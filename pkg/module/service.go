@@ -33,7 +33,7 @@ func NewService(opts Options) (*Service, error) {
 
 // ServiceName returns the canonical name.
 func (s *Service) ServiceName() string {
-	return "github.com/host-uk/core/module"
+	return "forge.lthn.ai/core/gui/module"
 }
 
 // ServiceStartup is called by Wails on app start.

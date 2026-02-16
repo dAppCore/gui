@@ -21,7 +21,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/host-uk/core/pkg/mcp"
+	"forge.lthn.ai/core/gui/pkg/mcp"
 )
 
 func main() {

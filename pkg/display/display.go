@@ -62,7 +62,7 @@ func Register(c *core.Core) (any, error) {
 
 // ServiceName returns the canonical name for this service.
 func (s *Service) ServiceName() string {
-	return "github.com/host-uk/core/display"
+	return "forge.lthn.ai/core/gui/display"
 }
 
 // ServiceStartup is called by Wails when the app starts. It initializes the display service

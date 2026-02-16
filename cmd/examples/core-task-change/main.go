@@ -4,7 +4,7 @@ import (
 	"embed"
 	"log"
 
-	"github.com/host-uk/core/runtime"
+	"forge.lthn.ai/core/gui/runtime"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 

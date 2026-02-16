@@ -56,7 +56,7 @@ func TestServiceName(t *testing.T) {
 	require.NoError(t, err)
 
 	name := service.ServiceName()
-	assert.Equal(t, "github.com/host-uk/core/display", name)
+	assert.Equal(t, "forge.lthn.ai/core/gui/display", name)
 }
 
 // --- Window Option Tests ---

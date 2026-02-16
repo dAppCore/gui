@@ -3,12 +3,12 @@ module lthn-desktop
 go 1.25.5
 
 require (
-	github.com/host-uk/core v0.0.0-00010101000000-000000000000
-	github.com/host-uk/core/pkg/display v0.0.0
-	github.com/host-uk/core/pkg/mcp v0.0.0-00010101000000-000000000000
-	github.com/host-uk/core/pkg/module v0.0.0-00010101000000-000000000000
-	github.com/host-uk/core/pkg/webview v0.0.0-00010101000000-000000000000
-	github.com/host-uk/core/pkg/ws v0.0.0-00010101000000-000000000000
+	forge.lthn.ai/core/gui v0.0.0-00010101000000-000000000000
+	forge.lthn.ai/core/gui/pkg/display v0.0.0
+	forge.lthn.ai/core/gui/pkg/mcp v0.0.0-00010101000000-000000000000
+	forge.lthn.ai/core/gui/pkg/module v0.0.0-00010101000000-000000000000
+	forge.lthn.ai/core/gui/pkg/webview v0.0.0-00010101000000-000000000000
+	forge.lthn.ai/core/gui/pkg/ws v0.0.0-00010101000000-000000000000
 	github.com/Snider/Mining v0.0.9
 	github.com/gin-gonic/gin v1.11.0
 	github.com/gorilla/websocket v1.5.3
@@ -16,24 +16,24 @@ require (
 )
 
 replace (
-	github.com/host-uk/core => ../../
-	github.com/host-uk/core/pkg/config => ../../pkg/config
-	github.com/host-uk/core/pkg/core => ../../pkg/core
-	github.com/host-uk/core/pkg/crypt => ../../pkg/crypt
-	github.com/host-uk/core/pkg/display => ../../pkg/display
-	github.com/host-uk/core/pkg/docs => ../../pkg/docs
-	github.com/host-uk/core/pkg/help => ../../pkg/help
-	github.com/host-uk/core/pkg/i18n => ../../pkg/i18n
-	github.com/host-uk/core/pkg/ide => ../../pkg/ide
-	github.com/host-uk/core/pkg/io => ../../pkg/io
-	github.com/host-uk/core/pkg/mcp => ../../pkg/mcp
-	github.com/host-uk/core/pkg/module => ../../pkg/module
-	github.com/host-uk/core/pkg/plugin => ../../pkg/plugin
-	github.com/host-uk/core/pkg/process => ../../pkg/process
-	github.com/host-uk/core/pkg/runtime => ../../pkg/runtime
-	github.com/host-uk/core/pkg/webview => ../../pkg/webview
-	github.com/host-uk/core/pkg/workspace => ../../pkg/workspace
-	github.com/host-uk/core/pkg/ws => ../../pkg/ws
+	forge.lthn.ai/core/gui => ../../
+	forge.lthn.ai/core/gui/pkg/config => ../../pkg/config
+	forge.lthn.ai/core/gui/pkg/core => ../../pkg/core
+	forge.lthn.ai/core/gui/pkg/crypt => ../../pkg/crypt
+	forge.lthn.ai/core/gui/pkg/display => ../../pkg/display
+	forge.lthn.ai/core/gui/pkg/docs => ../../pkg/docs
+	forge.lthn.ai/core/gui/pkg/help => ../../pkg/help
+	forge.lthn.ai/core/gui/pkg/i18n => ../../pkg/i18n
+	forge.lthn.ai/core/gui/pkg/ide => ../../pkg/ide
+	forge.lthn.ai/core/gui/pkg/io => ../../pkg/io
+	forge.lthn.ai/core/gui/pkg/mcp => ../../pkg/mcp
+	forge.lthn.ai/core/gui/pkg/module => ../../pkg/module
+	forge.lthn.ai/core/gui/pkg/plugin => ../../pkg/plugin
+	forge.lthn.ai/core/gui/pkg/process => ../../pkg/process
+	forge.lthn.ai/core/gui/pkg/runtime => ../../pkg/runtime
+	forge.lthn.ai/core/gui/pkg/webview => ../../pkg/webview
+	forge.lthn.ai/core/gui/pkg/workspace => ../../pkg/workspace
+	forge.lthn.ai/core/gui/pkg/ws => ../../pkg/ws
 )
 
 require (
@@ -43,7 +43,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.3.1 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProtonMail/go-crypto v1.3.0 // indirect
-	github.com/host-uk/core/pkg/config v0.0.0-00010101000000-000000000000 // indirect
+	forge.lthn.ai/core/gui/pkg/config v0.0.0-00010101000000-000000000000 // indirect
 	github.com/host-uk/core/pkg/core v0.0.0 // indirect
 	github.com/host-uk/core/pkg/docs v0.0.0-00010101000000-000000000000 // indirect
 	github.com/host-uk/core/pkg/help v0.0.0-00010101000000-000000000000 // indirect

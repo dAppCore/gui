@@ -50,7 +50,7 @@ func Register(c *core.Core) (any, error) {
 
 // ServiceName returns the canonical name for this service.
 func (s *Service) ServiceName() string {
-	return "github.com/host-uk/core/ide"
+	return "forge.lthn.ai/core/gui/ide"
 }
 
 // NewFile creates a new untitled file with the specified language.

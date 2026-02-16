@@ -1,3 +1,3 @@
-module github.com/host-uk/core/cmd/core-mcp
+module forge.lthn.ai/core/gui/cmd/core-mcp
 
 go 1.25.5

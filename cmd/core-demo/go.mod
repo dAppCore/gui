@@ -27,10 +27,10 @@ replace (
 	github.com/host-uk/core/pkg/module => ../../pkg/module
 	github.com/host-uk/core/pkg/plugin => ../../pkg/plugin
 	github.com/host-uk/core/pkg/process => ../../pkg/process
-	github.com/host-uk/core/pkg/runtime => ../../pkg/runtime
-	github.com/host-uk/core/pkg/webview => ../../pkg/webview
-	github.com/host-uk/core/pkg/workspace => ../../pkg/workspace
-	github.com/host-uk/core/pkg/ws => ../../pkg/ws
+	forge.lthn.ai/core/gui/pkg/runtime => ../../pkg/runtime
+	forge.lthn.ai/core/gui/pkg/webview => ../../pkg/webview
+	forge.lthn.ai/core/gui/pkg/workspace => ../../pkg/workspace
+	forge.lthn.ai/core/gui/pkg/ws => ../../pkg/ws
 )
 
 require (
@@ -38,8 +38,8 @@ require (
 	git.sr.ht/~jackmordaunt/go-toast/v2 v2.0.3 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProtonMail/go-crypto v1.3.0 // indirect
-	github.com/host-uk/core/pkg/config v0.0.0-00010101000000-000000000000 // indirect
-	github.com/host-uk/core/pkg/core v0.0.0 // indirect
+	forge.lthn.ai/core/gui/pkg/config v0.0.0-00010101000000-000000000000 // indirect
+	forge.lthn.ai/core/gui/pkg/core v0.0.0 // indirect
 	github.com/host-uk/core/pkg/docs v0.0.0-00010101000000-000000000000 // indirect
 	github.com/host-uk/core/pkg/help v0.0.0-00010101000000-000000000000 // indirect
 	github.com/host-uk/core/pkg/i18n v0.0.0-00010101000000-000000000000 // indirect

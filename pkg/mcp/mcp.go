@@ -52,7 +52,7 @@ func New(c *core.Core) *Service {
 
 	// Try to get the IDE service if available
 	if c != nil {
-		ideSvc, _ := core.ServiceFor[*ide.Service](c, "github.com/host-uk/core/ide")
+		ideSvc, _ := core.ServiceFor[*ide.Service](c, "forge.lthn.ai/core/gui/ide")
 		s.ide = ideSvc
 	}
 

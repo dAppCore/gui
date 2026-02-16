@@ -1,6 +1,6 @@
 package demo
 
-import "github.com/host-uk/core"
+import "forge.lthn.ai/core/gui"
 
 // this instance is the singleton instance of the demo module.
 var instance *API

@@ -9,10 +9,10 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/host-uk/core/pkg/display"
-	"github.com/host-uk/core/pkg/mcp"
-	"github.com/host-uk/core/pkg/webview"
-	"github.com/host-uk/core/pkg/ws"
+	"forge.lthn.ai/core/gui/pkg/display"
+	"forge.lthn.ai/core/gui/pkg/mcp"
+	"forge.lthn.ai/core/gui/pkg/webview"
+	"forge.lthn.ai/core/gui/pkg/ws"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
