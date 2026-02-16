@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/host-uk/core-gui/pkg/core"
-	"github.com/host-uk/core-gui/pkg/crypt/lthn"
-	"github.com/host-uk/core-gui/pkg/crypt/openpgp"
-	"github.com/host-uk/core-gui/pkg/io"
-	"github.com/host-uk/core-gui/pkg/io/local"
+	"forge.lthn.ai/core/gui/pkg/core"
+	"forge.lthn.ai/core/gui/pkg/crypt/lthn"
+	"forge.lthn.ai/core/gui/pkg/crypt/openpgp"
+	"forge.lthn.ai/core/gui/pkg/io"
+	"forge.lthn.ai/core/gui/pkg/io/local"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 

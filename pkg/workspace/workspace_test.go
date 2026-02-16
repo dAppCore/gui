@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/host-uk/core-gui/pkg/core"
-	"github.com/host-uk/core-gui/pkg/io"
+	"forge.lthn.ai/core/gui/pkg/core"
+	"forge.lthn.ai/core/gui/pkg/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )

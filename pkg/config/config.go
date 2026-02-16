@@ -43,7 +43,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/host-uk/core-gui/pkg/core"
+	"forge.lthn.ai/core/gui/pkg/core"
 	"github.com/adrg/xdg"
 )
 

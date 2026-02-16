@@ -4,9 +4,9 @@ package core
 import (
 	"context"
 
-	"github.com/host-uk/core-gui/pkg/plugin"
-	"github.com/host-uk/core-gui/pkg/plugin/builtin/system"
-	"github.com/host-uk/core-gui/pkg/runtime"
+	"forge.lthn.ai/core/gui/pkg/plugin"
+	"forge.lthn.ai/core/gui/pkg/plugin/builtin/system"
+	"forge.lthn.ai/core/gui/pkg/runtime"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 

@@ -1,4 +1,4 @@
-module github.com/host-uk/core-gui
+module forge.lthn.ai/core/gui
 
 go 1.25.5
 

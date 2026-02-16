@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/host-uk/core-gui/pkg/core"
+	"forge.lthn.ai/core/gui/pkg/core"
 )
 
 // Options holds configuration for the IDE service.

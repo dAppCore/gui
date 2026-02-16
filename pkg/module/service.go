@@ -3,7 +3,7 @@ package module
 import (
 	"context"
 
-	"github.com/host-uk/core-gui/pkg/core"
+	"forge.lthn.ai/core/gui/pkg/core"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 

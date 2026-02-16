@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/host-uk/core-gui/pkg/plugin"
+	"forge.lthn.ai/core/gui/pkg/plugin"
 )
 
 func init() {

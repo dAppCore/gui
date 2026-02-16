@@ -3,7 +3,7 @@ package io
 import (
 	"errors"
 
-	"github.com/host-uk/core-gui/pkg/io/local"
+	"forge.lthn.ai/core/gui/pkg/io/local"
 )
 
 // Medium defines the standard interface for a storage backend.

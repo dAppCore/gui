@@ -6,15 +6,15 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/host-uk/core-gui/pkg/config"
-	"github.com/host-uk/core-gui/pkg/crypt"
-	"github.com/host-uk/core-gui/pkg/display"
-	"github.com/host-uk/core-gui/pkg/docs"
-	"github.com/host-uk/core-gui/pkg/help"
-	"github.com/host-uk/core-gui/pkg/ide"
-	"github.com/host-uk/core-gui/pkg/io"
-	"github.com/host-uk/core-gui/pkg/module"
-	"github.com/host-uk/core-gui/pkg/workspace"
+	"forge.lthn.ai/core/gui/pkg/config"
+	"forge.lthn.ai/core/gui/pkg/crypt"
+	"forge.lthn.ai/core/gui/pkg/display"
+	"forge.lthn.ai/core/gui/pkg/docs"
+	"forge.lthn.ai/core/gui/pkg/help"
+	"forge.lthn.ai/core/gui/pkg/ide"
+	"forge.lthn.ai/core/gui/pkg/io"
+	"forge.lthn.ai/core/gui/pkg/module"
+	"forge.lthn.ai/core/gui/pkg/workspace"
 )
 
 // TestNew ensures that New correctly initializes a Runtime instance.

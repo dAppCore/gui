@@ -2,8 +2,8 @@
 package docs
 
 import (
-	"github.com/host-uk/core-gui/pkg/core"
-	"github.com/host-uk/core-gui/pkg/display"
+	"forge.lthn.ai/core/gui/pkg/core"
+	"forge.lthn.ai/core/gui/pkg/display"
 )
 
 // Service manages documentation windows.

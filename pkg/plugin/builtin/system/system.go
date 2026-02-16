@@ -9,7 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/host-uk/core-gui/pkg/plugin"
+	"forge.lthn.ai/core/gui/pkg/plugin"
 )
 
 // Plugin is the built-in system information plugin.

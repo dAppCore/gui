@@ -5,7 +5,7 @@ import (
 	"io/fs"
 	"log"
 
-	core "github.com/host-uk/core-gui"
+	core "forge.lthn.ai/core/gui"
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/services/notifications"
 )

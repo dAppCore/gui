@@ -15,12 +15,12 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
-	"github.com/host-uk/core-gui/pkg/core"
-	"github.com/host-uk/core-gui/pkg/display"
-	"github.com/host-uk/core-gui/pkg/ide"
-	"github.com/host-uk/core-gui/pkg/process"
-	"github.com/host-uk/core-gui/pkg/webview"
-	"github.com/host-uk/core-gui/pkg/ws"
+	"forge.lthn.ai/core/gui/pkg/core"
+	"forge.lthn.ai/core/gui/pkg/display"
+	"forge.lthn.ai/core/gui/pkg/ide"
+	"forge.lthn.ai/core/gui/pkg/process"
+	"forge.lthn.ai/core/gui/pkg/webview"
+	"forge.lthn.ai/core/gui/pkg/ws"
 )
 
 // Service provides an MCP server that exposes Core functionality.

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/host-uk/core-gui/pkg/help" // Assuming this is the import path for the help module
+	"forge.lthn.ai/core/gui/pkg/help" // Assuming this is the import path for the help module
 )
 
 // MockLogger is a mock implementation of the help.Logger interface.

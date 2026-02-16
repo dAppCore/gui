@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/host-uk/core-gui/pkg/core"
+	"forge.lthn.ai/core/gui/pkg/core"
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/events"
 	"github.com/wailsapp/wails/v3/pkg/services/notifications"

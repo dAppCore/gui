@@ -4,18 +4,18 @@ import (
 	"fmt"
 
 	// Import the CONCRETE implementations from the internal packages.
-	"github.com/host-uk/core-gui/pkg/config"
-	"github.com/host-uk/core-gui/pkg/crypt"
-	"github.com/host-uk/core-gui/pkg/display"
-	"github.com/host-uk/core-gui/pkg/docs"
-	"github.com/host-uk/core-gui/pkg/help"
-	"github.com/host-uk/core-gui/pkg/i18n"
-	"github.com/host-uk/core-gui/pkg/ide"
-	"github.com/host-uk/core-gui/pkg/io"
-	"github.com/host-uk/core-gui/pkg/module"
-	"github.com/host-uk/core-gui/pkg/workspace"
+	"forge.lthn.ai/core/gui/pkg/config"
+	"forge.lthn.ai/core/gui/pkg/crypt"
+	"forge.lthn.ai/core/gui/pkg/display"
+	"forge.lthn.ai/core/gui/pkg/docs"
+	"forge.lthn.ai/core/gui/pkg/help"
+	"forge.lthn.ai/core/gui/pkg/i18n"
+	"forge.lthn.ai/core/gui/pkg/ide"
+	"forge.lthn.ai/core/gui/pkg/io"
+	"forge.lthn.ai/core/gui/pkg/module"
+	"forge.lthn.ai/core/gui/pkg/workspace"
 	// Import the ABSTRACT contracts (interfaces).
-	"github.com/host-uk/core-gui/pkg/core"
+	"forge.lthn.ai/core/gui/pkg/core"
 )
 
 // App is the runtime container that holds all instantiated services.
