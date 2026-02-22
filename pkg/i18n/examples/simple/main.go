@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/snider/i18n/i18n"
+	"forge.lthn.ai/core/go-i18n"
 )
 
 func main() {

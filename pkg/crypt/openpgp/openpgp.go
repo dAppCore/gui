@@ -7,7 +7,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/Snider/Enchantrix/pkg/crypt"
+	"forge.lthn.ai/Snider/Enchantrix/pkg/crypt"
 )
 
 var service *crypt.Service

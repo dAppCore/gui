@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"forge.lthn.ai/core/gui/pkg/module"
-	"github.com/Snider/Mining/pkg/mining"
+	"forge.lthn.ai/Snider/Mining/pkg/mining"
 	"github.com/gin-gonic/gin"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )

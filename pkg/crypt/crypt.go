@@ -8,7 +8,7 @@ import (
 	"io"
 
 	"forge.lthn.ai/core/gui/pkg/core"
-	"github.com/Snider/Enchantrix/pkg/crypt"
+	"forge.lthn.ai/Snider/Enchantrix/pkg/crypt"
 )
 
 // HandleIPCEvents processes IPC messages for the crypt service.

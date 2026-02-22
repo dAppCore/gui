@@ -46,7 +46,7 @@ require (
 	github.com/host-uk/core/pkg/ide v0.0.0-00010101000000-000000000000 // indirect
 	github.com/host-uk/core/pkg/module v0.0.0-00010101000000-000000000000 // indirect
 	github.com/host-uk/core/pkg/process v0.0.0-00010101000000-000000000000 // indirect
-	github.com/Snider/Enchantrix v0.0.2 // indirect
+	forge.lthn.ai/Snider/Enchantrix v0.0.4 // indirect
 	github.com/adrg/xdg v0.5.3 // indirect
 	github.com/bep/debounce v1.2.1 // indirect
 	github.com/bytedance/sonic v1.14.0 // indirect

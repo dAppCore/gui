@@ -9,7 +9,7 @@ require (
 	forge.lthn.ai/core/gui/pkg/module v0.0.0-00010101000000-000000000000
 	forge.lthn.ai/core/gui/pkg/webview v0.0.0-00010101000000-000000000000
 	forge.lthn.ai/core/gui/pkg/ws v0.0.0-00010101000000-000000000000
-	github.com/Snider/Mining v0.0.9
+	forge.lthn.ai/Snider/Mining v0.0.10
 	github.com/gin-gonic/gin v1.11.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/wailsapp/wails/v3 v3.0.0-alpha.41
@@ -50,7 +50,7 @@ require (
 	github.com/host-uk/core/pkg/i18n v0.0.0-00010101000000-000000000000 // indirect
 	github.com/host-uk/core/pkg/ide v0.0.0-00010101000000-000000000000 // indirect
 	github.com/host-uk/core/pkg/process v0.0.0-00010101000000-000000000000 // indirect
-	github.com/Snider/Enchantrix v0.0.2 // indirect
+	forge.lthn.ai/Snider/Enchantrix v0.0.4 // indirect
 	github.com/adrg/xdg v0.5.3 // indirect
 	github.com/bep/debounce v1.2.1 // indirect
 	github.com/bytedance/sonic v1.14.0 // indirect
