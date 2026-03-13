@@ -76,19 +76,3 @@ func (ev *wailsEventManager) Emit(name string, data ...any) bool {
 	return ev.app.Event.Emit(name, data...)
 }
 
-// wailsEventSource implements EventSource using a Wails app.
-type wailsEventSource struct{ app *application.App }
-
-func newWailsEventSource(app *application.App) EventSource {
-	return &wailsEventSource{app: app}
-}
-
-func (es *wailsEventSource) OnThemeChange(handler func(isDark bool)) func() {
-	return es.app.Event.OnApplicationEvent(events.Common.ThemeChanged, func(_ *application.ApplicationEvent) {
-		handler(es.app.Env.IsDarkMode())
-	})
-}
-
-func (es *wailsEventSource) Emit(name string, data ...any) bool {
-	return es.app.Event.Emit(name, data...)
-}

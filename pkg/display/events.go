@@ -47,7 +47,6 @@ type WSEventManager struct {
 	upgrader    websocket.Upgrader
 	clients     map[*websocket.Conn]*clientState
 	mu          sync.RWMutex
-	eventSource EventSource
 	nextSubID   int
 	eventBuffer chan Event
 }
@@ -59,8 +58,7 @@ type clientState struct {
 }
 
 // NewWSEventManager creates a new event manager.
-// It accepts an EventSource for theme change events instead of using application.Get() directly.
-func NewWSEventManager(es EventSource) *WSEventManager {
+func NewWSEventManager() *WSEventManager {
 	em := &WSEventManager{
 		upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
@@ -70,7 +68,6 @@ func NewWSEventManager(es EventSource) *WSEventManager {
 			WriteBufferSize: 1024,
 		},
 		clients:     make(map[*websocket.Conn]*clientState),
-		eventSource: es,
 		eventBuffer: make(chan Event, 100),
 	}
 
@@ -303,26 +300,6 @@ func (em *WSEventManager) Close() {
 	em.clients = make(map[*websocket.Conn]*clientState)
 	em.mu.Unlock()
 	close(em.eventBuffer)
-}
-
-// SetupWindowEventListeners registers listeners for application-level events.
-// Uses EventSource instead of application.Get() directly.
-func (em *WSEventManager) SetupWindowEventListeners() {
-	if em.eventSource != nil {
-		em.eventSource.OnThemeChange(func(isDark bool) {
-			theme := "light"
-			if isDark {
-				theme = "dark"
-			}
-			em.Emit(Event{
-				Type: EventThemeChange,
-				Data: map[string]any{
-					"isDark": isDark,
-					"theme":  theme,
-				},
-			})
-		})
-	}
 }
 
 // AttachWindowListeners attaches event listeners to a specific window.

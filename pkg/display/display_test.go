@@ -432,23 +432,11 @@ func TestHandleListWorkspaces_Good(t *testing.T) {
 }
 
 func TestWSEventManager_Good(t *testing.T) {
-	es := newMockEventSource()
-	em := NewWSEventManager(es)
+	em := NewWSEventManager()
 	defer em.Close()
 
 	assert.NotNil(t, em)
 	assert.Equal(t, 0, em.ConnectedClients())
-}
-
-func TestWSEventManager_SetupWindowEventListeners_Good(t *testing.T) {
-	es := newMockEventSource()
-	em := NewWSEventManager(es)
-	defer em.Close()
-
-	em.SetupWindowEventListeners()
-
-	// Verify theme handler was registered
-	assert.Len(t, es.themeHandlers, 1)
 }
 
 // --- Config file loading tests ---

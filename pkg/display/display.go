@@ -9,6 +9,7 @@ import (
 
 	"forge.lthn.ai/core/go-config"
 	"forge.lthn.ai/core/go/pkg/core"
+	"forge.lthn.ai/core/gui/pkg/dialog"
 	"forge.lthn.ai/core/gui/pkg/environment"
 	"forge.lthn.ai/core/gui/pkg/menu"
 	"forge.lthn.ai/core/gui/pkg/notification"
@@ -16,7 +17,6 @@ import (
 	"forge.lthn.ai/core/gui/pkg/systray"
 	"forge.lthn.ai/core/gui/pkg/window"
 	"github.com/wailsapp/wails/v3/pkg/application"
-	"github.com/wailsapp/wails/v3/pkg/services/notifications"
 )
 
 // Options holds configuration for the display service.
@@ -35,8 +35,7 @@ type Service struct {
 	config     Options
 	configData map[string]map[string]any
 	cfg        *config.Config // go-config instance for file persistence
-	notifier   *notifications.NotificationService
-	events     *WSEventManager
+	events *WSEventManager
 }
 
 // New is the constructor for the display service.
@@ -77,8 +76,7 @@ func (s *Service) OnStartup(ctx context.Context) error {
 	// Initialise Wails wrappers if app is available (nil in tests)
 	if s.wailsApp != nil {
 		s.app = newWailsApp(s.wailsApp)
-		s.events = NewWSEventManager(newWailsEventSource(s.wailsApp))
-		s.events.SetupWindowEventListeners()
+		s.events = NewWSEventManager()
 	}
 
 	return nil
@@ -165,8 +163,18 @@ func (s *Service) handleTrayAction(actionID string) {
 	case "close-desktop":
 		// Hide all windows — future: add TaskHideWindow
 	case "env-info":
-		if s.app != nil {
-			s.ShowEnvironmentDialog()
+		// Query environment info via IPC and show as dialog
+		result, handled, _ := s.Core().QUERY(environment.QueryInfo{})
+		if handled {
+			info := result.(environment.EnvironmentInfo)
+			details := fmt.Sprintf("OS: %s\nArch: %s\nPlatform: %s %s",
+				info.OS, info.Arch, info.Platform.Name, info.Platform.Version)
+			_, _, _ = s.Core().PERFORM(dialog.TaskMessageDialog{
+				Opts: dialog.MessageDialogOptions{
+					Type: dialog.DialogInfo, Title: "Environment",
+					Message: details, Buttons: []string{"OK"},
+				},
+			})
 		}
 	case "quit":
 		if s.app != nil {
@@ -617,171 +625,6 @@ func (s *Service) ApplyWorkflowLayout(workflow window.WorkflowLayout) error {
 		return fmt.Errorf("window service not available")
 	}
 	return ws.Manager().ApplyWorkflow(workflow, ws.Manager().List(), 1920, 1080)
-}
-
-// --- Screen queries (remain in display — use application.Get() directly) ---
-
-// ScreenInfo contains information about a display screen.
-type ScreenInfo struct {
-	ID      string `json:"id"`
-	Name    string `json:"name"`
-	X       int    `json:"x"`
-	Y       int    `json:"y"`
-	Width   int    `json:"width"`
-	Height  int    `json:"height"`
-	Primary bool   `json:"primary"`
-}
-
-// WorkArea represents usable screen space.
-type WorkArea struct {
-	ScreenID string `json:"screenId"`
-	X        int    `json:"x"`
-	Y        int    `json:"y"`
-	Width    int    `json:"width"`
-	Height   int    `json:"height"`
-}
-
-// GetScreens returns information about all available screens.
-func (s *Service) GetScreens() []ScreenInfo {
-	app := application.Get()
-	if app == nil || app.Screen == nil {
-		return nil
-	}
-	screens := app.Screen.GetAll()
-	if screens == nil {
-		return nil
-	}
-	result := make([]ScreenInfo, 0, len(screens))
-	for _, screen := range screens {
-		result = append(result, ScreenInfo{
-			ID:      screen.ID,
-			Name:    screen.Name,
-			X:       screen.Bounds.X,
-			Y:       screen.Bounds.Y,
-			Width:   screen.Bounds.Width,
-			Height:  screen.Bounds.Height,
-			Primary: screen.IsPrimary,
-		})
-	}
-	return result
-}
-
-// GetWorkAreas returns the usable work area for all screens.
-func (s *Service) GetWorkAreas() []WorkArea {
-	app := application.Get()
-	if app == nil || app.Screen == nil {
-		return nil
-	}
-	screens := app.Screen.GetAll()
-	if screens == nil {
-		return nil
-	}
-	result := make([]WorkArea, 0, len(screens))
-	for _, screen := range screens {
-		result = append(result, WorkArea{
-			ScreenID: screen.ID,
-			X:        screen.WorkArea.X,
-			Y:        screen.WorkArea.Y,
-			Width:    screen.WorkArea.Width,
-			Height:   screen.WorkArea.Height,
-		})
-	}
-	return result
-}
-
-// GetPrimaryScreen returns information about the primary screen.
-func (s *Service) GetPrimaryScreen() (*ScreenInfo, error) {
-	app := application.Get()
-	if app == nil || app.Screen == nil {
-		return nil, fmt.Errorf("screen service not available")
-	}
-	screens := app.Screen.GetAll()
-	for _, screen := range screens {
-		if screen.IsPrimary {
-			return &ScreenInfo{
-				ID: screen.ID, Name: screen.Name,
-				X: screen.Bounds.X, Y: screen.Bounds.Y,
-				Width: screen.Bounds.Width, Height: screen.Bounds.Height,
-				Primary: true,
-			}, nil
-		}
-	}
-	return nil, fmt.Errorf("no primary screen found")
-}
-
-// GetScreen returns information about a specific screen by ID.
-func (s *Service) GetScreen(id string) (*ScreenInfo, error) {
-	app := application.Get()
-	if app == nil || app.Screen == nil {
-		return nil, fmt.Errorf("screen service not available")
-	}
-	screens := app.Screen.GetAll()
-	for _, screen := range screens {
-		if screen.ID == id {
-			return &ScreenInfo{
-				ID: screen.ID, Name: screen.Name,
-				X: screen.Bounds.X, Y: screen.Bounds.Y,
-				Width: screen.Bounds.Width, Height: screen.Bounds.Height,
-				Primary: screen.IsPrimary,
-			}, nil
-		}
-	}
-	return nil, fmt.Errorf("screen not found: %s", id)
-}
-
-// GetScreenAtPoint returns the screen containing a specific point.
-func (s *Service) GetScreenAtPoint(x, y int) (*ScreenInfo, error) {
-	app := application.Get()
-	if app == nil || app.Screen == nil {
-		return nil, fmt.Errorf("screen service not available")
-	}
-	screens := app.Screen.GetAll()
-	for _, screen := range screens {
-		bounds := screen.Bounds
-		if x >= bounds.X && x < bounds.X+bounds.Width &&
-			y >= bounds.Y && y < bounds.Y+bounds.Height {
-			return &ScreenInfo{
-				ID: screen.ID, Name: screen.Name,
-				X: bounds.X, Y: bounds.Y,
-				Width: bounds.Width, Height: bounds.Height,
-				Primary: screen.IsPrimary,
-			}, nil
-		}
-	}
-	return nil, fmt.Errorf("no screen found at point (%d, %d)", x, y)
-}
-
-// GetScreenForWindow returns the screen containing a specific window.
-func (s *Service) GetScreenForWindow(name string) (*ScreenInfo, error) {
-	info, err := s.GetWindowInfo(name)
-	if err != nil {
-		return nil, err
-	}
-	centerX := info.X + info.Width/2
-	centerY := info.Y + info.Height/2
-	return s.GetScreenAtPoint(centerX, centerY)
-}
-
-// ShowEnvironmentDialog displays environment information.
-func (s *Service) ShowEnvironmentDialog() {
-	envInfo := s.app.Env().Info()
-	details := "Environment Information:\n\n"
-	details += fmt.Sprintf("Operating System: %s\n", envInfo.OS)
-	details += fmt.Sprintf("Architecture: %s\n", envInfo.Arch)
-	details += fmt.Sprintf("Debug Mode: %t\n\n", envInfo.Debug)
-	details += fmt.Sprintf("Dark Mode: %t\n\n", s.app.Env().IsDarkMode())
-	details += "Platform Information:"
-	for key, value := range envInfo.PlatformInfo {
-		details += fmt.Sprintf("\n%s: %v", key, value)
-	}
-	if envInfo.OSInfo != nil {
-		details += fmt.Sprintf("\n\nOS Details:\nName: %s\nVersion: %s",
-			envInfo.OSInfo.Name, envInfo.OSInfo.Version)
-	}
-	dialog := s.app.Dialog().Info()
-	dialog.SetTitle("Environment Information")
-	dialog.SetMessage(details)
-	dialog.Show()
 }
 
 // GetEventManager returns the event manager for WebSocket event subscriptions.
