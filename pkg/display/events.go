@@ -26,6 +26,8 @@ const (
 	EventNotificationClick   EventType = "notification.click"
 	EventTrayClick           EventType = "tray.click"
 	EventTrayMenuItemClick   EventType = "tray.menuitem.click"
+	EventKeybindingTriggered EventType = "keybinding.triggered"
+	EventWindowFileDrop      EventType = "window.filedrop"
 )
 
 // Event represents a display event sent to subscribers.

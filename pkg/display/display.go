@@ -9,8 +9,10 @@ import (
 
 	"forge.lthn.ai/core/go-config"
 	"forge.lthn.ai/core/go/pkg/core"
+	"forge.lthn.ai/core/gui/pkg/browser"
 	"forge.lthn.ai/core/gui/pkg/dialog"
 	"forge.lthn.ai/core/gui/pkg/environment"
+	"forge.lthn.ai/core/gui/pkg/keybinding"
 	"forge.lthn.ai/core/gui/pkg/menu"
 	"forge.lthn.ai/core/gui/pkg/notification"
 	"forge.lthn.ai/core/gui/pkg/screen"
@@ -147,8 +149,57 @@ func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 			s.events.Emit(Event{Type: EventScreenChange,
 				Data: map[string]any{"screens": m.Screens}})
 		}
+	case keybinding.ActionTriggered:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventKeybindingTriggered,
+				Data: map[string]any{"accelerator": m.Accelerator}})
+		}
+	case window.ActionFilesDropped:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventWindowFileDrop, Window: m.Name,
+				Data: map[string]any{"paths": m.Paths, "targetId": m.TargetID}})
+		}
 	}
 	return nil
+}
+
+// WSMessage represents a command received from a WebSocket client.
+type WSMessage struct {
+	Action string         `json:"action"`
+	Data   map[string]any `json:"data,omitempty"`
+}
+
+// handleWSMessage bridges WebSocket commands to IPC calls.
+func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
+	var result any
+	var handled bool
+	var err error
+
+	switch msg.Action {
+	case "keybinding:add":
+		accelerator, _ := msg.Data["accelerator"].(string)
+		description, _ := msg.Data["description"].(string)
+		result, handled, err = s.Core().PERFORM(keybinding.TaskAdd{
+			Accelerator: accelerator, Description: description,
+		})
+	case "keybinding:remove":
+		accelerator, _ := msg.Data["accelerator"].(string)
+		result, handled, err = s.Core().PERFORM(keybinding.TaskRemove{
+			Accelerator: accelerator,
+		})
+	case "keybinding:list":
+		result, handled, err = s.Core().QUERY(keybinding.QueryList{})
+	case "browser:open-url":
+		url, _ := msg.Data["url"].(string)
+		result, handled, err = s.Core().PERFORM(browser.TaskOpenURL{URL: url})
+	case "browser:open-file":
+		path, _ := msg.Data["path"].(string)
+		result, handled, err = s.Core().PERFORM(browser.TaskOpenFile{Path: path})
+	default:
+		return nil, false, nil
+	}
+
+	return result, handled, err
 }
 
 // handleTrayAction processes tray menu item clicks.
