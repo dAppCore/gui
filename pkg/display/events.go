@@ -28,6 +28,15 @@ const (
 	EventTrayMenuItemClick   EventType = "tray.menuitem.click"
 	EventKeybindingTriggered EventType = "keybinding.triggered"
 	EventWindowFileDrop      EventType = "window.filedrop"
+	EventDockVisibility      EventType = "dock.visibility-changed"
+	EventAppStarted          EventType = "app.started"
+	EventAppOpenedWithFile   EventType = "app.opened-with-file"
+	EventAppWillTerminate    EventType = "app.will-terminate"
+	EventAppActive           EventType = "app.active"
+	EventAppInactive         EventType = "app.inactive"
+	EventSystemPowerChange   EventType = "system.power-change"
+	EventSystemSuspend       EventType = "system.suspend"
+	EventSystemResume        EventType = "system.resume"
 )
 
 // Event represents a display event sent to subscribers.

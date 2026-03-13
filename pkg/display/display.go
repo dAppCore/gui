@@ -11,8 +11,10 @@ import (
 	"forge.lthn.ai/core/go/pkg/core"
 	"forge.lthn.ai/core/gui/pkg/browser"
 	"forge.lthn.ai/core/gui/pkg/dialog"
+	"forge.lthn.ai/core/gui/pkg/dock"
 	"forge.lthn.ai/core/gui/pkg/environment"
 	"forge.lthn.ai/core/gui/pkg/keybinding"
+	"forge.lthn.ai/core/gui/pkg/lifecycle"
 	"forge.lthn.ai/core/gui/pkg/menu"
 	"forge.lthn.ai/core/gui/pkg/notification"
 	"forge.lthn.ai/core/gui/pkg/screen"
@@ -159,6 +161,44 @@ func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 			s.events.Emit(Event{Type: EventWindowFileDrop, Window: m.Name,
 				Data: map[string]any{"paths": m.Paths, "targetId": m.TargetID}})
 		}
+	case dock.ActionVisibilityChanged:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventDockVisibility,
+				Data: map[string]any{"visible": m.Visible}})
+		}
+	case lifecycle.ActionApplicationStarted:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventAppStarted})
+		}
+	case lifecycle.ActionOpenedWithFile:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventAppOpenedWithFile,
+				Data: map[string]any{"path": m.Path}})
+		}
+	case lifecycle.ActionWillTerminate:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventAppWillTerminate})
+		}
+	case lifecycle.ActionDidBecomeActive:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventAppActive})
+		}
+	case lifecycle.ActionDidResignActive:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventAppInactive})
+		}
+	case lifecycle.ActionPowerStatusChanged:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventSystemPowerChange})
+		}
+	case lifecycle.ActionSystemSuspend:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventSystemSuspend})
+		}
+	case lifecycle.ActionSystemResume:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventSystemResume})
+		}
 	}
 	return nil
 }
@@ -195,6 +235,17 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 	case "browser:open-file":
 		path, _ := msg.Data["path"].(string)
 		result, handled, err = s.Core().PERFORM(browser.TaskOpenFile{Path: path})
+	case "dock:show":
+		result, handled, err = s.Core().PERFORM(dock.TaskShowIcon{})
+	case "dock:hide":
+		result, handled, err = s.Core().PERFORM(dock.TaskHideIcon{})
+	case "dock:badge":
+		label, _ := msg.Data["label"].(string)
+		result, handled, err = s.Core().PERFORM(dock.TaskSetBadge{Label: label})
+	case "dock:badge-remove":
+		result, handled, err = s.Core().PERFORM(dock.TaskRemoveBadge{})
+	case "dock:visible":
+		result, handled, err = s.Core().QUERY(dock.QueryVisible{})
 	default:
 		return nil, false, nil
 	}
