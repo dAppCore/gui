@@ -23,6 +23,7 @@ const (
 	EventWindowCreate EventType = "window.create"
 	EventThemeChange         EventType = "theme.change"
 	EventScreenChange        EventType = "screen.change"
+	EventNotificationClick   EventType = "notification.click"
 	EventTrayClick           EventType = "tray.click"
 	EventTrayMenuItemClick   EventType = "tray.menuitem.click"
 )

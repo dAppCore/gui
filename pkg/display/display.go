@@ -9,7 +9,10 @@ import (
 
 	"forge.lthn.ai/core/go-config"
 	"forge.lthn.ai/core/go/pkg/core"
+	"forge.lthn.ai/core/gui/pkg/environment"
 	"forge.lthn.ai/core/gui/pkg/menu"
+	"forge.lthn.ai/core/gui/pkg/notification"
+	"forge.lthn.ai/core/gui/pkg/screen"
 	"forge.lthn.ai/core/gui/pkg/systray"
 	"forge.lthn.ai/core/gui/pkg/window"
 	"github.com/wailsapp/wails/v3/pkg/application"
@@ -127,6 +130,25 @@ func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 				Data: map[string]any{"actionId": m.ActionID}})
 		}
 		s.handleTrayAction(m.ActionID)
+	case environment.ActionThemeChanged:
+		if s.events != nil {
+			theme := "light"
+			if m.IsDark {
+				theme = "dark"
+			}
+			s.events.Emit(Event{Type: EventThemeChange,
+				Data: map[string]any{"isDark": m.IsDark, "theme": theme}})
+		}
+	case notification.ActionNotificationClicked:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventNotificationClick,
+				Data: map[string]any{"id": m.ID}})
+		}
+	case screen.ActionScreensChanged:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventScreenChange,
+				Data: map[string]any{"screens": m.Screens}})
+		}
 	}
 	return nil
 }
