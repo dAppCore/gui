@@ -79,10 +79,16 @@ func TestApplyOptions_Empty_Good(t *testing.T) {
 	assert.NotNil(t, w)
 }
 
-// newTestManager creates a Manager with a mock platform for testing.
+// newTestManager creates a Manager with a mock platform and clean state for testing.
 func newTestManager() (*Manager, *mockPlatform) {
 	p := newMockPlatform()
-	return NewManager(p), p
+	m := &Manager{
+		platform: p,
+		state:    &StateManager{states: make(map[string]WindowState)},
+		layout:   &LayoutManager{layouts: make(map[string]Layout)},
+		windows:  make(map[string]PlatformWindow),
+	}
+	return m, p
 }
 
 func TestManager_Open_Good(t *testing.T) {
@@ -265,4 +271,60 @@ func TestLayoutManager_DeleteLayout_Good(t *testing.T) {
 	lm.DeleteLayout("temp")
 	_, ok := lm.GetLayout("temp")
 	assert.False(t, ok)
+}
+
+// --- Tiling Tests ---
+
+func TestTileMode_String_Good(t *testing.T) {
+	assert.Equal(t, "left-half", TileModeLeftHalf.String())
+	assert.Equal(t, "grid", TileModeGrid.String())
+}
+
+func TestManager_TileWindows_Good(t *testing.T) {
+	m, _ := newTestManager()
+	_, _ = m.Open(WithName("a"), WithSize(800, 600))
+	_, _ = m.Open(WithName("b"), WithSize(800, 600))
+	err := m.TileWindows(TileModeLeftRight, []string{"a", "b"}, 1920, 1080)
+	require.NoError(t, err)
+	a, _ := m.Get("a")
+	b, _ := m.Get("b")
+	aw, _ := a.Size()
+	bw, _ := b.Size()
+	assert.Equal(t, 960, aw)
+	assert.Equal(t, 960, bw)
+}
+
+func TestManager_TileWindows_Bad(t *testing.T) {
+	m, _ := newTestManager()
+	err := m.TileWindows(TileModeLeftRight, []string{"nonexistent"}, 1920, 1080)
+	assert.Error(t, err)
+}
+
+func TestManager_SnapWindow_Good(t *testing.T) {
+	m, _ := newTestManager()
+	_, _ = m.Open(WithName("snap"), WithSize(800, 600))
+	err := m.SnapWindow("snap", SnapLeft, 1920, 1080)
+	require.NoError(t, err)
+	w, _ := m.Get("snap")
+	x, _ := w.Position()
+	assert.Equal(t, 0, x)
+	sw, _ := w.Size()
+	assert.Equal(t, 960, sw)
+}
+
+func TestManager_StackWindows_Good(t *testing.T) {
+	m, _ := newTestManager()
+	_, _ = m.Open(WithName("s1"), WithSize(800, 600))
+	_, _ = m.Open(WithName("s2"), WithSize(800, 600))
+	err := m.StackWindows([]string{"s1", "s2"}, 30, 30)
+	require.NoError(t, err)
+	s2, _ := m.Get("s2")
+	x, y := s2.Position()
+	assert.Equal(t, 30, x)
+	assert.Equal(t, 30, y)
+}
+
+func TestWorkflowLayout_Good(t *testing.T) {
+	assert.Equal(t, "coding", WorkflowCoding.String())
+	assert.Equal(t, "debugging", WorkflowDebugging.String())
 }
