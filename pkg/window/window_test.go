@@ -141,3 +141,81 @@ func TestManager_Remove_Good(t *testing.T) {
 	_, ok := m.Get("temp")
 	assert.False(t, ok)
 }
+
+// --- StateManager Tests ---
+
+// newTestStateManager creates a clean StateManager with a temp dir for testing.
+func newTestStateManager(t *testing.T) *StateManager {
+	return &StateManager{
+		configDir: t.TempDir(),
+		states:    make(map[string]WindowState),
+	}
+}
+
+func TestStateManager_SetGet_Good(t *testing.T) {
+	sm := newTestStateManager(t)
+	state := WindowState{X: 100, Y: 200, Width: 800, Height: 600, Maximized: false}
+	sm.SetState("main", state)
+	got, ok := sm.GetState("main")
+	assert.True(t, ok)
+	assert.Equal(t, 100, got.X)
+	assert.Equal(t, 800, got.Width)
+}
+
+func TestStateManager_SetGet_Bad(t *testing.T) {
+	sm := newTestStateManager(t)
+	_, ok := sm.GetState("nonexistent")
+	assert.False(t, ok)
+}
+
+func TestStateManager_CaptureState_Good(t *testing.T) {
+	sm := newTestStateManager(t)
+	w := &mockWindow{name: "cap", x: 50, y: 60, width: 1024, height: 768, maximised: true}
+	sm.CaptureState(w)
+	got, ok := sm.GetState("cap")
+	assert.True(t, ok)
+	assert.Equal(t, 50, got.X)
+	assert.Equal(t, 1024, got.Width)
+	assert.True(t, got.Maximized)
+}
+
+func TestStateManager_ApplyState_Good(t *testing.T) {
+	sm := newTestStateManager(t)
+	sm.SetState("win", WindowState{X: 10, Y: 20, Width: 640, Height: 480})
+	w := &Window{Name: "win", Width: 1280, Height: 800}
+	sm.ApplyState(w)
+	assert.Equal(t, 10, w.X)
+	assert.Equal(t, 20, w.Y)
+	assert.Equal(t, 640, w.Width)
+	assert.Equal(t, 480, w.Height)
+}
+
+func TestStateManager_ListStates_Good(t *testing.T) {
+	sm := newTestStateManager(t)
+	sm.SetState("a", WindowState{Width: 100})
+	sm.SetState("b", WindowState{Width: 200})
+	names := sm.ListStates()
+	assert.Len(t, names, 2)
+}
+
+func TestStateManager_Clear_Good(t *testing.T) {
+	sm := newTestStateManager(t)
+	sm.SetState("a", WindowState{Width: 100})
+	sm.Clear()
+	names := sm.ListStates()
+	assert.Empty(t, names)
+}
+
+func TestStateManager_Persistence_Good(t *testing.T) {
+	dir := t.TempDir()
+	sm1 := &StateManager{configDir: dir, states: make(map[string]WindowState)}
+	sm1.SetState("persist", WindowState{X: 42, Y: 84, Width: 500, Height: 300})
+	sm1.ForceSync()
+
+	sm2 := &StateManager{configDir: dir, states: make(map[string]WindowState)}
+	sm2.load()
+	got, ok := sm2.GetState("persist")
+	assert.True(t, ok)
+	assert.Equal(t, 42, got.X)
+	assert.Equal(t, 500, got.Width)
+}
