@@ -28,6 +28,7 @@ type PlatformWindowOptions struct {
 type PlatformWindow interface {
 	// Identity
 	Name() string
+	Title() string
 
 	// Queries
 	Position() (int, int)

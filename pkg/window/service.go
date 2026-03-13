@@ -68,6 +68,14 @@ func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
 		return s.queryWindowList(), true, nil
 	case QueryWindowByName:
 		return s.queryWindowByName(q.Name), true, nil
+	case QueryLayoutList:
+		return s.manager.Layout().ListLayouts(), true, nil
+	case QueryLayoutGet:
+		l, ok := s.manager.Layout().GetLayout(q.Name)
+		if !ok {
+			return (*Layout)(nil), true, nil
+		}
+		return &l, true, nil
 	default:
 		return nil, false, nil
 	}
@@ -81,7 +89,7 @@ func (s *Service) queryWindowList() []WindowInfo {
 			x, y := pw.Position()
 			w, h := pw.Size()
 			result = append(result, WindowInfo{
-				Name: name, X: x, Y: y, Width: w, Height: h,
+				Name: name, Title: pw.Title(), X: x, Y: y, Width: w, Height: h,
 				Maximized: pw.IsMaximised(),
 				Focused:   pw.IsFocused(),
 			})
@@ -98,7 +106,7 @@ func (s *Service) queryWindowByName(name string) *WindowInfo {
 	x, y := pw.Position()
 	w, h := pw.Size()
 	return &WindowInfo{
-		Name: name, X: x, Y: y, Width: w, Height: h,
+		Name: name, Title: pw.Title(), X: x, Y: y, Width: w, Height: h,
 		Maximized: pw.IsMaximised(),
 		Focused:   pw.IsFocused(),
 	}
@@ -122,6 +130,25 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 		return nil, true, s.taskMinimise(t.Name)
 	case TaskFocus:
 		return nil, true, s.taskFocus(t.Name)
+	case TaskRestore:
+		return nil, true, s.taskRestore(t.Name)
+	case TaskSetTitle:
+		return nil, true, s.taskSetTitle(t.Name, t.Title)
+	case TaskSetVisibility:
+		return nil, true, s.taskSetVisibility(t.Name, t.Visible)
+	case TaskFullscreen:
+		return nil, true, s.taskFullscreen(t.Name, t.Fullscreen)
+	case TaskSaveLayout:
+		return nil, true, s.taskSaveLayout(t.Name)
+	case TaskRestoreLayout:
+		return nil, true, s.taskRestoreLayout(t.Name)
+	case TaskDeleteLayout:
+		s.manager.Layout().DeleteLayout(t.Name)
+		return nil, true, nil
+	case TaskTileWindows:
+		return nil, true, s.taskTileWindows(t.Mode, t.Windows)
+	case TaskSnapWindow:
+		return nil, true, s.taskSnapWindow(t.Name, t.Position)
 	default:
 		return nil, false, nil
 	}
@@ -134,7 +161,7 @@ func (s *Service) taskOpenWindow(t TaskOpenWindow) (any, bool, error) {
 	}
 	x, y := pw.Position()
 	w, h := pw.Size()
-	info := WindowInfo{Name: pw.Name(), X: x, Y: y, Width: w, Height: h}
+	info := WindowInfo{Name: pw.Name(), Title: pw.Title(), X: x, Y: y, Width: w, Height: h}
 
 	// Attach platform event listeners that convert to IPC actions
 	s.trackWindow(pw)
@@ -236,6 +263,114 @@ func (s *Service) taskFocus(name string) error {
 	}
 	pw.Focus()
 	return nil
+}
+
+func (s *Service) taskRestore(name string) error {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return fmt.Errorf("window not found: %s", name)
+	}
+	pw.Restore()
+	s.manager.State().UpdateMaximized(name, false)
+	return nil
+}
+
+func (s *Service) taskSetTitle(name, title string) error {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return fmt.Errorf("window not found: %s", name)
+	}
+	pw.SetTitle(title)
+	return nil
+}
+
+func (s *Service) taskSetVisibility(name string, visible bool) error {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return fmt.Errorf("window not found: %s", name)
+	}
+	pw.SetVisibility(visible)
+	return nil
+}
+
+func (s *Service) taskFullscreen(name string, fullscreen bool) error {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return fmt.Errorf("window not found: %s", name)
+	}
+	if fullscreen {
+		pw.Fullscreen()
+	} else {
+		pw.UnFullscreen()
+	}
+	return nil
+}
+
+func (s *Service) taskSaveLayout(name string) error {
+	windows := s.queryWindowList()
+	states := make(map[string]WindowState, len(windows))
+	for _, w := range windows {
+		states[w.Name] = WindowState{
+			X: w.X, Y: w.Y, Width: w.Width, Height: w.Height,
+			Maximized: w.Maximized,
+		}
+	}
+	return s.manager.Layout().SaveLayout(name, states)
+}
+
+func (s *Service) taskRestoreLayout(name string) error {
+	layout, ok := s.manager.Layout().GetLayout(name)
+	if !ok {
+		return fmt.Errorf("layout not found: %s", name)
+	}
+	for winName, state := range layout.Windows {
+		pw, found := s.manager.Get(winName)
+		if !found {
+			continue
+		}
+		pw.SetPosition(state.X, state.Y)
+		pw.SetSize(state.Width, state.Height)
+		if state.Maximized {
+			pw.Maximise()
+		}
+	}
+	return nil
+}
+
+var tileModeMap = map[string]TileMode{
+	"left-half": TileModeLeftHalf, "right-half": TileModeRightHalf,
+	"top-half": TileModeTopHalf, "bottom-half": TileModeBottomHalf,
+	"top-left": TileModeTopLeft, "top-right": TileModeTopRight,
+	"bottom-left": TileModeBottomLeft, "bottom-right": TileModeBottomRight,
+	"left-right": TileModeLeftRight, "grid": TileModeGrid,
+}
+
+func (s *Service) taskTileWindows(mode string, names []string) error {
+	tm, ok := tileModeMap[mode]
+	if !ok {
+		return fmt.Errorf("unknown tile mode: %s", mode)
+	}
+	if len(names) == 0 {
+		names = s.manager.List()
+	}
+	// Default screen size — callers can query screen_primary for actual values.
+	return s.manager.TileWindows(tm, names, 1920, 1080)
+}
+
+var snapPosMap = map[string]SnapPosition{
+	"left": SnapLeft, "right": SnapRight,
+	"top": SnapTop, "bottom": SnapBottom,
+	"top-left": SnapTopLeft, "top-right": SnapTopRight,
+	"bottom-left": SnapBottomLeft, "bottom-right": SnapBottomRight,
+	"center": SnapCenter, "centre": SnapCenter,
+}
+
+func (s *Service) taskSnapWindow(name, position string) error {
+	pos, ok := snapPosMap[position]
+	if !ok {
+		return fmt.Errorf("unknown snap position: %s", position)
+	}
+	return s.manager.SnapWindow(name, pos, 1920, 1080)
 }
 
 // Manager returns the underlying window Manager for direct access.

@@ -38,6 +38,7 @@ type mockWindow struct {
 }
 
 func (w *mockWindow) Name() string                            { return w.name }
+func (w *mockWindow) Title() string                           { return w.title }
 func (w *mockWindow) Position() (int, int)                    { return w.x, w.y }
 func (w *mockWindow) Size() (int, int)                        { return w.width, w.height }
 func (w *mockWindow) IsMaximised() bool                       { return w.maximised }

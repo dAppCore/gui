@@ -37,7 +37,7 @@ func (wp *WailsPlatform) CreateWindow(opts PlatformWindowOptions) PlatformWindow
 		BackgroundColour:  application.NewRGBA(opts.BackgroundColour[0], opts.BackgroundColour[1], opts.BackgroundColour[2], opts.BackgroundColour[3]),
 	}
 	w := wp.app.Window.NewWithOptions(wOpts)
-	return &wailsWindow{w: w}
+	return &wailsWindow{w: w, title: opts.Title}
 }
 
 func (wp *WailsPlatform) GetWindows() []PlatformWindow {
@@ -52,16 +52,19 @@ func (wp *WailsPlatform) GetWindows() []PlatformWindow {
 }
 
 // wailsWindow wraps *application.WebviewWindow to implement PlatformWindow.
+// It stores the title locally because Wails v3 does not expose a title getter.
 type wailsWindow struct {
-	w *application.WebviewWindow
+	w     *application.WebviewWindow
+	title string
 }
 
 func (ww *wailsWindow) Name() string             { return ww.w.Name() }
+func (ww *wailsWindow) Title() string            { return ww.title }
 func (ww *wailsWindow) Position() (int, int)     { return ww.w.Position() }
 func (ww *wailsWindow) Size() (int, int)         { return ww.w.Size() }
 func (ww *wailsWindow) IsMaximised() bool        { return ww.w.IsMaximised() }
 func (ww *wailsWindow) IsFocused() bool          { return ww.w.IsFocused() }
-func (ww *wailsWindow) SetTitle(title string)    { ww.w.SetTitle(title) }
+func (ww *wailsWindow) SetTitle(title string)    { ww.title = title; ww.w.SetTitle(title) }
 func (ww *wailsWindow) SetPosition(x, y int)     { ww.w.SetPosition(x, y) }
 func (ww *wailsWindow) SetSize(width, height int) { ww.w.SetSize(width, height) }
 func (ww *wailsWindow) SetBackgroundColour(r, g, b, a uint8) {
