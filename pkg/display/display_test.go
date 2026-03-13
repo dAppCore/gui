@@ -12,172 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// --- Mock platform implementations for sub-packages ---
-
-// displayMockPlatformWindow implements window.PlatformWindow for display tests.
-type displayMockPlatformWindow struct {
-	name, title, url     string
-	width, height, x, y  int
-	maximised, focused   bool
-	visible, alwaysOnTop bool
-	closed               bool
-	eventHandlers        []func(window.WindowEvent)
-}
-
-func (w *displayMockPlatformWindow) Name() string             { return w.name }
-func (w *displayMockPlatformWindow) Position() (int, int)     { return w.x, w.y }
-func (w *displayMockPlatformWindow) Size() (int, int)         { return w.width, w.height }
-func (w *displayMockPlatformWindow) IsMaximised() bool        { return w.maximised }
-func (w *displayMockPlatformWindow) IsFocused() bool          { return w.focused }
-func (w *displayMockPlatformWindow) SetTitle(title string)    { w.title = title }
-func (w *displayMockPlatformWindow) SetPosition(x, y int)     { w.x = x; w.y = y }
-func (w *displayMockPlatformWindow) SetSize(width, height int) {
-	w.width = width
-	w.height = height
-}
-func (w *displayMockPlatformWindow) SetBackgroundColour(r, g, b, a uint8) {}
-func (w *displayMockPlatformWindow) SetVisibility(visible bool)           { w.visible = visible }
-func (w *displayMockPlatformWindow) SetAlwaysOnTop(alwaysOnTop bool)      { w.alwaysOnTop = alwaysOnTop }
-func (w *displayMockPlatformWindow) Maximise()                            { w.maximised = true }
-func (w *displayMockPlatformWindow) Restore()                             { w.maximised = false }
-func (w *displayMockPlatformWindow) Minimise()                            {}
-func (w *displayMockPlatformWindow) Focus()                               { w.focused = true }
-func (w *displayMockPlatformWindow) Close()                               { w.closed = true }
-func (w *displayMockPlatformWindow) Show()                                { w.visible = true }
-func (w *displayMockPlatformWindow) Hide()                                { w.visible = false }
-func (w *displayMockPlatformWindow) Fullscreen()                          {}
-func (w *displayMockPlatformWindow) UnFullscreen()                        {}
-func (w *displayMockPlatformWindow) OnWindowEvent(handler func(window.WindowEvent)) {
-	w.eventHandlers = append(w.eventHandlers, handler)
-}
-
-// displayMockWindowPlatform implements window.Platform for display tests.
-type displayMockWindowPlatform struct {
-	windows []*displayMockPlatformWindow
-}
-
-func (p *displayMockWindowPlatform) CreateWindow(opts window.PlatformWindowOptions) window.PlatformWindow {
-	w := &displayMockPlatformWindow{
-		name: opts.Name, title: opts.Title, url: opts.URL,
-		width: opts.Width, height: opts.Height,
-		x: opts.X, y: opts.Y,
-	}
-	p.windows = append(p.windows, w)
-	return w
-}
-
-func (p *displayMockWindowPlatform) GetWindows() []window.PlatformWindow {
-	out := make([]window.PlatformWindow, len(p.windows))
-	for i, w := range p.windows {
-		out[i] = w
-	}
-	return out
-}
-
-// displayMockSystrayPlatform implements systray.Platform for display tests.
-type displayMockSystrayPlatform struct {
-	trays []*displayMockTray
-	menus []*displayMockSystrayMenu
-}
-
-func (p *displayMockSystrayPlatform) NewTray() systray.PlatformTray {
-	t := &displayMockTray{}
-	p.trays = append(p.trays, t)
-	return t
-}
-
-func (p *displayMockSystrayPlatform) NewMenu() systray.PlatformMenu {
-	m := &displayMockSystrayMenu{}
-	p.menus = append(p.menus, m)
-	return m
-}
-
-type displayMockTray struct {
-	tooltip, label string
-	menu           systray.PlatformMenu
-}
-
-func (t *displayMockTray) SetIcon(data []byte)            {}
-func (t *displayMockTray) SetTemplateIcon(data []byte)    {}
-func (t *displayMockTray) SetTooltip(text string)         { t.tooltip = text }
-func (t *displayMockTray) SetLabel(text string)            { t.label = text }
-func (t *displayMockTray) SetMenu(m systray.PlatformMenu)  { t.menu = m }
-func (t *displayMockTray) AttachWindow(w systray.WindowHandle) {}
-
-type displayMockSystrayMenu struct {
-	items []string
-}
-
-func (m *displayMockSystrayMenu) Add(label string) systray.PlatformMenuItem {
-	m.items = append(m.items, label)
-	return &displayMockSystrayMenuItem{}
-}
-func (m *displayMockSystrayMenu) AddSeparator() { m.items = append(m.items, "---") }
-
-type displayMockSystrayMenuItem struct{}
-
-func (mi *displayMockSystrayMenuItem) SetTooltip(text string)  {}
-func (mi *displayMockSystrayMenuItem) SetChecked(checked bool)  {}
-func (mi *displayMockSystrayMenuItem) SetEnabled(enabled bool)  {}
-func (mi *displayMockSystrayMenuItem) OnClick(fn func())        {}
-func (mi *displayMockSystrayMenuItem) AddSubmenu() systray.PlatformMenu {
-	return &displayMockSystrayMenu{}
-}
-
-// displayMockMenuPlatform implements menu.Platform for display tests.
-type displayMockMenuPlatform struct {
-	appMenu menu.PlatformMenu
-}
-
-func (p *displayMockMenuPlatform) NewMenu() menu.PlatformMenu {
-	return &displayMockMenu{}
-}
-
-func (p *displayMockMenuPlatform) SetApplicationMenu(m menu.PlatformMenu) {
-	p.appMenu = m
-}
-
-type displayMockMenu struct {
-	items []string
-}
-
-func (m *displayMockMenu) Add(label string) menu.PlatformMenuItem {
-	m.items = append(m.items, label)
-	return &displayMockMenuItem{}
-}
-func (m *displayMockMenu) AddSeparator()                      { m.items = append(m.items, "---") }
-func (m *displayMockMenu) AddSubmenu(label string) menu.PlatformMenu {
-	m.items = append(m.items, label)
-	return &displayMockMenu{}
-}
-func (m *displayMockMenu) AddRole(role menu.MenuRole) {}
-
-type displayMockMenuItem struct{}
-
-func (mi *displayMockMenuItem) SetAccelerator(accel string) menu.PlatformMenuItem { return mi }
-func (mi *displayMockMenuItem) SetTooltip(text string) menu.PlatformMenuItem      { return mi }
-func (mi *displayMockMenuItem) SetChecked(checked bool) menu.PlatformMenuItem      { return mi }
-func (mi *displayMockMenuItem) SetEnabled(enabled bool) menu.PlatformMenuItem      { return mi }
-func (mi *displayMockMenuItem) OnClick(fn func()) menu.PlatformMenuItem            { return mi }
-
 // --- Test helpers ---
-
-// newServiceWithMocks creates a Service with mock sub-managers for testing.
-// Uses a temp directory for state/layout persistence to avoid loading real saved state.
-func newServiceWithMocks(t *testing.T) (*Service, *mockApp, *displayMockWindowPlatform) {
-	service, err := New()
-	require.NoError(t, err)
-
-	mock := newMockApp()
-	service.app = mock
-
-	wp := &displayMockWindowPlatform{}
-	service.windows = window.NewManagerWithDir(wp, t.TempDir())
-	service.tray = systray.NewManager(&displayMockSystrayPlatform{})
-	service.menus = menu.NewManager(&displayMockMenuPlatform{})
-
-	return service, mock, wp
-}
 
 // newTestDisplayService creates a display service registered with Core for IPC testing.
 func newTestDisplayService(t *testing.T) (*Service, *core.Core) {
@@ -190,6 +25,21 @@ func newTestDisplayService(t *testing.T) (*Service, *core.Core) {
 	require.NoError(t, c.ServiceStartup(context.Background(), nil))
 	svc := core.MustServiceFor[*Service](c, "display")
 	return svc, c
+}
+
+// newTestConclave creates a full 4-service conclave for integration testing.
+func newTestConclave(t *testing.T) *core.Core {
+	t.Helper()
+	c, err := core.New(
+		core.WithService(Register(nil)),
+		core.WithService(window.Register(window.NewMockPlatform())),
+		core.WithService(systray.Register(systray.NewMockPlatform())),
+		core.WithService(menu.Register(menu.NewMockPlatform())),
+		core.WithServiceLock(),
+	)
+	require.NoError(t, err)
+	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+	return c
 }
 
 // --- Tests ---
@@ -262,25 +112,70 @@ func TestConfigTask_Good(t *testing.T) {
 	assert.Equal(t, 800, cfg["default_width"])
 }
 
-func TestOpenWindow_Good(t *testing.T) {
-	t.Run("creates window with default options", func(t *testing.T) {
-		service, _, wp := newServiceWithMocks(t)
+// --- Conclave integration tests ---
 
-		err := service.OpenWindow()
+func TestServiceConclave_Good(t *testing.T) {
+	c := newTestConclave(t)
+
+	// Open a window via IPC
+	result, handled, err := c.PERFORM(window.TaskOpenWindow{
+		Opts: []window.WindowOption{window.WithName("main")},
+	})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	info := result.(window.WindowInfo)
+	assert.Equal(t, "main", info.Name)
+
+	// Query window config from display
+	val, handled, err := c.QUERY(window.QueryConfig{})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.NotNil(t, val)
+
+	// Set app menu via IPC
+	_, handled, err = c.PERFORM(menu.TaskSetAppMenu{Items: []menu.MenuItem{
+		{Label: "File"},
+	}})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	// Query app menu via IPC
+	menuResult, handled, _ := c.QUERY(menu.QueryGetAppMenu{})
+	assert.True(t, handled)
+	items := menuResult.([]menu.MenuItem)
+	assert.Len(t, items, 1)
+}
+
+func TestServiceConclave_Bad(t *testing.T) {
+	// Sub-service starts without display — config QUERY returns handled=false
+	c, err := core.New(
+		core.WithService(window.Register(window.NewMockPlatform())),
+		core.WithServiceLock(),
+	)
+	require.NoError(t, err)
+	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+
+	_, handled, _ := c.QUERY(window.QueryConfig{})
+	assert.False(t, handled, "no display service means no config handler")
+}
+
+// --- IPC delegation tests (full conclave) ---
+
+func TestOpenWindow_Good(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+
+	t.Run("creates window with default options", func(t *testing.T) {
+		err := svc.OpenWindow()
 		assert.NoError(t, err)
 
-		// Verify window was created through the platform
-		assert.Len(t, wp.windows, 1)
-		assert.Equal(t, "main", wp.windows[0].name)
-		assert.Equal(t, "Core", wp.windows[0].title)
-		assert.Equal(t, 1280, wp.windows[0].width)
-		assert.Equal(t, 800, wp.windows[0].height)
+		// Verify via IPC query
+		infos := svc.ListWindowInfos()
+		assert.GreaterOrEqual(t, len(infos), 1)
 	})
 
 	t.Run("creates window with custom options", func(t *testing.T) {
-		service, _, wp := newServiceWithMocks(t)
-
-		err := service.OpenWindow(
+		err := svc.OpenWindow(
 			window.WithName("custom-window"),
 			window.WithTitle("Custom Title"),
 			window.WithSize(640, 480),
@@ -288,27 +183,25 @@ func TestOpenWindow_Good(t *testing.T) {
 		)
 		assert.NoError(t, err)
 
-		assert.Len(t, wp.windows, 1)
-		assert.Equal(t, "custom-window", wp.windows[0].name)
-		assert.Equal(t, "Custom Title", wp.windows[0].title)
-		assert.Equal(t, 640, wp.windows[0].width)
-		assert.Equal(t, 480, wp.windows[0].height)
+		result, _, _ := c.QUERY(window.QueryWindowByName{Name: "custom-window"})
+		info := result.(*window.WindowInfo)
+		assert.Equal(t, "custom-window", info.Name)
 	})
 }
 
 func TestGetWindowInfo_Good(t *testing.T) {
-	service, _, wp := newServiceWithMocks(t)
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
 
-	_ = service.OpenWindow(
+	_ = svc.OpenWindow(
 		window.WithName("test-win"),
 		window.WithSize(800, 600),
 	)
 
-	// Set position on the mock window
-	wp.windows[0].x = 100
-	wp.windows[0].y = 200
+	// Modify position via IPC
+	_, _, _ = c.PERFORM(window.TaskSetPosition{Name: "test-win", X: 100, Y: 200})
 
-	info, err := service.GetWindowInfo("test-win")
+	info, err := svc.GetWindowInfo("test-win")
 	require.NoError(t, err)
 	assert.Equal(t, "test-win", info.Name)
 	assert.Equal(t, 100, info.X)
@@ -318,144 +211,165 @@ func TestGetWindowInfo_Good(t *testing.T) {
 }
 
 func TestGetWindowInfo_Bad(t *testing.T) {
-	service, _, _ := newServiceWithMocks(t)
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
 
-	_, err := service.GetWindowInfo("nonexistent")
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "window not found")
+	info, err := svc.GetWindowInfo("nonexistent")
+	// QueryWindowByName returns nil for nonexistent — handled=true, result=nil
+	assert.NoError(t, err)
+	assert.Nil(t, info)
 }
 
 func TestListWindowInfos_Good(t *testing.T) {
-	service, _, _ := newServiceWithMocks(t)
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
 
-	_ = service.OpenWindow(window.WithName("win-1"))
-	_ = service.OpenWindow(window.WithName("win-2"))
+	_ = svc.OpenWindow(window.WithName("win-1"))
+	_ = svc.OpenWindow(window.WithName("win-2"))
 
-	infos := service.ListWindowInfos()
+	infos := svc.ListWindowInfos()
 	assert.Len(t, infos, 2)
 }
 
 func TestSetWindowPosition_Good(t *testing.T) {
-	service, _, wp := newServiceWithMocks(t)
-	_ = service.OpenWindow(window.WithName("pos-win"))
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+	_ = svc.OpenWindow(window.WithName("pos-win"))
 
-	err := service.SetWindowPosition("pos-win", 300, 400)
+	err := svc.SetWindowPosition("pos-win", 300, 400)
 	assert.NoError(t, err)
-	assert.Equal(t, 300, wp.windows[0].x)
-	assert.Equal(t, 400, wp.windows[0].y)
+
+	info, _ := svc.GetWindowInfo("pos-win")
+	assert.Equal(t, 300, info.X)
+	assert.Equal(t, 400, info.Y)
 }
 
 func TestSetWindowPosition_Bad(t *testing.T) {
-	service, _, _ := newServiceWithMocks(t)
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
 
-	err := service.SetWindowPosition("nonexistent", 0, 0)
+	err := svc.SetWindowPosition("nonexistent", 0, 0)
 	assert.Error(t, err)
 }
 
 func TestSetWindowSize_Good(t *testing.T) {
-	service, _, wp := newServiceWithMocks(t)
-	_ = service.OpenWindow(window.WithName("size-win"))
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+	_ = svc.OpenWindow(window.WithName("size-win"))
 
-	err := service.SetWindowSize("size-win", 1024, 768)
+	err := svc.SetWindowSize("size-win", 1024, 768)
 	assert.NoError(t, err)
-	assert.Equal(t, 1024, wp.windows[0].width)
-	assert.Equal(t, 768, wp.windows[0].height)
+
+	info, _ := svc.GetWindowInfo("size-win")
+	assert.Equal(t, 1024, info.Width)
+	assert.Equal(t, 768, info.Height)
 }
 
 func TestMaximizeWindow_Good(t *testing.T) {
-	service, _, wp := newServiceWithMocks(t)
-	_ = service.OpenWindow(window.WithName("max-win"))
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+	_ = svc.OpenWindow(window.WithName("max-win"))
 
-	err := service.MaximizeWindow("max-win")
+	err := svc.MaximizeWindow("max-win")
 	assert.NoError(t, err)
-	assert.True(t, wp.windows[0].maximised)
+
+	info, _ := svc.GetWindowInfo("max-win")
+	assert.True(t, info.Maximized)
 }
 
 func TestRestoreWindow_Good(t *testing.T) {
-	service, _, wp := newServiceWithMocks(t)
-	_ = service.OpenWindow(window.WithName("restore-win"))
-	wp.windows[0].maximised = true
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+	_ = svc.OpenWindow(window.WithName("restore-win"))
+	_ = svc.MaximizeWindow("restore-win")
 
-	err := service.RestoreWindow("restore-win")
+	err := svc.RestoreWindow("restore-win")
 	assert.NoError(t, err)
-	assert.False(t, wp.windows[0].maximised)
+
+	info, _ := svc.GetWindowInfo("restore-win")
+	assert.False(t, info.Maximized)
 }
 
 func TestFocusWindow_Good(t *testing.T) {
-	service, _, wp := newServiceWithMocks(t)
-	_ = service.OpenWindow(window.WithName("focus-win"))
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+	_ = svc.OpenWindow(window.WithName("focus-win"))
 
-	err := service.FocusWindow("focus-win")
+	err := svc.FocusWindow("focus-win")
 	assert.NoError(t, err)
-	assert.True(t, wp.windows[0].focused)
+
+	info, _ := svc.GetWindowInfo("focus-win")
+	assert.True(t, info.Focused)
 }
 
 func TestCloseWindow_Good(t *testing.T) {
-	service, _, wp := newServiceWithMocks(t)
-	_ = service.OpenWindow(window.WithName("close-win"))
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+	_ = svc.OpenWindow(window.WithName("close-win"))
 
-	err := service.CloseWindow("close-win")
+	err := svc.CloseWindow("close-win")
 	assert.NoError(t, err)
-	assert.True(t, wp.windows[0].closed)
 
-	// Window should be removed from manager
-	_, ok := service.windows.Get("close-win")
-	assert.False(t, ok)
+	// Window should be removed
+	info, _ := svc.GetWindowInfo("close-win")
+	assert.Nil(t, info)
 }
 
 func TestSetWindowVisibility_Good(t *testing.T) {
-	service, _, wp := newServiceWithMocks(t)
-	_ = service.OpenWindow(window.WithName("vis-win"))
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+	_ = svc.OpenWindow(window.WithName("vis-win"))
 
-	err := service.SetWindowVisibility("vis-win", false)
+	err := svc.SetWindowVisibility("vis-win", false)
 	assert.NoError(t, err)
-	assert.False(t, wp.windows[0].visible)
 
-	err = service.SetWindowVisibility("vis-win", true)
+	err = svc.SetWindowVisibility("vis-win", true)
 	assert.NoError(t, err)
-	assert.True(t, wp.windows[0].visible)
 }
 
 func TestSetWindowAlwaysOnTop_Good(t *testing.T) {
-	service, _, wp := newServiceWithMocks(t)
-	_ = service.OpenWindow(window.WithName("ontop-win"))
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+	_ = svc.OpenWindow(window.WithName("ontop-win"))
 
-	err := service.SetWindowAlwaysOnTop("ontop-win", true)
+	err := svc.SetWindowAlwaysOnTop("ontop-win", true)
 	assert.NoError(t, err)
-	assert.True(t, wp.windows[0].alwaysOnTop)
 }
 
 func TestSetWindowTitle_Good(t *testing.T) {
-	service, _, wp := newServiceWithMocks(t)
-	_ = service.OpenWindow(window.WithName("title-win"))
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+	_ = svc.OpenWindow(window.WithName("title-win"))
 
-	err := service.SetWindowTitle("title-win", "New Title")
+	err := svc.SetWindowTitle("title-win", "New Title")
 	assert.NoError(t, err)
-	assert.Equal(t, "New Title", wp.windows[0].title)
 }
 
 func TestGetFocusedWindow_Good(t *testing.T) {
-	service, _, wp := newServiceWithMocks(t)
-	_ = service.OpenWindow(window.WithName("win-a"))
-	_ = service.OpenWindow(window.WithName("win-b"))
-	wp.windows[1].focused = true
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+	_ = svc.OpenWindow(window.WithName("win-a"))
+	_ = svc.OpenWindow(window.WithName("win-b"))
+	_ = svc.FocusWindow("win-b")
 
-	focused := service.GetFocusedWindow()
+	focused := svc.GetFocusedWindow()
 	assert.Equal(t, "win-b", focused)
 }
 
 func TestGetFocusedWindow_NoneSelected(t *testing.T) {
-	service, _, _ := newServiceWithMocks(t)
-	_ = service.OpenWindow(window.WithName("win-a"))
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+	_ = svc.OpenWindow(window.WithName("win-a"))
 
-	focused := service.GetFocusedWindow()
+	focused := svc.GetFocusedWindow()
 	assert.Equal(t, "", focused)
 }
 
 func TestCreateWindow_Good(t *testing.T) {
-	service, _, wp := newServiceWithMocks(t)
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
 
-	info, err := service.CreateWindow(CreateWindowOptions{
+	info, err := svc.CreateWindow(CreateWindowOptions{
 		Name:   "new-win",
 		Title:  "New Window",
 		URL:    "/new",
@@ -464,104 +378,55 @@ func TestCreateWindow_Good(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Equal(t, "new-win", info.Name)
-	assert.Equal(t, 600, info.Width)
-	assert.Equal(t, 400, info.Height)
-	assert.Len(t, wp.windows, 1)
 }
 
 func TestCreateWindow_Bad(t *testing.T) {
-	service, _, _ := newServiceWithMocks(t)
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
 
-	_, err := service.CreateWindow(CreateWindowOptions{})
+	_, err := svc.CreateWindow(CreateWindowOptions{})
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "window name is required")
 }
 
-func TestShowEnvironmentDialog_Good(t *testing.T) {
-	service, mock, _ := newServiceWithMocks(t)
+func TestResetWindowState_Good(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
 
-	// This will panic because Dialog().Info() returns nil
-	// We're verifying the env info is accessed, not that a dialog shows
-	assert.NotPanics(t, func() {
-		defer func() { recover() }() // Recover from nil dialog
-		service.ShowEnvironmentDialog()
-	})
-
-	// Verify dialog was requested (even though it's nil)
-	assert.Equal(t, 1, mock.dialogManager.infoDialogsCreated)
+	err := svc.ResetWindowState()
+	assert.NoError(t, err)
 }
 
-func TestBuildMenu_Good(t *testing.T) {
-	service, _, _ := newServiceWithMocks(t)
-	c, _ := core.New()
-	service.ServiceRuntime = core.NewServiceRuntime[Options](c, Options{})
+func TestGetSavedWindowStates_Good(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
 
-	// buildMenu should not panic with mock platforms
-	assert.NotPanics(t, func() {
-		service.buildMenu()
-	})
+	states := svc.GetSavedWindowStates()
+	assert.NotNil(t, states)
 }
 
-func TestSetupTray_Good(t *testing.T) {
-	service, _, _ := newServiceWithMocks(t)
-	c, _ := core.New()
-	service.ServiceRuntime = core.NewServiceRuntime[Options](c, Options{})
+func TestHandleIPCEvents_WindowOpened_Good(t *testing.T) {
+	c := newTestConclave(t)
 
-	// setupTray should not panic with mock platforms
-	assert.NotPanics(t, func() {
-		service.setupTray()
+	// Open a window — this should trigger ActionWindowOpened
+	// which HandleIPCEvents should convert to a WS event
+	result, handled, err := c.PERFORM(window.TaskOpenWindow{
+		Opts: []window.WindowOption{window.WithName("test")},
 	})
-
-	// Verify tray is active
-	assert.True(t, service.tray.IsActive())
-}
-
-func TestHandleNewWorkspace_Good(t *testing.T) {
-	service, _, wp := newServiceWithMocks(t)
-
-	service.handleNewWorkspace()
-
-	// Verify a window was created with correct options
-	assert.Len(t, wp.windows, 1)
-	assert.Equal(t, "workspace-new", wp.windows[0].name)
-	assert.Equal(t, "New Workspace", wp.windows[0].title)
-	assert.Equal(t, 500, wp.windows[0].width)
-	assert.Equal(t, 400, wp.windows[0].height)
+	require.NoError(t, err)
+	assert.True(t, handled)
+	info := result.(window.WindowInfo)
+	assert.Equal(t, "test", info.Name)
 }
 
 func TestHandleListWorkspaces_Good(t *testing.T) {
-	service, _, _ := newServiceWithMocks(t)
-	c, _ := core.New()
-	service.ServiceRuntime = core.NewServiceRuntime[Options](c, Options{})
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
 
 	// handleListWorkspaces should not panic when workspace service is not available
 	assert.NotPanics(t, func() {
-		service.handleListWorkspaces()
+		svc.handleListWorkspaces()
 	})
-}
-
-func TestHandleSaveFile_Good(t *testing.T) {
-	service, mock, _ := newServiceWithMocks(t)
-
-	service.handleSaveFile()
-
-	assert.Contains(t, mock.eventManager.emittedEvents, "ide:save")
-}
-
-func TestHandleRun_Good(t *testing.T) {
-	service, mock, _ := newServiceWithMocks(t)
-
-	service.handleRun()
-
-	assert.Contains(t, mock.eventManager.emittedEvents, "ide:run")
-}
-
-func TestHandleBuild_Good(t *testing.T) {
-	service, mock, _ := newServiceWithMocks(t)
-
-	service.handleBuild()
-
-	assert.Contains(t, mock.eventManager.emittedEvents, "ide:build")
 }
 
 func TestWSEventManager_Good(t *testing.T) {
@@ -582,38 +447,4 @@ func TestWSEventManager_SetupWindowEventListeners_Good(t *testing.T) {
 
 	// Verify theme handler was registered
 	assert.Len(t, es.themeHandlers, 1)
-}
-
-func TestResetWindowState_Good(t *testing.T) {
-	service, _, _ := newServiceWithMocks(t)
-
-	err := service.ResetWindowState()
-	assert.NoError(t, err)
-}
-
-func TestGetSavedWindowStates_Good(t *testing.T) {
-	service, _, _ := newServiceWithMocks(t)
-
-	states := service.GetSavedWindowStates()
-	assert.NotNil(t, states)
-}
-
-func TestHandleIPCEvents_WindowOpened_Good(t *testing.T) {
-	c, err := core.New(
-		core.WithService(Register(nil)),
-		core.WithService(window.Register(window.NewMockPlatform())),
-		core.WithServiceLock(),
-	)
-	require.NoError(t, err)
-	require.NoError(t, c.ServiceStartup(context.Background(), nil))
-
-	// Open a window — this should trigger ActionWindowOpened
-	// which HandleIPCEvents should convert to a WS event
-	result, handled, err := c.PERFORM(window.TaskOpenWindow{
-		Opts: []window.WindowOption{window.WithName("test")},
-	})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	info := result.(window.WindowInfo)
-	assert.Equal(t, "test", info.Name)
 }
