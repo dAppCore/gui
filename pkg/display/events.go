@@ -37,6 +37,7 @@ const (
 	EventSystemPowerChange   EventType = "system.power-change"
 	EventSystemSuspend       EventType = "system.suspend"
 	EventSystemResume        EventType = "system.resume"
+	EventContextMenuClick   EventType = "contextmenu.item-clicked"
 )
 
 // Event represents a display event sent to subscribers.

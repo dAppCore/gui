@@ -9,7 +9,10 @@ import (
 
 	"forge.lthn.ai/core/go-config"
 	"forge.lthn.ai/core/go/pkg/core"
+	"encoding/json"
+
 	"forge.lthn.ai/core/gui/pkg/browser"
+	"forge.lthn.ai/core/gui/pkg/contextmenu"
 	"forge.lthn.ai/core/gui/pkg/dialog"
 	"forge.lthn.ai/core/gui/pkg/dock"
 	"forge.lthn.ai/core/gui/pkg/environment"
@@ -199,6 +202,20 @@ func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 		if s.events != nil {
 			s.events.Emit(Event{Type: EventSystemResume})
 		}
+	case contextmenu.ActionItemClicked:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventContextMenuClick,
+				Data: map[string]any{
+					"menuName": m.MenuName,
+					"actionId": m.ActionID,
+					"data":     m.Data,
+				}})
+		}
+	case ActionIDECommand:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventIDECommand,
+				Data: map[string]any{"command": m.Command}})
+		}
 	}
 	return nil
 }
@@ -246,6 +263,22 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 		result, handled, err = s.Core().PERFORM(dock.TaskRemoveBadge{})
 	case "dock:visible":
 		result, handled, err = s.Core().QUERY(dock.QueryVisible{})
+	case "contextmenu:add":
+		name, _ := msg.Data["name"].(string)
+		menuJSON, _ := json.Marshal(msg.Data["menu"])
+		var menuDef contextmenu.ContextMenuDef
+		_ = json.Unmarshal(menuJSON, &menuDef)
+		result, handled, err = s.Core().PERFORM(contextmenu.TaskAdd{
+			Name: name, Menu: menuDef,
+		})
+	case "contextmenu:remove":
+		name, _ := msg.Data["name"].(string)
+		result, handled, err = s.Core().PERFORM(contextmenu.TaskRemove{Name: name})
+	case "contextmenu:get":
+		name, _ := msg.Data["name"].(string)
+		result, handled, err = s.Core().QUERY(contextmenu.QueryGet{Name: name})
+	case "contextmenu:list":
+		result, handled, err = s.Core().QUERY(contextmenu.QueryList{})
 	default:
 		return nil, false, nil
 	}
