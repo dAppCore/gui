@@ -2,6 +2,7 @@ package window
 
 import (
 	"context"
+	"sync"
 	"testing"
 
 	"forge.lthn.ai/core/go/pkg/core"
@@ -136,4 +137,40 @@ func TestTaskMaximise_Good(t *testing.T) {
 	result, _, _ := c.QUERY(QueryWindowByName{Name: "test"})
 	info := result.(*WindowInfo)
 	assert.True(t, info.Maximized)
+}
+
+func TestFileDrop_Good(t *testing.T) {
+	_, c := newTestWindowService(t)
+
+	// Open a window
+	result, _, _ := c.PERFORM(TaskOpenWindow{
+		Opts: []WindowOption{WithName("drop-test")},
+	})
+	info := result.(WindowInfo)
+	assert.Equal(t, "drop-test", info.Name)
+
+	// Capture broadcast actions
+	var dropped ActionFilesDropped
+	var mu sync.Mutex
+	c.RegisterAction(func(_ *core.Core, msg core.Message) error {
+		if a, ok := msg.(ActionFilesDropped); ok {
+			mu.Lock()
+			dropped = a
+			mu.Unlock()
+		}
+		return nil
+	})
+
+	// Get the mock window and simulate file drop
+	svc := core.MustServiceFor[*Service](c, "window")
+	pw, ok := svc.Manager().Get("drop-test")
+	require.True(t, ok)
+	mw := pw.(*mockWindow)
+	mw.emitFileDrop([]string{"/tmp/file1.txt", "/tmp/file2.txt"}, "upload-zone")
+
+	mu.Lock()
+	assert.Equal(t, "drop-test", dropped.Name)
+	assert.Equal(t, []string{"/tmp/file1.txt", "/tmp/file2.txt"}, dropped.Paths)
+	assert.Equal(t, "upload-zone", dropped.TargetID)
+	mu.Unlock()
 }

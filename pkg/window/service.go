@@ -168,6 +168,13 @@ func (s *Service) trackWindow(pw PlatformWindow) {
 			_ = s.Core().ACTION(ActionWindowClosed{Name: e.Name})
 		}
 	})
+	pw.OnFileDrop(func(paths []string, targetID string) {
+		_ = s.Core().ACTION(ActionFilesDropped{
+			Name:     pw.Name(),
+			Paths:    paths,
+			TargetID: targetID,
+		})
+	})
 }
 
 func (s *Service) taskCloseWindow(name string) error {

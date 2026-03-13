@@ -72,3 +72,9 @@ type ActionWindowResized struct {
 
 type ActionWindowFocused struct{ Name string }
 type ActionWindowBlurred struct{ Name string }
+
+type ActionFilesDropped struct {
+	Name     string   `json:"name"`     // window name
+	Paths    []string `json:"paths"`
+	TargetID string   `json:"targetId,omitempty"`
+}

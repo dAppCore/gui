@@ -56,6 +56,9 @@ type PlatformWindow interface {
 
 	// Events
 	OnWindowEvent(handler func(event WindowEvent))
+
+	// File drop
+	OnFileDrop(handler func(paths []string, targetID string))
 }
 
 // WindowEvent is emitted by the backend for window state changes.

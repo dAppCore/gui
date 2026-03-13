@@ -120,6 +120,18 @@ func (ww *wailsWindow) OnWindowEvent(handler func(event WindowEvent)) {
 	}
 }
 
+func (ww *wailsWindow) OnFileDrop(handler func(paths []string, targetID string)) {
+	ww.w.OnWindowEvent(events.Common.WindowFilesDropped, func(event *application.WindowEvent) {
+		files := event.Context().DroppedFiles()
+		details := event.Context().DropTargetDetails()
+		targetID := ""
+		if details != nil {
+			targetID = details.ElementID
+		}
+		handler(files, targetID)
+	})
+}
+
 // Ensure wailsWindow satisfies PlatformWindow at compile time.
 var _ PlatformWindow = (*wailsWindow)(nil)
 
