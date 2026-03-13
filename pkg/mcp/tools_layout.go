@@ -3,6 +3,7 @@ package mcp
 
 import (
 	"context"
+	"fmt"
 
 	"forge.lthn.ai/core/gui/pkg/window"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -18,13 +19,10 @@ type LayoutSaveOutput struct {
 }
 
 func (s *Subsystem) layoutSave(_ context.Context, _ *mcp.CallToolRequest, input LayoutSaveInput) (*mcp.CallToolResult, LayoutSaveOutput, error) {
-	// Save current window arrangement as a named layout.
-	// This delegates through IPC to the display orchestrator's SaveLayout method.
-	result, _, err := s.core.QUERY(window.QueryWindowList{})
+	_, _, err := s.core.PERFORM(window.TaskSaveLayout{Name: input.Name})
 	if err != nil {
 		return nil, LayoutSaveOutput{}, err
 	}
-	_ = result // Layout saving is coordinated by the display orchestrator
 	return nil, LayoutSaveOutput{Success: true}, nil
 }
 
@@ -38,6 +36,10 @@ type LayoutRestoreOutput struct {
 }
 
 func (s *Subsystem) layoutRestore(_ context.Context, _ *mcp.CallToolRequest, input LayoutRestoreInput) (*mcp.CallToolResult, LayoutRestoreOutput, error) {
+	_, _, err := s.core.PERFORM(window.TaskRestoreLayout{Name: input.Name})
+	if err != nil {
+		return nil, LayoutRestoreOutput{}, err
+	}
 	return nil, LayoutRestoreOutput{Success: true}, nil
 }
 
@@ -49,7 +51,15 @@ type LayoutListOutput struct {
 }
 
 func (s *Subsystem) layoutList(_ context.Context, _ *mcp.CallToolRequest, _ LayoutListInput) (*mcp.CallToolResult, LayoutListOutput, error) {
-	return nil, LayoutListOutput{}, nil
+	result, _, err := s.core.QUERY(window.QueryLayoutList{})
+	if err != nil {
+		return nil, LayoutListOutput{}, err
+	}
+	layouts, ok := result.([]window.LayoutInfo)
+	if !ok {
+		return nil, LayoutListOutput{}, fmt.Errorf("unexpected result type from layout list query")
+	}
+	return nil, LayoutListOutput{Layouts: layouts}, nil
 }
 
 // --- layout_delete ---
@@ -62,6 +72,10 @@ type LayoutDeleteOutput struct {
 }
 
 func (s *Subsystem) layoutDelete(_ context.Context, _ *mcp.CallToolRequest, input LayoutDeleteInput) (*mcp.CallToolResult, LayoutDeleteOutput, error) {
+	_, _, err := s.core.PERFORM(window.TaskDeleteLayout{Name: input.Name})
+	if err != nil {
+		return nil, LayoutDeleteOutput{}, err
+	}
 	return nil, LayoutDeleteOutput{Success: true}, nil
 }
 
@@ -75,7 +89,15 @@ type LayoutGetOutput struct {
 }
 
 func (s *Subsystem) layoutGet(_ context.Context, _ *mcp.CallToolRequest, input LayoutGetInput) (*mcp.CallToolResult, LayoutGetOutput, error) {
-	return nil, LayoutGetOutput{}, nil
+	result, _, err := s.core.QUERY(window.QueryLayoutGet{Name: input.Name})
+	if err != nil {
+		return nil, LayoutGetOutput{}, err
+	}
+	layout, ok := result.(*window.Layout)
+	if !ok {
+		return nil, LayoutGetOutput{}, fmt.Errorf("unexpected result type from layout get query")
+	}
+	return nil, LayoutGetOutput{Layout: layout}, nil
 }
 
 // --- layout_tile ---
@@ -89,6 +111,10 @@ type LayoutTileOutput struct {
 }
 
 func (s *Subsystem) layoutTile(_ context.Context, _ *mcp.CallToolRequest, input LayoutTileInput) (*mcp.CallToolResult, LayoutTileOutput, error) {
+	_, _, err := s.core.PERFORM(window.TaskTileWindows{Mode: input.Mode, Windows: input.Windows})
+	if err != nil {
+		return nil, LayoutTileOutput{}, err
+	}
 	return nil, LayoutTileOutput{Success: true}, nil
 }
 
@@ -103,6 +129,10 @@ type LayoutSnapOutput struct {
 }
 
 func (s *Subsystem) layoutSnap(_ context.Context, _ *mcp.CallToolRequest, input LayoutSnapInput) (*mcp.CallToolResult, LayoutSnapOutput, error) {
+	_, _, err := s.core.PERFORM(window.TaskSnapWindow{Name: input.Name, Position: input.Position})
+	if err != nil {
+		return nil, LayoutSnapOutput{}, err
+	}
 	return nil, LayoutSnapOutput{Success: true}, nil
 }
 

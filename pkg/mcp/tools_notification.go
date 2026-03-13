@@ -3,6 +3,7 @@ package mcp
 
 import (
 	"context"
+	"fmt"
 
 	"forge.lthn.ai/core/gui/pkg/notification"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -43,7 +44,10 @@ func (s *Subsystem) notificationPermissionRequest(_ context.Context, _ *mcp.Call
 	if err != nil {
 		return nil, NotificationPermissionRequestOutput{}, err
 	}
-	granted, _ := result.(bool)
+	granted, ok := result.(bool)
+	if !ok {
+		return nil, NotificationPermissionRequestOutput{}, fmt.Errorf("unexpected result type from notification permission request")
+	}
 	return nil, NotificationPermissionRequestOutput{Granted: granted}, nil
 }
 
@@ -59,7 +63,10 @@ func (s *Subsystem) notificationPermissionCheck(_ context.Context, _ *mcp.CallTo
 	if err != nil {
 		return nil, NotificationPermissionCheckOutput{}, err
 	}
-	status, _ := result.(notification.PermissionStatus)
+	status, ok := result.(notification.PermissionStatus)
+	if !ok {
+		return nil, NotificationPermissionCheckOutput{}, fmt.Errorf("unexpected result type from notification permission check")
+	}
 	return nil, NotificationPermissionCheckOutput{Granted: status.Granted}, nil
 }
 

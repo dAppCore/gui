@@ -48,7 +48,8 @@ func TestMCP_Good_ClipboardRoundTrip(t *testing.T) {
 	result, handled, err := c.QUERY(clipboard.QueryText{})
 	require.NoError(t, err)
 	assert.True(t, handled)
-	content, _ := result.(clipboard.ClipboardContent)
+	content, ok := result.(clipboard.ClipboardContent)
+	require.True(t, ok, "expected ClipboardContent type")
 	assert.Equal(t, "hello", content.Text)
 }
 

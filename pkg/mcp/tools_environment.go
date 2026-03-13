@@ -3,6 +3,7 @@ package mcp
 
 import (
 	"context"
+	"fmt"
 
 	"forge.lthn.ai/core/gui/pkg/environment"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -20,7 +21,10 @@ func (s *Subsystem) themeGet(_ context.Context, _ *mcp.CallToolRequest, _ ThemeG
 	if err != nil {
 		return nil, ThemeGetOutput{}, err
 	}
-	theme, _ := result.(environment.ThemeInfo)
+	theme, ok := result.(environment.ThemeInfo)
+	if !ok {
+		return nil, ThemeGetOutput{}, fmt.Errorf("unexpected result type from theme query")
+	}
 	return nil, ThemeGetOutput{Theme: theme}, nil
 }
 
@@ -36,7 +40,10 @@ func (s *Subsystem) themeSystem(_ context.Context, _ *mcp.CallToolRequest, _ The
 	if err != nil {
 		return nil, ThemeSystemOutput{}, err
 	}
-	info, _ := result.(environment.EnvironmentInfo)
+	info, ok := result.(environment.EnvironmentInfo)
+	if !ok {
+		return nil, ThemeSystemOutput{}, fmt.Errorf("unexpected result type from environment info query")
+	}
 	return nil, ThemeSystemOutput{Info: info}, nil
 }
 

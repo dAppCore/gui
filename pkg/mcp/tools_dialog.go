@@ -3,6 +3,7 @@ package mcp
 
 import (
 	"context"
+	"fmt"
 
 	"forge.lthn.ai/core/gui/pkg/dialog"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -30,7 +31,10 @@ func (s *Subsystem) dialogOpenFile(_ context.Context, _ *mcp.CallToolRequest, in
 	if err != nil {
 		return nil, DialogOpenFileOutput{}, err
 	}
-	paths, _ := result.([]string)
+	paths, ok := result.([]string)
+	if !ok {
+		return nil, DialogOpenFileOutput{}, fmt.Errorf("unexpected result type from open file dialog")
+	}
 	return nil, DialogOpenFileOutput{Paths: paths}, nil
 }
 
@@ -56,7 +60,10 @@ func (s *Subsystem) dialogSaveFile(_ context.Context, _ *mcp.CallToolRequest, in
 	if err != nil {
 		return nil, DialogSaveFileOutput{}, err
 	}
-	path, _ := result.(string)
+	path, ok := result.(string)
+	if !ok {
+		return nil, DialogSaveFileOutput{}, fmt.Errorf("unexpected result type from save file dialog")
+	}
 	return nil, DialogSaveFileOutput{Path: path}, nil
 }
 
@@ -78,7 +85,10 @@ func (s *Subsystem) dialogOpenDirectory(_ context.Context, _ *mcp.CallToolReques
 	if err != nil {
 		return nil, DialogOpenDirectoryOutput{}, err
 	}
-	path, _ := result.(string)
+	path, ok := result.(string)
+	if !ok {
+		return nil, DialogOpenDirectoryOutput{}, fmt.Errorf("unexpected result type from open directory dialog")
+	}
 	return nil, DialogOpenDirectoryOutput{Path: path}, nil
 }
 
@@ -103,7 +113,10 @@ func (s *Subsystem) dialogConfirm(_ context.Context, _ *mcp.CallToolRequest, inp
 	if err != nil {
 		return nil, DialogConfirmOutput{}, err
 	}
-	button, _ := result.(string)
+	button, ok := result.(string)
+	if !ok {
+		return nil, DialogConfirmOutput{}, fmt.Errorf("unexpected result type from confirm dialog")
+	}
 	return nil, DialogConfirmOutput{Button: button}, nil
 }
 
@@ -127,7 +140,10 @@ func (s *Subsystem) dialogPrompt(_ context.Context, _ *mcp.CallToolRequest, inpu
 	if err != nil {
 		return nil, DialogPromptOutput{}, err
 	}
-	button, _ := result.(string)
+	button, ok := result.(string)
+	if !ok {
+		return nil, DialogPromptOutput{}, fmt.Errorf("unexpected result type from prompt dialog")
+	}
 	return nil, DialogPromptOutput{Button: button}, nil
 }
 

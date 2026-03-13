@@ -3,6 +3,7 @@ package mcp
 
 import (
 	"context"
+	"fmt"
 
 	"forge.lthn.ai/core/gui/pkg/webview"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -102,7 +103,10 @@ func (s *Subsystem) webviewScreenshot(_ context.Context, _ *mcp.CallToolRequest,
 	if err != nil {
 		return nil, WebviewScreenshotOutput{}, err
 	}
-	sr, _ := result.(webview.ScreenshotResult)
+	sr, ok := result.(webview.ScreenshotResult)
+	if !ok {
+		return nil, WebviewScreenshotOutput{}, fmt.Errorf("unexpected result type from webview screenshot")
+	}
 	return nil, WebviewScreenshotOutput{Base64: sr.Base64, MimeType: sr.MimeType}, nil
 }
 
@@ -242,7 +246,10 @@ func (s *Subsystem) webviewConsole(_ context.Context, _ *mcp.CallToolRequest, in
 	if err != nil {
 		return nil, WebviewConsoleOutput{}, err
 	}
-	msgs, _ := result.([]webview.ConsoleMessage)
+	msgs, ok := result.([]webview.ConsoleMessage)
+	if !ok {
+		return nil, WebviewConsoleOutput{}, fmt.Errorf("unexpected result type from webview console query")
+	}
 	return nil, WebviewConsoleOutput{Messages: msgs}, nil
 }
 
@@ -280,7 +287,10 @@ func (s *Subsystem) webviewQuery(_ context.Context, _ *mcp.CallToolRequest, inpu
 	if err != nil {
 		return nil, WebviewQueryOutput{}, err
 	}
-	el, _ := result.(*webview.ElementInfo)
+	el, ok := result.(*webview.ElementInfo)
+	if !ok {
+		return nil, WebviewQueryOutput{}, fmt.Errorf("unexpected result type from webview query")
+	}
 	return nil, WebviewQueryOutput{Element: el}, nil
 }
 
@@ -300,7 +310,10 @@ func (s *Subsystem) webviewQueryAll(_ context.Context, _ *mcp.CallToolRequest, i
 	if err != nil {
 		return nil, WebviewQueryAllOutput{}, err
 	}
-	els, _ := result.([]*webview.ElementInfo)
+	els, ok := result.([]*webview.ElementInfo)
+	if !ok {
+		return nil, WebviewQueryAllOutput{}, fmt.Errorf("unexpected result type from webview query all")
+	}
 	return nil, WebviewQueryAllOutput{Elements: els}, nil
 }
 
@@ -320,7 +333,10 @@ func (s *Subsystem) webviewDOMTree(_ context.Context, _ *mcp.CallToolRequest, in
 	if err != nil {
 		return nil, WebviewDOMTreeOutput{}, err
 	}
-	html, _ := result.(string)
+	html, ok := result.(string)
+	if !ok {
+		return nil, WebviewDOMTreeOutput{}, fmt.Errorf("unexpected result type from webview DOM tree query")
+	}
 	return nil, WebviewDOMTreeOutput{HTML: html}, nil
 }
 
@@ -339,7 +355,10 @@ func (s *Subsystem) webviewURL(_ context.Context, _ *mcp.CallToolRequest, input 
 	if err != nil {
 		return nil, WebviewURLOutput{}, err
 	}
-	url, _ := result.(string)
+	url, ok := result.(string)
+	if !ok {
+		return nil, WebviewURLOutput{}, fmt.Errorf("unexpected result type from webview URL query")
+	}
 	return nil, WebviewURLOutput{URL: url}, nil
 }
 
@@ -358,7 +377,10 @@ func (s *Subsystem) webviewTitle(_ context.Context, _ *mcp.CallToolRequest, inpu
 	if err != nil {
 		return nil, WebviewTitleOutput{}, err
 	}
-	title, _ := result.(string)
+	title, ok := result.(string)
+	if !ok {
+		return nil, WebviewTitleOutput{}, fmt.Errorf("unexpected result type from webview title query")
+	}
 	return nil, WebviewTitleOutput{Title: title}, nil
 }
 

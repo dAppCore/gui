@@ -3,6 +3,7 @@ package mcp
 
 import (
 	"context"
+	"fmt"
 
 	"forge.lthn.ai/core/gui/pkg/window"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -20,7 +21,10 @@ func (s *Subsystem) windowList(_ context.Context, _ *mcp.CallToolRequest, _ Wind
 	if err != nil {
 		return nil, WindowListOutput{}, err
 	}
-	windows, _ := result.([]window.WindowInfo)
+	windows, ok := result.([]window.WindowInfo)
+	if !ok {
+		return nil, WindowListOutput{}, fmt.Errorf("unexpected result type from window list query")
+	}
 	return nil, WindowListOutput{Windows: windows}, nil
 }
 
@@ -38,7 +42,10 @@ func (s *Subsystem) windowGet(_ context.Context, _ *mcp.CallToolRequest, input W
 	if err != nil {
 		return nil, WindowGetOutput{}, err
 	}
-	info, _ := result.(*window.WindowInfo)
+	info, ok := result.(*window.WindowInfo)
+	if !ok {
+		return nil, WindowGetOutput{}, fmt.Errorf("unexpected result type from window get query")
+	}
 	return nil, WindowGetOutput{Window: info}, nil
 }
 
@@ -54,7 +61,10 @@ func (s *Subsystem) windowFocused(_ context.Context, _ *mcp.CallToolRequest, _ W
 	if err != nil {
 		return nil, WindowFocusedOutput{}, err
 	}
-	windows, _ := result.([]window.WindowInfo)
+	windows, ok := result.([]window.WindowInfo)
+	if !ok {
+		return nil, WindowFocusedOutput{}, fmt.Errorf("unexpected result type from window list query")
+	}
 	for _, w := range windows {
 		if w.Focused {
 			return nil, WindowFocusedOutput{Window: w.Name}, nil
@@ -98,7 +108,10 @@ func (s *Subsystem) windowCreate(_ context.Context, _ *mcp.CallToolRequest, inpu
 	if err != nil {
 		return nil, WindowCreateOutput{}, err
 	}
-	info, _ := result.(window.WindowInfo)
+	info, ok := result.(window.WindowInfo)
+	if !ok {
+		return nil, WindowCreateOutput{}, fmt.Errorf("unexpected result type from window create task")
+	}
 	return nil, WindowCreateOutput{Window: info}, nil
 }
 
@@ -226,8 +239,7 @@ type WindowRestoreOutput struct {
 }
 
 func (s *Subsystem) windowRestore(_ context.Context, _ *mcp.CallToolRequest, input WindowRestoreInput) (*mcp.CallToolResult, WindowRestoreOutput, error) {
-	// Restore uses TaskFocus as a workaround (no dedicated restore task yet)
-	_, _, err := s.core.PERFORM(window.TaskFocus{Name: input.Name})
+	_, _, err := s.core.PERFORM(window.TaskRestore{Name: input.Name})
 	if err != nil {
 		return nil, WindowRestoreOutput{}, err
 	}
@@ -262,8 +274,7 @@ type WindowTitleOutput struct {
 }
 
 func (s *Subsystem) windowTitle(_ context.Context, _ *mcp.CallToolRequest, input WindowTitleInput) (*mcp.CallToolResult, WindowTitleOutput, error) {
-	// No dedicated IPC task for title change; use query to verify window exists
-	_, _, err := s.core.QUERY(window.QueryWindowByName{Name: input.Name})
+	_, _, err := s.core.PERFORM(window.TaskSetTitle{Name: input.Name, Title: input.Title})
 	if err != nil {
 		return nil, WindowTitleOutput{}, err
 	}
@@ -281,12 +292,9 @@ type WindowVisibilityOutput struct {
 }
 
 func (s *Subsystem) windowVisibility(_ context.Context, _ *mcp.CallToolRequest, input WindowVisibilityInput) (*mcp.CallToolResult, WindowVisibilityOutput, error) {
-	// Visibility uses focus/close as approximation (no dedicated visibility task yet)
-	if input.Visible {
-		_, _, err := s.core.PERFORM(window.TaskFocus{Name: input.Name})
-		if err != nil {
-			return nil, WindowVisibilityOutput{}, err
-		}
+	_, _, err := s.core.PERFORM(window.TaskSetVisibility{Name: input.Name, Visible: input.Visible})
+	if err != nil {
+		return nil, WindowVisibilityOutput{}, err
 	}
 	return nil, WindowVisibilityOutput{Success: true}, nil
 }
@@ -302,12 +310,9 @@ type WindowFullscreenOutput struct {
 }
 
 func (s *Subsystem) windowFullscreen(_ context.Context, _ *mcp.CallToolRequest, input WindowFullscreenInput) (*mcp.CallToolResult, WindowFullscreenOutput, error) {
-	// No dedicated fullscreen task in IPC yet; use maximise as approximation
-	if input.Fullscreen {
-		_, _, err := s.core.PERFORM(window.TaskMaximise{Name: input.Name})
-		if err != nil {
-			return nil, WindowFullscreenOutput{}, err
-		}
+	_, _, err := s.core.PERFORM(window.TaskFullscreen{Name: input.Name, Fullscreen: input.Fullscreen})
+	if err != nil {
+		return nil, WindowFullscreenOutput{}, err
 	}
 	return nil, WindowFullscreenOutput{Success: true}, nil
 }

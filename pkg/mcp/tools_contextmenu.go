@@ -4,6 +4,7 @@ package mcp
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"forge.lthn.ai/core/gui/pkg/contextmenu"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -24,10 +25,15 @@ type ContextMenuAddOutput struct {
 
 func (s *Subsystem) contextMenuAdd(_ context.Context, _ *mcp.CallToolRequest, input ContextMenuAddInput) (*mcp.CallToolResult, ContextMenuAddOutput, error) {
 	// Convert map[string]any to ContextMenuDef via JSON round-trip
-	menuJSON, _ := json.Marshal(input.Menu)
+	menuJSON, err := json.Marshal(input.Menu)
+	if err != nil {
+		return nil, ContextMenuAddOutput{}, fmt.Errorf("failed to marshal menu definition: %w", err)
+	}
 	var menuDef contextmenu.ContextMenuDef
-	_ = json.Unmarshal(menuJSON, &menuDef)
-	_, _, err := s.core.PERFORM(contextmenu.TaskAdd{Name: input.Name, Menu: menuDef})
+	if err := json.Unmarshal(menuJSON, &menuDef); err != nil {
+		return nil, ContextMenuAddOutput{}, fmt.Errorf("failed to unmarshal menu definition: %w", err)
+	}
+	_, _, err = s.core.PERFORM(contextmenu.TaskAdd{Name: input.Name, Menu: menuDef})
 	if err != nil {
 		return nil, ContextMenuAddOutput{}, err
 	}
@@ -65,14 +71,22 @@ func (s *Subsystem) contextMenuGet(_ context.Context, _ *mcp.CallToolRequest, in
 	if err != nil {
 		return nil, ContextMenuGetOutput{}, err
 	}
-	menu, _ := result.(*contextmenu.ContextMenuDef)
+	menu, ok := result.(*contextmenu.ContextMenuDef)
+	if !ok {
+		return nil, ContextMenuGetOutput{}, fmt.Errorf("unexpected result type from context menu get query")
+	}
 	if menu == nil {
 		return nil, ContextMenuGetOutput{}, nil
 	}
 	// Convert to map[string]any via JSON round-trip to avoid cyclic type in schema
-	menuJSON, _ := json.Marshal(menu)
+	menuJSON, err := json.Marshal(menu)
+	if err != nil {
+		return nil, ContextMenuGetOutput{}, fmt.Errorf("failed to marshal context menu: %w", err)
+	}
 	var menuMap map[string]any
-	_ = json.Unmarshal(menuJSON, &menuMap)
+	if err := json.Unmarshal(menuJSON, &menuMap); err != nil {
+		return nil, ContextMenuGetOutput{}, fmt.Errorf("failed to unmarshal context menu: %w", err)
+	}
 	return nil, ContextMenuGetOutput{Menu: menuMap}, nil
 }
 
@@ -88,11 +102,19 @@ func (s *Subsystem) contextMenuList(_ context.Context, _ *mcp.CallToolRequest, _
 	if err != nil {
 		return nil, ContextMenuListOutput{}, err
 	}
-	menus, _ := result.(map[string]contextmenu.ContextMenuDef)
+	menus, ok := result.(map[string]contextmenu.ContextMenuDef)
+	if !ok {
+		return nil, ContextMenuListOutput{}, fmt.Errorf("unexpected result type from context menu list query")
+	}
 	// Convert to map[string]any via JSON round-trip to avoid cyclic type in schema
-	menusJSON, _ := json.Marshal(menus)
+	menusJSON, err := json.Marshal(menus)
+	if err != nil {
+		return nil, ContextMenuListOutput{}, fmt.Errorf("failed to marshal context menus: %w", err)
+	}
 	var menusMap map[string]any
-	_ = json.Unmarshal(menusJSON, &menusMap)
+	if err := json.Unmarshal(menusJSON, &menusMap); err != nil {
+		return nil, ContextMenuListOutput{}, fmt.Errorf("failed to unmarshal context menus: %w", err)
+	}
 	return nil, ContextMenuListOutput{Menus: menusMap}, nil
 }
 

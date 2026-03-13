@@ -3,6 +3,7 @@ package mcp
 
 import (
 	"context"
+	"fmt"
 
 	"forge.lthn.ai/core/gui/pkg/systray"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -67,7 +68,10 @@ func (s *Subsystem) trayInfo(_ context.Context, _ *mcp.CallToolRequest, _ TrayIn
 	if err != nil {
 		return nil, TrayInfoOutput{}, err
 	}
-	config, _ := result.(map[string]any)
+	config, ok := result.(map[string]any)
+	if !ok {
+		return nil, TrayInfoOutput{}, fmt.Errorf("unexpected result type from tray config query")
+	}
 	return nil, TrayInfoOutput{Config: config}, nil
 }
 
