@@ -77,6 +77,96 @@ func (s *Service) OnStartup(ctx context.Context) error {
 	return nil
 }
 
+// HandleIPCEvents is auto-discovered and registered by core.WithService.
+// It bridges sub-service IPC actions to WebSocket events for TS apps.
+func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
+	if s.events == nil && s.wailsApp != nil {
+		return nil // No WS event manager (testing without Wails)
+	}
+
+	switch m := msg.(type) {
+	case core.ActionServiceStartup:
+		// All services have completed OnStartup — safe to PERFORM on sub-services
+		if s.menus != nil {
+			s.buildMenu()
+		}
+		if s.tray != nil {
+			s.setupTray()
+		}
+	case window.ActionWindowOpened:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventWindowCreate, Window: m.Name,
+				Data: map[string]any{"name": m.Name}})
+		}
+	case window.ActionWindowClosed:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventWindowClose, Window: m.Name,
+				Data: map[string]any{"name": m.Name}})
+		}
+	case window.ActionWindowMoved:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventWindowMove, Window: m.Name,
+				Data: map[string]any{"x": m.X, "y": m.Y}})
+		}
+	case window.ActionWindowResized:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventWindowResize, Window: m.Name,
+				Data: map[string]any{"w": m.W, "h": m.H}})
+		}
+	case window.ActionWindowFocused:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventWindowFocus, Window: m.Name})
+		}
+	case window.ActionWindowBlurred:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventWindowBlur, Window: m.Name})
+		}
+	case systray.ActionTrayClicked:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventTrayClick})
+		}
+	case systray.ActionTrayMenuItemClicked:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventTrayMenuItemClick,
+				Data: map[string]any{"actionId": m.ActionID}})
+		}
+		s.handleTrayAction(m.ActionID)
+	}
+	return nil
+}
+
+// handleTrayAction processes tray menu item clicks.
+func (s *Service) handleTrayAction(actionID string) {
+	switch actionID {
+	case "open-desktop":
+		// Show all windows
+		if s.windows != nil {
+			for _, name := range s.windows.List() {
+				if pw, ok := s.windows.Get(name); ok {
+					pw.Show()
+				}
+			}
+		}
+	case "close-desktop":
+		// Hide all windows — future: add TaskHideWindow
+		if s.windows != nil {
+			for _, name := range s.windows.List() {
+				if pw, ok := s.windows.Get(name); ok {
+					pw.Hide()
+				}
+			}
+		}
+	case "env-info":
+		if s.app != nil {
+			s.ShowEnvironmentDialog()
+		}
+	case "quit":
+		if s.app != nil {
+			s.app.Quit()
+		}
+	}
+}
+
 func (s *Service) loadConfig() {
 	// In-memory defaults. go-config integration is deferred work.
 	if s.configData == nil {

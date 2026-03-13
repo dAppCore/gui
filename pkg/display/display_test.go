@@ -597,3 +597,23 @@ func TestGetSavedWindowStates_Good(t *testing.T) {
 	states := service.GetSavedWindowStates()
 	assert.NotNil(t, states)
 }
+
+func TestHandleIPCEvents_WindowOpened_Good(t *testing.T) {
+	c, err := core.New(
+		core.WithService(Register(nil)),
+		core.WithService(window.Register(window.NewMockPlatform())),
+		core.WithServiceLock(),
+	)
+	require.NoError(t, err)
+	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+
+	// Open a window — this should trigger ActionWindowOpened
+	// which HandleIPCEvents should convert to a WS event
+	result, handled, err := c.PERFORM(window.TaskOpenWindow{
+		Opts: []window.WindowOption{window.WithName("test")},
+	})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	info := result.(window.WindowInfo)
+	assert.Equal(t, "test", info.Name)
+}
