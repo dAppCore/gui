@@ -841,25 +841,30 @@ func (s *Service) handleNewFile() {
 }
 
 func (s *Service) handleOpenFile() {
-	dialog := s.app.Dialog().OpenFile()
-	dialog.SetTitle("Open File")
-	dialog.CanChooseFiles(true)
-	dialog.CanChooseDirectories(false)
-	result, err := dialog.PromptForSingleSelection()
-	if err != nil || result == "" {
+	result, handled, err := s.Core().PERFORM(dialog.TaskOpenFile{
+		Opts: dialog.OpenFileOptions{
+			Title:         "Open File",
+			AllowMultiple: false,
+		},
+	})
+	if err != nil || !handled {
+		return
+	}
+	paths, ok := result.([]string)
+	if !ok || len(paths) == 0 {
 		return
 	}
 	_, _, _ = s.Core().PERFORM(window.TaskOpenWindow{
 		Opts: []window.WindowOption{
 			window.WithName("editor"),
-			window.WithTitle(result + " - Editor"),
-			window.WithURL("/#/developer/editor?file=" + result),
+			window.WithTitle(paths[0] + " - Editor"),
+			window.WithURL("/#/developer/editor?file=" + paths[0]),
 			window.WithSize(1200, 800),
 		},
 	})
 }
 
-func (s *Service) handleSaveFile()   { s.app.Event().Emit("ide:save") }
+func (s *Service) handleSaveFile() { _ = s.Core().ACTION(ActionIDECommand{Command: "save"}) }
 func (s *Service) handleOpenEditor() {
 	_, _, _ = s.Core().PERFORM(window.TaskOpenWindow{
 		Opts: []window.WindowOption{
@@ -880,8 +885,8 @@ func (s *Service) handleOpenTerminal() {
 		},
 	})
 }
-func (s *Service) handleRun()   { s.app.Event().Emit("ide:run") }
-func (s *Service) handleBuild() { s.app.Event().Emit("ide:build") }
+func (s *Service) handleRun()   { _ = s.Core().ACTION(ActionIDECommand{Command: "run"}) }
+func (s *Service) handleBuild() { _ = s.Core().ACTION(ActionIDECommand{Command: "build"}) }
 
 // --- Tray (setup delegated via IPC) ---
 
