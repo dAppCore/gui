@@ -46,6 +46,17 @@ func NewLayoutManager() *LayoutManager {
 	return lm
 }
 
+// NewLayoutManagerWithDir creates a LayoutManager loading from a custom config directory.
+// Useful for testing or when the default config directory is not appropriate.
+func NewLayoutManagerWithDir(configDir string) *LayoutManager {
+	lm := &LayoutManager{
+		configDir: configDir,
+		layouts:   make(map[string]Layout),
+	}
+	lm.load()
+	return lm
+}
+
 func (lm *LayoutManager) filePath() string {
 	return filepath.Join(lm.configDir, "layouts.json")
 }

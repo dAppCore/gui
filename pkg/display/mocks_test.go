@@ -7,10 +7,7 @@ import (
 
 // mockApp is a mock implementation of the App interface for testing.
 type mockApp struct {
-	windowManager *mockWindowManager
-	menuManager   *mockMenuManager
 	dialogManager *mockDialogManager
-	systemTrayMgr *mockSystemTrayManager
 	envManager    *mockEnvManager
 	eventManager  *mockEventManager
 	logger        *mockLogger
@@ -19,66 +16,18 @@ type mockApp struct {
 
 func newMockApp() *mockApp {
 	return &mockApp{
-		windowManager: newMockWindowManager(),
-		menuManager:   newMockMenuManager(),
 		dialogManager: newMockDialogManager(),
-		systemTrayMgr: newMockSystemTrayManager(),
 		envManager:    newMockEnvManager(),
 		eventManager:  newMockEventManager(),
 		logger:        &mockLogger{},
 	}
 }
 
-func (m *mockApp) Window() WindowManager         { return m.windowManager }
-func (m *mockApp) Menu() MenuManager             { return m.menuManager }
-func (m *mockApp) Dialog() DialogManager         { return m.dialogManager }
-func (m *mockApp) SystemTray() SystemTrayManager { return m.systemTrayMgr }
-func (m *mockApp) Env() EnvManager               { return m.envManager }
-func (m *mockApp) Event() EventManager           { return m.eventManager }
-func (m *mockApp) Logger() Logger                { return m.logger }
-func (m *mockApp) Quit()                         { m.quitCalled = true }
-
-// mockWindowManager tracks window creation calls.
-type mockWindowManager struct {
-	createdWindows []application.WebviewWindowOptions
-	allWindows     []application.Window
-}
-
-func newMockWindowManager() *mockWindowManager {
-	return &mockWindowManager{
-		createdWindows: make([]application.WebviewWindowOptions, 0),
-		allWindows:     make([]application.Window, 0),
-	}
-}
-
-func (m *mockWindowManager) NewWithOptions(opts application.WebviewWindowOptions) *application.WebviewWindow {
-	m.createdWindows = append(m.createdWindows, opts)
-	// Return nil since we can't create a real window without Wails runtime
-	return nil
-}
-
-func (m *mockWindowManager) GetAll() []application.Window {
-	return m.allWindows
-}
-
-// mockMenuManager tracks menu creation calls.
-type mockMenuManager struct {
-	menusCreated int
-	menuSet      *application.Menu
-}
-
-func newMockMenuManager() *mockMenuManager {
-	return &mockMenuManager{}
-}
-
-func (m *mockMenuManager) New() *application.Menu {
-	m.menusCreated++
-	return nil // Can't create real menu without Wails runtime
-}
-
-func (m *mockMenuManager) Set(menu *application.Menu) {
-	m.menuSet = menu
-}
+func (m *mockApp) Dialog() DialogManager { return m.dialogManager }
+func (m *mockApp) Env() EnvManager       { return m.envManager }
+func (m *mockApp) Event() EventManager   { return m.eventManager }
+func (m *mockApp) Logger() Logger        { return m.logger }
+func (m *mockApp) Quit()                 { m.quitCalled = true }
 
 // mockDialogManager tracks dialog creation calls.
 type mockDialogManager struct {
@@ -102,20 +51,6 @@ func (m *mockDialogManager) Warning() *application.MessageDialog {
 
 func (m *mockDialogManager) OpenFile() *application.OpenFileDialogStruct {
 	return nil // Can't create real dialog without Wails runtime
-}
-
-// mockSystemTrayManager tracks system tray creation calls.
-type mockSystemTrayManager struct {
-	traysCreated int
-}
-
-func newMockSystemTrayManager() *mockSystemTrayManager {
-	return &mockSystemTrayManager{}
-}
-
-func (m *mockSystemTrayManager) New() *application.SystemTray {
-	m.traysCreated++
-	return nil // Can't create real system tray without Wails runtime
 }
 
 // mockEnvManager provides mock environment info.
@@ -147,11 +82,13 @@ func (m *mockEnvManager) IsDarkMode() bool {
 // mockEventManager tracks event registration.
 type mockEventManager struct {
 	registeredEvents []events.ApplicationEventType
+	emittedEvents    []string
 }
 
 func newMockEventManager() *mockEventManager {
 	return &mockEventManager{
 		registeredEvents: make([]events.ApplicationEventType, 0),
+		emittedEvents:    make([]string, 0),
 	}
 }
 
@@ -161,6 +98,7 @@ func (m *mockEventManager) OnApplicationEvent(eventType events.ApplicationEventT
 }
 
 func (m *mockEventManager) Emit(name string, data ...any) bool {
+	m.emittedEvents = append(m.emittedEvents, name)
 	return true // Pretend emission succeeded
 }
 
@@ -171,4 +109,22 @@ type mockLogger struct {
 
 func (m *mockLogger) Info(message string, args ...any) {
 	m.infoMessages = append(m.infoMessages, message)
+}
+
+// mockEventSource implements EventSource for testing.
+type mockEventSource struct {
+	themeHandlers []func(isDark bool)
+}
+
+func newMockEventSource() *mockEventSource {
+	return &mockEventSource{}
+}
+
+func (m *mockEventSource) OnThemeChange(handler func(isDark bool)) func() {
+	m.themeHandlers = append(m.themeHandlers, handler)
+	return func() {}
+}
+
+func (m *mockEventSource) Emit(name string, data ...any) bool {
+	return true
 }

@@ -1,20 +1,9 @@
+// pkg/display/actions.go
 package display
 
-import "github.com/wailsapp/wails/v3/pkg/application"
+import "forge.lthn.ai/core/gui/pkg/window"
 
-// ActionOpenWindow is an IPC message used to request a new window. It contains
-// the options for the new window.
-//
-// example:
-//
-//	action := display.ActionOpenWindow{
-//		WebviewWindowOptions: application.WebviewWindowOptions{
-//			Name: "my-window",
-//			Title: "My Window",
-//			Width: 800,
-//			Height: 600,
-//		},
-//	}
+// ActionOpenWindow is an IPC message type requesting a new window.
 type ActionOpenWindow struct {
-	application.WebviewWindowOptions
+	window.Window
 }

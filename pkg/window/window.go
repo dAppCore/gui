@@ -55,6 +55,17 @@ func NewManager(platform Platform) *Manager {
 	}
 }
 
+// NewManagerWithDir creates a window Manager with a custom config directory for state/layout persistence.
+// Useful for testing or when the default config directory is not appropriate.
+func NewManagerWithDir(platform Platform, configDir string) *Manager {
+	return &Manager{
+		platform: platform,
+		state:    NewStateManagerWithDir(configDir),
+		layout:   NewLayoutManagerWithDir(configDir),
+		windows:  make(map[string]PlatformWindow),
+	}
+}
+
 // Open creates a window using functional options, applies saved state, and tracks it.
 func (m *Manager) Open(opts ...WindowOption) (PlatformWindow, error) {
 	w, err := ApplyOptions(opts...)

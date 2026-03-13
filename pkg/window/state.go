@@ -43,6 +43,17 @@ func NewStateManager() *StateManager {
 	return sm
 }
 
+// NewStateManagerWithDir creates a StateManager loading from a custom config directory.
+// Useful for testing or when the default config directory is not appropriate.
+func NewStateManagerWithDir(configDir string) *StateManager {
+	sm := &StateManager{
+		configDir: configDir,
+		states:    make(map[string]WindowState),
+	}
+	sm.load()
+	return sm
+}
+
 func (sm *StateManager) filePath() string {
 	return filepath.Join(sm.configDir, "window_state.json")
 }
