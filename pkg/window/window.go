@@ -20,8 +20,7 @@ type Window struct {
 	AlwaysOnTop       bool
 	BackgroundColour  [4]uint8
 	DisableResize     bool
-	EnableDragAndDrop bool
-	Centered          bool
+	EnableFileDrop    bool
 }
 
 // ToPlatformOptions converts a Window to PlatformWindowOptions for the backend.
@@ -33,8 +32,7 @@ func (w *Window) ToPlatformOptions() PlatformWindowOptions {
 		MaxWidth: w.MaxWidth, MaxHeight: w.MaxHeight,
 		Frameless: w.Frameless, Hidden: w.Hidden,
 		AlwaysOnTop: w.AlwaysOnTop, BackgroundColour: w.BackgroundColour,
-		DisableResize: w.DisableResize, EnableDragAndDrop: w.EnableDragAndDrop,
-		Centered: w.Centered,
+		DisableResize: w.DisableResize, EnableFileDrop: w.EnableFileDrop,
 	}
 }
 

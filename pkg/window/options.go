@@ -62,6 +62,6 @@ func WithBackgroundColour(r, g, b, a uint8) WindowOption {
 	return func(w *Window) error { w.BackgroundColour = [4]uint8{r, g, b, a}; return nil }
 }
 
-func WithCentered(centered bool) WindowOption {
-	return func(w *Window) error { w.Centered = centered; return nil }
+func WithFileDrop(enabled bool) WindowOption {
+	return func(w *Window) error { w.EnableFileDrop = enabled; return nil }
 }

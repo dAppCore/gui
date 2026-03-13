@@ -21,8 +21,7 @@ type PlatformWindowOptions struct {
 	AlwaysOnTop           bool
 	BackgroundColour      [4]uint8 // RGBA
 	DisableResize         bool
-	EnableDragAndDrop     bool
-	Centered              bool
+	EnableFileDrop        bool
 }
 
 // PlatformWindow is a live window handle from the backend.
