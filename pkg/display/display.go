@@ -17,68 +17,104 @@ import (
 type Options struct{}
 
 // Service manages windowing, dialogs, and other visual elements.
-// It composes window.Manager, systray.Manager, and menu.Manager.
+// It orchestrates sub-services (window, systray, menu) via IPC and bridges
+// IPC actions to WebSocket events for TypeScript apps.
 type Service struct {
 	*core.ServiceRuntime[Options]
-	app      App
-	config   Options
-	windows  *window.Manager
-	tray     *systray.Manager
-	menus    *menu.Manager
-	notifier *notifications.NotificationService
-	events   *WSEventManager
-}
-
-// newDisplayService contains the common logic for initializing a Service struct.
-func newDisplayService() (*Service, error) {
-	return &Service{}, nil
+	wailsApp   *application.App
+	app        App
+	config     Options
+	configData map[string]map[string]any
+	windows    *window.Manager
+	tray       *systray.Manager
+	menus      *menu.Manager
+	notifier   *notifications.NotificationService
+	events     *WSEventManager
 }
 
 // New is the constructor for the display service.
 func New() (*Service, error) {
-	s, err := newDisplayService()
-	if err != nil {
-		return nil, err
+	return &Service{
+		configData: map[string]map[string]any{
+			"window":  {},
+			"systray": {},
+			"menu":    {},
+		},
+	}, nil
+}
+
+// Register creates a factory closure that captures the Wails app.
+// Pass nil for testing without a Wails runtime.
+func Register(wailsApp *application.App) func(*core.Core) (any, error) {
+	return func(c *core.Core) (any, error) {
+		s, err := New()
+		if err != nil {
+			return nil, err
+		}
+		s.ServiceRuntime = core.NewServiceRuntime[Options](c, Options{})
+		s.wailsApp = wailsApp
+		return s, nil
 	}
-	return s, nil
 }
 
-// Register creates and registers a new display service with the given Core instance.
-func Register(c *core.Core) (any, error) {
-	s, err := New()
-	if err != nil {
-		return nil, err
+// OnStartup loads config and registers IPC handlers synchronously.
+// CRITICAL: config handlers MUST be registered before returning —
+// sub-services depend on them during their own OnStartup.
+func (s *Service) OnStartup(ctx context.Context) error {
+	s.loadConfig()
+
+	// Register config query/task handlers — available NOW for sub-services
+	s.Core().RegisterQuery(s.handleConfigQuery)
+	s.Core().RegisterTask(s.handleConfigTask)
+
+	// Initialise Wails wrappers if app is available (nil in tests)
+	if s.wailsApp != nil {
+		s.app = newWailsApp(s.wailsApp)
+		s.events = NewWSEventManager(newWailsEventSource(s.wailsApp))
+		s.events.SetupWindowEventListeners()
 	}
-	s.ServiceRuntime = core.NewServiceRuntime[Options](c, Options{})
-	return s, nil
+
+	return nil
 }
 
-// ServiceName returns the canonical name for this service.
-func (s *Service) ServiceName() string {
-	return "forge.lthn.ai/core/gui/display"
+func (s *Service) loadConfig() {
+	// In-memory defaults. go-config integration is deferred work.
+	if s.configData == nil {
+		s.configData = map[string]map[string]any{
+			"window":  {},
+			"systray": {},
+			"menu":    {},
+		}
+	}
 }
 
-// ServiceStartup is called by Wails when the app starts.
-func (s *Service) ServiceStartup(ctx context.Context, options application.ServiceOptions) error {
-	return s.Startup(ctx)
+func (s *Service) handleConfigQuery(c *core.Core, q core.Query) (any, bool, error) {
+	switch q.(type) {
+	case window.QueryConfig:
+		return s.configData["window"], true, nil
+	case systray.QueryConfig:
+		return s.configData["systray"], true, nil
+	case menu.QueryConfig:
+		return s.configData["menu"], true, nil
+	default:
+		return nil, false, nil
+	}
 }
 
-// Startup initialises the display service and sets up sub-managers.
-func (s *Service) Startup(ctx context.Context) error {
-	wailsApp := application.Get()
-	s.app = newWailsApp(wailsApp)
-
-	// Create sub-manager platform adapters
-	s.windows = window.NewManager(window.NewWailsPlatform(wailsApp))
-	s.tray = systray.NewManager(systray.NewWailsPlatform(wailsApp))
-	s.menus = menu.NewManager(menu.NewWailsPlatform(wailsApp))
-
-	s.events = NewWSEventManager(newWailsEventSource(wailsApp))
-	s.events.SetupWindowEventListeners()
-	s.app.Logger().Info("Display service started")
-	s.buildMenu()
-	s.setupTray()
-	return s.OpenWindow()
+func (s *Service) handleConfigTask(c *core.Core, t core.Task) (any, bool, error) {
+	switch t := t.(type) {
+	case window.TaskSaveConfig:
+		s.configData["window"] = t.Value
+		return nil, true, nil
+	case systray.TaskSaveConfig:
+		s.configData["systray"] = t.Value
+		return nil, true, nil
+	case menu.TaskSaveConfig:
+		s.configData["menu"] = t.Value
+		return nil, true, nil
+	default:
+		return nil, false, nil
+	}
 }
 
 // --- Window Management (delegates to window.Manager) ---

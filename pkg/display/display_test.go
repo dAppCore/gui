@@ -1,6 +1,7 @@
 package display
 
 import (
+	"context"
 	"testing"
 
 	"forge.lthn.ai/core/go/pkg/core"
@@ -161,13 +162,6 @@ func (mi *displayMockMenuItem) OnClick(fn func()) menu.PlatformMenuItem         
 
 // --- Test helpers ---
 
-// newTestCore creates a new core instance for testing.
-func newTestCore(t *testing.T) *core.Core {
-	coreInstance, err := core.New()
-	require.NoError(t, err)
-	return coreInstance
-}
-
 // newServiceWithMocks creates a Service with mock sub-managers for testing.
 // Uses a temp directory for state/layout persistence to avoid loading real saved state.
 func newServiceWithMocks(t *testing.T) (*Service, *mockApp, *displayMockWindowPlatform) {
@@ -183,6 +177,19 @@ func newServiceWithMocks(t *testing.T) (*Service, *mockApp, *displayMockWindowPl
 	service.menus = menu.NewManager(&displayMockMenuPlatform{})
 
 	return service, mock, wp
+}
+
+// newTestDisplayService creates a display service registered with Core for IPC testing.
+func newTestDisplayService(t *testing.T) (*Service, *core.Core) {
+	t.Helper()
+	c, err := core.New(
+		core.WithService(Register(nil)),
+		core.WithServiceLock(),
+	)
+	require.NoError(t, err)
+	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+	svc := core.MustServiceFor[*Service](c, "display")
+	return svc, c
 }
 
 // --- Tests ---
@@ -203,31 +210,56 @@ func TestNew(t *testing.T) {
 	})
 }
 
-func TestRegister(t *testing.T) {
-	t.Run("registers with core successfully", func(t *testing.T) {
-		coreInstance := newTestCore(t)
-		service, err := Register(coreInstance)
-		require.NoError(t, err)
-		assert.NotNil(t, service, "Register() should return a non-nil service instance")
-	})
+func TestRegisterClosure_Good(t *testing.T) {
+	factory := Register(nil) // nil wailsApp for testing
+	assert.NotNil(t, factory)
 
-	t.Run("returns Service type", func(t *testing.T) {
-		coreInstance := newTestCore(t)
-		service, err := Register(coreInstance)
-		require.NoError(t, err)
+	c, err := core.New(
+		core.WithService(factory),
+		core.WithServiceLock(),
+	)
+	require.NoError(t, err)
+	require.NoError(t, c.ServiceStartup(context.Background(), nil))
 
-		displayService, ok := service.(*Service)
-		assert.True(t, ok, "Register() should return *Service type")
-		assert.NotNil(t, displayService.ServiceRuntime, "ServiceRuntime should be initialized")
-	})
+	svc := core.MustServiceFor[*Service](c, "display")
+	assert.NotNil(t, svc)
 }
 
-func TestServiceName(t *testing.T) {
-	service, err := New()
-	require.NoError(t, err)
+func TestConfigQuery_Good(t *testing.T) {
+	svc, c := newTestDisplayService(t)
 
-	name := service.ServiceName()
-	assert.Equal(t, "forge.lthn.ai/core/gui/display", name)
+	// Set window config
+	svc.configData["window"] = map[string]any{
+		"default_width": 1024,
+	}
+
+	result, handled, err := c.QUERY(window.QueryConfig{})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	cfg := result.(map[string]any)
+	assert.Equal(t, 1024, cfg["default_width"])
+}
+
+func TestConfigQuery_Bad(t *testing.T) {
+	// No display service — window config query returns handled=false
+	c, err := core.New(core.WithServiceLock())
+	require.NoError(t, err)
+	_, handled, _ := c.QUERY(window.QueryConfig{})
+	assert.False(t, handled)
+}
+
+func TestConfigTask_Good(t *testing.T) {
+	_, c := newTestDisplayService(t)
+
+	newCfg := map[string]any{"default_width": 800}
+	_, handled, err := c.PERFORM(window.TaskSaveConfig{Value: newCfg})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	// Verify config was saved
+	result, _, _ := c.QUERY(window.QueryConfig{})
+	cfg := result.(map[string]any)
+	assert.Equal(t, 800, cfg["default_width"])
 }
 
 func TestOpenWindow_Good(t *testing.T) {
@@ -461,8 +493,8 @@ func TestShowEnvironmentDialog_Good(t *testing.T) {
 
 func TestBuildMenu_Good(t *testing.T) {
 	service, _, _ := newServiceWithMocks(t)
-	coreInstance := newTestCore(t)
-	service.ServiceRuntime = core.NewServiceRuntime[Options](coreInstance, Options{})
+	c, _ := core.New()
+	service.ServiceRuntime = core.NewServiceRuntime[Options](c, Options{})
 
 	// buildMenu should not panic with mock platforms
 	assert.NotPanics(t, func() {
@@ -472,8 +504,8 @@ func TestBuildMenu_Good(t *testing.T) {
 
 func TestSetupTray_Good(t *testing.T) {
 	service, _, _ := newServiceWithMocks(t)
-	coreInstance := newTestCore(t)
-	service.ServiceRuntime = core.NewServiceRuntime[Options](coreInstance, Options{})
+	c, _ := core.New()
+	service.ServiceRuntime = core.NewServiceRuntime[Options](c, Options{})
 
 	// setupTray should not panic with mock platforms
 	assert.NotPanics(t, func() {
@@ -499,8 +531,8 @@ func TestHandleNewWorkspace_Good(t *testing.T) {
 
 func TestHandleListWorkspaces_Good(t *testing.T) {
 	service, _, _ := newServiceWithMocks(t)
-	coreInstance := newTestCore(t)
-	service.ServiceRuntime = core.NewServiceRuntime[Options](coreInstance, Options{})
+	c, _ := core.New()
+	service.ServiceRuntime = core.NewServiceRuntime[Options](c, Options{})
 
 	// handleListWorkspaces should not panic when workspace service is not available
 	assert.NotPanics(t, func() {
@@ -564,20 +596,4 @@ func TestGetSavedWindowStates_Good(t *testing.T) {
 
 	states := service.GetSavedWindowStates()
 	assert.NotNil(t, states)
-}
-
-func TestActionOpenWindow_Good(t *testing.T) {
-	action := ActionOpenWindow{
-		Window: window.Window{
-			Name:   "test",
-			Title:  "Test Window",
-			Width:  800,
-			Height: 600,
-		},
-	}
-
-	assert.Equal(t, "test", action.Name)
-	assert.Equal(t, "Test Window", action.Title)
-	assert.Equal(t, 800, action.Width)
-	assert.Equal(t, 600, action.Height)
 }

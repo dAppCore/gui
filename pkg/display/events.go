@@ -21,8 +21,10 @@ const (
 	EventWindowResize EventType = "window.resize"
 	EventWindowClose  EventType = "window.close"
 	EventWindowCreate EventType = "window.create"
-	EventThemeChange  EventType = "theme.change"
-	EventScreenChange EventType = "screen.change"
+	EventThemeChange         EventType = "theme.change"
+	EventScreenChange        EventType = "screen.change"
+	EventTrayClick           EventType = "tray.click"
+	EventTrayMenuItemClick   EventType = "tray.menuitem.click"
 )
 
 // Event represents a display event sent to subscribers.
