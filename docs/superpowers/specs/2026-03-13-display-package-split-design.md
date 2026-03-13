@@ -19,8 +19,8 @@ Today, all 3,910 LOC live in a single `pkg/display/` package across 15 files. Th
 Extracted from `display.go` (window CRUD, tiling, snapping, layouts), `window.go`, `window_state.go`, `layout.go`.
 
 **Responsibilities:**
-- `Window` type (CoreGUI's own, replaces the Wails type alias)
-- `WindowOption` functional options pattern
+- `Window` struct (CoreGUI's own, NOT a type alias — replaces `type Window = application.WebviewWindowOptions`)
+- `WindowOption` functional options rewritten against CoreGUI's `Window` struct: `func(*Window) error`
 - `WindowStateManager` — JSON persistence to `~/.config/Core/window_state.json`
 - `LayoutManager` — named window arrangements to `~/.config/Core/layouts.json`
 - Tiling (9 modes), snapping (9 positions), stacking
@@ -45,9 +45,10 @@ Extracted from `tray.go` plus `TrayMenuItem` types from `display.go`.
 - Icon management (template for macOS, dual-mode for Windows/Linux)
 - Tooltip and label
 - Dynamic menu builder (`TrayMenuItem` recursive tree)
-- Callback registry (`RegisterTrayMenuCallback`)
-- Attached panel window (hidden, frameless, offset)
+- Callback registry (`RegisterTrayMenuCallback`) — stored as `Manager` fields, NOT package-level vars
+- Attached panel window (hidden, frameless, offset) — accepts a `WindowHandle` interface (see Shared Types)
 - `Platform` adapter interface insulating Wails
+- **Migration note:** Current `activeTray` and `trayMenuCallbacks` package-level vars become fields on `Manager`
 
 **Source files:**
 
@@ -61,9 +62,10 @@ Extracted from `tray.go` plus `TrayMenuItem` types from `display.go`.
 Extracted from `menu.go`.
 
 **Responsibilities:**
-- Menu builder (File, Edit, View, Workspace, Developer, custom)
-- Menu item types, accelerators, submenus
+- Menu builder — constructs menu item trees (labels, accelerators, submenus, separators)
+- Menu item types and accelerator bindings
 - `Platform` adapter interface insulating Wails
+- **Click handlers live in `pkg/display`**, not here. `pkg/menu` builds structure only; the orchestrator injects closures for app-specific actions (open file, new window, etc.)
 
 **Source files:**
 
@@ -105,7 +107,8 @@ Moved from `pkg/display/ui/` to top-level `ui/`.
 
 - Reference implementation demonstrating all CoreGUI capabilities
 - Sets the standard pattern for downstream apps (BugSETI, LEM, Mining, IDE)
-- Placeholder with README initially — not built yet
+- Existing Angular code in `pkg/display/ui/` moves as-is to top-level `ui/`; `go:embed` directives update to match
+- Placeholder README added explaining its purpose as feature demo
 - Future: Playwright inside WebView2 for automated testing, errors surfaced to agents
 
 ## Dependency Direction
@@ -126,6 +129,23 @@ No circular dependencies. Window, systray, and menu are peers — they do not im
 
 Shared types (`ScreenInfo`, `WorkArea`) live in `pkg/display` since that's the contract layer TS apps consume.
 
+### Shared Types
+
+A `WindowHandle` interface lives in `pkg/display` for cross-package use (e.g. systray attaching a panel window without importing `pkg/window`):
+
+```go
+// pkg/display/types.go
+type WindowHandle interface {
+    Name() string
+    Show()
+    Hide()
+    SetPosition(x, y int)
+    SetSize(width, height int)
+}
+```
+
+Both `pkg/window.PlatformWindow` and `pkg/systray.PlatformTray.AttachWindow()` work with this interface — no `any` types, no cross-package peer imports.
+
 ## Wails Insulation Pattern
 
 Each sub-package defines a `Platform` interface — the adapter contract. Wails never leaks past this boundary.
@@ -138,19 +158,36 @@ type Platform interface {
 }
 
 type PlatformWindow interface {
+    // Identity
     Name() string
+
+    // Queries
+    Position() (int, int)
+    Size() (int, int)
+    IsMaximised() bool
+    IsFocused() bool
+
+    // Mutations
     SetTitle(title string)
     SetPosition(x, y int)
     SetSize(width, height int)
-    Maximize()
-    Restore()
-    Minimize()
-    Focus()
-    Close()
+    SetBackgroundColour(r, g, b, a uint8)
     SetVisibility(visible bool)
     SetAlwaysOnTop(alwaysOnTop bool)
-    SetFullscreen(fullscreen bool)
-    SetBackgroundColour(r, g, b, a uint8)
+
+    // Window state
+    Maximise()
+    Restore()
+    Minimise()
+    Focus()
+    Close()
+    Show()
+    Hide()
+    Fullscreen()
+    UnFullscreen()
+
+    // Events (for WSEventManager insulation)
+    OnWindowEvent(handler func(event WindowEvent))
 }
 ```
 
@@ -166,7 +203,7 @@ type PlatformTray interface {
     SetTooltip(text string)
     SetLabel(text string)
     SetMenu(menu PlatformMenu)
-    AttachWindow(w any)
+    AttachWindow(w display.WindowHandle)
 }
 ```
 
@@ -187,6 +224,21 @@ type PlatformMenu interface {
 - Wails adapter implementations live in each package (e.g. `pkg/window/wails.go`)
 - Mock implementations for testing (e.g. `pkg/window/mock_test.go`)
 - If Wails changes (v4, breaking API), update 3 adapter files — nothing else changes
+
+### WSEventManager Insulation
+
+`WSEventManager` (stays in `pkg/display`) currently calls `application.Get()` directly and takes `*application.WebviewWindow` in `AttachWindowListeners`. After the split:
+
+- `AttachWindowListeners` accepts `PlatformWindow` (which has `OnWindowEvent`) instead of the Wails concrete type
+- The `application.Get()` call moves into the Wails adapter — the event manager receives an `EventSource` interface
+- This allows testing the WebSocket bridge without a Wails runtime
+
+### WindowStateManager Insulation
+
+`CaptureState` currently takes `*application.WebviewWindow`. After the split:
+
+- `CaptureState` accepts `PlatformWindow` interface (has `Name()`, `Position()`, `Size()`, `IsMaximised()`)
+- `ApplyState` returns CoreGUI's own `Window` struct, not `application.WebviewWindowOptions`
 
 ## Testing Strategy
 
