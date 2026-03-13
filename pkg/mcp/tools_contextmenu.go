@@ -3,6 +3,7 @@ package mcp
 
 import (
 	"context"
+	"encoding/json"
 
 	"forge.lthn.ai/core/gui/pkg/contextmenu"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -10,16 +11,23 @@ import (
 
 // --- contextmenu_add ---
 
+// ContextMenuAddInput uses map[string]any for the menu definition because
+// contextmenu.ContextMenuDef contains self-referencing MenuItemDef (Items []MenuItemDef)
+// which the MCP SDK schema generator cannot handle (cycle detection panic).
 type ContextMenuAddInput struct {
-	Name string                    `json:"name"`
-	Menu contextmenu.ContextMenuDef `json:"menu"`
+	Name string         `json:"name"`
+	Menu map[string]any `json:"menu"`
 }
 type ContextMenuAddOutput struct {
 	Success bool `json:"success"`
 }
 
 func (s *Subsystem) contextMenuAdd(_ context.Context, _ *mcp.CallToolRequest, input ContextMenuAddInput) (*mcp.CallToolResult, ContextMenuAddOutput, error) {
-	_, _, err := s.core.PERFORM(contextmenu.TaskAdd{Name: input.Name, Menu: input.Menu})
+	// Convert map[string]any to ContextMenuDef via JSON round-trip
+	menuJSON, _ := json.Marshal(input.Menu)
+	var menuDef contextmenu.ContextMenuDef
+	_ = json.Unmarshal(menuJSON, &menuDef)
+	_, _, err := s.core.PERFORM(contextmenu.TaskAdd{Name: input.Name, Menu: menuDef})
 	if err != nil {
 		return nil, ContextMenuAddOutput{}, err
 	}
@@ -49,7 +57,7 @@ type ContextMenuGetInput struct {
 	Name string `json:"name"`
 }
 type ContextMenuGetOutput struct {
-	Menu *contextmenu.ContextMenuDef `json:"menu"`
+	Menu map[string]any `json:"menu"`
 }
 
 func (s *Subsystem) contextMenuGet(_ context.Context, _ *mcp.CallToolRequest, input ContextMenuGetInput) (*mcp.CallToolResult, ContextMenuGetOutput, error) {
@@ -58,14 +66,21 @@ func (s *Subsystem) contextMenuGet(_ context.Context, _ *mcp.CallToolRequest, in
 		return nil, ContextMenuGetOutput{}, err
 	}
 	menu, _ := result.(*contextmenu.ContextMenuDef)
-	return nil, ContextMenuGetOutput{Menu: menu}, nil
+	if menu == nil {
+		return nil, ContextMenuGetOutput{}, nil
+	}
+	// Convert to map[string]any via JSON round-trip to avoid cyclic type in schema
+	menuJSON, _ := json.Marshal(menu)
+	var menuMap map[string]any
+	_ = json.Unmarshal(menuJSON, &menuMap)
+	return nil, ContextMenuGetOutput{Menu: menuMap}, nil
 }
 
 // --- contextmenu_list ---
 
 type ContextMenuListInput struct{}
 type ContextMenuListOutput struct {
-	Menus map[string]contextmenu.ContextMenuDef `json:"menus"`
+	Menus map[string]any `json:"menus"`
 }
 
 func (s *Subsystem) contextMenuList(_ context.Context, _ *mcp.CallToolRequest, _ ContextMenuListInput) (*mcp.CallToolResult, ContextMenuListOutput, error) {
@@ -74,7 +89,11 @@ func (s *Subsystem) contextMenuList(_ context.Context, _ *mcp.CallToolRequest, _
 		return nil, ContextMenuListOutput{}, err
 	}
 	menus, _ := result.(map[string]contextmenu.ContextMenuDef)
-	return nil, ContextMenuListOutput{Menus: menus}, nil
+	// Convert to map[string]any via JSON round-trip to avoid cyclic type in schema
+	menusJSON, _ := json.Marshal(menus)
+	var menusMap map[string]any
+	_ = json.Unmarshal(menusJSON, &menusMap)
+	return nil, ContextMenuListOutput{Menus: menusMap}, nil
 }
 
 // --- Registration ---
