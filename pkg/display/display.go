@@ -22,6 +22,7 @@ import (
 	"forge.lthn.ai/core/gui/pkg/notification"
 	"forge.lthn.ai/core/gui/pkg/screen"
 	"forge.lthn.ai/core/gui/pkg/systray"
+	"forge.lthn.ai/core/gui/pkg/webview"
 	"forge.lthn.ai/core/gui/pkg/window"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
@@ -211,6 +212,16 @@ func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 					"data":     m.Data,
 				}})
 		}
+	case webview.ActionConsoleMessage:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventWebviewConsole, Window: m.Window,
+				Data: map[string]any{"message": m.Message}})
+		}
+	case webview.ActionException:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventWebviewException, Window: m.Window,
+				Data: map[string]any{"exception": m.Exception}})
+		}
 	case ActionIDECommand:
 		if s.events != nil {
 			s.events.Emit(Event{Type: EventIDECommand,
@@ -279,6 +290,90 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 		result, handled, err = s.Core().QUERY(contextmenu.QueryGet{Name: name})
 	case "contextmenu:list":
 		result, handled, err = s.Core().QUERY(contextmenu.QueryList{})
+	case "webview:eval":
+		w, _ := msg.Data["window"].(string)
+		script, _ := msg.Data["script"].(string)
+		result, handled, err = s.Core().PERFORM(webview.TaskEvaluate{Window: w, Script: script})
+	case "webview:click":
+		w, _ := msg.Data["window"].(string)
+		sel, _ := msg.Data["selector"].(string)
+		result, handled, err = s.Core().PERFORM(webview.TaskClick{Window: w, Selector: sel})
+	case "webview:type":
+		w, _ := msg.Data["window"].(string)
+		sel, _ := msg.Data["selector"].(string)
+		text, _ := msg.Data["text"].(string)
+		result, handled, err = s.Core().PERFORM(webview.TaskType{Window: w, Selector: sel, Text: text})
+	case "webview:navigate":
+		w, _ := msg.Data["window"].(string)
+		url, _ := msg.Data["url"].(string)
+		result, handled, err = s.Core().PERFORM(webview.TaskNavigate{Window: w, URL: url})
+	case "webview:screenshot":
+		w, _ := msg.Data["window"].(string)
+		result, handled, err = s.Core().PERFORM(webview.TaskScreenshot{Window: w})
+	case "webview:scroll":
+		w, _ := msg.Data["window"].(string)
+		x, _ := msg.Data["x"].(float64)
+		y, _ := msg.Data["y"].(float64)
+		result, handled, err = s.Core().PERFORM(webview.TaskScroll{Window: w, X: int(x), Y: int(y)})
+	case "webview:hover":
+		w, _ := msg.Data["window"].(string)
+		sel, _ := msg.Data["selector"].(string)
+		result, handled, err = s.Core().PERFORM(webview.TaskHover{Window: w, Selector: sel})
+	case "webview:select":
+		w, _ := msg.Data["window"].(string)
+		sel, _ := msg.Data["selector"].(string)
+		val, _ := msg.Data["value"].(string)
+		result, handled, err = s.Core().PERFORM(webview.TaskSelect{Window: w, Selector: sel, Value: val})
+	case "webview:check":
+		w, _ := msg.Data["window"].(string)
+		sel, _ := msg.Data["selector"].(string)
+		checked, _ := msg.Data["checked"].(bool)
+		result, handled, err = s.Core().PERFORM(webview.TaskCheck{Window: w, Selector: sel, Checked: checked})
+	case "webview:upload":
+		w, _ := msg.Data["window"].(string)
+		sel, _ := msg.Data["selector"].(string)
+		pathsRaw, _ := msg.Data["paths"].([]any)
+		var paths []string
+		for _, p := range pathsRaw {
+			if ps, ok := p.(string); ok {
+				paths = append(paths, ps)
+			}
+		}
+		result, handled, err = s.Core().PERFORM(webview.TaskUploadFile{Window: w, Selector: sel, Paths: paths})
+	case "webview:viewport":
+		w, _ := msg.Data["window"].(string)
+		width, _ := msg.Data["width"].(float64)
+		height, _ := msg.Data["height"].(float64)
+		result, handled, err = s.Core().PERFORM(webview.TaskSetViewport{Window: w, Width: int(width), Height: int(height)})
+	case "webview:clear-console":
+		w, _ := msg.Data["window"].(string)
+		result, handled, err = s.Core().PERFORM(webview.TaskClearConsole{Window: w})
+	case "webview:console":
+		w, _ := msg.Data["window"].(string)
+		level, _ := msg.Data["level"].(string)
+		limit := 100
+		if l, ok := msg.Data["limit"].(float64); ok {
+			limit = int(l)
+		}
+		result, handled, err = s.Core().QUERY(webview.QueryConsole{Window: w, Level: level, Limit: limit})
+	case "webview:query":
+		w, _ := msg.Data["window"].(string)
+		sel, _ := msg.Data["selector"].(string)
+		result, handled, err = s.Core().QUERY(webview.QuerySelector{Window: w, Selector: sel})
+	case "webview:query-all":
+		w, _ := msg.Data["window"].(string)
+		sel, _ := msg.Data["selector"].(string)
+		result, handled, err = s.Core().QUERY(webview.QuerySelectorAll{Window: w, Selector: sel})
+	case "webview:dom-tree":
+		w, _ := msg.Data["window"].(string)
+		sel, _ := msg.Data["selector"].(string)
+		result, handled, err = s.Core().QUERY(webview.QueryDOMTree{Window: w, Selector: sel})
+	case "webview:url":
+		w, _ := msg.Data["window"].(string)
+		result, handled, err = s.Core().QUERY(webview.QueryURL{Window: w})
+	case "webview:title":
+		w, _ := msg.Data["window"].(string)
+		result, handled, err = s.Core().QUERY(webview.QueryTitle{Window: w})
 	default:
 		return nil, false, nil
 	}
