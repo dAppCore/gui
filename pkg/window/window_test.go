@@ -219,3 +219,50 @@ func TestStateManager_Persistence_Good(t *testing.T) {
 	assert.Equal(t, 42, got.X)
 	assert.Equal(t, 500, got.Width)
 }
+
+// --- LayoutManager Tests ---
+
+// newTestLayoutManager creates a clean LayoutManager with a temp dir for testing.
+func newTestLayoutManager(t *testing.T) *LayoutManager {
+	return &LayoutManager{
+		configDir: t.TempDir(),
+		layouts:   make(map[string]Layout),
+	}
+}
+
+func TestLayoutManager_SaveGet_Good(t *testing.T) {
+	lm := newTestLayoutManager(t)
+	states := map[string]WindowState{
+		"editor":   {X: 0, Y: 0, Width: 960, Height: 1080},
+		"terminal": {X: 960, Y: 0, Width: 960, Height: 1080},
+	}
+	err := lm.SaveLayout("coding", states)
+	require.NoError(t, err)
+
+	layout, ok := lm.GetLayout("coding")
+	assert.True(t, ok)
+	assert.Equal(t, "coding", layout.Name)
+	assert.Len(t, layout.Windows, 2)
+}
+
+func TestLayoutManager_GetLayout_Bad(t *testing.T) {
+	lm := newTestLayoutManager(t)
+	_, ok := lm.GetLayout("nonexistent")
+	assert.False(t, ok)
+}
+
+func TestLayoutManager_ListLayouts_Good(t *testing.T) {
+	lm := newTestLayoutManager(t)
+	_ = lm.SaveLayout("a", map[string]WindowState{})
+	_ = lm.SaveLayout("b", map[string]WindowState{})
+	layouts := lm.ListLayouts()
+	assert.Len(t, layouts, 2)
+}
+
+func TestLayoutManager_DeleteLayout_Good(t *testing.T) {
+	lm := newTestLayoutManager(t)
+	_ = lm.SaveLayout("temp", map[string]WindowState{})
+	lm.DeleteLayout("temp")
+	_, ok := lm.GetLayout("temp")
+	assert.False(t, ok)
+}
