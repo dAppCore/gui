@@ -14,6 +14,7 @@ type Service struct {
 	*core.ServiceRuntime[Options]
 	manager  *Manager
 	platform Platform
+	iconPath string
 }
 
 // OnStartup queries config and registers IPC handlers.
@@ -29,12 +30,17 @@ func (s *Service) OnStartup(ctx context.Context) error {
 }
 
 func (s *Service) applyConfig(cfg map[string]any) {
-	// Apply config — tooltip, icon path, etc.
 	tooltip, _ := cfg["tooltip"].(string)
 	if tooltip == "" {
 		tooltip = "Core"
 	}
 	_ = s.manager.Setup(tooltip, tooltip)
+
+	if iconPath, ok := cfg["icon"].(string); ok && iconPath != "" {
+		// Icon loading is deferred to when assets are available.
+		// Store the path for later use.
+		s.iconPath = iconPath
+	}
 }
 
 // HandleIPCEvents is auto-discovered and registered by core.WithService.

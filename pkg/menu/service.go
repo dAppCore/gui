@@ -12,9 +12,10 @@ type Options struct{}
 // Service is a core.Service managing application menus via IPC.
 type Service struct {
 	*core.ServiceRuntime[Options]
-	manager  *Manager
-	platform Platform
-	items    []MenuItem // last-set menu items for QueryGetAppMenu
+	manager      *Manager
+	platform     Platform
+	items        []MenuItem // last-set menu items for QueryGetAppMenu
+	showDevTools bool
 }
 
 // OnStartup queries config and registers IPC handlers.
@@ -31,7 +32,16 @@ func (s *Service) OnStartup(ctx context.Context) error {
 }
 
 func (s *Service) applyConfig(cfg map[string]any) {
-	// Apply config — e.g., show_dev_tools
+	if v, ok := cfg["show_dev_tools"]; ok {
+		if show, ok := v.(bool); ok {
+			s.showDevTools = show
+		}
+	}
+}
+
+// ShowDevTools returns whether developer tools menu items should be shown.
+func (s *Service) ShowDevTools() bool {
+	return s.showDevTools
 }
 
 // HandleIPCEvents is auto-discovered and registered by core.WithService.

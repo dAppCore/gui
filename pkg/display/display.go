@@ -3,8 +3,11 @@ package display
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"runtime"
 
+	"forge.lthn.ai/core/go-config"
 	"forge.lthn.ai/core/go/pkg/core"
 	"forge.lthn.ai/core/gui/pkg/menu"
 	"forge.lthn.ai/core/gui/pkg/systray"
@@ -28,6 +31,7 @@ type Service struct {
 	app        App
 	config     Options
 	configData map[string]map[string]any
+	cfg        *config.Config // go-config instance for file persistence
 	notifier   *notifications.NotificationService
 	events     *WSEventManager
 }
@@ -149,13 +153,33 @@ func (s *Service) handleTrayAction(actionID string) {
 	}
 }
 
+func guiConfigPath() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return filepath.Join(".core", "gui", "config.yaml")
+	}
+	return filepath.Join(home, ".core", "gui", "config.yaml")
+}
+
 func (s *Service) loadConfig() {
-	// In-memory defaults. go-config integration is deferred work.
-	if s.configData == nil {
-		s.configData = map[string]map[string]any{
-			"window":  {},
-			"systray": {},
-			"menu":    {},
+	if s.cfg != nil {
+		return // Already loaded (e.g., via loadConfigFrom in tests)
+	}
+	s.loadConfigFrom(guiConfigPath())
+}
+
+func (s *Service) loadConfigFrom(path string) {
+	cfg, err := config.New(config.WithPath(path))
+	if err != nil {
+		// Non-critical — continue with empty configData
+		return
+	}
+	s.cfg = cfg
+
+	for _, section := range []string{"window", "systray", "menu"} {
+		var data map[string]any
+		if err := cfg.Get(section, &data); err == nil && data != nil {
+			s.configData[section] = data
 		}
 	}
 }
@@ -177,16 +201,27 @@ func (s *Service) handleConfigTask(c *core.Core, t core.Task) (any, bool, error)
 	switch t := t.(type) {
 	case window.TaskSaveConfig:
 		s.configData["window"] = t.Value
+		s.persistSection("window", t.Value)
 		return nil, true, nil
 	case systray.TaskSaveConfig:
 		s.configData["systray"] = t.Value
+		s.persistSection("systray", t.Value)
 		return nil, true, nil
 	case menu.TaskSaveConfig:
 		s.configData["menu"] = t.Value
+		s.persistSection("menu", t.Value)
 		return nil, true, nil
 	default:
 		return nil, false, nil
 	}
+}
+
+func (s *Service) persistSection(key string, value map[string]any) {
+	if s.cfg == nil {
+		return
+	}
+	_ = s.cfg.Set(key, value)
+	_ = s.cfg.Commit()
 }
 
 // --- Service accessors ---

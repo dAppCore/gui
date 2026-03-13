@@ -2,6 +2,8 @@ package display
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"forge.lthn.ai/core/go/pkg/core"
@@ -447,4 +449,69 @@ func TestWSEventManager_SetupWindowEventListeners_Good(t *testing.T) {
 
 	// Verify theme handler was registered
 	assert.Len(t, es.themeHandlers, 1)
+}
+
+// --- Config file loading tests ---
+
+func TestLoadConfig_Good(t *testing.T) {
+	// Create temp config file
+	dir := t.TempDir()
+	cfgPath := filepath.Join(dir, ".core", "gui", "config.yaml")
+	require.NoError(t, os.MkdirAll(filepath.Dir(cfgPath), 0o755))
+	require.NoError(t, os.WriteFile(cfgPath, []byte(`
+window:
+  default_width: 1280
+  default_height: 720
+systray:
+  tooltip: "Test App"
+menu:
+  show_dev_tools: false
+`), 0o644))
+
+	s, _ := New()
+	s.loadConfigFrom(cfgPath)
+
+	// Verify configData was populated from file
+	assert.Equal(t, 1280, s.configData["window"]["default_width"])
+	assert.Equal(t, "Test App", s.configData["systray"]["tooltip"])
+	assert.Equal(t, false, s.configData["menu"]["show_dev_tools"])
+}
+
+func TestLoadConfig_Bad_MissingFile(t *testing.T) {
+	s, _ := New()
+	s.loadConfigFrom(filepath.Join(t.TempDir(), "nonexistent.yaml"))
+
+	// Should not panic, configData stays at empty defaults
+	assert.Empty(t, s.configData["window"])
+	assert.Empty(t, s.configData["systray"])
+	assert.Empty(t, s.configData["menu"])
+}
+
+func TestHandleConfigTask_Persists_Good(t *testing.T) {
+	dir := t.TempDir()
+	cfgPath := filepath.Join(dir, "config.yaml")
+
+	s, _ := New()
+	s.loadConfigFrom(cfgPath) // Creates empty config (file doesn't exist yet)
+
+	// Simulate a TaskSaveConfig through the handler
+	c, _ := core.New(
+		core.WithService(func(c *core.Core) (any, error) {
+			s.ServiceRuntime = core.NewServiceRuntime[Options](c, Options{})
+			return s, nil
+		}),
+		core.WithServiceLock(),
+	)
+	c.ServiceStartup(context.Background(), nil)
+
+	_, handled, err := c.PERFORM(window.TaskSaveConfig{
+		Value: map[string]any{"default_width": 1920},
+	})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	// Verify file was written
+	data, err := os.ReadFile(cfgPath)
+	require.NoError(t, err)
+	assert.Contains(t, string(data), "default_width")
 }

@@ -38,8 +38,21 @@ func (s *Service) OnStartup(ctx context.Context) error {
 }
 
 func (s *Service) applyConfig(cfg map[string]any) {
-	// Apply config to manager defaults — future expansion.
-	// e.g., default_width, default_height, state_file path.
+	if w, ok := cfg["default_width"]; ok {
+		if _, ok := w.(int); ok {
+			// TODO: s.manager.SetDefaultWidth(width) — add when Manager API is extended
+		}
+	}
+	if h, ok := cfg["default_height"]; ok {
+		if _, ok := h.(int); ok {
+			// TODO: s.manager.SetDefaultHeight(height) — add when Manager API is extended
+		}
+	}
+	if sf, ok := cfg["state_file"]; ok {
+		if _, ok := sf.(string); ok {
+			// TODO: s.manager.State().SetPath(stateFile) — add when StateManager API is extended
+		}
+	}
 }
 
 // HandleIPCEvents is auto-discovered and registered by core.WithService.
