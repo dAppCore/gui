@@ -47,10 +47,11 @@ type Options struct {
 // Service is a core.Service managing webview interactions via IPC.
 type Service struct {
 	*core.ServiceRuntime[Options]
-	opts        Options
-	connections map[string]connector
-	mu          sync.RWMutex
-	newConn     func(debugURL, windowName string) (connector, error) // injectable for tests
+	opts         Options
+	connections  map[string]connector
+	mu           sync.RWMutex
+	newConn      func(debugURL, windowName string) (connector, error) // injectable for tests
+	watcherSetup func(conn connector, windowName string)              // called after connection creation
 }
 
 // Register creates a factory closure with the given options.
@@ -64,12 +65,14 @@ func Register(opts ...func(*Options)) func(*core.Core) (any, error) {
 		fn(&o)
 	}
 	return func(c *core.Core) (any, error) {
-		return &Service{
+		svc := &Service{
 			ServiceRuntime: core.NewServiceRuntime[Options](c, o),
 			opts:           o,
 			connections:    make(map[string]connector),
 			newConn:        defaultNewConn(o),
-		}, nil
+		}
+		svc.watcherSetup = svc.defaultWatcherSetup
+		return svc, nil
 	}
 }
 
@@ -110,6 +113,45 @@ func defaultNewConn(opts Options) func(string, string) (connector, error) {
 		}
 		return &realConnector{wv: wv}, nil
 	}
+}
+
+// defaultWatcherSetup wires up console/exception watchers on real connectors.
+// It broadcasts ActionConsoleMessage and ActionException via the Core IPC bus.
+func (s *Service) defaultWatcherSetup(conn connector, windowName string) {
+	rc, ok := conn.(*realConnector)
+	if !ok {
+		return // test mocks don't need watchers
+	}
+
+	cw := gowebview.NewConsoleWatcher(rc.wv)
+	cw.AddHandler(func(msg gowebview.ConsoleMessage) {
+		_ = s.Core().ACTION(ActionConsoleMessage{
+			Window: windowName,
+			Message: ConsoleMessage{
+				Type:      msg.Type,
+				Text:      msg.Text,
+				Timestamp: msg.Timestamp,
+				URL:       msg.URL,
+				Line:      msg.Line,
+				Column:    msg.Column,
+			},
+		})
+	})
+
+	ew := gowebview.NewExceptionWatcher(rc.wv)
+	ew.AddHandler(func(exc gowebview.ExceptionInfo) {
+		_ = s.Core().ACTION(ActionException{
+			Window: windowName,
+			Exception: ExceptionInfo{
+				Text:       exc.Text,
+				URL:        exc.URL,
+				Line:       exc.LineNumber,
+				Column:     exc.ColumnNumber,
+				StackTrace: exc.StackTrace,
+				Timestamp:  exc.Timestamp,
+			},
+		})
+	})
 }
 
 // OnStartup registers IPC handlers.
@@ -164,6 +206,9 @@ func (s *Service) getConn(windowName string) (connector, error) {
 		return nil, err
 	}
 	s.connections[windowName] = conn
+	if s.watcherSetup != nil {
+		s.watcherSetup(conn, windowName)
+	}
 	return conn, nil
 }
 
