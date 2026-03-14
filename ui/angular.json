@@ -3,22 +3,16 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "display": {
+    "gui-ui": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
-          "standalone": false
-        },
-        "@schematics/angular:directive": {
-          "standalone": false
-        },
-        "@schematics/angular:pipe": {
-          "standalone": false
+          "standalone": true
         }
       },
       "root": "",
       "sourceRoot": "src",
-      "prefix": "app",
+      "prefix": "core",
       "architect": {
         "build": {
           "builder": "@angular/build:application",
@@ -64,10 +58,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "display:build:production"
+              "buildTarget": "gui-ui:build:production"
             },
             "development": {
-              "buildTarget": "display:build:development"
+              "buildTarget": "gui-ui:build:development"
             }
           },
           "defaultConfiguration": "development"
