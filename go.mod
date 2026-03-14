@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	forge.lthn.ai/core/go v0.2.2
-	forge.lthn.ai/core/go-config v0.1.2
+	forge.lthn.ai/core/config v0.1.2
 	forge.lthn.ai/core/go-webview v0.1.2
 	github.com/gorilla/websocket v1.5.3
 	github.com/leaanthony/u v1.1.1
@@ -66,10 +66,11 @@ require (
 	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/crypto v0.48.0 // indirect
-	golang.org/x/net v0.49.0 // indirect
-	golang.org/x/oauth2 v0.34.0 // indirect
+	golang.org/x/net v0.51.0 // indirect
+	golang.org/x/oauth2 v0.35.0 // indirect
 	golang.org/x/sys v0.41.0 // indirect
 	golang.org/x/text v0.34.0 // indirect
+	golang.org/x/tools v0.42.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

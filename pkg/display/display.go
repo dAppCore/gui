@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"forge.lthn.ai/core/go-config"
+	"forge.lthn.ai/core/config"
 	"forge.lthn.ai/core/go/pkg/core"
 	"encoding/json"
 
@@ -42,7 +42,7 @@ type Service struct {
 	app        App
 	config     Options
 	configData map[string]map[string]any
-	cfg        *config.Config // go-config instance for file persistence
+	cfg        *config.Config // config instance for file persistence
 	events *WSEventManager
 }
 
