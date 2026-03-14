@@ -3,8 +3,8 @@ module forge.lthn.ai/core/gui
 go 1.26.0
 
 require (
-	forge.lthn.ai/core/go v0.2.2
 	forge.lthn.ai/core/config v0.1.0
+	forge.lthn.ai/core/go v0.2.2
 	forge.lthn.ai/core/go-webview v0.1.2
 	github.com/gorilla/websocket v1.5.3
 	github.com/leaanthony/u v1.1.1
