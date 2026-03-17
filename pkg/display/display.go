@@ -9,6 +9,7 @@ import (
 
 	"forge.lthn.ai/core/config"
 	"forge.lthn.ai/core/go/pkg/core"
+	coreerr "forge.lthn.ai/core/go-log"
 	"encoding/json"
 
 	"forge.lthn.ai/core/gui/pkg/browser"
@@ -241,7 +242,7 @@ type WSMessage struct {
 func wsRequire(data map[string]any, key string) (string, error) {
 	v, _ := data[key].(string)
 	if v == "" {
-		return "", fmt.Errorf("ws: missing required field %q", key)
+		return "", coreerr.E("display.wsRequire", fmt.Sprintf("missing required field %q", key), nil)
 	}
 	return v, nil
 }
@@ -600,7 +601,7 @@ func (s *Service) GetWindowInfo(name string) (*window.WindowInfo, error) {
 		return nil, err
 	}
 	if !handled {
-		return nil, fmt.Errorf("window service not available")
+		return nil, coreerr.E("display.GetWindowInfo", "window service not available", nil)
 	}
 	info, _ := result.(*window.WindowInfo)
 	return info, nil
@@ -666,11 +667,11 @@ func (s *Service) CloseWindow(name string) error {
 func (s *Service) RestoreWindow(name string) error {
 	ws := s.windowService()
 	if ws == nil {
-		return fmt.Errorf("window service not available")
+		return coreerr.E("display.RestoreWindow", "window service not available", nil)
 	}
 	pw, ok := ws.Manager().Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return coreerr.E("display.RestoreWindow", "window not found: "+name, nil)
 	}
 	pw.Restore()
 	return nil
@@ -681,11 +682,11 @@ func (s *Service) RestoreWindow(name string) error {
 func (s *Service) SetWindowVisibility(name string, visible bool) error {
 	ws := s.windowService()
 	if ws == nil {
-		return fmt.Errorf("window service not available")
+		return coreerr.E("display.SetWindowVisibility", "window service not available", nil)
 	}
 	pw, ok := ws.Manager().Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return coreerr.E("display.SetWindowVisibility", "window not found: "+name, nil)
 	}
 	pw.SetVisibility(visible)
 	return nil
@@ -696,11 +697,11 @@ func (s *Service) SetWindowVisibility(name string, visible bool) error {
 func (s *Service) SetWindowAlwaysOnTop(name string, alwaysOnTop bool) error {
 	ws := s.windowService()
 	if ws == nil {
-		return fmt.Errorf("window service not available")
+		return coreerr.E("display.SetWindowAlwaysOnTop", "window service not available", nil)
 	}
 	pw, ok := ws.Manager().Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return coreerr.E("display.SetWindowAlwaysOnTop", "window not found: "+name, nil)
 	}
 	pw.SetAlwaysOnTop(alwaysOnTop)
 	return nil
@@ -711,11 +712,11 @@ func (s *Service) SetWindowAlwaysOnTop(name string, alwaysOnTop bool) error {
 func (s *Service) SetWindowTitle(name string, title string) error {
 	ws := s.windowService()
 	if ws == nil {
-		return fmt.Errorf("window service not available")
+		return coreerr.E("display.SetWindowTitle", "window service not available", nil)
 	}
 	pw, ok := ws.Manager().Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return coreerr.E("display.SetWindowTitle", "window not found: "+name, nil)
 	}
 	pw.SetTitle(title)
 	return nil
@@ -726,11 +727,11 @@ func (s *Service) SetWindowTitle(name string, title string) error {
 func (s *Service) SetWindowFullscreen(name string, fullscreen bool) error {
 	ws := s.windowService()
 	if ws == nil {
-		return fmt.Errorf("window service not available")
+		return coreerr.E("display.SetWindowFullscreen", "window service not available", nil)
 	}
 	pw, ok := ws.Manager().Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return coreerr.E("display.SetWindowFullscreen", "window not found: "+name, nil)
 	}
 	if fullscreen {
 		pw.Fullscreen()
@@ -745,11 +746,11 @@ func (s *Service) SetWindowFullscreen(name string, fullscreen bool) error {
 func (s *Service) SetWindowBackgroundColour(name string, r, g, b, a uint8) error {
 	ws := s.windowService()
 	if ws == nil {
-		return fmt.Errorf("window service not available")
+		return coreerr.E("display.SetWindowBackgroundColour", "window service not available", nil)
 	}
 	pw, ok := ws.Manager().Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return coreerr.E("display.SetWindowBackgroundColour", "window not found: "+name, nil)
 	}
 	pw.SetBackgroundColour(r, g, b, a)
 	return nil
@@ -773,7 +774,7 @@ func (s *Service) GetWindowTitle(name string) (string, error) {
 		return "", err
 	}
 	if info == nil {
-		return "", fmt.Errorf("window not found: %s", name)
+		return "", coreerr.E("display.GetWindowTitle", "window not found: "+name, nil)
 	}
 	return info.Title, nil
 }
@@ -816,7 +817,7 @@ type CreateWindowOptions struct {
 // CreateWindow creates a new window with the specified options.
 func (s *Service) CreateWindow(opts CreateWindowOptions) (*window.WindowInfo, error) {
 	if opts.Name == "" {
-		return nil, fmt.Errorf("window name is required")
+		return nil, coreerr.E("display.CreateWindow", "window name is required", nil)
 	}
 	result, _, err := s.Core().PERFORM(window.TaskOpenWindow{
 		Opts: []window.WindowOption{
@@ -840,7 +841,7 @@ func (s *Service) CreateWindow(opts CreateWindowOptions) (*window.WindowInfo, er
 func (s *Service) SaveLayout(name string) error {
 	ws := s.windowService()
 	if ws == nil {
-		return fmt.Errorf("window service not available")
+		return coreerr.E("display.SaveLayout", "window service not available", nil)
 	}
 	states := make(map[string]window.WindowState)
 	for _, n := range ws.Manager().List() {
@@ -857,11 +858,11 @@ func (s *Service) SaveLayout(name string) error {
 func (s *Service) RestoreLayout(name string) error {
 	ws := s.windowService()
 	if ws == nil {
-		return fmt.Errorf("window service not available")
+		return coreerr.E("display.RestoreLayout", "window service not available", nil)
 	}
 	layout, ok := ws.Manager().Layout().GetLayout(name)
 	if !ok {
-		return fmt.Errorf("layout not found: %s", name)
+		return coreerr.E("display.RestoreLayout", "layout not found: "+name, nil)
 	}
 	for wName, state := range layout.Windows {
 		if pw, ok := ws.Manager().Get(wName); ok {
@@ -890,7 +891,7 @@ func (s *Service) ListLayouts() []window.LayoutInfo {
 func (s *Service) DeleteLayout(name string) error {
 	ws := s.windowService()
 	if ws == nil {
-		return fmt.Errorf("window service not available")
+		return coreerr.E("display.DeleteLayout", "window service not available", nil)
 	}
 	ws.Manager().Layout().DeleteLayout(name)
 	return nil
@@ -915,7 +916,7 @@ func (s *Service) GetLayout(name string) *window.Layout {
 func (s *Service) TileWindows(mode window.TileMode, windowNames []string) error {
 	ws := s.windowService()
 	if ws == nil {
-		return fmt.Errorf("window service not available")
+		return coreerr.E("display.TileWindows", "window service not available", nil)
 	}
 	return ws.Manager().TileWindows(mode, windowNames, 1920, 1080) // TODO: use actual screen size
 }
@@ -924,7 +925,7 @@ func (s *Service) TileWindows(mode window.TileMode, windowNames []string) error 
 func (s *Service) SnapWindow(name string, position window.SnapPosition) error {
 	ws := s.windowService()
 	if ws == nil {
-		return fmt.Errorf("window service not available")
+		return coreerr.E("display.SnapWindow", "window service not available", nil)
 	}
 	return ws.Manager().SnapWindow(name, position, 1920, 1080) // TODO: use actual screen size
 }
@@ -933,7 +934,7 @@ func (s *Service) SnapWindow(name string, position window.SnapPosition) error {
 func (s *Service) StackWindows(windowNames []string, offsetX, offsetY int) error {
 	ws := s.windowService()
 	if ws == nil {
-		return fmt.Errorf("window service not available")
+		return coreerr.E("display.StackWindows", "window service not available", nil)
 	}
 	return ws.Manager().StackWindows(windowNames, offsetX, offsetY)
 }
@@ -942,7 +943,7 @@ func (s *Service) StackWindows(windowNames []string, offsetX, offsetY int) error
 func (s *Service) ApplyWorkflowLayout(workflow window.WorkflowLayout) error {
 	ws := s.windowService()
 	if ws == nil {
-		return fmt.Errorf("window service not available")
+		return coreerr.E("display.ApplyWorkflowLayout", "window service not available", nil)
 	}
 	return ws.Manager().ApplyWorkflow(workflow, ws.Manager().List(), 1920, 1080)
 }

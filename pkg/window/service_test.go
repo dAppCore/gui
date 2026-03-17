@@ -174,3 +174,238 @@ func TestFileDrop_Good(t *testing.T) {
 	assert.Equal(t, "upload-zone", dropped.TargetID)
 	mu.Unlock()
 }
+
+// --- TaskMinimise ---
+
+func TestTaskMinimise_Good(t *testing.T) {
+	svc, c := newTestWindowService(t)
+	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("test")}})
+
+	_, handled, err := c.PERFORM(TaskMinimise{Name: "test"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	pw, ok := svc.Manager().Get("test")
+	require.True(t, ok)
+	mw := pw.(*mockWindow)
+	assert.True(t, mw.minimised)
+}
+
+func TestTaskMinimise_Bad(t *testing.T) {
+	_, c := newTestWindowService(t)
+	_, handled, err := c.PERFORM(TaskMinimise{Name: "nonexistent"})
+	assert.True(t, handled)
+	assert.Error(t, err)
+}
+
+// --- TaskFocus ---
+
+func TestTaskFocus_Good(t *testing.T) {
+	svc, c := newTestWindowService(t)
+	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("test")}})
+
+	_, handled, err := c.PERFORM(TaskFocus{Name: "test"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	pw, ok := svc.Manager().Get("test")
+	require.True(t, ok)
+	mw := pw.(*mockWindow)
+	assert.True(t, mw.focused)
+}
+
+func TestTaskFocus_Bad(t *testing.T) {
+	_, c := newTestWindowService(t)
+	_, handled, err := c.PERFORM(TaskFocus{Name: "nonexistent"})
+	assert.True(t, handled)
+	assert.Error(t, err)
+}
+
+// --- TaskRestore ---
+
+func TestTaskRestore_Good(t *testing.T) {
+	svc, c := newTestWindowService(t)
+	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("test")}})
+
+	// First maximise, then restore
+	_, _, _ = c.PERFORM(TaskMaximise{Name: "test"})
+
+	_, handled, err := c.PERFORM(TaskRestore{Name: "test"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	pw, ok := svc.Manager().Get("test")
+	require.True(t, ok)
+	mw := pw.(*mockWindow)
+	assert.False(t, mw.maximised)
+
+	// Verify state was updated
+	state, ok := svc.Manager().State().GetState("test")
+	assert.True(t, ok)
+	assert.False(t, state.Maximized)
+}
+
+func TestTaskRestore_Bad(t *testing.T) {
+	_, c := newTestWindowService(t)
+	_, handled, err := c.PERFORM(TaskRestore{Name: "nonexistent"})
+	assert.True(t, handled)
+	assert.Error(t, err)
+}
+
+// --- TaskSetTitle ---
+
+func TestTaskSetTitle_Good(t *testing.T) {
+	svc, c := newTestWindowService(t)
+	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("test")}})
+
+	_, handled, err := c.PERFORM(TaskSetTitle{Name: "test", Title: "New Title"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	pw, ok := svc.Manager().Get("test")
+	require.True(t, ok)
+	assert.Equal(t, "New Title", pw.Title())
+}
+
+func TestTaskSetTitle_Bad(t *testing.T) {
+	_, c := newTestWindowService(t)
+	_, handled, err := c.PERFORM(TaskSetTitle{Name: "nonexistent", Title: "Nope"})
+	assert.True(t, handled)
+	assert.Error(t, err)
+}
+
+// --- TaskSetVisibility ---
+
+func TestTaskSetVisibility_Good(t *testing.T) {
+	svc, c := newTestWindowService(t)
+	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("test")}})
+
+	_, handled, err := c.PERFORM(TaskSetVisibility{Name: "test", Visible: true})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	pw, ok := svc.Manager().Get("test")
+	require.True(t, ok)
+	mw := pw.(*mockWindow)
+	assert.True(t, mw.visible)
+
+	// Now hide it
+	_, handled, err = c.PERFORM(TaskSetVisibility{Name: "test", Visible: false})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.False(t, mw.visible)
+}
+
+func TestTaskSetVisibility_Bad(t *testing.T) {
+	_, c := newTestWindowService(t)
+	_, handled, err := c.PERFORM(TaskSetVisibility{Name: "nonexistent", Visible: true})
+	assert.True(t, handled)
+	assert.Error(t, err)
+}
+
+// --- TaskFullscreen ---
+
+func TestTaskFullscreen_Good(t *testing.T) {
+	svc, c := newTestWindowService(t)
+	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("test")}})
+
+	// Enter fullscreen
+	_, handled, err := c.PERFORM(TaskFullscreen{Name: "test", Fullscreen: true})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	pw, ok := svc.Manager().Get("test")
+	require.True(t, ok)
+	mw := pw.(*mockWindow)
+	assert.True(t, mw.fullscreened)
+
+	// Exit fullscreen
+	_, handled, err = c.PERFORM(TaskFullscreen{Name: "test", Fullscreen: false})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.False(t, mw.fullscreened)
+}
+
+func TestTaskFullscreen_Bad(t *testing.T) {
+	_, c := newTestWindowService(t)
+	_, handled, err := c.PERFORM(TaskFullscreen{Name: "nonexistent", Fullscreen: true})
+	assert.True(t, handled)
+	assert.Error(t, err)
+}
+
+// --- TaskSaveLayout ---
+
+func TestTaskSaveLayout_Good(t *testing.T) {
+	svc, c := newTestWindowService(t)
+	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("editor"), WithSize(960, 1080), WithPosition(0, 0)}})
+	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("terminal"), WithSize(960, 1080), WithPosition(960, 0)}})
+
+	_, handled, err := c.PERFORM(TaskSaveLayout{Name: "coding"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	// Verify layout was saved with correct window states
+	layout, ok := svc.Manager().Layout().GetLayout("coding")
+	assert.True(t, ok)
+	assert.Equal(t, "coding", layout.Name)
+	assert.Len(t, layout.Windows, 2)
+
+	editorState, ok := layout.Windows["editor"]
+	assert.True(t, ok)
+	assert.Equal(t, 0, editorState.X)
+	assert.Equal(t, 960, editorState.Width)
+
+	termState, ok := layout.Windows["terminal"]
+	assert.True(t, ok)
+	assert.Equal(t, 960, termState.X)
+	assert.Equal(t, 960, termState.Width)
+}
+
+func TestTaskSaveLayout_Bad(t *testing.T) {
+	_, c := newTestWindowService(t)
+	// Saving an empty layout with empty name returns an error from LayoutManager
+	_, handled, err := c.PERFORM(TaskSaveLayout{Name: ""})
+	assert.True(t, handled)
+	assert.Error(t, err)
+}
+
+// --- TaskRestoreLayout ---
+
+func TestTaskRestoreLayout_Good(t *testing.T) {
+	svc, c := newTestWindowService(t)
+	// Open windows
+	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("editor"), WithSize(800, 600), WithPosition(0, 0)}})
+	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("terminal"), WithSize(800, 600), WithPosition(0, 0)}})
+
+	// Save a layout with specific positions
+	_, _, _ = c.PERFORM(TaskSaveLayout{Name: "coding"})
+
+	// Move the windows to different positions
+	_, _, _ = c.PERFORM(TaskSetPosition{Name: "editor", X: 500, Y: 500})
+	_, _, _ = c.PERFORM(TaskSetPosition{Name: "terminal", X: 600, Y: 600})
+
+	// Restore the layout
+	_, handled, err := c.PERFORM(TaskRestoreLayout{Name: "coding"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	// Verify windows were moved back to saved positions
+	pw, ok := svc.Manager().Get("editor")
+	require.True(t, ok)
+	x, y := pw.Position()
+	assert.Equal(t, 0, x)
+	assert.Equal(t, 0, y)
+
+	pw2, ok := svc.Manager().Get("terminal")
+	require.True(t, ok)
+	x2, y2 := pw2.Position()
+	assert.Equal(t, 0, x2)
+	assert.Equal(t, 0, y2)
+}
+
+func TestTaskRestoreLayout_Bad(t *testing.T) {
+	_, c := newTestWindowService(t)
+	_, handled, err := c.PERFORM(TaskRestoreLayout{Name: "nonexistent"})
+	assert.True(t, handled)
+	assert.Error(t, err)
+}

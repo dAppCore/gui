@@ -2,8 +2,8 @@ package window
 
 import (
 	"context"
-	"fmt"
 
+	coreerr "forge.lthn.ai/core/go-log"
 	"forge.lthn.ai/core/go/pkg/core"
 )
 
@@ -207,7 +207,7 @@ func (s *Service) trackWindow(pw PlatformWindow) {
 func (s *Service) taskCloseWindow(name string) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return coreerr.E("window.taskClose", "window not found: "+name, nil)
 	}
 	// Persist state BEFORE closing (spec requirement)
 	s.manager.State().CaptureState(pw)
@@ -220,7 +220,7 @@ func (s *Service) taskCloseWindow(name string) error {
 func (s *Service) taskSetPosition(name string, x, y int) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return coreerr.E("window.taskSetPosition", "window not found: "+name, nil)
 	}
 	pw.SetPosition(x, y)
 	s.manager.State().UpdatePosition(name, x, y)
@@ -230,7 +230,7 @@ func (s *Service) taskSetPosition(name string, x, y int) error {
 func (s *Service) taskSetSize(name string, w, h int) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return coreerr.E("window.taskSetSize", "window not found: "+name, nil)
 	}
 	pw.SetSize(w, h)
 	s.manager.State().UpdateSize(name, w, h)
@@ -240,7 +240,7 @@ func (s *Service) taskSetSize(name string, w, h int) error {
 func (s *Service) taskMaximise(name string) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return coreerr.E("window.taskMaximise", "window not found: "+name, nil)
 	}
 	pw.Maximise()
 	s.manager.State().UpdateMaximized(name, true)
@@ -250,7 +250,7 @@ func (s *Service) taskMaximise(name string) error {
 func (s *Service) taskMinimise(name string) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return coreerr.E("window.taskMinimise", "window not found: "+name, nil)
 	}
 	pw.Minimise()
 	return nil
@@ -259,7 +259,7 @@ func (s *Service) taskMinimise(name string) error {
 func (s *Service) taskFocus(name string) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return coreerr.E("window.taskFocus", "window not found: "+name, nil)
 	}
 	pw.Focus()
 	return nil
@@ -268,7 +268,7 @@ func (s *Service) taskFocus(name string) error {
 func (s *Service) taskRestore(name string) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return coreerr.E("window.taskRestore", "window not found: "+name, nil)
 	}
 	pw.Restore()
 	s.manager.State().UpdateMaximized(name, false)
@@ -278,7 +278,7 @@ func (s *Service) taskRestore(name string) error {
 func (s *Service) taskSetTitle(name, title string) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return coreerr.E("window.taskSetTitle", "window not found: "+name, nil)
 	}
 	pw.SetTitle(title)
 	return nil
@@ -287,7 +287,7 @@ func (s *Service) taskSetTitle(name, title string) error {
 func (s *Service) taskSetVisibility(name string, visible bool) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return coreerr.E("window.taskSetVisibility", "window not found: "+name, nil)
 	}
 	pw.SetVisibility(visible)
 	return nil
@@ -296,7 +296,7 @@ func (s *Service) taskSetVisibility(name string, visible bool) error {
 func (s *Service) taskFullscreen(name string, fullscreen bool) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return coreerr.E("window.taskFullscreen", "window not found: "+name, nil)
 	}
 	if fullscreen {
 		pw.Fullscreen()
@@ -321,7 +321,7 @@ func (s *Service) taskSaveLayout(name string) error {
 func (s *Service) taskRestoreLayout(name string) error {
 	layout, ok := s.manager.Layout().GetLayout(name)
 	if !ok {
-		return fmt.Errorf("layout not found: %s", name)
+		return coreerr.E("window.taskRestoreLayout", "layout not found: "+name, nil)
 	}
 	for winName, state := range layout.Windows {
 		pw, found := s.manager.Get(winName)
@@ -348,7 +348,7 @@ var tileModeMap = map[string]TileMode{
 func (s *Service) taskTileWindows(mode string, names []string) error {
 	tm, ok := tileModeMap[mode]
 	if !ok {
-		return fmt.Errorf("unknown tile mode: %s", mode)
+		return coreerr.E("window.taskTileWindows", "unknown tile mode: "+mode, nil)
 	}
 	if len(names) == 0 {
 		names = s.manager.List()
@@ -368,7 +368,7 @@ var snapPosMap = map[string]SnapPosition{
 func (s *Service) taskSnapWindow(name, position string) error {
 	pos, ok := snapPosMap[position]
 	if !ok {
-		return fmt.Errorf("unknown snap position: %s", position)
+		return coreerr.E("window.taskSnapWindow", "unknown snap position: "+position, nil)
 	}
 	return s.manager.SnapWindow(name, pos, 1920, 1080)
 }

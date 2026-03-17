@@ -3,8 +3,8 @@ package keybinding
 
 import (
 	"context"
-	"fmt"
 
+	coreerr "forge.lthn.ai/core/go-log"
 	"forge.lthn.ai/core/go/pkg/core"
 )
 
@@ -75,7 +75,7 @@ func (s *Service) taskAdd(t TaskAdd) error {
 		_ = s.Core().ACTION(ActionTriggered{Accelerator: t.Accelerator})
 	})
 	if err != nil {
-		return fmt.Errorf("keybinding: platform add failed: %w", err)
+		return coreerr.E("keybinding.taskAdd", "platform add failed", err)
 	}
 
 	s.bindings[t.Accelerator] = BindingInfo{
@@ -87,12 +87,12 @@ func (s *Service) taskAdd(t TaskAdd) error {
 
 func (s *Service) taskRemove(t TaskRemove) error {
 	if _, exists := s.bindings[t.Accelerator]; !exists {
-		return fmt.Errorf("keybinding: not registered: %s", t.Accelerator)
+		return coreerr.E("keybinding.taskRemove", "not registered: "+t.Accelerator, nil)
 	}
 
 	err := s.platform.Remove(t.Accelerator)
 	if err != nil {
-		return fmt.Errorf("keybinding: platform remove failed: %w", err)
+		return coreerr.E("keybinding.taskRemove", "platform remove failed", err)
 	}
 
 	delete(s.bindings, t.Accelerator)

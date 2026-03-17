@@ -3,8 +3,8 @@ package mcp
 
 import (
 	"context"
-	"fmt"
 
+	coreerr "forge.lthn.ai/core/go-log"
 	"forge.lthn.ai/core/gui/pkg/screen"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -23,7 +23,7 @@ func (s *Subsystem) screenList(_ context.Context, _ *mcp.CallToolRequest, _ Scre
 	}
 	screens, ok := result.([]screen.Screen)
 	if !ok {
-		return nil, ScreenListOutput{}, fmt.Errorf("unexpected result type from screen list query")
+		return nil, ScreenListOutput{}, coreerr.E("mcp.screenList", "unexpected result type", nil)
 	}
 	return nil, ScreenListOutput{Screens: screens}, nil
 }
@@ -44,7 +44,7 @@ func (s *Subsystem) screenGet(_ context.Context, _ *mcp.CallToolRequest, input S
 	}
 	scr, ok := result.(*screen.Screen)
 	if !ok {
-		return nil, ScreenGetOutput{}, fmt.Errorf("unexpected result type from screen get query")
+		return nil, ScreenGetOutput{}, coreerr.E("mcp.screenGet", "unexpected result type", nil)
 	}
 	return nil, ScreenGetOutput{Screen: scr}, nil
 }
@@ -63,7 +63,7 @@ func (s *Subsystem) screenPrimary(_ context.Context, _ *mcp.CallToolRequest, _ S
 	}
 	scr, ok := result.(*screen.Screen)
 	if !ok {
-		return nil, ScreenPrimaryOutput{}, fmt.Errorf("unexpected result type from screen primary query")
+		return nil, ScreenPrimaryOutput{}, coreerr.E("mcp.screenPrimary", "unexpected result type", nil)
 	}
 	return nil, ScreenPrimaryOutput{Screen: scr}, nil
 }
@@ -85,7 +85,7 @@ func (s *Subsystem) screenAtPoint(_ context.Context, _ *mcp.CallToolRequest, inp
 	}
 	scr, ok := result.(*screen.Screen)
 	if !ok {
-		return nil, ScreenAtPointOutput{}, fmt.Errorf("unexpected result type from screen at point query")
+		return nil, ScreenAtPointOutput{}, coreerr.E("mcp.screenAtPoint", "unexpected result type", nil)
 	}
 	return nil, ScreenAtPointOutput{Screen: scr}, nil
 }
@@ -104,7 +104,7 @@ func (s *Subsystem) screenWorkAreas(_ context.Context, _ *mcp.CallToolRequest, _
 	}
 	areas, ok := result.([]screen.Rect)
 	if !ok {
-		return nil, ScreenWorkAreasOutput{}, fmt.Errorf("unexpected result type from screen work areas query")
+		return nil, ScreenWorkAreasOutput{}, coreerr.E("mcp.screenWorkAreas", "unexpected result type", nil)
 	}
 	return nil, ScreenWorkAreasOutput{WorkAreas: areas}, nil
 }

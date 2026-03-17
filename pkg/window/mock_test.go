@@ -33,6 +33,8 @@ type mockWindow struct {
 	maximised, focused   bool
 	visible, alwaysOnTop bool
 	closed               bool
+	minimised            bool
+	fullscreened         bool
 	eventHandlers        []func(WindowEvent)
 	fileDropHandlers     []func(paths []string, targetID string)
 }
@@ -51,13 +53,13 @@ func (w *mockWindow) SetVisibility(visible bool)              { w.visible = visi
 func (w *mockWindow) SetAlwaysOnTop(alwaysOnTop bool)         { w.alwaysOnTop = alwaysOnTop }
 func (w *mockWindow) Maximise()                               { w.maximised = true }
 func (w *mockWindow) Restore()                                { w.maximised = false }
-func (w *mockWindow) Minimise()                               {}
+func (w *mockWindow) Minimise()                               { w.minimised = true }
 func (w *mockWindow) Focus()                                  { w.focused = true }
 func (w *mockWindow) Close()                                  { w.closed = true }
 func (w *mockWindow) Show()                                   { w.visible = true }
 func (w *mockWindow) Hide()                                   { w.visible = false }
-func (w *mockWindow) Fullscreen()                             {}
-func (w *mockWindow) UnFullscreen()                           {}
+func (w *mockWindow) Fullscreen()                             { w.fullscreened = true }
+func (w *mockWindow) UnFullscreen()                           { w.fullscreened = false }
 func (w *mockWindow) OnWindowEvent(handler func(WindowEvent)) { w.eventHandlers = append(w.eventHandlers, handler) }
 func (w *mockWindow) OnFileDrop(handler func(paths []string, targetID string)) {
 	w.fileDropHandlers = append(w.fileDropHandlers, handler)

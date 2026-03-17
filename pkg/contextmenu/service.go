@@ -3,8 +3,8 @@ package contextmenu
 
 import (
 	"context"
-	"fmt"
 
+	coreerr "forge.lthn.ai/core/go-log"
 	"forge.lthn.ai/core/go/pkg/core"
 )
 
@@ -92,7 +92,7 @@ func (s *Service) taskAdd(t TaskAdd) error {
 		})
 	})
 	if err != nil {
-		return fmt.Errorf("contextmenu: platform add failed: %w", err)
+		return coreerr.E("contextmenu.taskAdd", "platform add failed", err)
 	}
 
 	s.menus[t.Name] = t.Menu
@@ -106,7 +106,7 @@ func (s *Service) taskRemove(t TaskRemove) error {
 
 	err := s.platform.Remove(t.Name)
 	if err != nil {
-		return fmt.Errorf("contextmenu: platform remove failed: %w", err)
+		return coreerr.E("contextmenu.taskRemove", "platform remove failed", err)
 	}
 
 	delete(s.menus, t.Name)
