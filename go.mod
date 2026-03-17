@@ -3,9 +3,9 @@ module forge.lthn.ai/core/gui
 go 1.26.0
 
 require (
-	forge.lthn.ai/core/config v0.1.6
-	forge.lthn.ai/core/go v0.3.1
-	forge.lthn.ai/core/go-webview v0.1.5
+	forge.lthn.ai/core/config v0.1.7
+	forge.lthn.ai/core/go v0.3.2
+	forge.lthn.ai/core/go-webview v0.1.6
 	github.com/gorilla/websocket v1.5.3
 	github.com/leaanthony/u v1.1.1
 	github.com/modelcontextprotocol/go-sdk v1.4.1
@@ -16,7 +16,7 @@ require (
 
 require (
 	dario.cat/mergo v1.0.2 // indirect
-	forge.lthn.ai/core/go-io v0.1.5 // indirect
+	forge.lthn.ai/core/go-io v0.1.6 // indirect
 	forge.lthn.ai/core/go-log v0.0.4 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProtonMail/go-crypto v1.4.0 // indirect
