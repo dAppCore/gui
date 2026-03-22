@@ -7,9 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"forge.lthn.ai/core/gui/pkg/window"
 	"github.com/gorilla/websocket"
-	"github.com/wailsapp/wails/v3/pkg/application"
-	"github.com/wailsapp/wails/v3/pkg/events"
 )
 
 // EventType represents the type of event.
@@ -22,8 +21,25 @@ const (
 	EventWindowResize EventType = "window.resize"
 	EventWindowClose  EventType = "window.close"
 	EventWindowCreate EventType = "window.create"
-	EventThemeChange  EventType = "theme.change"
-	EventScreenChange EventType = "screen.change"
+	EventThemeChange         EventType = "theme.change"
+	EventScreenChange        EventType = "screen.change"
+	EventNotificationClick   EventType = "notification.click"
+	EventTrayClick           EventType = "tray.click"
+	EventTrayMenuItemClick   EventType = "tray.menuitem.click"
+	EventKeybindingTriggered EventType = "keybinding.triggered"
+	EventWindowFileDrop      EventType = "window.filedrop"
+	EventDockVisibility      EventType = "dock.visibility-changed"
+	EventAppStarted          EventType = "app.started"
+	EventAppOpenedWithFile   EventType = "app.opened-with-file"
+	EventAppWillTerminate    EventType = "app.will-terminate"
+	EventAppActive           EventType = "app.active"
+	EventAppInactive         EventType = "app.inactive"
+	EventSystemPowerChange   EventType = "system.power-change"
+	EventSystemSuspend       EventType = "system.suspend"
+	EventSystemResume        EventType = "system.resume"
+	EventContextMenuClick    EventType = "contextmenu.item-clicked"
+	EventWebviewConsole      EventType = "webview.console"
+	EventWebviewException    EventType = "webview.exception"
 )
 
 // Event represents a display event sent to subscribers.
@@ -45,7 +61,6 @@ type WSEventManager struct {
 	upgrader    websocket.Upgrader
 	clients     map[*websocket.Conn]*clientState
 	mu          sync.RWMutex
-	display     *Service
 	nextSubID   int
 	eventBuffer chan Event
 }
@@ -57,7 +72,7 @@ type clientState struct {
 }
 
 // NewWSEventManager creates a new event manager.
-func NewWSEventManager(display *Service) *WSEventManager {
+func NewWSEventManager() *WSEventManager {
 	em := &WSEventManager{
 		upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
@@ -67,7 +82,6 @@ func NewWSEventManager(display *Service) *WSEventManager {
 			WriteBufferSize: 1024,
 		},
 		clients:     make(map[*websocket.Conn]*clientState),
-		display:     display,
 		eventBuffer: make(chan Event, 100),
 	}
 
@@ -302,64 +316,14 @@ func (em *WSEventManager) Close() {
 	close(em.eventBuffer)
 }
 
-// SetupWindowEventListeners attaches event listeners to all windows.
-func (em *WSEventManager) SetupWindowEventListeners() {
-	app := application.Get()
-	if app == nil {
-		return
-	}
-
-	// Listen for theme changes
-	app.Event.OnApplicationEvent(events.Common.ThemeChanged, func(event *application.ApplicationEvent) {
-		isDark := app.Env.IsDarkMode()
-		em.Emit(Event{
-			Type: EventThemeChange,
-			Data: map[string]any{
-				"isDark": isDark,
-				"theme":  map[bool]string{true: "dark", false: "light"}[isDark],
-			},
-		})
-	})
-}
-
 // AttachWindowListeners attaches event listeners to a specific window.
-func (em *WSEventManager) AttachWindowListeners(window *application.WebviewWindow) {
-	if window == nil {
+// Accepts window.PlatformWindow instead of *application.WebviewWindow.
+func (em *WSEventManager) AttachWindowListeners(pw window.PlatformWindow) {
+	if pw == nil {
 		return
 	}
 
-	name := window.Name()
-
-	// Window focus
-	window.OnWindowEvent(events.Common.WindowFocus, func(event *application.WindowEvent) {
-		em.EmitWindowEvent(EventWindowFocus, name, nil)
-	})
-
-	// Window blur
-	window.OnWindowEvent(events.Common.WindowLostFocus, func(event *application.WindowEvent) {
-		em.EmitWindowEvent(EventWindowBlur, name, nil)
-	})
-
-	// Window move
-	window.OnWindowEvent(events.Common.WindowDidMove, func(event *application.WindowEvent) {
-		x, y := window.Position()
-		em.EmitWindowEvent(EventWindowMove, name, map[string]any{
-			"x": x,
-			"y": y,
-		})
-	})
-
-	// Window resize
-	window.OnWindowEvent(events.Common.WindowDidResize, func(event *application.WindowEvent) {
-		width, height := window.Size()
-		em.EmitWindowEvent(EventWindowResize, name, map[string]any{
-			"width":  width,
-			"height": height,
-		})
-	})
-
-	// Window close
-	window.OnWindowEvent(events.Common.WindowClosing, func(event *application.WindowEvent) {
-		em.EmitWindowEvent(EventWindowClose, name, nil)
+	pw.OnWindowEvent(func(e window.WindowEvent) {
+		em.EmitWindowEvent(EventType("window."+e.Type), e.Name, e.Data)
 	})
 }

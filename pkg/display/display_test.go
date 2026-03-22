@@ -1,20 +1,50 @@
 package display
 
 import (
+	"context"
+	"os"
+	"path/filepath"
 	"testing"
 
-	"github.com/host-uk/core-gui/pkg/core"
+	"forge.lthn.ai/core/go/pkg/core"
+	"forge.lthn.ai/core/gui/pkg/menu"
+	"forge.lthn.ai/core/gui/pkg/systray"
+	"forge.lthn.ai/core/gui/pkg/window"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
-// newTestCore creates a new core instance with essential services for testing.
-func newTestCore(t *testing.T) *core.Core {
-	coreInstance, err := core.New()
+// --- Test helpers ---
+
+// newTestDisplayService creates a display service registered with Core for IPC testing.
+func newTestDisplayService(t *testing.T) (*Service, *core.Core) {
+	t.Helper()
+	c, err := core.New(
+		core.WithService(Register(nil)),
+		core.WithServiceLock(),
+	)
 	require.NoError(t, err)
-	return coreInstance
+	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+	svc := core.MustServiceFor[*Service](c, "display")
+	return svc, c
 }
+
+// newTestConclave creates a full 4-service conclave for integration testing.
+func newTestConclave(t *testing.T) *core.Core {
+	t.Helper()
+	c, err := core.New(
+		core.WithService(Register(nil)),
+		core.WithService(window.Register(window.NewMockPlatform())),
+		core.WithService(systray.Register(systray.NewMockPlatform())),
+		core.WithService(menu.Register(menu.NewMockPlatform())),
+		core.WithServiceLock(),
+	)
+	require.NoError(t, err)
+	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+	return c
+}
+
+// --- Tests ---
 
 func TestNew(t *testing.T) {
 	t.Run("creates service successfully", func(t *testing.T) {
@@ -32,605 +62,444 @@ func TestNew(t *testing.T) {
 	})
 }
 
-func TestRegister(t *testing.T) {
-	t.Run("registers with core successfully", func(t *testing.T) {
-		coreInstance := newTestCore(t)
-		service, err := Register(coreInstance)
-		require.NoError(t, err)
-		assert.NotNil(t, service, "Register() should return a non-nil service instance")
-	})
+func TestRegisterClosure_Good(t *testing.T) {
+	factory := Register(nil) // nil wailsApp for testing
+	assert.NotNil(t, factory)
 
-	t.Run("returns Service type", func(t *testing.T) {
-		coreInstance := newTestCore(t)
-		service, err := Register(coreInstance)
-		require.NoError(t, err)
-
-		displayService, ok := service.(*Service)
-		assert.True(t, ok, "Register() should return *Service type")
-		assert.NotNil(t, displayService.ServiceRuntime, "ServiceRuntime should be initialized")
-	})
-}
-
-func TestServiceName(t *testing.T) {
-	service, err := New()
+	c, err := core.New(
+		core.WithService(factory),
+		core.WithServiceLock(),
+	)
 	require.NoError(t, err)
+	require.NoError(t, c.ServiceStartup(context.Background(), nil))
 
-	name := service.ServiceName()
-	assert.Equal(t, "github.com/host-uk/core/display", name)
+	svc := core.MustServiceFor[*Service](c, "display")
+	assert.NotNil(t, svc)
 }
 
-// --- Window Option Tests ---
+func TestConfigQuery_Good(t *testing.T) {
+	svc, c := newTestDisplayService(t)
 
-func TestWindowName(t *testing.T) {
-	t.Run("sets window name", func(t *testing.T) {
-		opt := WindowName("test-window")
-		window := &Window{}
+	// Set window config
+	svc.configData["window"] = map[string]any{
+		"default_width": 1024,
+	}
 
-		err := opt(window)
-		assert.NoError(t, err)
-		assert.Equal(t, "test-window", window.Name)
-	})
-
-	t.Run("sets empty name", func(t *testing.T) {
-		opt := WindowName("")
-		window := &Window{}
-
-		err := opt(window)
-		assert.NoError(t, err)
-		assert.Equal(t, "", window.Name)
-	})
-}
-
-func TestWindowTitle(t *testing.T) {
-	t.Run("sets window title", func(t *testing.T) {
-		opt := WindowTitle("My Application")
-		window := &Window{}
-
-		err := opt(window)
-		assert.NoError(t, err)
-		assert.Equal(t, "My Application", window.Title)
-	})
-
-	t.Run("sets title with special characters", func(t *testing.T) {
-		opt := WindowTitle("App - v1.0 (Beta)")
-		window := &Window{}
-
-		err := opt(window)
-		assert.NoError(t, err)
-		assert.Equal(t, "App - v1.0 (Beta)", window.Title)
-	})
-}
-
-func TestWindowURL(t *testing.T) {
-	t.Run("sets window URL", func(t *testing.T) {
-		opt := WindowURL("/dashboard")
-		window := &Window{}
-
-		err := opt(window)
-		assert.NoError(t, err)
-		assert.Equal(t, "/dashboard", window.URL)
-	})
-
-	t.Run("sets full URL", func(t *testing.T) {
-		opt := WindowURL("https://example.com/page")
-		window := &Window{}
-
-		err := opt(window)
-		assert.NoError(t, err)
-		assert.Equal(t, "https://example.com/page", window.URL)
-	})
-}
-
-func TestWindowWidth(t *testing.T) {
-	t.Run("sets window width", func(t *testing.T) {
-		opt := WindowWidth(1024)
-		window := &Window{}
-
-		err := opt(window)
-		assert.NoError(t, err)
-		assert.Equal(t, 1024, window.Width)
-	})
-
-	t.Run("sets zero width", func(t *testing.T) {
-		opt := WindowWidth(0)
-		window := &Window{}
-
-		err := opt(window)
-		assert.NoError(t, err)
-		assert.Equal(t, 0, window.Width)
-	})
-
-	t.Run("sets large width", func(t *testing.T) {
-		opt := WindowWidth(3840)
-		window := &Window{}
-
-		err := opt(window)
-		assert.NoError(t, err)
-		assert.Equal(t, 3840, window.Width)
-	})
-}
-
-func TestWindowHeight(t *testing.T) {
-	t.Run("sets window height", func(t *testing.T) {
-		opt := WindowHeight(768)
-		window := &Window{}
-
-		err := opt(window)
-		assert.NoError(t, err)
-		assert.Equal(t, 768, window.Height)
-	})
-
-	t.Run("sets zero height", func(t *testing.T) {
-		opt := WindowHeight(0)
-		window := &Window{}
-
-		err := opt(window)
-		assert.NoError(t, err)
-		assert.Equal(t, 0, window.Height)
-	})
-}
-
-func TestApplyOptions(t *testing.T) {
-	t.Run("applies no options", func(t *testing.T) {
-		window := applyOptions()
-		assert.NotNil(t, window)
-		assert.Equal(t, "", window.Name)
-		assert.Equal(t, "", window.Title)
-		assert.Equal(t, 0, window.Width)
-		assert.Equal(t, 0, window.Height)
-	})
-
-	t.Run("applies single option", func(t *testing.T) {
-		window := applyOptions(WindowTitle("Test"))
-		assert.NotNil(t, window)
-		assert.Equal(t, "Test", window.Title)
-	})
-
-	t.Run("applies multiple options", func(t *testing.T) {
-		window := applyOptions(
-			WindowName("main"),
-			WindowTitle("My App"),
-			WindowURL("/home"),
-			WindowWidth(1280),
-			WindowHeight(720),
-		)
-
-		assert.NotNil(t, window)
-		assert.Equal(t, "main", window.Name)
-		assert.Equal(t, "My App", window.Title)
-		assert.Equal(t, "/home", window.URL)
-		assert.Equal(t, 1280, window.Width)
-		assert.Equal(t, 720, window.Height)
-	})
-
-	t.Run("handles nil options slice", func(t *testing.T) {
-		window := applyOptions(nil...)
-		assert.NotNil(t, window)
-	})
-
-	t.Run("applies options in order", func(t *testing.T) {
-		// Later options should override earlier ones
-		window := applyOptions(
-			WindowTitle("First"),
-			WindowTitle("Second"),
-		)
-
-		assert.NotNil(t, window)
-		assert.Equal(t, "Second", window.Title)
-	})
-}
-
-// --- ActionOpenWindow Tests ---
-
-func TestActionOpenWindow(t *testing.T) {
-	t.Run("creates action with options", func(t *testing.T) {
-		action := ActionOpenWindow{
-			WebviewWindowOptions: application.WebviewWindowOptions{
-				Name:   "test",
-				Title:  "Test Window",
-				Width:  800,
-				Height: 600,
-			},
-		}
-
-		assert.Equal(t, "test", action.Name)
-		assert.Equal(t, "Test Window", action.Title)
-		assert.Equal(t, 800, action.Width)
-		assert.Equal(t, 600, action.Height)
-	})
-}
-
-// --- Tests with Mock App ---
-
-// newServiceWithMockApp creates a Service with a mock app for testing.
-func newServiceWithMockApp(t *testing.T) (*Service, *mockApp) {
-	service, err := New()
+	result, handled, err := c.QUERY(window.QueryConfig{})
 	require.NoError(t, err)
-	mock := newMockApp()
-	service.app = mock
-	return service, mock
+	assert.True(t, handled)
+	cfg := result.(map[string]any)
+	assert.Equal(t, 1024, cfg["default_width"])
 }
 
-func TestOpenWindow(t *testing.T) {
+func TestConfigQuery_Bad(t *testing.T) {
+	// No display service — window config query returns handled=false
+	c, err := core.New(core.WithServiceLock())
+	require.NoError(t, err)
+	_, handled, _ := c.QUERY(window.QueryConfig{})
+	assert.False(t, handled)
+}
+
+func TestConfigTask_Good(t *testing.T) {
+	_, c := newTestDisplayService(t)
+
+	newCfg := map[string]any{"default_width": 800}
+	_, handled, err := c.PERFORM(window.TaskSaveConfig{Value: newCfg})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	// Verify config was saved
+	result, _, _ := c.QUERY(window.QueryConfig{})
+	cfg := result.(map[string]any)
+	assert.Equal(t, 800, cfg["default_width"])
+}
+
+// --- Conclave integration tests ---
+
+func TestServiceConclave_Good(t *testing.T) {
+	c := newTestConclave(t)
+
+	// Open a window via IPC
+	result, handled, err := c.PERFORM(window.TaskOpenWindow{
+		Opts: []window.WindowOption{window.WithName("main")},
+	})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	info := result.(window.WindowInfo)
+	assert.Equal(t, "main", info.Name)
+
+	// Query window config from display
+	val, handled, err := c.QUERY(window.QueryConfig{})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.NotNil(t, val)
+
+	// Set app menu via IPC
+	_, handled, err = c.PERFORM(menu.TaskSetAppMenu{Items: []menu.MenuItem{
+		{Label: "File"},
+	}})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	// Query app menu via IPC
+	menuResult, handled, _ := c.QUERY(menu.QueryGetAppMenu{})
+	assert.True(t, handled)
+	items := menuResult.([]menu.MenuItem)
+	assert.Len(t, items, 1)
+}
+
+func TestServiceConclave_Bad(t *testing.T) {
+	// Sub-service starts without display — config QUERY returns handled=false
+	c, err := core.New(
+		core.WithService(window.Register(window.NewMockPlatform())),
+		core.WithServiceLock(),
+	)
+	require.NoError(t, err)
+	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+
+	_, handled, _ := c.QUERY(window.QueryConfig{})
+	assert.False(t, handled, "no display service means no config handler")
+}
+
+// --- IPC delegation tests (full conclave) ---
+
+func TestOpenWindow_Good(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+
 	t.Run("creates window with default options", func(t *testing.T) {
-		service, mock := newServiceWithMockApp(t)
-
-		err := service.OpenWindow()
+		err := svc.OpenWindow()
 		assert.NoError(t, err)
 
-		// Verify window was created
-		assert.Len(t, mock.windowManager.createdWindows, 1)
-		opts := mock.windowManager.createdWindows[0]
-		assert.Equal(t, "main", opts.Name)
-		assert.Equal(t, "Core", opts.Title)
-		assert.Equal(t, 1280, opts.Width)
-		assert.Equal(t, 800, opts.Height)
-		assert.Equal(t, "/", opts.URL)
+		// Verify via IPC query
+		infos := svc.ListWindowInfos()
+		assert.GreaterOrEqual(t, len(infos), 1)
 	})
 
 	t.Run("creates window with custom options", func(t *testing.T) {
-		service, mock := newServiceWithMockApp(t)
-
-		err := service.OpenWindow(
-			WindowName("custom-window"),
-			WindowTitle("Custom Title"),
-			WindowWidth(640),
-			WindowHeight(480),
-			WindowURL("/custom"),
+		err := svc.OpenWindow(
+			window.WithName("custom-window"),
+			window.WithTitle("Custom Title"),
+			window.WithSize(640, 480),
+			window.WithURL("/custom"),
 		)
 		assert.NoError(t, err)
 
-		assert.Len(t, mock.windowManager.createdWindows, 1)
-		opts := mock.windowManager.createdWindows[0]
-		assert.Equal(t, "custom-window", opts.Name)
-		assert.Equal(t, "Custom Title", opts.Title)
-		assert.Equal(t, 640, opts.Width)
-		assert.Equal(t, 480, opts.Height)
-		assert.Equal(t, "/custom", opts.URL)
+		result, _, _ := c.QUERY(window.QueryWindowByName{Name: "custom-window"})
+		info := result.(*window.WindowInfo)
+		assert.Equal(t, "custom-window", info.Name)
 	})
 }
 
-func TestNewWithStruct(t *testing.T) {
-	t.Run("creates window from struct", func(t *testing.T) {
-		service, mock := newServiceWithMockApp(t)
+func TestGetWindowInfo_Good(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
 
-		opts := &Window{
-			Name:   "struct-window",
-			Title:  "Struct Title",
-			Width:  800,
-			Height: 600,
-			URL:    "/struct",
-		}
+	_ = svc.OpenWindow(
+		window.WithName("test-win"),
+		window.WithSize(800, 600),
+	)
 
-		_, err := service.NewWithStruct(opts)
-		assert.NoError(t, err)
+	// Modify position via IPC
+	_, _, _ = c.PERFORM(window.TaskSetPosition{Name: "test-win", X: 100, Y: 200})
 
-		assert.Len(t, mock.windowManager.createdWindows, 1)
-		created := mock.windowManager.createdWindows[0]
-		assert.Equal(t, "struct-window", created.Name)
-		assert.Equal(t, "Struct Title", created.Title)
-		assert.Equal(t, 800, created.Width)
-		assert.Equal(t, 600, created.Height)
+	info, err := svc.GetWindowInfo("test-win")
+	require.NoError(t, err)
+	assert.Equal(t, "test-win", info.Name)
+	assert.Equal(t, 100, info.X)
+	assert.Equal(t, 200, info.Y)
+	assert.Equal(t, 800, info.Width)
+	assert.Equal(t, 600, info.Height)
+}
+
+func TestGetWindowInfo_Bad(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+
+	info, err := svc.GetWindowInfo("nonexistent")
+	// QueryWindowByName returns nil for nonexistent — handled=true, result=nil
+	assert.NoError(t, err)
+	assert.Nil(t, info)
+}
+
+func TestListWindowInfos_Good(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+
+	_ = svc.OpenWindow(window.WithName("win-1"))
+	_ = svc.OpenWindow(window.WithName("win-2"))
+
+	infos := svc.ListWindowInfos()
+	assert.Len(t, infos, 2)
+}
+
+func TestSetWindowPosition_Good(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+	_ = svc.OpenWindow(window.WithName("pos-win"))
+
+	err := svc.SetWindowPosition("pos-win", 300, 400)
+	assert.NoError(t, err)
+
+	info, _ := svc.GetWindowInfo("pos-win")
+	assert.Equal(t, 300, info.X)
+	assert.Equal(t, 400, info.Y)
+}
+
+func TestSetWindowPosition_Bad(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+
+	err := svc.SetWindowPosition("nonexistent", 0, 0)
+	assert.Error(t, err)
+}
+
+func TestSetWindowSize_Good(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+	_ = svc.OpenWindow(window.WithName("size-win"))
+
+	err := svc.SetWindowSize("size-win", 1024, 768)
+	assert.NoError(t, err)
+
+	info, _ := svc.GetWindowInfo("size-win")
+	assert.Equal(t, 1024, info.Width)
+	assert.Equal(t, 768, info.Height)
+}
+
+func TestMaximizeWindow_Good(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+	_ = svc.OpenWindow(window.WithName("max-win"))
+
+	err := svc.MaximizeWindow("max-win")
+	assert.NoError(t, err)
+
+	info, _ := svc.GetWindowInfo("max-win")
+	assert.True(t, info.Maximized)
+}
+
+func TestRestoreWindow_Good(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+	_ = svc.OpenWindow(window.WithName("restore-win"))
+	_ = svc.MaximizeWindow("restore-win")
+
+	err := svc.RestoreWindow("restore-win")
+	assert.NoError(t, err)
+
+	info, _ := svc.GetWindowInfo("restore-win")
+	assert.False(t, info.Maximized)
+}
+
+func TestFocusWindow_Good(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+	_ = svc.OpenWindow(window.WithName("focus-win"))
+
+	err := svc.FocusWindow("focus-win")
+	assert.NoError(t, err)
+
+	info, _ := svc.GetWindowInfo("focus-win")
+	assert.True(t, info.Focused)
+}
+
+func TestCloseWindow_Good(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+	_ = svc.OpenWindow(window.WithName("close-win"))
+
+	err := svc.CloseWindow("close-win")
+	assert.NoError(t, err)
+
+	// Window should be removed
+	info, _ := svc.GetWindowInfo("close-win")
+	assert.Nil(t, info)
+}
+
+func TestSetWindowVisibility_Good(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+	_ = svc.OpenWindow(window.WithName("vis-win"))
+
+	err := svc.SetWindowVisibility("vis-win", false)
+	assert.NoError(t, err)
+
+	err = svc.SetWindowVisibility("vis-win", true)
+	assert.NoError(t, err)
+}
+
+func TestSetWindowAlwaysOnTop_Good(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+	_ = svc.OpenWindow(window.WithName("ontop-win"))
+
+	err := svc.SetWindowAlwaysOnTop("ontop-win", true)
+	assert.NoError(t, err)
+}
+
+func TestSetWindowTitle_Good(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+	_ = svc.OpenWindow(window.WithName("title-win"))
+
+	err := svc.SetWindowTitle("title-win", "New Title")
+	assert.NoError(t, err)
+}
+
+func TestGetFocusedWindow_Good(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+	_ = svc.OpenWindow(window.WithName("win-a"))
+	_ = svc.OpenWindow(window.WithName("win-b"))
+	_ = svc.FocusWindow("win-b")
+
+	focused := svc.GetFocusedWindow()
+	assert.Equal(t, "win-b", focused)
+}
+
+func TestGetFocusedWindow_NoneSelected(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+	_ = svc.OpenWindow(window.WithName("win-a"))
+
+	focused := svc.GetFocusedWindow()
+	assert.Equal(t, "", focused)
+}
+
+func TestCreateWindow_Good(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+
+	info, err := svc.CreateWindow(CreateWindowOptions{
+		Name:   "new-win",
+		Title:  "New Window",
+		URL:    "/new",
+		Width:  600,
+		Height: 400,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "new-win", info.Name)
+}
+
+func TestCreateWindow_Bad(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+
+	_, err := svc.CreateWindow(CreateWindowOptions{})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "window name is required")
+}
+
+func TestResetWindowState_Good(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+
+	err := svc.ResetWindowState()
+	assert.NoError(t, err)
+}
+
+func TestGetSavedWindowStates_Good(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+
+	states := svc.GetSavedWindowStates()
+	assert.NotNil(t, states)
+}
+
+func TestHandleIPCEvents_WindowOpened_Good(t *testing.T) {
+	c := newTestConclave(t)
+
+	// Open a window — this should trigger ActionWindowOpened
+	// which HandleIPCEvents should convert to a WS event
+	result, handled, err := c.PERFORM(window.TaskOpenWindow{
+		Opts: []window.WindowOption{window.WithName("test")},
+	})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	info := result.(window.WindowInfo)
+	assert.Equal(t, "test", info.Name)
+}
+
+func TestHandleListWorkspaces_Good(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+
+	// handleListWorkspaces should not panic when workspace service is not available
+	assert.NotPanics(t, func() {
+		svc.handleListWorkspaces()
 	})
 }
 
-func TestNewWithOptions(t *testing.T) {
-	t.Run("creates window from options", func(t *testing.T) {
-		service, mock := newServiceWithMockApp(t)
+func TestWSEventManager_Good(t *testing.T) {
+	em := NewWSEventManager()
+	defer em.Close()
 
-		_, err := service.NewWithOptions(
-			WindowName("options-window"),
-			WindowTitle("Options Title"),
-		)
-		assert.NoError(t, err)
-
-		assert.Len(t, mock.windowManager.createdWindows, 1)
-		opts := mock.windowManager.createdWindows[0]
-		assert.Equal(t, "options-window", opts.Name)
-		assert.Equal(t, "Options Title", opts.Title)
-	})
+	assert.NotNil(t, em)
+	assert.Equal(t, 0, em.ConnectedClients())
 }
 
-func TestNewWithURL(t *testing.T) {
-	t.Run("creates window with URL", func(t *testing.T) {
-		service, mock := newServiceWithMockApp(t)
+// --- Config file loading tests ---
 
-		_, err := service.NewWithURL("/dashboard")
-		assert.NoError(t, err)
+func TestLoadConfig_Good(t *testing.T) {
+	// Create temp config file
+	dir := t.TempDir()
+	cfgPath := filepath.Join(dir, ".core", "gui", "config.yaml")
+	require.NoError(t, os.MkdirAll(filepath.Dir(cfgPath), 0o755))
+	require.NoError(t, os.WriteFile(cfgPath, []byte(`
+window:
+  default_width: 1280
+  default_height: 720
+systray:
+  tooltip: "Test App"
+menu:
+  show_dev_tools: false
+`), 0o644))
 
-		assert.Len(t, mock.windowManager.createdWindows, 1)
-		opts := mock.windowManager.createdWindows[0]
-		assert.Equal(t, "/dashboard", opts.URL)
-		assert.Equal(t, "Core", opts.Title)
-		assert.Equal(t, 1280, opts.Width)
-		assert.Equal(t, 900, opts.Height)
-	})
+	s, _ := New()
+	s.loadConfigFrom(cfgPath)
+
+	// Verify configData was populated from file
+	assert.Equal(t, 1280, s.configData["window"]["default_width"])
+	assert.Equal(t, "Test App", s.configData["systray"]["tooltip"])
+	assert.Equal(t, false, s.configData["menu"]["show_dev_tools"])
 }
 
-func TestHandleOpenWindowAction(t *testing.T) {
-	t.Run("creates window from message map", func(t *testing.T) {
-		service, mock := newServiceWithMockApp(t)
+func TestLoadConfig_Bad_MissingFile(t *testing.T) {
+	s, _ := New()
+	s.loadConfigFrom(filepath.Join(t.TempDir(), "nonexistent.yaml"))
 
-		msg := map[string]any{
-			"name": "action-window",
-			"options": map[string]any{
-				"Title":  "Action Title",
-				"Width":  float64(1024),
-				"Height": float64(768),
-			},
-		}
-
-		err := service.handleOpenWindowAction(msg)
-		assert.NoError(t, err)
-
-		assert.Len(t, mock.windowManager.createdWindows, 1)
-		opts := mock.windowManager.createdWindows[0]
-		assert.Equal(t, "action-window", opts.Name)
-		assert.Equal(t, "Action Title", opts.Title)
-		assert.Equal(t, 1024, opts.Width)
-		assert.Equal(t, 768, opts.Height)
-	})
+	// Should not panic, configData stays at empty defaults
+	assert.Empty(t, s.configData["window"])
+	assert.Empty(t, s.configData["systray"])
+	assert.Empty(t, s.configData["menu"])
 }
 
-func TestMonitorScreenChanges(t *testing.T) {
-	t.Run("registers theme change event", func(t *testing.T) {
-		service, mock := newServiceWithMockApp(t)
+func TestHandleConfigTask_Persists_Good(t *testing.T) {
+	dir := t.TempDir()
+	cfgPath := filepath.Join(dir, "config.yaml")
 
-		service.monitorScreenChanges()
+	s, _ := New()
+	s.loadConfigFrom(cfgPath) // Creates empty config (file doesn't exist yet)
 
-		// Verify that an event handler was registered
-		assert.Len(t, mock.eventManager.registeredEvents, 1)
+	// Simulate a TaskSaveConfig through the handler
+	c, _ := core.New(
+		core.WithService(func(c *core.Core) (any, error) {
+			s.ServiceRuntime = core.NewServiceRuntime[Options](c, Options{})
+			return s, nil
+		}),
+		core.WithServiceLock(),
+	)
+	c.ServiceStartup(context.Background(), nil)
+
+	_, handled, err := c.PERFORM(window.TaskSaveConfig{
+		Value: map[string]any{"default_width": 1920},
 	})
-}
+	require.NoError(t, err)
+	assert.True(t, handled)
 
-func TestSelectDirectory(t *testing.T) {
-	t.Run("requires Wails runtime for file dialog", func(t *testing.T) {
-		// SelectDirectory uses application.OpenFileDialog() directly
-		// which requires Wails runtime. This test verifies the method exists.
-		service, _ := newServiceWithMockApp(t)
-		assert.NotNil(t, service.SelectDirectory)
-	})
-}
-
-func TestShowEnvironmentDialog(t *testing.T) {
-	t.Run("calls dialog with environment info", func(t *testing.T) {
-		service, mock := newServiceWithMockApp(t)
-
-		// This will panic because Dialog().Info() returns nil
-		// We're verifying the env info is accessed, not that a dialog shows
-		assert.NotPanics(t, func() {
-			defer func() { recover() }() // Recover from nil dialog
-			service.ShowEnvironmentDialog()
-		})
-
-		// Verify dialog was requested (even though it's nil)
-		assert.Equal(t, 1, mock.dialogManager.infoDialogsCreated)
-	})
-}
-
-func TestBuildMenu(t *testing.T) {
-	t.Run("creates and sets menu", func(t *testing.T) {
-		service, mock := newServiceWithMockApp(t)
-		coreInstance := newTestCore(t)
-		service.ServiceRuntime = core.NewServiceRuntime[Options](coreInstance, Options{})
-
-		// buildMenu will panic because Menu().New() returns nil
-		// We verify the menu manager was called
-		assert.NotPanics(t, func() {
-			defer func() { recover() }()
-			service.buildMenu()
-		})
-
-		assert.Equal(t, 1, mock.menuManager.menusCreated)
-	})
-}
-
-func TestSystemTray(t *testing.T) {
-	t.Run("creates system tray", func(t *testing.T) {
-		service, mock := newServiceWithMockApp(t)
-		coreInstance := newTestCore(t)
-		service.ServiceRuntime = core.NewServiceRuntime[Options](coreInstance, Options{})
-
-		// systemTray will panic because SystemTray().New() returns nil
-		// We verify the system tray manager was called
-		assert.NotPanics(t, func() {
-			defer func() { recover() }()
-			service.systemTray()
-		})
-
-		assert.Equal(t, 1, mock.systemTrayMgr.traysCreated)
-	})
-}
-
-func TestApplyOptionsWithError(t *testing.T) {
-	t.Run("returns nil when option returns error", func(t *testing.T) {
-		errorOption := func(o *Window) error {
-			return assert.AnError
-		}
-
-		result := applyOptions(errorOption)
-		assert.Nil(t, result)
-	})
-
-	t.Run("processes multiple options until error", func(t *testing.T) {
-		firstOption := func(o *Window) error {
-			o.Name = "first"
-			return nil
-		}
-		errorOption := func(o *Window) error {
-			return assert.AnError
-		}
-
-		result := applyOptions(firstOption, errorOption)
-		assert.Nil(t, result)
-		// The first option should have run before error
-		// But the result is nil so we can't check
-	})
-
-	t.Run("handles empty options slice", func(t *testing.T) {
-		opts := []WindowOption{}
-		result := applyOptions(opts...)
-		assert.NotNil(t, result)
-		assert.Equal(t, "", result.Name) // Default empty values
-	})
-}
-
-func TestHandleNewWorkspace(t *testing.T) {
-	t.Run("opens workspace creation window", func(t *testing.T) {
-		service, mock := newServiceWithMockApp(t)
-
-		service.handleNewWorkspace()
-
-		// Verify a window was created with correct options
-		assert.Len(t, mock.windowManager.createdWindows, 1)
-		opts := mock.windowManager.createdWindows[0]
-		assert.Equal(t, "workspace-new", opts.Name)
-		assert.Equal(t, "New Workspace", opts.Title)
-		assert.Equal(t, 500, opts.Width)
-		assert.Equal(t, 400, opts.Height)
-		assert.Equal(t, "/workspace/new", opts.URL)
-	})
-}
-
-func TestHandleListWorkspaces(t *testing.T) {
-	t.Run("shows warning when workspace service not available", func(t *testing.T) {
-		service, mock := newServiceWithMockApp(t)
-		coreInstance := newTestCore(t)
-		service.ServiceRuntime = core.NewServiceRuntime[Options](coreInstance, Options{})
-
-		// Don't register workspace service - it won't be available
-		// This will panic because Dialog().Warning() returns nil
-		assert.NotPanics(t, func() {
-			defer func() { recover() }()
-			service.handleListWorkspaces()
-		})
-
-		assert.Equal(t, 1, mock.dialogManager.warningDialogsCreated)
-	})
-}
-
-func TestParseWindowOptions(t *testing.T) {
-	t.Run("parses complete options", func(t *testing.T) {
-		msg := map[string]any{
-			"name": "test-window",
-			"options": map[string]any{
-				"Title":  "Test Title",
-				"Width":  float64(800),
-				"Height": float64(600),
-			},
-		}
-
-		opts := parseWindowOptions(msg)
-
-		assert.Equal(t, "test-window", opts.Name)
-		assert.Equal(t, "Test Title", opts.Title)
-		assert.Equal(t, 800, opts.Width)
-		assert.Equal(t, 600, opts.Height)
-	})
-
-	t.Run("handles missing name", func(t *testing.T) {
-		msg := map[string]any{
-			"options": map[string]any{
-				"Title": "Test Title",
-			},
-		}
-
-		opts := parseWindowOptions(msg)
-
-		assert.Equal(t, "", opts.Name)
-		assert.Equal(t, "Test Title", opts.Title)
-	})
-
-	t.Run("handles missing options", func(t *testing.T) {
-		msg := map[string]any{
-			"name": "test-window",
-		}
-
-		opts := parseWindowOptions(msg)
-
-		assert.Equal(t, "test-window", opts.Name)
-		assert.Equal(t, "", opts.Title)
-		assert.Equal(t, 0, opts.Width)
-		assert.Equal(t, 0, opts.Height)
-	})
-
-	t.Run("handles empty map", func(t *testing.T) {
-		msg := map[string]any{}
-
-		opts := parseWindowOptions(msg)
-
-		assert.Equal(t, "", opts.Name)
-		assert.Equal(t, "", opts.Title)
-	})
-
-	t.Run("handles wrong type for name", func(t *testing.T) {
-		msg := map[string]any{
-			"name": 123, // Wrong type - should be string
-		}
-
-		opts := parseWindowOptions(msg)
-
-		assert.Equal(t, "", opts.Name) // Should not set name
-	})
-
-	t.Run("handles wrong type for options", func(t *testing.T) {
-		msg := map[string]any{
-			"name":    "test",
-			"options": "not-a-map", // Wrong type
-		}
-
-		opts := parseWindowOptions(msg)
-
-		assert.Equal(t, "test", opts.Name)
-		assert.Equal(t, "", opts.Title) // Options not parsed
-	})
-
-	t.Run("handles partial width/height", func(t *testing.T) {
-		msg := map[string]any{
-			"options": map[string]any{
-				"Width": float64(800),
-				// Height missing
-			},
-		}
-
-		opts := parseWindowOptions(msg)
-
-		assert.Equal(t, 800, opts.Width)
-		assert.Equal(t, 0, opts.Height)
-	})
-}
-
-func TestBuildWailsWindowOptions(t *testing.T) {
-	t.Run("creates default options with no args", func(t *testing.T) {
-		opts := buildWailsWindowOptions()
-
-		assert.Equal(t, "main", opts.Name)
-		assert.Equal(t, "Core", opts.Title)
-		assert.Equal(t, 1280, opts.Width)
-		assert.Equal(t, 800, opts.Height)
-		assert.Equal(t, "/", opts.URL)
-	})
-
-	t.Run("applies custom options", func(t *testing.T) {
-		opts := buildWailsWindowOptions(
-			WindowName("custom"),
-			WindowTitle("Custom Title"),
-			WindowWidth(640),
-			WindowHeight(480),
-			WindowURL("/custom"),
-		)
-
-		assert.Equal(t, "custom", opts.Name)
-		assert.Equal(t, "Custom Title", opts.Title)
-		assert.Equal(t, 640, opts.Width)
-		assert.Equal(t, 480, opts.Height)
-		assert.Equal(t, "/custom", opts.URL)
-	})
-
-	t.Run("skips nil options", func(t *testing.T) {
-		opts := buildWailsWindowOptions(nil, WindowTitle("Test"))
-
-		assert.Equal(t, "Test", opts.Title)
-		assert.Equal(t, "main", opts.Name) // Default preserved
-	})
+	// Verify file was written
+	data, err := os.ReadFile(cfgPath)
+	require.NoError(t, err)
+	assert.Contains(t, string(data), "default_width")
 }
