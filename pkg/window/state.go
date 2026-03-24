@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
+
+	coreio "forge.lthn.ai/core/go-io"
 )
 
 // WindowState holds the persisted position/size of a window.
@@ -62,13 +64,13 @@ func (sm *StateManager) load() {
 	if sm.configDir == "" {
 		return
 	}
-	data, err := os.ReadFile(sm.filePath())
+	content, err := coreio.Local.Read(sm.filePath())
 	if err != nil {
 		return
 	}
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
-	_ = json.Unmarshal(data, &sm.states)
+	_ = json.Unmarshal([]byte(content), &sm.states)
 }
 
 func (sm *StateManager) save() {
@@ -81,8 +83,8 @@ func (sm *StateManager) save() {
 	if err != nil {
 		return
 	}
-	_ = os.MkdirAll(sm.configDir, 0o755)
-	_ = os.WriteFile(sm.filePath(), data, 0o644)
+	_ = coreio.Local.EnsureDir(sm.configDir)
+	_ = coreio.Local.Write(sm.filePath(), string(data))
 }
 
 func (sm *StateManager) scheduleSave() {

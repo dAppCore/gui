@@ -38,38 +38,43 @@ The display `Service` registers with `forge.lthn.ai/core/go`'s service container
 
 All Wails application APIs are abstracted behind interfaces in `interfaces.go` (`App`, `WindowManager`, `MenuManager`, `DialogManager`, etc.). The `wailsApp` adapter wraps the real Wails app. Tests inject a `mockApp` instead — see `mocks_test.go` and the `newServiceWithMockApp(t)` helper.
 
-### Key files in pkg/display/
+### Package structure (pkg/)
 
-| File | Responsibility |
-|------|---------------|
-| `display.go` | Service struct, lifecycle (`Startup`), window CRUD, screen queries, tiling/snapping/layout, workflow presets |
-| `window.go` | `WindowOption` functional options pattern, `Window` type alias for `application.WebviewWindowOptions` |
-| `window_state.go` | `WindowStateManager` — persists window position/size across restarts |
-| `layout.go` | `LayoutManager` — save/restore named window arrangements |
-| `events.go` | `WSEventManager` — WebSocket pub/sub for window/theme/screen events |
-| `interfaces.go` | Abstract interfaces + Wails adapter implementations |
-| `actions.go` | `ActionOpenWindow` IPC message type |
-| `menu.go` | Application menu construction |
-| `tray.go` | System tray setup |
-| `dialog.go` | File/directory dialogs |
-| `clipboard.go` | Clipboard read/write |
-| `notification.go` | System notifications |
-| `theme.go` | Dark/light mode detection |
-| `mocks_test.go` | Mock implementations of all interfaces for testing |
+| Package | Responsibility |
+|---------|---------------|
+| `display` | Orchestrator service — bridges sub-service IPC to WebSocket events, menu/tray setup, config persistence |
+| `window` | Window lifecycle, `Manager`, `StateManager` (position persistence), `LayoutManager` (named arrangements), tiling/snapping |
+| `menu` | Application menu construction via platform abstraction |
+| `systray` | System tray icon, tooltip, menu via platform abstraction |
+| `dialog` | File open/save, message, confirm, and prompt dialogs |
+| `clipboard` | Clipboard read/write/clear |
+| `notification` | System notifications with permission management |
+| `screen` | Screen/monitor queries (list, primary, at-point, work areas) |
+| `environment` | Theme detection (dark/light) and OS environment info |
+| `keybinding` | Global keyboard shortcut registration |
+| `contextmenu` | Named context menu registration and lifecycle |
+| `browser` | Open URLs and files in the default browser |
+| `dock` | macOS dock icon visibility and badge |
+| `lifecycle` | Application lifecycle events (start, terminate, suspend, resume) |
+| `webview` | Webview automation (eval, click, type, screenshot, DOM queries) |
+| `mcp` | MCP tool subsystem — exposes all services as Model Context Protocol tools |
 
 ### Patterns used throughout
 
-- **Functional options**: `WindowOption` functions (`WindowName()`, `WindowTitle()`, `WindowWidth()`, etc.) configure `application.WebviewWindowOptions`
-- **Type alias**: `Window = application.WebviewWindowOptions` — direct alias, not a wrapper
+- **Platform abstraction**: Each sub-service defines a `Platform` interface and `PlatformWindow`/`PlatformTray`/etc. types; tests inject mocks
+- **Functional options**: `WindowOption` functions (`WithName()`, `WithTitle()`, `WithSize()`, etc.) configure `window.Window` descriptors
+- **IPC message bus**: Sub-services communicate via `core.QUERY`, `core.PERFORM`, and `core.ACTION` — display orchestrates and bridges to WebSocket events
 - **Event broadcasting**: `WSEventManager` uses gorilla/websocket with a buffered channel (`eventBuffer`) and per-client subscription filtering (supports `"*"` wildcard)
-- **Window lookup by name**: Most Service methods iterate `s.app.Window().GetAll()` and type-assert to `*application.WebviewWindow`, then match by `Name()`
+- **Error handling**: All errors use `coreerr.E(op, msg, err)` from `forge.lthn.ai/core/go-log` (aliased as `coreerr`), never `fmt.Errorf`
+- **File I/O**: Use `forge.lthn.ai/core/go-io` (`coreio.Local`) for filesystem operations, never `os.ReadFile`/`os.WriteFile`
 
 ## Testing
 
 - Framework: `testify` (assert + require)
-- Pattern: `newServiceWithMockApp(t)` creates a `Service` with mock Wails app — no real window system needed
-- `newTestCore(t)` creates a real `core.Core` instance for integration-style tests
-- Some tests use `defer func() { recover() }()` to handle nil panics from mock methods that return nil pointers (e.g., `Dialog().Info()`)
+- Each sub-package has its own `*_test.go` with mock platform implementations
+- `pkg/window`: `NewManagerWithDir` / `NewStateManagerWithDir` / `NewLayoutManagerWithDir` accept custom config dirs for isolated tests
+- `pkg/display`: `newTestCore(t)` creates a real `core.Core` instance for integration-style tests
+- Sub-services use `mock_platform.go` or `mock_test.go` for platform mocks
 
 ## CI/CD
 
@@ -82,9 +87,13 @@ Both use reusable workflows from `core/go-devops`.
 ## Dependencies
 
 - `forge.lthn.ai/core/go` — Core framework with service container and DI
+- `forge.lthn.ai/core/go-log` — Structured errors (`coreerr.E()`)
+- `forge.lthn.ai/core/go-io` — Filesystem abstraction (`coreio.Local`)
+- `forge.lthn.ai/core/config` — Configuration file management
 - `github.com/wailsapp/wails/v3` — Desktop app framework (alpha.74)
 - `github.com/gorilla/websocket` — WebSocket for real-time events
 - `github.com/stretchr/testify` — Test assertions
+- `github.com/modelcontextprotocol/go-sdk` — MCP tool registration
 
 ## Repository migration note
 

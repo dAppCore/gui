@@ -1,7 +1,7 @@
 // pkg/window/tiling.go
 package window
 
-import "fmt"
+import coreerr "forge.lthn.ai/core/go-log"
 
 // TileMode defines how windows are arranged.
 type TileMode int
@@ -67,12 +67,12 @@ func (m *Manager) TileWindows(mode TileMode, names []string, screenW, screenH in
 	for _, name := range names {
 		pw, ok := m.Get(name)
 		if !ok {
-			return fmt.Errorf("window %q not found", name)
+			return coreerr.E("window.Manager.TileWindows", "window not found: "+name, nil)
 		}
 		windows = append(windows, pw)
 	}
 	if len(windows) == 0 {
-		return fmt.Errorf("no windows to tile")
+		return coreerr.E("window.Manager.TileWindows", "no windows to tile", nil)
 	}
 
 	halfW, halfH := screenW/2, screenH/2
@@ -146,7 +146,7 @@ func (m *Manager) TileWindows(mode TileMode, names []string, screenW, screenH in
 func (m *Manager) SnapWindow(name string, pos SnapPosition, screenW, screenH int) error {
 	pw, ok := m.Get(name)
 	if !ok {
-		return fmt.Errorf("window %q not found", name)
+		return coreerr.E("window.Manager.SnapWindow", "window not found: "+name, nil)
 	}
 
 	halfW, halfH := screenW/2, screenH/2
@@ -188,7 +188,7 @@ func (m *Manager) StackWindows(names []string, offsetX, offsetY int) error {
 	for i, name := range names {
 		pw, ok := m.Get(name)
 		if !ok {
-			return fmt.Errorf("window %q not found", name)
+			return coreerr.E("window.Manager.StackWindows", "window not found: "+name, nil)
 		}
 		pw.SetPosition(i*offsetX, i*offsetY)
 	}
@@ -198,7 +198,7 @@ func (m *Manager) StackWindows(names []string, offsetX, offsetY int) error {
 // ApplyWorkflow arranges windows in a predefined workflow layout.
 func (m *Manager) ApplyWorkflow(workflow WorkflowLayout, names []string, screenW, screenH int) error {
 	if len(names) == 0 {
-		return fmt.Errorf("no windows for workflow")
+		return coreerr.E("window.Manager.ApplyWorkflow", "no windows for workflow", nil)
 	}
 
 	switch workflow {

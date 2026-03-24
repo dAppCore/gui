@@ -3,9 +3,9 @@ package mcp
 
 import (
 	"context"
-	"fmt"
 
 	"forge.lthn.ai/core/gui/pkg/dialog"
+	coreerr "forge.lthn.ai/core/go-log"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -33,7 +33,7 @@ func (s *Subsystem) dialogOpenFile(_ context.Context, _ *mcp.CallToolRequest, in
 	}
 	paths, ok := result.([]string)
 	if !ok {
-		return nil, DialogOpenFileOutput{}, fmt.Errorf("unexpected result type from open file dialog")
+		return nil, DialogOpenFileOutput{}, coreerr.E("mcp.dialogOpenFile", "unexpected result type", nil)
 	}
 	return nil, DialogOpenFileOutput{Paths: paths}, nil
 }
@@ -62,7 +62,7 @@ func (s *Subsystem) dialogSaveFile(_ context.Context, _ *mcp.CallToolRequest, in
 	}
 	path, ok := result.(string)
 	if !ok {
-		return nil, DialogSaveFileOutput{}, fmt.Errorf("unexpected result type from save file dialog")
+		return nil, DialogSaveFileOutput{}, coreerr.E("mcp.dialogSaveFile", "unexpected result type", nil)
 	}
 	return nil, DialogSaveFileOutput{Path: path}, nil
 }
@@ -87,7 +87,7 @@ func (s *Subsystem) dialogOpenDirectory(_ context.Context, _ *mcp.CallToolReques
 	}
 	path, ok := result.(string)
 	if !ok {
-		return nil, DialogOpenDirectoryOutput{}, fmt.Errorf("unexpected result type from open directory dialog")
+		return nil, DialogOpenDirectoryOutput{}, coreerr.E("mcp.dialogOpenDirectory", "unexpected result type", nil)
 	}
 	return nil, DialogOpenDirectoryOutput{Path: path}, nil
 }
@@ -115,7 +115,7 @@ func (s *Subsystem) dialogConfirm(_ context.Context, _ *mcp.CallToolRequest, inp
 	}
 	button, ok := result.(string)
 	if !ok {
-		return nil, DialogConfirmOutput{}, fmt.Errorf("unexpected result type from confirm dialog")
+		return nil, DialogConfirmOutput{}, coreerr.E("mcp.dialogConfirm", "unexpected result type", nil)
 	}
 	return nil, DialogConfirmOutput{Button: button}, nil
 }
@@ -142,7 +142,7 @@ func (s *Subsystem) dialogPrompt(_ context.Context, _ *mcp.CallToolRequest, inpu
 	}
 	button, ok := result.(string)
 	if !ok {
-		return nil, DialogPromptOutput{}, fmt.Errorf("unexpected result type from prompt dialog")
+		return nil, DialogPromptOutput{}, coreerr.E("mcp.dialogPrompt", "unexpected result type", nil)
 	}
 	return nil, DialogPromptOutput{Button: button}, nil
 }

@@ -3,8 +3,8 @@ package mcp
 
 import (
 	"context"
-	"fmt"
 
+	coreerr "forge.lthn.ai/core/go-log"
 	"forge.lthn.ai/core/gui/pkg/window"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -23,7 +23,7 @@ func (s *Subsystem) windowList(_ context.Context, _ *mcp.CallToolRequest, _ Wind
 	}
 	windows, ok := result.([]window.WindowInfo)
 	if !ok {
-		return nil, WindowListOutput{}, fmt.Errorf("unexpected result type from window list query")
+		return nil, WindowListOutput{}, coreerr.E("mcp.windowList", "unexpected result type", nil)
 	}
 	return nil, WindowListOutput{Windows: windows}, nil
 }
@@ -44,7 +44,7 @@ func (s *Subsystem) windowGet(_ context.Context, _ *mcp.CallToolRequest, input W
 	}
 	info, ok := result.(*window.WindowInfo)
 	if !ok {
-		return nil, WindowGetOutput{}, fmt.Errorf("unexpected result type from window get query")
+		return nil, WindowGetOutput{}, coreerr.E("mcp.windowGet", "unexpected result type", nil)
 	}
 	return nil, WindowGetOutput{Window: info}, nil
 }
@@ -63,7 +63,7 @@ func (s *Subsystem) windowFocused(_ context.Context, _ *mcp.CallToolRequest, _ W
 	}
 	windows, ok := result.([]window.WindowInfo)
 	if !ok {
-		return nil, WindowFocusedOutput{}, fmt.Errorf("unexpected result type from window list query")
+		return nil, WindowFocusedOutput{}, coreerr.E("mcp.windowFocused", "unexpected result type", nil)
 	}
 	for _, w := range windows {
 		if w.Focused {
@@ -110,7 +110,7 @@ func (s *Subsystem) windowCreate(_ context.Context, _ *mcp.CallToolRequest, inpu
 	}
 	info, ok := result.(window.WindowInfo)
 	if !ok {
-		return nil, WindowCreateOutput{}, fmt.Errorf("unexpected result type from window create task")
+		return nil, WindowCreateOutput{}, coreerr.E("mcp.windowCreate", "unexpected result type", nil)
 	}
 	return nil, WindowCreateOutput{Window: info}, nil
 }

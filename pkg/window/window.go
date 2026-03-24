@@ -2,8 +2,9 @@
 package window
 
 import (
-	"fmt"
 	"sync"
+
+	coreerr "forge.lthn.ai/core/go-log"
 )
 
 // Window is CoreGUI's own window descriptor — NOT a Wails type alias.
@@ -70,7 +71,7 @@ func NewManagerWithDir(platform Platform, configDir string) *Manager {
 func (m *Manager) Open(opts ...WindowOption) (PlatformWindow, error) {
 	w, err := ApplyOptions(opts...)
 	if err != nil {
-		return nil, fmt.Errorf("window.Manager.Open: %w", err)
+		return nil, coreerr.E("window.Manager.Open", "failed to apply options", err)
 	}
 	return m.Create(w)
 }
