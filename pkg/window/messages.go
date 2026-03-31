@@ -17,10 +17,9 @@ type QueryWindowByName struct{ Name string }
 
 type QueryConfig struct{}
 
-type TaskOpenWindow struct {
-	Window  *Window
-	Options []WindowOption
-}
+// TaskOpenWindow opens a concrete Window descriptor.
+// window.TaskOpenWindow{Window: &window.Window{Name: "settings", URL: "/", Width: 800, Height: 600}}
+type TaskOpenWindow struct{ Window *Window }
 
 type TaskCloseWindow struct{ Name string }
 

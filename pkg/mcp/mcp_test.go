@@ -14,13 +14,13 @@ import (
 
 func TestSubsystem_Good_Name(t *testing.T) {
 	c, _ := core.New(core.WithServiceLock())
-	sub := New(c)
+	sub := NewSubsystem(c)
 	assert.Equal(t, "display", sub.Name())
 }
 
 func TestSubsystem_Good_RegisterTools(t *testing.T) {
 	c, _ := core.New(core.WithServiceLock())
-	sub := New(c)
+	sub := NewSubsystem(c)
 	// RegisterTools should not panic with a real mcp.Server
 	server := mcp.NewServer(&mcp.Implementation{Name: "test", Version: "0.1.0"}, nil)
 	assert.NotPanics(t, func() { sub.RegisterTools(server) })
@@ -34,7 +34,7 @@ type mockClipPlatform struct {
 }
 
 func (m *mockClipPlatform) Text() (string, bool)  { return m.text, m.ok }
-func (m *mockClipPlatform) SetText(t string) bool  { m.text = t; m.ok = t != ""; return true }
+func (m *mockClipPlatform) SetText(t string) bool { m.text = t; m.ok = t != ""; return true }
 
 func TestMCP_Good_ClipboardRoundTrip(t *testing.T) {
 	c, err := core.New(

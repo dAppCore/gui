@@ -43,9 +43,9 @@ type Service struct {
 	events     *WSEventManager
 }
 
-// New returns a display Service with empty config sections.
-// s, _ := display.New(); s.loadConfigFrom("/path/to/config.yaml")
-func New() (*Service, error) {
+// NewService returns a display Service with empty config sections.
+// svc, _ := display.NewService(); _, _ = svc.CreateWindow(display.CreateWindowOptions{Name: "settings", URL: "/settings", Width: 800, Height: 600})
+func NewService() (*Service, error) {
 	return &Service{
 		configData: map[string]map[string]any{
 			"window":  {},
@@ -55,12 +55,17 @@ func New() (*Service, error) {
 	}, nil
 }
 
+// Deprecated: use NewService().
+func New() (*Service, error) {
+	return NewService()
+}
+
 // Register binds the display service to a Core instance.
 // core.WithService(display.Register(app))      // production (Wails app)
 // core.WithService(display.Register(nil))      // tests (no Wails runtime)
 func Register(wailsApp *application.App) func(*core.Core) (any, error) {
 	return func(c *core.Core) (any, error) {
-		s, err := New()
+		s, err := NewService()
 		if err != nil {
 			return nil, err
 		}
@@ -584,7 +589,7 @@ func (s *Service) windowService() *window.Service {
 
 // --- Window Management (delegates via IPC) ---
 
-// OpenWindow creates a new window via IPC.
+// Deprecated: use CreateWindow(display.CreateWindowOptions{Name: "settings", URL: "/settings", Width: 800, Height: 600}).
 func (s *Service) OpenWindow(options ...window.WindowOption) error {
 	spec, err := window.ApplyOptions(options...)
 	if err != nil {

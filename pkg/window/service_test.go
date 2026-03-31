@@ -22,6 +22,14 @@ func newTestWindowService(t *testing.T) (*Service, *core.Core) {
 	return svc, c
 }
 
+func requireOpenWindow(t *testing.T, c *core.Core, window Window) WindowInfo {
+	t.Helper()
+	result, handled, err := c.PERFORM(TaskOpenWindow{Window: &window})
+	require.NoError(t, err)
+	require.True(t, handled)
+	return result.(WindowInfo)
+}
+
 func TestRegister_Good(t *testing.T) {
 	svc, _ := newTestWindowService(t)
 	assert.NotNil(t, svc)
@@ -39,15 +47,12 @@ func TestTaskOpenWindow_Good(t *testing.T) {
 	assert.Equal(t, "test", info.Name)
 }
 
-func TestTaskOpenWindow_OptionsFallback_Good(t *testing.T) {
+func TestTaskOpenWindow_Bad_MissingWindow(t *testing.T) {
 	_, c := newTestWindowService(t)
-	result, handled, err := c.PERFORM(TaskOpenWindow{
-		Options: []WindowOption{WithName("test-fallback"), WithURL("/")},
-	})
-	require.NoError(t, err)
+	result, handled, err := c.PERFORM(TaskOpenWindow{})
 	assert.True(t, handled)
-	info := result.(WindowInfo)
-	assert.Equal(t, "test-fallback", info.Name)
+	assert.Error(t, err)
+	assert.Nil(t, result)
 }
 
 func TestTaskOpenWindow_Bad(t *testing.T) {
@@ -60,8 +65,8 @@ func TestTaskOpenWindow_Bad(t *testing.T) {
 
 func TestQueryWindowList_Good(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("a")}})
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("b")}})
+	_ = requireOpenWindow(t, c, Window{Name: "a"})
+	_ = requireOpenWindow(t, c, Window{Name: "b"})
 
 	result, handled, err := c.QUERY(QueryWindowList{})
 	require.NoError(t, err)
@@ -72,7 +77,7 @@ func TestQueryWindowList_Good(t *testing.T) {
 
 func TestQueryWindowByName_Good(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	_ = requireOpenWindow(t, c, Window{Name: "test"})
 
 	result, handled, err := c.QUERY(QueryWindowByName{Name: "test"})
 	require.NoError(t, err)
@@ -91,7 +96,7 @@ func TestQueryWindowByName_Bad(t *testing.T) {
 
 func TestTaskCloseWindow_Good(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	_ = requireOpenWindow(t, c, Window{Name: "test"})
 
 	_, handled, err := c.PERFORM(TaskCloseWindow{Name: "test"})
 	require.NoError(t, err)
@@ -111,7 +116,7 @@ func TestTaskCloseWindow_Bad(t *testing.T) {
 
 func TestTaskSetPosition_Good(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	_ = requireOpenWindow(t, c, Window{Name: "test"})
 
 	_, handled, err := c.PERFORM(TaskSetPosition{Name: "test", X: 100, Y: 200})
 	require.NoError(t, err)
@@ -125,7 +130,7 @@ func TestTaskSetPosition_Good(t *testing.T) {
 
 func TestTaskSetSize_Good(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	_ = requireOpenWindow(t, c, Window{Name: "test"})
 
 	_, handled, err := c.PERFORM(TaskSetSize{Name: "test", Width: 800, Height: 600})
 	require.NoError(t, err)
@@ -139,7 +144,7 @@ func TestTaskSetSize_Good(t *testing.T) {
 
 func TestTaskMaximise_Good(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	_ = requireOpenWindow(t, c, Window{Name: "test"})
 
 	_, handled, err := c.PERFORM(TaskMaximise{Name: "test"})
 	require.NoError(t, err)
@@ -154,10 +159,7 @@ func TestFileDrop_Good(t *testing.T) {
 	_, c := newTestWindowService(t)
 
 	// Open a window
-	result, _, _ := c.PERFORM(TaskOpenWindow{
-		Options: []WindowOption{WithName("drop-test")},
-	})
-	info := result.(WindowInfo)
+	info := requireOpenWindow(t, c, Window{Name: "drop-test"})
 	assert.Equal(t, "drop-test", info.Name)
 
 	// Capture broadcast actions
@@ -190,7 +192,7 @@ func TestFileDrop_Good(t *testing.T) {
 
 func TestTaskMinimise_Good(t *testing.T) {
 	svc, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	_ = requireOpenWindow(t, c, Window{Name: "test"})
 
 	_, handled, err := c.PERFORM(TaskMinimise{Name: "test"})
 	require.NoError(t, err)
@@ -213,7 +215,7 @@ func TestTaskMinimise_Bad(t *testing.T) {
 
 func TestTaskFocus_Good(t *testing.T) {
 	svc, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	_ = requireOpenWindow(t, c, Window{Name: "test"})
 
 	_, handled, err := c.PERFORM(TaskFocus{Name: "test"})
 	require.NoError(t, err)
@@ -236,7 +238,7 @@ func TestTaskFocus_Bad(t *testing.T) {
 
 func TestTaskRestore_Good(t *testing.T) {
 	svc, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	_ = requireOpenWindow(t, c, Window{Name: "test"})
 
 	// First maximise, then restore
 	_, _, _ = c.PERFORM(TaskMaximise{Name: "test"})
@@ -267,7 +269,7 @@ func TestTaskRestore_Bad(t *testing.T) {
 
 func TestTaskSetTitle_Good(t *testing.T) {
 	svc, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	_ = requireOpenWindow(t, c, Window{Name: "test"})
 
 	_, handled, err := c.PERFORM(TaskSetTitle{Name: "test", Title: "New Title"})
 	require.NoError(t, err)
@@ -289,7 +291,7 @@ func TestTaskSetTitle_Bad(t *testing.T) {
 
 func TestTaskSetAlwaysOnTop_Good(t *testing.T) {
 	svc, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	_ = requireOpenWindow(t, c, Window{Name: "test"})
 
 	_, handled, err := c.PERFORM(TaskSetAlwaysOnTop{Name: "test", AlwaysOnTop: true})
 	require.NoError(t, err)
@@ -312,7 +314,7 @@ func TestTaskSetAlwaysOnTop_Bad(t *testing.T) {
 
 func TestTaskSetBackgroundColour_Good(t *testing.T) {
 	svc, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	_ = requireOpenWindow(t, c, Window{Name: "test"})
 
 	_, handled, err := c.PERFORM(TaskSetBackgroundColour{
 		Name: "test", Red: 10, Green: 20, Blue: 30, Alpha: 40,
@@ -337,7 +339,7 @@ func TestTaskSetBackgroundColour_Bad(t *testing.T) {
 
 func TestTaskSetVisibility_Good(t *testing.T) {
 	svc, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	_ = requireOpenWindow(t, c, Window{Name: "test"})
 
 	_, handled, err := c.PERFORM(TaskSetVisibility{Name: "test", Visible: true})
 	require.NoError(t, err)
@@ -366,7 +368,7 @@ func TestTaskSetVisibility_Bad(t *testing.T) {
 
 func TestTaskFullscreen_Good(t *testing.T) {
 	svc, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	_ = requireOpenWindow(t, c, Window{Name: "test"})
 
 	// Enter fullscreen
 	_, handled, err := c.PERFORM(TaskFullscreen{Name: "test", Fullscreen: true})
@@ -396,8 +398,8 @@ func TestTaskFullscreen_Bad(t *testing.T) {
 
 func TestTaskSaveLayout_Good(t *testing.T) {
 	svc, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("editor"), WithSize(960, 1080), WithPosition(0, 0)}})
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("terminal"), WithSize(960, 1080), WithPosition(960, 0)}})
+	_ = requireOpenWindow(t, c, Window{Name: "editor", Width: 960, Height: 1080, X: 0, Y: 0})
+	_ = requireOpenWindow(t, c, Window{Name: "terminal", Width: 960, Height: 1080, X: 960, Y: 0})
 
 	_, handled, err := c.PERFORM(TaskSaveLayout{Name: "coding"})
 	require.NoError(t, err)
@@ -433,8 +435,8 @@ func TestTaskSaveLayout_Bad(t *testing.T) {
 func TestTaskRestoreLayout_Good(t *testing.T) {
 	svc, c := newTestWindowService(t)
 	// Open windows
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("editor"), WithSize(800, 600), WithPosition(0, 0)}})
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("terminal"), WithSize(800, 600), WithPosition(0, 0)}})
+	_ = requireOpenWindow(t, c, Window{Name: "editor", Width: 800, Height: 600, X: 0, Y: 0})
+	_ = requireOpenWindow(t, c, Window{Name: "terminal", Width: 800, Height: 600, X: 0, Y: 0})
 
 	// Save a layout with specific positions
 	_, _, _ = c.PERFORM(TaskSaveLayout{Name: "coding"})
@@ -483,8 +485,8 @@ func TestTaskRestoreLayout_Bad(t *testing.T) {
 
 func TestTaskStackWindows_Good(t *testing.T) {
 	svc, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("s1"), WithSize(800, 600)}})
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("s2"), WithSize(800, 600)}})
+	_ = requireOpenWindow(t, c, Window{Name: "s1", Width: 800, Height: 600})
+	_ = requireOpenWindow(t, c, Window{Name: "s2", Width: 800, Height: 600})
 
 	_, handled, err := c.PERFORM(TaskStackWindows{Windows: []string{"s1", "s2"}, OffsetX: 25, OffsetY: 35})
 	require.NoError(t, err)
@@ -501,8 +503,8 @@ func TestTaskStackWindows_Good(t *testing.T) {
 
 func TestTaskApplyWorkflow_Good(t *testing.T) {
 	svc, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("editor"), WithSize(800, 600)}})
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("terminal"), WithSize(800, 600)}})
+	_ = requireOpenWindow(t, c, Window{Name: "editor", Width: 800, Height: 600})
+	_ = requireOpenWindow(t, c, Window{Name: "terminal", Width: 800, Height: 600})
 
 	_, handled, err := c.PERFORM(TaskApplyWorkflow{Workflow: "side-by-side"})
 	require.NoError(t, err)

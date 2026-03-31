@@ -49,10 +49,8 @@ func TestTaskTileWindows_Good_UsesPrimaryScreenSize(t *testing.T) {
 		},
 	})
 
-	_, _, err := c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("left"), WithSize(400, 400)}})
-	require.NoError(t, err)
-	_, _, err = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("right"), WithSize(400, 400)}})
-	require.NoError(t, err)
+	_ = requireOpenWindow(t, c, Window{Name: "left", Width: 400, Height: 400})
+	_ = requireOpenWindow(t, c, Window{Name: "right", Width: 400, Height: 400})
 
 	_, handled, err := c.PERFORM(TaskTileWindows{Mode: "left-right", Windows: []string{"left", "right"}})
 	require.NoError(t, err)
@@ -82,8 +80,7 @@ func TestTaskSnapWindow_Good_UsesPrimaryScreenSize(t *testing.T) {
 		},
 	})
 
-	_, _, err := c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("snap"), WithSize(400, 300)}})
-	require.NoError(t, err)
+	_ = requireOpenWindow(t, c, Window{Name: "snap", Width: 400, Height: 300})
 
 	_, handled, err := c.PERFORM(TaskSnapWindow{Name: "snap", Position: "left"})
 	require.NoError(t, err)
@@ -107,10 +104,8 @@ func TestTaskTileWindows_Good_UsesPrimaryWorkAreaOrigin(t *testing.T) {
 		},
 	})
 
-	_, _, err := c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("left"), WithSize(400, 400)}})
-	require.NoError(t, err)
-	_, _, err = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("right"), WithSize(400, 400)}})
-	require.NoError(t, err)
+	_ = requireOpenWindow(t, c, Window{Name: "left", Width: 400, Height: 400})
+	_ = requireOpenWindow(t, c, Window{Name: "right", Width: 400, Height: 400})
 
 	_, handled, err := c.PERFORM(TaskTileWindows{Mode: "left-right", Windows: []string{"left", "right"}})
 	require.NoError(t, err)

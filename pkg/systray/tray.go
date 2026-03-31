@@ -21,6 +21,7 @@ type Manager struct {
 }
 
 // NewManager creates a systray Manager.
+// systray.NewManager(systray.NewWailsPlatform(app)).Setup("Core", "Core")
 func NewManager(platform Platform) *Manager {
 	return &Manager{
 		platform:  platform,
@@ -29,6 +30,7 @@ func NewManager(platform Platform) *Manager {
 }
 
 // Setup creates the system tray with default icon and tooltip.
+// systray.NewManager(systray.NewWailsPlatform(app)).Setup("Core", "Core")
 func (m *Manager) Setup(tooltip, label string) error {
 	m.tray = m.platform.NewTray()
 	if m.tray == nil {

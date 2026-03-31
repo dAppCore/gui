@@ -11,10 +11,15 @@ type Subsystem struct {
 	core *core.Core
 }
 
-// New(c) creates a display MCP subsystem backed by a Core instance.
-// sub := mcp.New(c); sub.RegisterTools(server)
-func New(c *core.Core) *Subsystem {
+// NewSubsystem creates the display MCP bridge for a Core instance.
+// sub := mcp.NewSubsystem(c); sub.RegisterTools(server)
+func NewSubsystem(c *core.Core) *Subsystem {
 	return &Subsystem{core: c}
+}
+
+// Deprecated: use NewSubsystem(c).
+func New(c *core.Core) *Subsystem {
+	return NewSubsystem(c)
 }
 
 func (s *Subsystem) Name() string { return "display" }

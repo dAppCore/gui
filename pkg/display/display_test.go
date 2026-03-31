@@ -44,17 +44,23 @@ func newTestConclave(t *testing.T) *core.Core {
 	return c
 }
 
+func requireCreateWindow(t *testing.T, svc *Service, options CreateWindowOptions) {
+	t.Helper()
+	_, err := svc.CreateWindow(options)
+	require.NoError(t, err)
+}
+
 // --- Tests ---
 
-func TestNew_Good(t *testing.T) {
-	service, err := New()
+func TestNewService_Good(t *testing.T) {
+	service, err := NewService()
 	assert.NoError(t, err)
 	assert.NotNil(t, service)
 }
 
-func TestNew_Good_IndependentInstances(t *testing.T) {
-	service1, err1 := New()
-	service2, err2 := New()
+func TestNewService_Good_IndependentInstances(t *testing.T) {
+	service1, err1 := NewService()
+	service2, err2 := NewService()
 	assert.NoError(t, err1)
 	assert.NoError(t, err2)
 	assert.NotSame(t, service1, service2)
@@ -161,7 +167,7 @@ func TestServiceConclave_Bad(t *testing.T) {
 
 // --- IPC delegation tests (full conclave) ---
 
-func TestOpenWindow_Good(t *testing.T) {
+func TestOpenWindow_Compatibility_Good(t *testing.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 
@@ -174,17 +180,16 @@ func TestOpenWindow_Good(t *testing.T) {
 		assert.GreaterOrEqual(t, len(infos), 1)
 	})
 
-	t.Run("creates window with custom options", func(t *testing.T) {
-		err := svc.OpenWindow(
-			window.WithName("custom-window"),
-			window.WithTitle("Custom Title"),
-			window.WithSize(640, 480),
-			window.WithURL("/custom"),
-		)
-		assert.NoError(t, err)
+	t.Run("creates window with declarative options", func(t *testing.T) {
+		info, err := svc.CreateWindow(CreateWindowOptions{
+			Name:   "custom-window",
+			Title:  "Custom Title",
+			URL:    "/custom",
+			Width:  640,
+			Height: 480,
+		})
+		require.NoError(t, err)
 
-		result, _, _ := c.QUERY(window.QueryWindowByName{Name: "custom-window"})
-		info := result.(*window.WindowInfo)
 		assert.Equal(t, "custom-window", info.Name)
 	})
 }
@@ -193,10 +198,7 @@ func TestGetWindowInfo_Good(t *testing.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 
-	_ = svc.OpenWindow(
-		window.WithName("test-win"),
-		window.WithSize(800, 600),
-	)
+	requireCreateWindow(t, svc, CreateWindowOptions{Name: "test-win", Width: 800, Height: 600})
 
 	// Modify position via IPC
 	_, _, _ = c.PERFORM(window.TaskSetPosition{Name: "test-win", X: 100, Y: 200})
@@ -224,8 +226,8 @@ func TestListWindowInfos_Good(t *testing.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 
-	_ = svc.OpenWindow(window.WithName("win-1"))
-	_ = svc.OpenWindow(window.WithName("win-2"))
+	requireCreateWindow(t, svc, CreateWindowOptions{Name: "win-1"})
+	requireCreateWindow(t, svc, CreateWindowOptions{Name: "win-2"})
 
 	infos := svc.ListWindowInfos()
 	assert.Len(t, infos, 2)
@@ -234,7 +236,7 @@ func TestListWindowInfos_Good(t *testing.T) {
 func TestSetWindowPosition_Good(t *testing.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
-	_ = svc.OpenWindow(window.WithName("pos-win"))
+	requireCreateWindow(t, svc, CreateWindowOptions{Name: "pos-win"})
 
 	err := svc.SetWindowPosition("pos-win", 300, 400)
 	assert.NoError(t, err)
@@ -255,7 +257,7 @@ func TestSetWindowPosition_Bad(t *testing.T) {
 func TestSetWindowSize_Good(t *testing.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
-	_ = svc.OpenWindow(window.WithName("size-win"))
+	requireCreateWindow(t, svc, CreateWindowOptions{Name: "size-win"})
 
 	err := svc.SetWindowSize("size-win", 1024, 768)
 	assert.NoError(t, err)
@@ -268,7 +270,7 @@ func TestSetWindowSize_Good(t *testing.T) {
 func TestMaximizeWindow_Good(t *testing.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
-	_ = svc.OpenWindow(window.WithName("max-win"))
+	requireCreateWindow(t, svc, CreateWindowOptions{Name: "max-win"})
 
 	err := svc.MaximizeWindow("max-win")
 	assert.NoError(t, err)
@@ -280,7 +282,7 @@ func TestMaximizeWindow_Good(t *testing.T) {
 func TestRestoreWindow_Good(t *testing.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
-	_ = svc.OpenWindow(window.WithName("restore-win"))
+	requireCreateWindow(t, svc, CreateWindowOptions{Name: "restore-win"})
 	_ = svc.MaximizeWindow("restore-win")
 
 	err := svc.RestoreWindow("restore-win")
@@ -293,7 +295,7 @@ func TestRestoreWindow_Good(t *testing.T) {
 func TestFocusWindow_Good(t *testing.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
-	_ = svc.OpenWindow(window.WithName("focus-win"))
+	requireCreateWindow(t, svc, CreateWindowOptions{Name: "focus-win"})
 
 	err := svc.FocusWindow("focus-win")
 	assert.NoError(t, err)
@@ -305,7 +307,7 @@ func TestFocusWindow_Good(t *testing.T) {
 func TestCloseWindow_Good(t *testing.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
-	_ = svc.OpenWindow(window.WithName("close-win"))
+	requireCreateWindow(t, svc, CreateWindowOptions{Name: "close-win"})
 
 	err := svc.CloseWindow("close-win")
 	assert.NoError(t, err)
@@ -318,7 +320,7 @@ func TestCloseWindow_Good(t *testing.T) {
 func TestSetWindowVisibility_Good(t *testing.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
-	_ = svc.OpenWindow(window.WithName("vis-win"))
+	requireCreateWindow(t, svc, CreateWindowOptions{Name: "vis-win"})
 
 	err := svc.SetWindowVisibility("vis-win", false)
 	assert.NoError(t, err)
@@ -330,7 +332,7 @@ func TestSetWindowVisibility_Good(t *testing.T) {
 func TestSetWindowAlwaysOnTop_Good(t *testing.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
-	_ = svc.OpenWindow(window.WithName("ontop-win"))
+	requireCreateWindow(t, svc, CreateWindowOptions{Name: "ontop-win"})
 
 	err := svc.SetWindowAlwaysOnTop("ontop-win", true)
 	assert.NoError(t, err)
@@ -339,7 +341,7 @@ func TestSetWindowAlwaysOnTop_Good(t *testing.T) {
 func TestSetWindowTitle_Good(t *testing.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
-	_ = svc.OpenWindow(window.WithName("title-win"))
+	requireCreateWindow(t, svc, CreateWindowOptions{Name: "title-win"})
 
 	err := svc.SetWindowTitle("title-win", "New Title")
 	assert.NoError(t, err)
@@ -348,8 +350,8 @@ func TestSetWindowTitle_Good(t *testing.T) {
 func TestGetFocusedWindow_Good(t *testing.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
-	_ = svc.OpenWindow(window.WithName("win-a"))
-	_ = svc.OpenWindow(window.WithName("win-b"))
+	requireCreateWindow(t, svc, CreateWindowOptions{Name: "win-a"})
+	requireCreateWindow(t, svc, CreateWindowOptions{Name: "win-b"})
 	_ = svc.FocusWindow("win-b")
 
 	focused := svc.GetFocusedWindow()
@@ -359,7 +361,7 @@ func TestGetFocusedWindow_Good(t *testing.T) {
 func TestGetFocusedWindow_Good_NoneSelected(t *testing.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
-	_ = svc.OpenWindow(window.WithName("win-a"))
+	requireCreateWindow(t, svc, CreateWindowOptions{Name: "win-a"})
 
 	focused := svc.GetFocusedWindow()
 	assert.Equal(t, "", focused)
@@ -454,7 +456,7 @@ menu:
   show_dev_tools: false
 `), 0o644))
 
-	s, _ := New()
+	s, _ := NewService()
 	s.loadConfigFrom(cfgPath)
 
 	// Verify configData was populated from file
@@ -464,7 +466,7 @@ menu:
 }
 
 func TestLoadConfig_Bad_MissingFile(t *testing.T) {
-	s, _ := New()
+	s, _ := NewService()
 	s.loadConfigFrom(filepath.Join(t.TempDir(), "nonexistent.yaml"))
 
 	// Should not panic, configData stays at empty defaults
@@ -477,7 +479,7 @@ func TestHandleConfigTask_Persists_Good(t *testing.T) {
 	dir := t.TempDir()
 	cfgPath := filepath.Join(dir, "config.yaml")
 
-	s, _ := New()
+	s, _ := NewService()
 	s.loadConfigFrom(cfgPath) // Creates empty config (file doesn't exist yet)
 
 	// Simulate a TaskSaveConfig through the handler
