@@ -16,5 +16,11 @@ type QueryAtPoint struct{ X, Y int }
 // QueryWorkAreas returns work areas for all screens. Result: []Rect
 type QueryWorkAreas struct{}
 
+// QueryCurrent returns the most recently active screen. Result: *Screen (nil if no screens registered)
+//
+//	result, _, _ := c.QUERY(screen.QueryCurrent{})
+//	current := result.(*screen.Screen)
+type QueryCurrent struct{}
+
 // ActionScreensChanged is broadcast when displays change (future).
 type ActionScreensChanged struct{ Screens []Screen }

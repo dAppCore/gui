@@ -46,6 +46,8 @@ func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
 		return s.queryAtPoint(q.X, q.Y), true, nil
 	case QueryWorkAreas:
 		return s.queryWorkAreas(), true, nil
+	case QueryCurrent:
+		return s.platform.GetCurrent(), true, nil
 	default:
 		return nil, false, nil
 	}
