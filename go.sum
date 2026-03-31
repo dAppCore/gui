@@ -1,3 +1,5 @@
+dappco.re/go/core v0.8.0-alpha.1 h1:gj7+Scv+L63Z7wMxbJYHhaRFkHJo2u4MMPuUSv/Dhtk=
+dappco.re/go/core v0.8.0-alpha.1/go.mod h1:f2/tBZ3+3IqDrg2F5F598llv0nmb/4gJVCFzM5geE4A=
 forge.lthn.ai/core/config v0.1.8 h1:xP2hys7T94QGVF/OTh84/Zr5Dm/dL/0vzjht8zi+LOg=
 forge.lthn.ai/core/config v0.1.8/go.mod h1:8epZrkwoCt+5ayrqdinOUU/+w6UoxOyv9ZrdgVOgYfQ=
 forge.lthn.ai/core/go v0.3.3 h1:kYYZ2nRYy0/Be3cyuLJspRjLqTMxpckVyhb/7Sw2gd0=

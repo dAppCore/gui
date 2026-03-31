@@ -35,6 +35,13 @@ type mockConnector struct {
 	lastViewportW      int
 	lastViewportH      int
 	consoleClearCalled bool
+
+	zoom          float64
+	lastZoomSet   float64
+	printToPDF    bool
+	printCalled   bool
+	printPDFBytes []byte
+	printErr      error
 }
 
 func (m *mockConnector) Navigate(url string) error        { m.lastNavURL = url; return nil }
@@ -65,6 +72,25 @@ func (m *mockConnector) QuerySelectorAll(sel string) ([]*ElementInfo, error) {
 }
 
 func (m *mockConnector) GetConsole() []ConsoleMessage { return m.console }
+
+func (m *mockConnector) GetZoom() (float64, error) {
+	if m.zoom == 0 {
+		return 1.0, nil
+	}
+	return m.zoom, nil
+}
+
+func (m *mockConnector) SetZoom(zoom float64) error {
+	m.lastZoomSet = zoom
+	m.zoom = zoom
+	return nil
+}
+
+func (m *mockConnector) Print(toPDF bool) ([]byte, error) {
+	m.printCalled = true
+	m.printToPDF = toPDF
+	return m.printPDFBytes, m.printErr
+}
 
 func newTestService(t *testing.T, mock *mockConnector) (*Service, *core.Core) {
 	t.Helper()
@@ -189,4 +215,147 @@ func TestQueryURL_Bad_NoService(t *testing.T) {
 	c, _ := core.New(core.WithServiceLock())
 	_, handled, _ := c.QUERY(QueryURL{Window: "main"})
 	assert.False(t, handled)
+}
+
+// --- SetURL ---
+
+func TestTaskSetURL_Good(t *testing.T) {
+	mock := &mockConnector{}
+	_, c := newTestService(t, mock)
+	_, handled, err := c.PERFORM(TaskSetURL{Window: "main", URL: "https://example.com/page"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.Equal(t, "https://example.com/page", mock.lastNavURL)
+}
+
+func TestTaskSetURL_Bad_UnknownWindow(t *testing.T) {
+	_, c := newTestService(t, &mockConnector{})
+	// Inject a connector factory that errors
+	svc := core.MustServiceFor[*Service](c, "webview")
+	svc.newConn = func(_, _ string) (connector, error) {
+		return nil, core.E("test", "no connection", nil)
+	}
+	_, _, err := c.PERFORM(TaskSetURL{Window: "bad", URL: "https://example.com"})
+	assert.Error(t, err)
+}
+
+func TestTaskSetURL_Ugly_EmptyURL(t *testing.T) {
+	mock := &mockConnector{}
+	_, c := newTestService(t, mock)
+	_, handled, err := c.PERFORM(TaskSetURL{Window: "main", URL: ""})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.Equal(t, "", mock.lastNavURL)
+}
+
+// --- Zoom ---
+
+func TestQueryZoom_Good(t *testing.T) {
+	mock := &mockConnector{zoom: 1.5}
+	_, c := newTestService(t, mock)
+	result, handled, err := c.QUERY(QueryZoom{Window: "main"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.InDelta(t, 1.5, result.(float64), 0.001)
+}
+
+func TestQueryZoom_Good_DefaultsToOne(t *testing.T) {
+	mock := &mockConnector{} // zoom not set → GetZoom returns 1.0
+	_, c := newTestService(t, mock)
+	result, handled, err := c.QUERY(QueryZoom{Window: "main"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.InDelta(t, 1.0, result.(float64), 0.001)
+}
+
+func TestQueryZoom_Bad_NoService(t *testing.T) {
+	c, _ := core.New(core.WithServiceLock())
+	_, handled, _ := c.QUERY(QueryZoom{Window: "main"})
+	assert.False(t, handled)
+}
+
+func TestTaskSetZoom_Good(t *testing.T) {
+	mock := &mockConnector{}
+	_, c := newTestService(t, mock)
+	_, handled, err := c.PERFORM(TaskSetZoom{Window: "main", Zoom: 2.0})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.InDelta(t, 2.0, mock.lastZoomSet, 0.001)
+}
+
+func TestTaskSetZoom_Good_Reset(t *testing.T) {
+	mock := &mockConnector{zoom: 1.5}
+	_, c := newTestService(t, mock)
+	_, _, err := c.PERFORM(TaskSetZoom{Window: "main", Zoom: 1.0})
+	require.NoError(t, err)
+	assert.InDelta(t, 1.0, mock.zoom, 0.001)
+}
+
+func TestTaskSetZoom_Bad_NoService(t *testing.T) {
+	c, _ := core.New(core.WithServiceLock())
+	_, handled, _ := c.PERFORM(TaskSetZoom{Window: "main", Zoom: 1.5})
+	assert.False(t, handled)
+}
+
+func TestTaskSetZoom_Ugly_ZeroZoom(t *testing.T) {
+	mock := &mockConnector{}
+	_, c := newTestService(t, mock)
+	// Zero zoom is technically valid input; the connector accepts it.
+	_, handled, err := c.PERFORM(TaskSetZoom{Window: "main", Zoom: 0})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.InDelta(t, 0.0, mock.lastZoomSet, 0.001)
+}
+
+// --- Print ---
+
+func TestTaskPrint_Good_Dialog(t *testing.T) {
+	mock := &mockConnector{}
+	_, c := newTestService(t, mock)
+	result, handled, err := c.PERFORM(TaskPrint{Window: "main", ToPDF: false})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.Nil(t, result)
+	assert.True(t, mock.printCalled)
+	assert.False(t, mock.printToPDF)
+}
+
+func TestTaskPrint_Good_PDF(t *testing.T) {
+	pdfHeader := []byte{0x25, 0x50, 0x44, 0x46} // %PDF
+	mock := &mockConnector{printPDFBytes: pdfHeader}
+	_, c := newTestService(t, mock)
+	result, handled, err := c.PERFORM(TaskPrint{Window: "main", ToPDF: true})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	pr, ok := result.(PrintResult)
+	require.True(t, ok)
+	assert.Equal(t, "application/pdf", pr.MimeType)
+	assert.NotEmpty(t, pr.Base64)
+	assert.True(t, mock.printToPDF)
+}
+
+func TestTaskPrint_Bad_NoService(t *testing.T) {
+	c, _ := core.New(core.WithServiceLock())
+	_, handled, _ := c.PERFORM(TaskPrint{Window: "main"})
+	assert.False(t, handled)
+}
+
+func TestTaskPrint_Bad_Error(t *testing.T) {
+	mock := &mockConnector{printErr: core.E("test", "print failed", nil)}
+	_, c := newTestService(t, mock)
+	_, _, err := c.PERFORM(TaskPrint{Window: "main", ToPDF: true})
+	assert.Error(t, err)
+}
+
+func TestTaskPrint_Ugly_EmptyPDF(t *testing.T) {
+	// toPDF=true but connector returns zero bytes — should still wrap as PrintResult
+	mock := &mockConnector{printPDFBytes: []byte{}}
+	_, c := newTestService(t, mock)
+	result, handled, err := c.PERFORM(TaskPrint{Window: "main", ToPDF: true})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	pr, ok := result.(PrintResult)
+	require.True(t, ok)
+	assert.Equal(t, "application/pdf", pr.MimeType)
+	assert.Equal(t, "", pr.Base64) // empty PDF encodes to empty base64
 }

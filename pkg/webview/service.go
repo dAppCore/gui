@@ -34,6 +34,9 @@ type connector interface {
 	ClearConsole()
 	SetViewport(width, height int) error
 	UploadFile(selector string, paths []string) error
+	GetZoom() (float64, error)
+	SetZoom(zoom float64) error
+	Print(toPDF bool) ([]byte, error)
 	Close() error
 }
 
@@ -111,7 +114,7 @@ func defaultNewConn(options Options) func(string, string) (connector, error) {
 		if err != nil {
 			return nil, err
 		}
-		return &realConnector{wv: wv}, nil
+		return &realConnector{wv: wv, debugURL: debugURL}, nil
 	}
 }
 
@@ -273,6 +276,13 @@ func (s *Service) handleQuery(_ *core.Core, q core.Query) (any, bool, error) {
 		}
 		html, err := conn.GetHTML(selector)
 		return html, true, err
+	case QueryZoom:
+		conn, err := s.getConn(q.Window)
+		if err != nil {
+			return nil, true, err
+		}
+		zoom, err := conn.GetZoom()
+		return zoom, true, err
 	default:
 		return nil, false, nil
 	}
@@ -362,14 +372,45 @@ func (s *Service) handleTask(_ *core.Core, t core.Task) (any, bool, error) {
 		}
 		conn.ClearConsole()
 		return nil, true, nil
+	case TaskSetURL:
+		conn, err := s.getConn(t.Window)
+		if err != nil {
+			return nil, true, err
+		}
+		return nil, true, conn.Navigate(t.URL)
+	case TaskSetZoom:
+		conn, err := s.getConn(t.Window)
+		if err != nil {
+			return nil, true, err
+		}
+		return nil, true, conn.SetZoom(t.Zoom)
+	case TaskPrint:
+		conn, err := s.getConn(t.Window)
+		if err != nil {
+			return nil, true, err
+		}
+		pdfBytes, err := conn.Print(t.ToPDF)
+		if err != nil {
+			return nil, true, err
+		}
+		if !t.ToPDF {
+			return nil, true, nil
+		}
+		return PrintResult{
+			Base64:   base64.StdEncoding.EncodeToString(pdfBytes),
+			MimeType: "application/pdf",
+		}, true, nil
 	default:
 		return nil, false, nil
 	}
 }
 
 // realConnector wraps *gowebview.Webview, converting types at the boundary.
+// debugURL is retained so that PDF printing can issue a Page.printToPDF CDP call
+// via a fresh CDPClient, since go-webview v0.1.7 does not expose a PrintToPDF helper.
 type realConnector struct {
-	wv *gowebview.Webview
+	wv       *gowebview.Webview
+	debugURL string // Chrome debug HTTP endpoint (e.g., http://localhost:9222) for direct CDP calls
 }
 
 func (r *realConnector) Navigate(url string) error               { return r.wv.Navigate(url) }
@@ -384,6 +425,83 @@ func (r *realConnector) ClearConsole()                           { r.wv.ClearCon
 func (r *realConnector) Close() error                            { return r.wv.Close() }
 func (r *realConnector) SetViewport(w, h int) error              { return r.wv.SetViewport(w, h) }
 func (r *realConnector) UploadFile(sel string, p []string) error { return r.wv.UploadFile(sel, p) }
+
+// GetZoom returns the current CSS zoom level as a float64.
+// zoom, _ := conn.GetZoom()  // 1.0 = 100%, 1.5 = 150%
+func (r *realConnector) GetZoom() (float64, error) {
+	raw, err := r.wv.Evaluate("parseFloat(document.documentElement.style.zoom) || 1.0")
+	if err != nil {
+		return 0, core.E("realConnector.GetZoom", "failed to get zoom", err)
+	}
+	switch v := raw.(type) {
+	case float64:
+		return v, nil
+	case int:
+		return float64(v), nil
+	default:
+		return 1.0, nil
+	}
+}
+
+// SetZoom sets the CSS zoom level on the document root element.
+// conn.SetZoom(1.5)  // 150%
+// conn.SetZoom(1.0)  // reset to normal
+func (r *realConnector) SetZoom(zoom float64) error {
+	script := "document.documentElement.style.zoom = '" + strconv.FormatFloat(zoom, 'g', -1, 64) + "'; undefined"
+	_, err := r.wv.Evaluate(script)
+	if err != nil {
+		return core.E("realConnector.SetZoom", "failed to set zoom", err)
+	}
+	return nil
+}
+
+// Print triggers window.print() or exports to PDF via Page.printToPDF.
+// When toPDF is false the browser print dialog is opened (via window.print()) and nil bytes are returned.
+// When toPDF is true a fresh CDPClient is opened against the stored WebSocket URL to issue
+// Page.printToPDF, which returns raw PDF bytes.
+func (r *realConnector) Print(toPDF bool) ([]byte, error) {
+	if !toPDF {
+		_, err := r.wv.Evaluate("window.print(); undefined")
+		if err != nil {
+			return nil, core.E("realConnector.Print", "failed to open print dialog", err)
+		}
+		return nil, nil
+	}
+
+	if r.debugURL == "" {
+		return nil, core.E("realConnector.Print", "no debug URL stored; cannot issue Page.printToPDF", nil)
+	}
+
+	// Open a dedicated CDPClient for the single Page.printToPDF call.
+	// NewCDPClient connects to the first page target at the debug endpoint.
+	client, err := gowebview.NewCDPClient(r.debugURL)
+	if err != nil {
+		return nil, core.E("realConnector.Print", "failed to connect for PDF export", err)
+	}
+	defer client.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	result, err := client.Call(ctx, "Page.printToPDF", map[string]any{
+		"printBackground": true,
+	})
+	if err != nil {
+		return nil, core.E("realConnector.Print", "Page.printToPDF failed", err)
+	}
+
+	dataStr, ok := result["data"].(string)
+	if !ok {
+		return nil, core.E("realConnector.Print", "Page.printToPDF returned no data", nil)
+	}
+
+	pdfBytes, err := base64.StdEncoding.DecodeString(dataStr)
+	if err != nil {
+		return nil, core.E("realConnector.Print", "failed to decode PDF data", err)
+	}
+
+	return pdfBytes, nil
+}
 
 func (r *realConnector) Hover(sel string) error {
 	return gowebview.NewActionSequence().Add(&gowebview.HoverAction{Selector: sel}).Execute(context.Background(), r.wv)

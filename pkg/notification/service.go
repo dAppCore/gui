@@ -14,7 +14,8 @@ type Options struct{}
 
 type Service struct {
 	*core.ServiceRuntime[Options]
-	platform Platform
+	platform   Platform
+	categories map[string]NotificationCategory
 }
 
 func Register(p Platform) func(*core.Core) (any, error) {
@@ -22,6 +23,7 @@ func Register(p Platform) func(*core.Core) (any, error) {
 		return &Service{
 			ServiceRuntime: core.NewServiceRuntime[Options](c, Options{}),
 			platform:       p,
+			categories:     make(map[string]NotificationCategory),
 		}, nil
 	}
 }
@@ -53,6 +55,11 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 	case TaskRequestPermission:
 		granted, err := s.platform.RequestPermission()
 		return granted, true, err
+	case TaskRevokePermission:
+		return nil, true, s.platform.RevokePermission()
+	case TaskRegisterCategory:
+		s.categories[t.Category.ID] = t.Category
+		return nil, true, nil
 	default:
 		return nil, false, nil
 	}

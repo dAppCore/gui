@@ -110,6 +110,32 @@ type TaskSetViewport struct {
 // TaskClearConsole clears captured console messages. Result: nil
 type TaskClearConsole struct{ Window string `json:"window"` }
 
+// TaskSetURL navigates to a URL (alias for TaskNavigate, preferred for direct URL setting). Result: nil
+type TaskSetURL struct {
+	Window string `json:"window"`
+	URL    string `json:"url"`
+}
+
+// TaskSetZoom sets the page zoom level. Result: nil
+// zoom := 1.0 is normal; 1.5 is 150%; 0.5 is 50%.
+type TaskSetZoom struct {
+	Window string  `json:"window"`
+	Zoom   float64 `json:"zoom"`
+}
+
+// TaskPrint triggers the browser print dialog or prints to PDF. Result: *PrintResult
+// c.PERFORM(TaskPrint{Window: "main"})  // opens print dialog via window.print()
+// c.PERFORM(TaskPrint{Window: "main", ToPDF: true})  // returns base64 PDF bytes
+type TaskPrint struct {
+	Window string `json:"window"`
+	ToPDF  bool   `json:"toPDF,omitempty"` // true = return PDF bytes; false = open print dialog
+}
+
+// QueryZoom gets the current page zoom level. Result: float64
+// result, _, _ := c.QUERY(QueryZoom{Window: "main"})
+// zoom := result.(float64)
+type QueryZoom struct{ Window string `json:"window"` }
+
 // --- Actions (broadcast) ---
 
 // ActionConsoleMessage is broadcast when a console message is captured.
@@ -168,4 +194,10 @@ type ExceptionInfo struct {
 type ScreenshotResult struct {
 	Base64   string `json:"base64"`
 	MimeType string `json:"mimeType"` // always "image/png"
+}
+
+// PrintResult wraps PDF bytes as base64 when TaskPrint.ToPDF is true.
+type PrintResult struct {
+	Base64   string `json:"base64"`
+	MimeType string `json:"mimeType"` // always "application/pdf"
 }
