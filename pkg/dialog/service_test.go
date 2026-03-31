@@ -11,18 +11,18 @@ import (
 )
 
 type mockPlatform struct {
-	openFilePaths  []string
-	saveFilePath   string
-	openDirPath    string
-	messageButton  string
-	openFileErr    error
-	saveFileErr    error
-	openDirErr     error
-	messageErr     error
-	lastOpenOpts   OpenFileOptions
-	lastSaveOpts   SaveFileOptions
-	lastDirOpts    OpenDirectoryOptions
-	lastMsgOpts    MessageDialogOptions
+	openFilePaths []string
+	saveFilePath  string
+	openDirPath   string
+	messageButton string
+	openFileErr   error
+	saveFileErr   error
+	openDirErr    error
+	messageErr    error
+	lastOpenOpts  OpenFileOptions
+	lastSaveOpts  SaveFileOptions
+	lastDirOpts   OpenDirectoryOptions
+	lastMsgOpts   MessageDialogOptions
 }
 
 func (m *mockPlatform) OpenFile(opts OpenFileOptions) ([]string, error) {
@@ -70,7 +70,7 @@ func TestTaskOpenFile_Good(t *testing.T) {
 	mock.openFilePaths = []string{"/a.txt", "/b.txt"}
 
 	result, handled, err := c.PERFORM(TaskOpenFile{
-		Opts: OpenFileOptions{Title: "Pick", AllowMultiple: true},
+		Options: OpenFileOptions{Title: "Pick", AllowMultiple: true},
 	})
 	require.NoError(t, err)
 	assert.True(t, handled)
@@ -83,7 +83,7 @@ func TestTaskOpenFile_Good(t *testing.T) {
 func TestTaskSaveFile_Good(t *testing.T) {
 	_, c := newTestService(t)
 	result, handled, err := c.PERFORM(TaskSaveFile{
-		Opts: SaveFileOptions{Filename: "out.txt"},
+		Options: SaveFileOptions{Filename: "out.txt"},
 	})
 	require.NoError(t, err)
 	assert.True(t, handled)
@@ -93,7 +93,7 @@ func TestTaskSaveFile_Good(t *testing.T) {
 func TestTaskOpenDirectory_Good(t *testing.T) {
 	_, c := newTestService(t)
 	result, handled, err := c.PERFORM(TaskOpenDirectory{
-		Opts: OpenDirectoryOptions{Title: "Pick Dir"},
+		Options: OpenDirectoryOptions{Title: "Pick Dir"},
 	})
 	require.NoError(t, err)
 	assert.True(t, handled)
@@ -105,7 +105,7 @@ func TestTaskMessageDialog_Good(t *testing.T) {
 	mock.messageButton = "Yes"
 
 	result, handled, err := c.PERFORM(TaskMessageDialog{
-		Opts: MessageDialogOptions{
+		Options: MessageDialogOptions{
 			Type: DialogQuestion, Title: "Confirm",
 			Message: "Sure?", Buttons: []string{"Yes", "No"},
 		},

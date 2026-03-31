@@ -3,10 +3,10 @@ package dialog
 
 // Platform abstracts the native dialog backend.
 type Platform interface {
-	OpenFile(opts OpenFileOptions) ([]string, error)
-	SaveFile(opts SaveFileOptions) (string, error)
-	OpenDirectory(opts OpenDirectoryOptions) (string, error)
-	MessageDialog(opts MessageDialogOptions) (string, error)
+	OpenFile(options OpenFileOptions) ([]string, error)
+	SaveFile(options SaveFileOptions) (string, error)
+	OpenDirectory(options OpenDirectoryOptions) (string, error)
+	MessageDialog(options MessageDialogOptions) (string, error)
 }
 
 // DialogType represents the type of message dialog.

@@ -9,19 +9,19 @@ import (
 
 // Window is CoreGUI's own window descriptor — NOT a Wails type alias.
 type Window struct {
-	Name              string
-	Title             string
-	URL               string
-	Width, Height     int
-	X, Y              int
+	Name                string
+	Title               string
+	URL                 string
+	Width, Height       int
+	X, Y                int
 	MinWidth, MinHeight int
 	MaxWidth, MaxHeight int
-	Frameless         bool
-	Hidden            bool
-	AlwaysOnTop       bool
-	BackgroundColour  [4]uint8
-	DisableResize     bool
-	EnableFileDrop    bool
+	Frameless           bool
+	Hidden              bool
+	AlwaysOnTop         bool
+	BackgroundColour    [4]uint8
+	DisableResize       bool
+	EnableFileDrop      bool
 }
 
 // ToPlatformOptions converts a Window to PlatformWindowOptions for the backend.
@@ -68,8 +68,8 @@ func NewManagerWithDir(platform Platform, configDir string) *Manager {
 }
 
 // Open creates a window using functional options, applies saved state, and tracks it.
-func (m *Manager) Open(opts ...WindowOption) (PlatformWindow, error) {
-	w, err := ApplyOptions(opts...)
+func (m *Manager) Open(options ...WindowOption) (PlatformWindow, error) {
+	w, err := ApplyOptions(options...)
 	if err != nil {
 		return nil, coreerr.E("window.Manager.Open", "failed to apply options", err)
 	}

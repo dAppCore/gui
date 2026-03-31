@@ -3,7 +3,7 @@ package notification
 
 // Platform abstracts the native notification backend.
 type Platform interface {
-	Send(opts NotificationOptions) error
+	Send(options NotificationOptions) error
 	RequestPermission() (bool, error)
 	CheckPermission() (bool, error)
 }

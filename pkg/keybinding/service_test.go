@@ -99,7 +99,7 @@ func TestTaskAdd_Bad_Duplicate(t *testing.T) {
 	// Second add with same accelerator should fail
 	_, handled, err := c.PERFORM(TaskAdd{Accelerator: "Ctrl+S", Description: "Save Again"})
 	assert.True(t, handled)
-	assert.ErrorIs(t, err, ErrAlreadyRegistered)
+	assert.ErrorIs(t, err, ErrorAlreadyRegistered)
 }
 
 func TestTaskRemove_Good(t *testing.T) {

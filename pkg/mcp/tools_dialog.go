@@ -4,8 +4,8 @@ package mcp
 import (
 	"context"
 
-	"forge.lthn.ai/core/gui/pkg/dialog"
 	coreerr "forge.lthn.ai/core/go-log"
+	"forge.lthn.ai/core/gui/pkg/dialog"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -22,7 +22,7 @@ type DialogOpenFileOutput struct {
 }
 
 func (s *Subsystem) dialogOpenFile(_ context.Context, _ *mcp.CallToolRequest, input DialogOpenFileInput) (*mcp.CallToolResult, DialogOpenFileOutput, error) {
-	result, _, err := s.core.PERFORM(dialog.TaskOpenFile{Opts: dialog.OpenFileOptions{
+	result, _, err := s.core.PERFORM(dialog.TaskOpenFile{Options: dialog.OpenFileOptions{
 		Title:         input.Title,
 		Directory:     input.Directory,
 		Filters:       input.Filters,
@@ -51,7 +51,7 @@ type DialogSaveFileOutput struct {
 }
 
 func (s *Subsystem) dialogSaveFile(_ context.Context, _ *mcp.CallToolRequest, input DialogSaveFileInput) (*mcp.CallToolResult, DialogSaveFileOutput, error) {
-	result, _, err := s.core.PERFORM(dialog.TaskSaveFile{Opts: dialog.SaveFileOptions{
+	result, _, err := s.core.PERFORM(dialog.TaskSaveFile{Options: dialog.SaveFileOptions{
 		Title:     input.Title,
 		Directory: input.Directory,
 		Filename:  input.Filename,
@@ -78,7 +78,7 @@ type DialogOpenDirectoryOutput struct {
 }
 
 func (s *Subsystem) dialogOpenDirectory(_ context.Context, _ *mcp.CallToolRequest, input DialogOpenDirectoryInput) (*mcp.CallToolResult, DialogOpenDirectoryOutput, error) {
-	result, _, err := s.core.PERFORM(dialog.TaskOpenDirectory{Opts: dialog.OpenDirectoryOptions{
+	result, _, err := s.core.PERFORM(dialog.TaskOpenDirectory{Options: dialog.OpenDirectoryOptions{
 		Title:     input.Title,
 		Directory: input.Directory,
 	}})
@@ -104,7 +104,7 @@ type DialogConfirmOutput struct {
 }
 
 func (s *Subsystem) dialogConfirm(_ context.Context, _ *mcp.CallToolRequest, input DialogConfirmInput) (*mcp.CallToolResult, DialogConfirmOutput, error) {
-	result, _, err := s.core.PERFORM(dialog.TaskMessageDialog{Opts: dialog.MessageDialogOptions{
+	result, _, err := s.core.PERFORM(dialog.TaskMessageDialog{Options: dialog.MessageDialogOptions{
 		Type:    dialog.DialogQuestion,
 		Title:   input.Title,
 		Message: input.Message,
@@ -131,7 +131,7 @@ type DialogPromptOutput struct {
 }
 
 func (s *Subsystem) dialogPrompt(_ context.Context, _ *mcp.CallToolRequest, input DialogPromptInput) (*mcp.CallToolResult, DialogPromptOutput, error) {
-	result, _, err := s.core.PERFORM(dialog.TaskMessageDialog{Opts: dialog.MessageDialogOptions{
+	result, _, err := s.core.PERFORM(dialog.TaskMessageDialog{Options: dialog.MessageDialogOptions{
 		Type:    dialog.DialogInfo,
 		Title:   input.Title,
 		Message: input.Message,

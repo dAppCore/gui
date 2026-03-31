@@ -104,7 +104,7 @@ func TestConfigTask_Good(t *testing.T) {
 	_, c := newTestDisplayService(t)
 
 	newCfg := map[string]any{"default_width": 800}
-	_, handled, err := c.PERFORM(window.TaskSaveConfig{Value: newCfg})
+	_, handled, err := c.PERFORM(window.TaskSaveConfig{Config: newCfg})
 	require.NoError(t, err)
 	assert.True(t, handled)
 
@@ -121,7 +121,7 @@ func TestServiceConclave_Good(t *testing.T) {
 
 	// Open a window via IPC
 	result, handled, err := c.PERFORM(window.TaskOpenWindow{
-		Opts: []window.WindowOption{window.WithName("main")},
+		Options: []window.WindowOption{window.WithName("main")},
 	})
 	require.NoError(t, err)
 	assert.True(t, handled)
@@ -413,7 +413,7 @@ func TestHandleIPCEvents_WindowOpened_Good(t *testing.T) {
 	// Open a window — this should trigger ActionWindowOpened
 	// which HandleIPCEvents should convert to a WS event
 	result, handled, err := c.PERFORM(window.TaskOpenWindow{
-		Opts: []window.WindowOption{window.WithName("test")},
+		Options: []window.WindowOption{window.WithName("test")},
 	})
 	require.NoError(t, err)
 	assert.True(t, handled)
@@ -493,7 +493,7 @@ func TestHandleConfigTask_Persists_Good(t *testing.T) {
 	c.ServiceStartup(context.Background(), nil)
 
 	_, handled, err := c.PERFORM(window.TaskSaveConfig{
-		Value: map[string]any{"default_width": 1920},
+		Config: map[string]any{"default_width": 1920},
 	})
 	require.NoError(t, err)
 	assert.True(t, handled)

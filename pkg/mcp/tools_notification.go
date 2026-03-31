@@ -21,7 +21,7 @@ type NotificationShowOutput struct {
 }
 
 func (s *Subsystem) notificationShow(_ context.Context, _ *mcp.CallToolRequest, input NotificationShowInput) (*mcp.CallToolResult, NotificationShowOutput, error) {
-	_, _, err := s.core.PERFORM(notification.TaskSend{Opts: notification.NotificationOptions{
+	_, _, err := s.core.PERFORM(notification.TaskSend{Options: notification.NotificationOptions{
 		Title:    input.Title,
 		Message:  input.Message,
 		Subtitle: input.Subtitle,

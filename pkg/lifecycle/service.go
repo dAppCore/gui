@@ -1,4 +1,3 @@
-// pkg/lifecycle/service.go
 package lifecycle
 
 import (
@@ -7,22 +6,15 @@ import (
 	"forge.lthn.ai/core/go/pkg/core"
 )
 
-// Options holds configuration for the lifecycle service.
 type Options struct{}
 
-// Service is a core.Service that registers platform lifecycle callbacks
-// and broadcasts corresponding IPC Actions. It implements both Startable
-// and Stoppable: OnStartup registers all callbacks, OnShutdown cancels them.
 type Service struct {
 	*core.ServiceRuntime[Options]
 	platform Platform
 	cancels  []func()
 }
 
-// OnStartup registers a platform callback for each EventType and for file-open.
-// Each callback broadcasts the corresponding Action via s.Core().ACTION().
 func (s *Service) OnStartup(ctx context.Context) error {
-	// Register fire-and-forget event callbacks
 	eventActions := map[EventType]func(){
 		EventApplicationStarted: func() { _ = s.Core().ACTION(ActionApplicationStarted{}) },
 		EventWillTerminate:      func() { _ = s.Core().ACTION(ActionWillTerminate{}) },
@@ -38,7 +30,6 @@ func (s *Service) OnStartup(ctx context.Context) error {
 		s.cancels = append(s.cancels, cancel)
 	}
 
-	// Register file-open callback (carries data)
 	cancel := s.platform.OnOpenedWithFile(func(path string) {
 		_ = s.Core().ACTION(ActionOpenedWithFile{Path: path})
 	})
@@ -47,7 +38,6 @@ func (s *Service) OnStartup(ctx context.Context) error {
 	return nil
 }
 
-// OnShutdown cancels all registered platform callbacks.
 func (s *Service) OnShutdown(ctx context.Context) error {
 	for _, cancel := range s.cancels {
 		cancel()
@@ -56,8 +46,6 @@ func (s *Service) OnShutdown(ctx context.Context) error {
 	return nil
 }
 
-// HandleIPCEvents is auto-discovered and registered by core.WithService.
-// Lifecycle events are all outbound (platform -> IPC) so there is nothing to handle here.
 func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 	return nil
 }
