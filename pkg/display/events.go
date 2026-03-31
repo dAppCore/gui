@@ -1,12 +1,12 @@
 package display
 
 import (
-	"encoding/json"
 	"net/http"
 	"strconv"
 	"sync"
 	"time"
 
+	core "dappco.re/go/core"
 	"forge.lthn.ai/core/gui/pkg/window"
 	"github.com/gorilla/websocket"
 )
@@ -134,10 +134,11 @@ func (em *WSEventManager) sendEvent(conn *websocket.Conn, event Event) {
 		return
 	}
 
-	data, err := json.Marshal(event)
-	if err != nil {
+	marshalResult := core.JSONMarshal(event)
+	if !marshalResult.OK {
 		return
 	}
+	data, _ := marshalResult.Value.([]byte)
 
 	conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 	if err := conn.WriteMessage(websocket.TextMessage, data); err != nil {
@@ -178,7 +179,7 @@ func (em *WSEventManager) handleMessages(conn *websocket.Conn) {
 			EventTypes []EventType `json:"eventTypes,omitempty"`
 		}
 
-		if err := json.Unmarshal(message, &msg); err != nil {
+		if unmarshalResult := core.JSONUnmarshal(message, &msg); !unmarshalResult.OK {
 			continue
 		}
 
@@ -224,8 +225,10 @@ func (em *WSEventManager) subscribe(conn *websocket.Conn, id string, eventTypes 
 		"id":         id,
 		"eventTypes": eventTypes,
 	}
-	data, _ := json.Marshal(response)
-	conn.WriteMessage(websocket.TextMessage, data)
+	if marshalResult := core.JSONMarshal(response); marshalResult.OK {
+		responseData, _ := marshalResult.Value.([]byte)
+		conn.WriteMessage(websocket.TextMessage, responseData)
+	}
 }
 
 // unsubscribe removes a subscription for a client.
@@ -247,8 +250,10 @@ func (em *WSEventManager) unsubscribe(conn *websocket.Conn, id string) {
 		"type": "unsubscribed",
 		"id":   id,
 	}
-	data, _ := json.Marshal(response)
-	conn.WriteMessage(websocket.TextMessage, data)
+	if marshalResult := core.JSONMarshal(response); marshalResult.OK {
+		responseData, _ := marshalResult.Value.([]byte)
+		conn.WriteMessage(websocket.TextMessage, responseData)
+	}
 }
 
 // listSubscriptions sends a list of active subscriptions to a client.
@@ -272,8 +277,10 @@ func (em *WSEventManager) listSubscriptions(conn *websocket.Conn) {
 		"type":          "subscriptions",
 		"subscriptions": subs,
 	}
-	data, _ := json.Marshal(response)
-	conn.WriteMessage(websocket.TextMessage, data)
+	if marshalResult := core.JSONMarshal(response); marshalResult.OK {
+		responseData, _ := marshalResult.Value.([]byte)
+		conn.WriteMessage(websocket.TextMessage, responseData)
+	}
 }
 
 // removeClient removes a client and its subscriptions.

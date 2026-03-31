@@ -2,12 +2,10 @@
 package window
 
 import (
-	"encoding/json"
-	"os"
-	"path/filepath"
 	"sync"
 	"time"
 
+	core "dappco.re/go/core"
 	coreio "dappco.re/go/core/io"
 )
 
@@ -38,9 +36,8 @@ func NewStateManager() *StateManager {
 	sm := &StateManager{
 		states: make(map[string]WindowState),
 	}
-	configDir, err := os.UserConfigDir()
-	if err == nil {
-		sm.configDir = filepath.Join(configDir, "Core")
+	if configDir := core.Env("DIR_CONFIG"); configDir != "" {
+		sm.configDir = core.JoinPath(configDir, "Core")
 	}
 	sm.load()
 	return sm
@@ -61,12 +58,12 @@ func (sm *StateManager) filePath() string {
 	if sm.statePath != "" {
 		return sm.statePath
 	}
-	return filepath.Join(sm.configDir, "window_state.json")
+	return core.JoinPath(sm.configDir, "window_state.json")
 }
 
 func (sm *StateManager) dataDir() string {
 	if sm.statePath != "" {
-		return filepath.Dir(sm.statePath)
+		return core.PathDir(sm.statePath)
 	}
 	return sm.configDir
 }
@@ -96,7 +93,7 @@ func (sm *StateManager) load() {
 	}
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
-	_ = json.Unmarshal([]byte(content), &sm.states)
+	_ = core.JSONUnmarshalString(content, &sm.states)
 }
 
 func (sm *StateManager) save() {
@@ -104,11 +101,12 @@ func (sm *StateManager) save() {
 		return
 	}
 	sm.mu.RLock()
-	data, err := json.MarshalIndent(sm.states, "", "  ")
+	result := core.JSONMarshal(sm.states)
 	sm.mu.RUnlock()
-	if err != nil {
+	if !result.OK {
 		return
 	}
+	data := result.Value.([]byte)
 	if dir := sm.dataDir(); dir != "" {
 		_ = coreio.Local.EnsureDir(dir)
 	}

@@ -1,8 +1,8 @@
 package contextmenu
 
-import "errors"
+import core "dappco.re/go/core"
 
-var ErrorMenuNotFound = errors.New("contextmenu: menu not found")
+var ErrorMenuNotFound = core.E("contextmenu", "menu not found", nil)
 
 // QueryGet returns a named context menu definition. Result: *ContextMenuDef (nil if not found)
 type QueryGet struct {

@@ -2,12 +2,10 @@
 package window
 
 import (
-	"encoding/json"
-	"os"
-	"path/filepath"
 	"sync"
 	"time"
 
+	core "dappco.re/go/core"
 	coreio "dappco.re/go/core/io"
 	coreerr "dappco.re/go/core/log"
 )
@@ -40,9 +38,8 @@ func NewLayoutManager() *LayoutManager {
 	lm := &LayoutManager{
 		layouts: make(map[string]Layout),
 	}
-	configDir, err := os.UserConfigDir()
-	if err == nil {
-		lm.configDir = filepath.Join(configDir, "Core")
+	if configDir := core.Env("DIR_CONFIG"); configDir != "" {
+		lm.configDir = core.JoinPath(configDir, "Core")
 	}
 	lm.load()
 	return lm
@@ -60,7 +57,7 @@ func NewLayoutManagerWithDir(configDir string) *LayoutManager {
 }
 
 func (lm *LayoutManager) filePath() string {
-	return filepath.Join(lm.configDir, "layouts.json")
+	return core.JoinPath(lm.configDir, "layouts.json")
 }
 
 func (lm *LayoutManager) load() {
@@ -73,7 +70,7 @@ func (lm *LayoutManager) load() {
 	}
 	lm.mu.Lock()
 	defer lm.mu.Unlock()
-	_ = json.Unmarshal([]byte(content), &lm.layouts)
+	_ = core.JSONUnmarshalString(content, &lm.layouts)
 }
 
 func (lm *LayoutManager) save() {
@@ -81,11 +78,12 @@ func (lm *LayoutManager) save() {
 		return
 	}
 	lm.mu.RLock()
-	data, err := json.MarshalIndent(lm.layouts, "", "  ")
+	result := core.JSONMarshal(lm.layouts)
 	lm.mu.RUnlock()
-	if err != nil {
+	if !result.OK {
 		return
 	}
+	data := result.Value.([]byte)
 	_ = coreio.Local.EnsureDir(lm.configDir)
 	_ = coreio.Local.Write(lm.filePath(), string(data))
 }

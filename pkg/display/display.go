@@ -2,9 +2,6 @@ package display
 
 import (
 	"context"
-	"encoding/json"
-	"os"
-	"path/filepath"
 	"runtime"
 
 	"forge.lthn.ai/core/config"
@@ -331,9 +328,12 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 		return c.QUERY(dock.QueryVisible{})
 	case "contextmenu:add":
 		name, _ := msg.Data["name"].(string)
-		menuJSON, _ := json.Marshal(msg.Data["menu"])
+		marshalResult := core.JSONMarshal(msg.Data["menu"])
 		var menuDef contextmenu.ContextMenuDef
-		_ = json.Unmarshal(menuJSON, &menuDef)
+		if marshalResult.OK {
+			menuJSON, _ := marshalResult.Value.([]byte)
+			core.JSONUnmarshal(menuJSON, &menuDef)
+		}
 		return c.Action("contextmenu.add").Run(ctx, core.NewOptions(
 			core.Option{Key: "task", Value: contextmenu.TaskAdd{Name: name, Menu: menuDef}},
 		))
@@ -580,11 +580,11 @@ func (s *Service) handleTrayAction(actionID string) {
 }
 
 func guiConfigPath() string {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return filepath.Join(".core", "gui", "config.yaml")
+	home := core.Env("HOME")
+	if home == "" {
+		return core.JoinPath(".core", "gui", "config.yaml")
 	}
-	return filepath.Join(home, ".core", "gui", "config.yaml")
+	return core.JoinPath(home, ".core", "gui", "config.yaml")
 }
 
 func (s *Service) loadConfig() {

@@ -1,9 +1,9 @@
 package keybinding
 
-import "errors"
+import core "dappco.re/go/core"
 
-var ErrorAlreadyRegistered = errors.New("keybinding: accelerator already registered")
-var ErrorNotRegistered = errors.New("keybinding: accelerator not registered")
+var ErrorAlreadyRegistered = core.E("keybinding", "accelerator already registered", nil)
+var ErrorNotRegistered = core.E("keybinding", "accelerator not registered", nil)
 
 // BindingInfo describes a registered global key binding.
 type BindingInfo struct {
