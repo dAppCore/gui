@@ -27,15 +27,13 @@ import (
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
-// Options holds configuration for the display service.
 type Options struct{}
 
 // WindowInfo is an alias for window.WindowInfo (backward compatibility).
 type WindowInfo = window.WindowInfo
 
-// Service manages windowing, dialogs, and other visual elements.
-// It orchestrates sub-services (window, systray, menu) via IPC and bridges
-// IPC actions to WebSocket events for TypeScript apps.
+// Service orchestrates window, systray, and menu sub-services via IPC.
+// Bridges IPC actions to WebSocket events for TypeScript apps.
 type Service struct {
 	*core.ServiceRuntime[Options]
 	wailsApp   *application.App
@@ -45,7 +43,8 @@ type Service struct {
 	events     *WSEventManager
 }
 
-// New is the constructor for the display service.
+// New returns a display Service with empty config sections.
+// s, _ := display.New(); s.loadConfigFrom("/path/to/config.yaml")
 func New() (*Service, error) {
 	return &Service{
 		configData: map[string]map[string]any{
@@ -56,8 +55,9 @@ func New() (*Service, error) {
 	}, nil
 }
 
-// Register creates a factory closure that captures the Wails app.
-// Pass nil for testing without a Wails runtime.
+// Register binds the display service to a Core instance.
+// core.WithService(display.Register(app))      // production (Wails app)
+// core.WithService(display.Register(nil))      // tests (no Wails runtime)
 func Register(wailsApp *application.App) func(*core.Core) (any, error) {
 	return func(c *core.Core) (any, error) {
 		s, err := New()
@@ -70,9 +70,8 @@ func Register(wailsApp *application.App) func(*core.Core) (any, error) {
 	}
 }
 
-// OnStartup loads config and registers IPC handlers synchronously.
-// CRITICAL: config handlers MUST be registered before returning —
-// sub-services depend on them during their own OnStartup.
+// OnStartup loads config and registers handlers before sub-services start.
+// Config handlers are registered first — sub-services query them during their own OnStartup.
 func (s *Service) OnStartup(ctx context.Context) error {
 	s.loadConfig()
 
@@ -89,8 +88,7 @@ func (s *Service) OnStartup(ctx context.Context) error {
 	return nil
 }
 
-// HandleIPCEvents is auto-discovered and registered by core.WithService.
-// It bridges sub-service IPC actions to WebSocket events for TS apps.
+// HandleIPCEvents bridges IPC actions from sub-services to WebSocket events for TS apps.
 func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 	switch m := msg.(type) {
 	case core.ActionServiceStartup:
@@ -749,7 +747,8 @@ func (s *Service) GetSavedWindowStates() map[string]window.WindowState {
 	return result
 }
 
-// CreateWindowOptions contains options for creating a new window.
+// CreateWindowOptions specifies the initial state for a new named window.
+// svc.CreateWindow(display.CreateWindowOptions{Name: "settings", URL: "/settings", Width: 800, Height: 600})
 type CreateWindowOptions struct {
 	Name   string `json:"name"`
 	Title  string `json:"title,omitempty"`
@@ -760,7 +759,6 @@ type CreateWindowOptions struct {
 	Height int    `json:"height,omitempty"`
 }
 
-// CreateWindow creates a new window with the specified options.
 func (s *Service) CreateWindow(options CreateWindowOptions) (*window.WindowInfo, error) {
 	if options.Name == "" {
 		return nil, coreerr.E("display.CreateWindow", "window name is required", nil)

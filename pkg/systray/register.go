@@ -2,6 +2,8 @@ package systray
 
 import "forge.lthn.ai/core/go/pkg/core"
 
+// Register(p) binds the systray service to a Core instance.
+// core.WithService(systray.Register(wailsSystray))
 func Register(p Platform) func(*core.Core) (any, error) {
 	return func(c *core.Core) (any, error) {
 		return &Service{

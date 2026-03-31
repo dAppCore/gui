@@ -46,23 +46,21 @@ func newTestConclave(t *testing.T) *core.Core {
 
 // --- Tests ---
 
-func TestNew(t *testing.T) {
-	t.Run("creates service successfully", func(t *testing.T) {
-		service, err := New()
-		assert.NoError(t, err)
-		assert.NotNil(t, service, "New() should return a non-nil service instance")
-	})
-
-	t.Run("returns independent instances", func(t *testing.T) {
-		service1, err1 := New()
-		service2, err2 := New()
-		assert.NoError(t, err1)
-		assert.NoError(t, err2)
-		assert.NotSame(t, service1, service2, "New() should return different instances")
-	})
+func TestNew_Good(t *testing.T) {
+	service, err := New()
+	assert.NoError(t, err)
+	assert.NotNil(t, service)
 }
 
-func TestRegisterClosure_Good(t *testing.T) {
+func TestNew_Good_IndependentInstances(t *testing.T) {
+	service1, err1 := New()
+	service2, err2 := New()
+	assert.NoError(t, err1)
+	assert.NoError(t, err2)
+	assert.NotSame(t, service1, service2)
+}
+
+func TestRegister_Good(t *testing.T) {
 	factory := Register(nil) // nil wailsApp for testing
 	assert.NotNil(t, factory)
 
@@ -358,7 +356,7 @@ func TestGetFocusedWindow_Good(t *testing.T) {
 	assert.Equal(t, "win-b", focused)
 }
 
-func TestGetFocusedWindow_NoneSelected(t *testing.T) {
+func TestGetFocusedWindow_Good_NoneSelected(t *testing.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 	_ = svc.OpenWindow(window.WithName("win-a"))

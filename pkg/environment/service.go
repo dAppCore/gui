@@ -7,17 +7,16 @@ import (
 	"forge.lthn.ai/core/go/pkg/core"
 )
 
-// Options holds configuration for the environment service.
 type Options struct{}
 
-// Service is a core.Service providing environment queries and theme change events via IPC.
 type Service struct {
 	*core.ServiceRuntime[Options]
 	platform    Platform
-	cancelTheme func() // cancel function for theme change listener
+	cancelTheme func() // returned by Platform.OnThemeChange — called on shutdown
 }
 
-// Register creates a factory closure that captures the Platform adapter.
+// Register(p) binds the environment service to a Core instance.
+// core.WithService(environment.Register(wailsEnvironment))
 func Register(p Platform) func(*core.Core) (any, error) {
 	return func(c *core.Core) (any, error) {
 		return &Service{
@@ -27,7 +26,6 @@ func Register(p Platform) func(*core.Core) (any, error) {
 	}
 }
 
-// OnStartup registers IPC handlers and the theme change listener.
 func (s *Service) OnStartup(ctx context.Context) error {
 	s.Core().RegisterQuery(s.handleQuery)
 	s.Core().RegisterTask(s.handleTask)
@@ -39,7 +37,6 @@ func (s *Service) OnStartup(ctx context.Context) error {
 	return nil
 }
 
-// OnShutdown cancels the theme change listener.
 func (s *Service) OnShutdown(ctx context.Context) error {
 	if s.cancelTheme != nil {
 		s.cancelTheme()
@@ -47,7 +44,6 @@ func (s *Service) OnShutdown(ctx context.Context) error {
 	return nil
 }
 
-// HandleIPCEvents is auto-discovered by core.WithService.
 func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 	return nil
 }

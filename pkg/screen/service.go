@@ -7,16 +7,15 @@ import (
 	"forge.lthn.ai/core/go/pkg/core"
 )
 
-// Options holds configuration for the screen service.
 type Options struct{}
 
-// Service is a core.Service providing screen/display queries via IPC.
 type Service struct {
 	*core.ServiceRuntime[Options]
 	platform Platform
 }
 
-// Register creates a factory closure that captures the Platform adapter.
+// Register(p) binds the screen service to a Core instance.
+// core.WithService(screen.Register(wailsScreen))
 func Register(p Platform) func(*core.Core) (any, error) {
 	return func(c *core.Core) (any, error) {
 		return &Service{
@@ -26,13 +25,11 @@ func Register(p Platform) func(*core.Core) (any, error) {
 	}
 }
 
-// OnStartup registers IPC handlers.
 func (s *Service) OnStartup(ctx context.Context) error {
 	s.Core().RegisterQuery(s.handleQuery)
 	return nil
 }
 
-// HandleIPCEvents is auto-discovered by core.WithService.
 func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 	return nil
 }

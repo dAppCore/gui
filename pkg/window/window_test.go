@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestWindowDefaults(t *testing.T) {
+func TestWindowDefaults_Good(t *testing.T) {
 	w := &Window{}
 	assert.Equal(t, "", w.Name)
 	assert.Equal(t, 0, w.Width)

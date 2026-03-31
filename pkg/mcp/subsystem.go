@@ -6,21 +6,19 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-// Subsystem implements the MCP Subsystem interface via structural typing.
-// It registers GUI tools that translate MCP tool calls to IPC messages.
+// Subsystem translates MCP tool calls to Core IPC messages for GUI operations.
 type Subsystem struct {
 	core *core.Core
 }
 
-// New creates a display MCP subsystem backed by the given Core instance.
+// New(c) creates a display MCP subsystem backed by a Core instance.
+// sub := mcp.New(c); sub.RegisterTools(server)
 func New(c *core.Core) *Subsystem {
 	return &Subsystem{core: c}
 }
 
-// Name returns the subsystem identifier.
 func (s *Subsystem) Name() string { return "display" }
 
-// RegisterTools registers all GUI tools with the MCP server.
 func (s *Subsystem) RegisterTools(server *mcp.Server) {
 	s.registerWebviewTools(server)
 	s.registerWindowTools(server)

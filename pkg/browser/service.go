@@ -22,8 +22,6 @@ func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 	return nil
 }
 
-// --- Task Handlers ---
-
 func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 	switch t := t.(type) {
 	case TaskOpenURL:

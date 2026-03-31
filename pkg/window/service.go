@@ -327,7 +327,7 @@ func (s *Service) taskSetTitle(name, title string) error {
 func (s *Service) taskSetAlwaysOnTop(name string, alwaysOnTop bool) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return coreerr.E("window.taskSetAlwaysOnTop", "window not found: "+name, nil)
 	}
 	pw.SetAlwaysOnTop(alwaysOnTop)
 	return nil
@@ -336,7 +336,7 @@ func (s *Service) taskSetAlwaysOnTop(name string, alwaysOnTop bool) error {
 func (s *Service) taskSetBackgroundColour(name string, red, green, blue, alpha uint8) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return coreerr.E("window.taskSetBackgroundColour", "window not found: "+name, nil)
 	}
 	pw.SetBackgroundColour(red, green, blue, alpha)
 	return nil
@@ -453,7 +453,7 @@ var workflowLayoutMap = map[string]WorkflowLayout{
 func (s *Service) taskApplyWorkflow(workflow string, names []string) error {
 	layout, ok := workflowLayoutMap[workflow]
 	if !ok {
-		return fmt.Errorf("unknown workflow layout: %s", workflow)
+		return coreerr.E("window.taskApplyWorkflow", "unknown workflow layout: "+workflow, nil)
 	}
 	if len(names) == 0 {
 		names = s.manager.List()

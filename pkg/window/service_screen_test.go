@@ -40,7 +40,7 @@ func newTestWindowServiceWithScreen(t *testing.T, screens []screen.Screen) (*Ser
 	return svc, c
 }
 
-func TestTaskTileWindows_UsesPrimaryScreenSize(t *testing.T) {
+func TestTaskTileWindows_Good_UsesPrimaryScreenSize(t *testing.T) {
 	_, c := newTestWindowServiceWithScreen(t, []screen.Screen{
 		{
 			ID: "1", Name: "Primary", IsPrimary: true,
@@ -73,7 +73,7 @@ func TestTaskTileWindows_UsesPrimaryScreenSize(t *testing.T) {
 	assert.Equal(t, 1000, right.Height)
 }
 
-func TestTaskSnapWindow_UsesPrimaryScreenSize(t *testing.T) {
+func TestTaskSnapWindow_Good_UsesPrimaryScreenSize(t *testing.T) {
 	_, c := newTestWindowServiceWithScreen(t, []screen.Screen{
 		{
 			ID: "1", Name: "Primary", IsPrimary: true,
@@ -98,7 +98,7 @@ func TestTaskSnapWindow_UsesPrimaryScreenSize(t *testing.T) {
 	assert.Equal(t, 1000, info.Height)
 }
 
-func TestTaskTileWindows_UsesPrimaryWorkAreaOrigin(t *testing.T) {
+func TestTaskTileWindows_Good_UsesPrimaryWorkAreaOrigin(t *testing.T) {
 	_, c := newTestWindowServiceWithScreen(t, []screen.Screen{
 		{
 			ID: "1", Name: "Primary", IsPrimary: true,

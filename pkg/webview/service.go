@@ -37,14 +37,12 @@ type connector interface {
 	Close() error
 }
 
-// Options holds configuration for the webview service.
 type Options struct {
 	DebugURL     string        // Chrome debug endpoint (default: "http://localhost:9222")
 	Timeout      time.Duration // Operation timeout (default: 30s)
 	ConsoleLimit int           // Max console messages per window (default: 1000)
 }
 
-// Service is a core.Service managing webview interactions via IPC.
 type Service struct {
 	*core.ServiceRuntime[Options]
 	options      Options
@@ -54,7 +52,9 @@ type Service struct {
 	watcherSetup func(conn connector, windowName string)              // called after connection creation
 }
 
-// Register creates a factory closure with the given options.
+// Register binds the webview service to a Core instance.
+// core.WithService(webview.Register())
+// core.WithService(webview.Register(func(o *Options) { o.DebugURL = "http://localhost:9223" }))
 func Register(optionFns ...func(*Options)) func(*core.Core) (any, error) {
 	o := Options{
 		DebugURL:     "http://localhost:9222",
@@ -154,7 +154,6 @@ func (s *Service) defaultWatcherSetup(conn connector, windowName string) {
 	})
 }
 
-// OnStartup registers IPC handlers.
 func (s *Service) OnStartup(_ context.Context) error {
 	s.Core().RegisterQuery(s.handleQuery)
 	s.Core().RegisterTask(s.handleTask)

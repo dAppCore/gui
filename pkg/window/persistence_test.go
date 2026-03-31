@@ -112,7 +112,7 @@ func TestStateManager_ApplyState_Good(t *testing.T) {
 	assert.Equal(t, 500, w.Height)
 }
 
-func TestStateManager_ApplyState_NoState(t *testing.T) {
+func TestStateManager_ApplyState_Good_NoState(t *testing.T) {
 	sm := NewStateManagerWithDir(t.TempDir())
 
 	w := &Window{Name: "untouched", Width: 1280, Height: 800, X: 10, Y: 20}
