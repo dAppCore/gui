@@ -972,7 +972,8 @@ func (s *Service) ApplyWorkflowLayout(workflow window.WorkflowLayout) error {
 	if ws == nil {
 		return coreerr.E("display.ApplyWorkflowLayout", "window service not available", nil)
 	}
-	return ws.Manager().ApplyWorkflow(workflow, ws.Manager().List(), 1920, 1080)
+	screenWidth, screenHeight := s.primaryScreenSize()
+	return ws.Manager().ApplyWorkflow(workflow, ws.Manager().List(), screenWidth, screenHeight)
 }
 
 // GetEventManager returns the event manager for WebSocket event subscriptions.

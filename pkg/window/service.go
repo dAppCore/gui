@@ -5,6 +5,7 @@ import (
 
 	coreerr "forge.lthn.ai/core/go-log"
 	"forge.lthn.ai/core/go/pkg/core"
+	"forge.lthn.ai/core/gui/pkg/screen"
 )
 
 type Options struct{}
@@ -142,6 +143,33 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 	default:
 		return nil, false, nil
 	}
+}
+
+func (s *Service) primaryScreenSize() (int, int) {
+	const fallbackWidth = 1920
+	const fallbackHeight = 1080
+
+	result, handled, err := s.Core().QUERY(screen.QueryPrimary{})
+	if err != nil || !handled {
+		return fallbackWidth, fallbackHeight
+	}
+
+	primary, ok := result.(*screen.Screen)
+	if !ok || primary == nil {
+		return fallbackWidth, fallbackHeight
+	}
+
+	width := primary.WorkArea.Width
+	height := primary.WorkArea.Height
+	if width <= 0 || height <= 0 {
+		width = primary.Bounds.Width
+		height = primary.Bounds.Height
+	}
+	if width <= 0 || height <= 0 {
+		return fallbackWidth, fallbackHeight
+	}
+
+	return width, height
 }
 
 func (s *Service) taskOpenWindow(t TaskOpenWindow) (any, bool, error) {
@@ -343,8 +371,8 @@ func (s *Service) taskTileWindows(mode string, names []string) error {
 	if len(names) == 0 {
 		names = s.manager.List()
 	}
-	// Default screen size — callers can query screen_primary for actual values.
-	return s.manager.TileWindows(tm, names, 1920, 1080)
+	screenWidth, screenHeight := s.primaryScreenSize()
+	return s.manager.TileWindows(tm, names, screenWidth, screenHeight)
 }
 
 var snapPosMap = map[string]SnapPosition{
@@ -360,7 +388,8 @@ func (s *Service) taskSnapWindow(name, position string) error {
 	if !ok {
 		return coreerr.E("window.taskSnapWindow", "unknown snap position: "+position, nil)
 	}
-	return s.manager.SnapWindow(name, pos, 1920, 1080)
+	screenWidth, screenHeight := s.primaryScreenSize()
+	return s.manager.SnapWindow(name, pos, screenWidth, screenHeight)
 }
 
 // Manager returns the underlying window Manager for direct access.
