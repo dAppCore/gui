@@ -21,6 +21,7 @@ type PlatformTray interface {
 type PlatformMenu interface {
 	Add(label string) PlatformMenuItem
 	AddSeparator()
+	AddSubmenu(label string) PlatformMenu
 }
 
 // PlatformMenuItem is a single item in a tray menu.
@@ -29,7 +30,6 @@ type PlatformMenuItem interface {
 	SetChecked(checked bool)
 	SetEnabled(enabled bool)
 	OnClick(fn func())
-	AddSubmenu() PlatformMenu
 }
 
 // WindowHandle is a cross-package interface for window operations.

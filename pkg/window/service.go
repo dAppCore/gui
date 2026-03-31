@@ -32,18 +32,18 @@ func (s *Service) OnStartup(ctx context.Context) error {
 
 func (s *Service) applyConfig(configData map[string]any) {
 	if width, ok := configData["default_width"]; ok {
-		if _, ok := width.(int); ok {
-			// TODO: s.manager.SetDefaultWidth(width) — add when Manager API is extended
+		if width, ok := width.(int); ok {
+			s.manager.SetDefaultWidth(width)
 		}
 	}
 	if height, ok := configData["default_height"]; ok {
-		if _, ok := height.(int); ok {
-			// TODO: s.manager.SetDefaultHeight(height) — add when Manager API is extended
+		if height, ok := height.(int); ok {
+			s.manager.SetDefaultHeight(height)
 		}
 	}
 	if stateFile, ok := configData["state_file"]; ok {
-		if _, ok := stateFile.(string); ok {
-			// TODO: s.manager.State().SetPath(stateFile) — add when StateManager API is extended
+		if stateFile, ok := stateFile.(string); ok {
+			s.manager.State().SetPath(stateFile)
 		}
 	}
 }

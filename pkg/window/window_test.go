@@ -110,6 +110,19 @@ func TestManager_Open_Defaults_Good(t *testing.T) {
 	assert.Equal(t, 800, h)
 }
 
+func TestManager_Open_CustomDefaults_Good(t *testing.T) {
+	m, _ := newTestManager()
+	m.SetDefaultWidth(1440)
+	m.SetDefaultHeight(900)
+
+	pw, err := m.Open()
+	require.NoError(t, err)
+
+	w, h := pw.Size()
+	assert.Equal(t, 1440, w)
+	assert.Equal(t, 900, h)
+}
+
 func TestManager_Open_Bad(t *testing.T) {
 	m, _ := newTestManager()
 	_, err := m.Open(func(w *Window) error { return assert.AnError })
@@ -343,12 +356,12 @@ func TestApplyWorkflow_AllLayouts_Good(t *testing.T) {
 			"Presenting",
 			WorkflowPresenting,
 			0, 0, screenW, screenH, // maximised
-			0, 0, 800, 600,        // second window untouched
+			0, 0, 800, 600, // second window untouched
 		},
 		{
 			"SideBySide",
 			WorkflowSideBySide,
-			0, 0, 960, screenH,   // left half (1920/2)
+			0, 0, 960, screenH, // left half (1920/2)
 			960, 0, 960, screenH, // right half
 		},
 	}

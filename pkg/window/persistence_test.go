@@ -2,6 +2,8 @@
 package window
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -175,6 +177,20 @@ func TestStateManager_Persistence_Good(t *testing.T) {
 	assert.Equal(t, "secondary", got.Screen)
 	assert.Equal(t, "/settings", got.URL)
 	assert.NotZero(t, got.UpdatedAt)
+}
+
+func TestStateManager_SetPath_Good(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "custom", "window-state.json")
+
+	sm := NewStateManagerWithDir(dir)
+	sm.SetPath(path)
+	sm.SetState("custom", WindowState{Width: 640, Height: 480})
+	sm.ForceSync()
+
+	content, err := os.ReadFile(path)
+	require.NoError(t, err)
+	assert.Contains(t, string(content), "custom")
 }
 
 // --- LayoutManager Persistence Tests ---

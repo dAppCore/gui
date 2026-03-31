@@ -2,12 +2,11 @@ package display
 
 import (
 	"context"
-	"fmt"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"runtime"
 
-	"encoding/json"
 	"forge.lthn.ai/core/config"
 	coreerr "forge.lthn.ai/core/go-log"
 	"forge.lthn.ai/core/go/pkg/core"
@@ -241,7 +240,7 @@ type WSMessage struct {
 func wsRequire(data map[string]any, key string) (string, error) {
 	v, _ := data[key].(string)
 	if v == "" {
-		return "", coreerr.E("display.wsRequire", fmt.Sprintf("missing required field %q", key), nil)
+		return "", coreerr.E("display.wsRequire", "missing required field \""+key+"\"", nil)
 	}
 	return v, nil
 }
@@ -487,8 +486,8 @@ func (s *Service) handleTrayAction(actionID string) {
 		result, handled, _ := s.Core().QUERY(environment.QueryInfo{})
 		if handled {
 			info := result.(environment.EnvironmentInfo)
-			details := fmt.Sprintf("OS: %s\nArch: %s\nPlatform: %s %s",
-				info.OS, info.Arch, info.Platform.Name, info.Platform.Version)
+			details := "OS: " + info.OS + "\nArch: " + info.Arch + "\nPlatform: " +
+				info.Platform.Name + " " + info.Platform.Version
 			_, _, _ = s.Core().PERFORM(dialog.TaskMessageDialog{
 				Options: dialog.MessageDialogOptions{
 					Type: dialog.DialogInfo, Title: "Environment",
@@ -917,7 +916,8 @@ func (s *Service) TileWindows(mode window.TileMode, windowNames []string) error 
 	if ws == nil {
 		return coreerr.E("display.TileWindows", "window service not available", nil)
 	}
-	return ws.Manager().TileWindows(mode, windowNames, 1920, 1080) // TODO: use actual screen size
+	screenWidth, screenHeight := s.primaryScreenSize()
+	return ws.Manager().TileWindows(mode, windowNames, screenWidth, screenHeight)
 }
 
 // SnapWindow snaps a window to a screen edge or corner.
@@ -926,7 +926,35 @@ func (s *Service) SnapWindow(name string, position window.SnapPosition) error {
 	if ws == nil {
 		return coreerr.E("display.SnapWindow", "window service not available", nil)
 	}
-	return ws.Manager().SnapWindow(name, position, 1920, 1080) // TODO: use actual screen size
+	screenWidth, screenHeight := s.primaryScreenSize()
+	return ws.Manager().SnapWindow(name, position, screenWidth, screenHeight)
+}
+
+func (s *Service) primaryScreenSize() (int, int) {
+	const fallbackWidth = 1920
+	const fallbackHeight = 1080
+
+	result, handled, err := s.Core().QUERY(screen.QueryPrimary{})
+	if err != nil || !handled {
+		return fallbackWidth, fallbackHeight
+	}
+
+	primary, ok := result.(*screen.Screen)
+	if !ok || primary == nil {
+		return fallbackWidth, fallbackHeight
+	}
+
+	width := primary.WorkArea.Width
+	height := primary.WorkArea.Height
+	if width <= 0 || height <= 0 {
+		width = primary.Bounds.Width
+		height = primary.Bounds.Height
+	}
+	if width <= 0 || height <= 0 {
+		return fallbackWidth, fallbackHeight
+	}
+
+	return width, height
 }
 
 // StackWindows arranges windows in a cascade pattern.

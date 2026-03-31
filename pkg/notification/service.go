@@ -3,7 +3,7 @@ package notification
 
 import (
 	"context"
-	"fmt"
+	"strconv"
 	"time"
 
 	"forge.lthn.ai/core/go/pkg/core"
@@ -62,7 +62,7 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 func (s *Service) send(options NotificationOptions) error {
 	// Generate ID if not provided
 	if options.ID == "" {
-		options.ID = fmt.Sprintf("core-%d", time.Now().UnixNano())
+		options.ID = "core-" + strconv.FormatInt(time.Now().UnixNano(), 10)
 	}
 
 	if err := s.platform.Send(options); err != nil {

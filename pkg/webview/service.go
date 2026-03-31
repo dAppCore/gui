@@ -2,10 +2,10 @@
 package webview
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -86,7 +86,7 @@ func defaultNewConn(options Options) func(string, string) (connector, error) {
 		}
 		var wsURL string
 		for _, t := range targets {
-			if t.Type == "page" && (strings.Contains(t.Title, windowName) || strings.Contains(t.URL, windowName)) {
+			if t.Type == "page" && (bytes.Contains([]byte(t.Title), []byte(windowName)) || bytes.Contains([]byte(t.URL), []byte(windowName))) {
 				wsURL = t.WebSocketDebuggerURL
 				break
 			}
