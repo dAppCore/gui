@@ -3,7 +3,7 @@ package lifecycle
 import (
 	"context"
 
-	"forge.lthn.ai/core/go/pkg/core"
+	core "dappco.re/go/core"
 )
 
 type Options struct{}
@@ -14,7 +14,7 @@ type Service struct {
 	cancels  []func()
 }
 
-func (s *Service) OnStartup(ctx context.Context) error {
+func (s *Service) OnStartup(_ context.Context) core.Result {
 	eventActions := map[EventType]func(){
 		EventApplicationStarted: func() { _ = s.Core().ACTION(ActionApplicationStarted{}) },
 		EventWillTerminate:      func() { _ = s.Core().ACTION(ActionWillTerminate{}) },
@@ -35,17 +35,17 @@ func (s *Service) OnStartup(ctx context.Context) error {
 	})
 	s.cancels = append(s.cancels, cancel)
 
-	return nil
+	return core.Result{OK: true}
 }
 
-func (s *Service) OnShutdown(ctx context.Context) error {
+func (s *Service) OnShutdown(_ context.Context) core.Result {
 	for _, cancel := range s.cancels {
 		cancel()
 	}
 	s.cancels = nil
-	return nil
+	return core.Result{OK: true}
 }
 
-func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
-	return nil
+func (s *Service) HandleIPCEvents(_ *core.Core, _ core.Message) core.Result {
+	return core.Result{OK: true}
 }

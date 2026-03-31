@@ -5,7 +5,7 @@ import (
 	_ "embed"
 	"sync"
 
-	coreerr "forge.lthn.ai/core/go-log"
+	coreerr "dappco.re/go/core/log"
 )
 
 //go:embed assets/apptray.png

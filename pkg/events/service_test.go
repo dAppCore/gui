@@ -6,7 +6,7 @@ import (
 	"sync"
 	"testing"
 
-	"forge.lthn.ai/core/go/pkg/core"
+	core "dappco.re/go/core"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -14,9 +14,9 @@ import (
 // --- Mock Platform ---
 
 type mockPlatform struct {
-	mu        sync.Mutex
-	listeners map[string][]*mockListener
-	emitted   []CustomEvent
+	mu          sync.Mutex
+	listeners   map[string][]*mockListener
+	emitted     []CustomEvent
 	resetCalled bool
 }
 
@@ -116,14 +116,19 @@ func (m *mockPlatform) listenerCount() int {
 func newTestService(t *testing.T) (*Service, *core.Core, *mockPlatform) {
 	t.Helper()
 	mock := newMockPlatform()
-	c, err := core.New(
+	c := core.New(
 		core.WithService(Register(mock)),
 		core.WithServiceLock(),
 	)
-	require.NoError(t, err)
-	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
 	svc := core.MustServiceFor[*Service](c, "events")
 	return svc, c, mock
+}
+
+func taskRun(c *core.Core, name string, task any) core.Result {
+	return c.Action(name).Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: task},
+	))
 }
 
 // --- Good path tests ---
@@ -136,10 +141,9 @@ func TestRegister_Good(t *testing.T) {
 func TestTaskEmit_Good(t *testing.T) {
 	_, c, mock := newTestService(t)
 
-	result, handled, err := c.PERFORM(TaskEmit{Name: "user:login", Data: "alice"})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.Equal(t, false, result) // not cancelled
+	r := taskRun(c, "events.emit", TaskEmit{Name: "user:login", Data: "alice"})
+	require.True(t, r.OK)
+	assert.Equal(t, false, r.Value) // not cancelled
 
 	assert.Len(t, mock.emitted, 1)
 	assert.Equal(t, "user:login", mock.emitted[0].Name)
@@ -149,9 +153,8 @@ func TestTaskEmit_Good(t *testing.T) {
 func TestTaskEmit_NoData_Good(t *testing.T) {
 	_, c, mock := newTestService(t)
 
-	_, handled, err := c.PERFORM(TaskEmit{Name: "ping"})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "events.emit", TaskEmit{Name: "ping"})
+	require.True(t, r.OK)
 	assert.Len(t, mock.emitted, 1)
 	assert.Nil(t, mock.emitted[0].Data)
 }
@@ -160,16 +163,15 @@ func TestTaskOn_Good(t *testing.T) {
 	_, c, mock := newTestService(t)
 
 	var received []ActionEventFired
-	c.RegisterAction(func(_ *core.Core, msg core.Message) error {
+	c.RegisterAction(func(_ *core.Core, msg core.Message) core.Result {
 		if fired, ok := msg.(ActionEventFired); ok {
 			received = append(received, fired)
 		}
-		return nil
+		return core.Result{OK: true}
 	})
 
-	_, handled, err := c.PERFORM(TaskOn{Name: "theme:changed"})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "events.on", TaskOn{Name: "theme:changed"})
+	require.True(t, r.OK)
 
 	mock.simulateEvent("theme:changed", "dark")
 
@@ -182,31 +184,26 @@ func TestTaskOff_Good(t *testing.T) {
 	_, c, mock := newTestService(t)
 
 	// Register via IPC then remove
-	_, _, err := c.PERFORM(TaskOn{Name: "file:saved"})
-	require.NoError(t, err)
+	r := taskRun(c, "events.on", TaskOn{Name: "file:saved"})
+	require.True(t, r.OK)
 	assert.Equal(t, 1, mock.listenerCount())
 
-	_, handled, err := c.PERFORM(TaskOff{Name: "file:saved"})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r2 := taskRun(c, "events.off", TaskOff{Name: "file:saved"})
+	require.True(t, r2.OK)
 	assert.Equal(t, 0, mock.listenerCount())
 }
 
 func TestQueryListeners_Good(t *testing.T) {
 	_, c, _ := newTestService(t)
 
-	_, _, err := c.PERFORM(TaskOn{Name: "user:login"})
-	require.NoError(t, err)
-	_, _, err = c.PERFORM(TaskOn{Name: "user:login"})
-	require.NoError(t, err)
-	_, _, err = c.PERFORM(TaskOn{Name: "theme:changed"})
-	require.NoError(t, err)
+	require.True(t, taskRun(c, "events.on", TaskOn{Name: "user:login"}).OK)
+	require.True(t, taskRun(c, "events.on", TaskOn{Name: "user:login"}).OK)
+	require.True(t, taskRun(c, "events.on", TaskOn{Name: "theme:changed"}).OK)
 
-	result, handled, err := c.QUERY(QueryListeners{})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := c.QUERY(QueryListeners{})
+	require.True(t, r.OK)
 
-	infos := result.([]ListenerInfo)
+	infos := r.Value.([]ListenerInfo)
 	counts := make(map[string]int)
 	for _, info := range infos {
 		counts[info.EventName] = info.Count
@@ -218,25 +215,21 @@ func TestQueryListeners_Good(t *testing.T) {
 func TestQueryListeners_Empty_Good(t *testing.T) {
 	_, c, _ := newTestService(t)
 
-	result, handled, err := c.QUERY(QueryListeners{})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := c.QUERY(QueryListeners{})
+	require.True(t, r.OK)
 
-	infos := result.([]ListenerInfo)
+	infos := r.Value.([]ListenerInfo)
 	assert.Empty(t, infos)
 }
 
 func TestOnShutdown_CancelsAll_Good(t *testing.T) {
 	svc, _, mock := newTestService(t)
 
-	_, _, err := svc.Core().PERFORM(TaskOn{Name: "a:b"})
-	require.NoError(t, err)
-	_, _, err = svc.Core().PERFORM(TaskOn{Name: "c:d"})
-	require.NoError(t, err)
+	require.True(t, taskRun(svc.Core(), "events.on", TaskOn{Name: "a:b"}).OK)
+	require.True(t, taskRun(svc.Core(), "events.on", TaskOn{Name: "c:d"}).OK)
 	assert.Equal(t, 2, mock.listenerCount())
 
-	err = svc.OnShutdown(context.Background())
-	require.NoError(t, err)
+	require.True(t, svc.OnShutdown(context.Background()).OK)
 	assert.Equal(t, 0, mock.listenerCount())
 }
 
@@ -244,15 +237,14 @@ func TestActionEventFired_BroadcastOnSimulate_Good(t *testing.T) {
 	_, c, mock := newTestService(t)
 
 	var receivedEvents []CustomEvent
-	c.RegisterAction(func(_ *core.Core, msg core.Message) error {
+	c.RegisterAction(func(_ *core.Core, msg core.Message) core.Result {
 		if fired, ok := msg.(ActionEventFired); ok {
 			receivedEvents = append(receivedEvents, fired.Event)
 		}
-		return nil
+		return core.Result{OK: true}
 	})
 
-	_, _, err := c.PERFORM(TaskOn{Name: "data:ready"})
-	require.NoError(t, err)
+	require.True(t, taskRun(c, "events.on", TaskOn{Name: "data:ready"}).OK)
 
 	mock.simulateEvent("data:ready", map[string]any{"rows": 42})
 
@@ -265,37 +257,33 @@ func TestActionEventFired_BroadcastOnSimulate_Good(t *testing.T) {
 func TestTaskOn_EmptyName_Bad(t *testing.T) {
 	_, c, _ := newTestService(t)
 
-	_, handled, err := c.PERFORM(TaskOn{Name: ""})
-	assert.True(t, handled)
-	assert.Error(t, err)
+	r := taskRun(c, "events.on", TaskOn{Name: ""})
+	assert.False(t, r.OK)
 }
 
 func TestTaskEmit_UnknownEvent_Bad(t *testing.T) {
 	// Emitting an event with no listeners is valid — returns not-cancelled.
 	_, c, mock := newTestService(t)
 
-	result, handled, err := c.PERFORM(TaskEmit{Name: "no:listeners"})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.Equal(t, false, result)
+	r := taskRun(c, "events.emit", TaskEmit{Name: "no:listeners"})
+	require.True(t, r.OK)
+	assert.Equal(t, false, r.Value)
 	assert.Len(t, mock.emitted, 1) // still recorded as emitted
 }
 
 func TestQueryListeners_NoService_Bad(t *testing.T) {
 	// No events service registered — query is not handled.
-	c, err := core.New(core.WithServiceLock())
-	require.NoError(t, err)
+	c := core.New(core.WithServiceLock())
 
-	_, handled, _ := c.QUERY(QueryListeners{})
-	assert.False(t, handled)
+	r := c.QUERY(QueryListeners{})
+	assert.False(t, r.OK)
 }
 
 func TestTaskEmit_NoService_Bad(t *testing.T) {
-	c, err := core.New(core.WithServiceLock())
-	require.NoError(t, err)
+	c := core.New(core.WithServiceLock())
 
-	_, handled, _ := c.PERFORM(TaskEmit{Name: "x"})
-	assert.False(t, handled)
+	r := c.Action("events.emit").Run(context.Background(), core.NewOptions())
+	assert.False(t, r.OK)
 }
 
 // --- Ugly path tests ---
@@ -304,9 +292,8 @@ func TestTaskOff_NeverRegistered_Ugly(t *testing.T) {
 	// Off on a name that was never registered is a no-op — must not panic.
 	_, c, _ := newTestService(t)
 
-	_, handled, err := c.PERFORM(TaskOff{Name: "nonexistent:event"})
-	assert.True(t, handled)
-	assert.NoError(t, err)
+	r := taskRun(c, "events.off", TaskOff{Name: "nonexistent:event"})
+	assert.True(t, r.OK)
 }
 
 func TestTaskOn_MultipleListeners_Ugly(t *testing.T) {
@@ -315,18 +302,18 @@ func TestTaskOn_MultipleListeners_Ugly(t *testing.T) {
 
 	var mu sync.Mutex
 	var fireCount int
-	c.RegisterAction(func(_ *core.Core, msg core.Message) error {
+	c.RegisterAction(func(_ *core.Core, msg core.Message) core.Result {
 		if _, ok := msg.(ActionEventFired); ok {
 			mu.Lock()
 			fireCount++
 			mu.Unlock()
 		}
-		return nil
+		return core.Result{OK: true}
 	})
 
-	_, _, _ = c.PERFORM(TaskOn{Name: "flood"})
-	_, _, _ = c.PERFORM(TaskOn{Name: "flood"})
-	_, _, _ = c.PERFORM(TaskOn{Name: "flood"})
+	taskRun(c, "events.on", TaskOn{Name: "flood"})
+	taskRun(c, "events.on", TaskOn{Name: "flood"})
+	taskRun(c, "events.on", TaskOn{Name: "flood"})
 
 	mock.simulateEvent("flood", nil)
 
@@ -341,15 +328,15 @@ func TestTaskOff_ThenEmit_Ugly(t *testing.T) {
 	_, c, mock := newTestService(t)
 
 	var received bool
-	c.RegisterAction(func(_ *core.Core, msg core.Message) error {
+	c.RegisterAction(func(_ *core.Core, msg core.Message) core.Result {
 		if _, ok := msg.(ActionEventFired); ok {
 			received = true
 		}
-		return nil
+		return core.Result{OK: true}
 	})
 
-	_, _, _ = c.PERFORM(TaskOn{Name: "transient"})
-	_, _, _ = c.PERFORM(TaskOff{Name: "transient"})
+	taskRun(c, "events.on", TaskOn{Name: "transient"})
+	taskRun(c, "events.off", TaskOff{Name: "transient"})
 
 	mock.simulateEvent("transient", "late-data")
 	assert.False(t, received)
@@ -359,11 +346,11 @@ func TestQueryListeners_AfterOff_Ugly(t *testing.T) {
 	// After Off, the event name must not appear in QueryListeners results.
 	_, c, _ := newTestService(t)
 
-	_, _, _ = c.PERFORM(TaskOn{Name: "ephemeral"})
-	_, _, _ = c.PERFORM(TaskOff{Name: "ephemeral"})
+	taskRun(c, "events.on", TaskOn{Name: "ephemeral"})
+	taskRun(c, "events.off", TaskOff{Name: "ephemeral"})
 
-	result, _, _ := c.QUERY(QueryListeners{})
-	infos := result.([]ListenerInfo)
+	r := c.QUERY(QueryListeners{})
+	infos := r.Value.([]ListenerInfo)
 
 	for _, info := range infos {
 		assert.NotEqual(t, "ephemeral", info.EventName)

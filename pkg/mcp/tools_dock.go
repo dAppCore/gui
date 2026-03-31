@@ -4,6 +4,7 @@ package mcp
 import (
 	"context"
 
+	core "dappco.re/go/core"
 	"forge.lthn.ai/core/gui/pkg/dock"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -16,9 +17,12 @@ type DockShowOutput struct {
 }
 
 func (s *Subsystem) dockShow(_ context.Context, _ *mcp.CallToolRequest, _ DockShowInput) (*mcp.CallToolResult, DockShowOutput, error) {
-	_, _, err := s.core.PERFORM(dock.TaskShowIcon{})
-	if err != nil {
-		return nil, DockShowOutput{}, err
+	r := s.core.Action("dock.showIcon").Run(context.Background(), core.NewOptions())
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, DockShowOutput{}, e
+		}
+		return nil, DockShowOutput{}, nil
 	}
 	return nil, DockShowOutput{Success: true}, nil
 }
@@ -31,9 +35,12 @@ type DockHideOutput struct {
 }
 
 func (s *Subsystem) dockHide(_ context.Context, _ *mcp.CallToolRequest, _ DockHideInput) (*mcp.CallToolResult, DockHideOutput, error) {
-	_, _, err := s.core.PERFORM(dock.TaskHideIcon{})
-	if err != nil {
-		return nil, DockHideOutput{}, err
+	r := s.core.Action("dock.hideIcon").Run(context.Background(), core.NewOptions())
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, DockHideOutput{}, e
+		}
+		return nil, DockHideOutput{}, nil
 	}
 	return nil, DockHideOutput{Success: true}, nil
 }
@@ -48,9 +55,14 @@ type DockBadgeOutput struct {
 }
 
 func (s *Subsystem) dockBadge(_ context.Context, _ *mcp.CallToolRequest, input DockBadgeInput) (*mcp.CallToolResult, DockBadgeOutput, error) {
-	_, _, err := s.core.PERFORM(dock.TaskSetBadge{Label: input.Label})
-	if err != nil {
-		return nil, DockBadgeOutput{}, err
+	r := s.core.Action("dock.setBadge").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: dock.TaskSetBadge{Label: input.Label}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, DockBadgeOutput{}, e
+		}
+		return nil, DockBadgeOutput{}, nil
 	}
 	return nil, DockBadgeOutput{Success: true}, nil
 }

@@ -3,8 +3,8 @@ package window
 import (
 	"context"
 
-	coreerr "forge.lthn.ai/core/go-log"
-	"forge.lthn.ai/core/go/pkg/core"
+	coreerr "dappco.re/go/core/log"
+	core "dappco.re/go/core"
 	"forge.lthn.ai/core/gui/pkg/screen"
 )
 
@@ -16,19 +16,19 @@ type Service struct {
 	platform Platform
 }
 
-func (s *Service) OnStartup(ctx context.Context) error {
+func (s *Service) OnStartup(_ context.Context) core.Result {
 	// Query config — display registers its handler before us (registration order guarantee).
-	// If display is not registered, handled=false and we skip config.
-	configValue, handled, _ := s.Core().QUERY(QueryConfig{})
-	if handled {
-		if windowConfig, ok := configValue.(map[string]any); ok {
+	// If display is not registered, OK=false and we skip config.
+	r := s.Core().QUERY(QueryConfig{})
+	if r.OK {
+		if windowConfig, ok := r.Value.(map[string]any); ok {
 			s.applyConfig(windowConfig)
 		}
 	}
 
 	s.Core().RegisterQuery(s.handleQuery)
-	s.Core().RegisterTask(s.handleTask)
-	return nil
+	s.registerTaskActions()
+	return core.Result{OK: true}
 }
 
 func (s *Service) applyConfig(configData map[string]any) {
@@ -49,30 +49,30 @@ func (s *Service) applyConfig(configData map[string]any) {
 	}
 }
 
-func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
-	return nil
+func (s *Service) HandleIPCEvents(_ *core.Core, _ core.Message) core.Result {
+	return core.Result{OK: true}
 }
 
-func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
+func (s *Service) handleQuery(_ *core.Core, q core.Query) core.Result {
 	switch q := q.(type) {
 	case QueryWindowList:
-		return s.queryWindowList(), true, nil
+		return core.Result{Value: s.queryWindowList(), OK: true}
 	case QueryWindowByName:
-		return s.queryWindowByName(q.Name), true, nil
+		return core.Result{Value: s.queryWindowByName(q.Name), OK: true}
 	case QueryLayoutList:
-		return s.manager.Layout().ListLayouts(), true, nil
+		return core.Result{Value: s.manager.Layout().ListLayouts(), OK: true}
 	case QueryLayoutGet:
 		l, ok := s.manager.Layout().GetLayout(q.Name)
 		if !ok {
-			return (*Layout)(nil), true, nil
+			return core.Result{Value: (*Layout)(nil), OK: true}
 		}
-		return &l, true, nil
+		return core.Result{Value: &l, OK: true}
 	case QueryWindowZoom:
 		return s.queryWindowZoom(q.Name)
 	case QueryWindowBounds:
 		return s.queryWindowBounds(q.Name)
 	default:
-		return nil, false, nil
+		return core.Result{}
 	}
 }
 
@@ -107,80 +107,144 @@ func (s *Service) queryWindowByName(name string) *WindowInfo {
 	}
 }
 
-// --- Task Handlers ---
+// --- Action Registration ---
 
-func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
-	switch t := t.(type) {
-	case TaskOpenWindow:
+// registerTaskActions registers all window task handlers as named Core actions.
+func (s *Service) registerTaskActions() {
+	c := s.Core()
+	c.Action("window.open", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskOpenWindow)
 		return s.taskOpenWindow(t)
-	case TaskCloseWindow:
-		return nil, true, s.taskCloseWindow(t.Name)
-	case TaskSetPosition:
-		return nil, true, s.taskSetPosition(t.Name, t.X, t.Y)
-	case TaskSetSize:
-		return nil, true, s.taskSetSize(t.Name, t.Width, t.Height)
-	case TaskMaximise:
-		return nil, true, s.taskMaximise(t.Name)
-	case TaskMinimise:
-		return nil, true, s.taskMinimise(t.Name)
-	case TaskFocus:
-		return nil, true, s.taskFocus(t.Name)
-	case TaskRestore:
-		return nil, true, s.taskRestore(t.Name)
-	case TaskSetTitle:
-		return nil, true, s.taskSetTitle(t.Name, t.Title)
-	case TaskSetAlwaysOnTop:
-		return nil, true, s.taskSetAlwaysOnTop(t.Name, t.AlwaysOnTop)
-	case TaskSetBackgroundColour:
-		return nil, true, s.taskSetBackgroundColour(t.Name, t.Red, t.Green, t.Blue, t.Alpha)
-	case TaskSetVisibility:
-		return nil, true, s.taskSetVisibility(t.Name, t.Visible)
-	case TaskFullscreen:
-		return nil, true, s.taskFullscreen(t.Name, t.Fullscreen)
-	case TaskSaveLayout:
-		return nil, true, s.taskSaveLayout(t.Name)
-	case TaskRestoreLayout:
-		return nil, true, s.taskRestoreLayout(t.Name)
-	case TaskDeleteLayout:
+	})
+	c.Action("window.close", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskCloseWindow)
+		return core.Result{Value: nil, OK: true}.New(s.taskCloseWindow(t.Name))
+	})
+	c.Action("window.setPosition", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskSetPosition)
+		return core.Result{Value: nil, OK: true}.New(s.taskSetPosition(t.Name, t.X, t.Y))
+	})
+	c.Action("window.setSize", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskSetSize)
+		return core.Result{Value: nil, OK: true}.New(s.taskSetSize(t.Name, t.Width, t.Height))
+	})
+	c.Action("window.maximise", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskMaximise)
+		return core.Result{Value: nil, OK: true}.New(s.taskMaximise(t.Name))
+	})
+	c.Action("window.minimise", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskMinimise)
+		return core.Result{Value: nil, OK: true}.New(s.taskMinimise(t.Name))
+	})
+	c.Action("window.focus", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskFocus)
+		return core.Result{Value: nil, OK: true}.New(s.taskFocus(t.Name))
+	})
+	c.Action("window.restore", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskRestore)
+		return core.Result{Value: nil, OK: true}.New(s.taskRestore(t.Name))
+	})
+	c.Action("window.setTitle", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskSetTitle)
+		return core.Result{Value: nil, OK: true}.New(s.taskSetTitle(t.Name, t.Title))
+	})
+	c.Action("window.setAlwaysOnTop", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskSetAlwaysOnTop)
+		return core.Result{Value: nil, OK: true}.New(s.taskSetAlwaysOnTop(t.Name, t.AlwaysOnTop))
+	})
+	c.Action("window.setBackgroundColour", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskSetBackgroundColour)
+		return core.Result{Value: nil, OK: true}.New(s.taskSetBackgroundColour(t.Name, t.Red, t.Green, t.Blue, t.Alpha))
+	})
+	c.Action("window.setVisibility", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskSetVisibility)
+		return core.Result{Value: nil, OK: true}.New(s.taskSetVisibility(t.Name, t.Visible))
+	})
+	c.Action("window.fullscreen", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskFullscreen)
+		return core.Result{Value: nil, OK: true}.New(s.taskFullscreen(t.Name, t.Fullscreen))
+	})
+	c.Action("window.saveLayout", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskSaveLayout)
+		return core.Result{Value: nil, OK: true}.New(s.taskSaveLayout(t.Name))
+	})
+	c.Action("window.restoreLayout", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskRestoreLayout)
+		return core.Result{Value: nil, OK: true}.New(s.taskRestoreLayout(t.Name))
+	})
+	c.Action("window.deleteLayout", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskDeleteLayout)
 		s.manager.Layout().DeleteLayout(t.Name)
-		return nil, true, nil
-	case TaskTileWindows:
-		return nil, true, s.taskTileWindows(t.Mode, t.Windows)
-	case TaskStackWindows:
-		return nil, true, s.taskStackWindows(t.Windows, t.OffsetX, t.OffsetY)
-	case TaskSnapWindow:
-		return nil, true, s.taskSnapWindow(t.Name, t.Position)
-	case TaskApplyWorkflow:
-		return nil, true, s.taskApplyWorkflow(t.Workflow, t.Windows)
-	case TaskSetZoom:
-		return nil, true, s.taskSetZoom(t.Name, t.Magnification)
-	case TaskZoomIn:
-		return nil, true, s.taskZoomIn(t.Name)
-	case TaskZoomOut:
-		return nil, true, s.taskZoomOut(t.Name)
-	case TaskZoomReset:
-		return nil, true, s.taskZoomReset(t.Name)
-	case TaskSetURL:
-		return nil, true, s.taskSetURL(t.Name, t.URL)
-	case TaskSetHTML:
-		return nil, true, s.taskSetHTML(t.Name, t.HTML)
-	case TaskExecJS:
-		return nil, true, s.taskExecJS(t.Name, t.JS)
-	case TaskToggleFullscreen:
-		return nil, true, s.taskToggleFullscreen(t.Name)
-	case TaskToggleMaximise:
-		return nil, true, s.taskToggleMaximise(t.Name)
-	case TaskSetBounds:
-		return nil, true, s.taskSetBounds(t.Name, t.X, t.Y, t.Width, t.Height)
-	case TaskSetContentProtection:
-		return nil, true, s.taskSetContentProtection(t.Name, t.Protection)
-	case TaskFlash:
-		return nil, true, s.taskFlash(t.Name, t.Enabled)
-	case TaskPrint:
-		return nil, true, s.taskPrint(t.Name)
-	default:
-		return nil, false, nil
-	}
+		return core.Result{OK: true}
+	})
+	c.Action("window.tileWindows", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskTileWindows)
+		return core.Result{Value: nil, OK: true}.New(s.taskTileWindows(t.Mode, t.Windows))
+	})
+	c.Action("window.stackWindows", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskStackWindows)
+		return core.Result{Value: nil, OK: true}.New(s.taskStackWindows(t.Windows, t.OffsetX, t.OffsetY))
+	})
+	c.Action("window.snapWindow", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskSnapWindow)
+		return core.Result{Value: nil, OK: true}.New(s.taskSnapWindow(t.Name, t.Position))
+	})
+	c.Action("window.applyWorkflow", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskApplyWorkflow)
+		return core.Result{Value: nil, OK: true}.New(s.taskApplyWorkflow(t.Workflow, t.Windows))
+	})
+	c.Action("window.setZoom", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskSetZoom)
+		return core.Result{Value: nil, OK: true}.New(s.taskSetZoom(t.Name, t.Magnification))
+	})
+	c.Action("window.zoomIn", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskZoomIn)
+		return core.Result{Value: nil, OK: true}.New(s.taskZoomIn(t.Name))
+	})
+	c.Action("window.zoomOut", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskZoomOut)
+		return core.Result{Value: nil, OK: true}.New(s.taskZoomOut(t.Name))
+	})
+	c.Action("window.zoomReset", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskZoomReset)
+		return core.Result{Value: nil, OK: true}.New(s.taskZoomReset(t.Name))
+	})
+	c.Action("window.setURL", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskSetURL)
+		return core.Result{Value: nil, OK: true}.New(s.taskSetURL(t.Name, t.URL))
+	})
+	c.Action("window.setHTML", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskSetHTML)
+		return core.Result{Value: nil, OK: true}.New(s.taskSetHTML(t.Name, t.HTML))
+	})
+	c.Action("window.execJS", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskExecJS)
+		return core.Result{Value: nil, OK: true}.New(s.taskExecJS(t.Name, t.JS))
+	})
+	c.Action("window.toggleFullscreen", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskToggleFullscreen)
+		return core.Result{Value: nil, OK: true}.New(s.taskToggleFullscreen(t.Name))
+	})
+	c.Action("window.toggleMaximise", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskToggleMaximise)
+		return core.Result{Value: nil, OK: true}.New(s.taskToggleMaximise(t.Name))
+	})
+	c.Action("window.setBounds", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskSetBounds)
+		return core.Result{Value: nil, OK: true}.New(s.taskSetBounds(t.Name, t.X, t.Y, t.Width, t.Height))
+	})
+	c.Action("window.setContentProtection", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskSetContentProtection)
+		return core.Result{Value: nil, OK: true}.New(s.taskSetContentProtection(t.Name, t.Protection))
+	})
+	c.Action("window.flash", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskFlash)
+		return core.Result{Value: nil, OK: true}.New(s.taskFlash(t.Name, t.Enabled))
+	})
+	c.Action("window.print", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskPrint)
+		return core.Result{Value: nil, OK: true}.New(s.taskPrint(t.Name))
+	})
 }
 
 func (s *Service) primaryScreenArea() (int, int, int, int) {
@@ -189,12 +253,12 @@ func (s *Service) primaryScreenArea() (int, int, int, int) {
 	const fallbackWidth = 1920
 	const fallbackHeight = 1080
 
-	result, handled, err := s.Core().QUERY(screen.QueryPrimary{})
-	if err != nil || !handled {
+	r := s.Core().QUERY(screen.QueryPrimary{})
+	if !r.OK {
 		return fallbackX, fallbackY, fallbackWidth, fallbackHeight
 	}
 
-	primary, ok := result.(*screen.Screen)
+	primary, ok := r.Value.(*screen.Screen)
 	if !ok || primary == nil {
 		return fallbackX, fallbackY, fallbackWidth, fallbackHeight
 	}
@@ -216,7 +280,7 @@ func (s *Service) primaryScreenArea() (int, int, int, int) {
 	return x, y, width, height
 }
 
-func (s *Service) taskOpenWindow(t TaskOpenWindow) (any, bool, error) {
+func (s *Service) taskOpenWindow(t TaskOpenWindow) core.Result {
 	var (
 		pw  PlatformWindow
 		err error
@@ -227,7 +291,7 @@ func (s *Service) taskOpenWindow(t TaskOpenWindow) (any, bool, error) {
 		pw, err = s.manager.Open(t.Options...)
 	}
 	if err != nil {
-		return nil, true, err
+		return core.Result{Value: err, OK: false}
 	}
 	x, y := pw.Position()
 	w, h := pw.Size()
@@ -238,7 +302,7 @@ func (s *Service) taskOpenWindow(t TaskOpenWindow) (any, bool, error) {
 
 	// Broadcast to all listeners
 	_ = s.Core().ACTION(ActionWindowOpened{Name: pw.Name()})
-	return info, true, nil
+	return core.Result{Value: info, OK: true}
 }
 
 // trackWindow attaches platform event listeners that emit IPC actions.
@@ -494,12 +558,12 @@ func (s *Service) taskApplyWorkflow(workflow string, names []string) error {
 
 // --- Zoom ---
 
-func (s *Service) queryWindowZoom(name string) (any, bool, error) {
+func (s *Service) queryWindowZoom(name string) core.Result {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return nil, true, coreerr.E("window.queryWindowZoom", "window not found: "+name, nil)
+		return core.Result{Value: coreerr.E("window.queryWindowZoom", "window not found: "+name, nil), OK: false}
 	}
-	return pw.GetZoom(), true, nil
+	return core.Result{Value: pw.GetZoom(), OK: true}
 }
 
 func (s *Service) taskSetZoom(name string, magnification float64) error {
@@ -595,13 +659,13 @@ func (s *Service) taskToggleMaximise(name string) error {
 
 // --- Bounds ---
 
-func (s *Service) queryWindowBounds(name string) (any, bool, error) {
+func (s *Service) queryWindowBounds(name string) core.Result {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return nil, true, coreerr.E("window.queryWindowBounds", "window not found: "+name, nil)
+		return core.Result{Value: coreerr.E("window.queryWindowBounds", "window not found: "+name, nil), OK: false}
 	}
 	x, y, width, height := pw.GetBounds()
-	return WindowBounds{X: x, Y: y, Width: width, Height: height}, true, nil
+	return core.Result{Value: WindowBounds{X: x, Y: y, Width: width, Height: height}, OK: true}
 }
 
 func (s *Service) taskSetBounds(name string, x, y, width, height int) error {

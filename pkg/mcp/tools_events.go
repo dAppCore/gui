@@ -4,7 +4,8 @@ package mcp
 import (
 	"context"
 
-	coreerr "forge.lthn.ai/core/go-log"
+	core "dappco.re/go/core"
+	coreerr "dappco.re/go/core/log"
 	"forge.lthn.ai/core/gui/pkg/events"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -20,12 +21,16 @@ type EventEmitOutput struct {
 }
 
 func (s *Subsystem) eventEmit(_ context.Context, _ *mcp.CallToolRequest, input EventEmitInput) (*mcp.CallToolResult, EventEmitOutput, error) {
-	// result := s.core.PERFORM(events.TaskEmit{Name: "user:login", Data: payload})
-	result, _, err := s.core.PERFORM(events.TaskEmit{Name: input.Name, Data: input.Data})
-	if err != nil {
-		return nil, EventEmitOutput{}, err
+	r := s.core.Action("events.emit").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: events.TaskEmit{Name: input.Name, Data: input.Data}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, EventEmitOutput{}, e
+		}
+		return nil, EventEmitOutput{}, nil
 	}
-	cancelled, ok := result.(bool)
+	cancelled, ok := r.Value.(bool)
 	if !ok {
 		return nil, EventEmitOutput{}, coreerr.E("mcp.eventEmit", "unexpected result type", nil)
 	}
@@ -42,10 +47,14 @@ type EventOnOutput struct {
 }
 
 func (s *Subsystem) eventOn(_ context.Context, _ *mcp.CallToolRequest, input EventOnInput) (*mcp.CallToolResult, EventOnOutput, error) {
-	// s.core.PERFORM(events.TaskOn{Name: "theme:changed"})
-	_, _, err := s.core.PERFORM(events.TaskOn{Name: input.Name})
-	if err != nil {
-		return nil, EventOnOutput{}, err
+	r := s.core.Action("events.on").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: events.TaskOn{Name: input.Name}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, EventOnOutput{}, e
+		}
+		return nil, EventOnOutput{}, nil
 	}
 	return nil, EventOnOutput{Success: true}, nil
 }
@@ -60,10 +69,14 @@ type EventOffOutput struct {
 }
 
 func (s *Subsystem) eventOff(_ context.Context, _ *mcp.CallToolRequest, input EventOffInput) (*mcp.CallToolResult, EventOffOutput, error) {
-	// s.core.PERFORM(events.TaskOff{Name: "theme:changed"})
-	_, _, err := s.core.PERFORM(events.TaskOff{Name: input.Name})
-	if err != nil {
-		return nil, EventOffOutput{}, err
+	r := s.core.Action("events.off").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: events.TaskOff{Name: input.Name}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, EventOffOutput{}, e
+		}
+		return nil, EventOffOutput{}, nil
 	}
 	return nil, EventOffOutput{Success: true}, nil
 }
@@ -76,12 +89,14 @@ type EventListOutput struct {
 }
 
 func (s *Subsystem) eventList(_ context.Context, _ *mcp.CallToolRequest, _ EventListInput) (*mcp.CallToolResult, EventListOutput, error) {
-	// result, _, _ := s.core.QUERY(events.QueryListeners{})
-	result, _, err := s.core.QUERY(events.QueryListeners{})
-	if err != nil {
-		return nil, EventListOutput{}, err
+	r := s.core.QUERY(events.QueryListeners{})
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, EventListOutput{}, e
+		}
+		return nil, EventListOutput{}, nil
 	}
-	listenerInfos, ok := result.([]events.ListenerInfo)
+	listenerInfos, ok := r.Value.([]events.ListenerInfo)
 	if !ok {
 		return nil, EventListOutput{}, coreerr.E("mcp.eventList", "unexpected result type", nil)
 	}

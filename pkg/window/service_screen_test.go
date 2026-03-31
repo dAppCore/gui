@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"forge.lthn.ai/core/go/pkg/core"
+	core "dappco.re/go/core"
 	"forge.lthn.ai/core/gui/pkg/screen"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -32,17 +32,17 @@ func (m *mockScreenPlatform) GetCurrent() *screen.Screen {
 func newTestWindowServiceWithScreen(t *testing.T, screens []screen.Screen) (*Service, *core.Core) {
 	t.Helper()
 
-	c, err := core.New(
+	c := core.New(
 		core.WithService(screen.Register(&mockScreenPlatform{screens: screens})),
 		core.WithService(Register(newMockPlatform())),
 		core.WithServiceLock(),
 	)
-	require.NoError(t, err)
-	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
 
 	svc := core.MustServiceFor[*Service](c, "window")
 	return svc, c
 }
+
 
 func TestTaskTileWindows_Good_UsesPrimaryScreenSize(t *testing.T) {
 	_, c := newTestWindowServiceWithScreen(t, []screen.Screen{
@@ -53,25 +53,22 @@ func TestTaskTileWindows_Good_UsesPrimaryScreenSize(t *testing.T) {
 		},
 	})
 
-	_, _, err := c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("left"), WithSize(400, 400)}})
-	require.NoError(t, err)
-	_, _, err = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("right"), WithSize(400, 400)}})
-	require.NoError(t, err)
+	require.True(t, taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("left"), WithSize(400, 400)}}).OK)
+	require.True(t, taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("right"), WithSize(400, 400)}}).OK)
 
-	_, handled, err := c.PERFORM(TaskTileWindows{Mode: "left-right", Windows: []string{"left", "right"}})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "window.tileWindows", TaskTileWindows{Mode: "left-right", Windows: []string{"left", "right"}})
+	require.True(t, r.OK)
 
-	result, _, err := c.QUERY(QueryWindowByName{Name: "left"})
-	require.NoError(t, err)
-	left := result.(*WindowInfo)
+	r2 := c.QUERY(QueryWindowByName{Name: "left"})
+	require.True(t, r2.OK)
+	left := r2.Value.(*WindowInfo)
 	assert.Equal(t, 0, left.X)
 	assert.Equal(t, 1000, left.Width)
 	assert.Equal(t, 1000, left.Height)
 
-	result, _, err = c.QUERY(QueryWindowByName{Name: "right"})
-	require.NoError(t, err)
-	right := result.(*WindowInfo)
+	r3 := c.QUERY(QueryWindowByName{Name: "right"})
+	require.True(t, r3.OK)
+	right := r3.Value.(*WindowInfo)
 	assert.Equal(t, 1000, right.X)
 	assert.Equal(t, 1000, right.Width)
 	assert.Equal(t, 1000, right.Height)
@@ -86,16 +83,14 @@ func TestTaskSnapWindow_Good_UsesPrimaryScreenSize(t *testing.T) {
 		},
 	})
 
-	_, _, err := c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("snap"), WithSize(400, 300)}})
-	require.NoError(t, err)
+	require.True(t, taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("snap"), WithSize(400, 300)}}).OK)
 
-	_, handled, err := c.PERFORM(TaskSnapWindow{Name: "snap", Position: "left"})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "window.snapWindow", TaskSnapWindow{Name: "snap", Position: "left"})
+	require.True(t, r.OK)
 
-	result, _, err := c.QUERY(QueryWindowByName{Name: "snap"})
-	require.NoError(t, err)
-	info := result.(*WindowInfo)
+	r2 := c.QUERY(QueryWindowByName{Name: "snap"})
+	require.True(t, r2.OK)
+	info := r2.Value.(*WindowInfo)
 	assert.Equal(t, 0, info.X)
 	assert.Equal(t, 0, info.Y)
 	assert.Equal(t, 1000, info.Width)
@@ -111,26 +106,23 @@ func TestTaskTileWindows_Good_UsesPrimaryWorkAreaOrigin(t *testing.T) {
 		},
 	})
 
-	_, _, err := c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("left"), WithSize(400, 400)}})
-	require.NoError(t, err)
-	_, _, err = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("right"), WithSize(400, 400)}})
-	require.NoError(t, err)
+	require.True(t, taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("left"), WithSize(400, 400)}}).OK)
+	require.True(t, taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("right"), WithSize(400, 400)}}).OK)
 
-	_, handled, err := c.PERFORM(TaskTileWindows{Mode: "left-right", Windows: []string{"left", "right"}})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "window.tileWindows", TaskTileWindows{Mode: "left-right", Windows: []string{"left", "right"}})
+	require.True(t, r.OK)
 
-	result, _, err := c.QUERY(QueryWindowByName{Name: "left"})
-	require.NoError(t, err)
-	left := result.(*WindowInfo)
+	r2 := c.QUERY(QueryWindowByName{Name: "left"})
+	require.True(t, r2.OK)
+	left := r2.Value.(*WindowInfo)
 	assert.Equal(t, 100, left.X)
 	assert.Equal(t, 50, left.Y)
 	assert.Equal(t, 1000, left.Width)
 	assert.Equal(t, 1000, left.Height)
 
-	result, _, err = c.QUERY(QueryWindowByName{Name: "right"})
-	require.NoError(t, err)
-	right := result.(*WindowInfo)
+	r3 := c.QUERY(QueryWindowByName{Name: "right"})
+	require.True(t, r3.OK)
+	right := r3.Value.(*WindowInfo)
 	assert.Equal(t, 1100, right.X)
 	assert.Equal(t, 50, right.Y)
 	assert.Equal(t, 1000, right.Width)

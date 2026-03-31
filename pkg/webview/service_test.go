@@ -5,7 +5,7 @@ import (
 	"context"
 	"testing"
 
-	"forge.lthn.ai/core/go/pkg/core"
+	core "dappco.re/go/core"
 	"forge.lthn.ai/core/gui/pkg/window"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -95,13 +95,18 @@ func (m *mockConnector) Print(toPDF bool) ([]byte, error) {
 func newTestService(t *testing.T, mock *mockConnector) (*Service, *core.Core) {
 	t.Helper()
 	factory := Register()
-	c, err := core.New(core.WithService(factory), core.WithServiceLock())
-	require.NoError(t, err)
-	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+	c := core.New(core.WithService(factory), core.WithServiceLock())
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
 	svc := core.MustServiceFor[*Service](c, "webview")
 	// Inject mock connector
 	svc.newConn = func(_, _ string) (connector, error) { return mock, nil }
 	return svc, c
+}
+
+func taskRun(c *core.Core, name string, task any) core.Result {
+	return c.Action(name).Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: task},
+	))
 }
 
 func TestRegister_Good(t *testing.T) {
@@ -111,18 +116,16 @@ func TestRegister_Good(t *testing.T) {
 
 func TestQueryURL_Good(t *testing.T) {
 	_, c := newTestService(t, &mockConnector{url: "https://example.com"})
-	result, handled, err := c.QUERY(QueryURL{Window: "main"})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.Equal(t, "https://example.com", result)
+	r := c.QUERY(QueryURL{Window: "main"})
+	require.True(t, r.OK)
+	assert.Equal(t, "https://example.com", r.Value)
 }
 
 func TestQueryTitle_Good(t *testing.T) {
 	_, c := newTestService(t, &mockConnector{title: "Test Page"})
-	result, handled, err := c.QUERY(QueryTitle{Window: "main"})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.Equal(t, "Test Page", result)
+	r := c.QUERY(QueryTitle{Window: "main"})
+	require.True(t, r.OK)
+	assert.Equal(t, "Test Page", r.Value)
 }
 
 func TestQueryConsole_Good(t *testing.T) {
@@ -132,10 +135,9 @@ func TestQueryConsole_Good(t *testing.T) {
 		{Type: "log", Text: "world"},
 	}}
 	_, c := newTestService(t, mock)
-	result, handled, err := c.QUERY(QueryConsole{Window: "main", Level: "error", Limit: 10})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	msgs, _ := result.([]ConsoleMessage)
+	r := c.QUERY(QueryConsole{Window: "main", Level: "error", Limit: 10})
+	require.True(t, r.OK)
+	msgs, _ := r.Value.([]ConsoleMessage)
 	assert.Len(t, msgs, 1)
 	assert.Equal(t, "oops", msgs[0].Text)
 }
@@ -147,45 +149,41 @@ func TestQueryConsole_Good_Limit(t *testing.T) {
 		{Type: "log", Text: "c"},
 	}}
 	_, c := newTestService(t, mock)
-	result, _, _ := c.QUERY(QueryConsole{Window: "main", Limit: 2})
-	msgs, _ := result.([]ConsoleMessage)
+	r := c.QUERY(QueryConsole{Window: "main", Limit: 2})
+	msgs, _ := r.Value.([]ConsoleMessage)
 	assert.Len(t, msgs, 2)
 	assert.Equal(t, "b", msgs[0].Text) // last 2
 }
 
 func TestTaskEvaluate_Good(t *testing.T) {
 	_, c := newTestService(t, &mockConnector{evalResult: 42})
-	result, handled, err := c.PERFORM(TaskEvaluate{Window: "main", Script: "21*2"})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.Equal(t, 42, result)
+	r := taskRun(c, "webview.evaluate", TaskEvaluate{Window: "main", Script: "21*2"})
+	require.True(t, r.OK)
+	assert.Equal(t, 42, r.Value)
 }
 
 func TestTaskClick_Good(t *testing.T) {
 	mock := &mockConnector{}
 	_, c := newTestService(t, mock)
-	_, handled, err := c.PERFORM(TaskClick{Window: "main", Selector: "#btn"})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "webview.click", TaskClick{Window: "main", Selector: "#btn"})
+	require.True(t, r.OK)
 	assert.Equal(t, "#btn", mock.lastClickSel)
 }
 
 func TestTaskNavigate_Good(t *testing.T) {
 	mock := &mockConnector{}
 	_, c := newTestService(t, mock)
-	_, handled, err := c.PERFORM(TaskNavigate{Window: "main", URL: "https://example.com"})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "webview.navigate", TaskNavigate{Window: "main", URL: "https://example.com"})
+	require.True(t, r.OK)
 	assert.Equal(t, "https://example.com", mock.lastNavURL)
 }
 
 func TestTaskScreenshot_Good(t *testing.T) {
 	mock := &mockConnector{screenshot: []byte{0x89, 0x50, 0x4E, 0x47}}
 	_, c := newTestService(t, mock)
-	result, handled, err := c.PERFORM(TaskScreenshot{Window: "main"})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	sr, ok := result.(ScreenshotResult)
+	r := taskRun(c, "webview.screenshot", TaskScreenshot{Window: "main"})
+	require.True(t, r.OK)
+	sr, ok := r.Value.(ScreenshotResult)
 	assert.True(t, ok)
 	assert.Equal(t, "image/png", sr.MimeType)
 	assert.NotEmpty(t, sr.Base64)
@@ -194,9 +192,8 @@ func TestTaskScreenshot_Good(t *testing.T) {
 func TestTaskClearConsole_Good(t *testing.T) {
 	mock := &mockConnector{}
 	_, c := newTestService(t, mock)
-	_, handled, err := c.PERFORM(TaskClearConsole{Window: "main"})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "webview.clearConsole", TaskClearConsole{Window: "main"})
+	require.True(t, r.OK)
 	assert.True(t, mock.consoleClearCalled)
 }
 
@@ -204,7 +201,7 @@ func TestConnectionCleanup_Good(t *testing.T) {
 	mock := &mockConnector{}
 	_, c := newTestService(t, mock)
 	// Access creates connection
-	_, _, _ = c.QUERY(QueryURL{Window: "main"})
+	c.QUERY(QueryURL{Window: "main"})
 	assert.False(t, mock.closed)
 	// Window close action triggers cleanup
 	_ = c.ACTION(window.ActionWindowClosed{Name: "main"})
@@ -212,9 +209,9 @@ func TestConnectionCleanup_Good(t *testing.T) {
 }
 
 func TestQueryURL_Bad_NoService(t *testing.T) {
-	c, _ := core.New(core.WithServiceLock())
-	_, handled, _ := c.QUERY(QueryURL{Window: "main"})
-	assert.False(t, handled)
+	c := core.New(core.WithServiceLock())
+	r := c.QUERY(QueryURL{Window: "main"})
+	assert.False(t, r.OK)
 }
 
 // --- SetURL ---
@@ -222,9 +219,8 @@ func TestQueryURL_Bad_NoService(t *testing.T) {
 func TestTaskSetURL_Good(t *testing.T) {
 	mock := &mockConnector{}
 	_, c := newTestService(t, mock)
-	_, handled, err := c.PERFORM(TaskSetURL{Window: "main", URL: "https://example.com/page"})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "webview.setURL", TaskSetURL{Window: "main", URL: "https://example.com/page"})
+	require.True(t, r.OK)
 	assert.Equal(t, "https://example.com/page", mock.lastNavURL)
 }
 
@@ -235,16 +231,15 @@ func TestTaskSetURL_Bad_UnknownWindow(t *testing.T) {
 	svc.newConn = func(_, _ string) (connector, error) {
 		return nil, core.E("test", "no connection", nil)
 	}
-	_, _, err := c.PERFORM(TaskSetURL{Window: "bad", URL: "https://example.com"})
-	assert.Error(t, err)
+	r := taskRun(c, "webview.setURL", TaskSetURL{Window: "bad", URL: "https://example.com"})
+	assert.False(t, r.OK)
 }
 
 func TestTaskSetURL_Ugly_EmptyURL(t *testing.T) {
 	mock := &mockConnector{}
 	_, c := newTestService(t, mock)
-	_, handled, err := c.PERFORM(TaskSetURL{Window: "main", URL: ""})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "webview.setURL", TaskSetURL{Window: "main", URL: ""})
+	require.True(t, r.OK)
 	assert.Equal(t, "", mock.lastNavURL)
 }
 
@@ -253,57 +248,53 @@ func TestTaskSetURL_Ugly_EmptyURL(t *testing.T) {
 func TestQueryZoom_Good(t *testing.T) {
 	mock := &mockConnector{zoom: 1.5}
 	_, c := newTestService(t, mock)
-	result, handled, err := c.QUERY(QueryZoom{Window: "main"})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.InDelta(t, 1.5, result.(float64), 0.001)
+	r := c.QUERY(QueryZoom{Window: "main"})
+	require.True(t, r.OK)
+	assert.InDelta(t, 1.5, r.Value.(float64), 0.001)
 }
 
 func TestQueryZoom_Good_DefaultsToOne(t *testing.T) {
 	mock := &mockConnector{} // zoom not set → GetZoom returns 1.0
 	_, c := newTestService(t, mock)
-	result, handled, err := c.QUERY(QueryZoom{Window: "main"})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.InDelta(t, 1.0, result.(float64), 0.001)
+	r := c.QUERY(QueryZoom{Window: "main"})
+	require.True(t, r.OK)
+	assert.InDelta(t, 1.0, r.Value.(float64), 0.001)
 }
 
 func TestQueryZoom_Bad_NoService(t *testing.T) {
-	c, _ := core.New(core.WithServiceLock())
-	_, handled, _ := c.QUERY(QueryZoom{Window: "main"})
-	assert.False(t, handled)
+	c := core.New(core.WithServiceLock())
+	r := c.QUERY(QueryZoom{Window: "main"})
+	assert.False(t, r.OK)
 }
 
 func TestTaskSetZoom_Good(t *testing.T) {
 	mock := &mockConnector{}
 	_, c := newTestService(t, mock)
-	_, handled, err := c.PERFORM(TaskSetZoom{Window: "main", Zoom: 2.0})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "webview.setZoom", TaskSetZoom{Window: "main", Zoom: 2.0})
+	require.True(t, r.OK)
 	assert.InDelta(t, 2.0, mock.lastZoomSet, 0.001)
 }
 
 func TestTaskSetZoom_Good_Reset(t *testing.T) {
 	mock := &mockConnector{zoom: 1.5}
 	_, c := newTestService(t, mock)
-	_, _, err := c.PERFORM(TaskSetZoom{Window: "main", Zoom: 1.0})
-	require.NoError(t, err)
+	r := taskRun(c, "webview.setZoom", TaskSetZoom{Window: "main", Zoom: 1.0})
+	require.True(t, r.OK)
 	assert.InDelta(t, 1.0, mock.zoom, 0.001)
 }
 
 func TestTaskSetZoom_Bad_NoService(t *testing.T) {
-	c, _ := core.New(core.WithServiceLock())
-	_, handled, _ := c.PERFORM(TaskSetZoom{Window: "main", Zoom: 1.5})
-	assert.False(t, handled)
+	c := core.New(core.WithServiceLock())
+	r := c.Action("webview.setZoom").Run(context.Background(), core.NewOptions())
+	assert.False(t, r.OK)
 }
 
 func TestTaskSetZoom_Ugly_ZeroZoom(t *testing.T) {
 	mock := &mockConnector{}
 	_, c := newTestService(t, mock)
 	// Zero zoom is technically valid input; the connector accepts it.
-	_, handled, err := c.PERFORM(TaskSetZoom{Window: "main", Zoom: 0})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "webview.setZoom", TaskSetZoom{Window: "main", Zoom: 0})
+	require.True(t, r.OK)
 	assert.InDelta(t, 0.0, mock.lastZoomSet, 0.001)
 }
 
@@ -312,10 +303,9 @@ func TestTaskSetZoom_Ugly_ZeroZoom(t *testing.T) {
 func TestTaskPrint_Good_Dialog(t *testing.T) {
 	mock := &mockConnector{}
 	_, c := newTestService(t, mock)
-	result, handled, err := c.PERFORM(TaskPrint{Window: "main", ToPDF: false})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.Nil(t, result)
+	r := taskRun(c, "webview.print", TaskPrint{Window: "main", ToPDF: false})
+	require.True(t, r.OK)
+	assert.Nil(t, r.Value)
 	assert.True(t, mock.printCalled)
 	assert.False(t, mock.printToPDF)
 }
@@ -324,10 +314,9 @@ func TestTaskPrint_Good_PDF(t *testing.T) {
 	pdfHeader := []byte{0x25, 0x50, 0x44, 0x46} // %PDF
 	mock := &mockConnector{printPDFBytes: pdfHeader}
 	_, c := newTestService(t, mock)
-	result, handled, err := c.PERFORM(TaskPrint{Window: "main", ToPDF: true})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	pr, ok := result.(PrintResult)
+	r := taskRun(c, "webview.print", TaskPrint{Window: "main", ToPDF: true})
+	require.True(t, r.OK)
+	pr, ok := r.Value.(PrintResult)
 	require.True(t, ok)
 	assert.Equal(t, "application/pdf", pr.MimeType)
 	assert.NotEmpty(t, pr.Base64)
@@ -335,26 +324,25 @@ func TestTaskPrint_Good_PDF(t *testing.T) {
 }
 
 func TestTaskPrint_Bad_NoService(t *testing.T) {
-	c, _ := core.New(core.WithServiceLock())
-	_, handled, _ := c.PERFORM(TaskPrint{Window: "main"})
-	assert.False(t, handled)
+	c := core.New(core.WithServiceLock())
+	r := c.Action("webview.print").Run(context.Background(), core.NewOptions())
+	assert.False(t, r.OK)
 }
 
 func TestTaskPrint_Bad_Error(t *testing.T) {
 	mock := &mockConnector{printErr: core.E("test", "print failed", nil)}
 	_, c := newTestService(t, mock)
-	_, _, err := c.PERFORM(TaskPrint{Window: "main", ToPDF: true})
-	assert.Error(t, err)
+	r := taskRun(c, "webview.print", TaskPrint{Window: "main", ToPDF: true})
+	assert.False(t, r.OK)
 }
 
 func TestTaskPrint_Ugly_EmptyPDF(t *testing.T) {
 	// toPDF=true but connector returns zero bytes — should still wrap as PrintResult
 	mock := &mockConnector{printPDFBytes: []byte{}}
 	_, c := newTestService(t, mock)
-	result, handled, err := c.PERFORM(TaskPrint{Window: "main", ToPDF: true})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	pr, ok := result.(PrintResult)
+	r := taskRun(c, "webview.print", TaskPrint{Window: "main", ToPDF: true})
+	require.True(t, r.OK)
+	pr, ok := r.Value.(PrintResult)
 	require.True(t, ok)
 	assert.Equal(t, "application/pdf", pr.MimeType)
 	assert.Equal(t, "", pr.Base64) // empty PDF encodes to empty base64

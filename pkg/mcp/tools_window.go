@@ -4,7 +4,8 @@ package mcp
 import (
 	"context"
 
-	coreerr "forge.lthn.ai/core/go-log"
+	core "dappco.re/go/core"
+	coreerr "dappco.re/go/core/log"
 	"forge.lthn.ai/core/gui/pkg/window"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -17,11 +18,14 @@ type WindowListOutput struct {
 }
 
 func (s *Subsystem) windowList(_ context.Context, _ *mcp.CallToolRequest, _ WindowListInput) (*mcp.CallToolResult, WindowListOutput, error) {
-	result, _, err := s.core.QUERY(window.QueryWindowList{})
-	if err != nil {
-		return nil, WindowListOutput{}, err
+	r := s.core.QUERY(window.QueryWindowList{})
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, WindowListOutput{}, e
+		}
+		return nil, WindowListOutput{}, nil
 	}
-	windows, ok := result.([]window.WindowInfo)
+	windows, ok := r.Value.([]window.WindowInfo)
 	if !ok {
 		return nil, WindowListOutput{}, coreerr.E("mcp.windowList", "unexpected result type", nil)
 	}
@@ -38,11 +42,14 @@ type WindowGetOutput struct {
 }
 
 func (s *Subsystem) windowGet(_ context.Context, _ *mcp.CallToolRequest, input WindowGetInput) (*mcp.CallToolResult, WindowGetOutput, error) {
-	result, _, err := s.core.QUERY(window.QueryWindowByName{Name: input.Name})
-	if err != nil {
-		return nil, WindowGetOutput{}, err
+	r := s.core.QUERY(window.QueryWindowByName{Name: input.Name})
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, WindowGetOutput{}, e
+		}
+		return nil, WindowGetOutput{}, nil
 	}
-	info, ok := result.(*window.WindowInfo)
+	info, ok := r.Value.(*window.WindowInfo)
 	if !ok {
 		return nil, WindowGetOutput{}, coreerr.E("mcp.windowGet", "unexpected result type", nil)
 	}
@@ -57,11 +64,14 @@ type WindowFocusedOutput struct {
 }
 
 func (s *Subsystem) windowFocused(_ context.Context, _ *mcp.CallToolRequest, _ WindowFocusedInput) (*mcp.CallToolResult, WindowFocusedOutput, error) {
-	result, _, err := s.core.QUERY(window.QueryWindowList{})
-	if err != nil {
-		return nil, WindowFocusedOutput{}, err
+	r := s.core.QUERY(window.QueryWindowList{})
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, WindowFocusedOutput{}, e
+		}
+		return nil, WindowFocusedOutput{}, nil
 	}
-	windows, ok := result.([]window.WindowInfo)
+	windows, ok := r.Value.([]window.WindowInfo)
 	if !ok {
 		return nil, WindowFocusedOutput{}, coreerr.E("mcp.windowFocused", "unexpected result type", nil)
 	}
@@ -89,21 +99,26 @@ type WindowCreateOutput struct {
 }
 
 func (s *Subsystem) windowCreate(_ context.Context, _ *mcp.CallToolRequest, input WindowCreateInput) (*mcp.CallToolResult, WindowCreateOutput, error) {
-	result, _, err := s.core.PERFORM(window.TaskOpenWindow{
-		Window: &window.Window{
-			Name:   input.Name,
-			Title:  input.Title,
-			URL:    input.URL,
-			Width:  input.Width,
-			Height: input.Height,
-			X:      input.X,
-			Y:      input.Y,
-		},
-	})
-	if err != nil {
-		return nil, WindowCreateOutput{}, err
+	r := s.core.Action("window.open").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskOpenWindow{
+			Window: &window.Window{
+				Name:   input.Name,
+				Title:  input.Title,
+				URL:    input.URL,
+				Width:  input.Width,
+				Height: input.Height,
+				X:      input.X,
+				Y:      input.Y,
+			},
+		}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, WindowCreateOutput{}, e
+		}
+		return nil, WindowCreateOutput{}, coreerr.E("mcp.windowCreate", "window.open failed", nil)
 	}
-	info, ok := result.(window.WindowInfo)
+	info, ok := r.Value.(window.WindowInfo)
 	if !ok {
 		return nil, WindowCreateOutput{}, coreerr.E("mcp.windowCreate", "unexpected result type", nil)
 	}
@@ -120,9 +135,14 @@ type WindowCloseOutput struct {
 }
 
 func (s *Subsystem) windowClose(_ context.Context, _ *mcp.CallToolRequest, input WindowCloseInput) (*mcp.CallToolResult, WindowCloseOutput, error) {
-	_, _, err := s.core.PERFORM(window.TaskCloseWindow{Name: input.Name})
-	if err != nil {
-		return nil, WindowCloseOutput{}, err
+	r := s.core.Action("window.close").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskCloseWindow{Name: input.Name}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, WindowCloseOutput{}, e
+		}
+		return nil, WindowCloseOutput{}, nil
 	}
 	return nil, WindowCloseOutput{Success: true}, nil
 }
@@ -139,9 +159,14 @@ type WindowPositionOutput struct {
 }
 
 func (s *Subsystem) windowPosition(_ context.Context, _ *mcp.CallToolRequest, input WindowPositionInput) (*mcp.CallToolResult, WindowPositionOutput, error) {
-	_, _, err := s.core.PERFORM(window.TaskSetPosition{Name: input.Name, X: input.X, Y: input.Y})
-	if err != nil {
-		return nil, WindowPositionOutput{}, err
+	r := s.core.Action("window.setPosition").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskSetPosition{Name: input.Name, X: input.X, Y: input.Y}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, WindowPositionOutput{}, e
+		}
+		return nil, WindowPositionOutput{}, nil
 	}
 	return nil, WindowPositionOutput{Success: true}, nil
 }
@@ -158,9 +183,14 @@ type WindowSizeOutput struct {
 }
 
 func (s *Subsystem) windowSize(_ context.Context, _ *mcp.CallToolRequest, input WindowSizeInput) (*mcp.CallToolResult, WindowSizeOutput, error) {
-	_, _, err := s.core.PERFORM(window.TaskSetSize{Name: input.Name, Width: input.Width, Height: input.Height})
-	if err != nil {
-		return nil, WindowSizeOutput{}, err
+	r := s.core.Action("window.setSize").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskSetSize{Name: input.Name, Width: input.Width, Height: input.Height}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, WindowSizeOutput{}, e
+		}
+		return nil, WindowSizeOutput{}, nil
 	}
 	return nil, WindowSizeOutput{Success: true}, nil
 }
@@ -179,13 +209,23 @@ type WindowBoundsOutput struct {
 }
 
 func (s *Subsystem) windowBounds(_ context.Context, _ *mcp.CallToolRequest, input WindowBoundsInput) (*mcp.CallToolResult, WindowBoundsOutput, error) {
-	_, _, err := s.core.PERFORM(window.TaskSetPosition{Name: input.Name, X: input.X, Y: input.Y})
-	if err != nil {
-		return nil, WindowBoundsOutput{}, err
+	r := s.core.Action("window.setPosition").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskSetPosition{Name: input.Name, X: input.X, Y: input.Y}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, WindowBoundsOutput{}, e
+		}
+		return nil, WindowBoundsOutput{}, nil
 	}
-	_, _, err = s.core.PERFORM(window.TaskSetSize{Name: input.Name, Width: input.Width, Height: input.Height})
-	if err != nil {
-		return nil, WindowBoundsOutput{}, err
+	r = s.core.Action("window.setSize").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskSetSize{Name: input.Name, Width: input.Width, Height: input.Height}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, WindowBoundsOutput{}, e
+		}
+		return nil, WindowBoundsOutput{}, nil
 	}
 	return nil, WindowBoundsOutput{Success: true}, nil
 }
@@ -200,9 +240,14 @@ type WindowMaximizeOutput struct {
 }
 
 func (s *Subsystem) windowMaximize(_ context.Context, _ *mcp.CallToolRequest, input WindowMaximizeInput) (*mcp.CallToolResult, WindowMaximizeOutput, error) {
-	_, _, err := s.core.PERFORM(window.TaskMaximise{Name: input.Name})
-	if err != nil {
-		return nil, WindowMaximizeOutput{}, err
+	r := s.core.Action("window.maximise").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskMaximise{Name: input.Name}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, WindowMaximizeOutput{}, e
+		}
+		return nil, WindowMaximizeOutput{}, nil
 	}
 	return nil, WindowMaximizeOutput{Success: true}, nil
 }
@@ -217,9 +262,14 @@ type WindowMinimizeOutput struct {
 }
 
 func (s *Subsystem) windowMinimize(_ context.Context, _ *mcp.CallToolRequest, input WindowMinimizeInput) (*mcp.CallToolResult, WindowMinimizeOutput, error) {
-	_, _, err := s.core.PERFORM(window.TaskMinimise{Name: input.Name})
-	if err != nil {
-		return nil, WindowMinimizeOutput{}, err
+	r := s.core.Action("window.minimise").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskMinimise{Name: input.Name}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, WindowMinimizeOutput{}, e
+		}
+		return nil, WindowMinimizeOutput{}, nil
 	}
 	return nil, WindowMinimizeOutput{Success: true}, nil
 }
@@ -234,9 +284,14 @@ type WindowRestoreOutput struct {
 }
 
 func (s *Subsystem) windowRestore(_ context.Context, _ *mcp.CallToolRequest, input WindowRestoreInput) (*mcp.CallToolResult, WindowRestoreOutput, error) {
-	_, _, err := s.core.PERFORM(window.TaskRestore{Name: input.Name})
-	if err != nil {
-		return nil, WindowRestoreOutput{}, err
+	r := s.core.Action("window.restore").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskRestore{Name: input.Name}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, WindowRestoreOutput{}, e
+		}
+		return nil, WindowRestoreOutput{}, nil
 	}
 	return nil, WindowRestoreOutput{Success: true}, nil
 }
@@ -251,9 +306,14 @@ type WindowFocusOutput struct {
 }
 
 func (s *Subsystem) windowFocus(_ context.Context, _ *mcp.CallToolRequest, input WindowFocusInput) (*mcp.CallToolResult, WindowFocusOutput, error) {
-	_, _, err := s.core.PERFORM(window.TaskFocus{Name: input.Name})
-	if err != nil {
-		return nil, WindowFocusOutput{}, err
+	r := s.core.Action("window.focus").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskFocus{Name: input.Name}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, WindowFocusOutput{}, e
+		}
+		return nil, WindowFocusOutput{}, nil
 	}
 	return nil, WindowFocusOutput{Success: true}, nil
 }
@@ -269,9 +329,14 @@ type WindowTitleOutput struct {
 }
 
 func (s *Subsystem) windowTitle(_ context.Context, _ *mcp.CallToolRequest, input WindowTitleInput) (*mcp.CallToolResult, WindowTitleOutput, error) {
-	_, _, err := s.core.PERFORM(window.TaskSetTitle{Name: input.Name, Title: input.Title})
-	if err != nil {
-		return nil, WindowTitleOutput{}, err
+	r := s.core.Action("window.setTitle").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskSetTitle{Name: input.Name, Title: input.Title}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, WindowTitleOutput{}, e
+		}
+		return nil, WindowTitleOutput{}, nil
 	}
 	return nil, WindowTitleOutput{Success: true}, nil
 }
@@ -286,11 +351,11 @@ type WindowTitleGetOutput struct {
 }
 
 func (s *Subsystem) windowTitleGet(_ context.Context, _ *mcp.CallToolRequest, input WindowTitleGetInput) (*mcp.CallToolResult, WindowTitleGetOutput, error) {
-	result, _, err := s.core.QUERY(window.QueryWindowByName{Name: input.Name})
-	if err != nil {
-		return nil, WindowTitleGetOutput{}, err
+	r := s.core.QUERY(window.QueryWindowByName{Name: input.Name})
+	if !r.OK {
+		return nil, WindowTitleGetOutput{}, nil
 	}
-	info, _ := result.(*window.WindowInfo)
+	info, _ := r.Value.(*window.WindowInfo)
 	if info == nil {
 		return nil, WindowTitleGetOutput{}, nil
 	}
@@ -308,9 +373,14 @@ type WindowVisibilityOutput struct {
 }
 
 func (s *Subsystem) windowVisibility(_ context.Context, _ *mcp.CallToolRequest, input WindowVisibilityInput) (*mcp.CallToolResult, WindowVisibilityOutput, error) {
-	_, _, err := s.core.PERFORM(window.TaskSetVisibility{Name: input.Name, Visible: input.Visible})
-	if err != nil {
-		return nil, WindowVisibilityOutput{}, err
+	r := s.core.Action("window.setVisibility").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskSetVisibility{Name: input.Name, Visible: input.Visible}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, WindowVisibilityOutput{}, e
+		}
+		return nil, WindowVisibilityOutput{}, nil
 	}
 	return nil, WindowVisibilityOutput{Success: true}, nil
 }
@@ -326,9 +396,14 @@ type WindowAlwaysOnTopOutput struct {
 }
 
 func (s *Subsystem) windowAlwaysOnTop(_ context.Context, _ *mcp.CallToolRequest, input WindowAlwaysOnTopInput) (*mcp.CallToolResult, WindowAlwaysOnTopOutput, error) {
-	_, _, err := s.core.PERFORM(window.TaskSetAlwaysOnTop{Name: input.Name, AlwaysOnTop: input.AlwaysOnTop})
-	if err != nil {
-		return nil, WindowAlwaysOnTopOutput{}, err
+	r := s.core.Action("window.setAlwaysOnTop").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskSetAlwaysOnTop{Name: input.Name, AlwaysOnTop: input.AlwaysOnTop}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, WindowAlwaysOnTopOutput{}, e
+		}
+		return nil, WindowAlwaysOnTopOutput{}, nil
 	}
 	return nil, WindowAlwaysOnTopOutput{Success: true}, nil
 }
@@ -347,11 +422,16 @@ type WindowBackgroundColourOutput struct {
 }
 
 func (s *Subsystem) windowBackgroundColour(_ context.Context, _ *mcp.CallToolRequest, input WindowBackgroundColourInput) (*mcp.CallToolResult, WindowBackgroundColourOutput, error) {
-	_, _, err := s.core.PERFORM(window.TaskSetBackgroundColour{
-		Name: input.Name, Red: input.Red, Green: input.Green, Blue: input.Blue, Alpha: input.Alpha,
-	})
-	if err != nil {
-		return nil, WindowBackgroundColourOutput{}, err
+	r := s.core.Action("window.setBackgroundColour").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskSetBackgroundColour{
+			Name: input.Name, Red: input.Red, Green: input.Green, Blue: input.Blue, Alpha: input.Alpha,
+		}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, WindowBackgroundColourOutput{}, e
+		}
+		return nil, WindowBackgroundColourOutput{}, nil
 	}
 	return nil, WindowBackgroundColourOutput{Success: true}, nil
 }
@@ -367,9 +447,14 @@ type WindowFullscreenOutput struct {
 }
 
 func (s *Subsystem) windowFullscreen(_ context.Context, _ *mcp.CallToolRequest, input WindowFullscreenInput) (*mcp.CallToolResult, WindowFullscreenOutput, error) {
-	_, _, err := s.core.PERFORM(window.TaskFullscreen{Name: input.Name, Fullscreen: input.Fullscreen})
-	if err != nil {
-		return nil, WindowFullscreenOutput{}, err
+	r := s.core.Action("window.fullscreen").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskFullscreen{Name: input.Name, Fullscreen: input.Fullscreen}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, WindowFullscreenOutput{}, e
+		}
+		return nil, WindowFullscreenOutput{}, nil
 	}
 	return nil, WindowFullscreenOutput{Success: true}, nil
 }

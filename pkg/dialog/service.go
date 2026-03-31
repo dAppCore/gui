@@ -4,7 +4,7 @@ package dialog
 import (
 	"context"
 
-	"forge.lthn.ai/core/go/pkg/core"
+	core "dappco.re/go/core"
 )
 
 type Options struct{}
@@ -17,95 +17,83 @@ type Service struct {
 // Register(p) binds the dialog service to a Core instance.
 //
 //	c.WithService(dialog.Register(wailsDialog))
-func Register(p Platform) func(*core.Core) (any, error) {
-	return func(c *core.Core) (any, error) {
-		return &Service{
+func Register(p Platform) func(*core.Core) core.Result {
+	return func(c *core.Core) core.Result {
+		return core.Result{Value: &Service{
 			ServiceRuntime: core.NewServiceRuntime[Options](c, Options{}),
 			platform:       p,
-		}, nil
+		}, OK: true}
 	}
 }
 
-func (s *Service) OnStartup(ctx context.Context) error {
-	s.Core().RegisterTask(s.handleTask)
-	return nil
-}
-
-func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
-	return nil
-}
-
-func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
-	switch t := t.(type) {
-	case TaskOpenFile:
-		paths, err := s.platform.OpenFile(t.Options)
-		return paths, true, err
-
-	case TaskOpenFileWithOptions:
-		options := OpenFileOptions{}
-		if t.Options != nil {
-			options = *t.Options
+func (s *Service) OnStartup(_ context.Context) core.Result {
+	s.Core().Action("dialog.openFile", func(_ context.Context, opts core.Options) core.Result {
+		var openOpts OpenFileOptions
+		switch v := opts.Get("task").Value.(type) {
+		case TaskOpenFile:
+			openOpts = v.Options
+		case TaskOpenFileWithOptions:
+			if v.Options != nil {
+				openOpts = *v.Options
+			}
 		}
-		paths, err := s.platform.OpenFile(options)
-		return paths, true, err
-
-	case TaskSaveFile:
-		path, err := s.platform.SaveFile(t.Options)
-		return path, true, err
-
-	case TaskSaveFileWithOptions:
-		options := SaveFileOptions{}
-		if t.Options != nil {
-			options = *t.Options
+		paths, err := s.platform.OpenFile(openOpts)
+		return core.Result{}.New(paths, err)
+	})
+	s.Core().Action("dialog.saveFile", func(_ context.Context, opts core.Options) core.Result {
+		var saveOpts SaveFileOptions
+		switch v := opts.Get("task").Value.(type) {
+		case TaskSaveFile:
+			saveOpts = v.Options
+		case TaskSaveFileWithOptions:
+			if v.Options != nil {
+				saveOpts = *v.Options
+			}
 		}
-		path, err := s.platform.SaveFile(options)
-		return path, true, err
-
-	case TaskOpenDirectory:
+		path, err := s.platform.SaveFile(saveOpts)
+		return core.Result{}.New(path, err)
+	})
+	s.Core().Action("dialog.openDirectory", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskOpenDirectory)
 		path, err := s.platform.OpenDirectory(t.Options)
-		return path, true, err
-
-	case TaskMessageDialog:
+		return core.Result{}.New(path, err)
+	})
+	s.Core().Action("dialog.message", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskMessageDialog)
 		button, err := s.platform.MessageDialog(t.Options)
-		return button, true, err
-
-	case TaskInfo:
+		return core.Result{}.New(button, err)
+	})
+	s.Core().Action("dialog.info", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskInfo)
 		button, err := s.platform.MessageDialog(MessageDialogOptions{
-			Type:    DialogInfo,
-			Title:   t.Title,
-			Message: t.Message,
-			Buttons: t.Buttons,
+			Type: DialogInfo, Title: t.Title, Message: t.Message, Buttons: t.Buttons,
 		})
-		return button, true, err
-
-	case TaskQuestion:
+		return core.Result{}.New(button, err)
+	})
+	s.Core().Action("dialog.question", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskQuestion)
 		button, err := s.platform.MessageDialog(MessageDialogOptions{
-			Type:    DialogQuestion,
-			Title:   t.Title,
-			Message: t.Message,
-			Buttons: t.Buttons,
+			Type: DialogQuestion, Title: t.Title, Message: t.Message, Buttons: t.Buttons,
 		})
-		return button, true, err
-
-	case TaskWarning:
+		return core.Result{}.New(button, err)
+	})
+	s.Core().Action("dialog.warning", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskWarning)
 		button, err := s.platform.MessageDialog(MessageDialogOptions{
-			Type:    DialogWarning,
-			Title:   t.Title,
-			Message: t.Message,
-			Buttons: t.Buttons,
+			Type: DialogWarning, Title: t.Title, Message: t.Message, Buttons: t.Buttons,
 		})
-		return button, true, err
-
-	case TaskError:
+		return core.Result{}.New(button, err)
+	})
+	s.Core().Action("dialog.error", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskError)
 		button, err := s.platform.MessageDialog(MessageDialogOptions{
-			Type:    DialogError,
-			Title:   t.Title,
-			Message: t.Message,
-			Buttons: t.Buttons,
+			Type: DialogError, Title: t.Title, Message: t.Message, Buttons: t.Buttons,
 		})
-		return button, true, err
+		return core.Result{}.New(button, err)
+	})
+	return core.Result{OK: true}
+}
 
-	default:
-		return nil, false, nil
-	}
+func (s *Service) HandleIPCEvents(_ *core.Core, _ core.Message) core.Result {
+	return core.Result{OK: true}
 }

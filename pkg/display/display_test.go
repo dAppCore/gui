@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"forge.lthn.ai/core/go/pkg/core"
+	core "dappco.re/go/core"
 	"forge.lthn.ai/core/gui/pkg/menu"
 	"forge.lthn.ai/core/gui/pkg/systray"
 	"forge.lthn.ai/core/gui/pkg/window"
@@ -19,12 +19,11 @@ import (
 // newTestDisplayService creates a display service registered with Core for IPC testing.
 func newTestDisplayService(t *testing.T) (*Service, *core.Core) {
 	t.Helper()
-	c, err := core.New(
+	c := core.New(
 		core.WithService(Register(nil)),
 		core.WithServiceLock(),
 	)
-	require.NoError(t, err)
-	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
 	svc := core.MustServiceFor[*Service](c, "display")
 	return svc, c
 }
@@ -32,16 +31,21 @@ func newTestDisplayService(t *testing.T) (*Service, *core.Core) {
 // newTestConclave creates a full 4-service conclave for integration testing.
 func newTestConclave(t *testing.T) *core.Core {
 	t.Helper()
-	c, err := core.New(
+	c := core.New(
 		core.WithService(Register(nil)),
 		core.WithService(window.Register(window.NewMockPlatform())),
 		core.WithService(systray.Register(systray.NewMockPlatform())),
 		core.WithService(menu.Register(menu.NewMockPlatform())),
 		core.WithServiceLock(),
 	)
-	require.NoError(t, err)
-	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
 	return c
+}
+
+func taskRun(c *core.Core, name string, task any) core.Result {
+	return c.Action(name).Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: task},
+	))
 }
 
 // --- Tests ---
@@ -64,12 +68,11 @@ func TestRegister_Good(t *testing.T) {
 	factory := Register(nil) // nil wailsApp for testing
 	assert.NotNil(t, factory)
 
-	c, err := core.New(
+	c := core.New(
 		core.WithService(factory),
 		core.WithServiceLock(),
 	)
-	require.NoError(t, err)
-	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
 
 	svc := core.MustServiceFor[*Service](c, "display")
 	assert.NotNil(t, svc)
@@ -83,32 +86,29 @@ func TestConfigQuery_Good(t *testing.T) {
 		"default_width": 1024,
 	}
 
-	result, handled, err := c.QUERY(window.QueryConfig{})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	cfg := result.(map[string]any)
+	r := c.QUERY(window.QueryConfig{})
+	require.True(t, r.OK)
+	cfg := r.Value.(map[string]any)
 	assert.Equal(t, 1024, cfg["default_width"])
 }
 
 func TestConfigQuery_Bad(t *testing.T) {
 	// No display service — window config query returns handled=false
-	c, err := core.New(core.WithServiceLock())
-	require.NoError(t, err)
-	_, handled, _ := c.QUERY(window.QueryConfig{})
-	assert.False(t, handled)
+	c := core.New(core.WithServiceLock())
+	r := c.QUERY(window.QueryConfig{})
+	assert.False(t, r.OK)
 }
 
 func TestConfigTask_Good(t *testing.T) {
 	_, c := newTestDisplayService(t)
 
 	newCfg := map[string]any{"default_width": 800}
-	_, handled, err := c.PERFORM(window.TaskSaveConfig{Config: newCfg})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "display.saveWindowConfig", window.TaskSaveConfig{Config: newCfg})
+	require.True(t, r.OK)
 
 	// Verify config was saved
-	result, _, _ := c.QUERY(window.QueryConfig{})
-	cfg := result.(map[string]any)
+	r2 := c.QUERY(window.QueryConfig{})
+	cfg := r2.Value.(map[string]any)
 	assert.Equal(t, 800, cfg["default_width"])
 }
 
@@ -118,45 +118,41 @@ func TestServiceConclave_Good(t *testing.T) {
 	c := newTestConclave(t)
 
 	// Open a window via IPC
-	result, handled, err := c.PERFORM(window.TaskOpenWindow{
+	r := taskRun(c, "window.open", window.TaskOpenWindow{
 		Window: &window.Window{Name: "main"},
 	})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	info := result.(window.WindowInfo)
+	require.True(t, r.OK)
+	info := r.Value.(window.WindowInfo)
 	assert.Equal(t, "main", info.Name)
 
 	// Query window config from display
-	val, handled, err := c.QUERY(window.QueryConfig{})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.NotNil(t, val)
+	r2 := c.QUERY(window.QueryConfig{})
+	require.True(t, r2.OK)
+	assert.NotNil(t, r2.Value)
 
 	// Set app menu via IPC
-	_, handled, err = c.PERFORM(menu.TaskSetAppMenu{Items: []menu.MenuItem{
+	r3 := taskRun(c, "menu.setAppMenu", menu.TaskSetAppMenu{Items: []menu.MenuItem{
 		{Label: "File"},
 	}})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	require.True(t, r3.OK)
 
 	// Query app menu via IPC
-	menuResult, handled, _ := c.QUERY(menu.QueryGetAppMenu{})
-	assert.True(t, handled)
-	items := menuResult.([]menu.MenuItem)
+	r4 := c.QUERY(menu.QueryGetAppMenu{})
+	assert.True(t, r4.OK)
+	items := r4.Value.([]menu.MenuItem)
 	assert.Len(t, items, 1)
 }
 
 func TestServiceConclave_Bad(t *testing.T) {
 	// Sub-service starts without display — config QUERY returns handled=false
-	c, err := core.New(
+	c := core.New(
 		core.WithService(window.Register(window.NewMockPlatform())),
 		core.WithServiceLock(),
 	)
-	require.NoError(t, err)
-	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
 
-	_, handled, _ := c.QUERY(window.QueryConfig{})
-	assert.False(t, handled, "no display service means no config handler")
+	r := c.QUERY(window.QueryConfig{})
+	assert.False(t, r.OK, "no display service means no config handler")
 }
 
 // --- IPC delegation tests (full conclave) ---
@@ -183,8 +179,8 @@ func TestOpenWindow_Good(t *testing.T) {
 		)
 		assert.NoError(t, err)
 
-		result, _, _ := c.QUERY(window.QueryWindowByName{Name: "custom-window"})
-		info := result.(*window.WindowInfo)
+		r := c.QUERY(window.QueryWindowByName{Name: "custom-window"})
+		info := r.Value.(*window.WindowInfo)
 		assert.Equal(t, "custom-window", info.Name)
 	})
 }
@@ -199,7 +195,7 @@ func TestGetWindowInfo_Good(t *testing.T) {
 	)
 
 	// Modify position via IPC
-	_, _, _ = c.PERFORM(window.TaskSetPosition{Name: "test-win", X: 100, Y: 200})
+	taskRun(c, "window.setPosition", window.TaskSetPosition{Name: "test-win", X: 100, Y: 200})
 
 	info, err := svc.GetWindowInfo("test-win")
 	require.NoError(t, err)
@@ -410,12 +406,11 @@ func TestHandleIPCEvents_WindowOpened_Good(t *testing.T) {
 
 	// Open a window — this should trigger ActionWindowOpened
 	// which HandleIPCEvents should convert to a WS event
-	result, handled, err := c.PERFORM(window.TaskOpenWindow{
+	r := taskRun(c, "window.open", window.TaskOpenWindow{
 		Window: &window.Window{Name: "test"},
 	})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	info := result.(window.WindowInfo)
+	require.True(t, r.OK)
+	info := r.Value.(window.WindowInfo)
 	assert.Equal(t, "test", info.Name)
 }
 
@@ -481,20 +476,19 @@ func TestHandleConfigTask_Persists_Good(t *testing.T) {
 	s.loadConfigFrom(cfgPath) // Creates empty config (file doesn't exist yet)
 
 	// Simulate a TaskSaveConfig through the handler
-	c, _ := core.New(
-		core.WithService(func(c *core.Core) (any, error) {
+	c := core.New(
+		core.WithService(func(c *core.Core) core.Result {
 			s.ServiceRuntime = core.NewServiceRuntime[Options](c, Options{})
-			return s, nil
+			return core.Result{Value: s, OK: true}
 		}),
 		core.WithServiceLock(),
 	)
 	c.ServiceStartup(context.Background(), nil)
 
-	_, handled, err := c.PERFORM(window.TaskSaveConfig{
+	r := taskRun(c, "display.saveWindowConfig", window.TaskSaveConfig{
 		Config: map[string]any{"default_width": 1920},
 	})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	require.True(t, r.OK)
 
 	// Verify file was written
 	data, err := os.ReadFile(cfgPath)

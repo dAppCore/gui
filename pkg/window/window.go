@@ -4,7 +4,7 @@ package window
 import (
 	"sync"
 
-	coreerr "forge.lthn.ai/core/go-log"
+	coreerr "dappco.re/go/core/log"
 )
 
 // Window is CoreGUI's own window descriptor — NOT a Wails type alias.

@@ -4,8 +4,8 @@ package contextmenu
 import (
 	"context"
 
-	coreerr "forge.lthn.ai/core/go-log"
-	"forge.lthn.ai/core/go/pkg/core"
+	coreerr "dappco.re/go/core/log"
+	core "dappco.re/go/core"
 )
 
 type Options struct{}
@@ -16,37 +16,52 @@ type Service struct {
 	registeredMenus map[string]ContextMenuDef
 }
 
-func (s *Service) OnStartup(ctx context.Context) error {
+func (s *Service) OnStartup(_ context.Context) core.Result {
 	s.Core().RegisterQuery(s.handleQuery)
-	s.Core().RegisterTask(s.handleTask)
-	return nil
+	s.Core().Action("contextmenu.add", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskAdd)
+		return core.Result{Value: nil, OK: true}.New(s.taskAdd(t))
+	})
+	s.Core().Action("contextmenu.remove", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskRemove)
+		return core.Result{Value: nil, OK: true}.New(s.taskRemove(t))
+	})
+	s.Core().Action("contextmenu.update", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskUpdate)
+		return core.Result{Value: nil, OK: true}.New(s.taskUpdate(t))
+	})
+	s.Core().Action("contextmenu.destroy", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskDestroy)
+		return core.Result{Value: nil, OK: true}.New(s.taskDestroy(t))
+	})
+	return core.Result{OK: true}
 }
 
-func (s *Service) OnShutdown(ctx context.Context) error {
+func (s *Service) OnShutdown(_ context.Context) core.Result {
 	// Destroy all registered menus on shutdown to release platform resources
 	for name := range s.registeredMenus {
 		_ = s.platform.Remove(name)
 	}
 	s.registeredMenus = make(map[string]ContextMenuDef)
-	return nil
+	return core.Result{OK: true}
 }
 
-func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
-	return nil
+func (s *Service) HandleIPCEvents(_ *core.Core, _ core.Message) core.Result {
+	return core.Result{OK: true}
 }
 
 // --- Query Handlers ---
 
-func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
+func (s *Service) handleQuery(_ *core.Core, q core.Query) core.Result {
 	switch q := q.(type) {
 	case QueryGet:
-		return s.queryGet(q), true, nil
+		return core.Result{Value: s.queryGet(q), OK: true}
 	case QueryList:
-		return s.queryList(), true, nil
+		return core.Result{Value: s.queryList(), OK: true}
 	case QueryGetAll:
-		return s.queryList(), true, nil
+		return core.Result{Value: s.queryList(), OK: true}
 	default:
-		return nil, false, nil
+		return core.Result{}
 	}
 }
 
@@ -64,23 +79,6 @@ func (s *Service) queryList() map[string]ContextMenuDef {
 		result[k] = v
 	}
 	return result
-}
-
-// --- Task Handlers ---
-
-func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
-	switch t := t.(type) {
-	case TaskAdd:
-		return nil, true, s.taskAdd(t)
-	case TaskRemove:
-		return nil, true, s.taskRemove(t)
-	case TaskUpdate:
-		return nil, true, s.taskUpdate(t)
-	case TaskDestroy:
-		return nil, true, s.taskDestroy(t)
-	default:
-		return nil, false, nil
-	}
 }
 
 func (s *Service) taskAdd(t TaskAdd) error {

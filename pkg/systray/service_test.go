@@ -4,21 +4,26 @@ import (
 	"context"
 	"testing"
 
-	"forge.lthn.ai/core/go/pkg/core"
+	core "dappco.re/go/core"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func newTestSystrayService(t *testing.T) (*Service, *core.Core) {
 	t.Helper()
-	c, err := core.New(
+	c := core.New(
 		core.WithService(Register(newMockPlatform())),
 		core.WithServiceLock(),
 	)
-	require.NoError(t, err)
-	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
 	svc := core.MustServiceFor[*Service](c, "systray")
 	return svc, c
+}
+
+func taskRun(c *core.Core, name string, task any) core.Result {
+	return c.Action(name).Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: task},
+	))
 }
 
 func TestRegister_Good(t *testing.T) {
@@ -34,9 +39,8 @@ func TestTaskSetTrayIcon_Good(t *testing.T) {
 	require.NoError(t, svc.manager.Setup("Test", "Test"))
 
 	icon := []byte{0x89, 0x50, 0x4E, 0x47} // PNG header
-	_, handled, err := c.PERFORM(TaskSetTrayIcon{Data: icon})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "systray.setIcon", TaskSetTrayIcon{Data: icon})
+	require.True(t, r.OK)
 }
 
 func TestTaskSetTrayMenu_Good(t *testing.T) {
@@ -49,15 +53,13 @@ func TestTaskSetTrayMenu_Good(t *testing.T) {
 		{Type: "separator"},
 		{Label: "Quit", ActionID: "quit"},
 	}
-	_, handled, err := c.PERFORM(TaskSetTrayMenu{Items: items})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "systray.setMenu", TaskSetTrayMenu{Items: items})
+	require.True(t, r.OK)
 }
 
 func TestTaskSetTrayIcon_Bad(t *testing.T) {
-	// No systray service — PERFORM returns handled=false
-	c, err := core.New(core.WithServiceLock())
-	require.NoError(t, err)
-	_, handled, _ := c.PERFORM(TaskSetTrayIcon{Data: nil})
-	assert.False(t, handled)
+	// No systray service — action is not registered
+	c := core.New(core.WithServiceLock())
+	r := c.Action("systray.setIcon").Run(context.Background(), core.NewOptions())
+	assert.False(t, r.OK)
 }

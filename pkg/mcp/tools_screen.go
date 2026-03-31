@@ -4,7 +4,7 @@ package mcp
 import (
 	"context"
 
-	coreerr "forge.lthn.ai/core/go-log"
+	coreerr "dappco.re/go/core/log"
 	"forge.lthn.ai/core/gui/pkg/screen"
 	"forge.lthn.ai/core/gui/pkg/window"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -18,11 +18,14 @@ type ScreenListOutput struct {
 }
 
 func (s *Subsystem) screenList(_ context.Context, _ *mcp.CallToolRequest, _ ScreenListInput) (*mcp.CallToolResult, ScreenListOutput, error) {
-	result, _, err := s.core.QUERY(screen.QueryAll{})
-	if err != nil {
-		return nil, ScreenListOutput{}, err
+	r := s.core.QUERY(screen.QueryAll{})
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, ScreenListOutput{}, e
+		}
+		return nil, ScreenListOutput{}, nil
 	}
-	screens, ok := result.([]screen.Screen)
+	screens, ok := r.Value.([]screen.Screen)
 	if !ok {
 		return nil, ScreenListOutput{}, coreerr.E("mcp.screenList", "unexpected result type", nil)
 	}
@@ -39,11 +42,14 @@ type ScreenGetOutput struct {
 }
 
 func (s *Subsystem) screenGet(_ context.Context, _ *mcp.CallToolRequest, input ScreenGetInput) (*mcp.CallToolResult, ScreenGetOutput, error) {
-	result, _, err := s.core.QUERY(screen.QueryByID{ID: input.ID})
-	if err != nil {
-		return nil, ScreenGetOutput{}, err
+	r := s.core.QUERY(screen.QueryByID{ID: input.ID})
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, ScreenGetOutput{}, e
+		}
+		return nil, ScreenGetOutput{}, nil
 	}
-	scr, ok := result.(*screen.Screen)
+	scr, ok := r.Value.(*screen.Screen)
 	if !ok {
 		return nil, ScreenGetOutput{}, coreerr.E("mcp.screenGet", "unexpected result type", nil)
 	}
@@ -58,11 +64,14 @@ type ScreenPrimaryOutput struct {
 }
 
 func (s *Subsystem) screenPrimary(_ context.Context, _ *mcp.CallToolRequest, _ ScreenPrimaryInput) (*mcp.CallToolResult, ScreenPrimaryOutput, error) {
-	result, _, err := s.core.QUERY(screen.QueryPrimary{})
-	if err != nil {
-		return nil, ScreenPrimaryOutput{}, err
+	r := s.core.QUERY(screen.QueryPrimary{})
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, ScreenPrimaryOutput{}, e
+		}
+		return nil, ScreenPrimaryOutput{}, nil
 	}
-	scr, ok := result.(*screen.Screen)
+	scr, ok := r.Value.(*screen.Screen)
 	if !ok {
 		return nil, ScreenPrimaryOutput{}, coreerr.E("mcp.screenPrimary", "unexpected result type", nil)
 	}
@@ -80,11 +89,14 @@ type ScreenAtPointOutput struct {
 }
 
 func (s *Subsystem) screenAtPoint(_ context.Context, _ *mcp.CallToolRequest, input ScreenAtPointInput) (*mcp.CallToolResult, ScreenAtPointOutput, error) {
-	result, _, err := s.core.QUERY(screen.QueryAtPoint{X: input.X, Y: input.Y})
-	if err != nil {
-		return nil, ScreenAtPointOutput{}, err
+	r := s.core.QUERY(screen.QueryAtPoint{X: input.X, Y: input.Y})
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, ScreenAtPointOutput{}, e
+		}
+		return nil, ScreenAtPointOutput{}, nil
 	}
-	scr, ok := result.(*screen.Screen)
+	scr, ok := r.Value.(*screen.Screen)
 	if !ok {
 		return nil, ScreenAtPointOutput{}, coreerr.E("mcp.screenAtPoint", "unexpected result type", nil)
 	}
@@ -99,11 +111,14 @@ type ScreenWorkAreasOutput struct {
 }
 
 func (s *Subsystem) screenWorkAreas(_ context.Context, _ *mcp.CallToolRequest, _ ScreenWorkAreasInput) (*mcp.CallToolResult, ScreenWorkAreasOutput, error) {
-	result, _, err := s.core.QUERY(screen.QueryWorkAreas{})
-	if err != nil {
-		return nil, ScreenWorkAreasOutput{}, err
+	r := s.core.QUERY(screen.QueryWorkAreas{})
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, ScreenWorkAreasOutput{}, e
+		}
+		return nil, ScreenWorkAreasOutput{}, nil
 	}
-	areas, ok := result.([]screen.Rect)
+	areas, ok := r.Value.([]screen.Rect)
 	if !ok {
 		return nil, ScreenWorkAreasOutput{}, coreerr.E("mcp.screenWorkAreas", "unexpected result type", nil)
 	}
@@ -120,21 +135,21 @@ type ScreenForWindowOutput struct {
 }
 
 func (s *Subsystem) screenForWindow(_ context.Context, _ *mcp.CallToolRequest, input ScreenForWindowInput) (*mcp.CallToolResult, ScreenForWindowOutput, error) {
-	result, _, err := s.core.QUERY(window.QueryWindowByName{Name: input.Name})
-	if err != nil {
-		return nil, ScreenForWindowOutput{}, err
+	r := s.core.QUERY(window.QueryWindowByName{Name: input.Name})
+	if !r.OK {
+		return nil, ScreenForWindowOutput{}, nil
 	}
-	info, _ := result.(*window.WindowInfo)
+	info, _ := r.Value.(*window.WindowInfo)
 	if info == nil {
 		return nil, ScreenForWindowOutput{}, nil
 	}
 	centerX := info.X + info.Width/2
 	centerY := info.Y + info.Height/2
-	screenResult, _, err := s.core.QUERY(screen.QueryAtPoint{X: centerX, Y: centerY})
-	if err != nil {
-		return nil, ScreenForWindowOutput{}, err
+	r2 := s.core.QUERY(screen.QueryAtPoint{X: centerX, Y: centerY})
+	if !r2.OK {
+		return nil, ScreenForWindowOutput{}, nil
 	}
-	scr, _ := screenResult.(*screen.Screen)
+	scr, _ := r2.Value.(*screen.Screen)
 	return nil, ScreenForWindowOutput{Screen: scr}, nil
 }
 

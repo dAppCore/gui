@@ -4,7 +4,8 @@ package mcp
 import (
 	"context"
 
-	coreerr "forge.lthn.ai/core/go-log"
+	core "dappco.re/go/core"
+	coreerr "dappco.re/go/core/log"
 	"forge.lthn.ai/core/gui/pkg/dialog"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -25,19 +26,24 @@ type DialogOpenFileOutput struct {
 }
 
 func (s *Subsystem) dialogOpenFile(_ context.Context, _ *mcp.CallToolRequest, input DialogOpenFileInput) (*mcp.CallToolResult, DialogOpenFileOutput, error) {
-	result, _, err := s.core.PERFORM(dialog.TaskOpenFile{Options: dialog.OpenFileOptions{
-		Title:                input.Title,
-		Directory:            input.Directory,
-		Filters:              input.Filters,
-		AllowMultiple:        input.AllowMultiple,
-		CanChooseDirectories: input.CanChooseDirectories,
-		CanChooseFiles:       input.CanChooseFiles,
-		ShowHiddenFiles:      input.ShowHiddenFiles,
-	}})
-	if err != nil {
-		return nil, DialogOpenFileOutput{}, err
+	r := s.core.Action("dialog.openFile").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: dialog.TaskOpenFile{Options: dialog.OpenFileOptions{
+			Title:                input.Title,
+			Directory:            input.Directory,
+			Filters:              input.Filters,
+			AllowMultiple:        input.AllowMultiple,
+			CanChooseDirectories: input.CanChooseDirectories,
+			CanChooseFiles:       input.CanChooseFiles,
+			ShowHiddenFiles:      input.ShowHiddenFiles,
+		}}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, DialogOpenFileOutput{}, e
+		}
+		return nil, DialogOpenFileOutput{}, nil
 	}
-	paths, ok := result.([]string)
+	paths, ok := r.Value.([]string)
 	if !ok {
 		return nil, DialogOpenFileOutput{}, coreerr.E("mcp.dialogOpenFile", "unexpected result type", nil)
 	}
@@ -58,17 +64,22 @@ type DialogSaveFileOutput struct {
 }
 
 func (s *Subsystem) dialogSaveFile(_ context.Context, _ *mcp.CallToolRequest, input DialogSaveFileInput) (*mcp.CallToolResult, DialogSaveFileOutput, error) {
-	result, _, err := s.core.PERFORM(dialog.TaskSaveFile{Options: dialog.SaveFileOptions{
-		Title:           input.Title,
-		Directory:       input.Directory,
-		Filename:        input.Filename,
-		Filters:         input.Filters,
-		ShowHiddenFiles: input.ShowHiddenFiles,
-	}})
-	if err != nil {
-		return nil, DialogSaveFileOutput{}, err
+	r := s.core.Action("dialog.saveFile").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: dialog.TaskSaveFile{Options: dialog.SaveFileOptions{
+			Title:           input.Title,
+			Directory:       input.Directory,
+			Filename:        input.Filename,
+			Filters:         input.Filters,
+			ShowHiddenFiles: input.ShowHiddenFiles,
+		}}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, DialogSaveFileOutput{}, e
+		}
+		return nil, DialogSaveFileOutput{}, nil
 	}
-	path, ok := result.(string)
+	path, ok := r.Value.(string)
 	if !ok {
 		return nil, DialogSaveFileOutput{}, coreerr.E("mcp.dialogSaveFile", "unexpected result type", nil)
 	}
@@ -87,15 +98,20 @@ type DialogOpenDirectoryOutput struct {
 }
 
 func (s *Subsystem) dialogOpenDirectory(_ context.Context, _ *mcp.CallToolRequest, input DialogOpenDirectoryInput) (*mcp.CallToolResult, DialogOpenDirectoryOutput, error) {
-	result, _, err := s.core.PERFORM(dialog.TaskOpenDirectory{Options: dialog.OpenDirectoryOptions{
-		Title:           input.Title,
-		Directory:       input.Directory,
-		ShowHiddenFiles: input.ShowHiddenFiles,
-	}})
-	if err != nil {
-		return nil, DialogOpenDirectoryOutput{}, err
+	r := s.core.Action("dialog.openDirectory").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: dialog.TaskOpenDirectory{Options: dialog.OpenDirectoryOptions{
+			Title:           input.Title,
+			Directory:       input.Directory,
+			ShowHiddenFiles: input.ShowHiddenFiles,
+		}}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, DialogOpenDirectoryOutput{}, e
+		}
+		return nil, DialogOpenDirectoryOutput{}, nil
 	}
-	path, ok := result.(string)
+	path, ok := r.Value.(string)
 	if !ok {
 		return nil, DialogOpenDirectoryOutput{}, coreerr.E("mcp.dialogOpenDirectory", "unexpected result type", nil)
 	}
@@ -114,15 +130,20 @@ type DialogConfirmOutput struct {
 }
 
 func (s *Subsystem) dialogConfirm(_ context.Context, _ *mcp.CallToolRequest, input DialogConfirmInput) (*mcp.CallToolResult, DialogConfirmOutput, error) {
-	result, _, err := s.core.PERFORM(dialog.TaskQuestion{
-		Title:   input.Title,
-		Message: input.Message,
-		Buttons: input.Buttons,
-	})
-	if err != nil {
-		return nil, DialogConfirmOutput{}, err
+	r := s.core.Action("dialog.question").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: dialog.TaskQuestion{
+			Title:   input.Title,
+			Message: input.Message,
+			Buttons: input.Buttons,
+		}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, DialogConfirmOutput{}, e
+		}
+		return nil, DialogConfirmOutput{}, nil
 	}
-	button, ok := result.(string)
+	button, ok := r.Value.(string)
 	if !ok {
 		return nil, DialogConfirmOutput{}, coreerr.E("mcp.dialogConfirm", "unexpected result type", nil)
 	}
@@ -140,15 +161,20 @@ type DialogPromptOutput struct {
 }
 
 func (s *Subsystem) dialogPrompt(_ context.Context, _ *mcp.CallToolRequest, input DialogPromptInput) (*mcp.CallToolResult, DialogPromptOutput, error) {
-	result, _, err := s.core.PERFORM(dialog.TaskInfo{
-		Title:   input.Title,
-		Message: input.Message,
-		Buttons: []string{"OK", "Cancel"},
-	})
-	if err != nil {
-		return nil, DialogPromptOutput{}, err
+	r := s.core.Action("dialog.info").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: dialog.TaskInfo{
+			Title:   input.Title,
+			Message: input.Message,
+			Buttons: []string{"OK", "Cancel"},
+		}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, DialogPromptOutput{}, e
+		}
+		return nil, DialogPromptOutput{}, nil
 	}
-	button, ok := result.(string)
+	button, ok := r.Value.(string)
 	if !ok {
 		return nil, DialogPromptOutput{}, coreerr.E("mcp.dialogPrompt", "unexpected result type", nil)
 	}
@@ -167,15 +193,20 @@ type DialogInfoOutput struct {
 }
 
 func (s *Subsystem) dialogInfo(_ context.Context, _ *mcp.CallToolRequest, input DialogInfoInput) (*mcp.CallToolResult, DialogInfoOutput, error) {
-	result, _, err := s.core.PERFORM(dialog.TaskInfo{
-		Title:   input.Title,
-		Message: input.Message,
-		Buttons: input.Buttons,
-	})
-	if err != nil {
-		return nil, DialogInfoOutput{}, err
+	r := s.core.Action("dialog.info").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: dialog.TaskInfo{
+			Title:   input.Title,
+			Message: input.Message,
+			Buttons: input.Buttons,
+		}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, DialogInfoOutput{}, e
+		}
+		return nil, DialogInfoOutput{}, nil
 	}
-	button, ok := result.(string)
+	button, ok := r.Value.(string)
 	if !ok {
 		return nil, DialogInfoOutput{}, coreerr.E("mcp.dialogInfo", "unexpected result type", nil)
 	}
@@ -194,15 +225,20 @@ type DialogWarningOutput struct {
 }
 
 func (s *Subsystem) dialogWarning(_ context.Context, _ *mcp.CallToolRequest, input DialogWarningInput) (*mcp.CallToolResult, DialogWarningOutput, error) {
-	result, _, err := s.core.PERFORM(dialog.TaskWarning{
-		Title:   input.Title,
-		Message: input.Message,
-		Buttons: input.Buttons,
-	})
-	if err != nil {
-		return nil, DialogWarningOutput{}, err
+	r := s.core.Action("dialog.warning").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: dialog.TaskWarning{
+			Title:   input.Title,
+			Message: input.Message,
+			Buttons: input.Buttons,
+		}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, DialogWarningOutput{}, e
+		}
+		return nil, DialogWarningOutput{}, nil
 	}
-	button, ok := result.(string)
+	button, ok := r.Value.(string)
 	if !ok {
 		return nil, DialogWarningOutput{}, coreerr.E("mcp.dialogWarning", "unexpected result type", nil)
 	}
@@ -221,15 +257,20 @@ type DialogErrorOutput struct {
 }
 
 func (s *Subsystem) dialogError(_ context.Context, _ *mcp.CallToolRequest, input DialogErrorInput) (*mcp.CallToolResult, DialogErrorOutput, error) {
-	result, _, err := s.core.PERFORM(dialog.TaskError{
-		Title:   input.Title,
-		Message: input.Message,
-		Buttons: input.Buttons,
-	})
-	if err != nil {
-		return nil, DialogErrorOutput{}, err
+	r := s.core.Action("dialog.error").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: dialog.TaskError{
+			Title:   input.Title,
+			Message: input.Message,
+			Buttons: input.Buttons,
+		}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, DialogErrorOutput{}, e
+		}
+		return nil, DialogErrorOutput{}, nil
 	}
-	button, ok := result.(string)
+	button, ok := r.Value.(string)
 	if !ok {
 		return nil, DialogErrorOutput{}, coreerr.E("mcp.dialogError", "unexpected result type", nil)
 	}

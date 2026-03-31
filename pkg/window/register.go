@@ -1,15 +1,15 @@
 package window
 
-import "forge.lthn.ai/core/go/pkg/core"
+import core "dappco.re/go/core"
 
 // Register(p) binds the window service to a Core instance.
 // core.WithService(window.Register(window.NewWailsPlatform(app)))
-func Register(p Platform) func(*core.Core) (any, error) {
-	return func(c *core.Core) (any, error) {
-		return &Service{
+func Register(p Platform) func(*core.Core) core.Result {
+	return func(c *core.Core) core.Result {
+		return core.Result{Value: &Service{
 			ServiceRuntime: core.NewServiceRuntime[Options](c, Options{}),
 			platform:       p,
 			manager:        NewManager(p),
-		}, nil
+		}, OK: true}
 	}
 }

@@ -5,7 +5,7 @@ import (
 	"context"
 	"testing"
 
-	"forge.lthn.ai/core/go/pkg/core"
+	core "dappco.re/go/core"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -13,21 +13,21 @@ import (
 // --- Mock Platform ---
 
 type mockPlatform struct {
-	visible         bool
-	badge           string
-	hasBadge        bool
-	progress        float64
-	bounceID        int
-	bounceType      BounceType
-	bounceCalled    bool
+	visible          bool
+	badge            string
+	hasBadge         bool
+	progress         float64
+	bounceID         int
+	bounceType       BounceType
+	bounceCalled     bool
 	stopBounceCalled bool
-	showErr         error
-	hideErr         error
-	badgeErr        error
-	removeErr       error
-	progressErr     error
-	bounceErr       error
-	stopBounceErr   error
+	showErr          error
+	hideErr          error
+	badgeErr         error
+	removeErr        error
+	progressErr      error
+	bounceErr        error
+	stopBounceErr    error
 }
 
 func (m *mockPlatform) ShowIcon() error {
@@ -97,14 +97,25 @@ func (m *mockPlatform) StopBounce(requestID int) error {
 func newTestDockService(t *testing.T) (*Service, *core.Core, *mockPlatform) {
 	t.Helper()
 	mock := &mockPlatform{visible: true}
-	c, err := core.New(
+	c := core.New(
 		core.WithService(Register(mock)),
 		core.WithServiceLock(),
 	)
-	require.NoError(t, err)
-	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
 	svc := core.MustServiceFor[*Service](c, "dock")
 	return svc, c, mock
+}
+
+func taskRun(c *core.Core, name string, task any) core.Result {
+	return c.Action(name).Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: task},
+	))
+}
+
+func setBadge(c *core.Core, label string) core.Result {
+	return c.Action("dock.setBadge").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "label", Value: label},
+	))
 }
 
 // --- Tests ---
@@ -116,18 +127,16 @@ func TestRegister_Good(t *testing.T) {
 
 func TestQueryVisible_Good(t *testing.T) {
 	_, c, _ := newTestDockService(t)
-	result, handled, err := c.QUERY(QueryVisible{})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.Equal(t, true, result)
+	r := c.QUERY(QueryVisible{})
+	require.True(t, r.OK)
+	assert.Equal(t, true, r.Value)
 }
 
 func TestQueryVisible_Bad(t *testing.T) {
 	// No dock service registered — QUERY returns handled=false
-	c, err := core.New(core.WithServiceLock())
-	require.NoError(t, err)
-	_, handled, _ := c.QUERY(QueryVisible{})
-	assert.False(t, handled)
+	c := core.New(core.WithServiceLock())
+	r := c.QUERY(QueryVisible{})
+	assert.False(t, r.OK)
 }
 
 func TestTaskShowIcon_Good(t *testing.T) {
@@ -135,16 +144,15 @@ func TestTaskShowIcon_Good(t *testing.T) {
 	mock.visible = false // Start hidden
 
 	var received *ActionVisibilityChanged
-	c.RegisterAction(func(_ *core.Core, msg core.Message) error {
+	c.RegisterAction(func(_ *core.Core, msg core.Message) core.Result {
 		if a, ok := msg.(ActionVisibilityChanged); ok {
 			received = &a
 		}
-		return nil
+		return core.Result{OK: true}
 	})
 
-	_, handled, err := c.PERFORM(TaskShowIcon{})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "dock.showIcon", TaskShowIcon{})
+	require.True(t, r.OK)
 	assert.True(t, mock.visible)
 	require.NotNil(t, received)
 	assert.True(t, received.Visible)
@@ -155,16 +163,15 @@ func TestTaskHideIcon_Good(t *testing.T) {
 	mock.visible = true // Start visible
 
 	var received *ActionVisibilityChanged
-	c.RegisterAction(func(_ *core.Core, msg core.Message) error {
+	c.RegisterAction(func(_ *core.Core, msg core.Message) core.Result {
 		if a, ok := msg.(ActionVisibilityChanged); ok {
 			received = &a
 		}
-		return nil
+		return core.Result{OK: true}
 	})
 
-	_, handled, err := c.PERFORM(TaskHideIcon{})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "dock.hideIcon", TaskHideIcon{})
+	require.True(t, r.OK)
 	assert.False(t, mock.visible)
 	require.NotNil(t, received)
 	assert.False(t, received.Visible)
@@ -172,18 +179,16 @@ func TestTaskHideIcon_Good(t *testing.T) {
 
 func TestTaskSetBadge_Good(t *testing.T) {
 	_, c, mock := newTestDockService(t)
-	_, handled, err := c.PERFORM(TaskSetBadge{Label: "3"})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := setBadge(c, "3")
+	require.True(t, r.OK)
 	assert.Equal(t, "3", mock.badge)
 	assert.True(t, mock.hasBadge)
 }
 
 func TestTaskSetBadge_EmptyLabel_Good(t *testing.T) {
 	_, c, mock := newTestDockService(t)
-	_, handled, err := c.PERFORM(TaskSetBadge{Label: ""})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := setBadge(c, "")
+	require.True(t, r.OK)
 	assert.Equal(t, "", mock.badge)
 	assert.True(t, mock.hasBadge) // Empty string = default system badge indicator
 }
@@ -191,11 +196,10 @@ func TestTaskSetBadge_EmptyLabel_Good(t *testing.T) {
 func TestTaskRemoveBadge_Good(t *testing.T) {
 	_, c, mock := newTestDockService(t)
 	// Set a badge first
-	_, _, _ = c.PERFORM(TaskSetBadge{Label: "5"})
+	_ = setBadge(c, "5")
 
-	_, handled, err := c.PERFORM(TaskRemoveBadge{})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "dock.removeBadge", TaskRemoveBadge{})
+	require.True(t, r.OK)
 	assert.Equal(t, "", mock.badge)
 	assert.False(t, mock.hasBadge)
 }
@@ -204,27 +208,24 @@ func TestTaskShowIcon_Bad(t *testing.T) {
 	_, c, mock := newTestDockService(t)
 	mock.showErr = assert.AnError
 
-	_, handled, err := c.PERFORM(TaskShowIcon{})
-	assert.True(t, handled)
-	assert.Error(t, err)
+	r := taskRun(c, "dock.showIcon", TaskShowIcon{})
+	assert.False(t, r.OK)
 }
 
 func TestTaskHideIcon_Bad(t *testing.T) {
 	_, c, mock := newTestDockService(t)
 	mock.hideErr = assert.AnError
 
-	_, handled, err := c.PERFORM(TaskHideIcon{})
-	assert.True(t, handled)
-	assert.Error(t, err)
+	r := taskRun(c, "dock.hideIcon", TaskHideIcon{})
+	assert.False(t, r.OK)
 }
 
 func TestTaskSetBadge_Bad(t *testing.T) {
 	_, c, mock := newTestDockService(t)
 	mock.badgeErr = assert.AnError
 
-	_, handled, err := c.PERFORM(TaskSetBadge{Label: "3"})
-	assert.True(t, handled)
-	assert.Error(t, err)
+	r := setBadge(c, "3")
+	assert.False(t, r.OK)
 }
 
 // --- TaskSetProgressBar ---
@@ -233,16 +234,15 @@ func TestTaskSetProgressBar_Good(t *testing.T) {
 	_, c, mock := newTestDockService(t)
 
 	var received *ActionProgressChanged
-	c.RegisterAction(func(_ *core.Core, msg core.Message) error {
+	c.RegisterAction(func(_ *core.Core, msg core.Message) core.Result {
 		if a, ok := msg.(ActionProgressChanged); ok {
 			received = &a
 		}
-		return nil
+		return core.Result{OK: true}
 	})
 
-	_, handled, err := c.PERFORM(TaskSetProgressBar{Progress: 0.5})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "dock.setProgressBar", TaskSetProgressBar{Progress: 0.5})
+	require.True(t, r.OK)
 	assert.Equal(t, 0.5, mock.progress)
 	require.NotNil(t, received)
 	assert.Equal(t, 0.5, received.Progress)
@@ -251,9 +251,8 @@ func TestTaskSetProgressBar_Good(t *testing.T) {
 func TestTaskSetProgressBar_Hide_Good(t *testing.T) {
 	// Progress -1.0 hides the indicator
 	_, c, mock := newTestDockService(t)
-	_, handled, err := c.PERFORM(TaskSetProgressBar{Progress: -1.0})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "dock.setProgressBar", TaskSetProgressBar{Progress: -1.0})
+	require.True(t, r.OK)
 	assert.Equal(t, -1.0, mock.progress)
 }
 
@@ -261,17 +260,15 @@ func TestTaskSetProgressBar_Bad(t *testing.T) {
 	_, c, mock := newTestDockService(t)
 	mock.progressErr = assert.AnError
 
-	_, handled, err := c.PERFORM(TaskSetProgressBar{Progress: 0.5})
-	assert.True(t, handled)
-	assert.Error(t, err)
+	r := taskRun(c, "dock.setProgressBar", TaskSetProgressBar{Progress: 0.5})
+	assert.False(t, r.OK)
 }
 
 func TestTaskSetProgressBar_Ugly(t *testing.T) {
-	// No dock service — PERFORM returns handled=false
-	c, err := core.New(core.WithServiceLock())
-	require.NoError(t, err)
-	_, handled, _ := c.PERFORM(TaskSetProgressBar{Progress: 0.5})
-	assert.False(t, handled)
+	// No dock service — action is not registered
+	c := core.New(core.WithServiceLock())
+	r := c.Action("dock.setProgressBar").Run(context.Background(), core.NewOptions())
+	assert.False(t, r.OK)
 }
 
 // --- TaskBounce ---
@@ -280,19 +277,18 @@ func TestTaskBounce_Good(t *testing.T) {
 	_, c, mock := newTestDockService(t)
 
 	var received *ActionBounceStarted
-	c.RegisterAction(func(_ *core.Core, msg core.Message) error {
+	c.RegisterAction(func(_ *core.Core, msg core.Message) core.Result {
 		if a, ok := msg.(ActionBounceStarted); ok {
 			received = &a
 		}
-		return nil
+		return core.Result{OK: true}
 	})
 
-	result, handled, err := c.PERFORM(TaskBounce{BounceType: BounceInformational})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "dock.bounce", TaskBounce{BounceType: BounceInformational})
+	require.True(t, r.OK)
 	assert.True(t, mock.bounceCalled)
 	assert.Equal(t, BounceInformational, mock.bounceType)
-	requestID, ok := result.(int)
+	requestID, ok := r.Value.(int)
 	require.True(t, ok)
 	assert.Equal(t, 1, requestID)
 	require.NotNil(t, received)
@@ -301,11 +297,10 @@ func TestTaskBounce_Good(t *testing.T) {
 
 func TestTaskBounce_Critical_Good(t *testing.T) {
 	_, c, mock := newTestDockService(t)
-	result, handled, err := c.PERFORM(TaskBounce{BounceType: BounceCritical})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "dock.bounce", TaskBounce{BounceType: BounceCritical})
+	require.True(t, r.OK)
 	assert.Equal(t, BounceCritical, mock.bounceType)
-	requestID, ok := result.(int)
+	requestID, ok := r.Value.(int)
 	require.True(t, ok)
 	assert.Equal(t, 1, requestID)
 }
@@ -314,17 +309,15 @@ func TestTaskBounce_Bad(t *testing.T) {
 	_, c, mock := newTestDockService(t)
 	mock.bounceErr = assert.AnError
 
-	_, handled, err := c.PERFORM(TaskBounce{BounceType: BounceInformational})
-	assert.True(t, handled)
-	assert.Error(t, err)
+	r := taskRun(c, "dock.bounce", TaskBounce{BounceType: BounceInformational})
+	assert.False(t, r.OK)
 }
 
 func TestTaskBounce_Ugly(t *testing.T) {
-	// No dock service — PERFORM returns handled=false
-	c, err := core.New(core.WithServiceLock())
-	require.NoError(t, err)
-	_, handled, _ := c.PERFORM(TaskBounce{BounceType: BounceInformational})
-	assert.False(t, handled)
+	// No dock service — action is not registered
+	c := core.New(core.WithServiceLock())
+	r := c.Action("dock.bounce").Run(context.Background(), core.NewOptions())
+	assert.False(t, r.OK)
 }
 
 // --- TaskStopBounce ---
@@ -333,13 +326,12 @@ func TestTaskStopBounce_Good(t *testing.T) {
 	_, c, mock := newTestDockService(t)
 
 	// Start a bounce to get a requestID
-	result, _, err := c.PERFORM(TaskBounce{BounceType: BounceInformational})
-	require.NoError(t, err)
-	requestID := result.(int)
+	r := taskRun(c, "dock.bounce", TaskBounce{BounceType: BounceInformational})
+	require.True(t, r.OK)
+	requestID := r.Value.(int)
 
-	_, handled, err := c.PERFORM(TaskStopBounce{RequestID: requestID})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r2 := taskRun(c, "dock.stopBounce", TaskStopBounce{RequestID: requestID})
+	require.True(t, r2.OK)
 	assert.True(t, mock.stopBounceCalled)
 }
 
@@ -347,40 +339,35 @@ func TestTaskStopBounce_Bad(t *testing.T) {
 	_, c, mock := newTestDockService(t)
 	mock.stopBounceErr = assert.AnError
 
-	_, handled, err := c.PERFORM(TaskStopBounce{RequestID: 1})
-	assert.True(t, handled)
-	assert.Error(t, err)
+	r := taskRun(c, "dock.stopBounce", TaskStopBounce{RequestID: 1})
+	assert.False(t, r.OK)
 }
 
 func TestTaskStopBounce_Ugly(t *testing.T) {
-	// No dock service — PERFORM returns handled=false
-	c, err := core.New(core.WithServiceLock())
-	require.NoError(t, err)
-	_, handled, _ := c.PERFORM(TaskStopBounce{RequestID: 99})
-	assert.False(t, handled)
+	// No dock service — action is not registered
+	c := core.New(core.WithServiceLock())
+	r := c.Action("dock.stopBounce").Run(context.Background(), core.NewOptions())
+	assert.False(t, r.OK)
 }
 
 func TestTaskRemoveBadge_Bad(t *testing.T) {
 	_, c, mock := newTestDockService(t)
 	mock.removeErr = assert.AnError
 
-	_, handled, err := c.PERFORM(TaskRemoveBadge{})
-	assert.True(t, handled)
-	assert.Error(t, err)
+	r := taskRun(c, "dock.removeBadge", TaskRemoveBadge{})
+	assert.False(t, r.OK)
 }
 
 func TestQueryVisible_Ugly(t *testing.T) {
 	// Dock icon initially hidden
 	mock := &mockPlatform{visible: false}
-	c, err := core.New(
+	c := core.New(
 		core.WithService(Register(mock)),
 		core.WithServiceLock(),
 	)
-	require.NoError(t, err)
-	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
 
-	result, handled, err := c.QUERY(QueryVisible{})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.Equal(t, false, result)
+	r := c.QUERY(QueryVisible{})
+	require.True(t, r.OK)
+	assert.Equal(t, false, r.Value)
 }

@@ -4,6 +4,7 @@ package mcp
 import (
 	"context"
 
+	core "dappco.re/go/core"
 	"forge.lthn.ai/core/gui/pkg/keybinding"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -19,9 +20,14 @@ type KeybindingAddOutput struct {
 }
 
 func (s *Subsystem) keybindingAdd(_ context.Context, _ *mcp.CallToolRequest, input KeybindingAddInput) (*mcp.CallToolResult, KeybindingAddOutput, error) {
-	_, _, err := s.core.PERFORM(keybinding.TaskAdd{Accelerator: input.Accelerator, Description: input.Description})
-	if err != nil {
-		return nil, KeybindingAddOutput{}, err
+	r := s.core.Action("keybinding.add").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: keybinding.TaskAdd{Accelerator: input.Accelerator, Description: input.Description}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, KeybindingAddOutput{}, e
+		}
+		return nil, KeybindingAddOutput{}, nil
 	}
 	return nil, KeybindingAddOutput{Success: true}, nil
 }
@@ -36,9 +42,14 @@ type KeybindingRemoveOutput struct {
 }
 
 func (s *Subsystem) keybindingRemove(_ context.Context, _ *mcp.CallToolRequest, input KeybindingRemoveInput) (*mcp.CallToolResult, KeybindingRemoveOutput, error) {
-	_, _, err := s.core.PERFORM(keybinding.TaskRemove{Accelerator: input.Accelerator})
-	if err != nil {
-		return nil, KeybindingRemoveOutput{}, err
+	r := s.core.Action("keybinding.remove").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: keybinding.TaskRemove{Accelerator: input.Accelerator}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, KeybindingRemoveOutput{}, e
+		}
+		return nil, KeybindingRemoveOutput{}, nil
 	}
 	return nil, KeybindingRemoveOutput{Success: true}, nil
 }

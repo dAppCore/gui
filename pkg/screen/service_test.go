@@ -5,7 +5,7 @@ import (
 	"context"
 	"testing"
 
-	"forge.lthn.ai/core/go/pkg/core"
+	core "dappco.re/go/core"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -49,12 +49,11 @@ func newTestService(t *testing.T) (*mockPlatform, *core.Core) {
 			},
 		},
 	}
-	c, err := core.New(
+	c := core.New(
 		core.WithService(Register(mock)),
 		core.WithServiceLock(),
 	)
-	require.NoError(t, err)
-	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
 	return mock, c
 }
 
@@ -66,19 +65,17 @@ func TestRegister_Good(t *testing.T) {
 
 func TestQueryAll_Good(t *testing.T) {
 	_, c := newTestService(t)
-	result, handled, err := c.QUERY(QueryAll{})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	screens := result.([]Screen)
+	r := c.QUERY(QueryAll{})
+	require.True(t, r.OK)
+	screens := r.Value.([]Screen)
 	assert.Len(t, screens, 2)
 }
 
 func TestQueryPrimary_Good(t *testing.T) {
 	_, c := newTestService(t)
-	result, handled, err := c.QUERY(QueryPrimary{})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	scr := result.(*Screen)
+	r := c.QUERY(QueryPrimary{})
+	require.True(t, r.OK)
+	scr := r.Value.(*Screen)
 	require.NotNil(t, scr)
 	assert.Equal(t, "Built-in", scr.Name)
 	assert.True(t, scr.IsPrimary)
@@ -86,54 +83,49 @@ func TestQueryPrimary_Good(t *testing.T) {
 
 func TestQueryByID_Good(t *testing.T) {
 	_, c := newTestService(t)
-	result, handled, err := c.QUERY(QueryByID{ID: "2"})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	scr := result.(*Screen)
+	r := c.QUERY(QueryByID{ID: "2"})
+	require.True(t, r.OK)
+	scr := r.Value.(*Screen)
 	require.NotNil(t, scr)
 	assert.Equal(t, "External", scr.Name)
 }
 
 func TestQueryByID_Bad(t *testing.T) {
 	_, c := newTestService(t)
-	result, handled, err := c.QUERY(QueryByID{ID: "99"})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.Nil(t, result)
+	r := c.QUERY(QueryByID{ID: "99"})
+	require.True(t, r.OK)
+	assert.Nil(t, r.Value)
 }
 
 func TestQueryAtPoint_Good(t *testing.T) {
 	_, c := newTestService(t)
 
 	// Point on primary screen
-	result, handled, err := c.QUERY(QueryAtPoint{X: 100, Y: 100})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	scr := result.(*Screen)
+	r := c.QUERY(QueryAtPoint{X: 100, Y: 100})
+	require.True(t, r.OK)
+	scr := r.Value.(*Screen)
 	require.NotNil(t, scr)
 	assert.Equal(t, "Built-in", scr.Name)
 
 	// Point on external screen
-	result, _, _ = c.QUERY(QueryAtPoint{X: 3000, Y: 500})
-	scr = result.(*Screen)
+	r2 := c.QUERY(QueryAtPoint{X: 3000, Y: 500})
+	scr = r2.Value.(*Screen)
 	require.NotNil(t, scr)
 	assert.Equal(t, "External", scr.Name)
 }
 
 func TestQueryAtPoint_Bad(t *testing.T) {
 	_, c := newTestService(t)
-	result, handled, err := c.QUERY(QueryAtPoint{X: -1000, Y: -1000})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.Nil(t, result)
+	r := c.QUERY(QueryAtPoint{X: -1000, Y: -1000})
+	require.True(t, r.OK)
+	assert.Nil(t, r.Value)
 }
 
 func TestQueryWorkAreas_Good(t *testing.T) {
 	_, c := newTestService(t)
-	result, handled, err := c.QUERY(QueryWorkAreas{})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	areas := result.([]Rect)
+	r := c.QUERY(QueryWorkAreas{})
+	require.True(t, r.OK)
+	areas := r.Value.([]Rect)
 	assert.Len(t, areas, 2)
 	assert.Equal(t, 38, areas[0].Y) // primary has menu bar offset
 }
@@ -143,10 +135,9 @@ func TestQueryWorkAreas_Good(t *testing.T) {
 func TestQueryCurrent_Good(t *testing.T) {
 	// current falls back to primary when not explicitly set
 	_, c := newTestService(t)
-	result, handled, err := c.QUERY(QueryCurrent{})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	scr := result.(*Screen)
+	r := c.QUERY(QueryCurrent{})
+	require.True(t, r.OK)
+	scr := r.Value.(*Screen)
 	require.NotNil(t, scr)
 	assert.True(t, scr.IsPrimary)
 	assert.Equal(t, "Built-in", scr.Name)
@@ -155,17 +146,15 @@ func TestQueryCurrent_Good(t *testing.T) {
 func TestQueryCurrent_Bad(t *testing.T) {
 	// no screens at all → GetCurrent returns nil
 	mock := &mockPlatform{screens: []Screen{}}
-	c, err := core.New(
+	c := core.New(
 		core.WithService(Register(mock)),
 		core.WithServiceLock(),
 	)
-	require.NoError(t, err)
-	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
 
-	result, handled, err := c.QUERY(QueryCurrent{})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.Nil(t, result)
+	r := c.QUERY(QueryCurrent{})
+	require.True(t, r.OK)
+	assert.Nil(t, r.Value)
 }
 
 func TestQueryCurrent_Ugly(t *testing.T) {
@@ -179,15 +168,14 @@ func TestQueryCurrent_Ugly(t *testing.T) {
 		},
 	}
 	mock.current = &mock.screens[1]
-	c, err := core.New(
+	c := core.New(
 		core.WithService(Register(mock)),
 		core.WithServiceLock(),
 	)
-	require.NoError(t, err)
-	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
 
-	result, _, _ := c.QUERY(QueryCurrent{})
-	scr := result.(*Screen)
+	r := c.QUERY(QueryCurrent{})
+	scr := r.Value.(*Screen)
 	require.NotNil(t, scr)
 	assert.Equal(t, "External", scr.Name)
 }

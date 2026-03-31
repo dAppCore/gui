@@ -2,7 +2,7 @@
 package mcp
 
 import (
-	"forge.lthn.ai/core/go/pkg/core"
+	core "dappco.re/go/core"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 

@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	coreio "forge.lthn.ai/core/go-io"
+	coreio "dappco.re/go/core/io"
 )
 
 // WindowState holds the persisted position/size of a window.

@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"forge.lthn.ai/core/go/pkg/core"
+	core "dappco.re/go/core"
 	"forge.lthn.ai/core/gui/pkg/dialog"
 )
 
@@ -18,50 +18,51 @@ type Service struct {
 	categories map[string]NotificationCategory
 }
 
-func Register(p Platform) func(*core.Core) (any, error) {
-	return func(c *core.Core) (any, error) {
-		return &Service{
+func Register(p Platform) func(*core.Core) core.Result {
+	return func(c *core.Core) core.Result {
+		return core.Result{Value: &Service{
 			ServiceRuntime: core.NewServiceRuntime[Options](c, Options{}),
 			platform:       p,
 			categories:     make(map[string]NotificationCategory),
-		}, nil
+		}, OK: true}
 	}
 }
 
-func (s *Service) OnStartup(ctx context.Context) error {
+func (s *Service) OnStartup(_ context.Context) core.Result {
 	s.Core().RegisterQuery(s.handleQuery)
-	s.Core().RegisterTask(s.handleTask)
-	return nil
+	s.Core().Action("notification.send", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskSend)
+		return core.Result{Value: nil, OK: true}.New(s.send(t.Options))
+	})
+	s.Core().Action("notification.requestPermission", func(_ context.Context, _ core.Options) core.Result {
+		granted, err := s.platform.RequestPermission()
+		return core.Result{}.New(granted, err)
+	})
+	s.Core().Action("notification.revokePermission", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: nil, OK: true}.New(s.platform.RevokePermission())
+	})
+	s.Core().Action("notification.registerCategory", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskRegisterCategory)
+		s.categories[t.Category.ID] = t.Category
+		return core.Result{OK: true}
+	})
+	return core.Result{OK: true}
 }
 
-func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
-	return nil
+func (s *Service) HandleIPCEvents(_ *core.Core, _ core.Message) core.Result {
+	return core.Result{OK: true}
 }
 
-func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
+func (s *Service) handleQuery(_ *core.Core, q core.Query) core.Result {
 	switch q.(type) {
 	case QueryPermission:
 		granted, err := s.platform.CheckPermission()
-		return PermissionStatus{Granted: granted}, true, err
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		return core.Result{Value: PermissionStatus{Granted: granted}, OK: true}
 	default:
-		return nil, false, nil
-	}
-}
-
-func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
-	switch t := t.(type) {
-	case TaskSend:
-		return nil, true, s.send(t.Options)
-	case TaskRequestPermission:
-		granted, err := s.platform.RequestPermission()
-		return granted, true, err
-	case TaskRevokePermission:
-		return nil, true, s.platform.RevokePermission()
-	case TaskRegisterCategory:
-		s.categories[t.Category.ID] = t.Category
-		return nil, true, nil
-	default:
-		return nil, false, nil
+		return core.Result{}
 	}
 }
 
@@ -92,18 +93,25 @@ func (s *Service) fallbackDialog(options NotificationOptions) error {
 		dt = dialog.DialogInfo
 	}
 
-	msg := options.Message
+	message := options.Message
 	if options.Subtitle != "" {
-		msg = options.Subtitle + "\n\n" + msg
+		message = options.Subtitle + "\n\n" + message
 	}
 
-	_, _, err := s.Core().PERFORM(dialog.TaskMessageDialog{
-		Options: dialog.MessageDialogOptions{
-			Type:    dt,
-			Title:   options.Title,
-			Message: msg,
-			Buttons: []string{"OK"},
-		},
-	})
-	return err
+	r := s.Core().Action("dialog.message").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: dialog.TaskMessageDialog{
+			Options: dialog.MessageDialogOptions{
+				Type:    dt,
+				Title:   options.Title,
+				Message: message,
+				Buttons: []string{"OK"},
+			},
+		}},
+	))
+	if !r.OK {
+		if err, ok := r.Value.(error); ok {
+			return err
+		}
+	}
+	return nil
 }

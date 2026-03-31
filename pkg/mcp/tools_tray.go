@@ -4,7 +4,8 @@ package mcp
 import (
 	"context"
 
-	coreerr "forge.lthn.ai/core/go-log"
+	core "dappco.re/go/core"
+	coreerr "dappco.re/go/core/log"
 	"forge.lthn.ai/core/gui/pkg/systray"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -19,9 +20,14 @@ type TraySetIconOutput struct {
 }
 
 func (s *Subsystem) traySetIcon(_ context.Context, _ *mcp.CallToolRequest, input TraySetIconInput) (*mcp.CallToolResult, TraySetIconOutput, error) {
-	_, _, err := s.core.PERFORM(systray.TaskSetTrayIcon{Data: input.Data})
-	if err != nil {
-		return nil, TraySetIconOutput{}, err
+	r := s.core.Action("systray.setIcon").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: systray.TaskSetTrayIcon{Data: input.Data}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, TraySetIconOutput{}, e
+		}
+		return nil, TraySetIconOutput{}, nil
 	}
 	return nil, TraySetIconOutput{Success: true}, nil
 }
@@ -64,11 +70,14 @@ type TrayInfoOutput struct {
 }
 
 func (s *Subsystem) trayInfo(_ context.Context, _ *mcp.CallToolRequest, _ TrayInfoInput) (*mcp.CallToolResult, TrayInfoOutput, error) {
-	result, _, err := s.core.QUERY(systray.QueryConfig{})
-	if err != nil {
-		return nil, TrayInfoOutput{}, err
+	r := s.core.QUERY(systray.QueryConfig{})
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, TrayInfoOutput{}, e
+		}
+		return nil, TrayInfoOutput{}, nil
 	}
-	config, ok := result.(map[string]any)
+	config, ok := r.Value.(map[string]any)
 	if !ok {
 		return nil, TrayInfoOutput{}, coreerr.E("mcp.trayInfo", "unexpected result type", nil)
 	}

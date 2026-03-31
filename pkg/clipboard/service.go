@@ -4,7 +4,7 @@ package clipboard
 import (
 	"context"
 
-	"forge.lthn.ai/core/go/pkg/core"
+	core "dappco.re/go/core"
 )
 
 type Options struct{}
@@ -16,42 +16,38 @@ type Service struct {
 
 // Register(p) binds the clipboard service to a Core instance.
 // c.WithService(clipboard.Register(wailsClipboard))
-func Register(p Platform) func(*core.Core) (any, error) {
-	return func(c *core.Core) (any, error) {
-		return &Service{
+func Register(p Platform) func(*core.Core) core.Result {
+	return func(c *core.Core) core.Result {
+		return core.Result{Value: &Service{
 			ServiceRuntime: core.NewServiceRuntime[Options](c, Options{}),
 			platform:       p,
-		}, nil
+		}, OK: true}
 	}
 }
 
-func (s *Service) OnStartup(ctx context.Context) error {
+func (s *Service) OnStartup(_ context.Context) core.Result {
 	s.Core().RegisterQuery(s.handleQuery)
-	s.Core().RegisterTask(s.handleTask)
-	return nil
+	s.Core().Action("clipboard.setText", func(_ context.Context, opts core.Options) core.Result {
+		success := s.platform.SetText(opts.String("text"))
+		return core.Result{Value: success, OK: true}
+	})
+	s.Core().Action("clipboard.clear", func(_ context.Context, _ core.Options) core.Result {
+		success := s.platform.SetText("")
+		return core.Result{Value: success, OK: true}
+	})
+	return core.Result{OK: true}
 }
 
-func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
-	return nil
+func (s *Service) HandleIPCEvents(_ *core.Core, _ core.Message) core.Result {
+	return core.Result{OK: true}
 }
 
-func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
+func (s *Service) handleQuery(_ *core.Core, q core.Query) core.Result {
 	switch q.(type) {
 	case QueryText:
 		text, ok := s.platform.Text()
-		return ClipboardContent{Text: text, HasContent: ok && text != ""}, true, nil
+		return core.Result{Value: ClipboardContent{Text: text, HasContent: ok && text != ""}, OK: true}
 	default:
-		return nil, false, nil
-	}
-}
-
-func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
-	switch t := t.(type) {
-	case TaskSetText:
-		return s.platform.SetText(t.Text), true, nil
-	case TaskClear:
-		return s.platform.SetText(""), true, nil
-	default:
-		return nil, false, nil
+		return core.Result{}
 	}
 }

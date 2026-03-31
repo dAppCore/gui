@@ -1,7 +1,7 @@
 // pkg/window/tiling.go
 package window
 
-import coreerr "forge.lthn.ai/core/go-log"
+import coreerr "dappco.re/go/core/log"
 
 // TileMode defines how windows are arranged.
 type TileMode int

@@ -4,7 +4,8 @@ package mcp
 import (
 	"context"
 
-	coreerr "forge.lthn.ai/core/go-log"
+	core "dappco.re/go/core"
+	coreerr "dappco.re/go/core/log"
 	"forge.lthn.ai/core/gui/pkg/window"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -19,9 +20,14 @@ type LayoutSaveOutput struct {
 }
 
 func (s *Subsystem) layoutSave(_ context.Context, _ *mcp.CallToolRequest, input LayoutSaveInput) (*mcp.CallToolResult, LayoutSaveOutput, error) {
-	_, _, err := s.core.PERFORM(window.TaskSaveLayout{Name: input.Name})
-	if err != nil {
-		return nil, LayoutSaveOutput{}, err
+	r := s.core.Action("window.saveLayout").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskSaveLayout{Name: input.Name}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, LayoutSaveOutput{}, e
+		}
+		return nil, LayoutSaveOutput{}, nil
 	}
 	return nil, LayoutSaveOutput{Success: true}, nil
 }
@@ -36,9 +42,14 @@ type LayoutRestoreOutput struct {
 }
 
 func (s *Subsystem) layoutRestore(_ context.Context, _ *mcp.CallToolRequest, input LayoutRestoreInput) (*mcp.CallToolResult, LayoutRestoreOutput, error) {
-	_, _, err := s.core.PERFORM(window.TaskRestoreLayout{Name: input.Name})
-	if err != nil {
-		return nil, LayoutRestoreOutput{}, err
+	r := s.core.Action("window.restoreLayout").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskRestoreLayout{Name: input.Name}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, LayoutRestoreOutput{}, e
+		}
+		return nil, LayoutRestoreOutput{}, nil
 	}
 	return nil, LayoutRestoreOutput{Success: true}, nil
 }
@@ -51,11 +62,14 @@ type LayoutListOutput struct {
 }
 
 func (s *Subsystem) layoutList(_ context.Context, _ *mcp.CallToolRequest, _ LayoutListInput) (*mcp.CallToolResult, LayoutListOutput, error) {
-	result, _, err := s.core.QUERY(window.QueryLayoutList{})
-	if err != nil {
-		return nil, LayoutListOutput{}, err
+	r := s.core.QUERY(window.QueryLayoutList{})
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, LayoutListOutput{}, e
+		}
+		return nil, LayoutListOutput{}, nil
 	}
-	layouts, ok := result.([]window.LayoutInfo)
+	layouts, ok := r.Value.([]window.LayoutInfo)
 	if !ok {
 		return nil, LayoutListOutput{}, coreerr.E("mcp.layoutList", "unexpected result type", nil)
 	}
@@ -72,9 +86,14 @@ type LayoutDeleteOutput struct {
 }
 
 func (s *Subsystem) layoutDelete(_ context.Context, _ *mcp.CallToolRequest, input LayoutDeleteInput) (*mcp.CallToolResult, LayoutDeleteOutput, error) {
-	_, _, err := s.core.PERFORM(window.TaskDeleteLayout{Name: input.Name})
-	if err != nil {
-		return nil, LayoutDeleteOutput{}, err
+	r := s.core.Action("window.deleteLayout").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskDeleteLayout{Name: input.Name}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, LayoutDeleteOutput{}, e
+		}
+		return nil, LayoutDeleteOutput{}, nil
 	}
 	return nil, LayoutDeleteOutput{Success: true}, nil
 }
@@ -89,11 +108,14 @@ type LayoutGetOutput struct {
 }
 
 func (s *Subsystem) layoutGet(_ context.Context, _ *mcp.CallToolRequest, input LayoutGetInput) (*mcp.CallToolResult, LayoutGetOutput, error) {
-	result, _, err := s.core.QUERY(window.QueryLayoutGet{Name: input.Name})
-	if err != nil {
-		return nil, LayoutGetOutput{}, err
+	r := s.core.QUERY(window.QueryLayoutGet{Name: input.Name})
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, LayoutGetOutput{}, e
+		}
+		return nil, LayoutGetOutput{}, nil
 	}
-	layout, ok := result.(*window.Layout)
+	layout, ok := r.Value.(*window.Layout)
 	if !ok {
 		return nil, LayoutGetOutput{}, coreerr.E("mcp.layoutGet", "unexpected result type", nil)
 	}
@@ -111,9 +133,14 @@ type LayoutTileOutput struct {
 }
 
 func (s *Subsystem) layoutTile(_ context.Context, _ *mcp.CallToolRequest, input LayoutTileInput) (*mcp.CallToolResult, LayoutTileOutput, error) {
-	_, _, err := s.core.PERFORM(window.TaskTileWindows{Mode: input.Mode, Windows: input.Windows})
-	if err != nil {
-		return nil, LayoutTileOutput{}, err
+	r := s.core.Action("window.tileWindows").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskTileWindows{Mode: input.Mode, Windows: input.Windows}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, LayoutTileOutput{}, e
+		}
+		return nil, LayoutTileOutput{}, nil
 	}
 	return nil, LayoutTileOutput{Success: true}, nil
 }
@@ -129,9 +156,14 @@ type LayoutSnapOutput struct {
 }
 
 func (s *Subsystem) layoutSnap(_ context.Context, _ *mcp.CallToolRequest, input LayoutSnapInput) (*mcp.CallToolResult, LayoutSnapOutput, error) {
-	_, _, err := s.core.PERFORM(window.TaskSnapWindow{Name: input.Name, Position: input.Position})
-	if err != nil {
-		return nil, LayoutSnapOutput{}, err
+	r := s.core.Action("window.snapWindow").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskSnapWindow{Name: input.Name, Position: input.Position}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, LayoutSnapOutput{}, e
+		}
+		return nil, LayoutSnapOutput{}, nil
 	}
 	return nil, LayoutSnapOutput{Success: true}, nil
 }
@@ -148,9 +180,14 @@ type LayoutStackOutput struct {
 }
 
 func (s *Subsystem) layoutStack(_ context.Context, _ *mcp.CallToolRequest, input LayoutStackInput) (*mcp.CallToolResult, LayoutStackOutput, error) {
-	_, _, err := s.core.PERFORM(window.TaskStackWindows{Windows: input.Windows, OffsetX: input.OffsetX, OffsetY: input.OffsetY})
-	if err != nil {
-		return nil, LayoutStackOutput{}, err
+	r := s.core.Action("window.stackWindows").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskStackWindows{Windows: input.Windows, OffsetX: input.OffsetX, OffsetY: input.OffsetY}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, LayoutStackOutput{}, e
+		}
+		return nil, LayoutStackOutput{}, nil
 	}
 	return nil, LayoutStackOutput{Success: true}, nil
 }
@@ -166,9 +203,14 @@ type LayoutWorkflowOutput struct {
 }
 
 func (s *Subsystem) layoutWorkflow(_ context.Context, _ *mcp.CallToolRequest, input LayoutWorkflowInput) (*mcp.CallToolResult, LayoutWorkflowOutput, error) {
-	_, _, err := s.core.PERFORM(window.TaskApplyWorkflow{Workflow: input.Workflow, Windows: input.Windows})
-	if err != nil {
-		return nil, LayoutWorkflowOutput{}, err
+	r := s.core.Action("window.applyWorkflow").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskApplyWorkflow{Workflow: input.Workflow, Windows: input.Windows}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, LayoutWorkflowOutput{}, e
+		}
+		return nil, LayoutWorkflowOutput{}, nil
 	}
 	return nil, LayoutWorkflowOutput{Success: true}, nil
 }

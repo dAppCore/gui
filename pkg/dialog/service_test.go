@@ -5,7 +5,7 @@ import (
 	"context"
 	"testing"
 
-	"forge.lthn.ai/core/go/pkg/core"
+	core "dappco.re/go/core"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -50,13 +50,18 @@ func newTestService(t *testing.T) (*mockPlatform, *core.Core) {
 		openDirPath:   "/tmp/dir",
 		messageButton: "OK",
 	}
-	c, err := core.New(
+	c := core.New(
 		core.WithService(Register(mock)),
 		core.WithServiceLock(),
 	)
-	require.NoError(t, err)
-	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
 	return mock, c
+}
+
+func taskRun(c *core.Core, name string, task any) core.Result {
+	return c.Action(name).Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: task},
+	))
 }
 
 // --- Good path tests ---
@@ -71,12 +76,11 @@ func TestService_TaskOpenFile_Good(t *testing.T) {
 	mock, c := newTestService(t)
 	mock.openFilePaths = []string{"/a.txt", "/b.txt"}
 
-	result, handled, err := c.PERFORM(TaskOpenFile{
+	r := taskRun(c, "dialog.openFile", TaskOpenFile{
 		Options: OpenFileOptions{Title: "Pick", AllowMultiple: true},
 	})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	paths := result.([]string)
+	require.True(t, r.OK)
+	paths := r.Value.([]string)
 	assert.Equal(t, []string{"/a.txt", "/b.txt"}, paths)
 	assert.Equal(t, "Pick", mock.lastOpenOpts.Title)
 	assert.True(t, mock.lastOpenOpts.AllowMultiple)
@@ -87,15 +91,14 @@ func TestService_TaskOpenFile_FileFilters_Good(t *testing.T) {
 	mock.openFilePaths = []string{"/img.png"}
 
 	filters := []FileFilter{{DisplayName: "Images", Pattern: "*.png;*.jpg"}}
-	result, handled, err := c.PERFORM(TaskOpenFile{
+	r := taskRun(c, "dialog.openFile", TaskOpenFile{
 		Options: OpenFileOptions{
 			Title:   "Select image",
 			Filters: filters,
 		},
 	})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.Equal(t, []string{"/img.png"}, result.([]string))
+	require.True(t, r.OK)
+	assert.Equal(t, []string{"/img.png"}, r.Value.([]string))
 	require.Len(t, mock.lastOpenOpts.Filters, 1)
 	assert.Equal(t, "Images", mock.lastOpenOpts.Filters[0].DisplayName)
 	assert.Equal(t, "*.png;*.jpg", mock.lastOpenOpts.Filters[0].Pattern)
@@ -105,26 +108,25 @@ func TestService_TaskOpenFile_MultipleSelection_Good(t *testing.T) {
 	mock, c := newTestService(t)
 	mock.openFilePaths = []string{"/a.txt", "/b.txt", "/c.txt"}
 
-	result, handled, err := c.PERFORM(TaskOpenFile{
+	r := taskRun(c, "dialog.openFile", TaskOpenFile{
 		Options: OpenFileOptions{AllowMultiple: true},
 	})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.Equal(t, []string{"/a.txt", "/b.txt", "/c.txt"}, result.([]string))
+	require.True(t, r.OK)
+	assert.Equal(t, []string{"/a.txt", "/b.txt", "/c.txt"}, r.Value.([]string))
 	assert.True(t, mock.lastOpenOpts.AllowMultiple)
 }
 
 func TestService_TaskOpenFile_CanChooseOptions_Good(t *testing.T) {
 	mock, c := newTestService(t)
 
-	_, _, err := c.PERFORM(TaskOpenFile{
+	r := taskRun(c, "dialog.openFile", TaskOpenFile{
 		Options: OpenFileOptions{
 			CanChooseFiles:       true,
 			CanChooseDirectories: true,
 			ShowHiddenFiles:      true,
 		},
 	})
-	require.NoError(t, err)
+	require.True(t, r.OK)
 	assert.True(t, mock.lastOpenOpts.CanChooseFiles)
 	assert.True(t, mock.lastOpenOpts.CanChooseDirectories)
 	assert.True(t, mock.lastOpenOpts.ShowHiddenFiles)
@@ -135,14 +137,13 @@ func TestService_TaskOpenFileWithOptions_Good(t *testing.T) {
 	mock.openFilePaths = []string{"/log.txt"}
 
 	opts := &OpenFileOptions{
-		Title:         "Select log",
-		AllowMultiple: false,
+		Title:           "Select log",
+		AllowMultiple:   false,
 		ShowHiddenFiles: true,
 	}
-	result, handled, err := c.PERFORM(TaskOpenFileWithOptions{Options: opts})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.Equal(t, []string{"/log.txt"}, result.([]string))
+	r := taskRun(c, "dialog.openFile", TaskOpenFileWithOptions{Options: opts})
+	require.True(t, r.OK)
+	assert.Equal(t, []string{"/log.txt"}, r.Value.([]string))
 	assert.Equal(t, "Select log", mock.lastOpenOpts.Title)
 	assert.True(t, mock.lastOpenOpts.ShowHiddenFiles)
 }
@@ -150,29 +151,27 @@ func TestService_TaskOpenFileWithOptions_Good(t *testing.T) {
 func TestService_TaskOpenFileWithOptions_NilOptions_Good(t *testing.T) {
 	_, c := newTestService(t)
 
-	result, handled, err := c.PERFORM(TaskOpenFileWithOptions{Options: nil})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.NotNil(t, result)
+	r := taskRun(c, "dialog.openFile", TaskOpenFileWithOptions{Options: nil})
+	require.True(t, r.OK)
+	assert.NotNil(t, r.Value)
 }
 
 func TestService_TaskSaveFile_Good(t *testing.T) {
 	_, c := newTestService(t)
-	result, handled, err := c.PERFORM(TaskSaveFile{
+	r := taskRun(c, "dialog.saveFile", TaskSaveFile{
 		Options: SaveFileOptions{Filename: "out.txt"},
 	})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.Equal(t, "/tmp/save.txt", result)
+	require.True(t, r.OK)
+	assert.Equal(t, "/tmp/save.txt", r.Value)
 }
 
 func TestService_TaskSaveFile_ShowHidden_Good(t *testing.T) {
 	mock, c := newTestService(t)
 
-	_, _, err := c.PERFORM(TaskSaveFile{
+	r := taskRun(c, "dialog.saveFile", TaskSaveFile{
 		Options: SaveFileOptions{Filename: "out.txt", ShowHiddenFiles: true},
 	})
-	require.NoError(t, err)
+	require.True(t, r.OK)
 	assert.True(t, mock.lastSaveOpts.ShowHiddenFiles)
 }
 
@@ -185,10 +184,9 @@ func TestService_TaskSaveFileWithOptions_Good(t *testing.T) {
 		Filename: "data.json",
 		Filters:  []FileFilter{{DisplayName: "JSON", Pattern: "*.json"}},
 	}
-	result, handled, err := c.PERFORM(TaskSaveFileWithOptions{Options: opts})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.Equal(t, "/exports/data.json", result.(string))
+	r := taskRun(c, "dialog.saveFile", TaskSaveFileWithOptions{Options: opts})
+	require.True(t, r.OK)
+	assert.Equal(t, "/exports/data.json", r.Value.(string))
 	assert.Equal(t, "Export data", mock.lastSaveOpts.Title)
 	require.Len(t, mock.lastSaveOpts.Filters, 1)
 	assert.Equal(t, "JSON", mock.lastSaveOpts.Filters[0].DisplayName)
@@ -197,21 +195,19 @@ func TestService_TaskSaveFileWithOptions_Good(t *testing.T) {
 func TestService_TaskSaveFileWithOptions_NilOptions_Good(t *testing.T) {
 	_, c := newTestService(t)
 
-	result, handled, err := c.PERFORM(TaskSaveFileWithOptions{Options: nil})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.Equal(t, "/tmp/save.txt", result)
+	r := taskRun(c, "dialog.saveFile", TaskSaveFileWithOptions{Options: nil})
+	require.True(t, r.OK)
+	assert.Equal(t, "/tmp/save.txt", r.Value)
 }
 
 func TestService_TaskOpenDirectory_Good(t *testing.T) {
 	mock, c := newTestService(t)
 
-	result, handled, err := c.PERFORM(TaskOpenDirectory{
+	r := taskRun(c, "dialog.openDirectory", TaskOpenDirectory{
 		Options: OpenDirectoryOptions{Title: "Pick Dir", ShowHiddenFiles: true},
 	})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.Equal(t, "/tmp/dir", result)
+	require.True(t, r.OK)
+	assert.Equal(t, "/tmp/dir", r.Value)
 	assert.Equal(t, "Pick Dir", mock.lastDirOpts.Title)
 	assert.True(t, mock.lastDirOpts.ShowHiddenFiles)
 }
@@ -220,15 +216,14 @@ func TestService_TaskMessageDialog_Good(t *testing.T) {
 	mock, c := newTestService(t)
 	mock.messageButton = "Yes"
 
-	result, handled, err := c.PERFORM(TaskMessageDialog{
+	r := taskRun(c, "dialog.message", TaskMessageDialog{
 		Options: MessageDialogOptions{
 			Type: DialogQuestion, Title: "Confirm",
 			Message: "Sure?", Buttons: []string{"Yes", "No"},
 		},
 	})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.Equal(t, "Yes", result)
+	require.True(t, r.OK)
+	assert.Equal(t, "Yes", r.Value)
 	assert.Equal(t, DialogQuestion, mock.lastMsgOpts.Type)
 }
 
@@ -236,12 +231,11 @@ func TestService_TaskInfo_Good(t *testing.T) {
 	mock, c := newTestService(t)
 	mock.messageButton = "OK"
 
-	result, handled, err := c.PERFORM(TaskInfo{
+	r := taskRun(c, "dialog.info", TaskInfo{
 		Title: "Done", Message: "File saved successfully.",
 	})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.Equal(t, "OK", result.(string))
+	require.True(t, r.OK)
+	assert.Equal(t, "OK", r.Value.(string))
 	assert.Equal(t, DialogInfo, mock.lastMsgOpts.Type)
 	assert.Equal(t, "Done", mock.lastMsgOpts.Title)
 	assert.Equal(t, "File saved successfully.", mock.lastMsgOpts.Message)
@@ -251,12 +245,11 @@ func TestService_TaskInfo_WithButtons_Good(t *testing.T) {
 	mock, c := newTestService(t)
 	mock.messageButton = "Close"
 
-	result, handled, err := c.PERFORM(TaskInfo{
+	r := taskRun(c, "dialog.info", TaskInfo{
 		Title: "Notice", Message: "Update available.", Buttons: []string{"Close", "Later"},
 	})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.Equal(t, "Close", result.(string))
+	require.True(t, r.OK)
+	assert.Equal(t, "Close", r.Value.(string))
 	assert.Equal(t, []string{"Close", "Later"}, mock.lastMsgOpts.Buttons)
 }
 
@@ -264,12 +257,11 @@ func TestService_TaskQuestion_Good(t *testing.T) {
 	mock, c := newTestService(t)
 	mock.messageButton = "Yes"
 
-	result, handled, err := c.PERFORM(TaskQuestion{
+	r := taskRun(c, "dialog.question", TaskQuestion{
 		Title: "Confirm deletion", Message: "Delete file?", Buttons: []string{"Yes", "No"},
 	})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.Equal(t, "Yes", result.(string))
+	require.True(t, r.OK)
+	assert.Equal(t, "Yes", r.Value.(string))
 	assert.Equal(t, DialogQuestion, mock.lastMsgOpts.Type)
 	assert.Equal(t, "Confirm deletion", mock.lastMsgOpts.Title)
 }
@@ -278,12 +270,11 @@ func TestService_TaskWarning_Good(t *testing.T) {
 	mock, c := newTestService(t)
 	mock.messageButton = "OK"
 
-	result, handled, err := c.PERFORM(TaskWarning{
+	r := taskRun(c, "dialog.warning", TaskWarning{
 		Title: "Disk full", Message: "Storage is critically low.", Buttons: []string{"OK"},
 	})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.Equal(t, "OK", result.(string))
+	require.True(t, r.OK)
+	assert.Equal(t, "OK", r.Value.(string))
 	assert.Equal(t, DialogWarning, mock.lastMsgOpts.Type)
 	assert.Equal(t, "Disk full", mock.lastMsgOpts.Title)
 }
@@ -292,12 +283,11 @@ func TestService_TaskError_Good(t *testing.T) {
 	mock, c := newTestService(t)
 	mock.messageButton = "OK"
 
-	result, handled, err := c.PERFORM(TaskError{
+	r := taskRun(c, "dialog.error", TaskError{
 		Title: "Operation failed", Message: "could not write file: permission denied",
 	})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.Equal(t, "OK", result.(string))
+	require.True(t, r.OK)
+	assert.Equal(t, "OK", r.Value.(string))
 	assert.Equal(t, DialogError, mock.lastMsgOpts.Type)
 	assert.Equal(t, "Operation failed", mock.lastMsgOpts.Title)
 	assert.Equal(t, "could not write file: permission denied", mock.lastMsgOpts.Message)
@@ -306,45 +296,45 @@ func TestService_TaskError_Good(t *testing.T) {
 // --- Bad path tests ---
 
 func TestService_TaskOpenFile_Bad(t *testing.T) {
-	c, _ := core.New(core.WithServiceLock())
-	_, handled, _ := c.PERFORM(TaskOpenFile{})
-	assert.False(t, handled)
+	c := core.New(core.WithServiceLock())
+	r := c.Action("dialog.openFile").Run(context.Background(), core.NewOptions())
+	assert.False(t, r.OK)
 }
 
 func TestService_TaskOpenFileWithOptions_Bad(t *testing.T) {
-	c, _ := core.New(core.WithServiceLock())
-	_, handled, _ := c.PERFORM(TaskOpenFileWithOptions{})
-	assert.False(t, handled)
+	c := core.New(core.WithServiceLock())
+	r := c.Action("dialog.openFile").Run(context.Background(), core.NewOptions())
+	assert.False(t, r.OK)
 }
 
 func TestService_TaskSaveFileWithOptions_Bad(t *testing.T) {
-	c, _ := core.New(core.WithServiceLock())
-	_, handled, _ := c.PERFORM(TaskSaveFileWithOptions{})
-	assert.False(t, handled)
+	c := core.New(core.WithServiceLock())
+	r := c.Action("dialog.saveFile").Run(context.Background(), core.NewOptions())
+	assert.False(t, r.OK)
 }
 
 func TestService_TaskInfo_Bad(t *testing.T) {
-	c, _ := core.New(core.WithServiceLock())
-	_, handled, _ := c.PERFORM(TaskInfo{})
-	assert.False(t, handled)
+	c := core.New(core.WithServiceLock())
+	r := c.Action("dialog.info").Run(context.Background(), core.NewOptions())
+	assert.False(t, r.OK)
 }
 
 func TestService_TaskQuestion_Bad(t *testing.T) {
-	c, _ := core.New(core.WithServiceLock())
-	_, handled, _ := c.PERFORM(TaskQuestion{})
-	assert.False(t, handled)
+	c := core.New(core.WithServiceLock())
+	r := c.Action("dialog.question").Run(context.Background(), core.NewOptions())
+	assert.False(t, r.OK)
 }
 
 func TestService_TaskWarning_Bad(t *testing.T) {
-	c, _ := core.New(core.WithServiceLock())
-	_, handled, _ := c.PERFORM(TaskWarning{})
-	assert.False(t, handled)
+	c := core.New(core.WithServiceLock())
+	r := c.Action("dialog.warning").Run(context.Background(), core.NewOptions())
+	assert.False(t, r.OK)
 }
 
 func TestService_TaskError_Bad(t *testing.T) {
-	c, _ := core.New(core.WithServiceLock())
-	_, handled, _ := c.PERFORM(TaskError{})
-	assert.False(t, handled)
+	c := core.New(core.WithServiceLock())
+	r := c.Action("dialog.error").Run(context.Background(), core.NewOptions())
+	assert.False(t, r.OK)
 }
 
 // --- Ugly path tests ---
@@ -353,12 +343,11 @@ func TestService_TaskOpenFile_Ugly(t *testing.T) {
 	mock, c := newTestService(t)
 	mock.openFilePaths = nil
 
-	result, handled, err := c.PERFORM(TaskOpenFile{
+	r := taskRun(c, "dialog.openFile", TaskOpenFile{
 		Options: OpenFileOptions{Title: "Pick"},
 	})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.Nil(t, result.([]string))
+	require.True(t, r.OK)
+	assert.Nil(t, r.Value.([]string))
 }
 
 func TestService_TaskOpenFileWithOptions_MultipleFilters_Ugly(t *testing.T) {
@@ -373,10 +362,9 @@ func TestService_TaskOpenFileWithOptions_MultipleFilters_Ugly(t *testing.T) {
 			{DisplayName: "All files", Pattern: "*.*"},
 		},
 	}
-	result, handled, err := c.PERFORM(TaskOpenFileWithOptions{Options: opts})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.Equal(t, []string{"/doc.pdf"}, result.([]string))
+	r := taskRun(c, "dialog.openFile", TaskOpenFileWithOptions{Options: opts})
+	require.True(t, r.OK)
+	assert.Equal(t, []string{"/doc.pdf"}, r.Value.([]string))
 	assert.Len(t, mock.lastOpenOpts.Filters, 3)
 }
 
@@ -389,15 +377,14 @@ func TestService_TaskSaveFileWithOptions_FiltersAndHidden_Ugly(t *testing.T) {
 		ShowHiddenFiles: true,
 		Filters:         []FileFilter{{DisplayName: "CSV", Pattern: "*.csv"}},
 	}
-	_, _, err := c.PERFORM(TaskSaveFileWithOptions{Options: opts})
-	require.NoError(t, err)
+	r := taskRun(c, "dialog.saveFile", TaskSaveFileWithOptions{Options: opts})
+	require.True(t, r.OK)
 	assert.True(t, mock.lastSaveOpts.ShowHiddenFiles)
 	assert.Equal(t, "output.csv", mock.lastSaveOpts.Filename)
 }
 
 func TestService_UnknownTask_Ugly(t *testing.T) {
-	type unknownTask struct{}
-	c, _ := core.New(core.WithServiceLock())
-	_, handled, _ := c.PERFORM(unknownTask{})
-	assert.False(t, handled)
+	c := core.New(core.WithServiceLock())
+	r := c.Action("dialog.nonexistent").Run(context.Background(), core.NewOptions())
+	assert.False(t, r.OK)
 }

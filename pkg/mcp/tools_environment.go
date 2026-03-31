@@ -4,7 +4,7 @@ package mcp
 import (
 	"context"
 
-	coreerr "forge.lthn.ai/core/go-log"
+	coreerr "dappco.re/go/core/log"
 	"forge.lthn.ai/core/gui/pkg/environment"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -17,11 +17,14 @@ type ThemeGetOutput struct {
 }
 
 func (s *Subsystem) themeGet(_ context.Context, _ *mcp.CallToolRequest, _ ThemeGetInput) (*mcp.CallToolResult, ThemeGetOutput, error) {
-	result, _, err := s.core.QUERY(environment.QueryTheme{})
-	if err != nil {
-		return nil, ThemeGetOutput{}, err
+	r := s.core.QUERY(environment.QueryTheme{})
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, ThemeGetOutput{}, e
+		}
+		return nil, ThemeGetOutput{}, nil
 	}
-	theme, ok := result.(environment.ThemeInfo)
+	theme, ok := r.Value.(environment.ThemeInfo)
 	if !ok {
 		return nil, ThemeGetOutput{}, coreerr.E("mcp.themeGet", "unexpected result type", nil)
 	}
@@ -36,11 +39,14 @@ type ThemeSystemOutput struct {
 }
 
 func (s *Subsystem) themeSystem(_ context.Context, _ *mcp.CallToolRequest, _ ThemeSystemInput) (*mcp.CallToolResult, ThemeSystemOutput, error) {
-	result, _, err := s.core.QUERY(environment.QueryInfo{})
-	if err != nil {
-		return nil, ThemeSystemOutput{}, err
+	r := s.core.QUERY(environment.QueryInfo{})
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, ThemeSystemOutput{}, e
+		}
+		return nil, ThemeSystemOutput{}, nil
 	}
-	info, ok := result.(environment.EnvironmentInfo)
+	info, ok := r.Value.(environment.EnvironmentInfo)
 	if !ok {
 		return nil, ThemeSystemOutput{}, coreerr.E("mcp.themeSystem", "unexpected result type", nil)
 	}

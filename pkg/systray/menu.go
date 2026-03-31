@@ -1,7 +1,7 @@
 // pkg/systray/menu.go
 package systray
 
-import coreerr "forge.lthn.ai/core/go-log"
+import coreerr "dappco.re/go/core/log"
 
 // SetMenu sets a dynamic menu on the tray from TrayMenuItem descriptors.
 func (m *Manager) SetMenu(items []TrayMenuItem) error {

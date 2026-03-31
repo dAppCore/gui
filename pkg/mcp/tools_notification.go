@@ -4,7 +4,8 @@ package mcp
 import (
 	"context"
 
-	coreerr "forge.lthn.ai/core/go-log"
+	core "dappco.re/go/core"
+	coreerr "dappco.re/go/core/log"
 	"forge.lthn.ai/core/gui/pkg/notification"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -21,13 +22,18 @@ type NotificationShowOutput struct {
 }
 
 func (s *Subsystem) notificationShow(_ context.Context, _ *mcp.CallToolRequest, input NotificationShowInput) (*mcp.CallToolResult, NotificationShowOutput, error) {
-	_, _, err := s.core.PERFORM(notification.TaskSend{Options: notification.NotificationOptions{
-		Title:    input.Title,
-		Message:  input.Message,
-		Subtitle: input.Subtitle,
-	}})
-	if err != nil {
-		return nil, NotificationShowOutput{}, err
+	r := s.core.Action("notification.send").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: notification.TaskSend{Options: notification.NotificationOptions{
+			Title:    input.Title,
+			Message:  input.Message,
+			Subtitle: input.Subtitle,
+		}}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, NotificationShowOutput{}, e
+		}
+		return nil, NotificationShowOutput{}, nil
 	}
 	return nil, NotificationShowOutput{Success: true}, nil
 }
@@ -40,11 +46,14 @@ type NotificationPermissionRequestOutput struct {
 }
 
 func (s *Subsystem) notificationPermissionRequest(_ context.Context, _ *mcp.CallToolRequest, _ NotificationPermissionRequestInput) (*mcp.CallToolResult, NotificationPermissionRequestOutput, error) {
-	result, _, err := s.core.PERFORM(notification.TaskRequestPermission{})
-	if err != nil {
-		return nil, NotificationPermissionRequestOutput{}, err
+	r := s.core.Action("notification.requestPermission").Run(context.Background(), core.NewOptions())
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, NotificationPermissionRequestOutput{}, e
+		}
+		return nil, NotificationPermissionRequestOutput{}, nil
 	}
-	granted, ok := result.(bool)
+	granted, ok := r.Value.(bool)
 	if !ok {
 		return nil, NotificationPermissionRequestOutput{}, coreerr.E("mcp.notificationPermissionRequest", "unexpected result type", nil)
 	}
@@ -59,11 +68,14 @@ type NotificationPermissionCheckOutput struct {
 }
 
 func (s *Subsystem) notificationPermissionCheck(_ context.Context, _ *mcp.CallToolRequest, _ NotificationPermissionCheckInput) (*mcp.CallToolResult, NotificationPermissionCheckOutput, error) {
-	result, _, err := s.core.QUERY(notification.QueryPermission{})
-	if err != nil {
-		return nil, NotificationPermissionCheckOutput{}, err
+	r := s.core.QUERY(notification.QueryPermission{})
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, NotificationPermissionCheckOutput{}, e
+		}
+		return nil, NotificationPermissionCheckOutput{}, nil
 	}
-	status, ok := result.(notification.PermissionStatus)
+	status, ok := r.Value.(notification.PermissionStatus)
 	if !ok {
 		return nil, NotificationPermissionCheckOutput{}, coreerr.E("mcp.notificationPermissionCheck", "unexpected result type", nil)
 	}

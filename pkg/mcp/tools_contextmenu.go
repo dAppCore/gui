@@ -5,7 +5,8 @@ import (
 	"context"
 	"encoding/json"
 
-	coreerr "forge.lthn.ai/core/go-log"
+	core "dappco.re/go/core"
+	coreerr "dappco.re/go/core/log"
 	"forge.lthn.ai/core/gui/pkg/contextmenu"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -33,9 +34,14 @@ func (s *Subsystem) contextMenuAdd(_ context.Context, _ *mcp.CallToolRequest, in
 	if err := json.Unmarshal(menuJSON, &menuDef); err != nil {
 		return nil, ContextMenuAddOutput{}, coreerr.E("mcp.contextMenuAdd", "failed to unmarshal menu definition", err)
 	}
-	_, _, err = s.core.PERFORM(contextmenu.TaskAdd{Name: input.Name, Menu: menuDef})
-	if err != nil {
-		return nil, ContextMenuAddOutput{}, err
+	r := s.core.Action("contextmenu.add").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: contextmenu.TaskAdd{Name: input.Name, Menu: menuDef}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, ContextMenuAddOutput{}, e
+		}
+		return nil, ContextMenuAddOutput{}, nil
 	}
 	return nil, ContextMenuAddOutput{Success: true}, nil
 }
@@ -50,9 +56,14 @@ type ContextMenuRemoveOutput struct {
 }
 
 func (s *Subsystem) contextMenuRemove(_ context.Context, _ *mcp.CallToolRequest, input ContextMenuRemoveInput) (*mcp.CallToolResult, ContextMenuRemoveOutput, error) {
-	_, _, err := s.core.PERFORM(contextmenu.TaskRemove{Name: input.Name})
-	if err != nil {
-		return nil, ContextMenuRemoveOutput{}, err
+	r := s.core.Action("contextmenu.remove").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: contextmenu.TaskRemove{Name: input.Name}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, ContextMenuRemoveOutput{}, e
+		}
+		return nil, ContextMenuRemoveOutput{}, nil
 	}
 	return nil, ContextMenuRemoveOutput{Success: true}, nil
 }
@@ -67,11 +78,14 @@ type ContextMenuGetOutput struct {
 }
 
 func (s *Subsystem) contextMenuGet(_ context.Context, _ *mcp.CallToolRequest, input ContextMenuGetInput) (*mcp.CallToolResult, ContextMenuGetOutput, error) {
-	result, _, err := s.core.QUERY(contextmenu.QueryGet{Name: input.Name})
-	if err != nil {
-		return nil, ContextMenuGetOutput{}, err
+	r := s.core.QUERY(contextmenu.QueryGet{Name: input.Name})
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, ContextMenuGetOutput{}, e
+		}
+		return nil, ContextMenuGetOutput{}, nil
 	}
-	menu, ok := result.(*contextmenu.ContextMenuDef)
+	menu, ok := r.Value.(*contextmenu.ContextMenuDef)
 	if !ok {
 		return nil, ContextMenuGetOutput{}, coreerr.E("mcp.contextMenuGet", "unexpected result type", nil)
 	}
@@ -98,11 +112,14 @@ type ContextMenuListOutput struct {
 }
 
 func (s *Subsystem) contextMenuList(_ context.Context, _ *mcp.CallToolRequest, _ ContextMenuListInput) (*mcp.CallToolResult, ContextMenuListOutput, error) {
-	result, _, err := s.core.QUERY(contextmenu.QueryList{})
-	if err != nil {
-		return nil, ContextMenuListOutput{}, err
+	r := s.core.QUERY(contextmenu.QueryList{})
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, ContextMenuListOutput{}, e
+		}
+		return nil, ContextMenuListOutput{}, nil
 	}
-	menus, ok := result.(map[string]contextmenu.ContextMenuDef)
+	menus, ok := r.Value.(map[string]contextmenu.ContextMenuDef)
 	if !ok {
 		return nil, ContextMenuListOutput{}, coreerr.E("mcp.contextMenuList", "unexpected result type", nil)
 	}

@@ -17,10 +17,7 @@ type AppQuitOutput struct {
 
 func (s *Subsystem) appQuit(_ context.Context, _ *mcp.CallToolRequest, _ AppQuitInput) (*mcp.CallToolResult, AppQuitOutput, error) {
 	// Broadcast the will-terminate action which triggers application shutdown
-	err := s.core.ACTION(lifecycle.ActionWillTerminate{})
-	if err != nil {
-		return nil, AppQuitOutput{}, err
-	}
+	_ = s.core.ACTION(lifecycle.ActionWillTerminate{})
 	return nil, AppQuitOutput{Success: true}, nil
 }
 

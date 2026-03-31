@@ -5,21 +5,26 @@ import (
 	"sync"
 	"testing"
 
-	"forge.lthn.ai/core/go/pkg/core"
+	core "dappco.re/go/core"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func newTestWindowService(t *testing.T) (*Service, *core.Core) {
 	t.Helper()
-	c, err := core.New(
+	c := core.New(
 		core.WithService(Register(newMockPlatform())),
 		core.WithServiceLock(),
 	)
-	require.NoError(t, err)
-	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
 	svc := core.MustServiceFor[*Service](c, "window")
 	return svc, c
+}
+
+func taskRun(c *core.Core, name string, task any) core.Result {
+	return c.Action(name).Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: task},
+	))
 }
 
 func TestRegister_Good(t *testing.T) {
@@ -30,123 +35,112 @@ func TestRegister_Good(t *testing.T) {
 
 func TestTaskOpenWindow_Good(t *testing.T) {
 	_, c := newTestWindowService(t)
-	result, handled, err := c.PERFORM(TaskOpenWindow{
+	r := taskRun(c, "window.open", TaskOpenWindow{
 		Window: &Window{Name: "test", URL: "/"},
 	})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	info := result.(WindowInfo)
+	require.True(t, r.OK)
+	info := r.Value.(WindowInfo)
 	assert.Equal(t, "test", info.Name)
 }
 
 func TestTaskOpenWindow_OptionsFallback_Good(t *testing.T) {
 	_, c := newTestWindowService(t)
-	result, handled, err := c.PERFORM(TaskOpenWindow{
+	r := taskRun(c, "window.open", TaskOpenWindow{
 		Options: []WindowOption{WithName("test-fallback"), WithURL("/")},
 	})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	info := result.(WindowInfo)
+	require.True(t, r.OK)
+	info := r.Value.(WindowInfo)
 	assert.Equal(t, "test-fallback", info.Name)
 }
 
 func TestTaskOpenWindow_Bad(t *testing.T) {
-	// No window service registered — PERFORM returns handled=false
-	c, err := core.New(core.WithServiceLock())
-	require.NoError(t, err)
-	_, handled, _ := c.PERFORM(TaskOpenWindow{})
-	assert.False(t, handled)
+	// No window service registered — action is not registered
+	c := core.New(core.WithServiceLock())
+	r := c.Action("window.open").Run(context.Background(), core.NewOptions())
+	assert.False(t, r.OK)
 }
 
 func TestQueryWindowList_Good(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("a")}})
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("b")}})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("a")}})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("b")}})
 
-	result, handled, err := c.QUERY(QueryWindowList{})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	list := result.([]WindowInfo)
+	r := c.QUERY(QueryWindowList{})
+	require.True(t, r.OK)
+	list := r.Value.([]WindowInfo)
 	assert.Len(t, list, 2)
 }
 
 func TestQueryWindowByName_Good(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
-	result, handled, err := c.QUERY(QueryWindowByName{Name: "test"})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	info := result.(*WindowInfo)
+	r := c.QUERY(QueryWindowByName{Name: "test"})
+	require.True(t, r.OK)
+	info := r.Value.(*WindowInfo)
 	assert.Equal(t, "test", info.Name)
 }
 
 func TestQueryWindowByName_Bad(t *testing.T) {
 	_, c := newTestWindowService(t)
-	result, handled, err := c.QUERY(QueryWindowByName{Name: "nonexistent"})
-	require.NoError(t, err)
-	assert.True(t, handled) // handled=true, result is nil (not found)
-	assert.Nil(t, result)
+	r := c.QUERY(QueryWindowByName{Name: "nonexistent"})
+	require.True(t, r.OK) // handled=true, result is nil (not found)
+	assert.Nil(t, r.Value)
 }
 
 func TestTaskCloseWindow_Good(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
-	_, handled, err := c.PERFORM(TaskCloseWindow{Name: "test"})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "window.close", TaskCloseWindow{Name: "test"})
+	require.True(t, r.OK)
 
 	// Verify window is removed
-	result, _, _ := c.QUERY(QueryWindowByName{Name: "test"})
-	assert.Nil(t, result)
+	r2 := c.QUERY(QueryWindowByName{Name: "test"})
+	assert.Nil(t, r2.Value)
 }
 
 func TestTaskCloseWindow_Bad(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, handled, err := c.PERFORM(TaskCloseWindow{Name: "nonexistent"})
-	assert.True(t, handled)
-	assert.Error(t, err)
+	r := taskRun(c, "window.close", TaskCloseWindow{Name: "nonexistent"})
+	assert.False(t, r.OK)
 }
 
 func TestTaskSetPosition_Good(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
-	_, handled, err := c.PERFORM(TaskSetPosition{Name: "test", X: 100, Y: 200})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "window.setPosition", TaskSetPosition{Name: "test", X: 100, Y: 200})
+	require.True(t, r.OK)
 
-	result, _, _ := c.QUERY(QueryWindowByName{Name: "test"})
-	info := result.(*WindowInfo)
+	r2 := c.QUERY(QueryWindowByName{Name: "test"})
+	info := r2.Value.(*WindowInfo)
 	assert.Equal(t, 100, info.X)
 	assert.Equal(t, 200, info.Y)
 }
 
 func TestTaskSetSize_Good(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
-	_, handled, err := c.PERFORM(TaskSetSize{Name: "test", Width: 800, Height: 600})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "window.setSize", TaskSetSize{Name: "test", Width: 800, Height: 600})
+	require.True(t, r.OK)
 
-	result, _, _ := c.QUERY(QueryWindowByName{Name: "test"})
-	info := result.(*WindowInfo)
+	r2 := c.QUERY(QueryWindowByName{Name: "test"})
+	info := r2.Value.(*WindowInfo)
 	assert.Equal(t, 800, info.Width)
 	assert.Equal(t, 600, info.Height)
 }
 
 func TestTaskMaximise_Good(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
-	_, handled, err := c.PERFORM(TaskMaximise{Name: "test"})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "window.maximise", TaskMaximise{Name: "test"})
+	require.True(t, r.OK)
 
-	result, _, _ := c.QUERY(QueryWindowByName{Name: "test"})
-	info := result.(*WindowInfo)
+	r2 := c.QUERY(QueryWindowByName{Name: "test"})
+	info := r2.Value.(*WindowInfo)
 	assert.True(t, info.Maximized)
 }
 
@@ -154,22 +148,22 @@ func TestFileDrop_Good(t *testing.T) {
 	_, c := newTestWindowService(t)
 
 	// Open a window
-	result, _, _ := c.PERFORM(TaskOpenWindow{
+	r := taskRun(c, "window.open", TaskOpenWindow{
 		Options: []WindowOption{WithName("drop-test")},
 	})
-	info := result.(WindowInfo)
+	info := r.Value.(WindowInfo)
 	assert.Equal(t, "drop-test", info.Name)
 
 	// Capture broadcast actions
 	var dropped ActionFilesDropped
 	var mu sync.Mutex
-	c.RegisterAction(func(_ *core.Core, msg core.Message) error {
+	c.RegisterAction(func(_ *core.Core, msg core.Message) core.Result {
 		if a, ok := msg.(ActionFilesDropped); ok {
 			mu.Lock()
 			dropped = a
 			mu.Unlock()
 		}
-		return nil
+		return core.Result{OK: true}
 	})
 
 	// Get the mock window and simulate file drop
@@ -190,11 +184,10 @@ func TestFileDrop_Good(t *testing.T) {
 
 func TestTaskMinimise_Good(t *testing.T) {
 	svc, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
-	_, handled, err := c.PERFORM(TaskMinimise{Name: "test"})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "window.minimise", TaskMinimise{Name: "test"})
+	require.True(t, r.OK)
 
 	pw, ok := svc.Manager().Get("test")
 	require.True(t, ok)
@@ -204,20 +197,18 @@ func TestTaskMinimise_Good(t *testing.T) {
 
 func TestTaskMinimise_Bad(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, handled, err := c.PERFORM(TaskMinimise{Name: "nonexistent"})
-	assert.True(t, handled)
-	assert.Error(t, err)
+	r := taskRun(c, "window.minimise", TaskMinimise{Name: "nonexistent"})
+	assert.False(t, r.OK)
 }
 
 // --- TaskFocus ---
 
 func TestTaskFocus_Good(t *testing.T) {
 	svc, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
-	_, handled, err := c.PERFORM(TaskFocus{Name: "test"})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "window.focus", TaskFocus{Name: "test"})
+	require.True(t, r.OK)
 
 	pw, ok := svc.Manager().Get("test")
 	require.True(t, ok)
@@ -227,23 +218,21 @@ func TestTaskFocus_Good(t *testing.T) {
 
 func TestTaskFocus_Bad(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, handled, err := c.PERFORM(TaskFocus{Name: "nonexistent"})
-	assert.True(t, handled)
-	assert.Error(t, err)
+	r := taskRun(c, "window.focus", TaskFocus{Name: "nonexistent"})
+	assert.False(t, r.OK)
 }
 
 // --- TaskRestore ---
 
 func TestTaskRestore_Good(t *testing.T) {
 	svc, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
 	// First maximise, then restore
-	_, _, _ = c.PERFORM(TaskMaximise{Name: "test"})
+	taskRun(c, "window.maximise", TaskMaximise{Name: "test"})
 
-	_, handled, err := c.PERFORM(TaskRestore{Name: "test"})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "window.restore", TaskRestore{Name: "test"})
+	require.True(t, r.OK)
 
 	pw, ok := svc.Manager().Get("test")
 	require.True(t, ok)
@@ -258,20 +247,18 @@ func TestTaskRestore_Good(t *testing.T) {
 
 func TestTaskRestore_Bad(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, handled, err := c.PERFORM(TaskRestore{Name: "nonexistent"})
-	assert.True(t, handled)
-	assert.Error(t, err)
+	r := taskRun(c, "window.restore", TaskRestore{Name: "nonexistent"})
+	assert.False(t, r.OK)
 }
 
 // --- TaskSetTitle ---
 
 func TestTaskSetTitle_Good(t *testing.T) {
 	svc, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
-	_, handled, err := c.PERFORM(TaskSetTitle{Name: "test", Title: "New Title"})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "window.setTitle", TaskSetTitle{Name: "test", Title: "New Title"})
+	require.True(t, r.OK)
 
 	pw, ok := svc.Manager().Get("test")
 	require.True(t, ok)
@@ -280,20 +267,18 @@ func TestTaskSetTitle_Good(t *testing.T) {
 
 func TestTaskSetTitle_Bad(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, handled, err := c.PERFORM(TaskSetTitle{Name: "nonexistent", Title: "Nope"})
-	assert.True(t, handled)
-	assert.Error(t, err)
+	r := taskRun(c, "window.setTitle", TaskSetTitle{Name: "nonexistent", Title: "Nope"})
+	assert.False(t, r.OK)
 }
 
 // --- TaskSetAlwaysOnTop ---
 
 func TestTaskSetAlwaysOnTop_Good(t *testing.T) {
 	svc, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
-	_, handled, err := c.PERFORM(TaskSetAlwaysOnTop{Name: "test", AlwaysOnTop: true})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "window.setAlwaysOnTop", TaskSetAlwaysOnTop{Name: "test", AlwaysOnTop: true})
+	require.True(t, r.OK)
 
 	pw, ok := svc.Manager().Get("test")
 	require.True(t, ok)
@@ -303,22 +288,20 @@ func TestTaskSetAlwaysOnTop_Good(t *testing.T) {
 
 func TestTaskSetAlwaysOnTop_Bad(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, handled, err := c.PERFORM(TaskSetAlwaysOnTop{Name: "nonexistent", AlwaysOnTop: true})
-	assert.True(t, handled)
-	assert.Error(t, err)
+	r := taskRun(c, "window.setAlwaysOnTop", TaskSetAlwaysOnTop{Name: "nonexistent", AlwaysOnTop: true})
+	assert.False(t, r.OK)
 }
 
 // --- TaskSetBackgroundColour ---
 
 func TestTaskSetBackgroundColour_Good(t *testing.T) {
 	svc, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
-	_, handled, err := c.PERFORM(TaskSetBackgroundColour{
+	r := taskRun(c, "window.setBackgroundColour", TaskSetBackgroundColour{
 		Name: "test", Red: 10, Green: 20, Blue: 30, Alpha: 40,
 	})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	require.True(t, r.OK)
 
 	pw, ok := svc.Manager().Get("test")
 	require.True(t, ok)
@@ -328,20 +311,18 @@ func TestTaskSetBackgroundColour_Good(t *testing.T) {
 
 func TestTaskSetBackgroundColour_Bad(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, handled, err := c.PERFORM(TaskSetBackgroundColour{Name: "nonexistent", Red: 1, Green: 2, Blue: 3, Alpha: 4})
-	assert.True(t, handled)
-	assert.Error(t, err)
+	r := taskRun(c, "window.setBackgroundColour", TaskSetBackgroundColour{Name: "nonexistent", Red: 1, Green: 2, Blue: 3, Alpha: 4})
+	assert.False(t, r.OK)
 }
 
 // --- TaskSetVisibility ---
 
 func TestTaskSetVisibility_Good(t *testing.T) {
 	svc, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
-	_, handled, err := c.PERFORM(TaskSetVisibility{Name: "test", Visible: true})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "window.setVisibility", TaskSetVisibility{Name: "test", Visible: true})
+	require.True(t, r.OK)
 
 	pw, ok := svc.Manager().Get("test")
 	require.True(t, ok)
@@ -349,29 +330,26 @@ func TestTaskSetVisibility_Good(t *testing.T) {
 	assert.True(t, mw.visible)
 
 	// Now hide it
-	_, handled, err = c.PERFORM(TaskSetVisibility{Name: "test", Visible: false})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r2 := taskRun(c, "window.setVisibility", TaskSetVisibility{Name: "test", Visible: false})
+	require.True(t, r2.OK)
 	assert.False(t, mw.visible)
 }
 
 func TestTaskSetVisibility_Bad(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, handled, err := c.PERFORM(TaskSetVisibility{Name: "nonexistent", Visible: true})
-	assert.True(t, handled)
-	assert.Error(t, err)
+	r := taskRun(c, "window.setVisibility", TaskSetVisibility{Name: "nonexistent", Visible: true})
+	assert.False(t, r.OK)
 }
 
 // --- TaskFullscreen ---
 
 func TestTaskFullscreen_Good(t *testing.T) {
 	svc, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
 	// Enter fullscreen
-	_, handled, err := c.PERFORM(TaskFullscreen{Name: "test", Fullscreen: true})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "window.fullscreen", TaskFullscreen{Name: "test", Fullscreen: true})
+	require.True(t, r.OK)
 
 	pw, ok := svc.Manager().Get("test")
 	require.True(t, ok)
@@ -379,29 +357,26 @@ func TestTaskFullscreen_Good(t *testing.T) {
 	assert.True(t, mw.fullscreened)
 
 	// Exit fullscreen
-	_, handled, err = c.PERFORM(TaskFullscreen{Name: "test", Fullscreen: false})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r2 := taskRun(c, "window.fullscreen", TaskFullscreen{Name: "test", Fullscreen: false})
+	require.True(t, r2.OK)
 	assert.False(t, mw.fullscreened)
 }
 
 func TestTaskFullscreen_Bad(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, handled, err := c.PERFORM(TaskFullscreen{Name: "nonexistent", Fullscreen: true})
-	assert.True(t, handled)
-	assert.Error(t, err)
+	r := taskRun(c, "window.fullscreen", TaskFullscreen{Name: "nonexistent", Fullscreen: true})
+	assert.False(t, r.OK)
 }
 
 // --- TaskSaveLayout ---
 
 func TestTaskSaveLayout_Good(t *testing.T) {
 	svc, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("editor"), WithSize(960, 1080), WithPosition(0, 0)}})
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("terminal"), WithSize(960, 1080), WithPosition(960, 0)}})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("editor"), WithSize(960, 1080), WithPosition(0, 0)}})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("terminal"), WithSize(960, 1080), WithPosition(960, 0)}})
 
-	_, handled, err := c.PERFORM(TaskSaveLayout{Name: "coding"})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "window.saveLayout", TaskSaveLayout{Name: "coding"})
+	require.True(t, r.OK)
 
 	// Verify layout was saved with correct window states
 	layout, ok := svc.Manager().Layout().GetLayout("coding")
@@ -423,9 +398,8 @@ func TestTaskSaveLayout_Good(t *testing.T) {
 func TestTaskSaveLayout_Bad(t *testing.T) {
 	_, c := newTestWindowService(t)
 	// Saving an empty layout with empty name returns an error from LayoutManager
-	_, handled, err := c.PERFORM(TaskSaveLayout{Name: ""})
-	assert.True(t, handled)
-	assert.Error(t, err)
+	r := taskRun(c, "window.saveLayout", TaskSaveLayout{Name: ""})
+	assert.False(t, r.OK)
 }
 
 // --- TaskRestoreLayout ---
@@ -433,20 +407,19 @@ func TestTaskSaveLayout_Bad(t *testing.T) {
 func TestTaskRestoreLayout_Good(t *testing.T) {
 	svc, c := newTestWindowService(t)
 	// Open windows
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("editor"), WithSize(800, 600), WithPosition(0, 0)}})
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("terminal"), WithSize(800, 600), WithPosition(0, 0)}})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("editor"), WithSize(800, 600), WithPosition(0, 0)}})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("terminal"), WithSize(800, 600), WithPosition(0, 0)}})
 
 	// Save a layout with specific positions
-	_, _, _ = c.PERFORM(TaskSaveLayout{Name: "coding"})
+	taskRun(c, "window.saveLayout", TaskSaveLayout{Name: "coding"})
 
 	// Move the windows to different positions
-	_, _, _ = c.PERFORM(TaskSetPosition{Name: "editor", X: 500, Y: 500})
-	_, _, _ = c.PERFORM(TaskSetPosition{Name: "terminal", X: 600, Y: 600})
+	taskRun(c, "window.setPosition", TaskSetPosition{Name: "editor", X: 500, Y: 500})
+	taskRun(c, "window.setPosition", TaskSetPosition{Name: "terminal", X: 600, Y: 600})
 
 	// Restore the layout
-	_, handled, err := c.PERFORM(TaskRestoreLayout{Name: "coding"})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "window.restoreLayout", TaskRestoreLayout{Name: "coding"})
+	require.True(t, r.OK)
 
 	// Verify windows were moved back to saved positions
 	pw, ok := svc.Manager().Get("editor")
@@ -474,21 +447,19 @@ func TestTaskRestoreLayout_Good(t *testing.T) {
 
 func TestTaskRestoreLayout_Bad(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, handled, err := c.PERFORM(TaskRestoreLayout{Name: "nonexistent"})
-	assert.True(t, handled)
-	assert.Error(t, err)
+	r := taskRun(c, "window.restoreLayout", TaskRestoreLayout{Name: "nonexistent"})
+	assert.False(t, r.OK)
 }
 
 // --- TaskStackWindows ---
 
 func TestTaskStackWindows_Good(t *testing.T) {
 	svc, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("s1"), WithSize(800, 600)}})
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("s2"), WithSize(800, 600)}})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("s1"), WithSize(800, 600)}})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("s2"), WithSize(800, 600)}})
 
-	_, handled, err := c.PERFORM(TaskStackWindows{Windows: []string{"s1", "s2"}, OffsetX: 25, OffsetY: 35})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "window.stackWindows", TaskStackWindows{Windows: []string{"s1", "s2"}, OffsetX: 25, OffsetY: 35})
+	require.True(t, r.OK)
 
 	pw, ok := svc.Manager().Get("s2")
 	require.True(t, ok)
@@ -501,12 +472,11 @@ func TestTaskStackWindows_Good(t *testing.T) {
 
 func TestTaskApplyWorkflow_Good(t *testing.T) {
 	svc, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("editor"), WithSize(800, 600)}})
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("terminal"), WithSize(800, 600)}})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("editor"), WithSize(800, 600)}})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("terminal"), WithSize(800, 600)}})
 
-	_, handled, err := c.PERFORM(TaskApplyWorkflow{Workflow: "side-by-side"})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "window.applyWorkflow", TaskApplyWorkflow{Workflow: "side-by-side"})
+	require.True(t, r.OK)
 
 	editor, ok := svc.Manager().Get("editor")
 	require.True(t, ok)
@@ -525,28 +495,25 @@ func TestTaskApplyWorkflow_Good(t *testing.T) {
 
 func TestQueryWindowZoom_Good(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
-	result, handled, err := c.QUERY(QueryWindowZoom{Name: "test"})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.Equal(t, 1.0, result.(float64))
+	r := c.QUERY(QueryWindowZoom{Name: "test"})
+	require.True(t, r.OK)
+	assert.Equal(t, 1.0, r.Value.(float64))
 }
 
 func TestQueryWindowZoom_Bad(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, handled, err := c.QUERY(QueryWindowZoom{Name: "nonexistent"})
-	assert.True(t, handled)
-	assert.Error(t, err)
+	r := c.QUERY(QueryWindowZoom{Name: "nonexistent"})
+	assert.False(t, r.OK)
 }
 
 func TestTaskSetZoom_Good(t *testing.T) {
 	svc, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
-	_, handled, err := c.PERFORM(TaskSetZoom{Name: "test", Magnification: 1.5})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "window.setZoom", TaskSetZoom{Name: "test", Magnification: 1.5})
+	require.True(t, r.OK)
 
 	pw, ok := svc.Manager().Get("test")
 	require.True(t, ok)
@@ -556,18 +523,16 @@ func TestTaskSetZoom_Good(t *testing.T) {
 
 func TestTaskSetZoom_Bad(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, handled, err := c.PERFORM(TaskSetZoom{Name: "nonexistent", Magnification: 1.5})
-	assert.True(t, handled)
-	assert.Error(t, err)
+	r := taskRun(c, "window.setZoom", TaskSetZoom{Name: "nonexistent", Magnification: 1.5})
+	assert.False(t, r.OK)
 }
 
 func TestTaskZoomIn_Good(t *testing.T) {
 	svc, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
-	_, handled, err := c.PERFORM(TaskZoomIn{Name: "test"})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "window.zoomIn", TaskZoomIn{Name: "test"})
+	require.True(t, r.OK)
 
 	pw, ok := svc.Manager().Get("test")
 	require.True(t, ok)
@@ -577,20 +542,18 @@ func TestTaskZoomIn_Good(t *testing.T) {
 
 func TestTaskZoomIn_Bad(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, handled, err := c.PERFORM(TaskZoomIn{Name: "nonexistent"})
-	assert.True(t, handled)
-	assert.Error(t, err)
+	r := taskRun(c, "window.zoomIn", TaskZoomIn{Name: "nonexistent"})
+	assert.False(t, r.OK)
 }
 
 func TestTaskZoomOut_Good(t *testing.T) {
 	svc, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 	// Set zoom to 1.5 first so we can decrease it
-	_, _, _ = c.PERFORM(TaskSetZoom{Name: "test", Magnification: 1.5})
+	taskRun(c, "window.setZoom", TaskSetZoom{Name: "test", Magnification: 1.5})
 
-	_, handled, err := c.PERFORM(TaskZoomOut{Name: "test"})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "window.zoomOut", TaskZoomOut{Name: "test"})
+	require.True(t, r.OK)
 
 	pw, ok := svc.Manager().Get("test")
 	require.True(t, ok)
@@ -600,19 +563,17 @@ func TestTaskZoomOut_Good(t *testing.T) {
 
 func TestTaskZoomOut_Bad(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, handled, err := c.PERFORM(TaskZoomOut{Name: "nonexistent"})
-	assert.True(t, handled)
-	assert.Error(t, err)
+	r := taskRun(c, "window.zoomOut", TaskZoomOut{Name: "nonexistent"})
+	assert.False(t, r.OK)
 }
 
 func TestTaskZoomReset_Good(t *testing.T) {
 	svc, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
-	_, _, _ = c.PERFORM(TaskSetZoom{Name: "test", Magnification: 2.0})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	taskRun(c, "window.setZoom", TaskSetZoom{Name: "test", Magnification: 2.0})
 
-	_, handled, err := c.PERFORM(TaskZoomReset{Name: "test"})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "window.zoomReset", TaskZoomReset{Name: "test"})
+	require.True(t, r.OK)
 
 	pw, ok := svc.Manager().Get("test")
 	require.True(t, ok)
@@ -622,20 +583,18 @@ func TestTaskZoomReset_Good(t *testing.T) {
 
 func TestTaskZoomReset_Bad(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, handled, err := c.PERFORM(TaskZoomReset{Name: "nonexistent"})
-	assert.True(t, handled)
-	assert.Error(t, err)
+	r := taskRun(c, "window.zoomReset", TaskZoomReset{Name: "nonexistent"})
+	assert.False(t, r.OK)
 }
 
 // --- Content ---
 
 func TestTaskSetURL_Good(t *testing.T) {
 	svc, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
-	_, handled, err := c.PERFORM(TaskSetURL{Name: "test", URL: "https://example.com"})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "window.setURL", TaskSetURL{Name: "test", URL: "https://example.com"})
+	require.True(t, r.OK)
 
 	pw, ok := svc.Manager().Get("test")
 	require.True(t, ok)
@@ -645,18 +604,16 @@ func TestTaskSetURL_Good(t *testing.T) {
 
 func TestTaskSetURL_Bad(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, handled, err := c.PERFORM(TaskSetURL{Name: "nonexistent", URL: "https://example.com"})
-	assert.True(t, handled)
-	assert.Error(t, err)
+	r := taskRun(c, "window.setURL", TaskSetURL{Name: "nonexistent", URL: "https://example.com"})
+	assert.False(t, r.OK)
 }
 
 func TestTaskSetHTML_Good(t *testing.T) {
 	svc, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
-	_, handled, err := c.PERFORM(TaskSetHTML{Name: "test", HTML: "<h1>Hello</h1>"})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "window.setHTML", TaskSetHTML{Name: "test", HTML: "<h1>Hello</h1>"})
+	require.True(t, r.OK)
 
 	pw, ok := svc.Manager().Get("test")
 	require.True(t, ok)
@@ -666,18 +623,16 @@ func TestTaskSetHTML_Good(t *testing.T) {
 
 func TestTaskSetHTML_Bad(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, handled, err := c.PERFORM(TaskSetHTML{Name: "nonexistent", HTML: "<h1>Hello</h1>"})
-	assert.True(t, handled)
-	assert.Error(t, err)
+	r := taskRun(c, "window.setHTML", TaskSetHTML{Name: "nonexistent", HTML: "<h1>Hello</h1>"})
+	assert.False(t, r.OK)
 }
 
 func TestTaskExecJS_Good(t *testing.T) {
 	svc, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
-	_, handled, err := c.PERFORM(TaskExecJS{Name: "test", JS: "document.title = 'Ready'"})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "window.execJS", TaskExecJS{Name: "test", JS: "document.title = 'Ready'"})
+	require.True(t, r.OK)
 
 	pw, ok := svc.Manager().Get("test")
 	require.True(t, ok)
@@ -687,21 +642,19 @@ func TestTaskExecJS_Good(t *testing.T) {
 
 func TestTaskExecJS_Bad(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, handled, err := c.PERFORM(TaskExecJS{Name: "nonexistent", JS: "alert(1)"})
-	assert.True(t, handled)
-	assert.Error(t, err)
+	r := taskRun(c, "window.execJS", TaskExecJS{Name: "nonexistent", JS: "alert(1)"})
+	assert.False(t, r.OK)
 }
 
 // --- State toggles ---
 
 func TestTaskToggleFullscreen_Good(t *testing.T) {
 	svc, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
 	// Toggle on
-	_, handled, err := c.PERFORM(TaskToggleFullscreen{Name: "test"})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "window.toggleFullscreen", TaskToggleFullscreen{Name: "test"})
+	require.True(t, r.OK)
 
 	pw, ok := svc.Manager().Get("test")
 	require.True(t, ok)
@@ -709,25 +662,23 @@ func TestTaskToggleFullscreen_Good(t *testing.T) {
 	assert.True(t, mw.fullscreened)
 
 	// Toggle off
-	_, _, _ = c.PERFORM(TaskToggleFullscreen{Name: "test"})
+	taskRun(c, "window.toggleFullscreen", TaskToggleFullscreen{Name: "test"})
 	assert.False(t, mw.fullscreened)
 }
 
 func TestTaskToggleFullscreen_Bad(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, handled, err := c.PERFORM(TaskToggleFullscreen{Name: "nonexistent"})
-	assert.True(t, handled)
-	assert.Error(t, err)
+	r := taskRun(c, "window.toggleFullscreen", TaskToggleFullscreen{Name: "nonexistent"})
+	assert.False(t, r.OK)
 }
 
 func TestTaskToggleMaximise_Good(t *testing.T) {
 	svc, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
 	// Toggle on
-	_, handled, err := c.PERFORM(TaskToggleMaximise{Name: "test"})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "window.toggleMaximise", TaskToggleMaximise{Name: "test"})
+	require.True(t, r.OK)
 
 	pw, ok := svc.Manager().Get("test")
 	require.True(t, ok)
@@ -735,30 +686,28 @@ func TestTaskToggleMaximise_Good(t *testing.T) {
 	assert.True(t, mw.maximised)
 
 	// Toggle off
-	_, _, _ = c.PERFORM(TaskToggleMaximise{Name: "test"})
+	taskRun(c, "window.toggleMaximise", TaskToggleMaximise{Name: "test"})
 	assert.False(t, mw.maximised)
 }
 
 func TestTaskToggleMaximise_Bad(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, handled, err := c.PERFORM(TaskToggleMaximise{Name: "nonexistent"})
-	assert.True(t, handled)
-	assert.Error(t, err)
+	r := taskRun(c, "window.toggleMaximise", TaskToggleMaximise{Name: "nonexistent"})
+	assert.False(t, r.OK)
 }
 
 // --- Bounds ---
 
 func TestQueryWindowBounds_Good(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{
 		WithName("test"), WithSize(800, 600), WithPosition(100, 200),
 	}})
 
-	result, handled, err := c.QUERY(QueryWindowBounds{Name: "test"})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := c.QUERY(QueryWindowBounds{Name: "test"})
+	require.True(t, r.OK)
 
-	bounds := result.(WindowBounds)
+	bounds := r.Value.(WindowBounds)
 	assert.Equal(t, 100, bounds.X)
 	assert.Equal(t, 200, bounds.Y)
 	assert.Equal(t, 800, bounds.Width)
@@ -767,18 +716,16 @@ func TestQueryWindowBounds_Good(t *testing.T) {
 
 func TestQueryWindowBounds_Bad(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, handled, err := c.QUERY(QueryWindowBounds{Name: "nonexistent"})
-	assert.True(t, handled)
-	assert.Error(t, err)
+	r := c.QUERY(QueryWindowBounds{Name: "nonexistent"})
+	assert.False(t, r.OK)
 }
 
 func TestTaskSetBounds_Good(t *testing.T) {
 	svc, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
-	_, handled, err := c.PERFORM(TaskSetBounds{Name: "test", X: 50, Y: 75, Width: 1024, Height: 768})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "window.setBounds", TaskSetBounds{Name: "test", X: 50, Y: 75, Width: 1024, Height: 768})
+	require.True(t, r.OK)
 
 	pw, ok := svc.Manager().Get("test")
 	require.True(t, ok)
@@ -791,20 +738,18 @@ func TestTaskSetBounds_Good(t *testing.T) {
 
 func TestTaskSetBounds_Bad(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, handled, err := c.PERFORM(TaskSetBounds{Name: "nonexistent", X: 0, Y: 0, Width: 800, Height: 600})
-	assert.True(t, handled)
-	assert.Error(t, err)
+	r := taskRun(c, "window.setBounds", TaskSetBounds{Name: "nonexistent", X: 0, Y: 0, Width: 800, Height: 600})
+	assert.False(t, r.OK)
 }
 
 // --- Content protection ---
 
 func TestTaskSetContentProtection_Good(t *testing.T) {
 	svc, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
-	_, handled, err := c.PERFORM(TaskSetContentProtection{Name: "test", Protection: true})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "window.setContentProtection", TaskSetContentProtection{Name: "test", Protection: true})
+	require.True(t, r.OK)
 
 	pw, ok := svc.Manager().Get("test")
 	require.True(t, ok)
@@ -814,20 +759,18 @@ func TestTaskSetContentProtection_Good(t *testing.T) {
 
 func TestTaskSetContentProtection_Bad(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, handled, err := c.PERFORM(TaskSetContentProtection{Name: "nonexistent", Protection: true})
-	assert.True(t, handled)
-	assert.Error(t, err)
+	r := taskRun(c, "window.setContentProtection", TaskSetContentProtection{Name: "nonexistent", Protection: true})
+	assert.False(t, r.OK)
 }
 
 // --- Flash ---
 
 func TestTaskFlash_Good(t *testing.T) {
 	svc, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
-	_, handled, err := c.PERFORM(TaskFlash{Name: "test", Enabled: true})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "window.flash", TaskFlash{Name: "test", Enabled: true})
+	require.True(t, r.OK)
 
 	pw, ok := svc.Manager().Get("test")
 	require.True(t, ok)
@@ -837,27 +780,24 @@ func TestTaskFlash_Good(t *testing.T) {
 
 func TestTaskFlash_Bad(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, handled, err := c.PERFORM(TaskFlash{Name: "nonexistent", Enabled: true})
-	assert.True(t, handled)
-	assert.Error(t, err)
+	r := taskRun(c, "window.flash", TaskFlash{Name: "nonexistent", Enabled: true})
+	assert.False(t, r.OK)
 }
 
 // --- Print ---
 
 func TestTaskPrint_Good(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
-	_, handled, err := c.PERFORM(TaskPrint{Name: "test"})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := taskRun(c, "window.print", TaskPrint{Name: "test"})
+	require.True(t, r.OK)
 }
 
 func TestTaskPrint_Bad(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, handled, err := c.PERFORM(TaskPrint{Name: "nonexistent"})
-	assert.True(t, handled)
-	assert.Error(t, err)
+	r := taskRun(c, "window.print", TaskPrint{Name: "nonexistent"})
+	assert.False(t, r.OK)
 }
 
 // --- State queries (IsVisible, IsFullscreen, IsMinimised) ---
@@ -865,12 +805,12 @@ func TestTaskPrint_Bad(t *testing.T) {
 func TestQueryWindowBounds_Ugly(t *testing.T) {
 	// Verify bounds reflect position and size changes
 	_, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test"), WithSize(1280, 800)}})
-	_, _, _ = c.PERFORM(TaskSetBounds{Name: "test", X: 10, Y: 20, Width: 640, Height: 480})
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test"), WithSize(1280, 800)}})
+	taskRun(c, "window.setBounds", TaskSetBounds{Name: "test", X: 10, Y: 20, Width: 640, Height: 480})
 
-	result, _, err := c.QUERY(QueryWindowBounds{Name: "test"})
-	require.NoError(t, err)
-	bounds := result.(WindowBounds)
+	r := c.QUERY(QueryWindowBounds{Name: "test"})
+	require.True(t, r.OK)
+	bounds := r.Value.(WindowBounds)
 	assert.Equal(t, 10, bounds.X)
 	assert.Equal(t, 20, bounds.Y)
 	assert.Equal(t, 640, bounds.Width)

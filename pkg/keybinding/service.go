@@ -4,8 +4,8 @@ package keybinding
 import (
 	"context"
 
-	coreerr "forge.lthn.ai/core/go-log"
-	"forge.lthn.ai/core/go/pkg/core"
+	coreerr "dappco.re/go/core/log"
+	core "dappco.re/go/core"
 )
 
 type Options struct{}
@@ -16,24 +16,35 @@ type Service struct {
 	registeredBindings map[string]BindingInfo
 }
 
-func (s *Service) OnStartup(ctx context.Context) error {
+func (s *Service) OnStartup(_ context.Context) core.Result {
 	s.Core().RegisterQuery(s.handleQuery)
-	s.Core().RegisterTask(s.handleTask)
-	return nil
+	s.Core().Action("keybinding.add", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskAdd)
+		return core.Result{Value: nil, OK: true}.New(s.taskAdd(t))
+	})
+	s.Core().Action("keybinding.remove", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskRemove)
+		return core.Result{Value: nil, OK: true}.New(s.taskRemove(t))
+	})
+	s.Core().Action("keybinding.process", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskProcess)
+		return core.Result{Value: nil, OK: true}.New(s.taskProcess(t))
+	})
+	return core.Result{OK: true}
 }
 
-func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
-	return nil
+func (s *Service) HandleIPCEvents(_ *core.Core, _ core.Message) core.Result {
+	return core.Result{OK: true}
 }
 
 // --- Query Handlers ---
 
-func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
+func (s *Service) handleQuery(_ *core.Core, q core.Query) core.Result {
 	switch q.(type) {
 	case QueryList:
-		return s.queryList(), true, nil
+		return core.Result{Value: s.queryList(), OK: true}
 	default:
-		return nil, false, nil
+		return core.Result{}
 	}
 }
 
@@ -43,21 +54,6 @@ func (s *Service) queryList() []BindingInfo {
 		result = append(result, info)
 	}
 	return result
-}
-
-// --- Task Handlers ---
-
-func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
-	switch t := t.(type) {
-	case TaskAdd:
-		return nil, true, s.taskAdd(t)
-	case TaskRemove:
-		return nil, true, s.taskRemove(t)
-	case TaskProcess:
-		return nil, true, s.taskProcess(t)
-	default:
-		return nil, false, nil
-	}
 }
 
 func (s *Service) taskAdd(t TaskAdd) error {
@@ -97,7 +93,7 @@ func (s *Service) taskRemove(t TaskRemove) error {
 // taskProcess triggers the registered handler for the given accelerator programmatically.
 // Broadcasts ActionTriggered if handled; returns ErrorNotRegistered if the accelerator is unknown.
 //
-//	c.PERFORM(keybinding.TaskProcess{Accelerator: "Ctrl+S"})
+//	c.Action("keybinding.process").Run(ctx, core.NewOptions(core.Option{Key:"task", Value:keybinding.TaskProcess{Accelerator:"Ctrl+S"}}))
 func (s *Service) taskProcess(t TaskProcess) error {
 	if _, exists := s.registeredBindings[t.Accelerator]; !exists {
 		return coreerr.E("keybinding.taskProcess", "not registered: "+t.Accelerator, ErrorNotRegistered)
