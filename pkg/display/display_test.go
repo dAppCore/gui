@@ -3,7 +3,6 @@ package display
 import (
 	"context"
 	"os"
-	"path/filepath"
 	"testing"
 
 	core "dappco.re/go/core"
@@ -437,8 +436,8 @@ func TestWSEventManager_Good(t *testing.T) {
 func TestLoadConfig_Good(t *testing.T) {
 	// Create temp config file
 	dir := t.TempDir()
-	cfgPath := filepath.Join(dir, ".core", "gui", "config.yaml")
-	require.NoError(t, os.MkdirAll(filepath.Dir(cfgPath), 0o755))
+	cfgPath := core.JoinPath(dir, ".core", "gui", "config.yaml")
+	require.NoError(t, os.MkdirAll(core.PathDir(cfgPath), 0o755))
 	require.NoError(t, os.WriteFile(cfgPath, []byte(`
 window:
   default_width: 1280
@@ -460,7 +459,7 @@ menu:
 
 func TestLoadConfig_Bad_MissingFile(t *testing.T) {
 	s, _ := New()
-	s.loadConfigFrom(filepath.Join(t.TempDir(), "nonexistent.yaml"))
+	s.loadConfigFrom(core.JoinPath(t.TempDir(), "nonexistent.yaml"))
 
 	// Should not panic, configData stays at empty defaults
 	assert.Empty(t, s.configData["window"])
@@ -470,7 +469,7 @@ func TestLoadConfig_Bad_MissingFile(t *testing.T) {
 
 func TestHandleConfigTask_Persists_Good(t *testing.T) {
 	dir := t.TempDir()
-	cfgPath := filepath.Join(dir, "config.yaml")
+	cfgPath := core.JoinPath(dir, "config.yaml")
 
 	s, _ := New()
 	s.loadConfigFrom(cfgPath) // Creates empty config (file doesn't exist yet)

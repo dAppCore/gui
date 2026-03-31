@@ -3,10 +3,9 @@ package notification
 
 import (
 	"context"
-	"errors"
+	core "dappco.re/go/core"
 	"testing"
 
-	core "dappco.re/go/core"
 	"forge.lthn.ai/core/gui/pkg/dialog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -86,7 +85,7 @@ func TestTaskSend_Good(t *testing.T) {
 
 func TestTaskSend_Fallback_Good(t *testing.T) {
 	// Platform fails -> falls back to dialog via IPC
-	mockNotify := &mockPlatform{sendErr: errors.New("no permission")}
+	mockNotify := &mockPlatform{sendErr: core.NewError("no permission")}
 	mockDlg := &mockDialogPlatform{}
 	c := core.New(
 		core.WithService(dialog.Register(mockDlg)),
@@ -135,7 +134,7 @@ func TestTaskRevokePermission_Good(t *testing.T) {
 
 func TestTaskRevokePermission_Bad(t *testing.T) {
 	mock, c := newTestService(t)
-	mock.revokeErr = errors.New("cannot revoke")
+	mock.revokeErr = core.NewError("cannot revoke")
 	r := c.Action("notification.revokePermission").Run(context.Background(), core.NewOptions())
 	assert.False(t, r.OK)
 }
@@ -250,7 +249,7 @@ func TestQueryPermission_Bad(t *testing.T) {
 
 func TestQueryPermission_Ugly(t *testing.T) {
 	// Platform returns error — QUERY returns OK=false (framework does not propagate Value for failed queries)
-	mock := &mockPlatform{permErr: errors.New("platform error")}
+	mock := &mockPlatform{permErr: core.NewError("platform error")}
 	c := core.New(
 		core.WithService(Register(mock)),
 		core.WithServiceLock(),

@@ -3,10 +3,9 @@ package browser
 
 import (
 	"context"
-	"errors"
+	core "dappco.re/go/core"
 	"testing"
 
-	core "dappco.re/go/core"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -58,7 +57,7 @@ func TestTaskOpenURL_Good(t *testing.T) {
 }
 
 func TestTaskOpenURL_Bad_PlatformError(t *testing.T) {
-	mp := &mockPlatform{urlErr: errors.New("browser not found")}
+	mp := &mockPlatform{urlErr: core.NewError("browser not found")}
 	_, c := newTestBrowserService(t, mp)
 
 	r := c.Action("browser.openURL").Run(context.Background(), core.NewOptions(
@@ -79,7 +78,7 @@ func TestTaskOpenFile_Good(t *testing.T) {
 }
 
 func TestTaskOpenFile_Bad_PlatformError(t *testing.T) {
-	mp := &mockPlatform{fileErr: errors.New("file not found")}
+	mp := &mockPlatform{fileErr: core.NewError("file not found")}
 	_, c := newTestBrowserService(t, mp)
 
 	r := c.Action("browser.openFile").Run(context.Background(), core.NewOptions(
