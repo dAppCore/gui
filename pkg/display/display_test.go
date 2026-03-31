@@ -2,11 +2,11 @@ package display
 
 import (
 	"context"
-	"os"
-	"path/filepath"
 	"testing"
 
+	coreio "forge.lthn.ai/core/go-io"
 	"forge.lthn.ai/core/go/pkg/core"
+	coreutil "dappco.re/go/core"
 	"forge.lthn.ai/core/gui/pkg/menu"
 	"forge.lthn.ai/core/gui/pkg/systray"
 	"forge.lthn.ai/core/gui/pkg/window"
@@ -444,9 +444,9 @@ func TestWSEventManager_Good(t *testing.T) {
 func TestLoadConfig_Good(t *testing.T) {
 	// Create temp config file
 	dir := t.TempDir()
-	cfgPath := filepath.Join(dir, ".core", "gui", "config.yaml")
-	require.NoError(t, os.MkdirAll(filepath.Dir(cfgPath), 0o755))
-	require.NoError(t, os.WriteFile(cfgPath, []byte(`
+	cfgPath := coreutil.JoinPath(dir, ".core", "gui", "config.yaml")
+	require.NoError(t, coreio.Local.EnsureDir(coreutil.JoinPath(dir, ".core", "gui")))
+	require.NoError(t, coreio.Local.Write(cfgPath, `
 window:
   default_width: 1280
   default_height: 720
@@ -454,7 +454,7 @@ systray:
   tooltip: "Test App"
 menu:
   show_dev_tools: false
-`), 0o644))
+`))
 
 	s, _ := NewService()
 	s.loadConfigFrom(cfgPath)
@@ -467,7 +467,7 @@ menu:
 
 func TestLoadConfig_Bad_MissingFile(t *testing.T) {
 	s, _ := NewService()
-	s.loadConfigFrom(filepath.Join(t.TempDir(), "nonexistent.yaml"))
+	s.loadConfigFrom(coreutil.JoinPath(t.TempDir(), "nonexistent.yaml"))
 
 	// Should not panic, configData stays at empty defaults
 	assert.Empty(t, s.configData["window"])
@@ -477,7 +477,7 @@ func TestLoadConfig_Bad_MissingFile(t *testing.T) {
 
 func TestHandleConfigTask_Persists_Good(t *testing.T) {
 	dir := t.TempDir()
-	cfgPath := filepath.Join(dir, "config.yaml")
+	cfgPath := coreutil.JoinPath(dir, "config.yaml")
 
 	s, _ := NewService()
 	s.loadConfigFrom(cfgPath) // Creates empty config (file doesn't exist yet)
@@ -499,7 +499,7 @@ func TestHandleConfigTask_Persists_Good(t *testing.T) {
 	assert.True(t, handled)
 
 	// Verify file was written
-	data, err := os.ReadFile(cfgPath)
+	data, err := coreio.Local.Read(cfgPath)
 	require.NoError(t, err)
-	assert.Contains(t, string(data), "default_width")
+	assert.Contains(t, data, "default_width")
 }

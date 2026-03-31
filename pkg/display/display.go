@@ -2,20 +2,19 @@ package display
 
 import (
 	"context"
-	"encoding/json"
-	"os"
-	"path/filepath"
 	"runtime"
 
 	"forge.lthn.ai/core/config"
 	coreerr "forge.lthn.ai/core/go-log"
 	"forge.lthn.ai/core/go/pkg/core"
+	coreutil "dappco.re/go/core"
 
 	"forge.lthn.ai/core/gui/pkg/browser"
 	"forge.lthn.ai/core/gui/pkg/contextmenu"
 	"forge.lthn.ai/core/gui/pkg/dialog"
 	"forge.lthn.ai/core/gui/pkg/dock"
 	"forge.lthn.ai/core/gui/pkg/environment"
+	"forge.lthn.ai/core/gui/pkg/events"
 	"forge.lthn.ai/core/gui/pkg/keybinding"
 	"forge.lthn.ai/core/gui/pkg/lifecycle"
 	"forge.lthn.ai/core/gui/pkg/menu"
@@ -224,6 +223,31 @@ func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 			s.events.Emit(Event{Type: EventWebviewException, Window: m.Window,
 				Data: map[string]any{"exception": m.Exception}})
 		}
+	case events.ActionEventFired:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventCustomEvent,
+				Data: map[string]any{"name": m.Name, "data": m.Data}})
+		}
+	case dock.ActionProgressChanged:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventDockProgress,
+				Data: map[string]any{"value": m.Value}})
+		}
+	case dock.ActionBounceStarted:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventDockBounce,
+				Data: map[string]any{"bounceId": m.BounceID, "type": m.Type}})
+		}
+	case notification.ActionNotificationActionTriggered:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventNotificationAction,
+				Data: map[string]any{"notificationId": m.NotificationID, "actionId": m.ActionID}})
+		}
+	case notification.ActionNotificationDismissed:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventNotificationDismiss,
+				Data: map[string]any{"notificationId": m.NotificationID}})
+		}
 	case ActionIDECommand:
 		if s.events != nil {
 			s.events.Emit(Event{Type: EventIDECommand,
@@ -287,9 +311,9 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 		result, handled, err = s.Core().QUERY(dock.QueryVisible{})
 	case "contextmenu:add":
 		name, _ := msg.Data["name"].(string)
-		menuJSON, _ := json.Marshal(msg.Data["menu"])
+		menuJSON := coreutil.JSONMarshalString(msg.Data["menu"])
 		var menuDef contextmenu.ContextMenuDef
-		_ = json.Unmarshal(menuJSON, &menuDef)
+		_ = coreutil.JSONUnmarshalString(menuJSON, &menuDef)
 		result, handled, err = s.Core().PERFORM(contextmenu.TaskAdd{
 			Name: name, Menu: menuDef,
 		})
@@ -506,11 +530,11 @@ func (s *Service) handleTrayAction(actionID string) {
 }
 
 func guiConfigPath() string {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return filepath.Join(".core", "gui", "config.yaml")
+	home := coreutil.Env("DIR_HOME")
+	if home == "" {
+		return coreutil.JoinPath(".core", "gui", "config.yaml")
 	}
-	return filepath.Join(home, ".core", "gui", "config.yaml")
+	return coreutil.JoinPath(home, ".core", "gui", "config.yaml")
 }
 
 func (s *Service) loadConfig() {

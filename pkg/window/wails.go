@@ -85,8 +85,25 @@ func (ww *wailsWindow) Focus()                          { ww.w.Focus() }
 func (ww *wailsWindow) Close()                          { ww.w.Close() }
 func (ww *wailsWindow) Show()                           { ww.w.Show() }
 func (ww *wailsWindow) Hide()                           { ww.w.Hide() }
-func (ww *wailsWindow) Fullscreen()                     { ww.w.Fullscreen() }
-func (ww *wailsWindow) UnFullscreen()                   { ww.w.UnFullscreen() }
+func (ww *wailsWindow) Fullscreen()         { ww.w.Fullscreen() }
+func (ww *wailsWindow) UnFullscreen()       { ww.w.UnFullscreen() }
+func (ww *wailsWindow) GetZoom() float64    { return ww.w.GetZoom() }
+func (ww *wailsWindow) SetZoom(factor float64) { ww.w.SetZoom(factor) }
+func (ww *wailsWindow) ZoomIn()             { ww.w.ZoomIn() }
+func (ww *wailsWindow) ZoomOut()            { ww.w.ZoomOut() }
+func (ww *wailsWindow) SetURL(url string)   { ww.w.SetURL(url) }
+func (ww *wailsWindow) SetHTML(html string) { ww.w.SetHTML(html) }
+func (ww *wailsWindow) ExecJS(js string)    { ww.w.ExecJS(js) }
+func (ww *wailsWindow) GetBounds() Bounds {
+	r := ww.w.Bounds()
+	return Bounds{X: r.X, Y: r.Y, Width: r.Width, Height: r.Height}
+}
+func (ww *wailsWindow) SetBounds(b Bounds) {
+	ww.w.SetBounds(application.Rect{X: b.X, Y: b.Y, Width: b.Width, Height: b.Height})
+}
+func (ww *wailsWindow) ToggleFullscreen() { ww.w.ToggleFullscreen() }
+func (ww *wailsWindow) Print() error      { return ww.w.Print() }
+func (ww *wailsWindow) Flash(enabled bool) { ww.w.Flash(enabled) }
 
 func (ww *wailsWindow) OnWindowEvent(handler func(event WindowEvent)) {
 	name := ww.w.Name()

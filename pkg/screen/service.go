@@ -40,6 +40,8 @@ func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
 		return s.platform.GetAll(), true, nil
 	case QueryPrimary:
 		return s.platform.GetPrimary(), true, nil
+	case QueryCurrent:
+		return s.platform.GetCurrent(), true, nil
 	case QueryByID:
 		return s.queryByID(q.ID), true, nil
 	case QueryAtPoint:

@@ -39,4 +39,5 @@ func (s *Subsystem) RegisterTools(server *mcp.Server) {
 	s.registerKeybindingTools(server)
 	s.registerDockTools(server)
 	s.registerLifecycleTools(server)
+	s.registerEventTools(server)
 }

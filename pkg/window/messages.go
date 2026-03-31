@@ -102,6 +102,52 @@ type TaskApplyWorkflow struct {
 
 type TaskSaveConfig struct{ Config map[string]any }
 
+// QueryWindowZoom queries the current zoom factor for a named window. Result: float64
+type QueryWindowZoom struct{ Name string }
+
+// QueryWindowBounds queries the current bounds for a named window. Result: *Bounds
+type QueryWindowBounds struct{ Name string }
+
+// TaskSetZoom sets the zoom factor for a named window.
+// c.PERFORM(window.TaskSetZoom{Name: "main", Factor: 1.5})
+type TaskSetZoom struct {
+	Name   string
+	Factor float64
+}
+
+// TaskSetURL navigates a named window to a new URL.
+// c.PERFORM(window.TaskSetURL{Name: "main", URL: "/settings"})
+type TaskSetURL struct {
+	Name string
+	URL  string
+}
+
+// TaskSetHTML replaces the content of a named window with HTML.
+// c.PERFORM(window.TaskSetHTML{Name: "main", HTML: "<h1>Hello</h1>"})
+type TaskSetHTML struct {
+	Name string
+	HTML string
+}
+
+// TaskExecJS evaluates JavaScript in a named window.
+// c.PERFORM(window.TaskExecJS{Name: "main", JS: "document.title = 'Updated'"})
+type TaskExecJS struct {
+	Name string
+	JS   string
+}
+
+// TaskToggleFullscreen toggles fullscreen on a named window.
+type TaskToggleFullscreen struct{ Name string }
+
+// TaskPrint triggers the platform print dialog for a named window.
+type TaskPrint struct{ Name string }
+
+// TaskFlash flashes (or stops flashing) the taskbar entry for a named window (Windows).
+type TaskFlash struct {
+	Name    string
+	Enabled bool
+}
+
 type ActionWindowOpened struct{ Name string }
 type ActionWindowClosed struct{ Name string }
 

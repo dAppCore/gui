@@ -55,11 +55,39 @@ type PlatformWindow interface {
 	Fullscreen()
 	UnFullscreen()
 
+	// Zoom
+	GetZoom() float64
+	SetZoom(factor float64)
+	ZoomIn()
+	ZoomOut()
+
+	// Content
+	SetURL(url string)
+	SetHTML(html string)
+	ExecJS(js string)
+
+	// Bounds
+	GetBounds() Bounds
+	SetBounds(bounds Bounds)
+
+	// Extras
+	ToggleFullscreen()
+	Print() error
+	Flash(enabled bool)
+
 	// Events
 	OnWindowEvent(handler func(event WindowEvent))
 
 	// File drop
 	OnFileDrop(handler func(paths []string, targetID string))
+}
+
+// Bounds holds the position and dimensions of a window.
+type Bounds struct {
+	X      int `json:"x"`
+	Y      int `json:"y"`
+	Width  int `json:"width"`
+	Height int `json:"height"`
 }
 
 // WindowEvent is emitted by the backend for window state changes.

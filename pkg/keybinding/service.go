@@ -53,6 +53,8 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 		return nil, true, s.taskAdd(t)
 	case TaskRemove:
 		return nil, true, s.taskRemove(t)
+	case TaskProcess:
+		return nil, true, s.taskProcess(t)
 	default:
 		return nil, false, nil
 	}
@@ -80,7 +82,7 @@ func (s *Service) taskAdd(t TaskAdd) error {
 
 func (s *Service) taskRemove(t TaskRemove) error {
 	if _, exists := s.registeredBindings[t.Accelerator]; !exists {
-		return coreerr.E("keybinding.taskRemove", "not registered: "+t.Accelerator, nil)
+		return ErrorNotRegistered
 	}
 
 	err := s.platform.Remove(t.Accelerator)
@@ -89,5 +91,18 @@ func (s *Service) taskRemove(t TaskRemove) error {
 	}
 
 	delete(s.registeredBindings, t.Accelerator)
+	return nil
+}
+
+func (s *Service) taskProcess(t TaskProcess) error {
+	if _, exists := s.registeredBindings[t.Accelerator]; !exists {
+		return ErrorNotRegistered
+	}
+
+	err := s.platform.Process(t.Accelerator)
+	if err != nil {
+		return coreerr.E("keybinding.taskProcess", "platform process failed", err)
+	}
+
 	return nil
 }

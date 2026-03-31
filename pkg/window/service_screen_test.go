@@ -25,6 +25,10 @@ func (m *mockScreenPlatform) GetPrimary() *screen.Screen {
 	return nil
 }
 
+func (m *mockScreenPlatform) GetCurrent() *screen.Screen {
+	return m.GetPrimary()
+}
+
 func newTestWindowServiceWithScreen(t *testing.T, screens []screen.Screen) (*Service, *core.Core) {
 	t.Helper()
 

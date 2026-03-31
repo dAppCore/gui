@@ -53,6 +53,10 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 	case TaskRequestPermission:
 		granted, err := s.platform.RequestPermission()
 		return granted, true, err
+	case TaskRevokePermission:
+		return nil, true, s.platform.RevokePermission()
+	case TaskRegisterCategory:
+		return nil, true, s.platform.RegisterCategory(t.Category)
 	default:
 		return nil, false, nil
 	}

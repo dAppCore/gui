@@ -59,6 +59,10 @@ func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
 		return s.queryWindowList(), true, nil
 	case QueryWindowByName:
 		return s.queryWindowByName(q.Name), true, nil
+	case QueryWindowZoom:
+		return s.queryWindowZoom(q.Name)
+	case QueryWindowBounds:
+		return s.queryWindowBounds(q.Name)
 	case QueryLayoutList:
 		return s.manager.Layout().ListLayouts(), true, nil
 	case QueryLayoutGet:
@@ -87,6 +91,23 @@ func (s *Service) queryWindowList() []WindowInfo {
 		}
 	}
 	return result
+}
+
+func (s *Service) queryWindowZoom(name string) (any, bool, error) {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return nil, true, coreerr.E("window.queryWindowZoom", "window not found: "+name, nil)
+	}
+	return pw.GetZoom(), true, nil
+}
+
+func (s *Service) queryWindowBounds(name string) (any, bool, error) {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return nil, true, coreerr.E("window.queryWindowBounds", "window not found: "+name, nil)
+	}
+	bounds := pw.GetBounds()
+	return &bounds, true, nil
 }
 
 func (s *Service) queryWindowByName(name string) *WindowInfo {
@@ -133,6 +154,20 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 		return nil, true, s.taskSetVisibility(t.Name, t.Visible)
 	case TaskFullscreen:
 		return nil, true, s.taskFullscreen(t.Name, t.Fullscreen)
+	case TaskSetZoom:
+		return nil, true, s.taskSetZoom(t.Name, t.Factor)
+	case TaskSetURL:
+		return nil, true, s.taskSetURL(t.Name, t.URL)
+	case TaskSetHTML:
+		return nil, true, s.taskSetHTML(t.Name, t.HTML)
+	case TaskExecJS:
+		return nil, true, s.taskExecJS(t.Name, t.JS)
+	case TaskToggleFullscreen:
+		return nil, true, s.taskToggleFullscreen(t.Name)
+	case TaskPrint:
+		return nil, true, s.taskPrint(t.Name)
+	case TaskFlash:
+		return nil, true, s.taskFlash(t.Name, t.Enabled)
 	case TaskSaveLayout:
 		return nil, true, s.taskSaveLayout(t.Name)
 	case TaskRestoreLayout:
@@ -356,6 +391,68 @@ func (s *Service) taskFullscreen(name string, fullscreen bool) error {
 	} else {
 		pw.UnFullscreen()
 	}
+	return nil
+}
+
+func (s *Service) taskSetZoom(name string, factor float64) error {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return coreerr.E("window.taskSetZoom", "window not found: "+name, nil)
+	}
+	pw.SetZoom(factor)
+	return nil
+}
+
+func (s *Service) taskSetURL(name, url string) error {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return coreerr.E("window.taskSetURL", "window not found: "+name, nil)
+	}
+	pw.SetURL(url)
+	return nil
+}
+
+func (s *Service) taskSetHTML(name, html string) error {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return coreerr.E("window.taskSetHTML", "window not found: "+name, nil)
+	}
+	pw.SetHTML(html)
+	return nil
+}
+
+func (s *Service) taskExecJS(name, js string) error {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return coreerr.E("window.taskExecJS", "window not found: "+name, nil)
+	}
+	pw.ExecJS(js)
+	return nil
+}
+
+func (s *Service) taskToggleFullscreen(name string) error {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return coreerr.E("window.taskToggleFullscreen", "window not found: "+name, nil)
+	}
+	pw.ToggleFullscreen()
+	return nil
+}
+
+func (s *Service) taskPrint(name string) error {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return coreerr.E("window.taskPrint", "window not found: "+name, nil)
+	}
+	return pw.Print()
+}
+
+func (s *Service) taskFlash(name string, enabled bool) error {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return coreerr.E("window.taskFlash", "window not found: "+name, nil)
+	}
+	pw.Flash(enabled)
 	return nil
 }
 

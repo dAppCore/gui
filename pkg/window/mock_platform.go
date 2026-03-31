@@ -29,14 +29,20 @@ func (m *MockPlatform) GetWindows() []PlatformWindow {
 }
 
 type MockWindow struct {
-	name, title, url     string
-	width, height, x, y  int
-	maximised, focused   bool
-	visible, alwaysOnTop bool
-	backgroundColour     [4]uint8
-	closed               bool
-	eventHandlers        []func(WindowEvent)
-	fileDropHandlers     []func(paths []string, targetID string)
+	name, title, url      string
+	width, height, x, y   int
+	maximised, focused    bool
+	visible, alwaysOnTop  bool
+	backgroundColour      [4]uint8
+	closed                bool
+	zoom                  float64
+	html                  string
+	lastJS                string
+	flashing              bool
+	printCalled           bool
+	toggleFullscreenCount int
+	eventHandlers         []func(WindowEvent)
+	fileDropHandlers      []func(paths []string, targetID string)
 }
 
 func (w *MockWindow) Name() string                         { return w.name }
@@ -60,6 +66,25 @@ func (w *MockWindow) Show()                                { w.visible = true }
 func (w *MockWindow) Hide()                                { w.visible = false }
 func (w *MockWindow) Fullscreen()                          {}
 func (w *MockWindow) UnFullscreen()                        {}
+func (w *MockWindow) GetZoom() float64                     { return w.zoom }
+func (w *MockWindow) SetZoom(factor float64)               { w.zoom = factor }
+func (w *MockWindow) ZoomIn()                              { w.zoom += 0.1 }
+func (w *MockWindow) ZoomOut()                             { w.zoom -= 0.1 }
+func (w *MockWindow) SetURL(url string)                    { w.url = url }
+func (w *MockWindow) SetHTML(html string)                  { w.html = html }
+func (w *MockWindow) ExecJS(js string)                     { w.lastJS = js }
+func (w *MockWindow) GetBounds() Bounds {
+	return Bounds{X: w.x, Y: w.y, Width: w.width, Height: w.height}
+}
+func (w *MockWindow) SetBounds(bounds Bounds) {
+	w.x = bounds.X
+	w.y = bounds.Y
+	w.width = bounds.Width
+	w.height = bounds.Height
+}
+func (w *MockWindow) ToggleFullscreen()   { w.toggleFullscreenCount++ }
+func (w *MockWindow) Print() error        { w.printCalled = true; return nil }
+func (w *MockWindow) Flash(enabled bool)  { w.flashing = enabled }
 func (w *MockWindow) OnWindowEvent(handler func(WindowEvent)) {
 	w.eventHandlers = append(w.eventHandlers, handler)
 }

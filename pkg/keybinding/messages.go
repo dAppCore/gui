@@ -1,8 +1,12 @@
 package keybinding
 
-import "errors"
+import coreerr "forge.lthn.ai/core/go-log"
 
-var ErrorAlreadyRegistered = errors.New("keybinding: accelerator already registered")
+// ErrorAlreadyRegistered is returned by TaskAdd when the accelerator is already bound.
+var ErrorAlreadyRegistered = coreerr.NewError("keybinding: accelerator already registered")
+
+// ErrorNotRegistered is returned by TaskRemove and TaskProcess when the accelerator is unknown.
+var ErrorNotRegistered = coreerr.NewError("keybinding: accelerator not registered")
 
 // BindingInfo describes a registered global key binding.
 type BindingInfo struct {
@@ -21,6 +25,13 @@ type TaskAdd struct {
 
 // TaskRemove unregisters a global key binding by accelerator.
 type TaskRemove struct {
+	Accelerator string `json:"accelerator"`
+}
+
+// TaskProcess programmatically triggers a registered key binding as if the user pressed it.
+// Error: ErrorNotRegistered if the accelerator has not been registered.
+// _, _, err := c.PERFORM(TaskProcess{Accelerator: "Ctrl+S"})
+type TaskProcess struct {
 	Accelerator string `json:"accelerator"`
 }
 

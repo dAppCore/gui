@@ -17,6 +17,9 @@ require (
 replace github.com/wailsapp/wails/v3 => ./stubs/wails
 
 require (
+	dappco.re/go/core v0.8.0-alpha.1 // indirect
+	dappco.re/go/core/io v0.2.0 // indirect
+	dappco.re/go/core/log v0.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect

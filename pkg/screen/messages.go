@@ -7,6 +7,10 @@ type QueryAll struct{}
 // QueryPrimary returns the primary screen. Result: *Screen (nil if not found)
 type QueryPrimary struct{}
 
+// QueryCurrent returns the screen currently in use (e.g. containing the focused window).
+// Result: *Screen (nil if not determinable)
+type QueryCurrent struct{}
+
 // QueryByID returns a screen by ID. Result: *Screen (nil if not found)
 type QueryByID struct{ ID string }
 

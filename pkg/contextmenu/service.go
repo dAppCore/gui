@@ -34,6 +34,12 @@ func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
 		return s.queryGet(q), true, nil
 	case QueryList:
 		return s.queryList(), true, nil
+	case QueryGetAll:
+		menus := make([]ContextMenuDef, 0, len(s.registeredMenus))
+		for _, menu := range s.registeredMenus {
+			menus = append(menus, menu)
+		}
+		return menus, true, nil
 	default:
 		return nil, false, nil
 	}
@@ -63,6 +69,20 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 		return nil, true, s.taskAdd(t)
 	case TaskRemove:
 		return nil, true, s.taskRemove(t)
+	case TaskUpdate:
+		if _, exists := s.registeredMenus[t.Name]; !exists {
+			return nil, true, ErrorMenuNotFound
+		}
+		_ = s.platform.Remove(t.Name)
+		delete(s.registeredMenus, t.Name)
+		return nil, true, s.taskAdd(TaskAdd{Name: t.Name, Menu: t.Menu})
+	case TaskDestroy:
+		if _, exists := s.registeredMenus[t.Name]; !exists {
+			return nil, true, ErrorMenuNotFound
+		}
+		_ = s.platform.Remove(t.Name)
+		delete(s.registeredMenus, t.Name)
+		return nil, true, nil
 	default:
 		return nil, false, nil
 	}

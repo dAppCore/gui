@@ -522,3 +522,203 @@ func TestTaskApplyWorkflow_Good(t *testing.T) {
 	assert.Equal(t, 960, x)
 	assert.Equal(t, 0, y)
 }
+
+// --- TaskSetZoom / QueryWindowZoom ---
+
+func TestTaskSetZoom_Good(t *testing.T) {
+	svc, c := newTestWindowService(t)
+	_ = requireOpenWindow(t, c, Window{Name: "test"})
+
+	_, handled, err := c.PERFORM(TaskSetZoom{Name: "test", Factor: 1.5})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	result, handled, err := c.QUERY(QueryWindowZoom{Name: "test"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.InDelta(t, 1.5, result.(float64), 0.001)
+
+	pw, ok := svc.Manager().Get("test")
+	require.True(t, ok)
+	mw := pw.(*mockWindow)
+	assert.InDelta(t, 1.5, mw.zoom, 0.001)
+}
+
+func TestTaskSetZoom_Bad(t *testing.T) {
+	_, c := newTestWindowService(t)
+	_, handled, err := c.PERFORM(TaskSetZoom{Name: "nonexistent", Factor: 1.2})
+	assert.True(t, handled)
+	assert.Error(t, err)
+}
+
+func TestQueryWindowZoom_Bad(t *testing.T) {
+	_, c := newTestWindowService(t)
+	_, handled, err := c.QUERY(QueryWindowZoom{Name: "nonexistent"})
+	assert.True(t, handled)
+	assert.Error(t, err)
+}
+
+// --- QueryWindowBounds ---
+
+func TestQueryWindowBounds_Good(t *testing.T) {
+	_, c := newTestWindowService(t)
+	_ = requireOpenWindow(t, c, Window{Name: "bounds-test", Width: 800, Height: 600, X: 50, Y: 75})
+
+	result, handled, err := c.QUERY(QueryWindowBounds{Name: "bounds-test"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	bounds := result.(*Bounds)
+	require.NotNil(t, bounds)
+	assert.Equal(t, 50, bounds.X)
+	assert.Equal(t, 75, bounds.Y)
+	assert.Equal(t, 800, bounds.Width)
+	assert.Equal(t, 600, bounds.Height)
+}
+
+func TestQueryWindowBounds_Bad(t *testing.T) {
+	_, c := newTestWindowService(t)
+	_, handled, err := c.QUERY(QueryWindowBounds{Name: "nonexistent"})
+	assert.True(t, handled)
+	assert.Error(t, err)
+}
+
+// --- TaskSetURL ---
+
+func TestTaskSetURL_Good(t *testing.T) {
+	svc, c := newTestWindowService(t)
+	_ = requireOpenWindow(t, c, Window{Name: "test"})
+
+	_, handled, err := c.PERFORM(TaskSetURL{Name: "test", URL: "/settings"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	pw, ok := svc.Manager().Get("test")
+	require.True(t, ok)
+	mw := pw.(*mockWindow)
+	assert.Equal(t, "/settings", mw.url)
+}
+
+func TestTaskSetURL_Bad(t *testing.T) {
+	_, c := newTestWindowService(t)
+	_, handled, err := c.PERFORM(TaskSetURL{Name: "nonexistent", URL: "/nope"})
+	assert.True(t, handled)
+	assert.Error(t, err)
+}
+
+// --- TaskSetHTML ---
+
+func TestTaskSetHTML_Good(t *testing.T) {
+	svc, c := newTestWindowService(t)
+	_ = requireOpenWindow(t, c, Window{Name: "test"})
+
+	_, handled, err := c.PERFORM(TaskSetHTML{Name: "test", HTML: "<h1>Hello</h1>"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	pw, ok := svc.Manager().Get("test")
+	require.True(t, ok)
+	mw := pw.(*mockWindow)
+	assert.Equal(t, "<h1>Hello</h1>", mw.html)
+}
+
+func TestTaskSetHTML_Bad(t *testing.T) {
+	_, c := newTestWindowService(t)
+	_, handled, err := c.PERFORM(TaskSetHTML{Name: "nonexistent", HTML: "<p>nope</p>"})
+	assert.True(t, handled)
+	assert.Error(t, err)
+}
+
+// --- TaskExecJS ---
+
+func TestTaskExecJS_Good(t *testing.T) {
+	svc, c := newTestWindowService(t)
+	_ = requireOpenWindow(t, c, Window{Name: "test"})
+
+	_, handled, err := c.PERFORM(TaskExecJS{Name: "test", JS: "document.title = 'Updated'"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	pw, ok := svc.Manager().Get("test")
+	require.True(t, ok)
+	mw := pw.(*mockWindow)
+	assert.Equal(t, "document.title = 'Updated'", mw.lastJS)
+}
+
+func TestTaskExecJS_Bad(t *testing.T) {
+	_, c := newTestWindowService(t)
+	_, handled, err := c.PERFORM(TaskExecJS{Name: "nonexistent", JS: "alert(1)"})
+	assert.True(t, handled)
+	assert.Error(t, err)
+}
+
+// --- TaskToggleFullscreen ---
+
+func TestTaskToggleFullscreen_Good(t *testing.T) {
+	svc, c := newTestWindowService(t)
+	_ = requireOpenWindow(t, c, Window{Name: "test"})
+
+	_, handled, err := c.PERFORM(TaskToggleFullscreen{Name: "test"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	pw, ok := svc.Manager().Get("test")
+	require.True(t, ok)
+	mw := pw.(*mockWindow)
+	assert.Equal(t, 1, mw.toggleFullscreenCount)
+}
+
+func TestTaskToggleFullscreen_Bad(t *testing.T) {
+	_, c := newTestWindowService(t)
+	_, handled, err := c.PERFORM(TaskToggleFullscreen{Name: "nonexistent"})
+	assert.True(t, handled)
+	assert.Error(t, err)
+}
+
+// --- TaskPrint ---
+
+func TestTaskPrint_Good(t *testing.T) {
+	svc, c := newTestWindowService(t)
+	_ = requireOpenWindow(t, c, Window{Name: "test"})
+
+	_, handled, err := c.PERFORM(TaskPrint{Name: "test"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	pw, ok := svc.Manager().Get("test")
+	require.True(t, ok)
+	mw := pw.(*mockWindow)
+	assert.True(t, mw.printCalled)
+}
+
+func TestTaskPrint_Bad(t *testing.T) {
+	_, c := newTestWindowService(t)
+	_, handled, err := c.PERFORM(TaskPrint{Name: "nonexistent"})
+	assert.True(t, handled)
+	assert.Error(t, err)
+}
+
+// --- TaskFlash ---
+
+func TestTaskFlash_Good(t *testing.T) {
+	svc, c := newTestWindowService(t)
+	_ = requireOpenWindow(t, c, Window{Name: "test"})
+
+	_, handled, err := c.PERFORM(TaskFlash{Name: "test", Enabled: true})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	pw, ok := svc.Manager().Get("test")
+	require.True(t, ok)
+	mw := pw.(*mockWindow)
+	assert.True(t, mw.flashing)
+
+	_, _, _ = c.PERFORM(TaskFlash{Name: "test", Enabled: false})
+	assert.False(t, mw.flashing)
+}
+
+func TestTaskFlash_Bad(t *testing.T) {
+	_, c := newTestWindowService(t)
+	_, handled, err := c.PERFORM(TaskFlash{Name: "nonexistent", Enabled: true})
+	assert.True(t, handled)
+	assert.Error(t, err)
+}

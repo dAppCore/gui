@@ -26,6 +26,7 @@ func (m *mockPlatform) AccentColour() string     { return m.accentColour }
 func (m *mockPlatform) OpenFileManager(path string, selectFile bool) error {
 	return m.openFMErr
 }
+func (m *mockPlatform) HasFocusFollowsMouse() bool { return false }
 func (m *mockPlatform) OnThemeChange(handler func(isDark bool)) func() {
 	m.mu.Lock()
 	m.themeHandler = handler

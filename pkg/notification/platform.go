@@ -6,6 +6,8 @@ type Platform interface {
 	Send(options NotificationOptions) error
 	RequestPermission() (bool, error)
 	CheckPermission() (bool, error)
+	RevokePermission() error
+	RegisterCategory(category NotificationCategory) error
 }
 
 // NotificationSeverity indicates the severity for dialog fallback.
@@ -29,4 +31,17 @@ type NotificationOptions struct {
 // PermissionStatus indicates whether notifications are authorised.
 type PermissionStatus struct {
 	Granted bool `json:"granted"`
+}
+
+// NotificationAction describes a tappable action button on a notification.
+type NotificationAction struct {
+	ID    string `json:"id"`
+	Title string `json:"title"`
+}
+
+// NotificationCategory groups a set of actions that can appear on notifications.
+// Register categories on startup so the OS knows the available action buttons.
+type NotificationCategory struct {
+	ID      string               `json:"id"`
+	Actions []NotificationAction `json:"actions"`
 }

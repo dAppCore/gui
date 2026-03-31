@@ -56,6 +56,24 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 			return nil, true, err
 		}
 		return nil, true, nil
+	case TaskSetProgressBar:
+		if err := s.platform.SetProgressBar(t.Value); err != nil {
+			return nil, true, err
+		}
+		_ = s.Core().ACTION(ActionProgressChanged{Value: t.Value})
+		return nil, true, nil
+	case TaskBounce:
+		bounceID, err := s.platform.Bounce(t.Type)
+		if err != nil {
+			return nil, true, err
+		}
+		_ = s.Core().ACTION(ActionBounceStarted{BounceID: bounceID, Type: t.Type})
+		return bounceID, true, nil
+	case TaskStopBounce:
+		if err := s.platform.StopBounce(t.BounceID); err != nil {
+			return nil, true, err
+		}
+		return nil, true, nil
 	default:
 		return nil, false, nil
 	}

@@ -1,12 +1,12 @@
 package display
 
 import (
-	"encoding/json"
 	"net/http"
 	"strconv"
 	"sync"
 	"time"
 
+	core "dappco.re/go/core"
 	"forge.lthn.ai/core/gui/pkg/window"
 	"github.com/gorilla/websocket"
 )
@@ -40,6 +40,11 @@ const (
 	EventContextMenuClick    EventType = "contextmenu.item-clicked"
 	EventWebviewConsole      EventType = "webview.console"
 	EventWebviewException    EventType = "webview.exception"
+	EventCustomEvent         EventType = "event.custom"
+	EventDockProgress        EventType = "dock.progress"
+	EventDockBounce          EventType = "dock.bounce"
+	EventNotificationAction  EventType = "notification.action"
+	EventNotificationDismiss EventType = "notification.dismiss"
 )
 
 // Event represents a display event sent to subscribers.
@@ -129,13 +134,13 @@ func (em *WSEventManager) sendEvent(conn *websocket.Conn, event Event) {
 		return
 	}
 
-	data, err := json.Marshal(event)
-	if err != nil {
+	result := core.JSONMarshal(event)
+	if !result.OK {
 		return
 	}
 
 	conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-	if err := conn.WriteMessage(websocket.TextMessage, data); err != nil {
+	if err := conn.WriteMessage(websocket.TextMessage, result.Value.([]byte)); err != nil {
 		em.removeClient(conn)
 	}
 }
@@ -173,7 +178,7 @@ func (em *WSEventManager) handleMessages(conn *websocket.Conn) {
 			EventTypes []EventType `json:"eventTypes,omitempty"`
 		}
 
-		if err := json.Unmarshal(message, &msg); err != nil {
+		if !core.JSONUnmarshal(message, &msg).OK {
 			continue
 		}
 
@@ -219,8 +224,9 @@ func (em *WSEventManager) subscribe(conn *websocket.Conn, id string, eventTypes 
 		"id":         id,
 		"eventTypes": eventTypes,
 	}
-	data, _ := json.Marshal(response)
-	conn.WriteMessage(websocket.TextMessage, data)
+	if r := core.JSONMarshal(response); r.OK {
+		conn.WriteMessage(websocket.TextMessage, r.Value.([]byte))
+	}
 }
 
 // unsubscribe removes a subscription for a client.
@@ -242,8 +248,9 @@ func (em *WSEventManager) unsubscribe(conn *websocket.Conn, id string) {
 		"type": "unsubscribed",
 		"id":   id,
 	}
-	data, _ := json.Marshal(response)
-	conn.WriteMessage(websocket.TextMessage, data)
+	if r := core.JSONMarshal(response); r.OK {
+		conn.WriteMessage(websocket.TextMessage, r.Value.([]byte))
+	}
 }
 
 // listSubscriptions sends a list of active subscriptions to a client.
@@ -267,8 +274,9 @@ func (em *WSEventManager) listSubscriptions(conn *websocket.Conn) {
 		"type":          "subscriptions",
 		"subscriptions": subs,
 	}
-	data, _ := json.Marshal(response)
-	conn.WriteMessage(websocket.TextMessage, data)
+	if r := core.JSONMarshal(response); r.OK {
+		conn.WriteMessage(websocket.TextMessage, r.Value.([]byte))
+	}
 }
 
 // removeClient removes a client and its subscriptions.

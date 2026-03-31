@@ -37,14 +37,66 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 	case TaskOpenFile:
 		paths, err := s.platform.OpenFile(t.Options)
 		return paths, true, err
+	case TaskOpenFileWithOptions:
+		paths, err := s.platform.OpenFile(OpenFileOptions{
+			Title:                t.Title,
+			Directory:            t.Directory,
+			Filename:             t.Filename,
+			Filters:              t.Filters,
+			AllowMultiple:        t.AllowMultiple,
+			CanChooseDirectories: t.CanChooseDirectories,
+			CanChooseFiles:       t.CanChooseFiles,
+			ShowHiddenFiles:      t.ShowHiddenFiles,
+		})
+		return paths, true, err
 	case TaskSaveFile:
 		path, err := s.platform.SaveFile(t.Options)
+		return path, true, err
+	case TaskSaveFileWithOptions:
+		path, err := s.platform.SaveFile(SaveFileOptions{
+			Title:     t.Title,
+			Directory: t.Directory,
+			Filename:  t.Filename,
+			Filters:   t.Filters,
+		})
 		return path, true, err
 	case TaskOpenDirectory:
 		path, err := s.platform.OpenDirectory(t.Options)
 		return path, true, err
 	case TaskMessageDialog:
 		button, err := s.platform.MessageDialog(t.Options)
+		return button, true, err
+	case TaskInfo:
+		button, err := s.platform.MessageDialog(MessageDialogOptions{
+			Type:    DialogInfo,
+			Title:   t.Title,
+			Message: t.Message,
+			Buttons: t.Buttons,
+		})
+		return button, true, err
+	case TaskQuestion:
+		button, err := s.platform.MessageDialog(MessageDialogOptions{
+			Type:    DialogQuestion,
+			Title:   t.Title,
+			Message: t.Message,
+			Buttons: t.Buttons,
+		})
+		return button, true, err
+	case TaskWarning:
+		button, err := s.platform.MessageDialog(MessageDialogOptions{
+			Type:    DialogWarning,
+			Title:   t.Title,
+			Message: t.Message,
+			Buttons: t.Buttons,
+		})
+		return button, true, err
+	case TaskError:
+		button, err := s.platform.MessageDialog(MessageDialogOptions{
+			Type:    DialogError,
+			Title:   t.Title,
+			Message: t.Message,
+			Buttons: t.Buttons,
+		})
 		return button, true, err
 	default:
 		return nil, false, nil
