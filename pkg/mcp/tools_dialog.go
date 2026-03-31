@@ -12,10 +12,13 @@ import (
 // --- dialog_open_file ---
 
 type DialogOpenFileInput struct {
-	Title         string              `json:"title,omitempty"`
-	Directory     string              `json:"directory,omitempty"`
-	Filters       []dialog.FileFilter `json:"filters,omitempty"`
-	AllowMultiple bool                `json:"allowMultiple,omitempty"`
+	Title                string              `json:"title,omitempty"`
+	Directory            string              `json:"directory,omitempty"`
+	Filters              []dialog.FileFilter `json:"filters,omitempty"`
+	AllowMultiple        bool                `json:"allowMultiple,omitempty"`
+	CanChooseDirectories bool                `json:"canChooseDirectories,omitempty"`
+	CanChooseFiles       bool                `json:"canChooseFiles,omitempty"`
+	ShowHiddenFiles      bool                `json:"showHiddenFiles,omitempty"`
 }
 type DialogOpenFileOutput struct {
 	Paths []string `json:"paths"`
@@ -23,10 +26,13 @@ type DialogOpenFileOutput struct {
 
 func (s *Subsystem) dialogOpenFile(_ context.Context, _ *mcp.CallToolRequest, input DialogOpenFileInput) (*mcp.CallToolResult, DialogOpenFileOutput, error) {
 	result, _, err := s.core.PERFORM(dialog.TaskOpenFile{Options: dialog.OpenFileOptions{
-		Title:         input.Title,
-		Directory:     input.Directory,
-		Filters:       input.Filters,
-		AllowMultiple: input.AllowMultiple,
+		Title:                input.Title,
+		Directory:            input.Directory,
+		Filters:              input.Filters,
+		AllowMultiple:        input.AllowMultiple,
+		CanChooseDirectories: input.CanChooseDirectories,
+		CanChooseFiles:       input.CanChooseFiles,
+		ShowHiddenFiles:      input.ShowHiddenFiles,
 	}})
 	if err != nil {
 		return nil, DialogOpenFileOutput{}, err
@@ -41,10 +47,11 @@ func (s *Subsystem) dialogOpenFile(_ context.Context, _ *mcp.CallToolRequest, in
 // --- dialog_save_file ---
 
 type DialogSaveFileInput struct {
-	Title     string              `json:"title,omitempty"`
-	Directory string              `json:"directory,omitempty"`
-	Filename  string              `json:"filename,omitempty"`
-	Filters   []dialog.FileFilter `json:"filters,omitempty"`
+	Title           string              `json:"title,omitempty"`
+	Directory       string              `json:"directory,omitempty"`
+	Filename        string              `json:"filename,omitempty"`
+	Filters         []dialog.FileFilter `json:"filters,omitempty"`
+	ShowHiddenFiles bool                `json:"showHiddenFiles,omitempty"`
 }
 type DialogSaveFileOutput struct {
 	Path string `json:"path"`
@@ -52,10 +59,11 @@ type DialogSaveFileOutput struct {
 
 func (s *Subsystem) dialogSaveFile(_ context.Context, _ *mcp.CallToolRequest, input DialogSaveFileInput) (*mcp.CallToolResult, DialogSaveFileOutput, error) {
 	result, _, err := s.core.PERFORM(dialog.TaskSaveFile{Options: dialog.SaveFileOptions{
-		Title:     input.Title,
-		Directory: input.Directory,
-		Filename:  input.Filename,
-		Filters:   input.Filters,
+		Title:           input.Title,
+		Directory:       input.Directory,
+		Filename:        input.Filename,
+		Filters:         input.Filters,
+		ShowHiddenFiles: input.ShowHiddenFiles,
 	}})
 	if err != nil {
 		return nil, DialogSaveFileOutput{}, err
@@ -70,8 +78,9 @@ func (s *Subsystem) dialogSaveFile(_ context.Context, _ *mcp.CallToolRequest, in
 // --- dialog_open_directory ---
 
 type DialogOpenDirectoryInput struct {
-	Title     string `json:"title,omitempty"`
-	Directory string `json:"directory,omitempty"`
+	Title           string `json:"title,omitempty"`
+	Directory       string `json:"directory,omitempty"`
+	ShowHiddenFiles bool   `json:"showHiddenFiles,omitempty"`
 }
 type DialogOpenDirectoryOutput struct {
 	Path string `json:"path"`
@@ -79,8 +88,9 @@ type DialogOpenDirectoryOutput struct {
 
 func (s *Subsystem) dialogOpenDirectory(_ context.Context, _ *mcp.CallToolRequest, input DialogOpenDirectoryInput) (*mcp.CallToolResult, DialogOpenDirectoryOutput, error) {
 	result, _, err := s.core.PERFORM(dialog.TaskOpenDirectory{Options: dialog.OpenDirectoryOptions{
-		Title:     input.Title,
-		Directory: input.Directory,
+		Title:           input.Title,
+		Directory:       input.Directory,
+		ShowHiddenFiles: input.ShowHiddenFiles,
 	}})
 	if err != nil {
 		return nil, DialogOpenDirectoryOutput{}, err
@@ -104,12 +114,11 @@ type DialogConfirmOutput struct {
 }
 
 func (s *Subsystem) dialogConfirm(_ context.Context, _ *mcp.CallToolRequest, input DialogConfirmInput) (*mcp.CallToolResult, DialogConfirmOutput, error) {
-	result, _, err := s.core.PERFORM(dialog.TaskMessageDialog{Options: dialog.MessageDialogOptions{
-		Type:    dialog.DialogQuestion,
+	result, _, err := s.core.PERFORM(dialog.TaskQuestion{
 		Title:   input.Title,
 		Message: input.Message,
 		Buttons: input.Buttons,
-	}})
+	})
 	if err != nil {
 		return nil, DialogConfirmOutput{}, err
 	}
@@ -131,12 +140,11 @@ type DialogPromptOutput struct {
 }
 
 func (s *Subsystem) dialogPrompt(_ context.Context, _ *mcp.CallToolRequest, input DialogPromptInput) (*mcp.CallToolResult, DialogPromptOutput, error) {
-	result, _, err := s.core.PERFORM(dialog.TaskMessageDialog{Options: dialog.MessageDialogOptions{
-		Type:    dialog.DialogInfo,
+	result, _, err := s.core.PERFORM(dialog.TaskInfo{
 		Title:   input.Title,
 		Message: input.Message,
 		Buttons: []string{"OK", "Cancel"},
-	}})
+	})
 	if err != nil {
 		return nil, DialogPromptOutput{}, err
 	}
@@ -147,12 +155,96 @@ func (s *Subsystem) dialogPrompt(_ context.Context, _ *mcp.CallToolRequest, inpu
 	return nil, DialogPromptOutput{Button: button}, nil
 }
 
+// --- dialog_info ---
+
+type DialogInfoInput struct {
+	Title   string   `json:"title"`
+	Message string   `json:"message"`
+	Buttons []string `json:"buttons,omitempty"`
+}
+type DialogInfoOutput struct {
+	Button string `json:"button"`
+}
+
+func (s *Subsystem) dialogInfo(_ context.Context, _ *mcp.CallToolRequest, input DialogInfoInput) (*mcp.CallToolResult, DialogInfoOutput, error) {
+	result, _, err := s.core.PERFORM(dialog.TaskInfo{
+		Title:   input.Title,
+		Message: input.Message,
+		Buttons: input.Buttons,
+	})
+	if err != nil {
+		return nil, DialogInfoOutput{}, err
+	}
+	button, ok := result.(string)
+	if !ok {
+		return nil, DialogInfoOutput{}, coreerr.E("mcp.dialogInfo", "unexpected result type", nil)
+	}
+	return nil, DialogInfoOutput{Button: button}, nil
+}
+
+// --- dialog_warning ---
+
+type DialogWarningInput struct {
+	Title   string   `json:"title"`
+	Message string   `json:"message"`
+	Buttons []string `json:"buttons,omitempty"`
+}
+type DialogWarningOutput struct {
+	Button string `json:"button"`
+}
+
+func (s *Subsystem) dialogWarning(_ context.Context, _ *mcp.CallToolRequest, input DialogWarningInput) (*mcp.CallToolResult, DialogWarningOutput, error) {
+	result, _, err := s.core.PERFORM(dialog.TaskWarning{
+		Title:   input.Title,
+		Message: input.Message,
+		Buttons: input.Buttons,
+	})
+	if err != nil {
+		return nil, DialogWarningOutput{}, err
+	}
+	button, ok := result.(string)
+	if !ok {
+		return nil, DialogWarningOutput{}, coreerr.E("mcp.dialogWarning", "unexpected result type", nil)
+	}
+	return nil, DialogWarningOutput{Button: button}, nil
+}
+
+// --- dialog_error ---
+
+type DialogErrorInput struct {
+	Title   string   `json:"title"`
+	Message string   `json:"message"`
+	Buttons []string `json:"buttons,omitempty"`
+}
+type DialogErrorOutput struct {
+	Button string `json:"button"`
+}
+
+func (s *Subsystem) dialogError(_ context.Context, _ *mcp.CallToolRequest, input DialogErrorInput) (*mcp.CallToolResult, DialogErrorOutput, error) {
+	result, _, err := s.core.PERFORM(dialog.TaskError{
+		Title:   input.Title,
+		Message: input.Message,
+		Buttons: input.Buttons,
+	})
+	if err != nil {
+		return nil, DialogErrorOutput{}, err
+	}
+	button, ok := result.(string)
+	if !ok {
+		return nil, DialogErrorOutput{}, coreerr.E("mcp.dialogError", "unexpected result type", nil)
+	}
+	return nil, DialogErrorOutput{Button: button}, nil
+}
+
 // --- Registration ---
 
 func (s *Subsystem) registerDialogTools(server *mcp.Server) {
 	mcp.AddTool(server, &mcp.Tool{Name: "dialog_open_file", Description: "Show an open file dialog"}, s.dialogOpenFile)
 	mcp.AddTool(server, &mcp.Tool{Name: "dialog_save_file", Description: "Show a save file dialog"}, s.dialogSaveFile)
 	mcp.AddTool(server, &mcp.Tool{Name: "dialog_open_directory", Description: "Show a directory picker dialog"}, s.dialogOpenDirectory)
-	mcp.AddTool(server, &mcp.Tool{Name: "dialog_confirm", Description: "Show a confirmation dialog"}, s.dialogConfirm)
-	mcp.AddTool(server, &mcp.Tool{Name: "dialog_prompt", Description: "Show a prompt dialog"}, s.dialogPrompt)
+	mcp.AddTool(server, &mcp.Tool{Name: "dialog_confirm", Description: "Show a question/confirmation dialog"}, s.dialogConfirm)
+	mcp.AddTool(server, &mcp.Tool{Name: "dialog_prompt", Description: "Show an info prompt dialog with OK/Cancel"}, s.dialogPrompt)
+	mcp.AddTool(server, &mcp.Tool{Name: "dialog_info", Description: "Show an information message dialog"}, s.dialogInfo)
+	mcp.AddTool(server, &mcp.Tool{Name: "dialog_warning", Description: "Show a warning message dialog"}, s.dialogWarning)
+	mcp.AddTool(server, &mcp.Tool{Name: "dialog_error", Description: "Show an error message dialog"}, s.dialogError)
 }

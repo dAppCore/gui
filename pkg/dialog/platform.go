@@ -20,27 +20,38 @@ const (
 )
 
 // OpenFileOptions contains options for the open file dialog.
+//
+//	opts := OpenFileOptions{Title: "Select image", Filters: []FileFilter{{DisplayName: "Images", Pattern: "*.png;*.jpg"}}}
 type OpenFileOptions struct {
-	Title         string       `json:"title,omitempty"`
-	Directory     string       `json:"directory,omitempty"`
-	Filename      string       `json:"filename,omitempty"`
-	Filters       []FileFilter `json:"filters,omitempty"`
-	AllowMultiple bool         `json:"allowMultiple,omitempty"`
+	Title                string       `json:"title,omitempty"`
+	Directory            string       `json:"directory,omitempty"`
+	Filename             string       `json:"filename,omitempty"`
+	Filters              []FileFilter `json:"filters,omitempty"`
+	AllowMultiple        bool         `json:"allowMultiple,omitempty"`
+	CanChooseDirectories bool         `json:"canChooseDirectories,omitempty"`
+	CanChooseFiles       bool         `json:"canChooseFiles,omitempty"`
+	ShowHiddenFiles      bool         `json:"showHiddenFiles,omitempty"`
 }
 
 // SaveFileOptions contains options for the save file dialog.
+//
+//	opts := SaveFileOptions{Title: "Export", Filename: "report.pdf", ShowHiddenFiles: false}
 type SaveFileOptions struct {
-	Title     string       `json:"title,omitempty"`
-	Directory string       `json:"directory,omitempty"`
-	Filename  string       `json:"filename,omitempty"`
-	Filters   []FileFilter `json:"filters,omitempty"`
+	Title           string       `json:"title,omitempty"`
+	Directory       string       `json:"directory,omitempty"`
+	Filename        string       `json:"filename,omitempty"`
+	Filters         []FileFilter `json:"filters,omitempty"`
+	ShowHiddenFiles bool         `json:"showHiddenFiles,omitempty"`
 }
 
 // OpenDirectoryOptions contains options for the directory picker.
+//
+//	opts := OpenDirectoryOptions{Title: "Choose folder", ShowHiddenFiles: true}
 type OpenDirectoryOptions struct {
-	Title         string `json:"title,omitempty"`
-	Directory     string `json:"directory,omitempty"`
-	AllowMultiple bool   `json:"allowMultiple,omitempty"`
+	Title           string `json:"title,omitempty"`
+	Directory       string `json:"directory,omitempty"`
+	AllowMultiple   bool   `json:"allowMultiple,omitempty"`
+	ShowHiddenFiles bool   `json:"showHiddenFiles,omitempty"`
 }
 
 // MessageDialogOptions contains options for a message dialog.
