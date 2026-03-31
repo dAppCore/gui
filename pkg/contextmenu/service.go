@@ -22,6 +22,15 @@ func (s *Service) OnStartup(ctx context.Context) error {
 	return nil
 }
 
+func (s *Service) OnShutdown(ctx context.Context) error {
+	// Destroy all registered menus on shutdown to release platform resources
+	for name := range s.registeredMenus {
+		_ = s.platform.Remove(name)
+	}
+	s.registeredMenus = make(map[string]ContextMenuDef)
+	return nil
+}
+
 func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 	return nil
 }
@@ -33,6 +42,8 @@ func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
 	case QueryGet:
 		return s.queryGet(q), true, nil
 	case QueryList:
+		return s.queryList(), true, nil
+	case QueryGetAll:
 		return s.queryList(), true, nil
 	default:
 		return nil, false, nil
@@ -63,6 +74,10 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 		return nil, true, s.taskAdd(t)
 	case TaskRemove:
 		return nil, true, s.taskRemove(t)
+	case TaskUpdate:
+		return nil, true, s.taskUpdate(t)
+	case TaskDestroy:
+		return nil, true, s.taskDestroy(t)
 	default:
 		return nil, false, nil
 	}
@@ -99,6 +114,44 @@ func (s *Service) taskRemove(t TaskRemove) error {
 	err := s.platform.Remove(t.Name)
 	if err != nil {
 		return coreerr.E("contextmenu.taskRemove", "platform remove failed", err)
+	}
+
+	delete(s.registeredMenus, t.Name)
+	return nil
+}
+
+func (s *Service) taskUpdate(t TaskUpdate) error {
+	if _, exists := s.registeredMenus[t.Name]; !exists {
+		return ErrorMenuNotFound
+	}
+
+	// Re-register with updated definition — remove then add
+	if err := s.platform.Remove(t.Name); err != nil {
+		return coreerr.E("contextmenu.taskUpdate", "platform remove failed", err)
+	}
+
+	err := s.platform.Add(t.Name, t.Menu, func(menuName, actionID, data string) {
+		_ = s.Core().ACTION(ActionItemClicked{
+			MenuName: menuName,
+			ActionID: actionID,
+			Data:     data,
+		})
+	})
+	if err != nil {
+		return coreerr.E("contextmenu.taskUpdate", "platform add failed", err)
+	}
+
+	s.registeredMenus[t.Name] = t.Menu
+	return nil
+}
+
+func (s *Service) taskDestroy(t TaskDestroy) error {
+	if _, exists := s.registeredMenus[t.Name]; !exists {
+		return ErrorMenuNotFound
+	}
+
+	if err := s.platform.Remove(t.Name); err != nil {
+		return coreerr.E("contextmenu.taskDestroy", "platform remove failed", err)
 	}
 
 	delete(s.registeredMenus, t.Name)

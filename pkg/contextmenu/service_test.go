@@ -297,3 +297,188 @@ func TestQueryList_Bad_NoService(t *testing.T) {
 	_, handled, _ := c.QUERY(QueryList{})
 	assert.False(t, handled)
 }
+
+// --- TaskUpdate ---
+
+func TestTaskUpdate_Good(t *testing.T) {
+	// Update replaces items on an existing menu
+	mp := newMockPlatform()
+	_, c := newTestContextMenuService(t, mp)
+
+	_, _, _ = c.PERFORM(TaskAdd{
+		Name: "edit-menu",
+		Menu: ContextMenuDef{Name: "edit-menu", Items: []MenuItemDef{{Label: "Cut", ActionID: "cut"}}},
+	})
+
+	_, handled, err := c.PERFORM(TaskUpdate{
+		Name: "edit-menu",
+		Menu: ContextMenuDef{Name: "edit-menu", Items: []MenuItemDef{
+			{Label: "Cut", ActionID: "cut"},
+			{Label: "Copy", ActionID: "copy"},
+		}},
+	})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	result, _, _ := c.QUERY(QueryGet{Name: "edit-menu"})
+	def := result.(*ContextMenuDef)
+	assert.Len(t, def.Items, 2)
+	assert.Equal(t, "Copy", def.Items[1].Label)
+}
+
+func TestTaskUpdate_Bad_NotFound(t *testing.T) {
+	// Update on a non-existent menu returns ErrorMenuNotFound
+	mp := newMockPlatform()
+	_, c := newTestContextMenuService(t, mp)
+
+	_, handled, err := c.PERFORM(TaskUpdate{
+		Name: "ghost",
+		Menu: ContextMenuDef{Name: "ghost"},
+	})
+	assert.True(t, handled)
+	assert.ErrorIs(t, err, ErrorMenuNotFound)
+}
+
+func TestTaskUpdate_Ugly_PlatformRemoveError(t *testing.T) {
+	// Platform Remove fails mid-update — error is propagated
+	mp := newMockPlatform()
+	_, c := newTestContextMenuService(t, mp)
+
+	_, _, _ = c.PERFORM(TaskAdd{
+		Name: "tricky",
+		Menu: ContextMenuDef{Name: "tricky"},
+	})
+
+	mp.mu.Lock()
+	mp.removeErr = ErrorMenuNotFound // reuse sentinel as a platform-level error
+	mp.mu.Unlock()
+
+	_, handled, err := c.PERFORM(TaskUpdate{
+		Name: "tricky",
+		Menu: ContextMenuDef{Name: "tricky", Items: []MenuItemDef{{Label: "X", ActionID: "x"}}},
+	})
+	assert.True(t, handled)
+	assert.Error(t, err)
+}
+
+// --- TaskDestroy ---
+
+func TestTaskDestroy_Good(t *testing.T) {
+	// Destroy removes the menu and releases platform resources
+	mp := newMockPlatform()
+	_, c := newTestContextMenuService(t, mp)
+
+	_, _, _ = c.PERFORM(TaskAdd{Name: "doomed", Menu: ContextMenuDef{Name: "doomed"}})
+
+	_, handled, err := c.PERFORM(TaskDestroy{Name: "doomed"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	result, _, _ := c.QUERY(QueryGet{Name: "doomed"})
+	assert.Nil(t, result)
+
+	_, ok := mp.Get("doomed")
+	assert.False(t, ok)
+}
+
+func TestTaskDestroy_Bad_NotFound(t *testing.T) {
+	// Destroy on a non-existent menu returns ErrorMenuNotFound
+	mp := newMockPlatform()
+	_, c := newTestContextMenuService(t, mp)
+
+	_, handled, err := c.PERFORM(TaskDestroy{Name: "nonexistent"})
+	assert.True(t, handled)
+	assert.ErrorIs(t, err, ErrorMenuNotFound)
+}
+
+func TestTaskDestroy_Ugly_PlatformError(t *testing.T) {
+	// Platform Remove fails — error is propagated but service remains consistent
+	mp := newMockPlatform()
+	_, c := newTestContextMenuService(t, mp)
+
+	_, _, _ = c.PERFORM(TaskAdd{Name: "frail", Menu: ContextMenuDef{Name: "frail"}})
+
+	mp.mu.Lock()
+	mp.removeErr = ErrorMenuNotFound
+	mp.mu.Unlock()
+
+	_, handled, err := c.PERFORM(TaskDestroy{Name: "frail"})
+	assert.True(t, handled)
+	assert.Error(t, err)
+}
+
+// --- QueryGetAll ---
+
+func TestQueryGetAll_Good(t *testing.T) {
+	// QueryGetAll returns all registered menus (equivalent to QueryList)
+	mp := newMockPlatform()
+	_, c := newTestContextMenuService(t, mp)
+
+	_, _, _ = c.PERFORM(TaskAdd{Name: "x", Menu: ContextMenuDef{Name: "x"}})
+	_, _, _ = c.PERFORM(TaskAdd{Name: "y", Menu: ContextMenuDef{Name: "y"}})
+
+	result, handled, err := c.QUERY(QueryGetAll{})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	all := result.(map[string]ContextMenuDef)
+	assert.Len(t, all, 2)
+	assert.Contains(t, all, "x")
+	assert.Contains(t, all, "y")
+}
+
+func TestQueryGetAll_Bad_Empty(t *testing.T) {
+	// QueryGetAll on an empty registry returns an empty map
+	mp := newMockPlatform()
+	_, c := newTestContextMenuService(t, mp)
+
+	result, handled, err := c.QUERY(QueryGetAll{})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	all := result.(map[string]ContextMenuDef)
+	assert.Len(t, all, 0)
+}
+
+func TestQueryGetAll_Ugly_NoService(t *testing.T) {
+	// No contextmenu service — query is unhandled
+	c, _ := core.New(core.WithServiceLock())
+	_, handled, _ := c.QUERY(QueryGetAll{})
+	assert.False(t, handled)
+}
+
+// --- OnShutdown ---
+
+func TestOnShutdown_Good_CleansUpMenus(t *testing.T) {
+	// OnShutdown removes all registered menus from the platform
+	mp := newMockPlatform()
+	_, c := newTestContextMenuService(t, mp)
+
+	_, _, _ = c.PERFORM(TaskAdd{Name: "alpha", Menu: ContextMenuDef{Name: "alpha"}})
+	_, _, _ = c.PERFORM(TaskAdd{Name: "beta", Menu: ContextMenuDef{Name: "beta"}})
+
+	require.NoError(t, c.ServiceShutdown(t.Context()))
+
+	assert.Len(t, mp.menus, 0)
+}
+
+func TestOnShutdown_Bad_NothingRegistered(t *testing.T) {
+	// OnShutdown with no menus — no-op, no error
+	mp := newMockPlatform()
+	_, c := newTestContextMenuService(t, mp)
+
+	assert.NoError(t, c.ServiceShutdown(t.Context()))
+}
+
+func TestOnShutdown_Ugly_PlatformRemoveErrors(t *testing.T) {
+	// Platform Remove errors during shutdown are silently swallowed
+	mp := newMockPlatform()
+	_, c := newTestContextMenuService(t, mp)
+
+	_, _, _ = c.PERFORM(TaskAdd{Name: "stubborn", Menu: ContextMenuDef{Name: "stubborn"}})
+
+	mp.mu.Lock()
+	mp.removeErr = ErrorMenuNotFound
+	mp.mu.Unlock()
+
+	// Shutdown must not return an error even if platform Remove fails
+	assert.NoError(t, c.ServiceShutdown(t.Context()))
+}

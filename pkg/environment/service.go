@@ -61,6 +61,8 @@ func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
 		return s.platform.Info(), true, nil
 	case QueryAccentColour:
 		return s.platform.AccentColour(), true, nil
+	case QueryFocusFollowsMouse:
+		return s.platform.HasFocusFollowsMouse(), true, nil
 	default:
 		return nil, false, nil
 	}

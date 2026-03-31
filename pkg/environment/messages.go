@@ -16,6 +16,9 @@ type TaskOpenFileManager struct {
 	Select bool   `json:"select"`
 }
 
+// QueryFocusFollowsMouse returns whether the platform uses focus-follows-mouse. Result: bool
+type QueryFocusFollowsMouse struct{}
+
 // ActionThemeChanged is broadcast when the system theme changes.
 type ActionThemeChanged struct {
 	IsDark bool `json:"isDark"`
