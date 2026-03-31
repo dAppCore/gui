@@ -67,6 +67,10 @@ func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
 			return (*Layout)(nil), true, nil
 		}
 		return &l, true, nil
+	case QueryWindowZoom:
+		return s.queryWindowZoom(q.Name)
+	case QueryWindowBounds:
+		return s.queryWindowBounds(q.Name)
 	default:
 		return nil, false, nil
 	}
@@ -148,6 +152,32 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 		return nil, true, s.taskSnapWindow(t.Name, t.Position)
 	case TaskApplyWorkflow:
 		return nil, true, s.taskApplyWorkflow(t.Workflow, t.Windows)
+	case TaskSetZoom:
+		return nil, true, s.taskSetZoom(t.Name, t.Magnification)
+	case TaskZoomIn:
+		return nil, true, s.taskZoomIn(t.Name)
+	case TaskZoomOut:
+		return nil, true, s.taskZoomOut(t.Name)
+	case TaskZoomReset:
+		return nil, true, s.taskZoomReset(t.Name)
+	case TaskSetURL:
+		return nil, true, s.taskSetURL(t.Name, t.URL)
+	case TaskSetHTML:
+		return nil, true, s.taskSetHTML(t.Name, t.HTML)
+	case TaskExecJS:
+		return nil, true, s.taskExecJS(t.Name, t.JS)
+	case TaskToggleFullscreen:
+		return nil, true, s.taskToggleFullscreen(t.Name)
+	case TaskToggleMaximise:
+		return nil, true, s.taskToggleMaximise(t.Name)
+	case TaskSetBounds:
+		return nil, true, s.taskSetBounds(t.Name, t.X, t.Y, t.Width, t.Height)
+	case TaskSetContentProtection:
+		return nil, true, s.taskSetContentProtection(t.Name, t.Protection)
+	case TaskFlash:
+		return nil, true, s.taskFlash(t.Name, t.Enabled)
+	case TaskPrint:
+		return nil, true, s.taskPrint(t.Name)
 	default:
 		return nil, false, nil
 	}
@@ -460,6 +490,161 @@ func (s *Service) taskApplyWorkflow(workflow string, names []string) error {
 	}
 	originX, originY, screenWidth, screenHeight := s.primaryScreenArea()
 	return s.manager.ApplyWorkflow(layout, names, screenWidth, screenHeight, originX, originY)
+}
+
+// --- Zoom ---
+
+func (s *Service) queryWindowZoom(name string) (any, bool, error) {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return nil, true, coreerr.E("window.queryWindowZoom", "window not found: "+name, nil)
+	}
+	return pw.GetZoom(), true, nil
+}
+
+func (s *Service) taskSetZoom(name string, magnification float64) error {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return coreerr.E("window.taskSetZoom", "window not found: "+name, nil)
+	}
+	pw.SetZoom(magnification)
+	return nil
+}
+
+func (s *Service) taskZoomIn(name string) error {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return coreerr.E("window.taskZoomIn", "window not found: "+name, nil)
+	}
+	current := pw.GetZoom()
+	pw.SetZoom(current + 0.1)
+	return nil
+}
+
+func (s *Service) taskZoomOut(name string) error {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return coreerr.E("window.taskZoomOut", "window not found: "+name, nil)
+	}
+	current := pw.GetZoom()
+	next := current - 0.1
+	if next < 0.1 {
+		next = 0.1
+	}
+	pw.SetZoom(next)
+	return nil
+}
+
+func (s *Service) taskZoomReset(name string) error {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return coreerr.E("window.taskZoomReset", "window not found: "+name, nil)
+	}
+	pw.SetZoom(1.0)
+	return nil
+}
+
+// --- Content ---
+
+func (s *Service) taskSetURL(name, url string) error {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return coreerr.E("window.taskSetURL", "window not found: "+name, nil)
+	}
+	pw.SetURL(url)
+	return nil
+}
+
+func (s *Service) taskSetHTML(name, html string) error {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return coreerr.E("window.taskSetHTML", "window not found: "+name, nil)
+	}
+	pw.SetHTML(html)
+	return nil
+}
+
+func (s *Service) taskExecJS(name, js string) error {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return coreerr.E("window.taskExecJS", "window not found: "+name, nil)
+	}
+	pw.ExecJS(js)
+	return nil
+}
+
+// --- State toggles ---
+
+func (s *Service) taskToggleFullscreen(name string) error {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return coreerr.E("window.taskToggleFullscreen", "window not found: "+name, nil)
+	}
+	pw.ToggleFullscreen()
+	return nil
+}
+
+func (s *Service) taskToggleMaximise(name string) error {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return coreerr.E("window.taskToggleMaximise", "window not found: "+name, nil)
+	}
+	pw.ToggleMaximise()
+	return nil
+}
+
+// --- Bounds ---
+
+func (s *Service) queryWindowBounds(name string) (any, bool, error) {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return nil, true, coreerr.E("window.queryWindowBounds", "window not found: "+name, nil)
+	}
+	x, y, width, height := pw.GetBounds()
+	return WindowBounds{X: x, Y: y, Width: width, Height: height}, true, nil
+}
+
+func (s *Service) taskSetBounds(name string, x, y, width, height int) error {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return coreerr.E("window.taskSetBounds", "window not found: "+name, nil)
+	}
+	pw.SetBounds(x, y, width, height)
+	s.manager.State().UpdatePosition(name, x, y)
+	s.manager.State().UpdateSize(name, width, height)
+	return nil
+}
+
+// --- Content protection ---
+
+func (s *Service) taskSetContentProtection(name string, protection bool) error {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return coreerr.E("window.taskSetContentProtection", "window not found: "+name, nil)
+	}
+	pw.SetContentProtection(protection)
+	return nil
+}
+
+// --- Flash ---
+
+func (s *Service) taskFlash(name string, enabled bool) error {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return coreerr.E("window.taskFlash", "window not found: "+name, nil)
+	}
+	pw.Flash(enabled)
+	return nil
+}
+
+// --- Print ---
+
+func (s *Service) taskPrint(name string) error {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return coreerr.E("window.taskPrint", "window not found: "+name, nil)
+	}
+	return pw.Print()
 }
 
 // Manager returns the underlying window Manager for direct access.

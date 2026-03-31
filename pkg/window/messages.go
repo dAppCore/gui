@@ -124,3 +124,72 @@ type ActionFilesDropped struct {
 	Paths    []string `json:"paths"`
 	TargetID string   `json:"targetId,omitempty"`
 }
+
+// --- Zoom ---
+
+type QueryWindowZoom struct{ Name string }
+
+type TaskSetZoom struct {
+	Name          string
+	Magnification float64
+}
+
+type TaskZoomIn struct{ Name string }
+
+type TaskZoomOut struct{ Name string }
+
+type TaskZoomReset struct{ Name string }
+
+// --- Content ---
+
+type TaskSetURL struct {
+	Name string
+	URL  string
+}
+
+type TaskSetHTML struct {
+	Name string
+	HTML string
+}
+
+type TaskExecJS struct {
+	Name string
+	JS   string
+}
+
+// --- State toggles ---
+
+type TaskToggleFullscreen struct{ Name string }
+
+type TaskToggleMaximise struct{ Name string }
+
+// --- Bounds ---
+
+type QueryWindowBounds struct{ Name string }
+
+type WindowBounds struct {
+	X, Y, Width, Height int
+}
+
+type TaskSetBounds struct {
+	Name             string
+	X, Y, Width, Height int
+}
+
+// --- Content protection ---
+
+type TaskSetContentProtection struct {
+	Name       string
+	Protection bool
+}
+
+// --- Flash ---
+
+type TaskFlash struct {
+	Name    string
+	Enabled bool
+}
+
+// --- Print ---
+
+type TaskPrint struct{ Name string }

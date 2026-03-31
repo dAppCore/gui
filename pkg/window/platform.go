@@ -35,6 +35,11 @@ type PlatformWindow interface {
 	Size() (int, int)
 	IsMaximised() bool
 	IsFocused() bool
+	IsVisible() bool
+	IsFullscreen() bool
+	IsMinimised() bool
+	GetBounds() (x, y, width, height int)
+	GetZoom() float64
 
 	// Mutations
 	SetTitle(title string)
@@ -43,6 +48,11 @@ type PlatformWindow interface {
 	SetBackgroundColour(r, g, b, a uint8)
 	SetVisibility(visible bool)
 	SetAlwaysOnTop(alwaysOnTop bool)
+	SetBounds(x, y, width, height int)
+	SetURL(url string)
+	SetHTML(html string)
+	SetZoom(magnification float64)
+	SetContentProtection(protection bool)
 
 	// Window state
 	Maximise()
@@ -54,6 +64,15 @@ type PlatformWindow interface {
 	Hide()
 	Fullscreen()
 	UnFullscreen()
+	ToggleFullscreen()
+	ToggleMaximise()
+
+	// WebView
+	ExecJS(js string)
+
+	// Utilities
+	Flash(enabled bool)
+	Print() error
 
 	// Events
 	OnWindowEvent(handler func(event WindowEvent))
