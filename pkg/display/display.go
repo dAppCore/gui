@@ -15,6 +15,7 @@ import (
 	"forge.lthn.ai/core/gui/pkg/dialog"
 	"forge.lthn.ai/core/gui/pkg/dock"
 	"forge.lthn.ai/core/gui/pkg/environment"
+	"forge.lthn.ai/core/gui/pkg/events"
 	"forge.lthn.ai/core/gui/pkg/keybinding"
 	"forge.lthn.ai/core/gui/pkg/lifecycle"
 	"forge.lthn.ai/core/gui/pkg/menu"
@@ -241,6 +242,31 @@ func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) core.Result {
 		if s.events != nil {
 			s.events.Emit(Event{Type: EventIDECommand,
 				Data: map[string]any{"command": m.Command}})
+		}
+	case events.ActionEventFired:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventCustomEvent,
+				Data: map[string]any{"name": m.Event.Name, "data": m.Event.Data}})
+		}
+	case dock.ActionProgressChanged:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventDockProgress,
+				Data: map[string]any{"progress": m.Progress}})
+		}
+	case dock.ActionBounceStarted:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventDockBounce,
+				Data: map[string]any{"requestId": m.RequestID, "bounceType": m.BounceType}})
+		}
+	case notification.ActionNotificationActionTriggered:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventNotificationAction,
+				Data: map[string]any{"notificationId": m.NotificationID, "actionId": m.ActionID}})
+		}
+	case notification.ActionNotificationDismissed:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventNotificationDismiss,
+				Data: map[string]any{"id": m.ID}})
 		}
 	}
 	return core.Result{OK: true}

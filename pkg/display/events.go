@@ -40,6 +40,11 @@ const (
 	EventContextMenuClick    EventType = "contextmenu.item-clicked"
 	EventWebviewConsole      EventType = "webview.console"
 	EventWebviewException    EventType = "webview.exception"
+	EventCustomEvent         EventType = "custom.event"
+	EventDockProgress        EventType = "dock.progress"
+	EventDockBounce          EventType = "dock.bounce"
+	EventNotificationAction  EventType = "notification.action"
+	EventNotificationDismiss EventType = "notification.dismissed"
 )
 
 // Event represents a display event sent to subscribers.
