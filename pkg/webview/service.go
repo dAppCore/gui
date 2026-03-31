@@ -2,10 +2,10 @@
 package webview
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -47,7 +47,7 @@ type Options struct {
 // Service is a core.Service managing webview interactions via IPC.
 type Service struct {
 	*core.ServiceRuntime[Options]
-	opts         Options
+	options      Options
 	connections  map[string]connector
 	mu           sync.RWMutex
 	newConn      func(debugURL, windowName string) (connector, error) // injectable for tests
@@ -55,19 +55,19 @@ type Service struct {
 }
 
 // Register creates a factory closure with the given options.
-func Register(opts ...func(*Options)) func(*core.Core) (any, error) {
+func Register(optionFns ...func(*Options)) func(*core.Core) (any, error) {
 	o := Options{
 		DebugURL:     "http://localhost:9222",
 		Timeout:      30 * time.Second,
 		ConsoleLimit: 1000,
 	}
-	for _, fn := range opts {
+	for _, fn := range optionFns {
 		fn(&o)
 	}
 	return func(c *core.Core) (any, error) {
 		svc := &Service{
 			ServiceRuntime: core.NewServiceRuntime[Options](c, o),
-			opts:           o,
+			options:        o,
 			connections:    make(map[string]connector),
 			newConn:        defaultNewConn(o),
 		}
@@ -77,7 +77,7 @@ func Register(opts ...func(*Options)) func(*core.Core) (any, error) {
 }
 
 // defaultNewConn creates real go-webview connections.
-func defaultNewConn(opts Options) func(string, string) (connector, error) {
+func defaultNewConn(options Options) func(string, string) (connector, error) {
 	return func(debugURL, windowName string) (connector, error) {
 		// Enumerate targets, match by title/URL containing window name
 		targets, err := gowebview.ListTargets(debugURL)
@@ -86,7 +86,7 @@ func defaultNewConn(opts Options) func(string, string) (connector, error) {
 		}
 		var wsURL string
 		for _, t := range targets {
-			if t.Type == "page" && (strings.Contains(t.Title, windowName) || strings.Contains(t.URL, windowName)) {
+			if t.Type == "page" && (bytes.Contains([]byte(t.Title), []byte(windowName)) || bytes.Contains([]byte(t.URL), []byte(windowName))) {
 				wsURL = t.WebSocketDebuggerURL
 				break
 			}
@@ -105,8 +105,8 @@ func defaultNewConn(opts Options) func(string, string) (connector, error) {
 		}
 		wv, err := gowebview.New(
 			gowebview.WithDebugURL(debugURL),
-			gowebview.WithTimeout(opts.Timeout),
-			gowebview.WithConsoleLimit(opts.ConsoleLimit),
+			gowebview.WithTimeout(options.Timeout),
+			gowebview.WithConsoleLimit(options.ConsoleLimit),
 		)
 		if err != nil {
 			return nil, err
@@ -201,7 +201,7 @@ func (s *Service) getConn(windowName string) (connector, error) {
 	if conn, ok := s.connections[windowName]; ok {
 		return conn, nil
 	}
-	conn, err := s.newConn(s.opts.DebugURL, windowName)
+	conn, err := s.newConn(s.options.DebugURL, windowName)
 	if err != nil {
 		return nil, err
 	}
@@ -373,17 +373,17 @@ type realConnector struct {
 	wv *gowebview.Webview
 }
 
-func (r *realConnector) Navigate(url string) error              { return r.wv.Navigate(url) }
-func (r *realConnector) Click(sel string) error                 { return r.wv.Click(sel) }
-func (r *realConnector) Type(sel, text string) error            { return r.wv.Type(sel, text) }
-func (r *realConnector) Evaluate(script string) (any, error)    { return r.wv.Evaluate(script) }
-func (r *realConnector) Screenshot() ([]byte, error)            { return r.wv.Screenshot() }
-func (r *realConnector) GetURL() (string, error)                { return r.wv.GetURL() }
-func (r *realConnector) GetTitle() (string, error)              { return r.wv.GetTitle() }
-func (r *realConnector) GetHTML(sel string) (string, error)     { return r.wv.GetHTML(sel) }
-func (r *realConnector) ClearConsole()                          { r.wv.ClearConsole() }
-func (r *realConnector) Close() error                           { return r.wv.Close() }
-func (r *realConnector) SetViewport(w, h int) error             { return r.wv.SetViewport(w, h) }
+func (r *realConnector) Navigate(url string) error               { return r.wv.Navigate(url) }
+func (r *realConnector) Click(sel string) error                  { return r.wv.Click(sel) }
+func (r *realConnector) Type(sel, text string) error             { return r.wv.Type(sel, text) }
+func (r *realConnector) Evaluate(script string) (any, error)     { return r.wv.Evaluate(script) }
+func (r *realConnector) Screenshot() ([]byte, error)             { return r.wv.Screenshot() }
+func (r *realConnector) GetURL() (string, error)                 { return r.wv.GetURL() }
+func (r *realConnector) GetTitle() (string, error)               { return r.wv.GetTitle() }
+func (r *realConnector) GetHTML(sel string) (string, error)      { return r.wv.GetHTML(sel) }
+func (r *realConnector) ClearConsole()                           { r.wv.ClearConsole() }
+func (r *realConnector) Close() error                            { return r.wv.Close() }
+func (r *realConnector) SetViewport(w, h int) error              { return r.wv.SetViewport(w, h) }
 func (r *realConnector) UploadFile(sel string, p []string) error { return r.wv.UploadFile(sel, p) }
 
 func (r *realConnector) Hover(sel string) error {

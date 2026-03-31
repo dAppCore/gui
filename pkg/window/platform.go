@@ -3,25 +3,25 @@ package window
 
 // Platform abstracts the windowing backend (Wails v3).
 type Platform interface {
-	CreateWindow(opts PlatformWindowOptions) PlatformWindow
+	CreateWindow(options PlatformWindowOptions) PlatformWindow
 	GetWindows() []PlatformWindow
 }
 
 // PlatformWindowOptions are the backend-specific options passed to CreateWindow.
 type PlatformWindowOptions struct {
-	Name                  string
-	Title                 string
-	URL                   string
-	Width, Height         int
-	X, Y                  int
-	MinWidth, MinHeight   int
-	MaxWidth, MaxHeight   int
-	Frameless             bool
-	Hidden                bool
-	AlwaysOnTop           bool
-	BackgroundColour      [4]uint8 // RGBA
-	DisableResize         bool
-	EnableFileDrop        bool
+	Name                string
+	Title               string
+	URL                 string
+	Width, Height       int
+	X, Y                int
+	MinWidth, MinHeight int
+	MaxWidth, MaxHeight int
+	Frameless           bool
+	Hidden              bool
+	AlwaysOnTop         bool
+	BackgroundColour    [4]uint8 // RGBA
+	DisableResize       bool
+	EnableFileDrop      bool
 }
 
 // PlatformWindow is a live window handle from the backend.

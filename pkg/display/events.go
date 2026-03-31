@@ -2,8 +2,8 @@ package display
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -15,12 +15,12 @@ import (
 type EventType string
 
 const (
-	EventWindowFocus  EventType = "window.focus"
-	EventWindowBlur   EventType = "window.blur"
-	EventWindowMove   EventType = "window.move"
-	EventWindowResize EventType = "window.resize"
-	EventWindowClose  EventType = "window.close"
-	EventWindowCreate EventType = "window.create"
+	EventWindowFocus         EventType = "window.focus"
+	EventWindowBlur          EventType = "window.blur"
+	EventWindowMove          EventType = "window.move"
+	EventWindowResize        EventType = "window.resize"
+	EventWindowClose         EventType = "window.close"
+	EventWindowCreate        EventType = "window.create"
 	EventThemeChange         EventType = "theme.change"
 	EventScreenChange        EventType = "screen.change"
 	EventNotificationClick   EventType = "notification.click"
@@ -202,7 +202,7 @@ func (em *WSEventManager) subscribe(conn *websocket.Conn, id string, eventTypes 
 	if id == "" {
 		em.mu.Lock()
 		em.nextSubID++
-		id = fmt.Sprintf("sub-%d", em.nextSubID)
+		id = "sub-" + strconv.Itoa(em.nextSubID)
 		em.mu.Unlock()
 	}
 

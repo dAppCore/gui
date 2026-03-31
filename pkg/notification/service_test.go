@@ -66,7 +66,7 @@ func TestRegister_Good(t *testing.T) {
 func TestTaskSend_Good(t *testing.T) {
 	mock, c := newTestService(t)
 	_, handled, err := c.PERFORM(TaskSend{
-		Opts: NotificationOptions{Title: "Test", Message: "Hello"},
+		Options: NotificationOptions{Title: "Test", Message: "Hello"},
 	})
 	require.NoError(t, err)
 	assert.True(t, handled)
@@ -87,7 +87,7 @@ func TestTaskSend_Fallback_Good(t *testing.T) {
 	require.NoError(t, c.ServiceStartup(context.Background(), nil))
 
 	_, handled, err := c.PERFORM(TaskSend{
-		Opts: NotificationOptions{Title: "Warn", Message: "Oops", Severity: SeverityWarning},
+		Options: NotificationOptions{Title: "Warn", Message: "Oops", Severity: SeverityWarning},
 	})
 	assert.True(t, handled)
 	assert.NoError(t, err) // fallback succeeds even though platform failed

@@ -3,8 +3,9 @@ package systray
 
 import (
 	_ "embed"
-	"fmt"
 	"sync"
+
+	coreerr "forge.lthn.ai/core/go-log"
 )
 
 //go:embed assets/apptray.png
@@ -31,7 +32,7 @@ func NewManager(platform Platform) *Manager {
 func (m *Manager) Setup(tooltip, label string) error {
 	m.tray = m.platform.NewTray()
 	if m.tray == nil {
-		return fmt.Errorf("platform returned nil tray")
+		return coreerr.E("systray.Setup", "platform returned nil tray", nil)
 	}
 	m.tray.SetTemplateIcon(defaultIcon)
 	m.tray.SetTooltip(tooltip)
@@ -42,7 +43,7 @@ func (m *Manager) Setup(tooltip, label string) error {
 // SetIcon sets the tray icon.
 func (m *Manager) SetIcon(data []byte) error {
 	if m.tray == nil {
-		return fmt.Errorf("tray not initialised")
+		return coreerr.E("systray.SetIcon", "tray not initialised", nil)
 	}
 	m.tray.SetIcon(data)
 	return nil
@@ -51,7 +52,7 @@ func (m *Manager) SetIcon(data []byte) error {
 // SetTemplateIcon sets the template icon (macOS).
 func (m *Manager) SetTemplateIcon(data []byte) error {
 	if m.tray == nil {
-		return fmt.Errorf("tray not initialised")
+		return coreerr.E("systray.SetTemplateIcon", "tray not initialised", nil)
 	}
 	m.tray.SetTemplateIcon(data)
 	return nil
@@ -60,7 +61,7 @@ func (m *Manager) SetTemplateIcon(data []byte) error {
 // SetTooltip sets the tray tooltip.
 func (m *Manager) SetTooltip(text string) error {
 	if m.tray == nil {
-		return fmt.Errorf("tray not initialised")
+		return coreerr.E("systray.SetTooltip", "tray not initialised", nil)
 	}
 	m.tray.SetTooltip(text)
 	return nil
@@ -69,7 +70,7 @@ func (m *Manager) SetTooltip(text string) error {
 // SetLabel sets the tray label.
 func (m *Manager) SetLabel(text string) error {
 	if m.tray == nil {
-		return fmt.Errorf("tray not initialised")
+		return coreerr.E("systray.SetLabel", "tray not initialised", nil)
 	}
 	m.tray.SetLabel(text)
 	return nil
@@ -78,7 +79,7 @@ func (m *Manager) SetLabel(text string) error {
 // AttachWindow attaches a panel window to the tray.
 func (m *Manager) AttachWindow(w WindowHandle) error {
 	if m.tray == nil {
-		return fmt.Errorf("tray not initialised")
+		return coreerr.E("systray.AttachWindow", "tray not initialised", nil)
 	}
 	m.tray.AttachWindow(w)
 	return nil

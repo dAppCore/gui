@@ -2,14 +2,14 @@ package display
 
 import (
 	"context"
-	"fmt"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"runtime"
 
 	"forge.lthn.ai/core/config"
+	coreerr "forge.lthn.ai/core/go-log"
 	"forge.lthn.ai/core/go/pkg/core"
-	"encoding/json"
 
 	"forge.lthn.ai/core/gui/pkg/browser"
 	"forge.lthn.ai/core/gui/pkg/contextmenu"
@@ -40,10 +40,9 @@ type Service struct {
 	*core.ServiceRuntime[Options]
 	wailsApp   *application.App
 	app        App
-	config     Options
 	configData map[string]map[string]any
-	cfg        *config.Config // config instance for file persistence
-	events *WSEventManager
+	configFile *config.Config // config instance for file persistence
+	events     *WSEventManager
 }
 
 // New is the constructor for the display service.
@@ -116,7 +115,7 @@ func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 	case window.ActionWindowResized:
 		if s.events != nil {
 			s.events.Emit(Event{Type: EventWindowResize, Window: m.Name,
-				Data: map[string]any{"w": m.W, "h": m.H}})
+				Data: map[string]any{"w": m.Width, "h": m.Height}})
 		}
 	case window.ActionWindowFocused:
 		if s.events != nil {
@@ -241,7 +240,7 @@ type WSMessage struct {
 func wsRequire(data map[string]any, key string) (string, error) {
 	v, _ := data[key].(string)
 	if v == "" {
-		return "", fmt.Errorf("ws: missing required field %q", key)
+		return "", coreerr.E("display.wsRequire", "missing required field \""+key+"\"", nil)
 	}
 	return v, nil
 }
@@ -487,10 +486,10 @@ func (s *Service) handleTrayAction(actionID string) {
 		result, handled, _ := s.Core().QUERY(environment.QueryInfo{})
 		if handled {
 			info := result.(environment.EnvironmentInfo)
-			details := fmt.Sprintf("OS: %s\nArch: %s\nPlatform: %s %s",
-				info.OS, info.Arch, info.Platform.Name, info.Platform.Version)
+			details := "OS: " + info.OS + "\nArch: " + info.Arch + "\nPlatform: " +
+				info.Platform.Name + " " + info.Platform.Version
 			_, _, _ = s.Core().PERFORM(dialog.TaskMessageDialog{
-				Opts: dialog.MessageDialogOptions{
+				Options: dialog.MessageDialogOptions{
 					Type: dialog.DialogInfo, Title: "Environment",
 					Message: details, Buttons: []string{"OK"},
 				},
@@ -512,23 +511,23 @@ func guiConfigPath() string {
 }
 
 func (s *Service) loadConfig() {
-	if s.cfg != nil {
+	if s.configFile != nil {
 		return // Already loaded (e.g., via loadConfigFrom in tests)
 	}
 	s.loadConfigFrom(guiConfigPath())
 }
 
 func (s *Service) loadConfigFrom(path string) {
-	cfg, err := config.New(config.WithPath(path))
+	configFile, err := config.New(config.WithPath(path))
 	if err != nil {
 		// Non-critical — continue with empty configData
 		return
 	}
-	s.cfg = cfg
+	s.configFile = configFile
 
 	for _, section := range []string{"window", "systray", "menu"} {
 		var data map[string]any
-		if err := cfg.Get(section, &data); err == nil && data != nil {
+		if err := configFile.Get(section, &data); err == nil && data != nil {
 			s.configData[section] = data
 		}
 	}
@@ -550,16 +549,16 @@ func (s *Service) handleConfigQuery(c *core.Core, q core.Query) (any, bool, erro
 func (s *Service) handleConfigTask(c *core.Core, t core.Task) (any, bool, error) {
 	switch t := t.(type) {
 	case window.TaskSaveConfig:
-		s.configData["window"] = t.Value
-		s.persistSection("window", t.Value)
+		s.configData["window"] = t.Config
+		s.persistSection("window", t.Config)
 		return nil, true, nil
 	case systray.TaskSaveConfig:
-		s.configData["systray"] = t.Value
-		s.persistSection("systray", t.Value)
+		s.configData["systray"] = t.Config
+		s.persistSection("systray", t.Config)
 		return nil, true, nil
 	case menu.TaskSaveConfig:
-		s.configData["menu"] = t.Value
-		s.persistSection("menu", t.Value)
+		s.configData["menu"] = t.Config
+		s.persistSection("menu", t.Config)
 		return nil, true, nil
 	default:
 		return nil, false, nil
@@ -567,11 +566,11 @@ func (s *Service) handleConfigTask(c *core.Core, t core.Task) (any, bool, error)
 }
 
 func (s *Service) persistSection(key string, value map[string]any) {
-	if s.cfg == nil {
+	if s.configFile == nil {
 		return
 	}
-	_ = s.cfg.Set(key, value)
-	_ = s.cfg.Commit()
+	_ = s.configFile.Set(key, value)
+	_ = s.configFile.Commit()
 }
 
 // --- Service accessors ---
@@ -588,8 +587,8 @@ func (s *Service) windowService() *window.Service {
 // --- Window Management (delegates via IPC) ---
 
 // OpenWindow creates a new window via IPC.
-func (s *Service) OpenWindow(opts ...window.WindowOption) error {
-	_, _, err := s.Core().PERFORM(window.TaskOpenWindow{Opts: opts})
+func (s *Service) OpenWindow(options ...window.WindowOption) error {
+	_, _, err := s.Core().PERFORM(window.TaskOpenWindow{Options: options})
 	return err
 }
 
@@ -600,7 +599,7 @@ func (s *Service) GetWindowInfo(name string) (*window.WindowInfo, error) {
 		return nil, err
 	}
 	if !handled {
-		return nil, fmt.Errorf("window service not available")
+		return nil, coreerr.E("display.GetWindowInfo", "window service not available", nil)
 	}
 	info, _ := result.(*window.WindowInfo)
 	return info, nil
@@ -624,7 +623,7 @@ func (s *Service) SetWindowPosition(name string, x, y int) error {
 
 // SetWindowSize resizes a window via IPC.
 func (s *Service) SetWindowSize(name string, width, height int) error {
-	_, _, err := s.Core().PERFORM(window.TaskSetSize{Name: name, W: width, H: height})
+	_, _, err := s.Core().PERFORM(window.TaskSetSize{Name: name, Width: width, Height: height})
 	return err
 }
 
@@ -633,7 +632,7 @@ func (s *Service) SetWindowBounds(name string, x, y, width, height int) error {
 	if _, _, err := s.Core().PERFORM(window.TaskSetPosition{Name: name, X: x, Y: y}); err != nil {
 		return err
 	}
-	_, _, err := s.Core().PERFORM(window.TaskSetSize{Name: name, W: width, H: height})
+	_, _, err := s.Core().PERFORM(window.TaskSetSize{Name: name, Width: width, Height: height})
 	return err
 }
 
@@ -666,11 +665,11 @@ func (s *Service) CloseWindow(name string) error {
 func (s *Service) RestoreWindow(name string) error {
 	ws := s.windowService()
 	if ws == nil {
-		return fmt.Errorf("window service not available")
+		return coreerr.E("display.RestoreWindow", "window service not available", nil)
 	}
 	pw, ok := ws.Manager().Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return coreerr.E("display.RestoreWindow", "window not found: "+name, nil)
 	}
 	pw.Restore()
 	return nil
@@ -681,11 +680,11 @@ func (s *Service) RestoreWindow(name string) error {
 func (s *Service) SetWindowVisibility(name string, visible bool) error {
 	ws := s.windowService()
 	if ws == nil {
-		return fmt.Errorf("window service not available")
+		return coreerr.E("display.SetWindowVisibility", "window service not available", nil)
 	}
 	pw, ok := ws.Manager().Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return coreerr.E("display.SetWindowVisibility", "window not found: "+name, nil)
 	}
 	pw.SetVisibility(visible)
 	return nil
@@ -696,11 +695,11 @@ func (s *Service) SetWindowVisibility(name string, visible bool) error {
 func (s *Service) SetWindowAlwaysOnTop(name string, alwaysOnTop bool) error {
 	ws := s.windowService()
 	if ws == nil {
-		return fmt.Errorf("window service not available")
+		return coreerr.E("display.SetWindowAlwaysOnTop", "window service not available", nil)
 	}
 	pw, ok := ws.Manager().Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return coreerr.E("display.SetWindowAlwaysOnTop", "window not found: "+name, nil)
 	}
 	pw.SetAlwaysOnTop(alwaysOnTop)
 	return nil
@@ -711,11 +710,11 @@ func (s *Service) SetWindowAlwaysOnTop(name string, alwaysOnTop bool) error {
 func (s *Service) SetWindowTitle(name string, title string) error {
 	ws := s.windowService()
 	if ws == nil {
-		return fmt.Errorf("window service not available")
+		return coreerr.E("display.SetWindowTitle", "window service not available", nil)
 	}
 	pw, ok := ws.Manager().Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return coreerr.E("display.SetWindowTitle", "window not found: "+name, nil)
 	}
 	pw.SetTitle(title)
 	return nil
@@ -726,11 +725,11 @@ func (s *Service) SetWindowTitle(name string, title string) error {
 func (s *Service) SetWindowFullscreen(name string, fullscreen bool) error {
 	ws := s.windowService()
 	if ws == nil {
-		return fmt.Errorf("window service not available")
+		return coreerr.E("display.SetWindowFullscreen", "window service not available", nil)
 	}
 	pw, ok := ws.Manager().Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return coreerr.E("display.SetWindowFullscreen", "window not found: "+name, nil)
 	}
 	if fullscreen {
 		pw.Fullscreen()
@@ -745,11 +744,11 @@ func (s *Service) SetWindowFullscreen(name string, fullscreen bool) error {
 func (s *Service) SetWindowBackgroundColour(name string, r, g, b, a uint8) error {
 	ws := s.windowService()
 	if ws == nil {
-		return fmt.Errorf("window service not available")
+		return coreerr.E("display.SetWindowBackgroundColour", "window service not available", nil)
 	}
 	pw, ok := ws.Manager().Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return coreerr.E("display.SetWindowBackgroundColour", "window not found: "+name, nil)
 	}
 	pw.SetBackgroundColour(r, g, b, a)
 	return nil
@@ -773,7 +772,7 @@ func (s *Service) GetWindowTitle(name string) (string, error) {
 		return "", err
 	}
 	if info == nil {
-		return "", fmt.Errorf("window not found: %s", name)
+		return "", coreerr.E("display.GetWindowTitle", "window not found: "+name, nil)
 	}
 	return info.Title, nil
 }
@@ -814,17 +813,17 @@ type CreateWindowOptions struct {
 }
 
 // CreateWindow creates a new window with the specified options.
-func (s *Service) CreateWindow(opts CreateWindowOptions) (*window.WindowInfo, error) {
-	if opts.Name == "" {
-		return nil, fmt.Errorf("window name is required")
+func (s *Service) CreateWindow(options CreateWindowOptions) (*window.WindowInfo, error) {
+	if options.Name == "" {
+		return nil, coreerr.E("display.CreateWindow", "window name is required", nil)
 	}
 	result, _, err := s.Core().PERFORM(window.TaskOpenWindow{
-		Opts: []window.WindowOption{
-			window.WithName(opts.Name),
-			window.WithTitle(opts.Title),
-			window.WithURL(opts.URL),
-			window.WithSize(opts.Width, opts.Height),
-			window.WithPosition(opts.X, opts.Y),
+		Options: []window.WindowOption{
+			window.WithName(options.Name),
+			window.WithTitle(options.Title),
+			window.WithURL(options.URL),
+			window.WithSize(options.Width, options.Height),
+			window.WithPosition(options.X, options.Y),
 		},
 	})
 	if err != nil {
@@ -840,7 +839,7 @@ func (s *Service) CreateWindow(opts CreateWindowOptions) (*window.WindowInfo, er
 func (s *Service) SaveLayout(name string) error {
 	ws := s.windowService()
 	if ws == nil {
-		return fmt.Errorf("window service not available")
+		return coreerr.E("display.SaveLayout", "window service not available", nil)
 	}
 	states := make(map[string]window.WindowState)
 	for _, n := range ws.Manager().List() {
@@ -857,11 +856,11 @@ func (s *Service) SaveLayout(name string) error {
 func (s *Service) RestoreLayout(name string) error {
 	ws := s.windowService()
 	if ws == nil {
-		return fmt.Errorf("window service not available")
+		return coreerr.E("display.RestoreLayout", "window service not available", nil)
 	}
 	layout, ok := ws.Manager().Layout().GetLayout(name)
 	if !ok {
-		return fmt.Errorf("layout not found: %s", name)
+		return coreerr.E("display.RestoreLayout", "layout not found: "+name, nil)
 	}
 	for wName, state := range layout.Windows {
 		if pw, ok := ws.Manager().Get(wName); ok {
@@ -890,7 +889,7 @@ func (s *Service) ListLayouts() []window.LayoutInfo {
 func (s *Service) DeleteLayout(name string) error {
 	ws := s.windowService()
 	if ws == nil {
-		return fmt.Errorf("window service not available")
+		return coreerr.E("display.DeleteLayout", "window service not available", nil)
 	}
 	ws.Manager().Layout().DeleteLayout(name)
 	return nil
@@ -915,25 +914,54 @@ func (s *Service) GetLayout(name string) *window.Layout {
 func (s *Service) TileWindows(mode window.TileMode, windowNames []string) error {
 	ws := s.windowService()
 	if ws == nil {
-		return fmt.Errorf("window service not available")
+		return coreerr.E("display.TileWindows", "window service not available", nil)
 	}
-	return ws.Manager().TileWindows(mode, windowNames, 1920, 1080) // TODO: use actual screen size
+	screenWidth, screenHeight := s.primaryScreenSize()
+	return ws.Manager().TileWindows(mode, windowNames, screenWidth, screenHeight)
 }
 
 // SnapWindow snaps a window to a screen edge or corner.
 func (s *Service) SnapWindow(name string, position window.SnapPosition) error {
 	ws := s.windowService()
 	if ws == nil {
-		return fmt.Errorf("window service not available")
+		return coreerr.E("display.SnapWindow", "window service not available", nil)
 	}
-	return ws.Manager().SnapWindow(name, position, 1920, 1080) // TODO: use actual screen size
+	screenWidth, screenHeight := s.primaryScreenSize()
+	return ws.Manager().SnapWindow(name, position, screenWidth, screenHeight)
+}
+
+func (s *Service) primaryScreenSize() (int, int) {
+	const fallbackWidth = 1920
+	const fallbackHeight = 1080
+
+	result, handled, err := s.Core().QUERY(screen.QueryPrimary{})
+	if err != nil || !handled {
+		return fallbackWidth, fallbackHeight
+	}
+
+	primary, ok := result.(*screen.Screen)
+	if !ok || primary == nil {
+		return fallbackWidth, fallbackHeight
+	}
+
+	width := primary.WorkArea.Width
+	height := primary.WorkArea.Height
+	if width <= 0 || height <= 0 {
+		width = primary.Bounds.Width
+		height = primary.Bounds.Height
+	}
+	if width <= 0 || height <= 0 {
+		return fallbackWidth, fallbackHeight
+	}
+
+	return width, height
 }
 
 // StackWindows arranges windows in a cascade pattern.
 func (s *Service) StackWindows(windowNames []string, offsetX, offsetY int) error {
 	ws := s.windowService()
 	if ws == nil {
-		return fmt.Errorf("window service not available")
+		return coreerr.E("display.StackWindows", "window service not available", nil)
 	}
 	return ws.Manager().StackWindows(windowNames, offsetX, offsetY)
 }
@@ -942,7 +970,7 @@ func (s *Service) StackWindows(windowNames []string, offsetX, offsetY int) error
 func (s *Service) ApplyWorkflowLayout(workflow window.WorkflowLayout) error {
 	ws := s.windowService()
 	if ws == nil {
-		return fmt.Errorf("window service not available")
+		return coreerr.E("display.ApplyWorkflowLayout", "window service not available", nil)
 	}
 	return ws.Manager().ApplyWorkflow(workflow, ws.Manager().List(), 1920, 1080)
 }
@@ -993,7 +1021,7 @@ func ptr[T any](v T) *T { return &v }
 
 func (s *Service) handleNewWorkspace() {
 	_, _, _ = s.Core().PERFORM(window.TaskOpenWindow{
-		Opts: []window.WindowOption{
+		Options: []window.WindowOption{
 			window.WithName("workspace-new"),
 			window.WithTitle("New Workspace"),
 			window.WithURL("/workspace/new"),
@@ -1016,7 +1044,7 @@ func (s *Service) handleListWorkspaces() {
 
 func (s *Service) handleNewFile() {
 	_, _, _ = s.Core().PERFORM(window.TaskOpenWindow{
-		Opts: []window.WindowOption{
+		Options: []window.WindowOption{
 			window.WithName("editor"),
 			window.WithTitle("New File - Editor"),
 			window.WithURL("/#/developer/editor?new=true"),
@@ -1027,7 +1055,7 @@ func (s *Service) handleNewFile() {
 
 func (s *Service) handleOpenFile() {
 	result, handled, err := s.Core().PERFORM(dialog.TaskOpenFile{
-		Opts: dialog.OpenFileOptions{
+		Options: dialog.OpenFileOptions{
 			Title:         "Open File",
 			AllowMultiple: false,
 		},
@@ -1040,7 +1068,7 @@ func (s *Service) handleOpenFile() {
 		return
 	}
 	_, _, _ = s.Core().PERFORM(window.TaskOpenWindow{
-		Opts: []window.WindowOption{
+		Options: []window.WindowOption{
 			window.WithName("editor"),
 			window.WithTitle(paths[0] + " - Editor"),
 			window.WithURL("/#/developer/editor?file=" + paths[0]),
@@ -1052,7 +1080,7 @@ func (s *Service) handleOpenFile() {
 func (s *Service) handleSaveFile() { _ = s.Core().ACTION(ActionIDECommand{Command: "save"}) }
 func (s *Service) handleOpenEditor() {
 	_, _, _ = s.Core().PERFORM(window.TaskOpenWindow{
-		Opts: []window.WindowOption{
+		Options: []window.WindowOption{
 			window.WithName("editor"),
 			window.WithTitle("Editor"),
 			window.WithURL("/#/developer/editor"),
@@ -1062,7 +1090,7 @@ func (s *Service) handleOpenEditor() {
 }
 func (s *Service) handleOpenTerminal() {
 	_, _, _ = s.Core().PERFORM(window.TaskOpenWindow{
-		Opts: []window.WindowOption{
+		Options: []window.WindowOption{
 			window.WithName("terminal"),
 			window.WithTitle("Terminal"),
 			window.WithURL("/#/developer/terminal"),

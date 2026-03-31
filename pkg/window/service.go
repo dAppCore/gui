@@ -7,60 +7,50 @@ import (
 	"forge.lthn.ai/core/go/pkg/core"
 )
 
-// Options holds configuration for the window service.
 type Options struct{}
 
-// Service is a core.Service managing window lifecycle via IPC.
-// It embeds ServiceRuntime for Core access and composes Manager for platform operations.
 type Service struct {
 	*core.ServiceRuntime[Options]
 	manager  *Manager
 	platform Platform
 }
 
-// OnStartup queries config from the display orchestrator and registers IPC handlers.
 func (s *Service) OnStartup(ctx context.Context) error {
 	// Query config — display registers its handler before us (registration order guarantee).
 	// If display is not registered, handled=false and we skip config.
-	cfg, handled, _ := s.Core().QUERY(QueryConfig{})
+	configValue, handled, _ := s.Core().QUERY(QueryConfig{})
 	if handled {
-		if wCfg, ok := cfg.(map[string]any); ok {
-			s.applyConfig(wCfg)
+		if windowConfig, ok := configValue.(map[string]any); ok {
+			s.applyConfig(windowConfig)
 		}
 	}
 
-	// Register QUERY and TASK handlers manually.
-	// ACTION handler (HandleIPCEvents) is auto-registered by WithService —
-	// do NOT call RegisterAction here or actions will double-fire.
 	s.Core().RegisterQuery(s.handleQuery)
 	s.Core().RegisterTask(s.handleTask)
 	return nil
 }
 
-func (s *Service) applyConfig(cfg map[string]any) {
-	if w, ok := cfg["default_width"]; ok {
-		if _, ok := w.(int); ok {
-			// TODO: s.manager.SetDefaultWidth(width) — add when Manager API is extended
+func (s *Service) applyConfig(configData map[string]any) {
+	if width, ok := configData["default_width"]; ok {
+		if width, ok := width.(int); ok {
+			s.manager.SetDefaultWidth(width)
 		}
 	}
-	if h, ok := cfg["default_height"]; ok {
-		if _, ok := h.(int); ok {
-			// TODO: s.manager.SetDefaultHeight(height) — add when Manager API is extended
+	if height, ok := configData["default_height"]; ok {
+		if height, ok := height.(int); ok {
+			s.manager.SetDefaultHeight(height)
 		}
 	}
-	if sf, ok := cfg["state_file"]; ok {
-		if _, ok := sf.(string); ok {
-			// TODO: s.manager.State().SetPath(stateFile) — add when StateManager API is extended
+	if stateFile, ok := configData["state_file"]; ok {
+		if stateFile, ok := stateFile.(string); ok {
+			s.manager.State().SetPath(stateFile)
 		}
 	}
 }
 
-// HandleIPCEvents is auto-discovered and registered by core.WithService.
 func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 	return nil
 }
-
-// --- Query Handlers ---
 
 func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
 	switch q := q.(type) {
@@ -123,7 +113,7 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 	case TaskSetPosition:
 		return nil, true, s.taskSetPosition(t.Name, t.X, t.Y)
 	case TaskSetSize:
-		return nil, true, s.taskSetSize(t.Name, t.W, t.H)
+		return nil, true, s.taskSetSize(t.Name, t.Width, t.Height)
 	case TaskMaximise:
 		return nil, true, s.taskMaximise(t.Name)
 	case TaskMinimise:
@@ -155,7 +145,7 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 }
 
 func (s *Service) taskOpenWindow(t TaskOpenWindow) (any, bool, error) {
-	pw, err := s.manager.Open(t.Opts...)
+	pw, err := s.manager.Open(t.Options...)
 	if err != nil {
 		return nil, true, err
 	}
@@ -189,7 +179,7 @@ func (s *Service) trackWindow(pw PlatformWindow) {
 			if data := e.Data; data != nil {
 				w, _ := data["w"].(int)
 				h, _ := data["h"].(int)
-				_ = s.Core().ACTION(ActionWindowResized{Name: e.Name, W: w, H: h})
+				_ = s.Core().ACTION(ActionWindowResized{Name: e.Name, Width: w, Height: h})
 			}
 		case "close":
 			_ = s.Core().ACTION(ActionWindowClosed{Name: e.Name})
@@ -227,13 +217,13 @@ func (s *Service) taskSetPosition(name string, x, y int) error {
 	return nil
 }
 
-func (s *Service) taskSetSize(name string, w, h int) error {
+func (s *Service) taskSetSize(name string, width, height int) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
 		return fmt.Errorf("window not found: %s", name)
 	}
-	pw.SetSize(w, h)
-	s.manager.State().UpdateSize(name, w, h)
+	pw.SetSize(width, height)
+	s.manager.State().UpdateSize(name, width, height)
 	return nil
 }
 

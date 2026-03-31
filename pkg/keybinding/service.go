@@ -3,31 +3,25 @@ package keybinding
 
 import (
 	"context"
-	"fmt"
 
+	coreerr "forge.lthn.ai/core/go-log"
 	"forge.lthn.ai/core/go/pkg/core"
 )
 
-// Options holds configuration for the keybinding service.
 type Options struct{}
 
-// Service is a core.Service managing keyboard shortcuts via IPC.
-// It maintains an in-memory registry of bindings and delegates
-// platform-level registration to the Platform interface.
 type Service struct {
 	*core.ServiceRuntime[Options]
-	platform Platform
-	bindings map[string]BindingInfo
+	platform           Platform
+	registeredBindings map[string]BindingInfo
 }
 
-// OnStartup registers IPC handlers.
 func (s *Service) OnStartup(ctx context.Context) error {
 	s.Core().RegisterQuery(s.handleQuery)
 	s.Core().RegisterTask(s.handleTask)
 	return nil
 }
 
-// HandleIPCEvents is auto-discovered and registered by core.WithService.
 func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 	return nil
 }
@@ -43,10 +37,9 @@ func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
 	}
 }
 
-// queryList reads from the in-memory registry (not platform.GetAll()).
 func (s *Service) queryList() []BindingInfo {
-	result := make([]BindingInfo, 0, len(s.bindings))
-	for _, info := range s.bindings {
+	result := make([]BindingInfo, 0, len(s.registeredBindings))
+	for _, info := range s.registeredBindings {
 		result = append(result, info)
 	}
 	return result
@@ -66,8 +59,8 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 }
 
 func (s *Service) taskAdd(t TaskAdd) error {
-	if _, exists := s.bindings[t.Accelerator]; exists {
-		return ErrAlreadyRegistered
+	if _, exists := s.registeredBindings[t.Accelerator]; exists {
+		return ErrorAlreadyRegistered
 	}
 
 	// Register on platform with a callback that broadcasts ActionTriggered
@@ -75,10 +68,10 @@ func (s *Service) taskAdd(t TaskAdd) error {
 		_ = s.Core().ACTION(ActionTriggered{Accelerator: t.Accelerator})
 	})
 	if err != nil {
-		return fmt.Errorf("keybinding: platform add failed: %w", err)
+		return coreerr.E("keybinding.taskAdd", "platform add failed", err)
 	}
 
-	s.bindings[t.Accelerator] = BindingInfo{
+	s.registeredBindings[t.Accelerator] = BindingInfo{
 		Accelerator: t.Accelerator,
 		Description: t.Description,
 	}
@@ -86,15 +79,15 @@ func (s *Service) taskAdd(t TaskAdd) error {
 }
 
 func (s *Service) taskRemove(t TaskRemove) error {
-	if _, exists := s.bindings[t.Accelerator]; !exists {
-		return fmt.Errorf("keybinding: not registered: %s", t.Accelerator)
+	if _, exists := s.registeredBindings[t.Accelerator]; !exists {
+		return coreerr.E("keybinding.taskRemove", "not registered: "+t.Accelerator, nil)
 	}
 
 	err := s.platform.Remove(t.Accelerator)
 	if err != nil {
-		return fmt.Errorf("keybinding: platform remove failed: %w", err)
+		return coreerr.E("keybinding.taskRemove", "platform remove failed", err)
 	}
 
-	delete(s.bindings, t.Accelerator)
+	delete(s.registeredBindings, t.Accelerator)
 	return nil
 }

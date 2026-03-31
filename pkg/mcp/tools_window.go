@@ -89,22 +89,22 @@ type WindowCreateOutput struct {
 }
 
 func (s *Subsystem) windowCreate(_ context.Context, _ *mcp.CallToolRequest, input WindowCreateInput) (*mcp.CallToolResult, WindowCreateOutput, error) {
-	opts := []window.WindowOption{
+	options := []window.WindowOption{
 		window.WithName(input.Name),
 	}
 	if input.Title != "" {
-		opts = append(opts, window.WithTitle(input.Title))
+		options = append(options, window.WithTitle(input.Title))
 	}
 	if input.URL != "" {
-		opts = append(opts, window.WithURL(input.URL))
+		options = append(options, window.WithURL(input.URL))
 	}
 	if input.Width > 0 || input.Height > 0 {
-		opts = append(opts, window.WithSize(input.Width, input.Height))
+		options = append(options, window.WithSize(input.Width, input.Height))
 	}
 	if input.X != 0 || input.Y != 0 {
-		opts = append(opts, window.WithPosition(input.X, input.Y))
+		options = append(options, window.WithPosition(input.X, input.Y))
 	}
-	result, _, err := s.core.PERFORM(window.TaskOpenWindow{Opts: opts})
+	result, _, err := s.core.PERFORM(window.TaskOpenWindow{Options: options})
 	if err != nil {
 		return nil, WindowCreateOutput{}, err
 	}
@@ -163,7 +163,7 @@ type WindowSizeOutput struct {
 }
 
 func (s *Subsystem) windowSize(_ context.Context, _ *mcp.CallToolRequest, input WindowSizeInput) (*mcp.CallToolResult, WindowSizeOutput, error) {
-	_, _, err := s.core.PERFORM(window.TaskSetSize{Name: input.Name, W: input.Width, H: input.Height})
+	_, _, err := s.core.PERFORM(window.TaskSetSize{Name: input.Name, Width: input.Width, Height: input.Height})
 	if err != nil {
 		return nil, WindowSizeOutput{}, err
 	}
@@ -188,7 +188,7 @@ func (s *Subsystem) windowBounds(_ context.Context, _ *mcp.CallToolRequest, inpu
 	if err != nil {
 		return nil, WindowBoundsOutput{}, err
 	}
-	_, _, err = s.core.PERFORM(window.TaskSetSize{Name: input.Name, W: input.Width, H: input.Height})
+	_, _, err = s.core.PERFORM(window.TaskSetSize{Name: input.Name, Width: input.Width, Height: input.Height})
 	if err != nil {
 		return nil, WindowBoundsOutput{}, err
 	}

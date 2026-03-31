@@ -5,13 +5,13 @@ package window
 type WindowOption func(*Window) error
 
 // ApplyOptions creates a Window and applies all options in order.
-func ApplyOptions(opts ...WindowOption) (*Window, error) {
+func ApplyOptions(options ...WindowOption) (*Window, error) {
 	w := &Window{}
-	for _, opt := range opts {
-		if opt == nil {
+	for _, option := range options {
+		if option == nil {
 			continue
 		}
-		if err := opt(w); err != nil {
+		if err := option(w); err != nil {
 			return nil, err
 		}
 	}

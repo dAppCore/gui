@@ -84,3 +84,26 @@ func TestManager_GetInfo_Good(t *testing.T) {
 	info = m.GetInfo()
 	assert.True(t, info["active"].(bool))
 }
+
+func TestManager_Build_Submenu_Recursive_Good(t *testing.T) {
+	m, p := newTestManager()
+	items := []MenuItem{
+		{
+			Label: "Parent",
+			Children: []MenuItem{
+				{Label: "Child 1"},
+				{Label: "Child 2"},
+			},
+		},
+	}
+
+	menu := m.Build(items)
+	assert.NotNil(t, menu)
+	require.Len(t, p.menus, 1)
+	require.Len(t, p.menus[0].items, 1)
+	assert.Equal(t, "Parent", p.menus[0].items[0])
+	require.Len(t, p.menus[0].subs, 1)
+	require.Len(t, p.menus[0].subs[0].items, 2)
+	assert.Equal(t, "Child 1", p.menus[0].subs[0].items[0])
+	assert.Equal(t, "Child 2", p.menus[0].subs[0].items[1])
+}

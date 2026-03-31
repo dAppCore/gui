@@ -171,7 +171,7 @@ func TestTaskRemove_Bad_NotFound(t *testing.T) {
 
 	_, handled, err := c.PERFORM(TaskRemove{Name: "nonexistent"})
 	assert.True(t, handled)
-	assert.ErrorIs(t, err, ErrMenuNotFound)
+	assert.ErrorIs(t, err, ErrorMenuNotFound)
 }
 
 func TestQueryGet_Good(t *testing.T) {

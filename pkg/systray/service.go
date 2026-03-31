@@ -6,10 +6,8 @@ import (
 	"forge.lthn.ai/core/go/pkg/core"
 )
 
-// Options holds configuration for the systray service.
 type Options struct{}
 
-// Service is a core.Service managing the system tray via IPC.
 type Service struct {
 	*core.ServiceRuntime[Options]
 	manager  *Manager
@@ -17,33 +15,31 @@ type Service struct {
 	iconPath string
 }
 
-// OnStartup queries config and registers IPC handlers.
 func (s *Service) OnStartup(ctx context.Context) error {
-	cfg, handled, _ := s.Core().QUERY(QueryConfig{})
+	configValue, handled, _ := s.Core().QUERY(QueryConfig{})
 	if handled {
-		if tCfg, ok := cfg.(map[string]any); ok {
-			s.applyConfig(tCfg)
+		if trayConfig, ok := configValue.(map[string]any); ok {
+			s.applyConfig(trayConfig)
 		}
 	}
 	s.Core().RegisterTask(s.handleTask)
 	return nil
 }
 
-func (s *Service) applyConfig(cfg map[string]any) {
-	tooltip, _ := cfg["tooltip"].(string)
+func (s *Service) applyConfig(configData map[string]any) {
+	tooltip, _ := configData["tooltip"].(string)
 	if tooltip == "" {
 		tooltip = "Core"
 	}
 	_ = s.manager.Setup(tooltip, tooltip)
 
-	if iconPath, ok := cfg["icon"].(string); ok && iconPath != "" {
+	if iconPath, ok := configData["icon"].(string); ok && iconPath != "" {
 		// Icon loading is deferred to when assets are available.
 		// Store the path for later use.
 		s.iconPath = iconPath
 	}
 }
 
-// HandleIPCEvents is auto-discovered and registered by core.WithService.
 func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 	return nil
 }
@@ -78,7 +74,6 @@ func (s *Service) taskSetTrayMenu(t TaskSetTrayMenu) error {
 	return s.manager.SetMenu(t.Items)
 }
 
-// Manager returns the underlying systray Manager.
 func (s *Service) Manager() *Manager {
 	return s.manager
 }

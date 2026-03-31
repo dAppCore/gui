@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
+
+	coreio "forge.lthn.ai/core/go-io"
 )
 
 // WindowState holds the persisted position/size of a window.
@@ -25,6 +27,7 @@ type WindowState struct {
 // StateManager persists window positions to ~/.config/Core/window_state.json.
 type StateManager struct {
 	configDir string
+	statePath string
 	states    map[string]WindowState
 	mu        sync.RWMutex
 	saveTimer *time.Timer
@@ -55,24 +58,49 @@ func NewStateManagerWithDir(configDir string) *StateManager {
 }
 
 func (sm *StateManager) filePath() string {
+	if sm.statePath != "" {
+		return sm.statePath
+	}
 	return filepath.Join(sm.configDir, "window_state.json")
 }
 
-func (sm *StateManager) load() {
-	if sm.configDir == "" {
+func (sm *StateManager) dataDir() string {
+	if sm.statePath != "" {
+		return filepath.Dir(sm.statePath)
+	}
+	return sm.configDir
+}
+
+func (sm *StateManager) SetPath(path string) {
+	if path == "" {
 		return
 	}
-	data, err := os.ReadFile(sm.filePath())
+	sm.mu.Lock()
+	if sm.saveTimer != nil {
+		sm.saveTimer.Stop()
+		sm.saveTimer = nil
+	}
+	sm.statePath = path
+	sm.states = make(map[string]WindowState)
+	sm.mu.Unlock()
+	sm.load()
+}
+
+func (sm *StateManager) load() {
+	if sm.configDir == "" && sm.statePath == "" {
+		return
+	}
+	content, err := coreio.Local.Read(sm.filePath())
 	if err != nil {
 		return
 	}
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
-	_ = json.Unmarshal(data, &sm.states)
+	_ = json.Unmarshal([]byte(content), &sm.states)
 }
 
 func (sm *StateManager) save() {
-	if sm.configDir == "" {
+	if sm.configDir == "" && sm.statePath == "" {
 		return
 	}
 	sm.mu.RLock()
@@ -81,8 +109,10 @@ func (sm *StateManager) save() {
 	if err != nil {
 		return
 	}
-	_ = os.MkdirAll(sm.configDir, 0o755)
-	_ = os.WriteFile(sm.filePath(), data, 0o644)
+	if dir := sm.dataDir(); dir != "" {
+		_ = coreio.Local.EnsureDir(dir)
+	}
+	_ = coreio.Local.Write(sm.filePath(), string(data))
 }
 
 func (sm *StateManager) scheduleSave() {

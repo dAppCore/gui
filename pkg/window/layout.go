@@ -3,11 +3,13 @@ package window
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
+
+	coreio "forge.lthn.ai/core/go-io"
+	coreerr "forge.lthn.ai/core/go-log"
 )
 
 // Layout is a named window arrangement.
@@ -65,13 +67,13 @@ func (lm *LayoutManager) load() {
 	if lm.configDir == "" {
 		return
 	}
-	data, err := os.ReadFile(lm.filePath())
+	content, err := coreio.Local.Read(lm.filePath())
 	if err != nil {
 		return
 	}
 	lm.mu.Lock()
 	defer lm.mu.Unlock()
-	_ = json.Unmarshal(data, &lm.layouts)
+	_ = json.Unmarshal([]byte(content), &lm.layouts)
 }
 
 func (lm *LayoutManager) save() {
@@ -84,14 +86,14 @@ func (lm *LayoutManager) save() {
 	if err != nil {
 		return
 	}
-	_ = os.MkdirAll(lm.configDir, 0o755)
-	_ = os.WriteFile(lm.filePath(), data, 0o644)
+	_ = coreio.Local.EnsureDir(lm.configDir)
+	_ = coreio.Local.Write(lm.filePath(), string(data))
 }
 
 // SaveLayout creates or updates a named layout.
 func (lm *LayoutManager) SaveLayout(name string, windowStates map[string]WindowState) error {
 	if name == "" {
-		return fmt.Errorf("layout name cannot be empty")
+		return coreerr.E("window.LayoutManager.SaveLayout", "layout name cannot be empty", nil)
 	}
 	now := time.Now().UnixMilli()
 	lm.mu.Lock()

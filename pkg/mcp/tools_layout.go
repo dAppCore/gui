@@ -3,8 +3,8 @@ package mcp
 
 import (
 	"context"
-	"fmt"
 
+	coreerr "forge.lthn.ai/core/go-log"
 	"forge.lthn.ai/core/gui/pkg/window"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -57,7 +57,7 @@ func (s *Subsystem) layoutList(_ context.Context, _ *mcp.CallToolRequest, _ Layo
 	}
 	layouts, ok := result.([]window.LayoutInfo)
 	if !ok {
-		return nil, LayoutListOutput{}, fmt.Errorf("unexpected result type from layout list query")
+		return nil, LayoutListOutput{}, coreerr.E("mcp.layoutList", "unexpected result type", nil)
 	}
 	return nil, LayoutListOutput{Layouts: layouts}, nil
 }
@@ -95,7 +95,7 @@ func (s *Subsystem) layoutGet(_ context.Context, _ *mcp.CallToolRequest, input L
 	}
 	layout, ok := result.(*window.Layout)
 	if !ok {
-		return nil, LayoutGetOutput{}, fmt.Errorf("unexpected result type from layout get query")
+		return nil, LayoutGetOutput{}, coreerr.E("mcp.layoutGet", "unexpected result type", nil)
 	}
 	return nil, LayoutGetOutput{Layout: layout}, nil
 }

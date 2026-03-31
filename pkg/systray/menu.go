@@ -22,10 +22,8 @@ func (m *Manager) buildMenu(items []TrayMenuItem) PlatformMenu {
 			continue
 		}
 		if len(item.Submenu) > 0 {
-			sub := m.buildMenu(item.Submenu)
-			mi := menu.Add(item.Label)
-			_ = mi.AddSubmenu()
-			_ = sub // TODO: wire sub into parent via platform
+			sub := menu.AddSubmenu(item.Label)
+			m.buildMenu(sub, item.Submenu)
 			continue
 		}
 		mi := menu.Add(item.Label)
