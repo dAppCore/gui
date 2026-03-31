@@ -1,5 +1,8 @@
 package events
 
+// ApplicationEventType identifies an application-level event.
+type ApplicationEventType int
+
 // WindowEventType identifies a window event emitted by the application layer.
 type WindowEventType int
 
