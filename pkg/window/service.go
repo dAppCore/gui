@@ -187,15 +187,10 @@ func (s *Service) primaryScreenArea() (int, int, int, int) {
 }
 
 func (s *Service) taskOpenWindow(t TaskOpenWindow) (any, bool, error) {
-	var (
-		pw  PlatformWindow
-		err error
-	)
-	if t.Window != nil {
-		pw, err = s.manager.Create(t.Window)
-	} else {
-		pw, err = s.manager.Open(t.Options...)
+	if t.Window == nil {
+		return nil, true, coreerr.E("window.taskOpenWindow", "window descriptor is required", nil)
 	}
+	pw, err := s.manager.CreateWindow(*t.Window)
 	if err != nil {
 		return nil, true, err
 	}

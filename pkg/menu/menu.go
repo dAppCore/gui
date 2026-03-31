@@ -20,11 +20,13 @@ type Manager struct {
 }
 
 // NewManager creates a menu Manager.
+// menu.NewManager(menu.NewWailsPlatform(app)).SetApplicationMenu([]menu.MenuItem{{Label: "File"}})
 func NewManager(platform Platform) *Manager {
 	return &Manager{platform: platform}
 }
 
 // Build constructs a PlatformMenu from a tree of MenuItems.
+// menu.NewManager(menu.NewWailsPlatform(app)).Build([]menu.MenuItem{{Label: "File"}})
 func (m *Manager) Build(items []MenuItem) PlatformMenu {
 	menu := m.platform.NewMenu()
 	m.buildItems(menu, items)
@@ -60,6 +62,7 @@ func (m *Manager) buildItems(menu PlatformMenu, items []MenuItem) {
 }
 
 // SetApplicationMenu builds and sets the application menu.
+// menu.NewManager(menu.NewWailsPlatform(app)).SetApplicationMenu([]menu.MenuItem{{Label: "File"}})
 func (m *Manager) SetApplicationMenu(items []MenuItem) {
 	menu := m.Build(items)
 	m.platform.SetApplicationMenu(menu)

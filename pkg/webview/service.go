@@ -43,6 +43,28 @@ type Options struct {
 	ConsoleLimit int           // Max console messages per window (default: 1000)
 }
 
+func defaultOptions() Options {
+	return Options{
+		DebugURL:     "http://localhost:9222",
+		Timeout:      30 * time.Second,
+		ConsoleLimit: 1000,
+	}
+}
+
+func normalizeOptions(options Options) Options {
+	defaults := defaultOptions()
+	if options.DebugURL == "" {
+		options.DebugURL = defaults.DebugURL
+	}
+	if options.Timeout == 0 {
+		options.Timeout = defaults.Timeout
+	}
+	if options.ConsoleLimit == 0 {
+		options.ConsoleLimit = defaults.ConsoleLimit
+	}
+	return options
+}
+
 type Service struct {
 	*core.ServiceRuntime[Options]
 	options      Options
@@ -52,18 +74,10 @@ type Service struct {
 	watcherSetup func(conn connector, windowName string)              // called after connection creation
 }
 
-// Register binds the webview service to a Core instance.
-// core.WithService(webview.Register())
-// core.WithService(webview.Register(func(o *Options) { o.DebugURL = "http://localhost:9223" }))
-func Register(optionFns ...func(*Options)) func(*core.Core) (any, error) {
-	o := Options{
-		DebugURL:     "http://localhost:9222",
-		Timeout:      30 * time.Second,
-		ConsoleLimit: 1000,
-	}
-	for _, fn := range optionFns {
-		fn(&o)
-	}
+// RegisterWithOptions binds the webview service to a Core instance using a declarative Options literal.
+// core.WithService(webview.RegisterWithOptions(webview.Options{DebugURL: "http://localhost:9223", Timeout: 30 * time.Second, ConsoleLimit: 1000}))
+func RegisterWithOptions(options Options) func(*core.Core) (any, error) {
+	o := normalizeOptions(options)
 	return func(c *core.Core) (any, error) {
 		svc := &Service{
 			ServiceRuntime: core.NewServiceRuntime[Options](c, o),
@@ -74,6 +88,17 @@ func Register(optionFns ...func(*Options)) func(*core.Core) (any, error) {
 		svc.watcherSetup = svc.defaultWatcherSetup
 		return svc, nil
 	}
+}
+
+// Deprecated: use RegisterWithOptions(webview.Options{DebugURL: "http://localhost:9223", Timeout: 30 * time.Second, ConsoleLimit: 1000}).
+func Register(optionFns ...func(*Options)) func(*core.Core) (any, error) {
+	options := defaultOptions()
+	for _, fn := range optionFns {
+		if fn != nil {
+			fn(&options)
+		}
+	}
+	return RegisterWithOptions(options)
 }
 
 // defaultNewConn creates real go-webview connections.

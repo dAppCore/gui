@@ -1,10 +1,11 @@
 // pkg/window/options.go
 package window
 
-// WindowOption is a functional option applied to a Window descriptor.
+// WindowOption is the compatibility layer for option-chain callers.
+// Prefer a Window literal with Manager.CreateWindow.
 type WindowOption func(*Window) error
 
-// ApplyOptions creates a Window and applies all options in order.
+// Deprecated: use Manager.CreateWindow(Window{Name: "settings", URL: "/", Width: 800, Height: 600}).
 func ApplyOptions(options ...WindowOption) (*Window, error) {
 	w := &Window{}
 	for _, option := range options {
@@ -18,6 +19,7 @@ func ApplyOptions(options ...WindowOption) (*Window, error) {
 	return w, nil
 }
 
+// Compatibility helpers for callers still using option chains.
 func WithName(name string) WindowOption {
 	return func(w *Window) error { w.Name = name; return nil }
 }
