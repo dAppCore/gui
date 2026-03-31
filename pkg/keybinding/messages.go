@@ -3,6 +3,7 @@ package keybinding
 import "errors"
 
 var ErrorAlreadyRegistered = errors.New("keybinding: accelerator already registered")
+var ErrorNotRegistered = errors.New("keybinding: accelerator not registered")
 
 // BindingInfo describes a registered global key binding.
 type BindingInfo struct {
@@ -19,8 +20,16 @@ type TaskAdd struct {
 	Description string `json:"description"`
 }
 
-// TaskRemove unregisters a global key binding by accelerator.
+// TaskRemove unregisters a global key binding by accelerator. Error: ErrorNotRegistered if not found.
 type TaskRemove struct {
+	Accelerator string `json:"accelerator"`
+}
+
+// TaskProcess triggers a registered key binding programmatically.
+// Returns ActionTriggered if the accelerator was handled, ErrorNotRegistered if not found.
+//
+//	c.PERFORM(keybinding.TaskProcess{Accelerator: "Ctrl+S"})
+type TaskProcess struct {
 	Accelerator string `json:"accelerator"`
 }
 

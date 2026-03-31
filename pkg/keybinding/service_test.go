@@ -37,6 +37,17 @@ func (m *mockPlatform) Remove(accelerator string) error {
 	return nil
 }
 
+func (m *mockPlatform) Process(accelerator string) bool {
+	m.mu.Lock()
+	h, ok := m.handlers[accelerator]
+	m.mu.Unlock()
+	if ok && h != nil {
+		h()
+		return true
+	}
+	return false
+}
+
 func (m *mockPlatform) GetAll() []string {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -198,4 +209,89 @@ func TestQueryList_Bad_NoService(t *testing.T) {
 	c, _ := core.New(core.WithServiceLock())
 	_, handled, _ := c.QUERY(QueryList{})
 	assert.False(t, handled)
+}
+
+// --- TaskProcess tests ---
+
+func TestTaskProcess_Good(t *testing.T) {
+	mp := newMockPlatform()
+	_, c := newTestKeybindingService(t, mp)
+
+	_, _, _ = c.PERFORM(TaskAdd{Accelerator: "Ctrl+P", Description: "Print"})
+
+	var triggered ActionTriggered
+	var mu sync.Mutex
+	c.RegisterAction(func(_ *core.Core, msg core.Message) error {
+		if a, ok := msg.(ActionTriggered); ok {
+			mu.Lock()
+			triggered = a
+			mu.Unlock()
+		}
+		return nil
+	})
+
+	_, handled, err := c.PERFORM(TaskProcess{Accelerator: "Ctrl+P"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	mu.Lock()
+	assert.Equal(t, "Ctrl+P", triggered.Accelerator)
+	mu.Unlock()
+}
+
+func TestTaskProcess_Bad_NotRegistered(t *testing.T) {
+	mp := newMockPlatform()
+	_, c := newTestKeybindingService(t, mp)
+
+	_, handled, err := c.PERFORM(TaskProcess{Accelerator: "Ctrl+P"})
+	assert.True(t, handled)
+	assert.ErrorIs(t, err, ErrorNotRegistered)
+}
+
+func TestTaskProcess_Ugly_RemovedBinding(t *testing.T) {
+	mp := newMockPlatform()
+	_, c := newTestKeybindingService(t, mp)
+
+	_, _, _ = c.PERFORM(TaskAdd{Accelerator: "Ctrl+P", Description: "Print"})
+	_, _, _ = c.PERFORM(TaskRemove{Accelerator: "Ctrl+P"})
+
+	// After remove, process should fail with ErrorNotRegistered
+	_, handled, err := c.PERFORM(TaskProcess{Accelerator: "Ctrl+P"})
+	assert.True(t, handled)
+	assert.ErrorIs(t, err, ErrorNotRegistered)
+}
+
+// --- TaskRemove ErrorNotRegistered sentinel tests ---
+
+func TestTaskRemove_Bad_ErrorSentinel(t *testing.T) {
+	mp := newMockPlatform()
+	_, c := newTestKeybindingService(t, mp)
+
+	_, handled, err := c.PERFORM(TaskRemove{Accelerator: "Ctrl+X"})
+	assert.True(t, handled)
+	assert.ErrorIs(t, err, ErrorNotRegistered)
+}
+
+// --- QueryList Ugly: concurrent adds ---
+
+func TestQueryList_Ugly_ConcurrentAdds(t *testing.T) {
+	mp := newMockPlatform()
+	_, c := newTestKeybindingService(t, mp)
+
+	accelerators := []string{"Ctrl+1", "Ctrl+2", "Ctrl+3", "Ctrl+4", "Ctrl+5"}
+	var wg sync.WaitGroup
+	for _, accelerator := range accelerators {
+		wg.Add(1)
+		go func(acc string) {
+			defer wg.Done()
+			_, _, _ = c.PERFORM(TaskAdd{Accelerator: acc, Description: acc})
+		}(accelerator)
+	}
+	wg.Wait()
+
+	result, handled, err := c.QUERY(QueryList{})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	list := result.([]BindingInfo)
+	assert.Len(t, list, len(accelerators))
 }
