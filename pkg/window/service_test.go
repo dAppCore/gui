@@ -31,12 +31,23 @@ func TestRegister_Good(t *testing.T) {
 func TestTaskOpenWindow_Good(t *testing.T) {
 	_, c := newTestWindowService(t)
 	result, handled, err := c.PERFORM(TaskOpenWindow{
-		Options: []WindowOption{WithName("test"), WithURL("/")},
+		Window: &Window{Name: "test", URL: "/"},
 	})
 	require.NoError(t, err)
 	assert.True(t, handled)
 	info := result.(WindowInfo)
 	assert.Equal(t, "test", info.Name)
+}
+
+func TestTaskOpenWindow_OptionsFallback_Good(t *testing.T) {
+	_, c := newTestWindowService(t)
+	result, handled, err := c.PERFORM(TaskOpenWindow{
+		Options: []WindowOption{WithName("test-fallback"), WithURL("/")},
+	})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	info := result.(WindowInfo)
+	assert.Equal(t, "test-fallback", info.Name)
 }
 
 func TestTaskOpenWindow_Bad(t *testing.T) {
@@ -274,6 +285,54 @@ func TestTaskSetTitle_Bad(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// --- TaskSetAlwaysOnTop ---
+
+func TestTaskSetAlwaysOnTop_Good(t *testing.T) {
+	svc, c := newTestWindowService(t)
+	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+
+	_, handled, err := c.PERFORM(TaskSetAlwaysOnTop{Name: "test", AlwaysOnTop: true})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	pw, ok := svc.Manager().Get("test")
+	require.True(t, ok)
+	mw := pw.(*mockWindow)
+	assert.True(t, mw.alwaysOnTop)
+}
+
+func TestTaskSetAlwaysOnTop_Bad(t *testing.T) {
+	_, c := newTestWindowService(t)
+	_, handled, err := c.PERFORM(TaskSetAlwaysOnTop{Name: "nonexistent", AlwaysOnTop: true})
+	assert.True(t, handled)
+	assert.Error(t, err)
+}
+
+// --- TaskSetBackgroundColour ---
+
+func TestTaskSetBackgroundColour_Good(t *testing.T) {
+	svc, c := newTestWindowService(t)
+	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+
+	_, handled, err := c.PERFORM(TaskSetBackgroundColour{
+		Name: "test", Red: 10, Green: 20, Blue: 30, Alpha: 40,
+	})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	pw, ok := svc.Manager().Get("test")
+	require.True(t, ok)
+	mw := pw.(*mockWindow)
+	assert.Equal(t, [4]uint8{10, 20, 30, 40}, mw.backgroundColour)
+}
+
+func TestTaskSetBackgroundColour_Bad(t *testing.T) {
+	_, c := newTestWindowService(t)
+	_, handled, err := c.PERFORM(TaskSetBackgroundColour{Name: "nonexistent", Red: 1, Green: 2, Blue: 3, Alpha: 4})
+	assert.True(t, handled)
+	assert.Error(t, err)
+}
+
 // --- TaskSetVisibility ---
 
 func TestTaskSetVisibility_Good(t *testing.T) {
@@ -401,6 +460,16 @@ func TestTaskRestoreLayout_Good(t *testing.T) {
 	x2, y2 := pw2.Position()
 	assert.Equal(t, 0, x2)
 	assert.Equal(t, 0, y2)
+
+	editorState, ok := svc.Manager().State().GetState("editor")
+	require.True(t, ok)
+	assert.Equal(t, 0, editorState.X)
+	assert.Equal(t, 0, editorState.Y)
+
+	terminalState, ok := svc.Manager().State().GetState("terminal")
+	require.True(t, ok)
+	assert.Equal(t, 0, terminalState.X)
+	assert.Equal(t, 0, terminalState.Y)
 }
 
 func TestTaskRestoreLayout_Bad(t *testing.T) {
@@ -408,4 +477,46 @@ func TestTaskRestoreLayout_Bad(t *testing.T) {
 	_, handled, err := c.PERFORM(TaskRestoreLayout{Name: "nonexistent"})
 	assert.True(t, handled)
 	assert.Error(t, err)
+}
+
+// --- TaskStackWindows ---
+
+func TestTaskStackWindows_Good(t *testing.T) {
+	svc, c := newTestWindowService(t)
+	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("s1"), WithSize(800, 600)}})
+	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("s2"), WithSize(800, 600)}})
+
+	_, handled, err := c.PERFORM(TaskStackWindows{Windows: []string{"s1", "s2"}, OffsetX: 25, OffsetY: 35})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	pw, ok := svc.Manager().Get("s2")
+	require.True(t, ok)
+	x, y := pw.Position()
+	assert.Equal(t, 25, x)
+	assert.Equal(t, 35, y)
+}
+
+// --- TaskApplyWorkflow ---
+
+func TestTaskApplyWorkflow_Good(t *testing.T) {
+	svc, c := newTestWindowService(t)
+	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("editor"), WithSize(800, 600)}})
+	_, _, _ = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("terminal"), WithSize(800, 600)}})
+
+	_, handled, err := c.PERFORM(TaskApplyWorkflow{Workflow: "side-by-side"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	editor, ok := svc.Manager().Get("editor")
+	require.True(t, ok)
+	x, y := editor.Position()
+	assert.Equal(t, 0, x)
+	assert.Equal(t, 0, y)
+
+	terminal, ok := svc.Manager().Get("terminal")
+	require.True(t, ok)
+	x, y = terminal.Position()
+	assert.Equal(t, 960, x)
+	assert.Equal(t, 0, y)
 }

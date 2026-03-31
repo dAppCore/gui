@@ -8,14 +8,14 @@ func (m *Manager) SetMenu(items []TrayMenuItem) error {
 	if m.tray == nil {
 		return fmt.Errorf("tray not initialised")
 	}
-	menu := m.buildMenu(items)
+	menu := m.platform.NewMenu()
+	m.buildMenu(menu, items)
 	m.tray.SetMenu(menu)
 	return nil
 }
 
 // buildMenu recursively builds a PlatformMenu from TrayMenuItem descriptors.
-func (m *Manager) buildMenu(items []TrayMenuItem) PlatformMenu {
-	menu := m.platform.NewMenu()
+func (m *Manager) buildMenu(menu PlatformMenu, items []TrayMenuItem) {
 	for _, item := range items {
 		if item.Type == "separator" {
 			menu.AddSeparator()
@@ -45,7 +45,6 @@ func (m *Manager) buildMenu(items []TrayMenuItem) PlatformMenu {
 			})
 		}
 	}
-	return menu
 }
 
 // RegisterCallback registers a callback for a menu action ID.

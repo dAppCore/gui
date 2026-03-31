@@ -6,6 +6,7 @@ import (
 
 	coreerr "forge.lthn.ai/core/go-log"
 	"forge.lthn.ai/core/gui/pkg/screen"
+	"forge.lthn.ai/core/gui/pkg/window"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -109,6 +110,34 @@ func (s *Subsystem) screenWorkAreas(_ context.Context, _ *mcp.CallToolRequest, _
 	return nil, ScreenWorkAreasOutput{WorkAreas: areas}, nil
 }
 
+// --- screen_for_window ---
+
+type ScreenForWindowInput struct {
+	Name string `json:"name"`
+}
+type ScreenForWindowOutput struct {
+	Screen *screen.Screen `json:"screen"`
+}
+
+func (s *Subsystem) screenForWindow(_ context.Context, _ *mcp.CallToolRequest, input ScreenForWindowInput) (*mcp.CallToolResult, ScreenForWindowOutput, error) {
+	result, _, err := s.core.QUERY(window.QueryWindowByName{Name: input.Name})
+	if err != nil {
+		return nil, ScreenForWindowOutput{}, err
+	}
+	info, _ := result.(*window.WindowInfo)
+	if info == nil {
+		return nil, ScreenForWindowOutput{}, nil
+	}
+	centerX := info.X + info.Width/2
+	centerY := info.Y + info.Height/2
+	screenResult, _, err := s.core.QUERY(screen.QueryAtPoint{X: centerX, Y: centerY})
+	if err != nil {
+		return nil, ScreenForWindowOutput{}, err
+	}
+	scr, _ := screenResult.(*screen.Screen)
+	return nil, ScreenForWindowOutput{Screen: scr}, nil
+}
+
 // --- Registration ---
 
 func (s *Subsystem) registerScreenTools(server *mcp.Server) {
@@ -117,4 +146,5 @@ func (s *Subsystem) registerScreenTools(server *mcp.Server) {
 	mcp.AddTool(server, &mcp.Tool{Name: "screen_primary", Description: "Get the primary screen"}, s.screenPrimary)
 	mcp.AddTool(server, &mcp.Tool{Name: "screen_at_point", Description: "Get the screen at a specific point"}, s.screenAtPoint)
 	mcp.AddTool(server, &mcp.Tool{Name: "screen_work_areas", Description: "Get work areas for all screens"}, s.screenWorkAreas)
+	mcp.AddTool(server, &mcp.Tool{Name: "screen_for_window", Description: "Get the screen containing a window"}, s.screenForWindow)
 }

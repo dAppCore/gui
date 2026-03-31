@@ -17,7 +17,10 @@ type QueryWindowByName struct{ Name string }
 
 type QueryConfig struct{}
 
-type TaskOpenWindow struct{ Options []WindowOption }
+type TaskOpenWindow struct {
+	Window  *Window
+	Options []WindowOption
+}
 
 type TaskCloseWindow struct{ Name string }
 
@@ -42,6 +45,19 @@ type TaskRestore struct{ Name string }
 type TaskSetTitle struct {
 	Name  string
 	Title string
+}
+
+type TaskSetAlwaysOnTop struct {
+	Name        string
+	AlwaysOnTop bool
+}
+
+type TaskSetBackgroundColour struct {
+	Name  string
+	Red   uint8
+	Green uint8
+	Blue  uint8
+	Alpha uint8
 }
 
 type TaskSetVisibility struct {
@@ -69,9 +85,20 @@ type TaskTileWindows struct {
 	Windows []string // window names; empty = all
 }
 
+type TaskStackWindows struct {
+	Windows []string // window names; empty = all
+	OffsetX int
+	OffsetY int
+}
+
 type TaskSnapWindow struct {
 	Name     string // window name
 	Position string // "left", "right", "top", "bottom", "top-left", "top-right", "bottom-left", "bottom-right", "center"
+}
+
+type TaskApplyWorkflow struct {
+	Workflow string
+	Windows  []string // window names; empty = all
 }
 
 type TaskSaveConfig struct{ Config map[string]any }

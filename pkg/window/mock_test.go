@@ -31,6 +31,7 @@ type mockWindow struct {
 	width, height, x, y  int
 	maximised, focused   bool
 	visible, alwaysOnTop bool
+	backgroundColour     [4]uint8
 	closed               bool
 	minimised            bool
 	fullscreened         bool
@@ -47,7 +48,7 @@ func (w *mockWindow) IsFocused() bool                      { return w.focused }
 func (w *mockWindow) SetTitle(title string)                { w.title = title }
 func (w *mockWindow) SetPosition(x, y int)                 { w.x = x; w.y = y }
 func (w *mockWindow) SetSize(width, height int)            { w.width = width; w.height = height }
-func (w *mockWindow) SetBackgroundColour(r, g, b, a uint8) {}
+func (w *mockWindow) SetBackgroundColour(r, g, b, a uint8) { w.backgroundColour = [4]uint8{r, g, b, a} }
 func (w *mockWindow) SetVisibility(visible bool)           { w.visible = visible }
 func (w *mockWindow) SetAlwaysOnTop(alwaysOnTop bool)      { w.alwaysOnTop = alwaysOnTop }
 func (w *mockWindow) Maximise()                            { w.maximised = true }

@@ -121,7 +121,7 @@ func TestServiceConclave_Good(t *testing.T) {
 
 	// Open a window via IPC
 	result, handled, err := c.PERFORM(window.TaskOpenWindow{
-		Options: []window.WindowOption{window.WithName("main")},
+		Window: &window.Window{Name: "main"},
 	})
 	require.NoError(t, err)
 	assert.True(t, handled)
@@ -413,7 +413,7 @@ func TestHandleIPCEvents_WindowOpened_Good(t *testing.T) {
 	// Open a window — this should trigger ActionWindowOpened
 	// which HandleIPCEvents should convert to a WS event
 	result, handled, err := c.PERFORM(window.TaskOpenWindow{
-		Options: []window.WindowOption{window.WithName("test")},
+		Window: &window.Window{Name: "test"},
 	})
 	require.NoError(t, err)
 	assert.True(t, handled)
