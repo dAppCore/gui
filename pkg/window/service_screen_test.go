@@ -97,3 +97,38 @@ func TestTaskSnapWindow_UsesPrimaryScreenSize(t *testing.T) {
 	assert.Equal(t, 1000, info.Width)
 	assert.Equal(t, 1000, info.Height)
 }
+
+func TestTaskTileWindows_UsesPrimaryWorkAreaOrigin(t *testing.T) {
+	_, c := newTestWindowServiceWithScreen(t, []screen.Screen{
+		{
+			ID: "1", Name: "Primary", IsPrimary: true,
+			Bounds:   screen.Rect{X: 0, Y: 0, Width: 2000, Height: 1000},
+			WorkArea: screen.Rect{X: 100, Y: 50, Width: 2000, Height: 1000},
+		},
+	})
+
+	_, _, err := c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("left"), WithSize(400, 400)}})
+	require.NoError(t, err)
+	_, _, err = c.PERFORM(TaskOpenWindow{Options: []WindowOption{WithName("right"), WithSize(400, 400)}})
+	require.NoError(t, err)
+
+	_, handled, err := c.PERFORM(TaskTileWindows{Mode: "left-right", Windows: []string{"left", "right"}})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	result, _, err := c.QUERY(QueryWindowByName{Name: "left"})
+	require.NoError(t, err)
+	left := result.(*WindowInfo)
+	assert.Equal(t, 100, left.X)
+	assert.Equal(t, 50, left.Y)
+	assert.Equal(t, 1000, left.Width)
+	assert.Equal(t, 1000, left.Height)
+
+	result, _, err = c.QUERY(QueryWindowByName{Name: "right"})
+	require.NoError(t, err)
+	right := result.(*WindowInfo)
+	assert.Equal(t, 1100, right.X)
+	assert.Equal(t, 50, right.Y)
+	assert.Equal(t, 1000, right.Width)
+	assert.Equal(t, 1000, right.Height)
+}

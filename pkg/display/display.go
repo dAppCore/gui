@@ -588,7 +588,11 @@ func (s *Service) windowService() *window.Service {
 
 // OpenWindow creates a new window via IPC.
 func (s *Service) OpenWindow(options ...window.WindowOption) error {
-	_, _, err := s.Core().PERFORM(window.TaskOpenWindow{Options: options})
+	spec, err := window.ApplyOptions(options...)
+	if err != nil {
+		return err
+	}
+	_, _, err = s.Core().PERFORM(window.TaskOpenWindow{Window: spec})
 	return err
 }
 
@@ -661,97 +665,41 @@ func (s *Service) CloseWindow(name string) error {
 }
 
 // RestoreWindow restores a maximized/minimized window.
-// Uses direct Manager access (no IPC task for restore yet).
 func (s *Service) RestoreWindow(name string) error {
-	ws := s.windowService()
-	if ws == nil {
-		return coreerr.E("display.RestoreWindow", "window service not available", nil)
-	}
-	pw, ok := ws.Manager().Get(name)
-	if !ok {
-		return coreerr.E("display.RestoreWindow", "window not found: "+name, nil)
-	}
-	pw.Restore()
-	return nil
+	_, _, err := s.Core().PERFORM(window.TaskRestore{Name: name})
+	return err
 }
 
 // SetWindowVisibility shows or hides a window.
-// Uses direct Manager access (no IPC task for visibility yet).
 func (s *Service) SetWindowVisibility(name string, visible bool) error {
-	ws := s.windowService()
-	if ws == nil {
-		return coreerr.E("display.SetWindowVisibility", "window service not available", nil)
-	}
-	pw, ok := ws.Manager().Get(name)
-	if !ok {
-		return coreerr.E("display.SetWindowVisibility", "window not found: "+name, nil)
-	}
-	pw.SetVisibility(visible)
-	return nil
+	_, _, err := s.Core().PERFORM(window.TaskSetVisibility{Name: name, Visible: visible})
+	return err
 }
 
 // SetWindowAlwaysOnTop sets whether a window stays on top.
-// Uses direct Manager access (no IPC task for always-on-top yet).
 func (s *Service) SetWindowAlwaysOnTop(name string, alwaysOnTop bool) error {
-	ws := s.windowService()
-	if ws == nil {
-		return coreerr.E("display.SetWindowAlwaysOnTop", "window service not available", nil)
-	}
-	pw, ok := ws.Manager().Get(name)
-	if !ok {
-		return coreerr.E("display.SetWindowAlwaysOnTop", "window not found: "+name, nil)
-	}
-	pw.SetAlwaysOnTop(alwaysOnTop)
-	return nil
+	_, _, err := s.Core().PERFORM(window.TaskSetAlwaysOnTop{Name: name, AlwaysOnTop: alwaysOnTop})
+	return err
 }
 
 // SetWindowTitle changes a window's title.
-// Uses direct Manager access (no IPC task for title yet).
 func (s *Service) SetWindowTitle(name string, title string) error {
-	ws := s.windowService()
-	if ws == nil {
-		return coreerr.E("display.SetWindowTitle", "window service not available", nil)
-	}
-	pw, ok := ws.Manager().Get(name)
-	if !ok {
-		return coreerr.E("display.SetWindowTitle", "window not found: "+name, nil)
-	}
-	pw.SetTitle(title)
-	return nil
+	_, _, err := s.Core().PERFORM(window.TaskSetTitle{Name: name, Title: title})
+	return err
 }
 
 // SetWindowFullscreen sets a window to fullscreen mode.
-// Uses direct Manager access (no IPC task for fullscreen yet).
 func (s *Service) SetWindowFullscreen(name string, fullscreen bool) error {
-	ws := s.windowService()
-	if ws == nil {
-		return coreerr.E("display.SetWindowFullscreen", "window service not available", nil)
-	}
-	pw, ok := ws.Manager().Get(name)
-	if !ok {
-		return coreerr.E("display.SetWindowFullscreen", "window not found: "+name, nil)
-	}
-	if fullscreen {
-		pw.Fullscreen()
-	} else {
-		pw.UnFullscreen()
-	}
-	return nil
+	_, _, err := s.Core().PERFORM(window.TaskFullscreen{Name: name, Fullscreen: fullscreen})
+	return err
 }
 
 // SetWindowBackgroundColour sets the background colour of a window.
-// Uses direct Manager access (no IPC task for background colour yet).
 func (s *Service) SetWindowBackgroundColour(name string, r, g, b, a uint8) error {
-	ws := s.windowService()
-	if ws == nil {
-		return coreerr.E("display.SetWindowBackgroundColour", "window service not available", nil)
-	}
-	pw, ok := ws.Manager().Get(name)
-	if !ok {
-		return coreerr.E("display.SetWindowBackgroundColour", "window not found: "+name, nil)
-	}
-	pw.SetBackgroundColour(r, g, b, a)
-	return nil
+	_, _, err := s.Core().PERFORM(window.TaskSetBackgroundColour{
+		Name: name, Red: r, Green: g, Blue: b, Alpha: a,
+	})
+	return err
 }
 
 // GetFocusedWindow returns the name of the currently focused window.
@@ -818,12 +766,14 @@ func (s *Service) CreateWindow(options CreateWindowOptions) (*window.WindowInfo,
 		return nil, coreerr.E("display.CreateWindow", "window name is required", nil)
 	}
 	result, _, err := s.Core().PERFORM(window.TaskOpenWindow{
-		Options: []window.WindowOption{
-			window.WithName(options.Name),
-			window.WithTitle(options.Title),
-			window.WithURL(options.URL),
-			window.WithSize(options.Width, options.Height),
-			window.WithPosition(options.X, options.Y),
+		Window: &window.Window{
+			Name:   options.Name,
+			Title:  options.Title,
+			URL:    options.URL,
+			Width:  options.Width,
+			Height: options.Height,
+			X:      options.X,
+			Y:      options.Y,
 		},
 	})
 	if err != nil {
@@ -837,143 +787,68 @@ func (s *Service) CreateWindow(options CreateWindowOptions) (*window.WindowInfo,
 
 // SaveLayout saves the current window arrangement as a named layout.
 func (s *Service) SaveLayout(name string) error {
-	ws := s.windowService()
-	if ws == nil {
-		return coreerr.E("display.SaveLayout", "window service not available", nil)
-	}
-	states := make(map[string]window.WindowState)
-	for _, n := range ws.Manager().List() {
-		if pw, ok := ws.Manager().Get(n); ok {
-			x, y := pw.Position()
-			w, h := pw.Size()
-			states[n] = window.WindowState{X: x, Y: y, Width: w, Height: h, Maximized: pw.IsMaximised()}
-		}
-	}
-	return ws.Manager().Layout().SaveLayout(name, states)
+	_, _, err := s.Core().PERFORM(window.TaskSaveLayout{Name: name})
+	return err
 }
 
 // RestoreLayout applies a saved layout.
 func (s *Service) RestoreLayout(name string) error {
-	ws := s.windowService()
-	if ws == nil {
-		return coreerr.E("display.RestoreLayout", "window service not available", nil)
-	}
-	layout, ok := ws.Manager().Layout().GetLayout(name)
-	if !ok {
-		return coreerr.E("display.RestoreLayout", "layout not found: "+name, nil)
-	}
-	for wName, state := range layout.Windows {
-		if pw, ok := ws.Manager().Get(wName); ok {
-			pw.SetPosition(state.X, state.Y)
-			pw.SetSize(state.Width, state.Height)
-			if state.Maximized {
-				pw.Maximise()
-			} else {
-				pw.Restore()
-			}
-		}
-	}
-	return nil
+	_, _, err := s.Core().PERFORM(window.TaskRestoreLayout{Name: name})
+	return err
 }
 
 // ListLayouts returns all saved layout names with metadata.
 func (s *Service) ListLayouts() []window.LayoutInfo {
-	ws := s.windowService()
-	if ws == nil {
+	result, handled, _ := s.Core().QUERY(window.QueryLayoutList{})
+	if !handled {
 		return nil
 	}
-	return ws.Manager().Layout().ListLayouts()
+	layouts, _ := result.([]window.LayoutInfo)
+	return layouts
 }
 
 // DeleteLayout removes a saved layout by name.
 func (s *Service) DeleteLayout(name string) error {
-	ws := s.windowService()
-	if ws == nil {
-		return coreerr.E("display.DeleteLayout", "window service not available", nil)
-	}
-	ws.Manager().Layout().DeleteLayout(name)
-	return nil
+	_, _, err := s.Core().PERFORM(window.TaskDeleteLayout{Name: name})
+	return err
 }
 
 // GetLayout returns a specific layout by name.
 func (s *Service) GetLayout(name string) *window.Layout {
-	ws := s.windowService()
-	if ws == nil {
+	result, handled, _ := s.Core().QUERY(window.QueryLayoutGet{Name: name})
+	if !handled {
 		return nil
 	}
-	layout, ok := ws.Manager().Layout().GetLayout(name)
-	if !ok {
-		return nil
-	}
-	return &layout
+	layout, _ := result.(*window.Layout)
+	return layout
 }
 
 // --- Tiling/snapping delegation ---
 
 // TileWindows arranges windows in a tiled layout.
 func (s *Service) TileWindows(mode window.TileMode, windowNames []string) error {
-	ws := s.windowService()
-	if ws == nil {
-		return coreerr.E("display.TileWindows", "window service not available", nil)
-	}
-	screenWidth, screenHeight := s.primaryScreenSize()
-	return ws.Manager().TileWindows(mode, windowNames, screenWidth, screenHeight)
+	_, _, err := s.Core().PERFORM(window.TaskTileWindows{Mode: mode.String(), Windows: windowNames})
+	return err
 }
 
 // SnapWindow snaps a window to a screen edge or corner.
 func (s *Service) SnapWindow(name string, position window.SnapPosition) error {
-	ws := s.windowService()
-	if ws == nil {
-		return coreerr.E("display.SnapWindow", "window service not available", nil)
-	}
-	screenWidth, screenHeight := s.primaryScreenSize()
-	return ws.Manager().SnapWindow(name, position, screenWidth, screenHeight)
-}
-
-func (s *Service) primaryScreenSize() (int, int) {
-	const fallbackWidth = 1920
-	const fallbackHeight = 1080
-
-	result, handled, err := s.Core().QUERY(screen.QueryPrimary{})
-	if err != nil || !handled {
-		return fallbackWidth, fallbackHeight
-	}
-
-	primary, ok := result.(*screen.Screen)
-	if !ok || primary == nil {
-		return fallbackWidth, fallbackHeight
-	}
-
-	width := primary.WorkArea.Width
-	height := primary.WorkArea.Height
-	if width <= 0 || height <= 0 {
-		width = primary.Bounds.Width
-		height = primary.Bounds.Height
-	}
-	if width <= 0 || height <= 0 {
-		return fallbackWidth, fallbackHeight
-	}
-
-	return width, height
+	_, _, err := s.Core().PERFORM(window.TaskSnapWindow{Name: name, Position: position.String()})
+	return err
 }
 
 // StackWindows arranges windows in a cascade pattern.
 func (s *Service) StackWindows(windowNames []string, offsetX, offsetY int) error {
-	ws := s.windowService()
-	if ws == nil {
-		return coreerr.E("display.StackWindows", "window service not available", nil)
-	}
-	return ws.Manager().StackWindows(windowNames, offsetX, offsetY)
+	_, _, err := s.Core().PERFORM(window.TaskStackWindows{Windows: windowNames, OffsetX: offsetX, OffsetY: offsetY})
+	return err
 }
 
 // ApplyWorkflowLayout applies a predefined layout for a specific workflow.
 func (s *Service) ApplyWorkflowLayout(workflow window.WorkflowLayout) error {
-	ws := s.windowService()
-	if ws == nil {
-		return coreerr.E("display.ApplyWorkflowLayout", "window service not available", nil)
-	}
-	screenWidth, screenHeight := s.primaryScreenSize()
-	return ws.Manager().ApplyWorkflow(workflow, ws.Manager().List(), screenWidth, screenHeight)
+	_, _, err := s.Core().PERFORM(window.TaskApplyWorkflow{
+		Workflow: workflow.String(),
+	})
+	return err
 }
 
 // GetEventManager returns the event manager for WebSocket event subscriptions.
@@ -1022,11 +897,12 @@ func ptr[T any](v T) *T { return &v }
 
 func (s *Service) handleNewWorkspace() {
 	_, _, _ = s.Core().PERFORM(window.TaskOpenWindow{
-		Options: []window.WindowOption{
-			window.WithName("workspace-new"),
-			window.WithTitle("New Workspace"),
-			window.WithURL("/workspace/new"),
-			window.WithSize(500, 400),
+		Window: &window.Window{
+			Name:   "workspace-new",
+			Title:  "New Workspace",
+			URL:    "/workspace/new",
+			Width:  500,
+			Height: 400,
 		},
 	})
 }
@@ -1045,11 +921,12 @@ func (s *Service) handleListWorkspaces() {
 
 func (s *Service) handleNewFile() {
 	_, _, _ = s.Core().PERFORM(window.TaskOpenWindow{
-		Options: []window.WindowOption{
-			window.WithName("editor"),
-			window.WithTitle("New File - Editor"),
-			window.WithURL("/#/developer/editor?new=true"),
-			window.WithSize(1200, 800),
+		Window: &window.Window{
+			Name:   "editor",
+			Title:  "New File - Editor",
+			URL:    "/#/developer/editor?new=true",
+			Width:  1200,
+			Height: 800,
 		},
 	})
 }
@@ -1069,11 +946,12 @@ func (s *Service) handleOpenFile() {
 		return
 	}
 	_, _, _ = s.Core().PERFORM(window.TaskOpenWindow{
-		Options: []window.WindowOption{
-			window.WithName("editor"),
-			window.WithTitle(paths[0] + " - Editor"),
-			window.WithURL("/#/developer/editor?file=" + paths[0]),
-			window.WithSize(1200, 800),
+		Window: &window.Window{
+			Name:   "editor",
+			Title:  paths[0] + " - Editor",
+			URL:    "/#/developer/editor?file=" + paths[0],
+			Width:  1200,
+			Height: 800,
 		},
 	})
 }
@@ -1081,21 +959,23 @@ func (s *Service) handleOpenFile() {
 func (s *Service) handleSaveFile() { _ = s.Core().ACTION(ActionIDECommand{Command: "save"}) }
 func (s *Service) handleOpenEditor() {
 	_, _, _ = s.Core().PERFORM(window.TaskOpenWindow{
-		Options: []window.WindowOption{
-			window.WithName("editor"),
-			window.WithTitle("Editor"),
-			window.WithURL("/#/developer/editor"),
-			window.WithSize(1200, 800),
+		Window: &window.Window{
+			Name:   "editor",
+			Title:  "Editor",
+			URL:    "/#/developer/editor",
+			Width:  1200,
+			Height: 800,
 		},
 	})
 }
 func (s *Service) handleOpenTerminal() {
 	_, _, _ = s.Core().PERFORM(window.TaskOpenWindow{
-		Options: []window.WindowOption{
-			window.WithName("terminal"),
-			window.WithTitle("Terminal"),
-			window.WithURL("/#/developer/terminal"),
-			window.WithSize(800, 500),
+		Window: &window.Window{
+			Name:   "terminal",
+			Title:  "Terminal",
+			URL:    "/#/developer/terminal",
+			Width:  800,
+			Height: 500,
 		},
 	})
 }

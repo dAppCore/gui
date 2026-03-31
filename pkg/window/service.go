@@ -125,6 +125,10 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 		return nil, true, s.taskRestore(t.Name)
 	case TaskSetTitle:
 		return nil, true, s.taskSetTitle(t.Name, t.Title)
+	case TaskSetAlwaysOnTop:
+		return nil, true, s.taskSetAlwaysOnTop(t.Name, t.AlwaysOnTop)
+	case TaskSetBackgroundColour:
+		return nil, true, s.taskSetBackgroundColour(t.Name, t.Red, t.Green, t.Blue, t.Alpha)
 	case TaskSetVisibility:
 		return nil, true, s.taskSetVisibility(t.Name, t.Visible)
 	case TaskFullscreen:
@@ -138,42 +142,60 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 		return nil, true, nil
 	case TaskTileWindows:
 		return nil, true, s.taskTileWindows(t.Mode, t.Windows)
+	case TaskStackWindows:
+		return nil, true, s.taskStackWindows(t.Windows, t.OffsetX, t.OffsetY)
 	case TaskSnapWindow:
 		return nil, true, s.taskSnapWindow(t.Name, t.Position)
+	case TaskApplyWorkflow:
+		return nil, true, s.taskApplyWorkflow(t.Workflow, t.Windows)
 	default:
 		return nil, false, nil
 	}
 }
 
-func (s *Service) primaryScreenSize() (int, int) {
+func (s *Service) primaryScreenArea() (int, int, int, int) {
+	const fallbackX = 0
+	const fallbackY = 0
 	const fallbackWidth = 1920
 	const fallbackHeight = 1080
 
 	result, handled, err := s.Core().QUERY(screen.QueryPrimary{})
 	if err != nil || !handled {
-		return fallbackWidth, fallbackHeight
+		return fallbackX, fallbackY, fallbackWidth, fallbackHeight
 	}
 
 	primary, ok := result.(*screen.Screen)
 	if !ok || primary == nil {
-		return fallbackWidth, fallbackHeight
+		return fallbackX, fallbackY, fallbackWidth, fallbackHeight
 	}
 
+	x := primary.WorkArea.X
+	y := primary.WorkArea.Y
 	width := primary.WorkArea.Width
 	height := primary.WorkArea.Height
 	if width <= 0 || height <= 0 {
+		x = primary.Bounds.X
+		y = primary.Bounds.Y
 		width = primary.Bounds.Width
 		height = primary.Bounds.Height
 	}
 	if width <= 0 || height <= 0 {
-		return fallbackWidth, fallbackHeight
+		return fallbackX, fallbackY, fallbackWidth, fallbackHeight
 	}
 
-	return width, height
+	return x, y, width, height
 }
 
 func (s *Service) taskOpenWindow(t TaskOpenWindow) (any, bool, error) {
-	pw, err := s.manager.Open(t.Options...)
+	var (
+		pw  PlatformWindow
+		err error
+	)
+	if t.Window != nil {
+		pw, err = s.manager.Create(t.Window)
+	} else {
+		pw, err = s.manager.Open(t.Options...)
+	}
 	if err != nil {
 		return nil, true, err
 	}
@@ -302,6 +324,24 @@ func (s *Service) taskSetTitle(name, title string) error {
 	return nil
 }
 
+func (s *Service) taskSetAlwaysOnTop(name string, alwaysOnTop bool) error {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return fmt.Errorf("window not found: %s", name)
+	}
+	pw.SetAlwaysOnTop(alwaysOnTop)
+	return nil
+}
+
+func (s *Service) taskSetBackgroundColour(name string, red, green, blue, alpha uint8) error {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return fmt.Errorf("window not found: %s", name)
+	}
+	pw.SetBackgroundColour(red, green, blue, alpha)
+	return nil
+}
+
 func (s *Service) taskSetVisibility(name string, visible bool) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
@@ -350,7 +390,10 @@ func (s *Service) taskRestoreLayout(name string) error {
 		pw.SetSize(state.Width, state.Height)
 		if state.Maximized {
 			pw.Maximise()
+		} else {
+			pw.Restore()
 		}
+		s.manager.State().CaptureState(pw)
 	}
 	return nil
 }
@@ -371,8 +414,16 @@ func (s *Service) taskTileWindows(mode string, names []string) error {
 	if len(names) == 0 {
 		names = s.manager.List()
 	}
-	screenWidth, screenHeight := s.primaryScreenSize()
-	return s.manager.TileWindows(tm, names, screenWidth, screenHeight)
+	originX, originY, screenWidth, screenHeight := s.primaryScreenArea()
+	return s.manager.TileWindows(tm, names, screenWidth, screenHeight, originX, originY)
+}
+
+func (s *Service) taskStackWindows(names []string, offsetX, offsetY int) error {
+	if len(names) == 0 {
+		names = s.manager.List()
+	}
+	originX, originY, _, _ := s.primaryScreenArea()
+	return s.manager.StackWindows(names, offsetX, offsetY, originX, originY)
 }
 
 var snapPosMap = map[string]SnapPosition{
@@ -388,8 +439,27 @@ func (s *Service) taskSnapWindow(name, position string) error {
 	if !ok {
 		return coreerr.E("window.taskSnapWindow", "unknown snap position: "+position, nil)
 	}
-	screenWidth, screenHeight := s.primaryScreenSize()
-	return s.manager.SnapWindow(name, pos, screenWidth, screenHeight)
+	originX, originY, screenWidth, screenHeight := s.primaryScreenArea()
+	return s.manager.SnapWindow(name, pos, screenWidth, screenHeight, originX, originY)
+}
+
+var workflowLayoutMap = map[string]WorkflowLayout{
+	"coding":       WorkflowCoding,
+	"debugging":    WorkflowDebugging,
+	"presenting":   WorkflowPresenting,
+	"side-by-side": WorkflowSideBySide,
+}
+
+func (s *Service) taskApplyWorkflow(workflow string, names []string) error {
+	layout, ok := workflowLayoutMap[workflow]
+	if !ok {
+		return fmt.Errorf("unknown workflow layout: %s", workflow)
+	}
+	if len(names) == 0 {
+		names = s.manager.List()
+	}
+	originX, originY, screenWidth, screenHeight := s.primaryScreenArea()
+	return s.manager.ApplyWorkflow(layout, names, screenWidth, screenHeight, originX, originY)
 }
 
 // Manager returns the underlying window Manager for direct access.

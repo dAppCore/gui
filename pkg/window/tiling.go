@@ -44,6 +44,16 @@ const (
 	SnapCenter
 )
 
+var snapPositionNames = map[SnapPosition]string{
+	SnapLeft: "left", SnapRight: "right",
+	SnapTop: "top", SnapBottom: "bottom",
+	SnapTopLeft: "top-left", SnapTopRight: "top-right",
+	SnapBottomLeft: "bottom-left", SnapBottomRight: "bottom-right",
+	SnapCenter: "center",
+}
+
+func (p SnapPosition) String() string { return snapPositionNames[p] }
+
 // WorkflowLayout is a predefined arrangement for common tasks.
 type WorkflowLayout int
 
@@ -61,8 +71,26 @@ var workflowNames = map[WorkflowLayout]string{
 
 func (w WorkflowLayout) String() string { return workflowNames[w] }
 
+func layoutOrigin(origin []int) (int, int) {
+	if len(origin) == 0 {
+		return 0, 0
+	}
+	if len(origin) == 1 {
+		return origin[0], 0
+	}
+	return origin[0], origin[1]
+}
+
+func (m *Manager) captureState(pw PlatformWindow) {
+	if m.state == nil || pw == nil {
+		return
+	}
+	m.state.CaptureState(pw)
+}
+
 // TileWindows arranges the named windows in the given mode across the screen area.
-func (m *Manager) TileWindows(mode TileMode, names []string, screenW, screenH int) error {
+func (m *Manager) TileWindows(mode TileMode, names []string, screenW, screenH int, origin ...int) error {
+	originX, originY := layoutOrigin(origin)
 	windows := make([]PlatformWindow, 0, len(names))
 	for _, name := range names {
 		pw, ok := m.Get(name)
@@ -81,8 +109,9 @@ func (m *Manager) TileWindows(mode TileMode, names []string, screenW, screenH in
 	case TileModeLeftRight:
 		w := screenW / len(windows)
 		for i, pw := range windows {
-			pw.SetPosition(i*w, 0)
+			pw.SetPosition(originX+i*w, originY)
 			pw.SetSize(w, screenH)
+			m.captureState(pw)
 		}
 	case TileModeGrid:
 		cols := 2
@@ -95,55 +124,65 @@ func (m *Manager) TileWindows(mode TileMode, names []string, screenW, screenH in
 			col := i % cols
 			rows := (len(windows) + cols - 1) / cols
 			cellH := screenH / rows
-			pw.SetPosition(col*cellW, row*cellH)
+			pw.SetPosition(originX+col*cellW, originY+row*cellH)
 			pw.SetSize(cellW, cellH)
+			m.captureState(pw)
 		}
 	case TileModeLeftHalf:
 		for _, pw := range windows {
-			pw.SetPosition(0, 0)
+			pw.SetPosition(originX, originY)
 			pw.SetSize(halfW, screenH)
+			m.captureState(pw)
 		}
 	case TileModeRightHalf:
 		for _, pw := range windows {
-			pw.SetPosition(halfW, 0)
+			pw.SetPosition(originX+halfW, originY)
 			pw.SetSize(halfW, screenH)
+			m.captureState(pw)
 		}
 	case TileModeTopHalf:
 		for _, pw := range windows {
-			pw.SetPosition(0, 0)
+			pw.SetPosition(originX, originY)
 			pw.SetSize(screenW, halfH)
+			m.captureState(pw)
 		}
 	case TileModeBottomHalf:
 		for _, pw := range windows {
-			pw.SetPosition(0, halfH)
+			pw.SetPosition(originX, originY+halfH)
 			pw.SetSize(screenW, halfH)
+			m.captureState(pw)
 		}
 	case TileModeTopLeft:
 		for _, pw := range windows {
-			pw.SetPosition(0, 0)
+			pw.SetPosition(originX, originY)
 			pw.SetSize(halfW, halfH)
+			m.captureState(pw)
 		}
 	case TileModeTopRight:
 		for _, pw := range windows {
-			pw.SetPosition(halfW, 0)
+			pw.SetPosition(originX+halfW, originY)
 			pw.SetSize(halfW, halfH)
+			m.captureState(pw)
 		}
 	case TileModeBottomLeft:
 		for _, pw := range windows {
-			pw.SetPosition(0, halfH)
+			pw.SetPosition(originX, originY+halfH)
 			pw.SetSize(halfW, halfH)
+			m.captureState(pw)
 		}
 	case TileModeBottomRight:
 		for _, pw := range windows {
-			pw.SetPosition(halfW, halfH)
+			pw.SetPosition(originX+halfW, originY+halfH)
 			pw.SetSize(halfW, halfH)
+			m.captureState(pw)
 		}
 	}
 	return nil
 }
 
 // SnapWindow snaps a window to a screen edge/corner/centre.
-func (m *Manager) SnapWindow(name string, pos SnapPosition, screenW, screenH int) error {
+func (m *Manager) SnapWindow(name string, pos SnapPosition, screenW, screenH int, origin ...int) error {
+	originX, originY := layoutOrigin(origin)
 	pw, ok := m.Get(name)
 	if !ok {
 		return coreerr.E("window.Manager.SnapWindow", "window not found: "+name, nil)
@@ -153,50 +192,54 @@ func (m *Manager) SnapWindow(name string, pos SnapPosition, screenW, screenH int
 
 	switch pos {
 	case SnapLeft:
-		pw.SetPosition(0, 0)
+		pw.SetPosition(originX, originY)
 		pw.SetSize(halfW, screenH)
 	case SnapRight:
-		pw.SetPosition(halfW, 0)
+		pw.SetPosition(originX+halfW, originY)
 		pw.SetSize(halfW, screenH)
 	case SnapTop:
-		pw.SetPosition(0, 0)
+		pw.SetPosition(originX, originY)
 		pw.SetSize(screenW, halfH)
 	case SnapBottom:
-		pw.SetPosition(0, halfH)
+		pw.SetPosition(originX, originY+halfH)
 		pw.SetSize(screenW, halfH)
 	case SnapTopLeft:
-		pw.SetPosition(0, 0)
+		pw.SetPosition(originX, originY)
 		pw.SetSize(halfW, halfH)
 	case SnapTopRight:
-		pw.SetPosition(halfW, 0)
+		pw.SetPosition(originX+halfW, originY)
 		pw.SetSize(halfW, halfH)
 	case SnapBottomLeft:
-		pw.SetPosition(0, halfH)
+		pw.SetPosition(originX, originY+halfH)
 		pw.SetSize(halfW, halfH)
 	case SnapBottomRight:
-		pw.SetPosition(halfW, halfH)
+		pw.SetPosition(originX+halfW, originY+halfH)
 		pw.SetSize(halfW, halfH)
 	case SnapCenter:
 		cw, ch := pw.Size()
-		pw.SetPosition((screenW-cw)/2, (screenH-ch)/2)
+		pw.SetPosition(originX+(screenW-cw)/2, originY+(screenH-ch)/2)
 	}
+	m.captureState(pw)
 	return nil
 }
 
 // StackWindows cascades windows with an offset.
-func (m *Manager) StackWindows(names []string, offsetX, offsetY int) error {
+func (m *Manager) StackWindows(names []string, offsetX, offsetY int, origin ...int) error {
+	originX, originY := layoutOrigin(origin)
 	for i, name := range names {
 		pw, ok := m.Get(name)
 		if !ok {
 			return coreerr.E("window.Manager.StackWindows", "window not found: "+name, nil)
 		}
-		pw.SetPosition(i*offsetX, i*offsetY)
+		pw.SetPosition(originX+i*offsetX, originY+i*offsetY)
+		m.captureState(pw)
 	}
 	return nil
 }
 
 // ApplyWorkflow arranges windows in a predefined workflow layout.
-func (m *Manager) ApplyWorkflow(workflow WorkflowLayout, names []string, screenW, screenH int) error {
+func (m *Manager) ApplyWorkflow(workflow WorkflowLayout, names []string, screenW, screenH int, origin ...int) error {
+	originX, originY := layoutOrigin(origin)
 	if len(names) == 0 {
 		return coreerr.E("window.Manager.ApplyWorkflow", "no windows for workflow", nil)
 	}
@@ -206,36 +249,41 @@ func (m *Manager) ApplyWorkflow(workflow WorkflowLayout, names []string, screenW
 		// 70/30 split — main editor + terminal
 		mainW := screenW * 70 / 100
 		if pw, ok := m.Get(names[0]); ok {
-			pw.SetPosition(0, 0)
+			pw.SetPosition(originX, originY)
 			pw.SetSize(mainW, screenH)
+			m.captureState(pw)
 		}
 		if len(names) > 1 {
 			if pw, ok := m.Get(names[1]); ok {
-				pw.SetPosition(mainW, 0)
+				pw.SetPosition(originX+mainW, originY)
 				pw.SetSize(screenW-mainW, screenH)
+				m.captureState(pw)
 			}
 		}
 	case WorkflowDebugging:
 		// 60/40 split
 		mainW := screenW * 60 / 100
 		if pw, ok := m.Get(names[0]); ok {
-			pw.SetPosition(0, 0)
+			pw.SetPosition(originX, originY)
 			pw.SetSize(mainW, screenH)
+			m.captureState(pw)
 		}
 		if len(names) > 1 {
 			if pw, ok := m.Get(names[1]); ok {
-				pw.SetPosition(mainW, 0)
+				pw.SetPosition(originX+mainW, originY)
 				pw.SetSize(screenW-mainW, screenH)
+				m.captureState(pw)
 			}
 		}
 	case WorkflowPresenting:
 		// Maximise first window
 		if pw, ok := m.Get(names[0]); ok {
-			pw.SetPosition(0, 0)
+			pw.SetPosition(originX, originY)
 			pw.SetSize(screenW, screenH)
+			m.captureState(pw)
 		}
 	case WorkflowSideBySide:
-		return m.TileWindows(TileModeLeftRight, names, screenW, screenH)
+		return m.TileWindows(TileModeLeftRight, names, screenW, screenH, originX, originY)
 	}
 	return nil
 }

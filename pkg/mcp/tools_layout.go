@@ -136,6 +136,43 @@ func (s *Subsystem) layoutSnap(_ context.Context, _ *mcp.CallToolRequest, input 
 	return nil, LayoutSnapOutput{Success: true}, nil
 }
 
+// --- layout_stack ---
+
+type LayoutStackInput struct {
+	Windows []string `json:"windows,omitempty"`
+	OffsetX int      `json:"offsetX"`
+	OffsetY int      `json:"offsetY"`
+}
+type LayoutStackOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) layoutStack(_ context.Context, _ *mcp.CallToolRequest, input LayoutStackInput) (*mcp.CallToolResult, LayoutStackOutput, error) {
+	_, _, err := s.core.PERFORM(window.TaskStackWindows{Windows: input.Windows, OffsetX: input.OffsetX, OffsetY: input.OffsetY})
+	if err != nil {
+		return nil, LayoutStackOutput{}, err
+	}
+	return nil, LayoutStackOutput{Success: true}, nil
+}
+
+// --- layout_workflow ---
+
+type LayoutWorkflowInput struct {
+	Workflow string   `json:"workflow"`
+	Windows  []string `json:"windows,omitempty"`
+}
+type LayoutWorkflowOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) layoutWorkflow(_ context.Context, _ *mcp.CallToolRequest, input LayoutWorkflowInput) (*mcp.CallToolResult, LayoutWorkflowOutput, error) {
+	_, _, err := s.core.PERFORM(window.TaskApplyWorkflow{Workflow: input.Workflow, Windows: input.Windows})
+	if err != nil {
+		return nil, LayoutWorkflowOutput{}, err
+	}
+	return nil, LayoutWorkflowOutput{Success: true}, nil
+}
+
 // --- Registration ---
 
 func (s *Subsystem) registerLayoutTools(server *mcp.Server) {
@@ -146,4 +183,6 @@ func (s *Subsystem) registerLayoutTools(server *mcp.Server) {
 	mcp.AddTool(server, &mcp.Tool{Name: "layout_get", Description: "Get a specific layout by name"}, s.layoutGet)
 	mcp.AddTool(server, &mcp.Tool{Name: "layout_tile", Description: "Tile windows in a grid arrangement"}, s.layoutTile)
 	mcp.AddTool(server, &mcp.Tool{Name: "layout_snap", Description: "Snap a window to a screen edge or corner"}, s.layoutSnap)
+	mcp.AddTool(server, &mcp.Tool{Name: "layout_stack", Description: "Stack windows in a cascade pattern"}, s.layoutStack)
+	mcp.AddTool(server, &mcp.Tool{Name: "layout_workflow", Description: "Apply a preset workflow layout"}, s.layoutWorkflow)
 }
