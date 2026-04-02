@@ -950,6 +950,106 @@ func TestHandleWSMessage_Extended_Good(t *testing.T) {
 		assert.Equal(t, "side-by-side", suggestion.Mode)
 	})
 
+	t.Run("window list", func(t *testing.T) {
+		result, handled, err := svc.handleWSMessage(WSMessage{Action: "window:list"})
+		require.NoError(t, err)
+		assert.True(t, handled)
+		windows, ok := result.([]window.WindowInfo)
+		require.True(t, ok)
+		assert.GreaterOrEqual(t, len(windows), 2)
+	})
+
+	t.Run("window get", func(t *testing.T) {
+		result, handled, err := svc.handleWSMessage(WSMessage{
+			Action: "window:get",
+			Data:   map[string]any{"name": "editor"},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+		info, ok := result.(*window.WindowInfo)
+		require.True(t, ok)
+		require.NotNil(t, info)
+		assert.Equal(t, "editor", info.Name)
+	})
+
+	t.Run("window focused", func(t *testing.T) {
+		require.NoError(t, svc.FocusWindow("assistant"))
+		result, handled, err := svc.handleWSMessage(WSMessage{Action: "window:focused"})
+		require.NoError(t, err)
+		assert.True(t, handled)
+		assert.Equal(t, "assistant", result)
+	})
+
+	t.Run("window title get", func(t *testing.T) {
+		result, handled, err := svc.handleWSMessage(WSMessage{
+			Action: "window:title-get",
+			Data:   map[string]any{"name": "editor"},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+		assert.Equal(t, "Editor", result)
+	})
+
+	t.Run("window position and bounds", func(t *testing.T) {
+		_, handled, err := svc.handleWSMessage(WSMessage{
+			Action: "window:position",
+			Data: map[string]any{
+				"name": "assistant",
+				"x":    float64(40),
+				"y":    float64(50),
+			},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+
+		_, handled, err = svc.handleWSMessage(WSMessage{
+			Action: "window:bounds",
+			Data: map[string]any{
+				"name":   "assistant",
+				"x":      float64(60),
+				"y":      float64(70),
+				"width":  float64(800),
+				"height": float64(640),
+			},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+
+		info, err := svc.GetWindowInfo("assistant")
+		require.NoError(t, err)
+		require.NotNil(t, info)
+		assert.Equal(t, 60, info.X)
+		assert.Equal(t, 70, info.Y)
+		assert.Equal(t, 800, info.Width)
+		assert.Equal(t, 640, info.Height)
+	})
+
+	t.Run("window create and close", func(t *testing.T) {
+		result, handled, err := svc.handleWSMessage(WSMessage{
+			Action: "window:create",
+			Data: map[string]any{
+				"name":   "ws-new",
+				"title":  "WS New",
+				"url":    "/ws-new",
+				"width":  float64(500),
+				"height": float64(350),
+			},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+		created, ok := result.(*window.WindowInfo)
+		require.True(t, ok)
+		require.NotNil(t, created)
+		assert.Equal(t, "ws-new", created.Name)
+
+		_, handled, err = svc.handleWSMessage(WSMessage{
+			Action: "window:close",
+			Data:   map[string]any{"name": "ws-new"},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+	})
+
 	t.Run("layout stack", func(t *testing.T) {
 		_, handled, err := svc.handleWSMessage(WSMessage{
 			Action: "layout:stack",

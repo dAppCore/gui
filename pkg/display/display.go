@@ -281,6 +281,147 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 	case "browser:open-file":
 		path, _ := msg.Data["path"].(string)
 		result, handled, err = s.Core().PERFORM(browser.TaskOpenFile{Path: path})
+	case "window:list":
+		result, handled, err = s.Core().QUERY(window.QueryWindowList{})
+	case "window:get":
+		name, e := wsRequire(msg.Data, "name")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = s.Core().QUERY(window.QueryWindowByName{Name: name})
+	case "window:focused":
+		result, handled, err = s.GetFocusedWindow(), true, nil
+	case "window:create":
+		var opts CreateWindowOptions
+		encoded, _ := json.Marshal(msg.Data)
+		if err := json.Unmarshal(encoded, &opts); err != nil {
+			return nil, false, fmt.Errorf("ws: invalid window create options: %w", err)
+		}
+		info, createErr := s.CreateWindow(opts)
+		if createErr != nil {
+			return nil, false, createErr
+		}
+		result, handled, err = info, true, nil
+	case "window:close":
+		name, e := wsRequire(msg.Data, "name")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = nil, true, s.CloseWindow(name)
+	case "window:position":
+		name, e := wsRequire(msg.Data, "name")
+		if e != nil {
+			return nil, false, e
+		}
+		x, _ := msg.Data["x"].(float64)
+		y, _ := msg.Data["y"].(float64)
+		result, handled, err = nil, true, s.SetWindowPosition(name, int(x), int(y))
+	case "window:size":
+		name, e := wsRequire(msg.Data, "name")
+		if e != nil {
+			return nil, false, e
+		}
+		width, _ := msg.Data["width"].(float64)
+		height, _ := msg.Data["height"].(float64)
+		result, handled, err = nil, true, s.SetWindowSize(name, int(width), int(height))
+	case "window:bounds":
+		name, e := wsRequire(msg.Data, "name")
+		if e != nil {
+			return nil, false, e
+		}
+		x, _ := msg.Data["x"].(float64)
+		y, _ := msg.Data["y"].(float64)
+		width, _ := msg.Data["width"].(float64)
+		height, _ := msg.Data["height"].(float64)
+		result, handled, err = nil, true, s.SetWindowBounds(name, int(x), int(y), int(width), int(height))
+	case "window:maximize":
+		name, e := wsRequire(msg.Data, "name")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = nil, true, s.MaximizeWindow(name)
+	case "window:minimize":
+		name, e := wsRequire(msg.Data, "name")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = nil, true, s.MinimizeWindow(name)
+	case "window:restore":
+		name, e := wsRequire(msg.Data, "name")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = nil, true, s.RestoreWindow(name)
+	case "window:focus":
+		name, e := wsRequire(msg.Data, "name")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = nil, true, s.FocusWindow(name)
+	case "focus:set":
+		name, e := wsRequire(msg.Data, "name")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = nil, true, s.FocusSet(name)
+	case "window:visibility":
+		name, e := wsRequire(msg.Data, "name")
+		if e != nil {
+			return nil, false, e
+		}
+		visible, _ := msg.Data["visible"].(bool)
+		result, handled, err = nil, true, s.SetWindowVisibility(name, visible)
+	case "window:title-set":
+		name, e := wsRequire(msg.Data, "name")
+		if e != nil {
+			return nil, false, e
+		}
+		title, e := wsRequire(msg.Data, "title")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = nil, true, s.SetWindowTitle(name, title)
+	case "window:title-get":
+		name, e := wsRequire(msg.Data, "name")
+		if e != nil {
+			return nil, false, e
+		}
+		title, titleErr := s.GetWindowTitle(name)
+		if titleErr != nil {
+			return nil, false, titleErr
+		}
+		result, handled, err = title, true, nil
+	case "window:always-on-top":
+		name, e := wsRequire(msg.Data, "name")
+		if e != nil {
+			return nil, false, e
+		}
+		alwaysOnTop, _ := msg.Data["alwaysOnTop"].(bool)
+		result, handled, err = nil, true, s.SetWindowAlwaysOnTop(name, alwaysOnTop)
+	case "window:background-colour":
+		name, e := wsRequire(msg.Data, "name")
+		if e != nil {
+			return nil, false, e
+		}
+		red, _ := msg.Data["red"].(float64)
+		green, _ := msg.Data["green"].(float64)
+		blue, _ := msg.Data["blue"].(float64)
+		alpha, _ := msg.Data["alpha"].(float64)
+		result, handled, err = nil, true, s.SetWindowBackgroundColour(name, uint8(red), uint8(green), uint8(blue), uint8(alpha))
+	case "window:opacity":
+		name, e := wsRequire(msg.Data, "name")
+		if e != nil {
+			return nil, false, e
+		}
+		opacity, _ := msg.Data["opacity"].(float64)
+		result, handled, err = nil, true, s.SetWindowOpacity(name, float32(opacity))
+	case "window:fullscreen":
+		name, e := wsRequire(msg.Data, "name")
+		if e != nil {
+			return nil, false, e
+		}
+		fullscreen, _ := msg.Data["fullscreen"].(bool)
+		result, handled, err = nil, true, s.SetWindowFullscreen(name, fullscreen)
 	case "dock:show":
 		result, handled, err = s.Core().PERFORM(dock.TaskShowIcon{})
 	case "dock:hide":
