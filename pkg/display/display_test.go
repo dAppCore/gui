@@ -426,6 +426,8 @@ func TestGetWindowInfo_Good(t *testing.T) {
 	assert.Equal(t, 200, info.Y)
 	assert.Equal(t, 800, info.Width)
 	assert.Equal(t, 600, info.Height)
+	assert.True(t, info.Visible)
+	assert.False(t, info.Minimized)
 }
 
 func TestGetWindowInfo_Bad(t *testing.T) {
@@ -559,9 +561,15 @@ func TestSetWindowVisibility_Good(t *testing.T) {
 
 	err := svc.SetWindowVisibility("vis-win", false)
 	assert.NoError(t, err)
+	info, err := svc.GetWindowInfo("vis-win")
+	require.NoError(t, err)
+	assert.False(t, info.Visible)
 
 	err = svc.SetWindowVisibility("vis-win", true)
 	assert.NoError(t, err)
+	info, err = svc.GetWindowInfo("vis-win")
+	require.NoError(t, err)
+	assert.True(t, info.Visible)
 }
 
 func TestSetWindowAlwaysOnTop_Good(t *testing.T) {

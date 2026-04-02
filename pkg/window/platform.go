@@ -33,6 +33,8 @@ type PlatformWindow interface {
 	// Queries
 	Position() (int, int)
 	Size() (int, int)
+	IsVisible() bool
+	IsMinimised() bool
 	IsMaximised() bool
 	IsFocused() bool
 

@@ -119,7 +119,14 @@ func (s *Service) queryWindowByName(name string) *WindowInfo {
 	x, y := pw.Position()
 	w, h := pw.Size()
 	return &WindowInfo{
-		Name: name, Title: pw.Title(), X: x, Y: y, Width: w, Height: h,
+		Name:      name,
+		Title:     pw.Title(),
+		X:         x,
+		Y:         y,
+		Width:     w,
+		Height:    h,
+		Visible:   pw.IsVisible(),
+		Minimized: pw.IsMinimised(),
 		Maximized: pw.IsMaximised(),
 		Focused:   pw.IsFocused(),
 	}
@@ -195,7 +202,18 @@ func (s *Service) taskOpenWindow(t TaskOpenWindow) (any, bool, error) {
 	}
 	x, y := pw.Position()
 	w, h := pw.Size()
-	info := WindowInfo{Name: pw.Name(), Title: pw.Title(), X: x, Y: y, Width: w, Height: h}
+	info := WindowInfo{
+		Name:      pw.Name(),
+		Title:     pw.Title(),
+		X:         x,
+		Y:         y,
+		Width:     w,
+		Height:    h,
+		Visible:   pw.IsVisible(),
+		Minimized: pw.IsMinimised(),
+		Maximized: pw.IsMaximised(),
+		Focused:   pw.IsFocused(),
+	}
 
 	// Attach platform event listeners that convert to IPC actions
 	s.trackWindow(pw)

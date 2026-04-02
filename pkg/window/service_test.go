@@ -95,6 +95,8 @@ func TestQueryWindowByName_Good(t *testing.T) {
 	assert.True(t, handled)
 	info := result.(*WindowInfo)
 	assert.Equal(t, "test", info.Name)
+	assert.True(t, info.Visible)
+	assert.False(t, info.Minimized)
 }
 
 func TestQueryWindowByName_Bad(t *testing.T) {
@@ -151,6 +153,28 @@ func TestTaskSetSize_Good(t *testing.T) {
 	info := result.(*WindowInfo)
 	assert.Equal(t, 800, info.Width)
 	assert.Equal(t, 600, info.Height)
+}
+
+func TestTaskMinimiseAndVisibility_Good(t *testing.T) {
+	_, c := newTestWindowService(t)
+	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("test")}})
+
+	_, handled, err := c.PERFORM(TaskMinimise{Name: "test"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	result, _, _ := c.QUERY(QueryWindowByName{Name: "test"})
+	info := result.(*WindowInfo)
+	assert.True(t, info.Minimized)
+	assert.False(t, info.Visible)
+
+	_, handled, err = c.PERFORM(TaskSetVisibility{Name: "test", Visible: true})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	result, _, _ = c.QUERY(QueryWindowByName{Name: "test"})
+	info = result.(*WindowInfo)
+	assert.True(t, info.Visible)
 }
 
 func TestTaskSetAlwaysOnTop_Good(t *testing.T) {

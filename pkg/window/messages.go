@@ -8,6 +8,8 @@ type WindowInfo struct {
 	Y         int    `json:"y"`
 	Width     int    `json:"width"`
 	Height    int    `json:"height"`
+	Visible   bool   `json:"visible"`
+	Minimized bool   `json:"minimized"`
 	Maximized bool   `json:"maximized"`
 	Focused   bool   `json:"focused"`
 }

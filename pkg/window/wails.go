@@ -62,6 +62,8 @@ func (ww *wailsWindow) Name() string              { return ww.w.Name() }
 func (ww *wailsWindow) Title() string             { return ww.title }
 func (ww *wailsWindow) Position() (int, int)      { return ww.w.Position() }
 func (ww *wailsWindow) Size() (int, int)          { return ww.w.Size() }
+func (ww *wailsWindow) IsVisible() bool           { return ww.w.IsVisible() }
+func (ww *wailsWindow) IsMinimised() bool         { return ww.w.IsMinimised() }
 func (ww *wailsWindow) IsMaximised() bool         { return ww.w.IsMaximised() }
 func (ww *wailsWindow) IsFocused() bool           { return ww.w.IsFocused() }
 func (ww *wailsWindow) SetTitle(title string)     { ww.title = title; ww.w.SetTitle(title) }

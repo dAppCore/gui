@@ -33,7 +33,8 @@ func (m *mockPlatform) GetWindows() []PlatformWindow {
 type mockWindow struct {
 	name, title, url     string
 	width, height, x, y  int
-	maximised, focused   bool
+	maximised, minimised bool
+	focused              bool
 	visible, alwaysOnTop bool
 	backgroundColor      [4]uint8
 	devtoolsOpen         bool
@@ -46,6 +47,8 @@ func (w *mockWindow) Name() string                         { return w.name }
 func (w *mockWindow) Title() string                        { return w.title }
 func (w *mockWindow) Position() (int, int)                 { return w.x, w.y }
 func (w *mockWindow) Size() (int, int)                     { return w.width, w.height }
+func (w *mockWindow) IsVisible() bool                      { return w.visible }
+func (w *mockWindow) IsMinimised() bool                    { return w.minimised }
 func (w *mockWindow) IsMaximised() bool                    { return w.maximised }
 func (w *mockWindow) IsFocused() bool                      { return w.focused }
 func (w *mockWindow) SetTitle(title string)                { w.title = title }
@@ -54,9 +57,9 @@ func (w *mockWindow) SetSize(width, height int)            { w.width = width; w.
 func (w *mockWindow) SetBackgroundColour(r, g, b, a uint8) { w.backgroundColor = [4]uint8{r, g, b, a} }
 func (w *mockWindow) SetVisibility(visible bool)           { w.visible = visible }
 func (w *mockWindow) SetAlwaysOnTop(alwaysOnTop bool)      { w.alwaysOnTop = alwaysOnTop }
-func (w *mockWindow) Maximise()                            { w.maximised = true }
-func (w *mockWindow) Restore()                             { w.maximised = false }
-func (w *mockWindow) Minimise()                            {}
+func (w *mockWindow) Maximise()                            { w.maximised = true; w.minimised = false; w.visible = true }
+func (w *mockWindow) Restore()                             { w.maximised = false; w.minimised = false; w.visible = true }
+func (w *mockWindow) Minimise()                            { w.minimised = true; w.maximised = false; w.visible = false }
 func (w *mockWindow) Focus()                               { w.focused = true }
 func (w *mockWindow) Close()                               { w.closed = true }
 func (w *mockWindow) Show()                                { w.visible = true }

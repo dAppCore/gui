@@ -89,6 +89,7 @@ type WebviewWindow struct {
 	title         string
 	x, y          int
 	width, height int
+	minimised     bool
 	maximised     bool
 	focused       bool
 	visible       bool
@@ -116,6 +117,8 @@ func newWebviewWindow(opts WebviewWindowOptions) *WebviewWindow {
 func (w *WebviewWindow) Name() string          { return w.opts.Name }
 func (w *WebviewWindow) Position() (int, int)  { return w.x, w.y }
 func (w *WebviewWindow) Size() (int, int)      { return w.width, w.height }
+func (w *WebviewWindow) IsVisible() bool       { return w.visible }
+func (w *WebviewWindow) IsMinimised() bool     { return w.minimised }
 func (w *WebviewWindow) IsMaximised() bool     { return w.maximised }
 func (w *WebviewWindow) IsFocused() bool       { return w.focused }
 func (w *WebviewWindow) SetTitle(title string) { w.title = title }
@@ -126,9 +129,9 @@ func (w *WebviewWindow) SetSize(width, height int) {
 func (w *WebviewWindow) SetBackgroundColour(colour RGBA) {}
 func (w *WebviewWindow) SetVisibility(visible bool)      { w.visible = visible }
 func (w *WebviewWindow) SetAlwaysOnTop(alwaysOnTop bool) { w.alwaysOnTop = alwaysOnTop }
-func (w *WebviewWindow) Maximise()                       { w.maximised = true }
-func (w *WebviewWindow) Restore()                        { w.maximised = false }
-func (w *WebviewWindow) Minimise()                       {}
+func (w *WebviewWindow) Maximise()                       { w.maximised = true; w.minimised = false; w.visible = true }
+func (w *WebviewWindow) Restore()                        { w.maximised = false; w.minimised = false; w.visible = true }
+func (w *WebviewWindow) Minimise()                       { w.minimised = true; w.maximised = false; w.visible = false }
 func (w *WebviewWindow) Focus()                          { w.focused = true }
 func (w *WebviewWindow) Close()                          {}
 func (w *WebviewWindow) Show()                           { w.visible = true }
