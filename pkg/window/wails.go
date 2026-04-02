@@ -45,7 +45,7 @@ func (wp *WailsPlatform) GetWindows() []PlatformWindow {
 	out := make([]PlatformWindow, 0, len(all))
 	for _, w := range all {
 		if wv, ok := w.(*application.WebviewWindow); ok {
-			out = append(out, &wailsWindow{w: wv})
+			out = append(out, &wailsWindow{w: wv, title: wv.Name()})
 		}
 	}
 	return out
@@ -58,8 +58,16 @@ type wailsWindow struct {
 	title string
 }
 
-func (ww *wailsWindow) Name() string              { return ww.w.Name() }
-func (ww *wailsWindow) Title() string             { return ww.title }
+func (ww *wailsWindow) Name() string { return ww.w.Name() }
+func (ww *wailsWindow) Title() string {
+	if ww.title != "" {
+		return ww.title
+	}
+	if ww.w != nil {
+		return ww.w.Name()
+	}
+	return ""
+}
 func (ww *wailsWindow) Position() (int, int)      { return ww.w.Position() }
 func (ww *wailsWindow) Size() (int, int)          { return ww.w.Size() }
 func (ww *wailsWindow) IsVisible() bool           { return ww.w.IsVisible() }

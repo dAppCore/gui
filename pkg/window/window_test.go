@@ -178,6 +178,18 @@ func TestWailsWindow_DevToolsToggle_Good(t *testing.T) {
 	assert.False(t, ww.w.DevToolsOpen())
 }
 
+func TestWailsPlatform_GetWindows_TitleFallback_Good(t *testing.T) {
+	app := application.NewApp()
+	platform := NewWailsPlatform(app)
+
+	pw := platform.CreateWindow(PlatformWindowOptions{Name: "fallback"})
+	require.NotNil(t, pw)
+
+	windows := platform.GetWindows()
+	require.Len(t, windows, 1)
+	assert.Equal(t, "fallback", windows[0].Title())
+}
+
 // --- StateManager Tests ---
 
 // newTestStateManager creates a clean StateManager with a temp dir for testing.
