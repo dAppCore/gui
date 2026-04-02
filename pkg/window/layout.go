@@ -11,6 +11,7 @@ import (
 )
 
 // Layout is a named window arrangement.
+// Use: layout := window.Layout{Name: "coding"}
 type Layout struct {
 	Name      string                 `json:"name"`
 	Windows   map[string]WindowState `json:"windows"`
@@ -19,6 +20,7 @@ type Layout struct {
 }
 
 // LayoutInfo is a summary of a layout.
+// Use: info := window.LayoutInfo{Name: "coding", WindowCount: 2}
 type LayoutInfo struct {
 	Name        string `json:"name"`
 	WindowCount int    `json:"windowCount"`

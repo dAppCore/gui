@@ -8,6 +8,7 @@ import (
 )
 
 // Window is CoreGUI's own window descriptor — NOT a Wails type alias.
+// Use: spec := &window.Window{Name: "editor", URL: "/editor"}
 type Window struct {
 	Name                string
 	Title               string
@@ -38,6 +39,7 @@ func (w *Window) ToPlatformOptions() PlatformWindowOptions {
 }
 
 // Manager manages window lifecycle through a Platform backend.
+// Use: mgr := window.NewManager(platform)
 type Manager struct {
 	platform      Platform
 	state         *StateManager

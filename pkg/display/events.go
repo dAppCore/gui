@@ -13,6 +13,7 @@ import (
 )
 
 // EventType represents the type of event.
+// Use: eventType := display.EventWindowFocus
 type EventType string
 
 const (
@@ -44,6 +45,7 @@ const (
 )
 
 // Event represents a display event sent to subscribers.
+// Use: evt := display.Event{Type: display.EventWindowFocus, Window: "editor"}
 type Event struct {
 	Type      EventType      `json:"type"`
 	Timestamp int64          `json:"timestamp"`
@@ -52,12 +54,14 @@ type Event struct {
 }
 
 // Subscription represents a client subscription to events.
+// Use: sub := display.Subscription{ID: "sub-1", EventTypes: []display.EventType{display.EventWindowFocus}}
 type Subscription struct {
 	ID         string      `json:"id"`
 	EventTypes []EventType `json:"eventTypes"`
 }
 
 // EventServerInfo summarises the live WebSocket event server state.
+// Use: info := display.EventServerInfo{ConnectedClients: 1, Subscriptions: 3}
 type EventServerInfo struct {
 	ConnectedClients int `json:"connectedClients"`
 	Subscriptions    int `json:"subscriptions"`
@@ -65,6 +69,7 @@ type EventServerInfo struct {
 }
 
 // WSEventManager manages WebSocket connections and event subscriptions.
+// Use: events := display.NewWSEventManager()
 type WSEventManager struct {
 	upgrader    websocket.Upgrader
 	clients     map[*websocket.Conn]*clientState
@@ -74,6 +79,7 @@ type WSEventManager struct {
 }
 
 // clientState tracks a client's subscriptions.
+// Use: state := &clientState{subscriptions: map[string]*Subscription{}}
 type clientState struct {
 	subscriptions map[string]*Subscription
 	mu            sync.RWMutex

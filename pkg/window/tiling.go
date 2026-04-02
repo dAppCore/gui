@@ -4,6 +4,7 @@ package window
 import "fmt"
 
 // TileMode defines how windows are arranged.
+// Use: mode := window.TileModeLeftRight
 type TileMode int
 
 const (
@@ -27,9 +28,12 @@ var tileModeNames = map[TileMode]string{
 	TileModeLeftRight: "left-right", TileModeGrid: "grid",
 }
 
+// String returns the canonical layout name for the tile mode.
+// Use: label := window.TileModeGrid.String()
 func (m TileMode) String() string { return tileModeNames[m] }
 
 // SnapPosition defines where a window snaps to.
+// Use: pos := window.SnapRight
 type SnapPosition int
 
 const (
@@ -45,6 +49,7 @@ const (
 )
 
 // WorkflowLayout is a predefined arrangement for common tasks.
+// Use: workflow := window.WorkflowCoding
 type WorkflowLayout int
 
 const (
@@ -59,9 +64,12 @@ var workflowNames = map[WorkflowLayout]string{
 	WorkflowPresenting: "presenting", WorkflowSideBySide: "side-by-side",
 }
 
+// String returns the canonical workflow name.
+// Use: label := window.WorkflowCoding.String()
 func (w WorkflowLayout) String() string { return workflowNames[w] }
 
 // ParseWorkflowLayout converts a workflow name into its enum value.
+// Use: workflow, ok := window.ParseWorkflowLayout("coding")
 func ParseWorkflowLayout(name string) (WorkflowLayout, bool) {
 	for workflow, workflowName := range workflowNames {
 		if workflowName == name {
