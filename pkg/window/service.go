@@ -1,3 +1,4 @@
+// pkg/window/service.go
 package window
 
 import (
@@ -13,6 +14,7 @@ import (
 type Options struct{}
 
 // Service is a core.Service managing window lifecycle via IPC.
+// Use: core.WithService(window.Register(window.NewMockPlatform()))
 // It embeds ServiceRuntime for Core access and composes Manager for platform operations.
 type Service struct {
 	*core.ServiceRuntime[Options]

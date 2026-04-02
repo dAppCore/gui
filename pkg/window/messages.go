@@ -1,3 +1,4 @@
+// pkg/window/messages.go
 package window
 
 // WindowInfo contains information about a window.

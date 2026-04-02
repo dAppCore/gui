@@ -49,6 +49,7 @@ type Manager struct {
 }
 
 // NewManager creates a window Manager with the given platform backend.
+// Use: mgr := window.NewManager(platform)
 func NewManager(platform Platform) *Manager {
 	return &Manager{
 		platform: platform,
@@ -59,7 +60,7 @@ func NewManager(platform Platform) *Manager {
 }
 
 // NewManagerWithDir creates a window Manager with a custom config directory for state/layout persistence.
-// Useful for testing or when the default config directory is not appropriate.
+// Use: mgr := window.NewManagerWithDir(platform, t.TempDir())
 func NewManagerWithDir(platform Platform, configDir string) *Manager {
 	return &Manager{
 		platform: platform,
@@ -84,6 +85,7 @@ func (m *Manager) SetDefaultHeight(height int) {
 }
 
 // Open creates a window using functional options, applies saved state, and tracks it.
+// Use: _, err := mgr.Open(window.WithName("editor"), window.WithURL("/editor"))
 func (m *Manager) Open(opts ...WindowOption) (PlatformWindow, error) {
 	w, err := ApplyOptions(opts...)
 	if err != nil {
@@ -93,6 +95,7 @@ func (m *Manager) Open(opts ...WindowOption) (PlatformWindow, error) {
 }
 
 // Create creates a window from a Window descriptor.
+// Use: _, err := mgr.Create(&window.Window{Name: "editor", URL: "/editor"})
 func (m *Manager) Create(w *Window) (PlatformWindow, error) {
 	if w.Name == "" {
 		w.Name = "main"

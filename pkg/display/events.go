@@ -1,3 +1,4 @@
+// pkg/display/events.go
 package display
 
 import (
@@ -15,12 +16,12 @@ import (
 type EventType string
 
 const (
-	EventWindowFocus  EventType = "window.focus"
-	EventWindowBlur   EventType = "window.blur"
-	EventWindowMove   EventType = "window.move"
-	EventWindowResize EventType = "window.resize"
-	EventWindowClose  EventType = "window.close"
-	EventWindowCreate EventType = "window.create"
+	EventWindowFocus         EventType = "window.focus"
+	EventWindowBlur          EventType = "window.blur"
+	EventWindowMove          EventType = "window.move"
+	EventWindowResize        EventType = "window.resize"
+	EventWindowClose         EventType = "window.close"
+	EventWindowCreate        EventType = "window.create"
 	EventThemeChange         EventType = "theme.change"
 	EventScreenChange        EventType = "screen.change"
 	EventNotificationClick   EventType = "notification.click"
@@ -72,6 +73,7 @@ type clientState struct {
 }
 
 // NewWSEventManager creates a new event manager.
+// Use: events := display.NewWSEventManager()
 func NewWSEventManager() *WSEventManager {
 	em := &WSEventManager{
 		upgrader: websocket.Upgrader{

@@ -49,6 +49,7 @@ type Service struct {
 }
 
 // New is the constructor for the display service.
+// Use: svc, err := display.New()
 func New() (*Service, error) {
 	return &Service{
 		configData: map[string]map[string]any{
@@ -60,6 +61,7 @@ func New() (*Service, error) {
 }
 
 // Register creates a factory closure that captures the Wails app.
+// Use: core.WithService(display.Register(app))
 // Pass nil for testing without a Wails runtime.
 func Register(wailsApp *application.App) func(*core.Core) (any, error) {
 	return func(c *core.Core) (any, error) {
@@ -1060,12 +1062,14 @@ func (s *Service) windowService() *window.Service {
 // --- Window Management (delegates via IPC) ---
 
 // OpenWindow creates a new window via IPC.
+// Use: _ = svc.OpenWindow(window.WithName("editor"), window.WithURL("/editor"))
 func (s *Service) OpenWindow(opts ...window.WindowOption) error {
 	_, _, err := s.Core().PERFORM(window.TaskOpenWindow{Opts: opts})
 	return err
 }
 
 // GetWindowInfo returns information about a window via IPC.
+// Use: info, err := svc.GetWindowInfo("editor")
 func (s *Service) GetWindowInfo(name string) (*window.WindowInfo, error) {
 	result, handled, err := s.Core().QUERY(window.QueryWindowByName{Name: name})
 	if err != nil {
@@ -1079,6 +1083,7 @@ func (s *Service) GetWindowInfo(name string) (*window.WindowInfo, error) {
 }
 
 // ListWindowInfos returns information about all tracked windows via IPC.
+// Use: infos := svc.ListWindowInfos()
 func (s *Service) ListWindowInfos() []window.WindowInfo {
 	result, handled, _ := s.Core().QUERY(window.QueryWindowList{})
 	if !handled {
@@ -1089,18 +1094,21 @@ func (s *Service) ListWindowInfos() []window.WindowInfo {
 }
 
 // SetWindowPosition moves a window via IPC.
+// Use: _ = svc.SetWindowPosition("editor", 160, 120)
 func (s *Service) SetWindowPosition(name string, x, y int) error {
 	_, _, err := s.Core().PERFORM(window.TaskSetPosition{Name: name, X: x, Y: y})
 	return err
 }
 
 // SetWindowSize resizes a window via IPC.
+// Use: _ = svc.SetWindowSize("editor", 1280, 800)
 func (s *Service) SetWindowSize(name string, width, height int) error {
 	_, _, err := s.Core().PERFORM(window.TaskSetSize{Name: name, W: width, H: height})
 	return err
 }
 
 // SetWindowBounds sets both position and size of a window via IPC.
+// Use: _ = svc.SetWindowBounds("editor", 160, 120, 1280, 800)
 func (s *Service) SetWindowBounds(name string, x, y, width, height int) error {
 	if _, _, err := s.Core().PERFORM(window.TaskSetPosition{Name: name, X: x, Y: y}); err != nil {
 		return err
@@ -1110,65 +1118,76 @@ func (s *Service) SetWindowBounds(name string, x, y, width, height int) error {
 }
 
 // MaximizeWindow maximizes a window via IPC.
+// Use: _ = svc.MaximizeWindow("editor")
 func (s *Service) MaximizeWindow(name string) error {
 	_, _, err := s.Core().PERFORM(window.TaskMaximise{Name: name})
 	return err
 }
 
 // MinimizeWindow minimizes a window via IPC.
+// Use: _ = svc.MinimizeWindow("editor")
 func (s *Service) MinimizeWindow(name string) error {
 	_, _, err := s.Core().PERFORM(window.TaskMinimise{Name: name})
 	return err
 }
 
 // FocusWindow brings a window to the front via IPC.
+// Use: _ = svc.FocusWindow("editor")
 func (s *Service) FocusWindow(name string) error {
 	_, _, err := s.Core().PERFORM(window.TaskFocus{Name: name})
 	return err
 }
 
 // FocusSet is a compatibility alias for FocusWindow.
+// Use: _ = svc.FocusSet("editor")
 func (s *Service) FocusSet(name string) error {
 	return s.FocusWindow(name)
 }
 
 // CloseWindow closes a window via IPC.
+// Use: _ = svc.CloseWindow("editor")
 func (s *Service) CloseWindow(name string) error {
 	_, _, err := s.Core().PERFORM(window.TaskCloseWindow{Name: name})
 	return err
 }
 
 // RestoreWindow restores a maximized/minimized window via IPC.
+// Use: _ = svc.RestoreWindow("editor")
 func (s *Service) RestoreWindow(name string) error {
 	_, _, err := s.Core().PERFORM(window.TaskRestore{Name: name})
 	return err
 }
 
 // SetWindowVisibility shows or hides a window via IPC.
+// Use: _ = svc.SetWindowVisibility("editor", false)
 func (s *Service) SetWindowVisibility(name string, visible bool) error {
 	_, _, err := s.Core().PERFORM(window.TaskSetVisibility{Name: name, Visible: visible})
 	return err
 }
 
 // SetWindowAlwaysOnTop sets whether a window stays on top via IPC.
+// Use: _ = svc.SetWindowAlwaysOnTop("editor", true)
 func (s *Service) SetWindowAlwaysOnTop(name string, alwaysOnTop bool) error {
 	_, _, err := s.Core().PERFORM(window.TaskSetAlwaysOnTop{Name: name, AlwaysOnTop: alwaysOnTop})
 	return err
 }
 
 // SetWindowTitle changes a window's title via IPC.
+// Use: _ = svc.SetWindowTitle("editor", "Core Editor")
 func (s *Service) SetWindowTitle(name string, title string) error {
 	_, _, err := s.Core().PERFORM(window.TaskSetTitle{Name: name, Title: title})
 	return err
 }
 
 // SetWindowFullscreen sets a window to fullscreen mode via IPC.
+// Use: _ = svc.SetWindowFullscreen("editor", true)
 func (s *Service) SetWindowFullscreen(name string, fullscreen bool) error {
 	_, _, err := s.Core().PERFORM(window.TaskFullscreen{Name: name, Fullscreen: fullscreen})
 	return err
 }
 
 // SetWindowBackgroundColour sets the background colour of a window via IPC.
+// Use: _ = svc.SetWindowBackgroundColour("editor", 0, 0, 0, 0)
 func (s *Service) SetWindowBackgroundColour(name string, r, g, b, a uint8) error {
 	_, _, err := s.Core().PERFORM(window.TaskSetBackgroundColour{
 		Name:  name,
@@ -1181,6 +1200,7 @@ func (s *Service) SetWindowBackgroundColour(name string, r, g, b, a uint8) error
 }
 
 // SetWindowOpacity updates a window's opacity via IPC.
+// Use: _ = svc.SetWindowOpacity("editor", 0.85)
 func (s *Service) SetWindowOpacity(name string, opacity float32) error {
 	_, _, err := s.Core().PERFORM(window.TaskSetOpacity{
 		Name:    name,
@@ -1196,6 +1216,7 @@ func (s *Service) ClearWebviewConsole(name string) error {
 }
 
 // GetFocusedWindow returns the name of the currently focused window.
+// Use: focused := svc.GetFocusedWindow()
 func (s *Service) GetFocusedWindow() string {
 	infos := s.ListWindowInfos()
 	for _, info := range infos {
@@ -1207,6 +1228,7 @@ func (s *Service) GetFocusedWindow() string {
 }
 
 // GetWindowTitle returns the title of a window by name.
+// Use: title, err := svc.GetWindowTitle("editor")
 func (s *Service) GetWindowTitle(name string) (string, error) {
 	info, err := s.GetWindowInfo(name)
 	if err != nil {
@@ -1256,6 +1278,7 @@ type CreateWindowOptions struct {
 }
 
 // CreateWindow creates a new window with the specified options.
+// Use: info, err := svc.CreateWindow(display.CreateWindowOptions{Name: "editor", URL: "/editor"})
 func (s *Service) CreateWindow(opts CreateWindowOptions) (*window.WindowInfo, error) {
 	if opts.Name == "" {
 		return nil, fmt.Errorf("window name is required")
@@ -1283,6 +1306,7 @@ func (s *Service) CreateWindow(opts CreateWindowOptions) (*window.WindowInfo, er
 // --- Layout delegation ---
 
 // SaveLayout saves the current window arrangement as a named layout.
+// Use: _ = svc.SaveLayout("coding")
 func (s *Service) SaveLayout(name string) error {
 	ws := s.windowService()
 	if ws == nil {
@@ -1300,6 +1324,7 @@ func (s *Service) SaveLayout(name string) error {
 }
 
 // RestoreLayout applies a saved layout.
+// Use: _ = svc.RestoreLayout("coding")
 func (s *Service) RestoreLayout(name string) error {
 	ws := s.windowService()
 	if ws == nil {
@@ -1324,6 +1349,7 @@ func (s *Service) RestoreLayout(name string) error {
 }
 
 // ListLayouts returns all saved layout names with metadata.
+// Use: layouts := svc.ListLayouts()
 func (s *Service) ListLayouts() []window.LayoutInfo {
 	ws := s.windowService()
 	if ws == nil {
@@ -1333,6 +1359,7 @@ func (s *Service) ListLayouts() []window.LayoutInfo {
 }
 
 // DeleteLayout removes a saved layout by name.
+// Use: _ = svc.DeleteLayout("coding")
 func (s *Service) DeleteLayout(name string) error {
 	ws := s.windowService()
 	if ws == nil {
@@ -1343,6 +1370,7 @@ func (s *Service) DeleteLayout(name string) error {
 }
 
 // GetLayout returns a specific layout by name.
+// Use: layout := svc.GetLayout("coding")
 func (s *Service) GetLayout(name string) *window.Layout {
 	ws := s.windowService()
 	if ws == nil {
@@ -1358,6 +1386,7 @@ func (s *Service) GetLayout(name string) *window.Layout {
 // --- Tiling/snapping delegation ---
 
 // TileWindows arranges windows in a tiled layout.
+// Use: _ = svc.TileWindows(window.TileModeLeftRight, []string{"left", "right"})
 func (s *Service) TileWindows(mode window.TileMode, windowNames []string) error {
 	ws := s.windowService()
 	if ws == nil {
@@ -1368,6 +1397,7 @@ func (s *Service) TileWindows(mode window.TileMode, windowNames []string) error 
 }
 
 // SnapWindow snaps a window to a screen edge or corner.
+// Use: _ = svc.SnapWindow("editor", window.SnapRight)
 func (s *Service) SnapWindow(name string, position window.SnapPosition) error {
 	ws := s.windowService()
 	if ws == nil {
@@ -1405,6 +1435,7 @@ func (s *Service) primaryScreenSize() (int, int) {
 }
 
 // StackWindows arranges windows in a cascade pattern.
+// Use: _ = svc.StackWindows([]string{"editor", "terminal"}, 24, 24)
 func (s *Service) StackWindows(windowNames []string, offsetX, offsetY int) error {
 	ws := s.windowService()
 	if ws == nil {
@@ -1414,6 +1445,7 @@ func (s *Service) StackWindows(windowNames []string, offsetX, offsetY int) error
 }
 
 // ApplyWorkflowLayout applies a predefined layout for a specific workflow.
+// Use: _ = svc.ApplyWorkflowLayout(window.WorkflowCoding)
 func (s *Service) ApplyWorkflowLayout(workflow window.WorkflowLayout) error {
 	ws := s.windowService()
 	if ws == nil {
@@ -1424,6 +1456,7 @@ func (s *Service) ApplyWorkflowLayout(workflow window.WorkflowLayout) error {
 }
 
 // ArrangeWindowPair places two windows side by side using the window manager's balanced split.
+// Use: _ = svc.ArrangeWindowPair("editor", "terminal")
 func (s *Service) ArrangeWindowPair(first, second string) error {
 	ws := s.windowService()
 	if ws == nil {
@@ -1434,6 +1467,7 @@ func (s *Service) ArrangeWindowPair(first, second string) error {
 }
 
 // FindSpace returns a free placement suggestion for a new window.
+// Use: space, err := svc.FindSpace(800, 600)
 func (s *Service) FindSpace(width, height int) (window.SpaceInfo, error) {
 	ws := s.windowService()
 	if ws == nil {
