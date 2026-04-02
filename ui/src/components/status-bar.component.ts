@@ -12,7 +12,7 @@ import { WebSocketService } from '../services/websocket.service';
   selector: 'status-bar',
   standalone: true,
   template: `
-    <footer class="status-bar">
+    <footer class="status-bar" [style.--sidebar-width]="sidebarWidth">
       <div class="status-left">
         <span class="status-item version">{{ version }}</span>
         <span class="status-item providers">
@@ -33,7 +33,8 @@ import { WebSocketService } from '../services/websocket.service';
     `
       .status-bar {
         position: fixed;
-        inset-inline: 0;
+        left: 0;
+        width: 100%;
         bottom: 0;
         z-index: 40;
         height: 2.5rem;
@@ -48,6 +49,13 @@ import { WebSocketService } from '../services/websocket.service';
       :host-context(.dark) .status-bar {
         border-color: rgba(255, 255, 255, 0.1);
         background: rgb(17 24 39);
+      }
+
+      @media (min-width: 1024px) {
+        .status-bar {
+          left: var(--sidebar-width, 0);
+          width: calc(100% - var(--sidebar-width, 0));
+        }
       }
 
       .status-left,

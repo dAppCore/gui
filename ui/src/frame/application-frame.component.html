@@ -101,7 +101,7 @@
               </div>
               <nav class="flex flex-1 flex-col">
                 <ul role="list" class="-mx-2 flex-1 space-y-1">
-                  @for (item of navigation; track item.name) {
+                  @for (item of navigation(); track item.name) {
                     <li>
                       <a
                         [routerLink]="item.href"
@@ -134,7 +134,7 @@
         </button>
         <nav class="relative mt-1">
           <ul role="list" class="flex flex-col items-center space-y-1">
-            @for (item of navigation; track item.name) {
+            @for (item of navigation(); track item.name) {
               <li>
                 <a
                   [routerLink]="item.href"
@@ -161,19 +161,5 @@
     </div>
   </main>
 
-  <footer
-    class="fixed inset-x-0 bottom-0 z-40 h-10 border-t border-gray-200 bg-white dark:border-white/10 dark:bg-gray-900 lg:left-20"
-  >
-    <div class="flex h-full items-center justify-between px-4 sm:px-6 lg:px-8">
-      <span class="text-sm text-gray-500 dark:text-gray-400">
-        {{ version }}
-        <i class="fa-regular fa-puzzle-piece ml-2"></i>
-        {{ providerCount() }}
-      </span>
-      <span class="text-sm text-gray-500 dark:text-gray-400">
-        <span class="connection-dot" [class.connected]="wsConnected()"></span>
-        {{ time }}
-      </span>
-    </div>
-  </footer>
+  <status-bar [version]="version" sidebarWidth="5rem"></status-bar>
 </div>
