@@ -143,7 +143,7 @@ This document tracks the implementation of display server features that enable A
 - [x] `dialog_open_directory` - Show directory picker
 - [x] `dialog_message` - Show message dialog (info/warning/error) (via notification_show)
 - [x] `dialog_confirm` - Show confirmation dialog
-- [~] `dialog_prompt` - Show input prompt dialog (not supported natively in Wails v3)
+- [x] `dialog_prompt` - Show input prompt dialog with a webview fallback when native support is unavailable
 
 ### Theme & Appearance
 - [x] `theme_get` - Get current theme (dark/light)

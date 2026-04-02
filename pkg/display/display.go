@@ -2018,9 +2018,20 @@ func (s *Service) ConfirmDialog(title, message string) (bool, error) {
 	return button == "Yes" || button == "OK", nil
 }
 
-// PromptDialog shows a prompt-style dialog and returns the selected button.
-// Use: button, accepted, err := svc.PromptDialog("Rename file", "Enter a new name")
+// PromptDialog shows a prompt-style dialog and returns entered text when the webview
+// prompt path is available, otherwise it falls back to a button-based message dialog.
+// Use: value, accepted, err := svc.PromptDialog("Rename file", "Enter a new name")
 func (s *Service) PromptDialog(title, message string) (string, bool, error) {
+	if text, ok, err := s.promptViaWebView(title, message); err == nil {
+		if ok {
+			return text, true, nil
+		}
+		return "", false, nil
+	}
+
+	// Fall back to the native message dialog path when no webview prompt is available.
+	// The returned error is intentionally ignored unless the fallback also fails.
+
 	result, handled, err := s.Core().PERFORM(dialog.TaskMessageDialog{
 		Opts: dialog.MessageDialogOptions{
 			Type:    dialog.DialogInfo,
@@ -2037,6 +2048,46 @@ func (s *Service) PromptDialog(title, message string) (string, bool, error) {
 	}
 	button, _ := result.(string)
 	return button, button == "OK", nil
+}
+
+func (s *Service) promptViaWebView(title, message string) (string, bool, error) {
+	windowName := s.GetFocusedWindow()
+	if windowName == "" {
+		infos := s.ListWindowInfos()
+		if len(infos) > 0 {
+			windowName = infos[0].Name
+		}
+	}
+	if windowName == "" {
+		return "", false, fmt.Errorf("no webview window available")
+	}
+
+	encodedTitle, err := json.Marshal(title)
+	if err != nil {
+		return "", false, err
+	}
+	encodedMessage, err := json.Marshal(message)
+	if err != nil {
+		return "", false, err
+	}
+
+	result, handled, err := s.Core().PERFORM(webview.TaskEvaluate{
+		Window: windowName,
+		Script: "window.prompt(" + string(encodedTitle) + "," + string(encodedMessage) + ")",
+	})
+	if err != nil {
+		return "", false, err
+	}
+	if !handled {
+		return "", false, fmt.Errorf("webview service not available")
+	}
+	if result == nil {
+		return "", false, nil
+	}
+	if text, ok := result.(string); ok {
+		return text, true, nil
+	}
+	return fmt.Sprint(result), true, nil
 }
 
 // DialogMessage shows an informational, warning, or error message via the notification pipeline.
