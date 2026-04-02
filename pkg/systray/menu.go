@@ -1,12 +1,12 @@
 // pkg/systray/menu.go
 package systray
 
-import "fmt"
+import "forge.lthn.ai/core/go/pkg/core"
 
 // SetMenu sets a dynamic menu on the tray from TrayMenuItem descriptors.
 func (m *Manager) SetMenu(items []TrayMenuItem) error {
 	if m.tray == nil {
-		return fmt.Errorf("tray not initialised")
+		return core.E("systray.SetMenu", "tray not initialised", nil)
 	}
 	m.menuItems = append([]TrayMenuItem(nil), items...)
 	menu := m.buildMenu(items)

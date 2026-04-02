@@ -3,21 +3,32 @@ package clipboard
 
 import (
 	"context"
-	"fmt"
 
 	"forge.lthn.ai/core/go/pkg/core"
 )
 
-// Options holds configuration for the clipboard service.
+// Options configures the clipboard service.
+//
+// Example:
+//
+//	core.WithService(clipboard.Register(platform))
 type Options struct{}
 
-// Service is a core.Service managing clipboard operations via IPC.
+// Service manages clipboard operations via Core queries and tasks.
+//
+// Example:
+//
+//	svc := &clipboard.Service{}
 type Service struct {
 	*core.ServiceRuntime[Options]
 	platform Platform
 }
 
-// Register creates a factory closure that captures the Platform adapter.
+// Register creates a Core service factory for the clipboard backend.
+//
+// Example:
+//
+//	core.New(core.WithService(clipboard.Register(platform)))
 func Register(p Platform) func(*core.Core) (any, error) {
 	return func(c *core.Core) (any, error) {
 		return &Service{
@@ -27,14 +38,18 @@ func Register(p Platform) func(*core.Core) (any, error) {
 	}
 }
 
-// OnStartup registers IPC handlers.
+// OnStartup registers clipboard handlers with Core.
+//
+// Example:
+//
+//	_ = svc.OnStartup(context.Background())
 func (s *Service) OnStartup(ctx context.Context) error {
 	s.Core().RegisterQuery(s.handleQuery)
 	s.Core().RegisterTask(s.handleTask)
 	return nil
 }
 
-// HandleIPCEvents is auto-discovered by core.WithService.
+// HandleIPCEvents satisfies Core's IPC hook.
 func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 	return nil
 }
@@ -70,7 +85,7 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 		if writer, ok := s.platform.(imageWriter); ok {
 			return writer.SetImage(t.Data), true, nil
 		}
-		return false, true, fmt.Errorf("clipboard image write not supported")
+		return false, true, core.E("clipboard.handleTask", "clipboard image write not supported", nil)
 	default:
 		return nil, false, nil
 	}

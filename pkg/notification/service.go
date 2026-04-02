@@ -10,16 +10,28 @@ import (
 	"forge.lthn.ai/core/gui/pkg/dialog"
 )
 
-// Options holds configuration for the notification service.
+// Options configures the notification service.
+//
+// Example:
+//
+//	core.WithService(notification.Register(platform))
 type Options struct{}
 
-// Service is a core.Service managing notifications via IPC.
+// Service manages notifications via Core tasks and queries.
+//
+// Example:
+//
+//	svc := &notification.Service{}
 type Service struct {
 	*core.ServiceRuntime[Options]
 	platform Platform
 }
 
-// Register creates a factory closure that captures the Platform adapter.
+// Register creates a Core service factory for the notification backend.
+//
+// Example:
+//
+//	core.New(core.WithService(notification.Register(platform)))
 func Register(p Platform) func(*core.Core) (any, error) {
 	return func(c *core.Core) (any, error) {
 		return &Service{
@@ -29,14 +41,18 @@ func Register(p Platform) func(*core.Core) (any, error) {
 	}
 }
 
-// OnStartup registers IPC handlers.
+// OnStartup registers notification handlers with Core.
+//
+// Example:
+//
+//	_ = svc.OnStartup(context.Background())
 func (s *Service) OnStartup(ctx context.Context) error {
 	s.Core().RegisterQuery(s.handleQuery)
 	s.Core().RegisterTask(s.handleTask)
 	return nil
 }
 
-// HandleIPCEvents is auto-discovered by core.WithService.
+// HandleIPCEvents satisfies Core's IPC hook.
 func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 	return nil
 }

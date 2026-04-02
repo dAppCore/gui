@@ -3,15 +3,19 @@ package systray
 
 import (
 	_ "embed"
-	"fmt"
 	"sync"
+
+	"forge.lthn.ai/core/go/pkg/core"
 )
 
 //go:embed assets/apptray.png
 var defaultIcon []byte
 
 // Manager manages the system tray lifecycle.
-// State that was previously in package-level vars is now on the Manager.
+//
+// Example:
+//
+//	manager := systray.NewManager(platform)
 type Manager struct {
 	platform        Platform
 	tray            PlatformTray
@@ -25,6 +29,10 @@ type Manager struct {
 }
 
 // NewManager creates a systray Manager.
+//
+// Example:
+//
+//	manager := systray.NewManager(platform)
 func NewManager(platform Platform) *Manager {
 	return &Manager{
 		platform:  platform,
@@ -36,7 +44,7 @@ func NewManager(platform Platform) *Manager {
 func (m *Manager) Setup(tooltip, label string) error {
 	m.tray = m.platform.NewTray()
 	if m.tray == nil {
-		return fmt.Errorf("platform returned nil tray")
+		return core.E("systray.Setup", "platform returned nil tray", nil)
 	}
 	m.tray.SetTemplateIcon(defaultIcon)
 	m.tray.SetTooltip(tooltip)
@@ -50,7 +58,7 @@ func (m *Manager) Setup(tooltip, label string) error {
 // SetIcon sets the tray icon.
 func (m *Manager) SetIcon(data []byte) error {
 	if m.tray == nil {
-		return fmt.Errorf("tray not initialised")
+		return core.E("systray.SetIcon", "tray not initialised", nil)
 	}
 	m.tray.SetIcon(data)
 	m.hasIcon = len(data) > 0
@@ -60,7 +68,7 @@ func (m *Manager) SetIcon(data []byte) error {
 // SetTemplateIcon sets the template icon (macOS).
 func (m *Manager) SetTemplateIcon(data []byte) error {
 	if m.tray == nil {
-		return fmt.Errorf("tray not initialised")
+		return core.E("systray.SetTemplateIcon", "tray not initialised", nil)
 	}
 	m.tray.SetTemplateIcon(data)
 	m.hasTemplateIcon = len(data) > 0
@@ -70,7 +78,7 @@ func (m *Manager) SetTemplateIcon(data []byte) error {
 // SetTooltip sets the tray tooltip.
 func (m *Manager) SetTooltip(text string) error {
 	if m.tray == nil {
-		return fmt.Errorf("tray not initialised")
+		return core.E("systray.SetTooltip", "tray not initialised", nil)
 	}
 	m.tray.SetTooltip(text)
 	m.tooltip = text
@@ -80,7 +88,7 @@ func (m *Manager) SetTooltip(text string) error {
 // SetLabel sets the tray label.
 func (m *Manager) SetLabel(text string) error {
 	if m.tray == nil {
-		return fmt.Errorf("tray not initialised")
+		return core.E("systray.SetLabel", "tray not initialised", nil)
 	}
 	m.tray.SetLabel(text)
 	m.label = text
@@ -90,7 +98,7 @@ func (m *Manager) SetLabel(text string) error {
 // AttachWindow attaches a panel window to the tray.
 func (m *Manager) AttachWindow(w WindowHandle) error {
 	if m.tray == nil {
-		return fmt.Errorf("tray not initialised")
+		return core.E("systray.AttachWindow", "tray not initialised", nil)
 	}
 	m.tray.AttachWindow(w)
 	return nil

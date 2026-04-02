@@ -2,16 +2,23 @@ package systray
 
 import (
 	"context"
-	"fmt"
 
 	"forge.lthn.ai/core/go/pkg/core"
 	"forge.lthn.ai/core/gui/pkg/notification"
 )
 
-// Options holds configuration for the systray service.
+// Options configures the systray service.
+//
+// Example:
+//
+//	core.WithService(systray.Register(platform))
 type Options struct{}
 
-// Service is a core.Service managing the system tray via IPC.
+// Service manages system tray operations via Core tasks.
+//
+// Example:
+//
+//	svc := &systray.Service{}
 type Service struct {
 	*core.ServiceRuntime[Options]
 	manager  *Manager
@@ -19,7 +26,11 @@ type Service struct {
 	iconPath string
 }
 
-// OnStartup queries config and registers IPC handlers.
+// OnStartup loads tray config and registers task handlers.
+//
+// Example:
+//
+//	_ = svc.OnStartup(context.Background())
 func (s *Service) OnStartup(ctx context.Context) error {
 	cfg, handled, _ := s.Core().QUERY(QueryConfig{})
 	if handled {
@@ -45,7 +56,7 @@ func (s *Service) applyConfig(cfg map[string]any) {
 	}
 }
 
-// HandleIPCEvents is auto-discovered and registered by core.WithService.
+// HandleIPCEvents satisfies Core's IPC hook.
 func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 	return nil
 }
@@ -95,7 +106,7 @@ func (s *Service) taskShowMessage(title, message string) error {
 	}
 	tray := s.manager.Tray()
 	if tray == nil {
-		return fmt.Errorf("tray not initialised")
+		return core.E("systray.taskShowMessage", "tray not initialised", nil)
 	}
 	if messenger, ok := tray.(interface{ ShowMessage(title, message string) }); ok {
 		messenger.ShowMessage(title, message)

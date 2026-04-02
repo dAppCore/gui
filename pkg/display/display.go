@@ -1562,7 +1562,7 @@ func (s *Service) ReadClipboard() (string, error) {
 		return "", err
 	}
 	if !handled {
-		return "", fmt.Errorf("clipboard service not available")
+		return "", core.E("display.ReadClipboard", "clipboard service not available", nil)
 	}
 	content, _ := result.(clipboard.ClipboardContent)
 	return content.Text, nil
@@ -1575,10 +1575,10 @@ func (s *Service) WriteClipboard(text string) error {
 		return err
 	}
 	if !handled {
-		return fmt.Errorf("clipboard service not available")
+		return core.E("display.WriteClipboard", "clipboard service not available", nil)
 	}
 	if ok, _ := result.(bool); !ok {
-		return fmt.Errorf("clipboard write failed")
+		return core.E("display.WriteClipboard", "clipboard write failed", nil)
 	}
 	return nil
 }
@@ -1607,10 +1607,10 @@ func (s *Service) ClearClipboard() error {
 		return err
 	}
 	if !handled {
-		return fmt.Errorf("clipboard service not available")
+		return core.E("display.ClearClipboard", "clipboard service not available", nil)
 	}
 	if ok, _ := result.(bool); !ok {
-		return fmt.Errorf("clipboard clear failed")
+		return core.E("display.ClearClipboard", "clipboard clear failed", nil)
 	}
 	return nil
 }
@@ -1622,7 +1622,7 @@ func (s *Service) ReadClipboardImage() (clipboard.ClipboardImageContent, error) 
 		return clipboard.ClipboardImageContent{}, err
 	}
 	if !handled {
-		return clipboard.ClipboardImageContent{}, fmt.Errorf("clipboard service not available")
+		return clipboard.ClipboardImageContent{}, core.E("display.ReadClipboardImage", "clipboard service not available", nil)
 	}
 	content, _ := result.(clipboard.ClipboardImageContent)
 	return content, nil
@@ -1635,10 +1635,10 @@ func (s *Service) WriteClipboardImage(data []byte) error {
 		return err
 	}
 	if !handled {
-		return fmt.Errorf("clipboard service not available")
+		return core.E("display.WriteClipboardImage", "clipboard service not available", nil)
 	}
 	if ok, _ := result.(bool); !ok {
-		return fmt.Errorf("clipboard image write failed")
+		return core.E("display.WriteClipboardImage", "clipboard image write failed", nil)
 	}
 	return nil
 }
@@ -1652,7 +1652,7 @@ func (s *Service) ShowNotification(opts notification.NotificationOptions) error 
 		return err
 	}
 	if !handled {
-		return fmt.Errorf("notification service not available")
+		return core.E("display.ShowNotification", "notification service not available", nil)
 	}
 	return nil
 }
