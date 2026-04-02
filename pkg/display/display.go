@@ -416,6 +416,73 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 			return nil, false, e
 		}
 		result, handled, err = s.Core().PERFORM(webview.TaskClearConsole{Window: w})
+	case "webview:highlight":
+		w, e := wsRequire(msg.Data, "window")
+		if e != nil {
+			return nil, false, e
+		}
+		sel, e := wsRequire(msg.Data, "selector")
+		if e != nil {
+			return nil, false, e
+		}
+		colour, _ := msg.Data["colour"].(string)
+		result, handled, err = s.Core().PERFORM(webview.TaskHighlight{Window: w, Selector: sel, Colour: colour})
+	case "webview:computed-style":
+		w, e := wsRequire(msg.Data, "window")
+		if e != nil {
+			return nil, false, e
+		}
+		sel, e := wsRequire(msg.Data, "selector")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = s.Core().QUERY(webview.QueryComputedStyle{Window: w, Selector: sel})
+	case "webview:performance":
+		w, e := wsRequire(msg.Data, "window")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = s.Core().QUERY(webview.QueryPerformance{Window: w})
+	case "webview:resources":
+		w, e := wsRequire(msg.Data, "window")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = s.Core().QUERY(webview.QueryResources{Window: w})
+	case "webview:network":
+		w, e := wsRequire(msg.Data, "window")
+		if e != nil {
+			return nil, false, e
+		}
+		limit := 0
+		if l, ok := msg.Data["limit"].(float64); ok {
+			limit = int(l)
+		}
+		result, handled, err = s.Core().QUERY(webview.QueryNetwork{Window: w, Limit: limit})
+	case "webview:network-inject":
+		w, e := wsRequire(msg.Data, "window")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = s.Core().PERFORM(webview.TaskInjectNetworkLogging{Window: w})
+	case "webview:network-clear":
+		w, e := wsRequire(msg.Data, "window")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = s.Core().PERFORM(webview.TaskClearNetworkLog{Window: w})
+	case "webview:print":
+		w, e := wsRequire(msg.Data, "window")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = s.Core().PERFORM(webview.TaskPrint{Window: w})
+	case "webview:pdf":
+		w, e := wsRequire(msg.Data, "window")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = s.Core().PERFORM(webview.TaskExportPDF{Window: w})
 	case "webview:console":
 		w, e := wsRequire(msg.Data, "window")
 		if e != nil {

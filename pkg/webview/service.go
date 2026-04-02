@@ -4,10 +4,14 @@ package webview
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+	"unsafe"
 
 	gowebview "forge.lthn.ai/core/go-webview"
 	"forge.lthn.ai/core/go/pkg/core"
@@ -34,6 +38,8 @@ type connector interface {
 	ClearConsole()
 	SetViewport(width, height int) error
 	UploadFile(selector string, paths []string) error
+	Print() error
+	PrintToPDF() ([]byte, error)
 	Close() error
 }
 
@@ -274,6 +280,62 @@ func (s *Service) handleQuery(_ *core.Core, q core.Query) (any, bool, error) {
 		}
 		html, err := conn.GetHTML(selector)
 		return html, true, err
+	case QueryComputedStyle:
+		conn, err := s.getConn(q.Window)
+		if err != nil {
+			return nil, true, err
+		}
+		result, err := conn.Evaluate(computedStyleScript(q.Selector))
+		if err != nil {
+			return nil, true, err
+		}
+		style, err := coerceToMapStringString(result)
+		if err != nil {
+			return nil, true, err
+		}
+		return style, true, nil
+	case QueryPerformance:
+		conn, err := s.getConn(q.Window)
+		if err != nil {
+			return nil, true, err
+		}
+		result, err := conn.Evaluate(performanceScript())
+		if err != nil {
+			return nil, true, err
+		}
+		metrics, err := coerceToPerformanceMetrics(result)
+		if err != nil {
+			return nil, true, err
+		}
+		return metrics, true, nil
+	case QueryResources:
+		conn, err := s.getConn(q.Window)
+		if err != nil {
+			return nil, true, err
+		}
+		result, err := conn.Evaluate(resourcesScript())
+		if err != nil {
+			return nil, true, err
+		}
+		resources, err := coerceToResourceEntries(result)
+		if err != nil {
+			return nil, true, err
+		}
+		return resources, true, nil
+	case QueryNetwork:
+		conn, err := s.getConn(q.Window)
+		if err != nil {
+			return nil, true, err
+		}
+		result, err := conn.Evaluate(networkLogScript(q.Limit))
+		if err != nil {
+			return nil, true, err
+		}
+		entries, err := coerceToNetworkEntries(result)
+		if err != nil {
+			return nil, true, err
+		}
+		return entries, true, nil
 	default:
 		return nil, false, nil
 	}
@@ -363,13 +425,81 @@ func (s *Service) handleTask(_ *core.Core, t core.Task) (any, bool, error) {
 		}
 		conn.ClearConsole()
 		return nil, true, nil
+	case TaskHighlight:
+		conn, err := s.getConn(t.Window)
+		if err != nil {
+			return nil, true, err
+		}
+		_, err = conn.Evaluate(highlightScript(t.Selector, t.Colour))
+		return nil, true, err
 	case TaskOpenDevTools:
 		return nil, true, nil
 	case TaskCloseDevTools:
 		return nil, true, nil
+	case TaskInjectNetworkLogging:
+		conn, err := s.getConn(t.Window)
+		if err != nil {
+			return nil, true, err
+		}
+		_, err = conn.Evaluate(networkInitScript())
+		return nil, true, err
+	case TaskClearNetworkLog:
+		conn, err := s.getConn(t.Window)
+		if err != nil {
+			return nil, true, err
+		}
+		_, err = conn.Evaluate(networkClearScript())
+		return nil, true, err
+	case TaskPrint:
+		conn, err := s.getConn(t.Window)
+		if err != nil {
+			return nil, true, err
+		}
+		return nil, true, conn.Print()
+	case TaskExportPDF:
+		conn, err := s.getConn(t.Window)
+		if err != nil {
+			return nil, true, err
+		}
+		pdf, err := conn.PrintToPDF()
+		if err != nil {
+			return nil, true, err
+		}
+		return PDFResult{
+			Base64:   base64.StdEncoding.EncodeToString(pdf),
+			MimeType: "application/pdf",
+		}, true, nil
 	default:
 		return nil, false, nil
 	}
+}
+
+func coerceJSON[T any](v any) (T, error) {
+	var out T
+	raw, err := json.Marshal(v)
+	if err != nil {
+		return out, err
+	}
+	if err := json.Unmarshal(raw, &out); err != nil {
+		return out, err
+	}
+	return out, nil
+}
+
+func coerceToMapStringString(v any) (map[string]string, error) {
+	return coerceJSON[map[string]string](v)
+}
+
+func coerceToPerformanceMetrics(v any) (PerformanceMetrics, error) {
+	return coerceJSON[PerformanceMetrics](v)
+}
+
+func coerceToResourceEntries(v any) ([]ResourceEntry, error) {
+	return coerceJSON[[]ResourceEntry](v)
+}
+
+func coerceToNetworkEntries(v any) ([]NetworkEntry, error) {
+	return coerceJSON[[]NetworkEntry](v)
 }
 
 // realConnector wraps *gowebview.Webview, converting types at the boundary.
@@ -386,9 +516,48 @@ func (r *realConnector) GetURL() (string, error)                 { return r.wv.G
 func (r *realConnector) GetTitle() (string, error)               { return r.wv.GetTitle() }
 func (r *realConnector) GetHTML(sel string) (string, error)      { return r.wv.GetHTML(sel) }
 func (r *realConnector) ClearConsole()                           { r.wv.ClearConsole() }
+func (r *realConnector) Print() error                            { _, err := r.wv.Evaluate("window.print()"); return err }
 func (r *realConnector) Close() error                            { return r.wv.Close() }
 func (r *realConnector) SetViewport(w, h int) error              { return r.wv.SetViewport(w, h) }
 func (r *realConnector) UploadFile(sel string, p []string) error { return r.wv.UploadFile(sel, p) }
+func (r *realConnector) PrintToPDF() ([]byte, error) {
+	client, err := r.cdpClient()
+	if err != nil {
+		return nil, err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	result, err := client.Call(ctx, "Page.printToPDF", map[string]any{
+		"printBackground":   true,
+		"preferCSSPageSize": true,
+	})
+	if err != nil {
+		return nil, err
+	}
+	data, ok := result["data"].(string)
+	if !ok || data == "" {
+		return nil, fmt.Errorf("webview: missing PDF data")
+	}
+	return base64.StdEncoding.DecodeString(data)
+}
+
+func (r *realConnector) cdpClient() (*gowebview.CDPClient, error) {
+	rv := reflect.ValueOf(r.wv)
+	if rv.Kind() != reflect.Ptr || rv.IsNil() {
+		return nil, fmt.Errorf("webview: invalid connector")
+	}
+	elem := rv.Elem()
+	field := elem.FieldByName("client")
+	if !field.IsValid() || field.IsNil() {
+		return nil, fmt.Errorf("webview: CDP client not available")
+	}
+	ptr := reflect.NewAt(field.Type(), unsafe.Pointer(field.UnsafeAddr())).Elem().Interface()
+	client, ok := ptr.(*gowebview.CDPClient)
+	if !ok || client == nil {
+		return nil, fmt.Errorf("webview: unexpected CDP client type")
+	}
+	return client, nil
+}
 
 func (r *realConnector) Hover(sel string) error {
 	return gowebview.NewActionSequence().Add(&gowebview.HoverAction{Selector: sel}).Execute(context.Background(), r.wv)

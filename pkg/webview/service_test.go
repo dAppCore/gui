@@ -3,6 +3,7 @@ package webview
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"forge.lthn.ai/core/go/pkg/core"
@@ -12,14 +13,17 @@ import (
 )
 
 type mockConnector struct {
-	url        string
-	title      string
-	html       string
-	evalResult any
-	screenshot []byte
-	console    []ConsoleMessage
-	elements   []*ElementInfo
-	closed     bool
+	url         string
+	title       string
+	html        string
+	evalResult  any
+	evalFn      func(script string) (any, error)
+	screenshot  []byte
+	console     []ConsoleMessage
+	elements    []*ElementInfo
+	closed      bool
+	pdfBytes    []byte
+	printCalled bool
 
 	lastClickSel       string
 	lastTypeSel        string
@@ -35,6 +39,7 @@ type mockConnector struct {
 	lastViewportW      int
 	lastViewportH      int
 	consoleClearCalled bool
+	lastEvalScript     string
 }
 
 func (m *mockConnector) Navigate(url string) error { m.lastNavURL = url; return nil }
@@ -55,17 +60,30 @@ func (m *mockConnector) Check(sel string, c bool) error {
 	m.lastCheckVal = c
 	return nil
 }
-func (m *mockConnector) Evaluate(s string) (any, error)     { return m.evalResult, nil }
+func (m *mockConnector) Evaluate(s string) (any, error) {
+	m.lastEvalScript = s
+	if m.evalFn != nil {
+		return m.evalFn(s)
+	}
+	return m.evalResult, nil
+}
 func (m *mockConnector) Screenshot() ([]byte, error)        { return m.screenshot, nil }
 func (m *mockConnector) GetURL() (string, error)            { return m.url, nil }
 func (m *mockConnector) GetTitle() (string, error)          { return m.title, nil }
 func (m *mockConnector) GetHTML(sel string) (string, error) { return m.html, nil }
 func (m *mockConnector) ClearConsole()                      { m.consoleClearCalled = true }
+func (m *mockConnector) Print() error                       { m.printCalled = true; return nil }
 func (m *mockConnector) Close() error                       { m.closed = true; return nil }
 func (m *mockConnector) SetViewport(w, h int) error {
 	m.lastViewportW = w
 	m.lastViewportH = h
 	return nil
+}
+func (m *mockConnector) PrintToPDF() ([]byte, error) {
+	if len(m.pdfBytes) == 0 {
+		return []byte("%PDF-1.4\n"), nil
+	}
+	return m.pdfBytes, nil
 }
 func (m *mockConnector) UploadFile(sel string, p []string) error {
 	m.lastUploadSel = sel
@@ -202,6 +220,90 @@ func TestTaskDevTools_Good(t *testing.T) {
 	_, handled, err = c.PERFORM(TaskCloseDevTools{Window: "main"})
 	require.NoError(t, err)
 	assert.True(t, handled)
+}
+
+func TestDiagnosticsQueries_Good(t *testing.T) {
+	mock := &mockConnector{
+		evalFn: func(script string) (any, error) {
+			switch {
+			case strings.Contains(script, "getComputedStyle"):
+				return map[string]any{"color": "rgb(1, 2, 3)"}, nil
+			case strings.Contains(script, "performance.getEntriesByType(\"navigation\")"):
+				return map[string]any{
+					"navigationStart":      1.0,
+					"domContentLoaded":     2.0,
+					"loadEventEnd":         3.0,
+					"firstPaint":           4.0,
+					"firstContentfulPaint": 5.0,
+					"usedJSHeapSize":       6.0,
+					"totalJSHeapSize":      7.0,
+				}, nil
+			case strings.Contains(script, "performance.getEntriesByType(\"resource\")"):
+				return []any{
+					map[string]any{"name": "app.js", "entryType": "resource", "initiatorType": "script"},
+				}, nil
+			case strings.Contains(script, "window.__coreNetworkLog"):
+				return []any{
+					map[string]any{"url": "https://example.com", "method": "GET", "status": 200, "resource": "fetch"},
+				}, nil
+			default:
+				return nil, nil
+			}
+		},
+	}
+	_, c := newTestService(t, mock)
+
+	style, handled, err := c.QUERY(QueryComputedStyle{Window: "main", Selector: "#app"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.Equal(t, "rgb(1, 2, 3)", style.(map[string]string)["color"])
+
+	perf, handled, err := c.QUERY(QueryPerformance{Window: "main"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.Equal(t, 1.0, perf.(PerformanceMetrics).NavigationStart)
+
+	resources, handled, err := c.QUERY(QueryResources{Window: "main"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.Len(t, resources.([]ResourceEntry), 1)
+
+	network, handled, err := c.QUERY(QueryNetwork{Window: "main", Limit: 10})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.Len(t, network.([]NetworkEntry), 1)
+}
+
+func TestDiagnosticsTasks_Good(t *testing.T) {
+	mock := &mockConnector{pdfBytes: []byte("%PDF-1.7")}
+	_, c := newTestService(t, mock)
+
+	_, handled, err := c.PERFORM(TaskHighlight{Window: "main", Selector: "#app", Colour: "#00ff00"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.Contains(t, mock.lastEvalScript, "outline")
+
+	_, handled, err = c.PERFORM(TaskInjectNetworkLogging{Window: "main"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.Contains(t, mock.lastEvalScript, "__coreNetworkLog")
+
+	_, handled, err = c.PERFORM(TaskClearNetworkLog{Window: "main"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	_, handled, err = c.PERFORM(TaskPrint{Window: "main"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.True(t, mock.printCalled)
+
+	result, handled, err := c.PERFORM(TaskExportPDF{Window: "main"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	pdf, ok := result.(PDFResult)
+	require.True(t, ok)
+	assert.Equal(t, "application/pdf", pdf.MimeType)
+	assert.NotEmpty(t, pdf.Base64)
 }
 
 func TestConnectionCleanup_Good(t *testing.T) {

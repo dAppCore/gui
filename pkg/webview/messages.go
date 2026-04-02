@@ -40,6 +40,28 @@ type QueryDOMTree struct {
 	Selector string `json:"selector,omitempty"` // empty = full document
 }
 
+// QueryComputedStyle returns the computed CSS properties for an element.
+type QueryComputedStyle struct {
+	Window   string `json:"window"`
+	Selector string `json:"selector"`
+}
+
+// QueryPerformance returns page performance metrics.
+type QueryPerformance struct {
+	Window string `json:"window"`
+}
+
+// QueryResources returns the page's loaded resource entries.
+type QueryResources struct {
+	Window string `json:"window"`
+}
+
+// QueryNetwork returns the captured network log.
+type QueryNetwork struct {
+	Window string `json:"window"`
+	Limit  int    `json:"limit,omitempty"`
+}
+
 // --- Tasks (side-effects) ---
 
 // TaskEvaluate executes JavaScript. Result: any (JS return value)
@@ -118,6 +140,13 @@ type TaskClearConsole struct {
 	Window string `json:"window"`
 }
 
+// TaskHighlight visually highlights an element.
+type TaskHighlight struct {
+	Window   string `json:"window"`
+	Selector string `json:"selector"`
+	Colour   string `json:"colour,omitempty"`
+}
+
 // TaskOpenDevTools opens the browser devtools for the target window. Result: nil
 type TaskOpenDevTools struct {
 	Window string `json:"window"`
@@ -125,6 +154,26 @@ type TaskOpenDevTools struct {
 
 // TaskCloseDevTools closes the browser devtools for the target window. Result: nil
 type TaskCloseDevTools struct {
+	Window string `json:"window"`
+}
+
+// TaskInjectNetworkLogging injects fetch/XHR interception into the page.
+type TaskInjectNetworkLogging struct {
+	Window string `json:"window"`
+}
+
+// TaskClearNetworkLog clears the captured network log.
+type TaskClearNetworkLog struct {
+	Window string `json:"window"`
+}
+
+// TaskPrint prints the current page using the browser's native print flow.
+type TaskPrint struct {
+	Window string `json:"window"`
+}
+
+// TaskExportPDF exports the page to a PDF document.
+type TaskExportPDF struct {
 	Window string `json:"window"`
 }
 
@@ -186,4 +235,44 @@ type ExceptionInfo struct {
 type ScreenshotResult struct {
 	Base64   string `json:"base64"`
 	MimeType string `json:"mimeType"` // always "image/png"
+}
+
+// PerformanceMetrics summarises browser performance timings.
+type PerformanceMetrics struct {
+	NavigationStart      float64 `json:"navigationStart"`
+	DOMContentLoaded     float64 `json:"domContentLoaded"`
+	LoadEventEnd         float64 `json:"loadEventEnd"`
+	FirstPaint           float64 `json:"firstPaint,omitempty"`
+	FirstContentfulPaint float64 `json:"firstContentfulPaint,omitempty"`
+	UsedJSHeapSize       float64 `json:"usedJSHeapSize,omitempty"`
+	TotalJSHeapSize      float64 `json:"totalJSHeapSize,omitempty"`
+}
+
+// ResourceEntry summarises a loaded resource.
+type ResourceEntry struct {
+	Name            string  `json:"name"`
+	EntryType       string  `json:"entryType"`
+	InitiatorType   string  `json:"initiatorType,omitempty"`
+	StartTime       float64 `json:"startTime"`
+	Duration        float64 `json:"duration"`
+	TransferSize    float64 `json:"transferSize,omitempty"`
+	EncodedBodySize float64 `json:"encodedBodySize,omitempty"`
+	DecodedBodySize float64 `json:"decodedBodySize,omitempty"`
+}
+
+// NetworkEntry summarises a captured fetch/XHR request.
+type NetworkEntry struct {
+	URL       string `json:"url"`
+	Method    string `json:"method"`
+	Status    int    `json:"status,omitempty"`
+	Resource  string `json:"resource,omitempty"`
+	OK        bool   `json:"ok,omitempty"`
+	Error     string `json:"error,omitempty"`
+	Timestamp int64  `json:"timestamp,omitempty"`
+}
+
+// PDFResult contains exported PDF bytes encoded for transport.
+type PDFResult struct {
+	Base64   string `json:"base64"`
+	MimeType string `json:"mimeType"` // always "application/pdf"
 }

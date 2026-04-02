@@ -13,13 +13,12 @@ type exportedMockTray struct {
 	tooltip, label     string
 }
 
-func (t *exportedMockTray) SetIcon(data []byte)               { t.icon = data }
-func (t *exportedMockTray) SetTemplateIcon(data []byte)       { t.templateIcon = data }
-func (t *exportedMockTray) SetTooltip(text string)            { t.tooltip = text }
-func (t *exportedMockTray) SetLabel(text string)              { t.label = text }
-func (t *exportedMockTray) SetMenu(menu PlatformMenu)         {}
-func (t *exportedMockTray) AttachWindow(w WindowHandle)       {}
-func (t *exportedMockTray) ShowMessage(title, message string) {}
+func (t *exportedMockTray) SetIcon(data []byte)         { t.icon = data }
+func (t *exportedMockTray) SetTemplateIcon(data []byte) { t.templateIcon = data }
+func (t *exportedMockTray) SetTooltip(text string)      { t.tooltip = text }
+func (t *exportedMockTray) SetLabel(text string)        { t.label = text }
+func (t *exportedMockTray) SetMenu(menu PlatformMenu)   {}
+func (t *exportedMockTray) AttachWindow(w WindowHandle) {}
 
 type exportedMockMenu struct{ items []exportedMockMenuItem }
 
