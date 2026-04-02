@@ -127,6 +127,7 @@ func (w *WebviewWindow) SetSize(width, height int) {
 	w.width, w.height = width, height
 }
 func (w *WebviewWindow) SetBackgroundColour(colour RGBA) {}
+func (w *WebviewWindow) SetOpacity(opacity float32)      {}
 func (w *WebviewWindow) SetVisibility(visible bool)      { w.visible = visible }
 func (w *WebviewWindow) SetAlwaysOnTop(alwaysOnTop bool) { w.alwaysOnTop = alwaysOnTop }
 func (w *WebviewWindow) Maximise()                       { w.maximised = true; w.minimised = false; w.visible = true }

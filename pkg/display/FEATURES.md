@@ -31,6 +31,7 @@ This document tracks the implementation of display server features that enable A
 - [x] `window_title_get` - Get current window title (returns window name)
 - [x] `window_always_on_top` - Pin window above others
 - [x] `window_background_colour` - Set window background color with alpha (transparency)
+- [x] `window_opacity` - Set window opacity
 - [x] `window_fullscreen` - Enter/exit fullscreen mode
 
 ---
@@ -235,7 +236,6 @@ This document tracks the implementation of display server features that enable A
 - [x] `tray_info` - Get tray status
 
 ### Phase 8 - Remaining Features (Future)
-- [ ] window_opacity (true opacity if Wails adds support)
 - [ ] layout_beside_editor, layout_suggest
 - [ ] webview_devtools_open, webview_devtools_close
 - [ ] clipboard_read_image, clipboard_write_image

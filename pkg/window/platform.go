@@ -43,6 +43,7 @@ type PlatformWindow interface {
 	SetPosition(x, y int)
 	SetSize(width, height int)
 	SetBackgroundColour(r, g, b, a uint8)
+	SetOpacity(opacity float32)
 	SetVisibility(visible bool)
 	SetAlwaysOnTop(alwaysOnTop bool)
 

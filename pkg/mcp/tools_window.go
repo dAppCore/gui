@@ -356,6 +356,24 @@ func (s *Subsystem) windowBackgroundColour(_ context.Context, _ *mcp.CallToolReq
 	return nil, WindowBackgroundColourOutput{Success: true}, nil
 }
 
+// --- window_opacity ---
+
+type WindowOpacityInput struct {
+	Name    string  `json:"name"`
+	Opacity float32 `json:"opacity"`
+}
+type WindowOpacityOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) windowOpacity(_ context.Context, _ *mcp.CallToolRequest, input WindowOpacityInput) (*mcp.CallToolResult, WindowOpacityOutput, error) {
+	_, _, err := s.core.PERFORM(window.TaskSetOpacity{Name: input.Name, Opacity: input.Opacity})
+	if err != nil {
+		return nil, WindowOpacityOutput{}, err
+	}
+	return nil, WindowOpacityOutput{Success: true}, nil
+}
+
 // --- window_fullscreen ---
 
 type WindowFullscreenInput struct {
@@ -394,5 +412,6 @@ func (s *Subsystem) registerWindowTools(server *mcp.Server) {
 	mcp.AddTool(server, &mcp.Tool{Name: "window_visibility", Description: "Show or hide a window"}, s.windowVisibility)
 	mcp.AddTool(server, &mcp.Tool{Name: "window_always_on_top", Description: "Pin a window above others"}, s.windowAlwaysOnTop)
 	mcp.AddTool(server, &mcp.Tool{Name: "window_background_colour", Description: "Set a window background colour"}, s.windowBackgroundColour)
+	mcp.AddTool(server, &mcp.Tool{Name: "window_opacity", Description: "Set a window opacity"}, s.windowOpacity)
 	mcp.AddTool(server, &mcp.Tool{Name: "window_fullscreen", Description: "Set a window to fullscreen mode"}, s.windowFullscreen)
 }

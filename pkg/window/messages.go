@@ -107,6 +107,12 @@ type TaskSetBackgroundColour struct {
 	Alpha uint8
 }
 
+// TaskSetOpacity updates the window opacity as a value between 0 and 1.
+type TaskSetOpacity struct {
+	Name    string
+	Opacity float32
+}
+
 // TaskSetVisibility shows or hides a window.
 type TaskSetVisibility struct {
 	Name    string

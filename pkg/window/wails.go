@@ -72,6 +72,7 @@ func (ww *wailsWindow) SetSize(width, height int) { ww.w.SetSize(width, height) 
 func (ww *wailsWindow) SetBackgroundColour(r, g, b, a uint8) {
 	ww.w.SetBackgroundColour(application.NewRGBA(r, g, b, a))
 }
+func (ww *wailsWindow) SetOpacity(opacity float32) { ww.w.SetOpacity(opacity) }
 func (ww *wailsWindow) SetVisibility(visible bool) {
 	if visible {
 		ww.w.Show()

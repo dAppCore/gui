@@ -218,6 +218,29 @@ func TestTaskSetBackgroundColour_Good(t *testing.T) {
 	assert.Equal(t, [4]uint8{10, 20, 30, 40}, pw.(*mockWindow).backgroundColor)
 }
 
+func TestTaskSetOpacity_Good(t *testing.T) {
+	_, c := newTestWindowService(t)
+	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("test")}})
+
+	_, handled, err := c.PERFORM(TaskSetOpacity{Name: "test", Opacity: 0.65})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	svc := core.MustServiceFor[*Service](c, "window")
+	pw, ok := svc.Manager().Get("test")
+	require.True(t, ok)
+	assert.InDelta(t, 0.65, pw.(*mockWindow).opacity, 0.0001)
+}
+
+func TestTaskSetOpacity_BadRange(t *testing.T) {
+	_, c := newTestWindowService(t)
+	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("test")}})
+
+	_, handled, err := c.PERFORM(TaskSetOpacity{Name: "test", Opacity: 1.5})
+	require.Error(t, err)
+	assert.True(t, handled)
+}
+
 func TestTaskStackWindows_Good(t *testing.T) {
 	_, c := newTestWindowService(t)
 	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("one")}})

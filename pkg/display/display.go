@@ -1168,6 +1168,15 @@ func (s *Service) SetWindowBackgroundColour(name string, r, g, b, a uint8) error
 	return err
 }
 
+// SetWindowOpacity updates a window's opacity via IPC.
+func (s *Service) SetWindowOpacity(name string, opacity float32) error {
+	_, _, err := s.Core().PERFORM(window.TaskSetOpacity{
+		Name:    name,
+		Opacity: opacity,
+	})
+	return err
+}
+
 // GetFocusedWindow returns the name of the currently focused window.
 func (s *Service) GetFocusedWindow() string {
 	infos := s.ListWindowInfos()

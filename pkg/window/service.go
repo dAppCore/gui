@@ -165,6 +165,8 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 		return nil, true, s.taskSetAlwaysOnTop(t.Name, t.AlwaysOnTop)
 	case TaskSetBackgroundColour:
 		return nil, true, s.taskSetBackgroundColour(t.Name, t.Red, t.Green, t.Blue, t.Alpha)
+	case TaskSetOpacity:
+		return nil, true, s.taskSetOpacity(t.Name, t.Opacity)
 	case TaskSetVisibility:
 		return nil, true, s.taskSetVisibility(t.Name, t.Visible)
 	case TaskFullscreen:
@@ -368,6 +370,18 @@ func (s *Service) taskSetBackgroundColour(name string, red, green, blue, alpha u
 		return fmt.Errorf("window not found: %s", name)
 	}
 	pw.SetBackgroundColour(red, green, blue, alpha)
+	return nil
+}
+
+func (s *Service) taskSetOpacity(name string, opacity float32) error {
+	if opacity < 0 || opacity > 1 {
+		return fmt.Errorf("opacity must be between 0 and 1")
+	}
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return fmt.Errorf("window not found: %s", name)
+	}
+	pw.SetOpacity(opacity)
 	return nil
 }
 

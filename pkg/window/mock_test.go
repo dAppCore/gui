@@ -37,6 +37,7 @@ type mockWindow struct {
 	focused              bool
 	visible, alwaysOnTop bool
 	backgroundColor      [4]uint8
+	opacity              float32
 	devtoolsOpen         bool
 	closed               bool
 	eventHandlers        []func(WindowEvent)
@@ -55,6 +56,7 @@ func (w *mockWindow) SetTitle(title string)                { w.title = title }
 func (w *mockWindow) SetPosition(x, y int)                 { w.x = x; w.y = y }
 func (w *mockWindow) SetSize(width, height int)            { w.width = width; w.height = height }
 func (w *mockWindow) SetBackgroundColour(r, g, b, a uint8) { w.backgroundColor = [4]uint8{r, g, b, a} }
+func (w *mockWindow) SetOpacity(opacity float32)           { w.opacity = opacity }
 func (w *mockWindow) SetVisibility(visible bool)           { w.visible = visible }
 func (w *mockWindow) SetAlwaysOnTop(alwaysOnTop bool)      { w.alwaysOnTop = alwaysOnTop }
 func (w *mockWindow) Maximise()                            { w.maximised = true; w.minimised = false; w.visible = true }

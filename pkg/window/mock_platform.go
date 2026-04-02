@@ -38,6 +38,7 @@ type MockWindow struct {
 	focused              bool
 	visible, alwaysOnTop bool
 	backgroundColor      [4]uint8
+	opacity              float32
 	closed               bool
 	eventHandlers        []func(WindowEvent)
 	fileDropHandlers     []func(paths []string, targetID string)
@@ -55,6 +56,7 @@ func (w *MockWindow) SetTitle(title string)                { w.title = title }
 func (w *MockWindow) SetPosition(x, y int)                 { w.x = x; w.y = y }
 func (w *MockWindow) SetSize(width, height int)            { w.width = width; w.height = height }
 func (w *MockWindow) SetBackgroundColour(r, g, b, a uint8) { w.backgroundColor = [4]uint8{r, g, b, a} }
+func (w *MockWindow) SetOpacity(opacity float32)           { w.opacity = opacity }
 func (w *MockWindow) SetVisibility(visible bool)           { w.visible = visible }
 func (w *MockWindow) SetAlwaysOnTop(alwaysOnTop bool)      { w.alwaysOnTop = alwaysOnTop }
 func (w *MockWindow) Maximise()                            { w.maximised = true; w.minimised = false; w.visible = true }
