@@ -1,17 +1,18 @@
 :root {
   color-scheme: dark;
-  --bg: #070b14;
-  --bg-soft: #0f1729;
-  --panel: rgba(13, 19, 34, 0.86);
-  --panel-strong: rgba(18, 26, 46, 0.94);
-  --border: rgba(255, 255, 255, 0.09);
-  --text: #eef2ff;
-  --muted: #a8b3cf;
-  --accent: #8b5cf6;
-  --accent-strong: #c084fc;
-  --accent-soft: rgba(139, 92, 246, 0.2);
+  --bg: #050816;
+  --bg-soft: #0d1324;
+  --panel: rgba(10, 16, 30, 0.86);
+  --panel-strong: rgba(15, 24, 42, 0.96);
+  --border: rgba(255, 255, 255, 0.08);
+  --text: #f4f7fb;
+  --muted: #aab6cd;
+  --accent: #14b8a6;
+  --accent-strong: #67e8f9;
+  --accent-warm: #f59e0b;
+  --accent-soft: rgba(20, 184, 166, 0.18);
   --good: #4ade80;
-  --shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+  --shadow: 0 28px 90px rgba(0, 0, 0, 0.5);
   --radius: 24px;
   --radius-sm: 16px;
   --mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
@@ -27,13 +28,15 @@ body {
 body {
   min-height: 100%;
   background:
-    radial-gradient(circle at top left, rgba(139, 92, 246, 0.26), transparent 30%),
-    radial-gradient(circle at top right, rgba(34, 211, 238, 0.15), transparent 28%),
-    linear-gradient(160deg, #050816 0%, #070b14 44%, #0b1020 100%);
+    radial-gradient(circle at top left, rgba(20, 184, 166, 0.24), transparent 28%),
+    radial-gradient(circle at top right, rgba(245, 158, 11, 0.16), transparent 24%),
+    radial-gradient(circle at 50% 120%, rgba(59, 130, 246, 0.16), transparent 30%),
+    linear-gradient(160deg, #040714 0%, #07101e 44%, #091322 100%);
   color: var(--text);
   font-family: var(--sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  overflow-x: hidden;
 }
 
 body::before {
@@ -42,11 +45,11 @@ body::before {
   inset: 0;
   pointer-events: none;
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: 48px 48px;
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 52px 52px;
   mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.85), transparent 90%);
-  opacity: 0.3;
+  opacity: 0.28;
 }
 
 core-display {
@@ -78,7 +81,7 @@ core-display .display-shell {
   position: relative;
   z-index: 1;
   min-height: 100vh;
-  padding: 3rem clamp(1.25rem, 3vw, 2.5rem);
+  padding: 3rem clamp(1.25rem, 3vw, 2.5rem) 4rem;
 }
 
 core-display .display-shell::before {
@@ -87,7 +90,9 @@ core-display .display-shell::before {
   inset: 1.5rem;
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 32px;
-  background: linear-gradient(180deg, rgba(13, 19, 34, 0.35), rgba(7, 11, 20, 0.08));
+  background:
+    linear-gradient(180deg, rgba(10, 16, 30, 0.72), rgba(7, 11, 20, 0.14)),
+    radial-gradient(circle at top right, rgba(20, 184, 166, 0.12), transparent 24%);
   backdrop-filter: blur(22px);
   box-shadow: 0 30px 90px rgba(0, 0, 0, 0.4);
   z-index: -1;
@@ -108,6 +113,7 @@ core-display .hero {
   padding: clamp(1.5rem, 3vw, 2rem);
   overflow: hidden;
   position: relative;
+  animation: panel-rise 620ms ease both;
 }
 
 core-display .hero::after {
@@ -117,7 +123,7 @@ core-display .hero::after {
   width: 18rem;
   height: 18rem;
   border-radius: 999px;
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.34), transparent 68%);
+  background: radial-gradient(circle, rgba(20, 184, 166, 0.34), transparent 68%);
   filter: blur(12px);
   pointer-events: none;
 }
@@ -188,12 +194,13 @@ core-display .secondary-action {
     border-color 140ms ease,
     background 140ms ease;
   cursor: pointer;
+  will-change: transform;
 }
 
 core-display .primary-action {
-  background: linear-gradient(135deg, var(--accent), #4f46e5);
+  background: linear-gradient(135deg, var(--accent), #2563eb);
   color: white;
-  box-shadow: 0 10px 30px rgba(91, 33, 182, 0.35);
+  box-shadow: 0 10px 30px rgba(20, 184, 166, 0.24);
 }
 
 core-display .secondary-action {
@@ -205,6 +212,16 @@ core-display .secondary-action {
 core-display .primary-action:hover,
 core-display .secondary-action:hover {
   transform: translateY(-1px);
+}
+
+core-display .primary-action:focus-visible,
+core-display .secondary-action:focus-visible,
+core-display .provider-row:focus-visible,
+core-display .settings-field input:focus-visible,
+.frame-header button:focus-visible,
+.frame-nav a:focus-visible {
+  outline: 2px solid rgba(103, 232, 249, 0.75);
+  outline-offset: 2px;
 }
 
 core-display .hero-meta {
@@ -223,6 +240,16 @@ core-display .meta-card {
   border-radius: var(--radius-sm);
   background: var(--panel-strong);
   border: 1px solid rgba(255, 255, 255, 0.07);
+  transition:
+    transform 140ms ease,
+    border-color 140ms ease,
+    background 140ms ease;
+}
+
+core-display .meta-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(103, 232, 249, 0.16);
+  background: rgba(15, 24, 42, 0.98);
 }
 
 core-display .meta-label {
@@ -250,10 +277,13 @@ core-display .content-grid {
 
 core-display .feature-panel {
   padding: 1.25rem;
+  animation: panel-rise 620ms ease both;
 }
 
 core-display .feature-panel.accent {
-  background: linear-gradient(180deg, rgba(20, 27, 48, 0.92), rgba(11, 15, 28, 0.9));
+  background:
+    linear-gradient(180deg, rgba(16, 24, 41, 0.95), rgba(11, 17, 30, 0.92)),
+    radial-gradient(circle at top right, rgba(20, 184, 166, 0.12), transparent 30%);
 }
 
 core-display .panel-heading {
@@ -274,12 +304,20 @@ core-display .pill {
   background: rgba(255, 255, 255, 0.04);
   color: var(--muted);
   font-size: 0.78rem;
+  transition:
+    transform 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease;
 }
 
 core-display .pill.good {
   color: var(--good);
   border-color: rgba(74, 222, 128, 0.24);
   background: rgba(74, 222, 128, 0.08);
+}
+
+core-display .pill:hover {
+  transform: translateY(-1px);
 }
 
 core-display .provider-list {
@@ -309,13 +347,13 @@ core-display .provider-row {
 
 core-display .provider-row:hover {
   transform: translateY(-1px);
-  border-color: rgba(139, 92, 246, 0.3);
+  border-color: rgba(20, 184, 166, 0.32);
   background: rgba(255, 255, 255, 0.05);
 }
 
 core-display .provider-row.selected {
-  border-color: rgba(139, 92, 246, 0.52);
-  background: rgba(139, 92, 246, 0.11);
+  border-color: rgba(20, 184, 166, 0.5);
+  background: rgba(20, 184, 166, 0.12);
 }
 
 core-display .provider-icon {
@@ -324,7 +362,7 @@ core-display .provider-icon {
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 0.95rem;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.35), rgba(99, 102, 241, 0.15));
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.35), rgba(37, 99, 235, 0.18));
   color: white;
   font-weight: 700;
 }
@@ -377,6 +415,16 @@ core-display .feature-list li {
   border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.05);
+  transition:
+    transform 140ms ease,
+    border-color 140ms ease,
+    background 140ms ease;
+}
+
+core-display .feature-list li:hover {
+  transform: translateY(-1px);
+  border-color: rgba(245, 158, 11, 0.2);
+  background: rgba(255, 255, 255, 0.055);
 }
 
 core-display .feature-list strong {
@@ -421,7 +469,9 @@ core-display .preview-host {
   border-radius: var(--radius-sm);
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.05);
-  background: rgba(5, 8, 22, 0.45);
+  background:
+    linear-gradient(180deg, rgba(5, 8, 22, 0.52), rgba(5, 8, 22, 0.7)),
+    radial-gradient(circle at top right, rgba(20, 184, 166, 0.08), transparent 32%);
 }
 
 core-display .single-column {
@@ -454,17 +504,47 @@ core-display .settings-field input {
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.04);
   color: var(--text);
+  transition:
+    border-color 140ms ease,
+    background 140ms ease,
+    transform 140ms ease;
 }
 
 core-display .settings-field input:focus {
-  outline: 2px solid rgba(139, 92, 246, 0.55);
-  outline-offset: 2px;
+  border-color: rgba(103, 232, 249, 0.45);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 core-display .settings-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
+}
+
+@keyframes panel-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  core-display .hero,
+  core-display .feature-panel,
+  core-display .meta-card,
+  core-display .provider-row,
+  core-display .pill,
+  core-display .feature-list li,
+  core-display .primary-action,
+  core-display .secondary-action {
+    animation: none;
+    transition: none;
+  }
 }
 
 @media (max-width: 920px) {
