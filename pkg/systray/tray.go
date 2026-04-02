@@ -19,6 +19,7 @@ var defaultIcon []byte
 type Manager struct {
 	platform        Platform
 	tray            PlatformTray
+	panelWindow     WindowHandle
 	callbacks       map[string]func()
 	tooltip         string
 	label           string
@@ -100,7 +101,34 @@ func (m *Manager) AttachWindow(w WindowHandle) error {
 	if m.tray == nil {
 		return core.E("systray.AttachWindow", "tray not initialised", nil)
 	}
+	m.mu.Lock()
+	m.panelWindow = w
+	m.mu.Unlock()
 	m.tray.AttachWindow(w)
+	return nil
+}
+
+// ShowPanel shows the attached tray panel window if one is configured.
+func (m *Manager) ShowPanel() error {
+	m.mu.RLock()
+	w := m.panelWindow
+	m.mu.RUnlock()
+	if w == nil {
+		return nil
+	}
+	w.Show()
+	return nil
+}
+
+// HidePanel hides the attached tray panel window if one is configured.
+func (m *Manager) HidePanel() error {
+	m.mu.RLock()
+	w := m.panelWindow
+	m.mu.RUnlock()
+	if w == nil {
+		return nil
+	}
+	w.Hide()
 	return nil
 }
 

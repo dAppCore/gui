@@ -9,6 +9,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type mockWindowHandle struct {
+	name       string
+	showCalled bool
+	hideCalled bool
+}
+
+func (w *mockWindowHandle) Name() string                    { return w.name }
+func (w *mockWindowHandle) Show()                           { w.showCalled = true }
+func (w *mockWindowHandle) Hide()                           { w.hideCalled = true }
+func (w *mockWindowHandle) SetPosition(x, y int)            {}
+func (w *mockWindowHandle) SetSize(width, height int)       {}
+
 func newTestSystrayService(t *testing.T) (*Service, *core.Core) {
 	t.Helper()
 	c, err := core.New(
@@ -113,4 +125,22 @@ func TestTaskShowMessage_Good(t *testing.T) {
 	_, handled, err := c.PERFORM(TaskShowMessage{Title: "Hello", Message: "World"})
 	require.NoError(t, err)
 	assert.True(t, handled)
+}
+
+func TestTaskShowHidePanel_Good(t *testing.T) {
+	svc, c := newTestSystrayService(t)
+	require.NoError(t, svc.manager.Setup("Test", "Test"))
+
+	panel := &mockWindowHandle{name: "panel"}
+	require.NoError(t, svc.manager.AttachWindow(panel))
+
+	_, handled, err := c.PERFORM(TaskShowPanel{})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.True(t, panel.showCalled)
+
+	_, handled, err = c.PERFORM(TaskHidePanel{})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.True(t, panel.hideCalled)
 }

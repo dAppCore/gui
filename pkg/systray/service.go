@@ -72,11 +72,9 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 	case TaskSetTrayMenu:
 		return nil, true, s.taskSetTrayMenu(t)
 	case TaskShowPanel:
-		// Panel show — deferred (requires WindowHandle integration)
-		return nil, true, nil
+		return nil, true, s.manager.ShowPanel()
 	case TaskHidePanel:
-		// Panel hide — deferred (requires WindowHandle integration)
-		return nil, true, nil
+		return nil, true, s.manager.HidePanel()
 	case TaskShowMessage:
 		return nil, true, s.taskShowMessage(t.Title, t.Message)
 	default:
