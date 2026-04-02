@@ -615,6 +615,19 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 			Workflow: workflow,
 			Windows:  names,
 		})
+	case "window:arrange-pair":
+		first, e := wsRequire(msg.Data, "first")
+		if e != nil {
+			return nil, false, e
+		}
+		second, e := wsRequire(msg.Data, "second")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = s.Core().PERFORM(window.TaskArrangePair{
+			First:  first,
+			Second: second,
+		})
 	case "layout:suggest":
 		windowCount := 0
 		if count, ok := msg.Data["windowCount"].(float64); ok {
@@ -638,6 +651,19 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 			WindowCount:  windowCount,
 			ScreenWidth:  screenWidth,
 			ScreenHeight: screenHeight,
+		})
+	case "screen:find-space":
+		width := 0
+		if w, ok := msg.Data["width"].(float64); ok {
+			width = int(w)
+		}
+		height := 0
+		if h, ok := msg.Data["height"].(float64); ok {
+			height = int(h)
+		}
+		result, handled, err = s.Core().QUERY(window.QueryFindSpace{
+			Width:  width,
+			Height: height,
 		})
 	case "screen:list":
 		result, handled, err = s.Core().QUERY(screen.QueryAll{})
@@ -1420,6 +1446,32 @@ func (s *Service) ApplyWorkflowLayout(workflow window.WorkflowLayout) error {
 	}
 	screenWidth, screenHeight := s.primaryScreenSize()
 	return ws.Manager().ApplyWorkflow(workflow, ws.Manager().List(), screenWidth, screenHeight)
+}
+
+// ArrangeWindowPair places two windows side by side using the window manager's balanced split.
+func (s *Service) ArrangeWindowPair(first, second string) error {
+	ws := s.windowService()
+	if ws == nil {
+		return fmt.Errorf("window service not available")
+	}
+	screenWidth, screenHeight := s.primaryScreenSize()
+	return ws.Manager().ArrangePair(first, second, screenWidth, screenHeight)
+}
+
+// FindSpace returns a free placement suggestion for a new window.
+func (s *Service) FindSpace(width, height int) (window.SpaceInfo, error) {
+	ws := s.windowService()
+	if ws == nil {
+		return window.SpaceInfo{}, fmt.Errorf("window service not available")
+	}
+	screenWidth, screenHeight := s.primaryScreenSize()
+	if width <= 0 {
+		width = screenWidth / 2
+	}
+	if height <= 0 {
+		height = screenHeight / 2
+	}
+	return ws.Manager().FindSpace(screenWidth, screenHeight, width, height), nil
 }
 
 // --- Screen management ---

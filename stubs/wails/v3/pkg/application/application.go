@@ -136,6 +136,8 @@ func (w *WebviewWindow) Hide()                           { w.visible = false }
 func (w *WebviewWindow) Fullscreen()                     { w.fullscreen = true }
 func (w *WebviewWindow) UnFullscreen()                   { w.fullscreen = false }
 func (w *WebviewWindow) OpenDevTools()                   { w.devtoolsOpen = true }
+func (w *WebviewWindow) CloseDevTools()                  { w.devtoolsOpen = false }
+func (w *WebviewWindow) DevToolsOpen() bool              { return w.devtoolsOpen }
 
 func (w *WebviewWindow) OnWindowEvent(eventType events.WindowEventType, callback func(event *WindowEvent)) func() {
 	w.mu.Lock()

@@ -36,6 +36,7 @@ type mockWindow struct {
 	maximised, focused   bool
 	visible, alwaysOnTop bool
 	backgroundColor      [4]uint8
+	devtoolsOpen         bool
 	closed               bool
 	eventHandlers        []func(WindowEvent)
 	fileDropHandlers     []func(paths []string, targetID string)
@@ -62,8 +63,8 @@ func (w *mockWindow) Show()                                { w.visible = true }
 func (w *mockWindow) Hide()                                { w.visible = false }
 func (w *mockWindow) Fullscreen()                          {}
 func (w *mockWindow) UnFullscreen()                        {}
-func (w *mockWindow) OpenDevTools()                        {}
-func (w *mockWindow) CloseDevTools()                       {}
+func (w *mockWindow) OpenDevTools()                        { w.devtoolsOpen = true }
+func (w *mockWindow) CloseDevTools()                       { w.devtoolsOpen = false }
 func (w *mockWindow) OnWindowEvent(handler func(WindowEvent)) {
 	w.eventHandlers = append(w.eventHandlers, handler)
 }

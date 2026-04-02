@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 func TestWindowDefaults(t *testing.T) {
@@ -160,6 +161,21 @@ func TestManager_Remove_Good(t *testing.T) {
 	m.Remove("temp")
 	_, ok := m.Get("temp")
 	assert.False(t, ok)
+}
+
+func TestWailsWindow_DevToolsToggle_Good(t *testing.T) {
+	app := application.NewApp()
+	platform := NewWailsPlatform(app)
+
+	pw := platform.CreateWindow(PlatformWindowOptions{Name: "devtools"})
+	ww, ok := pw.(*wailsWindow)
+	require.True(t, ok)
+
+	ww.OpenDevTools()
+	assert.True(t, ww.w.DevToolsOpen())
+
+	ww.CloseDevTools()
+	assert.False(t, ww.w.DevToolsOpen())
 }
 
 // --- StateManager Tests ---

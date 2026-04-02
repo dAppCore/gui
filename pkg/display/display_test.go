@@ -919,6 +919,36 @@ func TestHandleWSMessage_Extended_Good(t *testing.T) {
 		assert.True(t, handled)
 	})
 
+	t.Run("window arrange pair", func(t *testing.T) {
+		_, handled, err := svc.handleWSMessage(WSMessage{
+			Action: "window:arrange-pair",
+			Data: map[string]any{
+				"first":  "editor",
+				"second": "assistant",
+			},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+	})
+
+	t.Run("screen find space", func(t *testing.T) {
+		result, handled, err := svc.handleWSMessage(WSMessage{
+			Action: "screen:find-space",
+			Data: map[string]any{
+				"width":  float64(400),
+				"height": float64(300),
+			},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+		space, ok := result.(window.SpaceInfo)
+		require.True(t, ok)
+		assert.Equal(t, 2560, space.ScreenWidth)
+		assert.Equal(t, 1440, space.ScreenHeight)
+		assert.Equal(t, 400, space.Width)
+		assert.Equal(t, 300, space.Height)
+	})
+
 	t.Run("clipboard image read", func(t *testing.T) {
 		result, handled, err := svc.handleWSMessage(WSMessage{Action: "clipboard:read-image"})
 		require.NoError(t, err)

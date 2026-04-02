@@ -88,7 +88,7 @@ func (ww *wailsWindow) Hide()                           { ww.w.Hide() }
 func (ww *wailsWindow) Fullscreen()                     { ww.w.Fullscreen() }
 func (ww *wailsWindow) UnFullscreen()                   { ww.w.UnFullscreen() }
 func (ww *wailsWindow) OpenDevTools()                   { ww.w.OpenDevTools() }
-func (ww *wailsWindow) CloseDevTools()                  {}
+func (ww *wailsWindow) CloseDevTools()                  { ww.w.CloseDevTools() }
 
 func (ww *wailsWindow) OnWindowEvent(handler func(event WindowEvent)) {
 	name := ww.w.Name()
