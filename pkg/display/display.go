@@ -35,6 +35,9 @@ type Options struct{}
 // WindowInfo is an alias for window.WindowInfo (backward compatibility).
 type WindowInfo = window.WindowInfo
 
+// LayoutSuggestion is an alias for window.LayoutSuggestion (backward compatibility).
+type LayoutSuggestion = window.LayoutSuggestion
+
 // Service manages windowing, dialogs, and other visual elements.
 // It orchestrates sub-services (window, systray, menu) via IPC and bridges
 // IPC actions to WebSocket events for TypeScript apps.
@@ -1499,6 +1502,34 @@ func (s *Service) FindSpace(width, height int) (window.SpaceInfo, error) {
 		height = screenHeight / 2
 	}
 	return ws.Manager().FindSpace(screenWidth, screenHeight, width, height), nil
+}
+
+// SuggestLayout returns a recommended arrangement for the current screen.
+// Use: suggestion, err := svc.SuggestLayout(3, 1920, 1080)
+func (s *Service) SuggestLayout(windowCount, screenWidth, screenHeight int) (window.LayoutSuggestion, error) {
+	result, handled, err := s.Core().QUERY(window.QueryLayoutSuggestion{
+		WindowCount:  windowCount,
+		ScreenWidth:  screenWidth,
+		ScreenHeight: screenHeight,
+	})
+	if err != nil {
+		return window.LayoutSuggestion{}, err
+	}
+	if !handled {
+		return window.LayoutSuggestion{}, fmt.Errorf("window service not available")
+	}
+	suggestion, _ := result.(window.LayoutSuggestion)
+	return suggestion, nil
+}
+
+// BesideEditor positions a target window beside an editor window.
+// Use: _ = svc.BesideEditor("editor", "assistant")
+func (s *Service) BesideEditor(editorName, windowName string) error {
+	_, _, err := s.Core().PERFORM(window.TaskBesideEditor{
+		Editor: editorName,
+		Window: windowName,
+	})
+	return err
 }
 
 // --- Screen management ---

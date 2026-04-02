@@ -689,6 +689,28 @@ func TestServiceWrappers_Good(t *testing.T) {
 		require.NotNil(t, screenInfo)
 	})
 
+	t.Run("layout helpers", func(t *testing.T) {
+		suggestion, err := svc.SuggestLayout(2, 2560, 1440)
+		require.NoError(t, err)
+		assert.Equal(t, "side-by-side", suggestion.Mode)
+
+		require.NoError(t, svc.OpenWindow(window.WithName("editor-beside"), window.WithSize(800, 600)))
+		require.NoError(t, svc.OpenWindow(window.WithName("assistant-beside"), window.WithSize(400, 600)))
+		require.NoError(t, svc.BesideEditor("editor-beside", "assistant-beside"))
+
+		editorInfo, err := svc.GetWindowInfo("editor-beside")
+		require.NoError(t, err)
+		require.NotNil(t, editorInfo)
+		assert.Equal(t, 0, editorInfo.X)
+		assert.Equal(t, 1792, editorInfo.Width)
+
+		assistantInfo, err := svc.GetWindowInfo("assistant-beside")
+		require.NoError(t, err)
+		require.NotNil(t, assistantInfo)
+		assert.Equal(t, 1792, assistantInfo.X)
+		assert.Equal(t, 768, assistantInfo.Width)
+	})
+
 	t.Run("clipboard wrappers", func(t *testing.T) {
 		text, err := svc.ReadClipboard()
 		require.NoError(t, err)
