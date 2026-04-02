@@ -49,6 +49,7 @@ type connector interface {
 }
 
 // Options holds configuration for the webview service.
+// Use: svc, err := webview.Register()(core.New())
 type Options struct {
 	DebugURL     string        // Chrome debug endpoint (default: "http://localhost:9222")
 	Timeout      time.Duration // Operation timeout (default: 30s)
@@ -56,6 +57,7 @@ type Options struct {
 }
 
 // Service is a core.Service managing webview interactions via IPC.
+// Use: svc, err := webview.Register()(core.New())
 type Service struct {
 	*core.ServiceRuntime[Options]
 	opts         Options
@@ -67,6 +69,7 @@ type Service struct {
 }
 
 // Register creates a factory closure with the given options.
+// Use: core.WithService(webview.Register())
 func Register(opts ...func(*Options)) func(*core.Core) (any, error) {
 	o := Options{
 		DebugURL:     "http://localhost:9222",

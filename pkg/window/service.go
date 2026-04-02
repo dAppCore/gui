@@ -11,11 +11,13 @@ import (
 )
 
 // Options holds configuration for the window service.
+// Use: svc, err := window.Register(platform)(core.New())
 type Options struct{}
 
 // Service is a core.Service managing window lifecycle via IPC.
 // Use: core.WithService(window.Register(window.NewMockPlatform()))
 // It embeds ServiceRuntime for Core access and composes Manager for platform operations.
+// Use: svc, err := window.Register(platform)(core.New())
 type Service struct {
 	*core.ServiceRuntime[Options]
 	manager  *Manager
@@ -23,6 +25,7 @@ type Service struct {
 }
 
 // OnStartup queries config from the display orchestrator and registers IPC handlers.
+// Use: _ = svc.OnStartup(context.Background())
 func (s *Service) OnStartup(ctx context.Context) error {
 	// Query config — display registers its handler before us (registration order guarantee).
 	// If display is not registered, handled=false and we skip config.
@@ -60,6 +63,7 @@ func (s *Service) applyConfig(cfg map[string]any) {
 }
 
 // HandleIPCEvents is auto-discovered and registered by core.WithService.
+// Use: _ = svc.HandleIPCEvents(core, msg)
 func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 	return nil
 }

@@ -26,6 +26,7 @@ type Window struct {
 }
 
 // ToPlatformOptions converts a Window to PlatformWindowOptions for the backend.
+// Use: opts := spec.ToPlatformOptions()
 func (w *Window) ToPlatformOptions() PlatformWindowOptions {
 	return PlatformWindowOptions{
 		Name: w.Name, Title: w.Title, URL: w.URL,
@@ -73,6 +74,7 @@ func NewManagerWithDir(platform Platform, configDir string) *Manager {
 }
 
 // SetDefaultWidth overrides the fallback width used when a window is created without one.
+// Use: mgr.SetDefaultWidth(1280)
 func (m *Manager) SetDefaultWidth(width int) {
 	if width > 0 {
 		m.defaultWidth = width
@@ -80,6 +82,7 @@ func (m *Manager) SetDefaultWidth(width int) {
 }
 
 // SetDefaultHeight overrides the fallback height used when a window is created without one.
+// Use: mgr.SetDefaultHeight(800)
 func (m *Manager) SetDefaultHeight(height int) {
 	if height > 0 {
 		m.defaultHeight = height
@@ -136,6 +139,7 @@ func (m *Manager) Create(w *Window) (PlatformWindow, error) {
 }
 
 // Get returns a tracked window by name.
+// Use: pw, ok := mgr.Get("editor")
 func (m *Manager) Get(name string) (PlatformWindow, bool) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -144,6 +148,7 @@ func (m *Manager) Get(name string) (PlatformWindow, bool) {
 }
 
 // List returns all tracked window names.
+// Use: names := mgr.List()
 func (m *Manager) List() []string {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -155,6 +160,7 @@ func (m *Manager) List() []string {
 }
 
 // Remove stops tracking a window by name.
+// Use: mgr.Remove("editor")
 func (m *Manager) Remove(name string) {
 	m.mu.Lock()
 	delete(m.windows, name)
@@ -162,21 +168,25 @@ func (m *Manager) Remove(name string) {
 }
 
 // Platform returns the underlying platform for direct access.
+// Use: platform := mgr.Platform()
 func (m *Manager) Platform() Platform {
 	return m.platform
 }
 
 // State returns the state manager for window persistence.
+// Use: state := mgr.State()
 func (m *Manager) State() *StateManager {
 	return m.state
 }
 
 // Layout returns the layout manager.
+// Use: layouts := mgr.Layout()
 func (m *Manager) Layout() *LayoutManager {
 	return m.layout
 }
 
 // SuggestLayout returns a simple layout recommendation for the given screen.
+// Use: suggestion := mgr.SuggestLayout(1920, 1080, 2)
 func (m *Manager) SuggestLayout(screenW, screenH, windowCount int) LayoutSuggestion {
 	if windowCount <= 1 {
 		return LayoutSuggestion{
@@ -224,6 +234,7 @@ func (m *Manager) SuggestLayout(screenW, screenH, windowCount int) LayoutSuggest
 }
 
 // FindSpace returns a free placement suggestion for a new window.
+// Use: info := mgr.FindSpace(1920, 1080, 1280, 800)
 func (m *Manager) FindSpace(screenW, screenH, width, height int) SpaceInfo {
 	if width <= 0 {
 		width = screenW / 2
@@ -273,6 +284,7 @@ func (m *Manager) FindSpace(screenW, screenH, width, height int) SpaceInfo {
 }
 
 // ArrangePair places two windows side-by-side with a balanced split.
+// Use: _ = mgr.ArrangePair("editor", "terminal", 1920, 1080)
 func (m *Manager) ArrangePair(first, second string, screenW, screenH int) error {
 	left, ok := m.Get(first)
 	if !ok {
@@ -293,6 +305,7 @@ func (m *Manager) ArrangePair(first, second string, screenW, screenH int) error 
 }
 
 // BesideEditor places a target window beside an editor window, using a 70/30 split.
+// Use: _ = mgr.BesideEditor("editor", "terminal", 1920, 1080)
 func (m *Manager) BesideEditor(editorName, windowName string, screenW, screenH int) error {
 	editor, ok := m.Get(editorName)
 	if !ok {

@@ -30,6 +30,7 @@ import (
 )
 
 // Options holds configuration for the display service.
+// Use: svc, err := display.NewService()
 type Options struct{}
 
 // WindowInfo is an alias for window.WindowInfo (backward compatibility).
@@ -41,6 +42,7 @@ type LayoutSuggestion = window.LayoutSuggestion
 // Service manages windowing, dialogs, and other visual elements.
 // It orchestrates sub-services (window, systray, menu) via IPC and bridges
 // IPC actions to WebSocket events for TypeScript apps.
+// Use: svc, err := display.NewService()
 type Service struct {
 	*core.ServiceRuntime[Options]
 	wailsApp   *application.App
@@ -64,6 +66,7 @@ func NewService() (*Service, error) {
 }
 
 // Deprecated: use NewService.
+// Use: svc, err := display.New()
 func New() (*Service, error) {
 	return NewService()
 }
@@ -1436,6 +1439,7 @@ func (s *Service) GetSavedWindowStates() map[string]window.WindowState {
 }
 
 // CreateWindowOptions contains options for creating a new window.
+// Use: opts := display.CreateWindowOptions{Name: "editor", URL: "/editor"}
 type CreateWindowOptions struct {
 	Name             string   `json:"name"`
 	Title            string   `json:"title,omitempty"`

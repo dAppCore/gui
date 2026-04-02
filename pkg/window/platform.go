@@ -2,12 +2,14 @@
 package window
 
 // Platform abstracts the windowing backend (Wails v3).
+// Use: var p window.Platform
 type Platform interface {
 	CreateWindow(opts PlatformWindowOptions) PlatformWindow
 	GetWindows() []PlatformWindow
 }
 
 // PlatformWindowOptions are the backend-specific options passed to CreateWindow.
+// Use: opts := window.PlatformWindowOptions{Name: "editor"}
 type PlatformWindowOptions struct {
 	Name                string
 	Title               string
@@ -25,6 +27,7 @@ type PlatformWindowOptions struct {
 }
 
 // PlatformWindow is a live window handle from the backend.
+// Use: var w window.PlatformWindow
 type PlatformWindow interface {
 	// Identity
 	Name() string
@@ -68,6 +71,7 @@ type PlatformWindow interface {
 }
 
 // WindowEvent is emitted by the backend for window state changes.
+// Use: evt := window.WindowEvent{Type: "focus", Name: "editor"}
 type WindowEvent struct {
 	Type string // "focus", "blur", "move", "resize", "close"
 	Name string // window name

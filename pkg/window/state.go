@@ -11,6 +11,7 @@ import (
 
 // WindowState holds the persisted position/size of a window.
 // JSON tags match existing window_state.json format for backward compat.
+// Use: state := window.WindowState{X: 10, Y: 20, Width: 1280, Height: 800}
 type WindowState struct {
 	X         int    `json:"x,omitempty"`
 	Y         int    `json:"y,omitempty"`
@@ -23,6 +24,7 @@ type WindowState struct {
 }
 
 // StateManager persists window positions to ~/.config/Core/window_state.json.
+// Use: sm := window.NewStateManager()
 type StateManager struct {
 	configDir string
 	statePath string
@@ -32,6 +34,7 @@ type StateManager struct {
 }
 
 // NewStateManager creates a StateManager loading from the default config directory.
+// Use: sm := window.NewStateManager()
 func NewStateManager() *StateManager {
 	sm := &StateManager{
 		states: make(map[string]WindowState),
@@ -46,6 +49,7 @@ func NewStateManager() *StateManager {
 
 // NewStateManagerWithDir creates a StateManager loading from a custom config directory.
 // Useful for testing or when the default config directory is not appropriate.
+// Use: sm := window.NewStateManagerWithDir(t.TempDir())
 func NewStateManagerWithDir(configDir string) *StateManager {
 	sm := &StateManager{
 		configDir: configDir,
@@ -70,6 +74,7 @@ func (sm *StateManager) dataDir() string {
 }
 
 // SetPath overrides the persisted state file path.
+// Use: sm.SetPath(filepath.Join(t.TempDir(), "window_state.json"))
 func (sm *StateManager) SetPath(path string) {
 	if path == "" {
 		return
@@ -120,6 +125,7 @@ func (sm *StateManager) scheduleSave() {
 }
 
 // GetState returns the saved state for a window name.
+// Use: state, ok := sm.GetState("editor")
 func (sm *StateManager) GetState(name string) (WindowState, bool) {
 	sm.mu.RLock()
 	defer sm.mu.RUnlock()
@@ -128,6 +134,7 @@ func (sm *StateManager) GetState(name string) (WindowState, bool) {
 }
 
 // SetState saves state for a window name (debounced disk write).
+// Use: sm.SetState("editor", window.WindowState{Width: 1280, Height: 800})
 func (sm *StateManager) SetState(name string, state WindowState) {
 	state.UpdatedAt = time.Now().UnixMilli()
 	sm.mu.Lock()
@@ -137,6 +144,7 @@ func (sm *StateManager) SetState(name string, state WindowState) {
 }
 
 // UpdatePosition updates only the position fields.
+// Use: sm.UpdatePosition("editor", 160, 120)
 func (sm *StateManager) UpdatePosition(name string, x, y int) {
 	sm.mu.Lock()
 	s := sm.states[name]
@@ -149,6 +157,7 @@ func (sm *StateManager) UpdatePosition(name string, x, y int) {
 }
 
 // UpdateSize updates only the size fields.
+// Use: sm.UpdateSize("editor", 1280, 800)
 func (sm *StateManager) UpdateSize(name string, width, height int) {
 	sm.mu.Lock()
 	s := sm.states[name]
@@ -161,6 +170,7 @@ func (sm *StateManager) UpdateSize(name string, width, height int) {
 }
 
 // UpdateMaximized updates the maximized flag.
+// Use: sm.UpdateMaximized("editor", true)
 func (sm *StateManager) UpdateMaximized(name string, maximized bool) {
 	sm.mu.Lock()
 	s := sm.states[name]
@@ -172,6 +182,7 @@ func (sm *StateManager) UpdateMaximized(name string, maximized bool) {
 }
 
 // CaptureState snapshots the current state from a PlatformWindow.
+// Use: sm.CaptureState(pw)
 func (sm *StateManager) CaptureState(pw PlatformWindow) {
 	x, y := pw.Position()
 	w, h := pw.Size()
@@ -182,6 +193,7 @@ func (sm *StateManager) CaptureState(pw PlatformWindow) {
 }
 
 // ApplyState restores saved position/size to a Window descriptor.
+// Use: sm.ApplyState(&window.Window{Name: "editor"})
 func (sm *StateManager) ApplyState(w *Window) {
 	s, ok := sm.GetState(w.Name)
 	if !ok {
@@ -198,6 +210,7 @@ func (sm *StateManager) ApplyState(w *Window) {
 }
 
 // ListStates returns all stored window names.
+// Use: names := sm.ListStates()
 func (sm *StateManager) ListStates() []string {
 	sm.mu.RLock()
 	defer sm.mu.RUnlock()
@@ -209,6 +222,7 @@ func (sm *StateManager) ListStates() []string {
 }
 
 // Clear removes all stored states.
+// Use: sm.Clear()
 func (sm *StateManager) Clear() {
 	sm.mu.Lock()
 	sm.states = make(map[string]WindowState)
@@ -217,6 +231,7 @@ func (sm *StateManager) Clear() {
 }
 
 // ForceSync writes state to disk immediately.
+// Use: sm.ForceSync()
 func (sm *StateManager) ForceSync() {
 	if sm.saveTimer != nil {
 		sm.saveTimer.Stop()
