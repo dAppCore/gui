@@ -658,6 +658,7 @@ func (s *Subsystem) registerWebviewTools(server *mcp.Server) {
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_viewport", Description: "Set the webview viewport dimensions"}, s.webviewViewport)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_console", Description: "Get captured console messages from a webview"}, s.webviewConsole)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_console_clear", Description: "Clear captured console messages"}, s.webviewConsoleClear)
+	mcp.AddTool(server, &mcp.Tool{Name: "webview_clear_console", Description: "Alias for webview_console_clear"}, s.webviewConsoleClear)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_query", Description: "Find a single DOM element by CSS selector"}, s.webviewQuery)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_element_info", Description: "Get detailed information about a DOM element"}, s.webviewElementInfo)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_query_all", Description: "Find all DOM elements matching a CSS selector"}, s.webviewQueryAll)

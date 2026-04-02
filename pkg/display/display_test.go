@@ -726,6 +726,21 @@ func TestServiceWrappers_Good(t *testing.T) {
 		assert.True(t, fixture.notificationPlatform.clearCalled)
 	})
 
+	t.Run("compatibility aliases", func(t *testing.T) {
+		_ = svc.OpenWindow(window.WithName("alias-win"))
+
+		require.NoError(t, svc.FocusSet("alias-win"))
+		info, err := svc.GetWindowInfo("alias-win")
+		require.NoError(t, err)
+		require.NotNil(t, info)
+		assert.True(t, info.Focused)
+
+		require.NoError(t, svc.DialogMessage("warning", "Alias", "Message"))
+		assert.Equal(t, notification.SeverityWarning, fixture.notificationPlatform.lastOpts.Severity)
+		assert.Equal(t, "Alias", fixture.notificationPlatform.lastOpts.Title)
+		assert.Equal(t, "Message", fixture.notificationPlatform.lastOpts.Message)
+	})
+
 	t.Run("dialog wrappers", func(t *testing.T) {
 		paths, err := svc.OpenFileDialog(dialog.OpenFileOptions{Title: "Pick"})
 		require.NoError(t, err)

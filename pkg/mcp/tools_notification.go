@@ -110,6 +110,38 @@ func (s *Subsystem) notificationClear(_ context.Context, _ *mcp.CallToolRequest,
 	return nil, NotificationClearOutput{Success: true}, nil
 }
 
+// --- dialog_message ---
+
+type DialogMessageInput struct {
+	Title   string `json:"title"`
+	Message string `json:"message"`
+	Kind    string `json:"kind,omitempty"`
+}
+type DialogMessageOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) dialogMessage(_ context.Context, _ *mcp.CallToolRequest, input DialogMessageInput) (*mcp.CallToolResult, DialogMessageOutput, error) {
+	var severity notification.NotificationSeverity
+	switch input.Kind {
+	case "warning":
+		severity = notification.SeverityWarning
+	case "error":
+		severity = notification.SeverityError
+	default:
+		severity = notification.SeverityInfo
+	}
+	_, _, err := s.core.PERFORM(notification.TaskSend{Opts: notification.NotificationOptions{
+		Title:    input.Title,
+		Message:  input.Message,
+		Severity: severity,
+	}})
+	if err != nil {
+		return nil, DialogMessageOutput{}, err
+	}
+	return nil, DialogMessageOutput{Success: true}, nil
+}
+
 // --- Registration ---
 
 func (s *Subsystem) registerNotificationTools(server *mcp.Server) {
@@ -118,4 +150,5 @@ func (s *Subsystem) registerNotificationTools(server *mcp.Server) {
 	mcp.AddTool(server, &mcp.Tool{Name: "notification_permission_request", Description: "Request notification permission"}, s.notificationPermissionRequest)
 	mcp.AddTool(server, &mcp.Tool{Name: "notification_permission_check", Description: "Check notification permission status"}, s.notificationPermissionCheck)
 	mcp.AddTool(server, &mcp.Tool{Name: "notification_clear", Description: "Clear notifications when supported"}, s.notificationClear)
+	mcp.AddTool(server, &mcp.Tool{Name: "dialog_message", Description: "Show a message dialog using the notification pipeline"}, s.dialogMessage)
 }

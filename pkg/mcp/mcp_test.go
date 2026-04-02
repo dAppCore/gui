@@ -7,6 +7,7 @@ import (
 
 	"forge.lthn.ai/core/go/pkg/core"
 	"forge.lthn.ai/core/gui/pkg/clipboard"
+	"forge.lthn.ai/core/gui/pkg/notification"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -34,7 +35,20 @@ type mockClipPlatform struct {
 }
 
 func (m *mockClipPlatform) Text() (string, bool)  { return m.text, m.ok }
-func (m *mockClipPlatform) SetText(t string) bool  { m.text = t; m.ok = t != ""; return true }
+func (m *mockClipPlatform) SetText(t string) bool { m.text = t; m.ok = t != ""; return true }
+
+type mockNotificationPlatform struct {
+	sendCalled bool
+	lastOpts   notification.NotificationOptions
+}
+
+func (m *mockNotificationPlatform) Send(opts notification.NotificationOptions) error {
+	m.sendCalled = true
+	m.lastOpts = opts
+	return nil
+}
+func (m *mockNotificationPlatform) RequestPermission() (bool, error) { return true, nil }
+func (m *mockNotificationPlatform) CheckPermission() (bool, error)   { return true, nil }
 
 func TestMCP_Good_ClipboardRoundTrip(t *testing.T) {
 	c, err := core.New(
@@ -51,6 +65,27 @@ func TestMCP_Good_ClipboardRoundTrip(t *testing.T) {
 	content, ok := result.(clipboard.ClipboardContent)
 	require.True(t, ok, "expected ClipboardContent type")
 	assert.Equal(t, "hello", content.Text)
+}
+
+func TestMCP_Good_DialogMessage(t *testing.T) {
+	mock := &mockNotificationPlatform{}
+	c, err := core.New(
+		core.WithService(notification.Register(mock)),
+		core.WithServiceLock(),
+	)
+	require.NoError(t, err)
+	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+
+	sub := New(c)
+	_, result, err := sub.dialogMessage(context.Background(), nil, DialogMessageInput{
+		Title:   "Alias",
+		Message: "Hello",
+		Kind:    "error",
+	})
+	require.NoError(t, err)
+	assert.True(t, result.Success)
+	assert.True(t, mock.sendCalled)
+	assert.Equal(t, notification.SeverityError, mock.lastOpts.Severity)
 }
 
 func TestMCP_Bad_NoServices(t *testing.T) {

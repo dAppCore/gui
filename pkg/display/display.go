@@ -1120,6 +1120,11 @@ func (s *Service) FocusWindow(name string) error {
 	return err
 }
 
+// FocusSet is a compatibility alias for FocusWindow.
+func (s *Service) FocusSet(name string) error {
+	return s.FocusWindow(name)
+}
+
 // CloseWindow closes a window via IPC.
 func (s *Service) CloseWindow(name string) error {
 	_, _, err := s.Core().PERFORM(window.TaskCloseWindow{Name: name})
@@ -1174,6 +1179,12 @@ func (s *Service) SetWindowOpacity(name string, opacity float32) error {
 		Name:    name,
 		Opacity: opacity,
 	})
+	return err
+}
+
+// ClearWebviewConsole clears the captured console buffer for a window.
+func (s *Service) ClearWebviewConsole(name string) error {
+	_, _, err := s.Core().PERFORM(webview.TaskClearConsole{Window: name})
 	return err
 }
 
@@ -1770,6 +1781,27 @@ func (s *Service) PromptDialog(title, message string) (string, bool, error) {
 	}
 	button, _ := result.(string)
 	return button, button == "OK", nil
+}
+
+// DialogMessage shows an informational, warning, or error message via the notification pipeline.
+func (s *Service) DialogMessage(kind, title, message string) error {
+	var severity notification.NotificationSeverity
+	switch kind {
+	case "warning":
+		severity = notification.SeverityWarning
+	case "error":
+		severity = notification.SeverityError
+	default:
+		severity = notification.SeverityInfo
+	}
+	_, _, err := s.Core().PERFORM(notification.TaskSend{
+		Opts: notification.NotificationOptions{
+			Title:    title,
+			Message:  message,
+			Severity: severity,
+		},
+	})
+	return err
 }
 
 // --- Theme ---

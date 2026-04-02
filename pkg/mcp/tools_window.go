@@ -407,6 +407,7 @@ func (s *Subsystem) registerWindowTools(server *mcp.Server) {
 	mcp.AddTool(server, &mcp.Tool{Name: "window_minimize", Description: "Minimise a window"}, s.windowMinimize)
 	mcp.AddTool(server, &mcp.Tool{Name: "window_restore", Description: "Restore a maximised or minimised window"}, s.windowRestore)
 	mcp.AddTool(server, &mcp.Tool{Name: "window_focus", Description: "Bring a window to the front"}, s.windowFocus)
+	mcp.AddTool(server, &mcp.Tool{Name: "focus_set", Description: "Alias for window_focus"}, s.windowFocus)
 	mcp.AddTool(server, &mcp.Tool{Name: "window_title", Description: "Set the title of a window"}, s.windowTitle)
 	mcp.AddTool(server, &mcp.Tool{Name: "window_title_get", Description: "Get the title of a window"}, s.windowTitleGet)
 	mcp.AddTool(server, &mcp.Tool{Name: "window_visibility", Description: "Show or hide a window"}, s.windowVisibility)
