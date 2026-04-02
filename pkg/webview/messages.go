@@ -94,6 +94,12 @@ type TaskScreenshot struct {
 	Window string `json:"window"`
 }
 
+// TaskScreenshotElement captures a specific element as PNG. Result: ScreenshotResult
+type TaskScreenshotElement struct {
+	Window   string `json:"window"`
+	Selector string `json:"selector"`
+}
+
 // TaskScroll scrolls to an absolute position (window.scrollTo). Result: nil
 type TaskScroll struct {
 	Window string `json:"window"`

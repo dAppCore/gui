@@ -2,10 +2,15 @@
 package webview
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"image"
+	"image/draw"
+	"image/png"
+	"math"
 	"reflect"
 	"strconv"
 	"strings"
@@ -381,6 +386,19 @@ func (s *Service) handleTask(_ *core.Core, t core.Task) (any, bool, error) {
 			Base64:   base64.StdEncoding.EncodeToString(png),
 			MimeType: "image/png",
 		}, true, nil
+	case TaskScreenshotElement:
+		conn, err := s.getConn(t.Window)
+		if err != nil {
+			return nil, true, err
+		}
+		png, err := captureElementScreenshot(conn, t.Selector)
+		if err != nil {
+			return nil, true, err
+		}
+		return ScreenshotResult{
+			Base64:   base64.StdEncoding.EncodeToString(png),
+			MimeType: "image/png",
+		}, true, nil
 	case TaskScroll:
 		conn, err := s.getConn(t.Window)
 		if err != nil {
@@ -433,8 +451,26 @@ func (s *Service) handleTask(_ *core.Core, t core.Task) (any, bool, error) {
 		_, err = conn.Evaluate(highlightScript(t.Selector, t.Colour))
 		return nil, true, err
 	case TaskOpenDevTools:
+		ws, err := core.ServiceFor[*window.Service](s.Core(), "window")
+		if err != nil {
+			return nil, true, err
+		}
+		pw, ok := ws.Manager().Get(t.Window)
+		if !ok {
+			return nil, true, fmt.Errorf("window not found: %s", t.Window)
+		}
+		pw.OpenDevTools()
 		return nil, true, nil
 	case TaskCloseDevTools:
+		ws, err := core.ServiceFor[*window.Service](s.Core(), "window")
+		if err != nil {
+			return nil, true, err
+		}
+		pw, ok := ws.Manager().Get(t.Window)
+		if !ok {
+			return nil, true, fmt.Errorf("window not found: %s", t.Window)
+		}
+		pw.CloseDevTools()
 		return nil, true, nil
 	case TaskInjectNetworkLogging:
 		conn, err := s.getConn(t.Window)
@@ -500,6 +536,91 @@ func coerceToResourceEntries(v any) ([]ResourceEntry, error) {
 
 func coerceToNetworkEntries(v any) ([]NetworkEntry, error) {
 	return coerceJSON[[]NetworkEntry](v)
+}
+
+type elementScreenshotBounds struct {
+	Left             float64 `json:"left"`
+	Top              float64 `json:"top"`
+	Width            float64 `json:"width"`
+	Height           float64 `json:"height"`
+	DevicePixelRatio float64 `json:"devicePixelRatio"`
+}
+
+func elementScreenshotScript(selector string) string {
+	sel := jsQuote(selector)
+	return fmt.Sprintf(`(function(){
+  const el = document.querySelector(%s);
+  if (!el) return null;
+  try { el.scrollIntoView({block: "center", inline: "center"}); } catch (e) {}
+  const rect = el.getBoundingClientRect();
+  return {
+    left: rect.left,
+    top: rect.top,
+    width: rect.width,
+    height: rect.height,
+    devicePixelRatio: window.devicePixelRatio || 1
+  };
+})()`, sel)
+}
+
+func captureElementScreenshot(conn connector, selector string) ([]byte, error) {
+	result, err := conn.Evaluate(elementScreenshotScript(selector))
+	if err != nil {
+		return nil, err
+	}
+	if result == nil {
+		return nil, fmt.Errorf("webview: element not found: %s", selector)
+	}
+	bounds, err := coerceJSON[elementScreenshotBounds](result)
+	if err != nil {
+		return nil, err
+	}
+	if bounds.Width <= 0 || bounds.Height <= 0 {
+		return nil, fmt.Errorf("webview: element has no measurable bounds: %s", selector)
+	}
+	raw, err := conn.Screenshot()
+	if err != nil {
+		return nil, err
+	}
+	img, _, err := image.Decode(bytes.NewReader(raw))
+	if err != nil {
+		return nil, err
+	}
+
+	scale := bounds.DevicePixelRatio
+	if scale <= 0 {
+		scale = 1
+	}
+	left := int(math.Floor(bounds.Left * scale))
+	top := int(math.Floor(bounds.Top * scale))
+	right := int(math.Ceil((bounds.Left + bounds.Width) * scale))
+	bottom := int(math.Ceil((bounds.Top + bounds.Height) * scale))
+
+	srcBounds := img.Bounds()
+	if left < srcBounds.Min.X {
+		left = srcBounds.Min.X
+	}
+	if top < srcBounds.Min.Y {
+		top = srcBounds.Min.Y
+	}
+	if right > srcBounds.Max.X {
+		right = srcBounds.Max.X
+	}
+	if bottom > srcBounds.Max.Y {
+		bottom = srcBounds.Max.Y
+	}
+	if right <= left || bottom <= top {
+		return nil, fmt.Errorf("webview: element is outside the captured screenshot: %s", selector)
+	}
+
+	crop := image.NewRGBA(image.Rect(0, 0, right-left, bottom-top))
+	draw.Draw(crop, crop.Bounds(), img, image.Point{X: left, Y: top}, draw.Src)
+
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, crop); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }
 
 // realConnector wraps *gowebview.Webview, converting types at the boundary.

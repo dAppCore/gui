@@ -345,6 +345,16 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 			return nil, false, e
 		}
 		result, handled, err = s.Core().PERFORM(webview.TaskScreenshot{Window: w})
+	case "webview:screenshot-element":
+		w, e := wsRequire(msg.Data, "window")
+		if e != nil {
+			return nil, false, e
+		}
+		sel, e := wsRequire(msg.Data, "selector")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = s.Core().PERFORM(webview.TaskScreenshotElement{Window: w, Selector: sel})
 	case "webview:scroll":
 		w, e := wsRequire(msg.Data, "window")
 		if e != nil {
@@ -521,6 +531,22 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 		}
 		sel, _ := msg.Data["selector"].(string) // selector optional for dom-tree (defaults to root)
 		result, handled, err = s.Core().QUERY(webview.QueryDOMTree{Window: w, Selector: sel})
+	case "webview:source":
+		w, e := wsRequire(msg.Data, "window")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = s.Core().QUERY(webview.QueryDOMTree{Window: w})
+	case "webview:element-info":
+		w, e := wsRequire(msg.Data, "window")
+		if e != nil {
+			return nil, false, e
+		}
+		sel, e := wsRequire(msg.Data, "selector")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = s.Core().QUERY(webview.QuerySelector{Window: w, Selector: sel})
 	case "webview:url":
 		w, e := wsRequire(msg.Data, "window")
 		if e != nil {

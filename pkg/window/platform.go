@@ -9,19 +9,19 @@ type Platform interface {
 
 // PlatformWindowOptions are the backend-specific options passed to CreateWindow.
 type PlatformWindowOptions struct {
-	Name                  string
-	Title                 string
-	URL                   string
-	Width, Height         int
-	X, Y                  int
-	MinWidth, MinHeight   int
-	MaxWidth, MaxHeight   int
-	Frameless             bool
-	Hidden                bool
-	AlwaysOnTop           bool
-	BackgroundColour      [4]uint8 // RGBA
-	DisableResize         bool
-	EnableFileDrop        bool
+	Name                string
+	Title               string
+	URL                 string
+	Width, Height       int
+	X, Y                int
+	MinWidth, MinHeight int
+	MaxWidth, MaxHeight int
+	Frameless           bool
+	Hidden              bool
+	AlwaysOnTop         bool
+	BackgroundColour    [4]uint8 // RGBA
+	DisableResize       bool
+	EnableFileDrop      bool
 }
 
 // PlatformWindow is a live window handle from the backend.
@@ -54,6 +54,8 @@ type PlatformWindow interface {
 	Hide()
 	Fullscreen()
 	UnFullscreen()
+	OpenDevTools()
+	CloseDevTools()
 
 	// Events
 	OnWindowEvent(handler func(event WindowEvent))

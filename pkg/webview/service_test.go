@@ -2,7 +2,12 @@
 package webview
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
+	"image"
+	"image/color"
+	"image/png"
 	"strings"
 	"testing"
 
@@ -107,7 +112,11 @@ func (m *mockConnector) GetConsole() []ConsoleMessage { return m.console }
 func newTestService(t *testing.T, mock *mockConnector) (*Service, *core.Core) {
 	t.Helper()
 	factory := Register()
-	c, err := core.New(core.WithService(factory), core.WithServiceLock())
+	c, err := core.New(
+		core.WithService(window.Register(window.NewMockPlatform())),
+		core.WithService(factory),
+		core.WithServiceLock(),
+	)
 	require.NoError(t, err)
 	require.NoError(t, c.ServiceStartup(context.Background(), nil))
 	svc := core.MustServiceFor[*Service](c, "webview")
@@ -203,6 +212,43 @@ func TestTaskScreenshot_Good(t *testing.T) {
 	assert.NotEmpty(t, sr.Base64)
 }
 
+func TestTaskScreenshotElement_Good(t *testing.T) {
+	img := image.NewRGBA(image.Rect(0, 0, 4, 4))
+	for y := 0; y < 4; y++ {
+		for x := 0; x < 4; x++ {
+			img.SetRGBA(x, y, color.RGBA{R: uint8(x * 40), G: uint8(y * 40), B: 200, A: 255})
+		}
+	}
+	var buf bytes.Buffer
+	require.NoError(t, png.Encode(&buf, img))
+
+	mock := &mockConnector{
+		screenshot: buf.Bytes(),
+		evalFn: func(script string) (any, error) {
+			return map[string]any{
+				"left":             1.0,
+				"top":              1.0,
+				"width":            2.0,
+				"height":           2.0,
+				"devicePixelRatio": 1.0,
+			}, nil
+		},
+	}
+	_, c := newTestService(t, mock)
+
+	result, handled, err := c.PERFORM(TaskScreenshotElement{Window: "main", Selector: "#card"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	sr, ok := result.(ScreenshotResult)
+	require.True(t, ok)
+
+	raw, err := base64.StdEncoding.DecodeString(sr.Base64)
+	require.NoError(t, err)
+	decoded, err := png.Decode(bytes.NewReader(raw))
+	require.NoError(t, err)
+	assert.Equal(t, image.Rect(0, 0, 2, 2), decoded.Bounds())
+}
+
 func TestTaskClearConsole_Good(t *testing.T) {
 	mock := &mockConnector{}
 	_, c := newTestService(t, mock)
@@ -214,6 +260,8 @@ func TestTaskClearConsole_Good(t *testing.T) {
 
 func TestTaskDevTools_Good(t *testing.T) {
 	_, c := newTestService(t, &mockConnector{})
+	_, _, err := c.PERFORM(window.TaskOpenWindow{Opts: []window.WindowOption{window.WithName("main")}})
+	require.NoError(t, err)
 	_, handled, err := c.PERFORM(TaskOpenDevTools{Window: "main"})
 	require.NoError(t, err)
 	assert.True(t, handled)

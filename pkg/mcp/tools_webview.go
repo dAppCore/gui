@@ -110,6 +110,30 @@ func (s *Subsystem) webviewScreenshot(_ context.Context, _ *mcp.CallToolRequest,
 	return nil, WebviewScreenshotOutput{Base64: sr.Base64, MimeType: sr.MimeType}, nil
 }
 
+// --- webview_screenshot_element ---
+
+type WebviewScreenshotElementInput struct {
+	Window   string `json:"window"`
+	Selector string `json:"selector"`
+}
+
+type WebviewScreenshotElementOutput struct {
+	Base64   string `json:"base64"`
+	MimeType string `json:"mimeType"`
+}
+
+func (s *Subsystem) webviewScreenshotElement(_ context.Context, _ *mcp.CallToolRequest, input WebviewScreenshotElementInput) (*mcp.CallToolResult, WebviewScreenshotElementOutput, error) {
+	result, _, err := s.core.PERFORM(webview.TaskScreenshotElement{Window: input.Window, Selector: input.Selector})
+	if err != nil {
+		return nil, WebviewScreenshotElementOutput{}, err
+	}
+	sr, ok := result.(webview.ScreenshotResult)
+	if !ok {
+		return nil, WebviewScreenshotElementOutput{}, fmt.Errorf("unexpected result type from webview element screenshot")
+	}
+	return nil, WebviewScreenshotElementOutput{Base64: sr.Base64, MimeType: sr.MimeType}, nil
+}
+
 // --- webview_scroll ---
 
 type WebviewScrollInput struct {
@@ -328,6 +352,12 @@ func (s *Subsystem) webviewQuery(_ context.Context, _ *mcp.CallToolRequest, inpu
 	return nil, WebviewQueryOutput{Element: el}, nil
 }
 
+// --- webview_element_info ---
+
+func (s *Subsystem) webviewElementInfo(_ context.Context, _ *mcp.CallToolRequest, input WebviewQueryInput) (*mcp.CallToolResult, WebviewQueryOutput, error) {
+	return s.webviewQuery(nil, nil, input)
+}
+
 // --- webview_query_all ---
 
 type WebviewQueryAllInput struct {
@@ -372,6 +402,12 @@ func (s *Subsystem) webviewDOMTree(_ context.Context, _ *mcp.CallToolRequest, in
 		return nil, WebviewDOMTreeOutput{}, fmt.Errorf("unexpected result type from webview DOM tree query")
 	}
 	return nil, WebviewDOMTreeOutput{HTML: html}, nil
+}
+
+// --- webview_source ---
+
+func (s *Subsystem) webviewSource(_ context.Context, _ *mcp.CallToolRequest, input WebviewDOMTreeInput) (*mcp.CallToolResult, WebviewDOMTreeOutput, error) {
+	return s.webviewDOMTree(nil, nil, input)
 }
 
 // --- webview_computed_style ---
@@ -613,6 +649,7 @@ func (s *Subsystem) registerWebviewTools(server *mcp.Server) {
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_type", Description: "Type text into an element in a webview"}, s.webviewType)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_navigate", Description: "Navigate a webview to a URL"}, s.webviewNavigate)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_screenshot", Description: "Capture a webview screenshot as base64 PNG"}, s.webviewScreenshot)
+	mcp.AddTool(server, &mcp.Tool{Name: "webview_screenshot_element", Description: "Capture a specific element as base64 PNG"}, s.webviewScreenshotElement)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_scroll", Description: "Scroll a webview to an absolute position"}, s.webviewScroll)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_hover", Description: "Hover over an element in a webview"}, s.webviewHover)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_select", Description: "Select an option in a select element"}, s.webviewSelect)
@@ -622,8 +659,10 @@ func (s *Subsystem) registerWebviewTools(server *mcp.Server) {
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_console", Description: "Get captured console messages from a webview"}, s.webviewConsole)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_console_clear", Description: "Clear captured console messages"}, s.webviewConsoleClear)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_query", Description: "Find a single DOM element by CSS selector"}, s.webviewQuery)
+	mcp.AddTool(server, &mcp.Tool{Name: "webview_element_info", Description: "Get detailed information about a DOM element"}, s.webviewElementInfo)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_query_all", Description: "Find all DOM elements matching a CSS selector"}, s.webviewQueryAll)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_dom_tree", Description: "Get HTML content of a webview"}, s.webviewDOMTree)
+	mcp.AddTool(server, &mcp.Tool{Name: "webview_source", Description: "Get page HTML source"}, s.webviewSource)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_computed_style", Description: "Get computed styles for an element"}, s.webviewComputedStyle)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_performance", Description: "Get page performance metrics"}, s.webviewPerformance)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_resources", Description: "List loaded page resources"}, s.webviewResources)
