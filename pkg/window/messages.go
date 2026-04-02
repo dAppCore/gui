@@ -12,6 +12,14 @@ type WindowInfo struct {
 	Focused   bool   `json:"focused"`
 }
 
+// Bounds describes the position and size of a window.
+type Bounds struct {
+	X      int `json:"x"`
+	Y      int `json:"y"`
+	Width  int `json:"width"`
+	Height int `json:"height"`
+}
+
 // --- Queries (read-only) ---
 
 // QueryWindowList returns all tracked windows. Result: []WindowInfo
@@ -23,6 +31,9 @@ type QueryWindowByName struct{ Name string }
 // QueryConfig requests this service's config section from the display orchestrator.
 // Result: map[string]any
 type QueryConfig struct{}
+
+// QueryWindowBounds returns the current bounds for a window.
+type QueryWindowBounds struct{ Name string }
 
 // QueryFindSpace returns a suggested free placement for a new window.
 type QueryFindSpace struct {
@@ -40,7 +51,10 @@ type QueryLayoutSuggestion struct {
 // --- Tasks (side-effects) ---
 
 // TaskOpenWindow creates a new window. Result: WindowInfo
-type TaskOpenWindow struct{ Opts []WindowOption }
+type TaskOpenWindow struct {
+	Window *Window
+	Opts   []WindowOption
+}
 
 // TaskCloseWindow closes a window. Handler persists state BEFORE emitting ActionWindowClosed.
 type TaskCloseWindow struct{ Name string }
@@ -53,8 +67,9 @@ type TaskSetPosition struct {
 
 // TaskSetSize resizes a window.
 type TaskSetSize struct {
-	Name string
-	W, H int
+	Name          string
+	Width, Height int
+	W, H          int
 }
 
 // TaskMaximise maximises a window.
@@ -73,6 +88,21 @@ type TaskRestore struct{ Name string }
 type TaskSetTitle struct {
 	Name  string
 	Title string
+}
+
+// TaskSetAlwaysOnTop pins a window above others.
+type TaskSetAlwaysOnTop struct {
+	Name        string
+	AlwaysOnTop bool
+}
+
+// TaskSetBackgroundColour updates the window background colour.
+type TaskSetBackgroundColour struct {
+	Name  string
+	Red   uint8
+	Green uint8
+	Blue  uint8
+	Alpha uint8
 }
 
 // TaskSetVisibility shows or hides a window.
@@ -157,8 +187,9 @@ type ActionWindowMoved struct {
 }
 
 type ActionWindowResized struct {
-	Name string
-	W, H int
+	Name          string
+	Width, Height int
+	W, H          int
 }
 
 type ActionWindowFocused struct{ Name string }

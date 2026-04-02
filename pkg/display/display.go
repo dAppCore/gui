@@ -1243,13 +1243,15 @@ func (s *Service) GetSavedWindowStates() map[string]window.WindowState {
 
 // CreateWindowOptions contains options for creating a new window.
 type CreateWindowOptions struct {
-	Name   string `json:"name"`
-	Title  string `json:"title,omitempty"`
-	URL    string `json:"url,omitempty"`
-	X      int    `json:"x,omitempty"`
-	Y      int    `json:"y,omitempty"`
-	Width  int    `json:"width,omitempty"`
-	Height int    `json:"height,omitempty"`
+	Name             string   `json:"name"`
+	Title            string   `json:"title,omitempty"`
+	URL              string   `json:"url,omitempty"`
+	X                int      `json:"x,omitempty"`
+	Y                int      `json:"y,omitempty"`
+	Width            int      `json:"width,omitempty"`
+	Height           int      `json:"height,omitempty"`
+	AlwaysOnTop      bool     `json:"alwaysOnTop,omitempty"`
+	BackgroundColour [4]uint8 `json:"backgroundColour,omitempty"`
 }
 
 // CreateWindow creates a new window with the specified options.
@@ -1258,12 +1260,16 @@ func (s *Service) CreateWindow(opts CreateWindowOptions) (*window.WindowInfo, er
 		return nil, fmt.Errorf("window name is required")
 	}
 	result, _, err := s.Core().PERFORM(window.TaskOpenWindow{
-		Opts: []window.WindowOption{
-			window.WithName(opts.Name),
-			window.WithTitle(opts.Title),
-			window.WithURL(opts.URL),
-			window.WithSize(opts.Width, opts.Height),
-			window.WithPosition(opts.X, opts.Y),
+		Window: &window.Window{
+			Name:             opts.Name,
+			Title:            opts.Title,
+			URL:              opts.URL,
+			X:                opts.X,
+			Y:                opts.Y,
+			Width:            opts.Width,
+			Height:           opts.Height,
+			AlwaysOnTop:      opts.AlwaysOnTop,
+			BackgroundColour: opts.BackgroundColour,
 		},
 	})
 	if err != nil {

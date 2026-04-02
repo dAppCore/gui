@@ -89,22 +89,17 @@ type WindowCreateOutput struct {
 }
 
 func (s *Subsystem) windowCreate(_ context.Context, _ *mcp.CallToolRequest, input WindowCreateInput) (*mcp.CallToolResult, WindowCreateOutput, error) {
-	opts := []window.WindowOption{
-		window.WithName(input.Name),
-	}
-	if input.Title != "" {
-		opts = append(opts, window.WithTitle(input.Title))
-	}
-	if input.URL != "" {
-		opts = append(opts, window.WithURL(input.URL))
-	}
-	if input.Width > 0 || input.Height > 0 {
-		opts = append(opts, window.WithSize(input.Width, input.Height))
-	}
-	if input.X != 0 || input.Y != 0 {
-		opts = append(opts, window.WithPosition(input.X, input.Y))
-	}
-	result, _, err := s.core.PERFORM(window.TaskOpenWindow{Opts: opts})
+	result, _, err := s.core.PERFORM(window.TaskOpenWindow{
+		Window: &window.Window{
+			Name:   input.Name,
+			Title:  input.Title,
+			URL:    input.URL,
+			Width:  input.Width,
+			Height: input.Height,
+			X:      input.X,
+			Y:      input.Y,
+		},
+	})
 	if err != nil {
 		return nil, WindowCreateOutput{}, err
 	}
@@ -163,7 +158,7 @@ type WindowSizeOutput struct {
 }
 
 func (s *Subsystem) windowSize(_ context.Context, _ *mcp.CallToolRequest, input WindowSizeInput) (*mcp.CallToolResult, WindowSizeOutput, error) {
-	_, _, err := s.core.PERFORM(window.TaskSetSize{Name: input.Name, W: input.Width, H: input.Height})
+	_, _, err := s.core.PERFORM(window.TaskSetSize{Name: input.Name, Width: input.Width, Height: input.Height})
 	if err != nil {
 		return nil, WindowSizeOutput{}, err
 	}
@@ -188,7 +183,7 @@ func (s *Subsystem) windowBounds(_ context.Context, _ *mcp.CallToolRequest, inpu
 	if err != nil {
 		return nil, WindowBoundsOutput{}, err
 	}
-	_, _, err = s.core.PERFORM(window.TaskSetSize{Name: input.Name, W: input.Width, H: input.Height})
+	_, _, err = s.core.PERFORM(window.TaskSetSize{Name: input.Name, Width: input.Width, Height: input.Height})
 	if err != nil {
 		return nil, WindowBoundsOutput{}, err
 	}
@@ -281,6 +276,27 @@ func (s *Subsystem) windowTitle(_ context.Context, _ *mcp.CallToolRequest, input
 	return nil, WindowTitleOutput{Success: true}, nil
 }
 
+// --- window_title_get ---
+
+type WindowTitleGetInput struct {
+	Name string `json:"name"`
+}
+type WindowTitleGetOutput struct {
+	Title string `json:"title"`
+}
+
+func (s *Subsystem) windowTitleGet(_ context.Context, _ *mcp.CallToolRequest, input WindowTitleGetInput) (*mcp.CallToolResult, WindowTitleGetOutput, error) {
+	result, _, err := s.core.QUERY(window.QueryWindowByName{Name: input.Name})
+	if err != nil {
+		return nil, WindowTitleGetOutput{}, err
+	}
+	info, _ := result.(*window.WindowInfo)
+	if info == nil {
+		return nil, WindowTitleGetOutput{}, nil
+	}
+	return nil, WindowTitleGetOutput{Title: info.Title}, nil
+}
+
 // --- window_visibility ---
 
 type WindowVisibilityInput struct {
@@ -297,6 +313,47 @@ func (s *Subsystem) windowVisibility(_ context.Context, _ *mcp.CallToolRequest, 
 		return nil, WindowVisibilityOutput{}, err
 	}
 	return nil, WindowVisibilityOutput{Success: true}, nil
+}
+
+// --- window_always_on_top ---
+
+type WindowAlwaysOnTopInput struct {
+	Name        string `json:"name"`
+	AlwaysOnTop bool   `json:"alwaysOnTop"`
+}
+type WindowAlwaysOnTopOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) windowAlwaysOnTop(_ context.Context, _ *mcp.CallToolRequest, input WindowAlwaysOnTopInput) (*mcp.CallToolResult, WindowAlwaysOnTopOutput, error) {
+	_, _, err := s.core.PERFORM(window.TaskSetAlwaysOnTop{Name: input.Name, AlwaysOnTop: input.AlwaysOnTop})
+	if err != nil {
+		return nil, WindowAlwaysOnTopOutput{}, err
+	}
+	return nil, WindowAlwaysOnTopOutput{Success: true}, nil
+}
+
+// --- window_background_colour ---
+
+type WindowBackgroundColourInput struct {
+	Name  string `json:"name"`
+	Red   uint8  `json:"red"`
+	Green uint8  `json:"green"`
+	Blue  uint8  `json:"blue"`
+	Alpha uint8  `json:"alpha"`
+}
+type WindowBackgroundColourOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) windowBackgroundColour(_ context.Context, _ *mcp.CallToolRequest, input WindowBackgroundColourInput) (*mcp.CallToolResult, WindowBackgroundColourOutput, error) {
+	_, _, err := s.core.PERFORM(window.TaskSetBackgroundColour{
+		Name: input.Name, Red: input.Red, Green: input.Green, Blue: input.Blue, Alpha: input.Alpha,
+	})
+	if err != nil {
+		return nil, WindowBackgroundColourOutput{}, err
+	}
+	return nil, WindowBackgroundColourOutput{Success: true}, nil
 }
 
 // --- window_fullscreen ---
@@ -333,6 +390,9 @@ func (s *Subsystem) registerWindowTools(server *mcp.Server) {
 	mcp.AddTool(server, &mcp.Tool{Name: "window_restore", Description: "Restore a maximised or minimised window"}, s.windowRestore)
 	mcp.AddTool(server, &mcp.Tool{Name: "window_focus", Description: "Bring a window to the front"}, s.windowFocus)
 	mcp.AddTool(server, &mcp.Tool{Name: "window_title", Description: "Set the title of a window"}, s.windowTitle)
+	mcp.AddTool(server, &mcp.Tool{Name: "window_title_get", Description: "Get the title of a window"}, s.windowTitleGet)
 	mcp.AddTool(server, &mcp.Tool{Name: "window_visibility", Description: "Show or hide a window"}, s.windowVisibility)
+	mcp.AddTool(server, &mcp.Tool{Name: "window_always_on_top", Description: "Pin a window above others"}, s.windowAlwaysOnTop)
+	mcp.AddTool(server, &mcp.Tool{Name: "window_background_colour", Description: "Set a window background colour"}, s.windowBackgroundColour)
 	mcp.AddTool(server, &mcp.Tool{Name: "window_fullscreen", Description: "Set a window to fullscreen mode"}, s.windowFullscreen)
 }

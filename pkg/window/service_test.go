@@ -54,6 +54,18 @@ func TestTaskOpenWindow_Good(t *testing.T) {
 	assert.Equal(t, "test", info.Name)
 }
 
+func TestTaskOpenWindowDescriptor_Good(t *testing.T) {
+	_, c := newTestWindowService(t)
+	result, handled, err := c.PERFORM(TaskOpenWindow{
+		Window: &Window{Name: "descriptor", Title: "Descriptor", Width: 640, Height: 480},
+	})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	info := result.(WindowInfo)
+	assert.Equal(t, "descriptor", info.Name)
+	assert.Equal(t, "Descriptor", info.Title)
+}
+
 func TestTaskOpenWindow_Bad(t *testing.T) {
 	// No window service registered — PERFORM returns handled=false
 	c, err := core.New(core.WithServiceLock())
@@ -139,6 +151,36 @@ func TestTaskSetSize_Good(t *testing.T) {
 	info := result.(*WindowInfo)
 	assert.Equal(t, 800, info.Width)
 	assert.Equal(t, 600, info.Height)
+}
+
+func TestTaskSetAlwaysOnTop_Good(t *testing.T) {
+	_, c := newTestWindowService(t)
+	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("test")}})
+
+	_, handled, err := c.PERFORM(TaskSetAlwaysOnTop{Name: "test", AlwaysOnTop: true})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	svc := core.MustServiceFor[*Service](c, "window")
+	pw, ok := svc.Manager().Get("test")
+	require.True(t, ok)
+	assert.True(t, pw.(*mockWindow).alwaysOnTop)
+}
+
+func TestTaskSetBackgroundColour_Good(t *testing.T) {
+	_, c := newTestWindowService(t)
+	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("test")}})
+
+	_, handled, err := c.PERFORM(TaskSetBackgroundColour{
+		Name: "test", Red: 10, Green: 20, Blue: 30, Alpha: 40,
+	})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	svc := core.MustServiceFor[*Service](c, "window")
+	pw, ok := svc.Manager().Get("test")
+	require.True(t, ok)
+	assert.Equal(t, [4]uint8{10, 20, 30, 40}, pw.(*mockWindow).backgroundColor)
 }
 
 func TestTaskStackWindows_Good(t *testing.T) {

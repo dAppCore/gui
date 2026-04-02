@@ -14,6 +14,9 @@ func (m *mockPlatform) CreateWindow(opts PlatformWindowOptions) PlatformWindow {
 		name: opts.Name, title: opts.Title, url: opts.URL,
 		width: opts.Width, height: opts.Height,
 		x: opts.X, y: opts.Y,
+		alwaysOnTop:     opts.AlwaysOnTop,
+		backgroundColor: opts.BackgroundColour,
+		visible:         !opts.Hidden,
 	}
 	m.windows = append(m.windows, w)
 	return w
@@ -32,6 +35,7 @@ type mockWindow struct {
 	width, height, x, y  int
 	maximised, focused   bool
 	visible, alwaysOnTop bool
+	backgroundColor      [4]uint8
 	closed               bool
 	eventHandlers        []func(WindowEvent)
 	fileDropHandlers     []func(paths []string, targetID string)
@@ -46,7 +50,7 @@ func (w *mockWindow) IsFocused() bool                      { return w.focused }
 func (w *mockWindow) SetTitle(title string)                { w.title = title }
 func (w *mockWindow) SetPosition(x, y int)                 { w.x = x; w.y = y }
 func (w *mockWindow) SetSize(width, height int)            { w.width = width; w.height = height }
-func (w *mockWindow) SetBackgroundColour(r, g, b, a uint8) {}
+func (w *mockWindow) SetBackgroundColour(r, g, b, a uint8) { w.backgroundColor = [4]uint8{r, g, b, a} }
 func (w *mockWindow) SetVisibility(visible bool)           { w.visible = visible }
 func (w *mockWindow) SetAlwaysOnTop(alwaysOnTop bool)      { w.alwaysOnTop = alwaysOnTop }
 func (w *mockWindow) Maximise()                            { w.maximised = true }

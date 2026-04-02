@@ -70,6 +70,11 @@ func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
 		return s.queryWindowList(), true, nil
 	case QueryWindowByName:
 		return s.queryWindowByName(q.Name), true, nil
+	case QueryWindowBounds:
+		if info := s.queryWindowByName(q.Name); info != nil {
+			return &Bounds{X: info.X, Y: info.Y, Width: info.Width, Height: info.Height}, true, nil
+		}
+		return (*Bounds)(nil), true, nil
 	case QueryLayoutList:
 		return s.manager.Layout().ListLayouts(), true, nil
 	case QueryLayoutGet:
@@ -131,7 +136,7 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 	case TaskSetPosition:
 		return nil, true, s.taskSetPosition(t.Name, t.X, t.Y)
 	case TaskSetSize:
-		return nil, true, s.taskSetSize(t.Name, t.W, t.H)
+		return nil, true, s.taskSetSize(t.Name, t.Width, t.Height, t.W, t.H)
 	case TaskMaximise:
 		return nil, true, s.taskMaximise(t.Name)
 	case TaskMinimise:
@@ -142,6 +147,10 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 		return nil, true, s.taskRestore(t.Name)
 	case TaskSetTitle:
 		return nil, true, s.taskSetTitle(t.Name, t.Title)
+	case TaskSetAlwaysOnTop:
+		return nil, true, s.taskSetAlwaysOnTop(t.Name, t.AlwaysOnTop)
+	case TaskSetBackgroundColour:
+		return nil, true, s.taskSetBackgroundColour(t.Name, t.Red, t.Green, t.Blue, t.Alpha)
 	case TaskSetVisibility:
 		return nil, true, s.taskSetVisibility(t.Name, t.Visible)
 	case TaskFullscreen:
@@ -171,7 +180,16 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 }
 
 func (s *Service) taskOpenWindow(t TaskOpenWindow) (any, bool, error) {
-	pw, err := s.manager.Open(t.Opts...)
+	var (
+		pw  PlatformWindow
+		err error
+	)
+	if t.Window != nil {
+		spec := *t.Window
+		pw, err = s.manager.Create(&spec)
+	} else {
+		pw, err = s.manager.Open(t.Opts...)
+	}
 	if err != nil {
 		return nil, true, err
 	}
@@ -205,7 +223,7 @@ func (s *Service) trackWindow(pw PlatformWindow) {
 			if data := e.Data; data != nil {
 				w, _ := data["w"].(int)
 				h, _ := data["h"].(int)
-				_ = s.Core().ACTION(ActionWindowResized{Name: e.Name, W: w, H: h})
+				_ = s.Core().ACTION(ActionWindowResized{Name: e.Name, Width: w, Height: h, W: w, H: h})
 			}
 		case "close":
 			_ = s.Core().ACTION(ActionWindowClosed{Name: e.Name})
@@ -243,13 +261,23 @@ func (s *Service) taskSetPosition(name string, x, y int) error {
 	return nil
 }
 
-func (s *Service) taskSetSize(name string, w, h int) error {
+func (s *Service) taskSetSize(name string, width, height, legacyWidth, legacyHeight int) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
 		return fmt.Errorf("window not found: %s", name)
 	}
-	pw.SetSize(w, h)
-	s.manager.State().UpdateSize(name, w, h)
+	if width == 0 && height == 0 {
+		width, height = legacyWidth, legacyHeight
+	} else {
+		if width == 0 {
+			width = legacyWidth
+		}
+		if height == 0 {
+			height = legacyHeight
+		}
+	}
+	pw.SetSize(width, height)
+	s.manager.State().UpdateSize(name, width, height)
 	return nil
 }
 
@@ -297,6 +325,24 @@ func (s *Service) taskSetTitle(name, title string) error {
 		return fmt.Errorf("window not found: %s", name)
 	}
 	pw.SetTitle(title)
+	return nil
+}
+
+func (s *Service) taskSetAlwaysOnTop(name string, alwaysOnTop bool) error {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return fmt.Errorf("window not found: %s", name)
+	}
+	pw.SetAlwaysOnTop(alwaysOnTop)
+	return nil
+}
+
+func (s *Service) taskSetBackgroundColour(name string, red, green, blue, alpha uint8) error {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return fmt.Errorf("window not found: %s", name)
+	}
+	pw.SetBackgroundColour(red, green, blue, alpha)
 	return nil
 }
 
