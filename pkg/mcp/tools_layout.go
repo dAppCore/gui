@@ -4,7 +4,6 @@ package mcp
 import (
 	"context"
 	"fmt"
-	"math"
 
 	"forge.lthn.ai/core/go/pkg/core"
 	"forge.lthn.ai/core/gui/pkg/screen"
@@ -185,15 +184,22 @@ func (s *Subsystem) layoutSuggest(_ context.Context, _ *mcp.CallToolRequest, inp
 	if screenW <= 0 || screenH <= 0 {
 		screenW, screenH = primaryScreenSize(s.core)
 	}
-	suggestion := suggestLayout(screenW, screenH, windowCount)
-	return nil, LayoutSuggestOutput{Suggestion: window.LayoutSuggestion{
-		Mode:           suggestion.Mode,
-		Columns:        suggestion.Columns,
-		Rows:           suggestion.Rows,
-		PrimaryWidth:   suggestion.PrimaryWidth,
-		SecondaryWidth: suggestion.SecondaryWidth,
-		Description:    suggestion.Description,
-	}}, nil
+	result, handled, err := s.core.QUERY(window.QueryLayoutSuggestion{
+		WindowCount:  windowCount,
+		ScreenWidth:  screenW,
+		ScreenHeight: screenH,
+	})
+	if err != nil {
+		return nil, LayoutSuggestOutput{}, err
+	}
+	if !handled {
+		return nil, LayoutSuggestOutput{}, fmt.Errorf("window service not available")
+	}
+	suggestion, ok := result.(window.LayoutSuggestion)
+	if !ok {
+		return nil, LayoutSuggestOutput{}, fmt.Errorf("unexpected result type from layout suggestion query")
+	}
+	return nil, LayoutSuggestOutput{Suggestion: suggestion}, nil
 }
 
 // --- screen_find_space ---
@@ -211,9 +217,17 @@ func (s *Subsystem) screenFindSpace(_ context.Context, _ *mcp.CallToolRequest, i
 	if screenW <= 0 || screenH <= 0 {
 		screenW, screenH = 1920, 1080
 	}
-	result, _, err := s.core.QUERY(window.QueryFindSpace{Width: input.Width, Height: input.Height})
+	result, handled, err := s.core.QUERY(window.QueryFindSpace{
+		Width:        input.Width,
+		Height:       input.Height,
+		ScreenWidth:  screenW,
+		ScreenHeight: screenH,
+	})
 	if err != nil {
 		return nil, ScreenFindSpaceOutput{}, err
+	}
+	if !handled {
+		return nil, ScreenFindSpaceOutput{}, fmt.Errorf("window service not available")
 	}
 	space, ok := result.(window.SpaceInfo)
 	if !ok {
@@ -328,47 +342,4 @@ func primaryScreenSize(c *core.Core) (int, int) {
 		}
 	}
 	return 1920, 1080
-}
-
-func suggestLayout(screenW, screenH, windowCount int) window.LayoutSuggestion {
-	if windowCount <= 1 {
-		return window.LayoutSuggestion{
-			Mode:           "single",
-			Columns:        1,
-			Rows:           1,
-			PrimaryWidth:   screenW,
-			SecondaryWidth: 0,
-			Description:    "Focus the primary window and keep the screen uncluttered.",
-		}
-	}
-	if windowCount == 2 {
-		return window.LayoutSuggestion{
-			Mode:           "side-by-side",
-			Columns:        2,
-			Rows:           1,
-			PrimaryWidth:   screenW / 2,
-			SecondaryWidth: screenW - (screenW / 2),
-			Description:    "Split the screen into two equal panes.",
-		}
-	}
-	if windowCount <= 4 {
-		return window.LayoutSuggestion{
-			Mode:           "quadrants",
-			Columns:        2,
-			Rows:           2,
-			PrimaryWidth:   screenW / 2,
-			SecondaryWidth: screenW / 2,
-			Description:    "Use a 2x2 grid for the active windows.",
-		}
-	}
-	cols := 3
-	rows := int(math.Ceil(float64(windowCount) / float64(cols)))
-	return window.LayoutSuggestion{
-		Mode:           "grid",
-		Columns:        cols,
-		Rows:           rows,
-		PrimaryWidth:   screenW / cols,
-		SecondaryWidth: screenW / cols,
-		Description:    "Use a dense grid to keep every window visible.",
-	}
 }
