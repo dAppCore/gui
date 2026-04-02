@@ -258,11 +258,18 @@ func (mi *MenuItem) OnClick(fn func(ctx *Context)) *MenuItem {
 
 // SystemTray models a tray icon.
 type SystemTray struct {
-	icon         []byte
-	templateIcon []byte
-	tooltip      string
-	label        string
-	menu         *Menu
+	icon           []byte
+	templateIcon   []byte
+	tooltip        string
+	label          string
+	menu           *Menu
+	attachedWindow interface {
+		Show()
+		Hide()
+		Focus()
+		IsVisible() bool
+	}
+	onClick func()
 }
 
 func (st *SystemTray) SetIcon(icon []byte) *SystemTray {
@@ -288,9 +295,39 @@ func (st *SystemTray) SetMenu(menu *Menu) *SystemTray {
 	return st
 }
 
-func (st *SystemTray) Show()                               {}
-func (st *SystemTray) Hide()                               {}
-func (st *SystemTray) OnClick(callback func()) *SystemTray { return st }
+func (st *SystemTray) Show() {}
+func (st *SystemTray) Hide() {}
+func (st *SystemTray) OnClick(callback func()) *SystemTray {
+	st.onClick = callback
+	return st
+}
+
+func (st *SystemTray) AttachWindow(window interface {
+	Show()
+	Hide()
+	Focus()
+	IsVisible() bool
+}) *SystemTray {
+	st.attachedWindow = window
+	st.OnClick(func() {
+		if st.attachedWindow == nil {
+			return
+		}
+		if st.attachedWindow.IsVisible() {
+			st.attachedWindow.Hide()
+			return
+		}
+		st.attachedWindow.Show()
+		st.attachedWindow.Focus()
+	})
+	return st
+}
+
+func (st *SystemTray) Click() {
+	if st.onClick != nil {
+		st.onClick()
+	}
+}
 
 // SystemTrayManager creates trays.
 type SystemTrayManager struct {

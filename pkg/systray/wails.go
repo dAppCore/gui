@@ -15,7 +15,7 @@ func NewWailsPlatform(app *application.App) *WailsPlatform {
 }
 
 func (wp *WailsPlatform) NewTray() PlatformTray {
-	return &wailsTray{tray: wp.app.SystemTray.New(), app: wp.app}
+	return &wailsTray{tray: wp.app.SystemTray.New()}
 }
 
 func (wp *WailsPlatform) NewMenu() PlatformMenu {
@@ -24,7 +24,6 @@ func (wp *WailsPlatform) NewMenu() PlatformMenu {
 
 type wailsTray struct {
 	tray *application.SystemTray
-	app  *application.App
 }
 
 func (wt *wailsTray) SetIcon(data []byte)         { wt.tray.SetIcon(data) }
@@ -39,8 +38,19 @@ func (wt *wailsTray) SetMenu(menu PlatformMenu) {
 }
 
 func (wt *wailsTray) AttachWindow(w WindowHandle) {
-	// Wails systray AttachWindow expects an application.Window interface.
-	// The caller must pass an appropriate wrapper.
+	if wt.tray == nil {
+		return
+	}
+	window, ok := w.(interface {
+		Show()
+		Hide()
+		Focus()
+		IsVisible() bool
+	})
+	if !ok {
+		return
+	}
+	wt.tray.AttachWindow(window)
 }
 
 // wailsTrayMenu wraps *application.Menu for the PlatformMenu interface.
