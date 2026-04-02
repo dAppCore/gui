@@ -1,1 +1,390 @@
-/* You can add global styles to this file, and also import other style files */
+:root {
+  color-scheme: dark;
+  --bg: #070b14;
+  --bg-soft: #0f1729;
+  --panel: rgba(13, 19, 34, 0.86);
+  --panel-strong: rgba(18, 26, 46, 0.94);
+  --border: rgba(255, 255, 255, 0.09);
+  --text: #eef2ff;
+  --muted: #a8b3cf;
+  --accent: #8b5cf6;
+  --accent-strong: #c084fc;
+  --accent-soft: rgba(139, 92, 246, 0.2);
+  --good: #4ade80;
+  --shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+  --radius: 24px;
+  --radius-sm: 16px;
+  --mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+  --sans: 'IBM Plex Sans', 'Avenir Next', 'Trebuchet MS', sans-serif;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  min-height: 100%;
+  background:
+    radial-gradient(circle at top left, rgba(139, 92, 246, 0.26), transparent 30%),
+    radial-gradient(circle at top right, rgba(34, 211, 238, 0.15), transparent 28%),
+    linear-gradient(160deg, #050816 0%, #070b14 44%, #0b1020 100%);
+  color: var(--text);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.85), transparent 90%);
+  opacity: 0.3;
+}
+
+core-display {
+  display: block;
+  min-height: 100vh;
+}
+
+button,
+a {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.mono {
+  font-family: var(--mono);
+  letter-spacing: 0;
+}
+
+core-display {
+  display: block;
+  min-height: 100vh;
+}
+
+core-display .display-shell {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  padding: 3rem clamp(1.25rem, 3vw, 2.5rem);
+}
+
+core-display .display-shell::before {
+  content: '';
+  position: absolute;
+  inset: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 32px;
+  background: linear-gradient(180deg, rgba(13, 19, 34, 0.35), rgba(7, 11, 20, 0.08));
+  backdrop-filter: blur(22px);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.4);
+  z-index: -1;
+}
+
+core-display .hero,
+core-display .feature-panel {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+core-display .hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.9fr);
+  gap: 1.5rem;
+  padding: clamp(1.5rem, 3vw, 2rem);
+  overflow: hidden;
+  position: relative;
+}
+
+core-display .hero::after {
+  content: '';
+  position: absolute;
+  inset: auto -5rem -4rem auto;
+  width: 18rem;
+  height: 18rem;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.34), transparent 68%);
+  filter: blur(12px);
+  pointer-events: none;
+}
+
+core-display .hero-copy,
+core-display .hero-meta {
+  position: relative;
+  z-index: 1;
+}
+
+core-display .eyebrow {
+  margin: 0 0 0.75rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent-strong);
+}
+
+core-display h1,
+core-display h2,
+core-display p {
+  margin: 0;
+}
+
+core-display h1 {
+  font-size: clamp(2.6rem, 5vw, 4.5rem);
+  line-height: 0.95;
+  letter-spacing: -0.05em;
+  max-width: 12ch;
+}
+
+core-display h2 {
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+}
+
+core-display .subtitle {
+  margin-top: 1rem;
+  font-size: 1.1rem;
+  color: var(--accent-strong);
+}
+
+core-display .body {
+  margin-top: 0.75rem;
+  max-width: 62ch;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+core-display .hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+core-display .primary-action,
+core-display .secondary-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  transition:
+    transform 140ms ease,
+    border-color 140ms ease,
+    background 140ms ease;
+  cursor: pointer;
+}
+
+core-display .primary-action {
+  background: linear-gradient(135deg, var(--accent), #4f46e5);
+  color: white;
+  box-shadow: 0 10px 30px rgba(91, 33, 182, 0.35);
+}
+
+core-display .secondary-action {
+  border-color: var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+}
+
+core-display .primary-action:hover,
+core-display .secondary-action:hover {
+  transform: translateY(-1px);
+}
+
+core-display .hero-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  align-content: start;
+}
+
+core-display .meta-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-height: 6rem;
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  background: var(--panel-strong);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+core-display .meta-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+core-display .meta-card strong {
+  font-size: 1.05rem;
+  line-height: 1.3;
+}
+
+core-display .good {
+  color: var(--good);
+}
+
+core-display .content-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 1.25rem;
+  margin-top: 1.25rem;
+}
+
+core-display .feature-panel {
+  padding: 1.25rem;
+}
+
+core-display .feature-panel.accent {
+  background: linear-gradient(180deg, rgba(20, 27, 48, 0.92), rgba(11, 15, 28, 0.9));
+}
+
+core-display .panel-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+core-display .pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+core-display .provider-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+core-display .provider-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.875rem;
+  align-items: center;
+  padding: 0.85rem;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+core-display .provider-icon {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.95rem;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.35), rgba(99, 102, 241, 0.15));
+  color: white;
+  font-weight: 700;
+}
+
+core-display .provider-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+core-display .provider-copy strong {
+  font-size: 0.98rem;
+}
+
+core-display .provider-copy span,
+core-display .provider-copy small {
+  color: var(--muted);
+}
+
+core-display .provider-copy small {
+  overflow-wrap: anywhere;
+}
+
+core-display .empty-state {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-height: 10rem;
+  align-items: start;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  color: var(--muted);
+}
+
+core-display .feature-list {
+  display: grid;
+  gap: 0.85rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+core-display .feature-list li {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.95rem 1rem;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+core-display .feature-list strong {
+  font-size: 0.98rem;
+}
+
+core-display .feature-list span {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+@media (max-width: 920px) {
+  core-display .hero,
+  core-display .content-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  core-display .display-shell {
+    padding: 1rem;
+  }
+
+  core-display .display-shell::before {
+    inset: 0.75rem;
+    border-radius: 24px;
+  }
+
+  core-display .hero-meta {
+    grid-template-columns: 1fr;
+  }
+
+  core-display h1 {
+    max-width: none;
+  }
+}
