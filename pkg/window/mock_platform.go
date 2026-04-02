@@ -63,7 +63,10 @@ func (w *MockWindow) Maximise()                            { w.maximised = true;
 func (w *MockWindow) Restore()                             { w.maximised = false; w.minimised = false; w.visible = true }
 func (w *MockWindow) Minimise()                            { w.minimised = true; w.maximised = false; w.visible = false }
 func (w *MockWindow) Focus()                               { w.focused = true }
-func (w *MockWindow) Close()                               { w.closed = true }
+func (w *MockWindow) Close() {
+	w.closed = true
+	w.emit(WindowEvent{Type: "close", Name: w.name})
+}
 func (w *MockWindow) Show()                                { w.visible = true }
 func (w *MockWindow) Hide()                                { w.visible = false }
 func (w *MockWindow) Fullscreen()                          {}
@@ -75,4 +78,16 @@ func (w *MockWindow) OnWindowEvent(handler func(WindowEvent)) {
 }
 func (w *MockWindow) OnFileDrop(handler func(paths []string, targetID string)) {
 	w.fileDropHandlers = append(w.fileDropHandlers, handler)
+}
+
+func (w *MockWindow) emit(e WindowEvent) {
+	for _, h := range w.eventHandlers {
+		h(e)
+	}
+}
+
+func (w *MockWindow) emitFileDrop(paths []string, targetID string) {
+	for _, h := range w.fileDropHandlers {
+		h(paths, targetID)
+	}
 }

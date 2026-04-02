@@ -58,7 +58,8 @@ type TaskOpenWindow struct {
 	Opts   []WindowOption
 }
 
-// TaskCloseWindow closes a window. Handler persists state BEFORE emitting ActionWindowClosed.
+// TaskCloseWindow closes a window after persisting state.
+// Platform close events emit ActionWindowClosed through the tracked window handler.
 type TaskCloseWindow struct{ Name string }
 
 // TaskSetPosition moves a window.

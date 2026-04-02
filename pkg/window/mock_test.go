@@ -63,7 +63,10 @@ func (w *mockWindow) Maximise()                            { w.maximised = true;
 func (w *mockWindow) Restore()                             { w.maximised = false; w.minimised = false; w.visible = true }
 func (w *mockWindow) Minimise()                            { w.minimised = true; w.maximised = false; w.visible = false }
 func (w *mockWindow) Focus()                               { w.focused = true }
-func (w *mockWindow) Close()                               { w.closed = true }
+func (w *mockWindow) Close() {
+	w.closed = true
+	w.emit(WindowEvent{Type: "close", Name: w.name})
+}
 func (w *mockWindow) Show()                                { w.visible = true }
 func (w *mockWindow) Hide()                                { w.visible = false }
 func (w *mockWindow) Fullscreen()                          {}

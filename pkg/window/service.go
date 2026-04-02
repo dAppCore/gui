@@ -274,7 +274,6 @@ func (s *Service) taskCloseWindow(name string) error {
 	s.manager.State().CaptureState(pw)
 	pw.Close()
 	s.manager.Remove(name)
-	_ = s.Core().ACTION(ActionWindowClosed{Name: name})
 	return nil
 }
 
@@ -454,8 +453,8 @@ func (s *Service) taskTileWindows(mode string, names []string) error {
 	if len(names) == 0 {
 		names = s.manager.List()
 	}
-	// Default screen size — callers can query screen_primary for actual values.
-	return s.manager.TileWindows(tm, names, 1920, 1080)
+	screenW, screenH := s.primaryScreenSize()
+	return s.manager.TileWindows(tm, names, screenW, screenH)
 }
 
 var snapPosMap = map[string]SnapPosition{

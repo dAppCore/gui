@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"forge.lthn.ai/core/go/pkg/core"
+	"forge.lthn.ai/core/gui/pkg/screen"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -14,6 +15,41 @@ func newTestWindowService(t *testing.T) (*Service, *core.Core) {
 	t.Helper()
 	c, err := core.New(
 		core.WithService(Register(newMockPlatform())),
+		core.WithServiceLock(),
+	)
+	require.NoError(t, err)
+	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+	svc := core.MustServiceFor[*Service](c, "window")
+	return svc, c
+}
+
+type testScreenPlatform struct {
+	screens []screen.Screen
+}
+
+func (p *testScreenPlatform) GetAll() []screen.Screen { return p.screens }
+
+func (p *testScreenPlatform) GetPrimary() *screen.Screen {
+	for i := range p.screens {
+		if p.screens[i].IsPrimary {
+			return &p.screens[i]
+		}
+	}
+	return nil
+}
+
+func newTestWindowServiceWithScreen(t *testing.T) (*Service, *core.Core) {
+	t.Helper()
+	c, err := core.New(
+		core.WithService(Register(newMockPlatform())),
+		core.WithService(screen.Register(&testScreenPlatform{
+			screens: []screen.Screen{{
+				ID: "primary", Name: "Primary", IsPrimary: true,
+				Size:     screen.Size{Width: 2560, Height: 1440},
+				Bounds:   screen.Rect{X: 0, Y: 0, Width: 2560, Height: 1440},
+				WorkArea: screen.Rect{X: 0, Y: 0, Width: 2560, Height: 1440},
+			}},
+		})),
 		core.WithServiceLock(),
 	)
 	require.NoError(t, err)
@@ -216,6 +252,26 @@ func TestTaskSetBackgroundColour_Good(t *testing.T) {
 	pw, ok := svc.Manager().Get("test")
 	require.True(t, ok)
 	assert.Equal(t, [4]uint8{10, 20, 30, 40}, pw.(*mockWindow).backgroundColor)
+}
+
+func TestTaskTileWindows_UsesPrimaryScreenSize(t *testing.T) {
+	_, c := newTestWindowServiceWithScreen(t)
+	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("left")}})
+	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("right")}})
+
+	_, handled, err := c.PERFORM(TaskTileWindows{Mode: "left-right", Windows: []string{"left", "right"}})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	left, _, _ := c.QUERY(QueryWindowByName{Name: "left"})
+	right, _, _ := c.QUERY(QueryWindowByName{Name: "right"})
+	leftInfo := left.(*WindowInfo)
+	rightInfo := right.(*WindowInfo)
+
+	assert.Equal(t, 1280, leftInfo.Width)
+	assert.Equal(t, 1280, rightInfo.Width)
+	assert.Equal(t, 0, leftInfo.X)
+	assert.Equal(t, 1280, rightInfo.X)
 }
 
 func TestTaskSetOpacity_Good(t *testing.T) {
