@@ -10,6 +10,7 @@ import (
 	"forge.lthn.ai/core/go/pkg/core"
 	"forge.lthn.ai/core/gui/pkg/clipboard"
 	"forge.lthn.ai/core/gui/pkg/dialog"
+	"forge.lthn.ai/core/gui/pkg/environment"
 	"forge.lthn.ai/core/gui/pkg/menu"
 	"forge.lthn.ai/core/gui/pkg/notification"
 	"forge.lthn.ai/core/gui/pkg/screen"
@@ -79,15 +80,53 @@ func (m *mockNotificationPlatform) Clear() error {
 	return nil
 }
 
-type mockDialogPlatform struct {
-	button string
-	last   dialog.MessageDialogOptions
+type mockEnvironmentPlatform struct {
+	isDark bool
+	info   environment.EnvironmentInfo
+	accent string
 }
 
-func (m *mockDialogPlatform) OpenFile(opts dialog.OpenFileOptions) ([]string, error) { return nil, nil }
-func (m *mockDialogPlatform) SaveFile(opts dialog.SaveFileOptions) (string, error)   { return "", nil }
+func (m *mockEnvironmentPlatform) IsDarkMode() bool { return m.isDark }
+func (m *mockEnvironmentPlatform) Info() environment.EnvironmentInfo {
+	return m.info
+}
+func (m *mockEnvironmentPlatform) AccentColour() string { return m.accent }
+func (m *mockEnvironmentPlatform) OpenFileManager(path string, selectFile bool) error {
+	return nil
+}
+func (m *mockEnvironmentPlatform) OnThemeChange(handler func(isDark bool)) func() {
+	return func() {}
+}
+func (m *mockEnvironmentPlatform) SetTheme(isDark bool) error {
+	m.isDark = isDark
+	return nil
+}
+
+type mockDialogPlatform struct {
+	button        string
+	openFilePaths []string
+	saveFilePath  string
+	openDirPath   string
+	last          dialog.MessageDialogOptions
+}
+
+func (m *mockDialogPlatform) OpenFile(opts dialog.OpenFileOptions) ([]string, error) {
+	if len(m.openFilePaths) == 0 {
+		return []string{"/tmp/file.txt"}, nil
+	}
+	return m.openFilePaths, nil
+}
+func (m *mockDialogPlatform) SaveFile(opts dialog.SaveFileOptions) (string, error) {
+	if m.saveFilePath == "" {
+		return "/tmp/save.txt", nil
+	}
+	return m.saveFilePath, nil
+}
 func (m *mockDialogPlatform) OpenDirectory(opts dialog.OpenDirectoryOptions) (string, error) {
-	return "", nil
+	if m.openDirPath == "" {
+		return "/tmp/dir", nil
+	}
+	return m.openDirPath, nil
 }
 func (m *mockDialogPlatform) MessageDialog(opts dialog.MessageDialogOptions) (string, error) {
 	m.last = opts
@@ -164,9 +203,31 @@ func newTestConclave(t *testing.T) *core.Core {
 
 func newExtendedTestConclave(t *testing.T) *core.Core {
 	t.Helper()
+	fixture := newExtendedTestConclaveWithMocks(t)
+	return fixture.core
+}
+
+type extendedTestConclave struct {
+	core                 *core.Core
+	clipboardPlatform    *mockClipboardPlatform
+	notificationPlatform *mockNotificationPlatform
+	dialogPlatform       *mockDialogPlatform
+	environmentPlatform  *mockEnvironmentPlatform
+}
+
+func newExtendedTestConclaveWithMocks(t *testing.T) *extendedTestConclave {
+	t.Helper()
 	clipboardPlatform := &mockClipboardPlatform{text: "hello", ok: true, image: []byte{1, 2, 3}, imgOk: true}
 	notificationPlatform := &mockNotificationPlatform{permGranted: true}
 	dialogPlatform := &mockDialogPlatform{button: "OK"}
+	environmentPlatform := &mockEnvironmentPlatform{
+		isDark: true,
+		accent: "rgb(0,122,255)",
+		info: environment.EnvironmentInfo{
+			OS: "darwin", Arch: "arm64",
+			Platform: environment.PlatformInfo{Name: "macOS", Version: "14.0"},
+		},
+	}
 
 	c, err := core.New(
 		core.WithService(Register(nil)),
@@ -184,12 +245,19 @@ func newExtendedTestConclave(t *testing.T) *core.Core {
 		core.WithService(clipboard.Register(clipboardPlatform)),
 		core.WithService(notification.Register(notificationPlatform)),
 		core.WithService(dialog.Register(dialogPlatform)),
+		core.WithService(environment.Register(environmentPlatform)),
 		core.WithService(webview.Register()),
 		core.WithServiceLock(),
 	)
 	require.NoError(t, err)
 	require.NoError(t, c.ServiceStartup(context.Background(), nil))
-	return c
+	return &extendedTestConclave{
+		core:                 c,
+		clipboardPlatform:    clipboardPlatform,
+		notificationPlatform: notificationPlatform,
+		dialogPlatform:       dialogPlatform,
+		environmentPlatform:  environmentPlatform,
+	}
 }
 
 // --- Tests ---
@@ -572,6 +640,137 @@ func TestGetSavedWindowStates_Good(t *testing.T) {
 
 	states := svc.GetSavedWindowStates()
 	assert.NotNil(t, states)
+}
+
+func TestServiceWrappers_Good(t *testing.T) {
+	fixture := newExtendedTestConclaveWithMocks(t)
+	svc := core.MustServiceFor[*Service](fixture.core, "display")
+
+	t.Run("screen wrappers", func(t *testing.T) {
+		screens := svc.GetScreens()
+		require.Len(t, screens, 1)
+
+		primary, err := svc.GetPrimaryScreen()
+		require.NoError(t, err)
+		require.NotNil(t, primary)
+		assert.True(t, primary.IsPrimary)
+
+		atPoint, err := svc.GetScreenAtPoint(10, 10)
+		require.NoError(t, err)
+		require.NotNil(t, atPoint)
+
+		workAreas := svc.GetWorkAreas()
+		require.Len(t, workAreas, 1)
+	})
+
+	t.Run("window-screen lookup", func(t *testing.T) {
+		require.NoError(t, svc.OpenWindow(window.WithName("screen-win"), window.WithSize(640, 480)))
+		screenInfo, err := svc.GetScreenForWindow("screen-win")
+		require.NoError(t, err)
+		require.NotNil(t, screenInfo)
+	})
+
+	t.Run("clipboard wrappers", func(t *testing.T) {
+		text, err := svc.ReadClipboard()
+		require.NoError(t, err)
+		assert.Equal(t, "hello", text)
+		assert.True(t, svc.HasClipboard())
+
+		require.NoError(t, svc.WriteClipboard("updated"))
+		text, err = svc.ReadClipboard()
+		require.NoError(t, err)
+		assert.Equal(t, "updated", text)
+
+		image, err := svc.ReadClipboardImage()
+		require.NoError(t, err)
+		assert.True(t, image.HasContent)
+
+		require.NoError(t, svc.WriteClipboardImage([]byte{9, 8, 7}))
+		require.NoError(t, svc.ClearClipboard())
+		assert.False(t, svc.HasClipboard())
+	})
+
+	t.Run("notification wrappers", func(t *testing.T) {
+		require.NoError(t, svc.ShowInfoNotification("Info", "Hello"))
+		require.True(t, fixture.notificationPlatform.sendCalled)
+		assert.Equal(t, notification.SeverityInfo, fixture.notificationPlatform.lastOpts.Severity)
+
+		granted, err := svc.RequestNotificationPermission()
+		require.NoError(t, err)
+		assert.True(t, granted)
+
+		granted, err = svc.CheckNotificationPermission()
+		require.NoError(t, err)
+		assert.True(t, granted)
+
+		require.NoError(t, svc.ClearNotifications())
+		assert.True(t, fixture.notificationPlatform.clearCalled)
+	})
+
+	t.Run("dialog wrappers", func(t *testing.T) {
+		paths, err := svc.OpenFileDialog(dialog.OpenFileOptions{Title: "Pick"})
+		require.NoError(t, err)
+		require.NotEmpty(t, paths)
+
+		path, err := svc.OpenSingleFileDialog(dialog.OpenFileOptions{Title: "Pick"})
+		require.NoError(t, err)
+		assert.Equal(t, paths[0], path)
+
+		path, err = svc.SaveFileDialog(dialog.SaveFileOptions{Filename: "out.txt"})
+		require.NoError(t, err)
+		assert.Equal(t, "/tmp/save.txt", path)
+
+		path, err = svc.OpenDirectoryDialog(dialog.OpenDirectoryOptions{Title: "Pick Dir"})
+		require.NoError(t, err)
+		assert.Equal(t, "/tmp/dir", path)
+
+		confirmed, err := svc.ConfirmDialog("Confirm", "Continue?")
+		require.NoError(t, err)
+		assert.True(t, confirmed)
+
+		button, accepted, err := svc.PromptDialog("Question", "Continue?")
+		require.NoError(t, err)
+		assert.Equal(t, "OK", button)
+		assert.True(t, accepted)
+	})
+
+	t.Run("theme wrappers", func(t *testing.T) {
+		theme := svc.GetTheme()
+		require.NotNil(t, theme)
+		assert.True(t, theme.IsDark)
+		assert.Equal(t, "dark", svc.GetSystemTheme())
+
+		require.NoError(t, svc.SetTheme(false))
+		assert.False(t, fixture.environmentPlatform.isDark)
+		theme = svc.GetTheme()
+		require.NotNil(t, theme)
+		assert.False(t, theme.IsDark)
+		assert.Equal(t, "light", svc.GetSystemTheme())
+	})
+
+	t.Run("tray wrappers", func(t *testing.T) {
+		info := svc.GetTrayInfo()
+		require.NotNil(t, info)
+		assert.True(t, info["active"].(bool))
+
+		require.NoError(t, svc.SetTrayTooltip("Updated Tooltip"))
+		require.NoError(t, svc.SetTrayLabel("Updated Label"))
+		require.NoError(t, svc.SetTrayIcon([]byte{1, 2, 3}))
+		require.NoError(t, svc.SetTrayMenu([]systray.TrayMenuItem{
+			{Label: "One", ActionID: "one"},
+			{Type: "separator"},
+			{Label: "More", Submenu: []systray.TrayMenuItem{{Label: "Two", ActionID: "two"}}},
+		}))
+
+		info = svc.GetTrayInfo()
+		require.NotNil(t, info)
+		assert.Equal(t, "Updated Tooltip", info["tooltip"])
+		assert.Equal(t, "Updated Label", info["label"])
+		assert.True(t, info["hasIcon"].(bool))
+		items, ok := info["menuItems"].([]systray.TrayMenuItem)
+		require.True(t, ok)
+		require.Len(t, items, 3)
+	})
 }
 
 func TestHandleIPCEvents_WindowOpened_Good(t *testing.T) {

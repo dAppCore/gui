@@ -13,10 +13,15 @@ var defaultIcon []byte
 // Manager manages the system tray lifecycle.
 // State that was previously in package-level vars is now on the Manager.
 type Manager struct {
-	platform  Platform
-	tray      PlatformTray
-	callbacks map[string]func()
-	mu        sync.RWMutex
+	platform        Platform
+	tray            PlatformTray
+	callbacks       map[string]func()
+	tooltip         string
+	label           string
+	hasIcon         bool
+	hasTemplateIcon bool
+	menuItems       []TrayMenuItem
+	mu              sync.RWMutex
 }
 
 // NewManager creates a systray Manager.
@@ -36,6 +41,9 @@ func (m *Manager) Setup(tooltip, label string) error {
 	m.tray.SetTemplateIcon(defaultIcon)
 	m.tray.SetTooltip(tooltip)
 	m.tray.SetLabel(label)
+	m.tooltip = tooltip
+	m.label = label
+	m.hasTemplateIcon = true
 	return nil
 }
 
@@ -45,6 +53,7 @@ func (m *Manager) SetIcon(data []byte) error {
 		return fmt.Errorf("tray not initialised")
 	}
 	m.tray.SetIcon(data)
+	m.hasIcon = len(data) > 0
 	return nil
 }
 
@@ -54,6 +63,7 @@ func (m *Manager) SetTemplateIcon(data []byte) error {
 		return fmt.Errorf("tray not initialised")
 	}
 	m.tray.SetTemplateIcon(data)
+	m.hasTemplateIcon = len(data) > 0
 	return nil
 }
 
@@ -63,6 +73,7 @@ func (m *Manager) SetTooltip(text string) error {
 		return fmt.Errorf("tray not initialised")
 	}
 	m.tray.SetTooltip(text)
+	m.tooltip = text
 	return nil
 }
 
@@ -72,6 +83,7 @@ func (m *Manager) SetLabel(text string) error {
 		return fmt.Errorf("tray not initialised")
 	}
 	m.tray.SetLabel(text)
+	m.label = text
 	return nil
 }
 

@@ -8,6 +8,7 @@ func (m *Manager) SetMenu(items []TrayMenuItem) error {
 	if m.tray == nil {
 		return fmt.Errorf("tray not initialised")
 	}
+	m.menuItems = append([]TrayMenuItem(nil), items...)
 	menu := m.buildMenu(items)
 	m.tray.SetMenu(menu)
 	return nil
@@ -77,6 +78,11 @@ func (m *Manager) GetCallback(actionID string) (func(), bool) {
 // GetInfo returns tray status information.
 func (m *Manager) GetInfo() map[string]any {
 	return map[string]any{
-		"active": m.IsActive(),
+		"active":          m.IsActive(),
+		"tooltip":         m.tooltip,
+		"label":           m.label,
+		"hasIcon":         m.hasIcon,
+		"hasTemplateIcon": m.hasTemplateIcon,
+		"menuItems":       append([]TrayMenuItem(nil), m.menuItems...),
 	}
 }

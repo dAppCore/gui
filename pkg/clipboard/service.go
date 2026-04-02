@@ -60,7 +60,12 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 	case TaskSetText:
 		return s.platform.SetText(t.Text), true, nil
 	case TaskClear:
-		return s.platform.SetText(""), true, nil
+		_ = s.platform.SetText("")
+		if writer, ok := s.platform.(imageWriter); ok {
+			// Best-effort clear for image-aware clipboard backends.
+			_ = writer.SetImage(nil)
+		}
+		return true, true, nil
 	case TaskSetImage:
 		if writer, ok := s.platform.(imageWriter); ok {
 			return writer.SetImage(t.Data), true, nil

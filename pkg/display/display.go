@@ -613,6 +613,65 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 			ScreenWidth:  screenWidth,
 			ScreenHeight: screenHeight,
 		})
+	case "screen:list":
+		result, handled, err = s.Core().QUERY(screen.QueryAll{})
+	case "screen:get":
+		id, e := wsRequire(msg.Data, "id")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = s.Core().QUERY(screen.QueryByID{ID: id})
+	case "screen:primary":
+		result, handled, err = s.Core().QUERY(screen.QueryPrimary{})
+	case "screen:at-point":
+		x, _ := msg.Data["x"].(float64)
+		y, _ := msg.Data["y"].(float64)
+		result, handled, err = s.Core().QUERY(screen.QueryAtPoint{X: int(x), Y: int(y)})
+	case "screen:work-areas":
+		result, handled, err = s.Core().QUERY(screen.QueryWorkAreas{})
+	case "screen:for-window":
+		name, e := wsRequire(msg.Data, "window")
+		if e != nil {
+			return nil, false, e
+		}
+		screenInfo, screenErr := s.GetScreenForWindow(name)
+		if screenErr != nil {
+			return nil, false, screenErr
+		}
+		result, handled, err = screenInfo, true, nil
+	case "clipboard:read":
+		result, handled, err = s.Core().QUERY(clipboard.QueryText{})
+	case "clipboard:write":
+		text, e := wsRequire(msg.Data, "text")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = s.Core().PERFORM(clipboard.TaskSetText{Text: text})
+	case "clipboard:has":
+		textResult, textHandled, textErr := s.Core().QUERY(clipboard.QueryText{})
+		if textErr != nil {
+			return nil, false, textErr
+		}
+		hasContent := false
+		if textHandled {
+			if content, ok := textResult.(clipboard.ClipboardContent); ok {
+				hasContent = content.HasContent
+			}
+		}
+		if !hasContent {
+			imageResult, imageHandled, imageErr := s.Core().QUERY(clipboard.QueryImage{})
+			if imageErr != nil {
+				return nil, false, imageErr
+			}
+			if imageHandled {
+				if content, ok := imageResult.(clipboard.ClipboardImageContent); ok {
+					hasContent = content.HasContent
+				}
+			}
+		}
+		result, handled, err = hasContent, true, nil
+	case "clipboard:clear":
+		result, handled, err = s.Core().PERFORM(clipboard.TaskClear{})
 	case "clipboard:read-image":
 		result, handled, err = s.Core().QUERY(clipboard.QueryImage{})
 	case "clipboard:write-image":
@@ -625,6 +684,53 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 			return nil, false, fmt.Errorf("ws: invalid base64 image data: %w", decodeErr)
 		}
 		result, handled, err = s.Core().PERFORM(clipboard.TaskSetImage{Data: decoded})
+	case "notification:show":
+		var opts notification.NotificationOptions
+		encoded, _ := json.Marshal(msg.Data)
+		_ = json.Unmarshal(encoded, &opts)
+		result, handled, err = s.Core().PERFORM(notification.TaskSend{Opts: opts})
+	case "notification:info":
+		title, e := wsRequire(msg.Data, "title")
+		if e != nil {
+			return nil, false, e
+		}
+		message, e := wsRequire(msg.Data, "message")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = s.Core().PERFORM(notification.TaskSend{Opts: notification.NotificationOptions{
+			Title:    title,
+			Message:  message,
+			Severity: notification.SeverityInfo,
+		}})
+	case "notification:warning":
+		title, e := wsRequire(msg.Data, "title")
+		if e != nil {
+			return nil, false, e
+		}
+		message, e := wsRequire(msg.Data, "message")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = s.Core().PERFORM(notification.TaskSend{Opts: notification.NotificationOptions{
+			Title:    title,
+			Message:  message,
+			Severity: notification.SeverityWarning,
+		}})
+	case "notification:error":
+		title, e := wsRequire(msg.Data, "title")
+		if e != nil {
+			return nil, false, e
+		}
+		message, e := wsRequire(msg.Data, "message")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = s.Core().PERFORM(notification.TaskSend{Opts: notification.NotificationOptions{
+			Title:    title,
+			Message:  message,
+			Severity: notification.SeverityError,
+		}})
 	case "notification:with-actions":
 		title, e := wsRequire(msg.Data, "title")
 		if e != nil {
@@ -679,6 +785,83 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 			return nil, false, e
 		}
 		result, handled, err = s.Core().PERFORM(systray.TaskSetLabel{Label: label})
+	case "tray:set-icon":
+		data, e := wsRequire(msg.Data, "data")
+		if e != nil {
+			return nil, false, e
+		}
+		decoded, decodeErr := base64.StdEncoding.DecodeString(data)
+		if decodeErr != nil {
+			return nil, false, fmt.Errorf("ws: invalid base64 tray icon data: %w", decodeErr)
+		}
+		result, handled, err = s.Core().PERFORM(systray.TaskSetTrayIcon{Data: decoded})
+	case "tray:set-menu":
+		raw, ok := msg.Data["items"]
+		if !ok {
+			return nil, false, fmt.Errorf("ws: missing required field %q", "items")
+		}
+		encoded, _ := json.Marshal(raw)
+		var items []systray.TrayMenuItem
+		if err := json.Unmarshal(encoded, &items); err != nil {
+			return nil, false, fmt.Errorf("ws: invalid tray menu items: %w", err)
+		}
+		result, handled, err = s.Core().PERFORM(systray.TaskSetTrayMenu{Items: items})
+	case "tray:info":
+		result, handled, err = s.GetTrayInfo(), true, nil
+	case "theme:get":
+		result, handled, err = s.GetTheme(), true, nil
+	case "theme:system":
+		result, handled, err = s.GetSystemTheme(), true, nil
+	case "theme:set":
+		isDark, _ := msg.Data["isDark"].(bool)
+		result, handled, err = nil, true, s.SetTheme(isDark)
+	case "dialog:open-file":
+		var opts dialog.OpenFileOptions
+		encoded, _ := json.Marshal(msg.Data)
+		if err := json.Unmarshal(encoded, &opts); err != nil {
+			return nil, false, fmt.Errorf("ws: invalid open file options: %w", err)
+		}
+		paths, openErr := s.OpenFileDialog(opts)
+		if openErr != nil {
+			return nil, false, openErr
+		}
+		result, handled, err = paths, true, nil
+	case "dialog:save-file":
+		var opts dialog.SaveFileOptions
+		encoded, _ := json.Marshal(msg.Data)
+		if err := json.Unmarshal(encoded, &opts); err != nil {
+			return nil, false, fmt.Errorf("ws: invalid save file options: %w", err)
+		}
+		path, saveErr := s.SaveFileDialog(opts)
+		if saveErr != nil {
+			return nil, false, saveErr
+		}
+		result, handled, err = path, true, nil
+	case "dialog:open-directory":
+		var opts dialog.OpenDirectoryOptions
+		encoded, _ := json.Marshal(msg.Data)
+		if err := json.Unmarshal(encoded, &opts); err != nil {
+			return nil, false, fmt.Errorf("ws: invalid open directory options: %w", err)
+		}
+		path, dirErr := s.OpenDirectoryDialog(opts)
+		if dirErr != nil {
+			return nil, false, dirErr
+		}
+		result, handled, err = path, true, nil
+	case "dialog:confirm":
+		title, e := wsRequire(msg.Data, "title")
+		if e != nil {
+			return nil, false, e
+		}
+		message, e := wsRequire(msg.Data, "message")
+		if e != nil {
+			return nil, false, e
+		}
+		confirmed, confirmErr := s.ConfirmDialog(title, message)
+		if confirmErr != nil {
+			return nil, false, confirmErr
+		}
+		result, handled, err = confirmed, true, nil
 	case "dialog:prompt":
 		title, e := wsRequire(msg.Data, "title")
 		if e != nil {
@@ -688,14 +871,12 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 		if e != nil {
 			return nil, false, e
 		}
-		result, handled, err = s.Core().PERFORM(dialog.TaskMessageDialog{
-			Opts: dialog.MessageDialogOptions{
-				Type:    dialog.DialogInfo,
-				Title:   title,
-				Message: message,
-				Buttons: []string{"OK", "Cancel"},
-			},
-		})
+		button, accepted, promptErr := s.PromptDialog(title, message)
+		if promptErr != nil {
+			return nil, false, promptErr
+		}
+		_ = accepted
+		result, handled, err = button, true, nil
 	default:
 		return nil, false, nil
 	}
@@ -1207,6 +1388,461 @@ func (s *Service) ApplyWorkflowLayout(workflow window.WorkflowLayout) error {
 	}
 	screenWidth, screenHeight := s.primaryScreenSize()
 	return ws.Manager().ApplyWorkflow(workflow, ws.Manager().List(), screenWidth, screenHeight)
+}
+
+// --- Screen management ---
+
+// GetScreens returns all known screens.
+func (s *Service) GetScreens() []screen.Screen {
+	result, handled, _ := s.Core().QUERY(screen.QueryAll{})
+	if !handled {
+		return nil
+	}
+	screens, _ := result.([]screen.Screen)
+	return screens
+}
+
+// GetScreen returns a screen by ID.
+func (s *Service) GetScreen(id string) (*screen.Screen, error) {
+	result, handled, err := s.Core().QUERY(screen.QueryByID{ID: id})
+	if err != nil {
+		return nil, err
+	}
+	if !handled {
+		return nil, fmt.Errorf("screen service not available")
+	}
+	scr, _ := result.(*screen.Screen)
+	return scr, nil
+}
+
+// GetPrimaryScreen returns the primary screen.
+func (s *Service) GetPrimaryScreen() (*screen.Screen, error) {
+	result, handled, err := s.Core().QUERY(screen.QueryPrimary{})
+	if err != nil {
+		return nil, err
+	}
+	if !handled {
+		return nil, fmt.Errorf("screen service not available")
+	}
+	scr, _ := result.(*screen.Screen)
+	return scr, nil
+}
+
+// GetScreenAtPoint returns the screen containing the specified point.
+func (s *Service) GetScreenAtPoint(x, y int) (*screen.Screen, error) {
+	result, handled, err := s.Core().QUERY(screen.QueryAtPoint{X: x, Y: y})
+	if err != nil {
+		return nil, err
+	}
+	if !handled {
+		return nil, fmt.Errorf("screen service not available")
+	}
+	scr, _ := result.(*screen.Screen)
+	return scr, nil
+}
+
+// GetScreenForWindow returns the screen containing the named window.
+func (s *Service) GetScreenForWindow(name string) (*screen.Screen, error) {
+	info, err := s.GetWindowInfo(name)
+	if err != nil {
+		return nil, err
+	}
+	if info == nil {
+		return nil, nil
+	}
+	x := info.X
+	y := info.Y
+	if info.Width > 0 && info.Height > 0 {
+		x += info.Width / 2
+		y += info.Height / 2
+	}
+	return s.GetScreenAtPoint(x, y)
+}
+
+// GetWorkAreas returns the usable area of every screen.
+func (s *Service) GetWorkAreas() []screen.Rect {
+	result, handled, _ := s.Core().QUERY(screen.QueryWorkAreas{})
+	if !handled {
+		return nil
+	}
+	areas, _ := result.([]screen.Rect)
+	return areas
+}
+
+// --- Clipboard ---
+
+// ReadClipboard returns the current clipboard text content.
+func (s *Service) ReadClipboard() (string, error) {
+	result, handled, err := s.Core().QUERY(clipboard.QueryText{})
+	if err != nil {
+		return "", err
+	}
+	if !handled {
+		return "", fmt.Errorf("clipboard service not available")
+	}
+	content, _ := result.(clipboard.ClipboardContent)
+	return content.Text, nil
+}
+
+// WriteClipboard writes text to the clipboard.
+func (s *Service) WriteClipboard(text string) error {
+	result, handled, err := s.Core().PERFORM(clipboard.TaskSetText{Text: text})
+	if err != nil {
+		return err
+	}
+	if !handled {
+		return fmt.Errorf("clipboard service not available")
+	}
+	if ok, _ := result.(bool); !ok {
+		return fmt.Errorf("clipboard write failed")
+	}
+	return nil
+}
+
+// HasClipboard reports whether the clipboard has text or image content.
+func (s *Service) HasClipboard() bool {
+	textResult, textHandled, _ := s.Core().QUERY(clipboard.QueryText{})
+	if textHandled {
+		if content, ok := textResult.(clipboard.ClipboardContent); ok && content.HasContent {
+			return true
+		}
+	}
+	imageResult, imageHandled, _ := s.Core().QUERY(clipboard.QueryImage{})
+	if imageHandled {
+		if content, ok := imageResult.(clipboard.ClipboardImageContent); ok && content.HasContent {
+			return true
+		}
+	}
+	return false
+}
+
+// ClearClipboard clears clipboard text and any image data when supported.
+func (s *Service) ClearClipboard() error {
+	result, handled, err := s.Core().PERFORM(clipboard.TaskClear{})
+	if err != nil {
+		return err
+	}
+	if !handled {
+		return fmt.Errorf("clipboard service not available")
+	}
+	if ok, _ := result.(bool); !ok {
+		return fmt.Errorf("clipboard clear failed")
+	}
+	return nil
+}
+
+// ReadClipboardImage returns the clipboard image content.
+func (s *Service) ReadClipboardImage() (clipboard.ClipboardImageContent, error) {
+	result, handled, err := s.Core().QUERY(clipboard.QueryImage{})
+	if err != nil {
+		return clipboard.ClipboardImageContent{}, err
+	}
+	if !handled {
+		return clipboard.ClipboardImageContent{}, fmt.Errorf("clipboard service not available")
+	}
+	content, _ := result.(clipboard.ClipboardImageContent)
+	return content, nil
+}
+
+// WriteClipboardImage writes raw image data to the clipboard.
+func (s *Service) WriteClipboardImage(data []byte) error {
+	result, handled, err := s.Core().PERFORM(clipboard.TaskSetImage{Data: data})
+	if err != nil {
+		return err
+	}
+	if !handled {
+		return fmt.Errorf("clipboard service not available")
+	}
+	if ok, _ := result.(bool); !ok {
+		return fmt.Errorf("clipboard image write failed")
+	}
+	return nil
+}
+
+// --- Notifications ---
+
+// ShowNotification sends a native notification.
+func (s *Service) ShowNotification(opts notification.NotificationOptions) error {
+	_, handled, err := s.Core().PERFORM(notification.TaskSend{Opts: opts})
+	if err != nil {
+		return err
+	}
+	if !handled {
+		return fmt.Errorf("notification service not available")
+	}
+	return nil
+}
+
+// ShowInfoNotification sends an informational notification.
+func (s *Service) ShowInfoNotification(title, message string) error {
+	return s.ShowNotification(notification.NotificationOptions{
+		Title:    title,
+		Message:  message,
+		Severity: notification.SeverityInfo,
+	})
+}
+
+// ShowWarningNotification sends a warning notification.
+func (s *Service) ShowWarningNotification(title, message string) error {
+	return s.ShowNotification(notification.NotificationOptions{
+		Title:    title,
+		Message:  message,
+		Severity: notification.SeverityWarning,
+	})
+}
+
+// ShowErrorNotification sends an error notification.
+func (s *Service) ShowErrorNotification(title, message string) error {
+	return s.ShowNotification(notification.NotificationOptions{
+		Title:    title,
+		Message:  message,
+		Severity: notification.SeverityError,
+	})
+}
+
+// RequestNotificationPermission requests notification permission.
+func (s *Service) RequestNotificationPermission() (bool, error) {
+	result, handled, err := s.Core().PERFORM(notification.TaskRequestPermission{})
+	if err != nil {
+		return false, err
+	}
+	if !handled {
+		return false, fmt.Errorf("notification service not available")
+	}
+	granted, _ := result.(bool)
+	return granted, nil
+}
+
+// CheckNotificationPermission checks notification permission.
+func (s *Service) CheckNotificationPermission() (bool, error) {
+	result, handled, err := s.Core().QUERY(notification.QueryPermission{})
+	if err != nil {
+		return false, err
+	}
+	if !handled {
+		return false, fmt.Errorf("notification service not available")
+	}
+	status, _ := result.(notification.PermissionStatus)
+	return status.Granted, nil
+}
+
+// ClearNotifications clears notifications when supported.
+func (s *Service) ClearNotifications() error {
+	_, handled, err := s.Core().PERFORM(notification.TaskClear{})
+	if err != nil {
+		return err
+	}
+	if !handled {
+		return fmt.Errorf("notification service not available")
+	}
+	return nil
+}
+
+// --- Dialogs ---
+
+// OpenFileDialog opens a file picker and returns all selected paths.
+func (s *Service) OpenFileDialog(opts dialog.OpenFileOptions) ([]string, error) {
+	result, handled, err := s.Core().PERFORM(dialog.TaskOpenFile{Opts: opts})
+	if err != nil {
+		return nil, err
+	}
+	if !handled {
+		return nil, fmt.Errorf("dialog service not available")
+	}
+	paths, _ := result.([]string)
+	return paths, nil
+}
+
+// OpenSingleFileDialog opens a file picker and returns the first selected path.
+func (s *Service) OpenSingleFileDialog(opts dialog.OpenFileOptions) (string, error) {
+	paths, err := s.OpenFileDialog(opts)
+	if err != nil {
+		return "", err
+	}
+	if len(paths) == 0 {
+		return "", nil
+	}
+	return paths[0], nil
+}
+
+// SaveFileDialog opens a save dialog and returns the selected path.
+func (s *Service) SaveFileDialog(opts dialog.SaveFileOptions) (string, error) {
+	result, handled, err := s.Core().PERFORM(dialog.TaskSaveFile{Opts: opts})
+	if err != nil {
+		return "", err
+	}
+	if !handled {
+		return "", fmt.Errorf("dialog service not available")
+	}
+	path, _ := result.(string)
+	return path, nil
+}
+
+// OpenDirectoryDialog opens a directory picker and returns the selected path.
+func (s *Service) OpenDirectoryDialog(opts dialog.OpenDirectoryOptions) (string, error) {
+	result, handled, err := s.Core().PERFORM(dialog.TaskOpenDirectory{Opts: opts})
+	if err != nil {
+		return "", err
+	}
+	if !handled {
+		return "", fmt.Errorf("dialog service not available")
+	}
+	path, _ := result.(string)
+	return path, nil
+}
+
+// ConfirmDialog shows a confirmation prompt.
+func (s *Service) ConfirmDialog(title, message string) (bool, error) {
+	result, handled, err := s.Core().PERFORM(dialog.TaskMessageDialog{
+		Opts: dialog.MessageDialogOptions{
+			Type:    dialog.DialogQuestion,
+			Title:   title,
+			Message: message,
+			Buttons: []string{"Yes", "No"},
+		},
+	})
+	if err != nil {
+		return false, err
+	}
+	if !handled {
+		return false, fmt.Errorf("dialog service not available")
+	}
+	button, _ := result.(string)
+	return button == "Yes" || button == "OK", nil
+}
+
+// PromptDialog shows a prompt-style dialog and returns the selected button.
+func (s *Service) PromptDialog(title, message string) (string, bool, error) {
+	result, handled, err := s.Core().PERFORM(dialog.TaskMessageDialog{
+		Opts: dialog.MessageDialogOptions{
+			Type:    dialog.DialogInfo,
+			Title:   title,
+			Message: message,
+			Buttons: []string{"OK", "Cancel"},
+		},
+	})
+	if err != nil {
+		return "", false, err
+	}
+	if !handled {
+		return "", false, fmt.Errorf("dialog service not available")
+	}
+	button, _ := result.(string)
+	return button, button == "OK", nil
+}
+
+// --- Theme ---
+
+// GetTheme returns the current theme state.
+func (s *Service) GetTheme() *Theme {
+	result, handled, err := s.Core().QUERY(environment.QueryTheme{})
+	if err != nil || !handled {
+		return nil
+	}
+	theme, ok := result.(environment.ThemeInfo)
+	if !ok {
+		return nil
+	}
+	return &Theme{IsDark: theme.IsDark}
+}
+
+// GetSystemTheme returns the current system theme preference.
+func (s *Service) GetSystemTheme() string {
+	result, handled, err := s.Core().QUERY(environment.QueryTheme{})
+	if err != nil || !handled {
+		return ""
+	}
+	theme, ok := result.(environment.ThemeInfo)
+	if !ok {
+		return ""
+	}
+	if theme.IsDark {
+		return "dark"
+	}
+	return "light"
+}
+
+// SetTheme overrides the application theme.
+func (s *Service) SetTheme(isDark bool) error {
+	_, handled, err := s.Core().PERFORM(environment.TaskSetTheme{IsDark: isDark})
+	if err != nil {
+		return err
+	}
+	if !handled {
+		return fmt.Errorf("environment service not available")
+	}
+	return nil
+}
+
+// --- Tray ---
+
+// SetTrayIcon sets the tray icon image.
+func (s *Service) SetTrayIcon(data []byte) error {
+	_, handled, err := s.Core().PERFORM(systray.TaskSetTrayIcon{Data: data})
+	if err != nil {
+		return err
+	}
+	if !handled {
+		return fmt.Errorf("systray service not available")
+	}
+	return nil
+}
+
+// SetTrayTooltip updates the tray tooltip.
+func (s *Service) SetTrayTooltip(tooltip string) error {
+	_, handled, err := s.Core().PERFORM(systray.TaskSetTooltip{Tooltip: tooltip})
+	if err != nil {
+		return err
+	}
+	if !handled {
+		return fmt.Errorf("systray service not available")
+	}
+	return nil
+}
+
+// SetTrayLabel updates the tray label.
+func (s *Service) SetTrayLabel(label string) error {
+	_, handled, err := s.Core().PERFORM(systray.TaskSetLabel{Label: label})
+	if err != nil {
+		return err
+	}
+	if !handled {
+		return fmt.Errorf("systray service not available")
+	}
+	return nil
+}
+
+// SetTrayMenu replaces the tray menu items.
+func (s *Service) SetTrayMenu(items []systray.TrayMenuItem) error {
+	_, handled, err := s.Core().PERFORM(systray.TaskSetTrayMenu{Items: items})
+	if err != nil {
+		return err
+	}
+	if !handled {
+		return fmt.Errorf("systray service not available")
+	}
+	return nil
+}
+
+// GetTrayInfo returns current tray state information.
+func (s *Service) GetTrayInfo() map[string]any {
+	svc, err := core.ServiceFor[*systray.Service](s.Core(), "systray")
+	if err != nil || svc == nil || svc.Manager() == nil {
+		return nil
+	}
+	return svc.Manager().GetInfo()
+}
+
+// ShowTrayMessage shows a tray message or notification.
+func (s *Service) ShowTrayMessage(title, message string) error {
+	_, handled, err := s.Core().PERFORM(systray.TaskShowMessage{Title: title, Message: message})
+	if err != nil {
+		return err
+	}
+	if !handled {
+		return fmt.Errorf("systray service not available")
+	}
+	return nil
 }
 
 // GetEventManager returns the event manager for WebSocket event subscriptions.

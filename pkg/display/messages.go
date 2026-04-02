@@ -10,3 +10,8 @@ type ActionIDECommand struct {
 
 // EventIDECommand is the WS event type for IDE commands.
 const EventIDECommand EventType = "ide.command"
+
+// Theme is the display-level theme summary exposed by the service API.
+type Theme struct {
+	IsDark bool `json:"isDark"`
+}
