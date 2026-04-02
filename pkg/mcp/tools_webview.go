@@ -295,6 +295,29 @@ func (s *Subsystem) webviewConsoleClear(_ context.Context, _ *mcp.CallToolReques
 	return nil, WebviewConsoleClearOutput{Success: true}, nil
 }
 
+// --- webview_errors ---
+
+type WebviewErrorsInput struct {
+	Window string `json:"window"`
+	Limit  int    `json:"limit,omitempty"`
+}
+
+type WebviewErrorsOutput struct {
+	Errors []webview.ExceptionInfo `json:"errors"`
+}
+
+func (s *Subsystem) webviewErrors(_ context.Context, _ *mcp.CallToolRequest, input WebviewErrorsInput) (*mcp.CallToolResult, WebviewErrorsOutput, error) {
+	result, _, err := s.core.QUERY(webview.QueryExceptions{Window: input.Window, Limit: input.Limit})
+	if err != nil {
+		return nil, WebviewErrorsOutput{}, err
+	}
+	errors, ok := result.([]webview.ExceptionInfo)
+	if !ok {
+		return nil, WebviewErrorsOutput{}, fmt.Errorf("unexpected result type from webview errors query")
+	}
+	return nil, WebviewErrorsOutput{Errors: errors}, nil
+}
+
 // --- webview_devtools_open ---
 
 type WebviewDevToolsOpenInput struct {
@@ -659,6 +682,7 @@ func (s *Subsystem) registerWebviewTools(server *mcp.Server) {
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_console", Description: "Get captured console messages from a webview"}, s.webviewConsole)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_console_clear", Description: "Clear captured console messages"}, s.webviewConsoleClear)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_clear_console", Description: "Alias for webview_console_clear"}, s.webviewConsoleClear)
+	mcp.AddTool(server, &mcp.Tool{Name: "webview_errors", Description: "Get captured JavaScript exceptions from a webview"}, s.webviewErrors)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_query", Description: "Find a single DOM element by CSS selector"}, s.webviewQuery)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_element_info", Description: "Get detailed information about a DOM element"}, s.webviewElementInfo)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_query_all", Description: "Find all DOM elements matching a CSS selector"}, s.webviewQueryAll)

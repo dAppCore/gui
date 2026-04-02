@@ -62,6 +62,12 @@ type QueryNetwork struct {
 	Limit  int    `json:"limit,omitempty"`
 }
 
+// QueryExceptions returns captured JavaScript exceptions.
+type QueryExceptions struct {
+	Window string `json:"window"`
+	Limit  int    `json:"limit,omitempty"`
+}
+
 // --- Tasks (side-effects) ---
 
 // TaskEvaluate executes JavaScript. Result: any (JS return value)

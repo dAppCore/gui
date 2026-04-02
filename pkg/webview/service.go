@@ -60,6 +60,7 @@ type Service struct {
 	*core.ServiceRuntime[Options]
 	opts         Options
 	connections  map[string]connector
+	exceptions   map[string][]ExceptionInfo
 	mu           sync.RWMutex
 	newConn      func(debugURL, windowName string) (connector, error) // injectable for tests
 	watcherSetup func(conn connector, windowName string)              // called after connection creation
@@ -80,6 +81,7 @@ func Register(opts ...func(*Options)) func(*core.Core) (any, error) {
 			ServiceRuntime: core.NewServiceRuntime[Options](c, o),
 			opts:           o,
 			connections:    make(map[string]connector),
+			exceptions:     make(map[string][]ExceptionInfo),
 			newConn:        defaultNewConn(o),
 		}
 		svc.watcherSetup = svc.defaultWatcherSetup
@@ -192,7 +194,10 @@ func (s *Service) HandleIPCEvents(_ *core.Core, msg core.Message) error {
 			conn.Close()
 			delete(s.connections, m.Name)
 		}
+		delete(s.exceptions, m.Name)
 		s.mu.Unlock()
+	case ActionException:
+		s.recordException(m.Window, m.Exception)
 	}
 	return nil
 }
@@ -341,6 +346,8 @@ func (s *Service) handleQuery(_ *core.Core, q core.Query) (any, bool, error) {
 			return nil, true, err
 		}
 		return entries, true, nil
+	case QueryExceptions:
+		return s.queryExceptions(q.Window, q.Limit), true, nil
 	default:
 		return nil, false, nil
 	}
@@ -508,6 +515,28 @@ func (s *Service) handleTask(_ *core.Core, t core.Task) (any, bool, error) {
 	default:
 		return nil, false, nil
 	}
+}
+
+func (s *Service) recordException(windowName string, exc ExceptionInfo) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	exceptions := append(s.exceptions[windowName], exc)
+	if limit := s.opts.ConsoleLimit; limit > 0 && len(exceptions) > limit {
+		exceptions = exceptions[len(exceptions)-limit:]
+	}
+	s.exceptions[windowName] = exceptions
+}
+
+func (s *Service) queryExceptions(windowName string, limit int) []ExceptionInfo {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	exceptions := append([]ExceptionInfo(nil), s.exceptions[windowName]...)
+	if limit > 0 && len(exceptions) > limit {
+		exceptions = exceptions[len(exceptions)-limit:]
+	}
+	return exceptions
 }
 
 func coerceJSON[T any](v any) (T, error) {

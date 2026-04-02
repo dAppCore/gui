@@ -174,6 +174,29 @@ func TestQueryConsole_Good_Limit(t *testing.T) {
 	assert.Equal(t, "b", msgs[0].Text) // last 2
 }
 
+func TestQueryExceptions_Good(t *testing.T) {
+	_, c := newTestService(t, &mockConnector{})
+
+	require.NoError(t, c.ACTION(ActionException{
+		Window: "main",
+		Exception: ExceptionInfo{
+			Text:       "boom",
+			URL:        "https://example.com/app.js",
+			Line:       12,
+			Column:     4,
+			StackTrace: "Error: boom",
+		},
+	}))
+
+	result, handled, err := c.QUERY(QueryExceptions{Window: "main"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	exceptions, _ := result.([]ExceptionInfo)
+	require.Len(t, exceptions, 1)
+	assert.Equal(t, "boom", exceptions[0].Text)
+	assert.Equal(t, 12, exceptions[0].Line)
+}
+
 func TestTaskEvaluate_Good(t *testing.T) {
 	_, c := newTestService(t, &mockConnector{evalResult: 42})
 	result, handled, err := c.PERFORM(TaskEvaluate{Window: "main", Script: "21*2"})
