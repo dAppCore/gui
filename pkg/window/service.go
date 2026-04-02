@@ -40,19 +40,19 @@ func (s *Service) OnStartup(ctx context.Context) error {
 }
 
 func (s *Service) applyConfig(cfg map[string]any) {
-	if w, ok := cfg["default_width"]; ok {
-		if _, ok := w.(int); ok {
-			// TODO: s.manager.SetDefaultWidth(width) — add when Manager API is extended
+	if width, ok := cfg["default_width"]; ok {
+		if width, ok := width.(int); ok {
+			s.manager.SetDefaultWidth(width)
 		}
 	}
-	if h, ok := cfg["default_height"]; ok {
-		if _, ok := h.(int); ok {
-			// TODO: s.manager.SetDefaultHeight(height) — add when Manager API is extended
+	if height, ok := cfg["default_height"]; ok {
+		if height, ok := height.(int); ok {
+			s.manager.SetDefaultHeight(height)
 		}
 	}
-	if sf, ok := cfg["state_file"]; ok {
-		if _, ok := sf.(string); ok {
-			// TODO: s.manager.State().SetPath(stateFile) — add when StateManager API is extended
+	if stateFile, ok := cfg["state_file"]; ok {
+		if stateFile, ok := stateFile.(string); ok {
+			s.manager.State().SetPath(stateFile)
 		}
 	}
 }

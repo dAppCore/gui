@@ -2,6 +2,7 @@
 package window
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -108,6 +109,19 @@ func TestManager_Open_Defaults_Good(t *testing.T) {
 	w, h := pw.Size()
 	assert.Equal(t, 1280, w)
 	assert.Equal(t, 800, h)
+}
+
+func TestManager_DefaultSizeOverrides_Good(t *testing.T) {
+	m, _ := newTestManager()
+	m.SetDefaultWidth(1440)
+	m.SetDefaultHeight(900)
+
+	pw, err := m.Open()
+	require.NoError(t, err)
+
+	w, h := pw.Size()
+	assert.Equal(t, 1440, w)
+	assert.Equal(t, 900, h)
 }
 
 func TestManager_Open_Bad(t *testing.T) {
@@ -224,6 +238,23 @@ func TestStateManager_Persistence_Good(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, 42, got.X)
 	assert.Equal(t, 500, got.Width)
+}
+
+func TestStateManager_SetPath_Good(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "custom-window-state.json")
+	sm := &StateManager{states: make(map[string]WindowState)}
+
+	sm.SetPath(path)
+	sm.SetState("custom", WindowState{X: 11, Y: 22, Width: 333, Height: 444})
+	sm.ForceSync()
+
+	reloaded := &StateManager{states: make(map[string]WindowState)}
+	reloaded.SetPath(path)
+	got, ok := reloaded.GetState("custom")
+	require.True(t, ok)
+	assert.Equal(t, 11, got.X)
+	assert.Equal(t, 333, got.Width)
 }
 
 // --- LayoutManager Tests ---

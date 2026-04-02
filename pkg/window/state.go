@@ -25,6 +25,7 @@ type WindowState struct {
 // StateManager persists window positions to ~/.config/Core/window_state.json.
 type StateManager struct {
 	configDir string
+	statePath string
 	states    map[string]WindowState
 	mu        sync.RWMutex
 	saveTimer *time.Timer
@@ -55,11 +56,37 @@ func NewStateManagerWithDir(configDir string) *StateManager {
 }
 
 func (sm *StateManager) filePath() string {
+	if sm.statePath != "" {
+		return sm.statePath
+	}
 	return filepath.Join(sm.configDir, "window_state.json")
 }
 
+func (sm *StateManager) dataDir() string {
+	if sm.statePath != "" {
+		return filepath.Dir(sm.statePath)
+	}
+	return sm.configDir
+}
+
+// SetPath overrides the persisted state file path.
+func (sm *StateManager) SetPath(path string) {
+	if path == "" {
+		return
+	}
+	sm.mu.Lock()
+	if sm.saveTimer != nil {
+		sm.saveTimer.Stop()
+		sm.saveTimer = nil
+	}
+	sm.statePath = path
+	sm.states = make(map[string]WindowState)
+	sm.mu.Unlock()
+	sm.load()
+}
+
 func (sm *StateManager) load() {
-	if sm.configDir == "" {
+	if sm.configDir == "" && sm.statePath == "" {
 		return
 	}
 	data, err := os.ReadFile(sm.filePath())
@@ -72,7 +99,7 @@ func (sm *StateManager) load() {
 }
 
 func (sm *StateManager) save() {
-	if sm.configDir == "" {
+	if sm.configDir == "" && sm.statePath == "" {
 		return
 	}
 	sm.mu.RLock()
@@ -81,7 +108,7 @@ func (sm *StateManager) save() {
 	if err != nil {
 		return
 	}
-	_ = os.MkdirAll(sm.configDir, 0o755)
+	_ = os.MkdirAll(sm.dataDir(), 0o755)
 	_ = os.WriteFile(sm.filePath(), data, 0o644)
 }
 

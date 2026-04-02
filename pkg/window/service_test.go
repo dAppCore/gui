@@ -28,6 +28,21 @@ func TestRegister_Good(t *testing.T) {
 	assert.NotNil(t, svc.manager)
 }
 
+func TestApplyConfig_Good(t *testing.T) {
+	svc, _ := newTestWindowService(t)
+
+	svc.applyConfig(map[string]any{
+		"default_width":  1500,
+		"default_height": 900,
+	})
+
+	pw, err := svc.manager.Open()
+	require.NoError(t, err)
+	w, h := pw.Size()
+	assert.Equal(t, 1500, w)
+	assert.Equal(t, 900, h)
+}
+
 func TestTaskOpenWindow_Good(t *testing.T) {
 	_, c := newTestWindowService(t)
 	result, handled, err := c.PERFORM(TaskOpenWindow{

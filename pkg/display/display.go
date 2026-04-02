@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"encoding/json"
 	"forge.lthn.ai/core/config"
 	"forge.lthn.ai/core/go/pkg/core"
-	"encoding/json"
 
 	"forge.lthn.ai/core/gui/pkg/browser"
 	"forge.lthn.ai/core/gui/pkg/contextmenu"
@@ -43,7 +43,7 @@ type Service struct {
 	config     Options
 	configData map[string]map[string]any
 	cfg        *config.Config // config instance for file persistence
-	events *WSEventManager
+	events     *WSEventManager
 }
 
 // New is the constructor for the display service.
@@ -917,7 +917,8 @@ func (s *Service) TileWindows(mode window.TileMode, windowNames []string) error 
 	if ws == nil {
 		return fmt.Errorf("window service not available")
 	}
-	return ws.Manager().TileWindows(mode, windowNames, 1920, 1080) // TODO: use actual screen size
+	screenWidth, screenHeight := s.primaryScreenSize()
+	return ws.Manager().TileWindows(mode, windowNames, screenWidth, screenHeight)
 }
 
 // SnapWindow snaps a window to a screen edge or corner.
@@ -926,7 +927,35 @@ func (s *Service) SnapWindow(name string, position window.SnapPosition) error {
 	if ws == nil {
 		return fmt.Errorf("window service not available")
 	}
-	return ws.Manager().SnapWindow(name, position, 1920, 1080) // TODO: use actual screen size
+	screenWidth, screenHeight := s.primaryScreenSize()
+	return ws.Manager().SnapWindow(name, position, screenWidth, screenHeight)
+}
+
+func (s *Service) primaryScreenSize() (int, int) {
+	const fallbackWidth = 1920
+	const fallbackHeight = 1080
+
+	result, handled, err := s.Core().QUERY(screen.QueryPrimary{})
+	if err != nil || !handled {
+		return fallbackWidth, fallbackHeight
+	}
+
+	primary, ok := result.(*screen.Screen)
+	if !ok || primary == nil {
+		return fallbackWidth, fallbackHeight
+	}
+
+	width := primary.WorkArea.Width
+	height := primary.WorkArea.Height
+	if width <= 0 || height <= 0 {
+		width = primary.Bounds.Width
+		height = primary.Bounds.Height
+	}
+	if width <= 0 || height <= 0 {
+		return fallbackWidth, fallbackHeight
+	}
+
+	return width, height
 }
 
 // StackWindows arranges windows in a cascade pattern.
@@ -944,7 +973,8 @@ func (s *Service) ApplyWorkflowLayout(workflow window.WorkflowLayout) error {
 	if ws == nil {
 		return fmt.Errorf("window service not available")
 	}
-	return ws.Manager().ApplyWorkflow(workflow, ws.Manager().List(), 1920, 1080)
+	screenWidth, screenHeight := s.primaryScreenSize()
+	return ws.Manager().ApplyWorkflow(workflow, ws.Manager().List(), screenWidth, screenHeight)
 }
 
 // GetEventManager returns the event manager for WebSocket event subscriptions.

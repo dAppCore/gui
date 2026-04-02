@@ -8,11 +8,27 @@ import (
 
 	"forge.lthn.ai/core/go/pkg/core"
 	"forge.lthn.ai/core/gui/pkg/menu"
+	"forge.lthn.ai/core/gui/pkg/screen"
 	"forge.lthn.ai/core/gui/pkg/systray"
 	"forge.lthn.ai/core/gui/pkg/window"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+type mockScreenPlatform struct {
+	screens []screen.Screen
+}
+
+func (m *mockScreenPlatform) GetAll() []screen.Screen { return m.screens }
+
+func (m *mockScreenPlatform) GetPrimary() *screen.Screen {
+	for i := range m.screens {
+		if m.screens[i].IsPrimary {
+			return &m.screens[i]
+		}
+	}
+	return nil
+}
 
 // --- Test helpers ---
 
@@ -35,6 +51,14 @@ func newTestConclave(t *testing.T) *core.Core {
 	c, err := core.New(
 		core.WithService(Register(nil)),
 		core.WithService(window.Register(window.NewMockPlatform())),
+		core.WithService(screen.Register(&mockScreenPlatform{
+			screens: []screen.Screen{{
+				ID: "primary", Name: "Primary", IsPrimary: true,
+				Size:     screen.Size{Width: 2560, Height: 1440},
+				Bounds:   screen.Rect{X: 0, Y: 0, Width: 2560, Height: 1440},
+				WorkArea: screen.Rect{X: 0, Y: 0, Width: 2560, Height: 1440},
+			}},
+		})),
 		core.WithService(systray.Register(systray.NewMockPlatform())),
 		core.WithService(menu.Register(menu.NewMockPlatform())),
 		core.WithServiceLock(),
@@ -220,6 +244,25 @@ func TestGetWindowInfo_Bad(t *testing.T) {
 	// QueryWindowByName returns nil for nonexistent — handled=true, result=nil
 	assert.NoError(t, err)
 	assert.Nil(t, info)
+}
+
+func TestTileWindows_UsesPrimaryScreenSize(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+
+	_ = svc.OpenWindow(window.WithName("left"))
+	_ = svc.OpenWindow(window.WithName("right"))
+
+	err := svc.TileWindows(window.TileModeLeftRight, []string{"left", "right"})
+	require.NoError(t, err)
+
+	left, err := svc.GetWindowInfo("left")
+	require.NoError(t, err)
+	assert.Equal(t, 1280, left.Width)
+
+	right, err := svc.GetWindowInfo("right")
+	require.NoError(t, err)
+	assert.Equal(t, 1280, right.Width)
 }
 
 func TestListWindowInfos_Good(t *testing.T) {

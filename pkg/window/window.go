@@ -39,11 +39,13 @@ func (w *Window) ToPlatformOptions() PlatformWindowOptions {
 
 // Manager manages window lifecycle through a Platform backend.
 type Manager struct {
-	platform Platform
-	state    *StateManager
-	layout   *LayoutManager
-	windows  map[string]PlatformWindow
-	mu       sync.RWMutex
+	platform      Platform
+	state         *StateManager
+	layout        *LayoutManager
+	windows       map[string]PlatformWindow
+	defaultWidth  int
+	defaultHeight int
+	mu            sync.RWMutex
 }
 
 // NewManager creates a window Manager with the given platform backend.
@@ -67,6 +69,20 @@ func NewManagerWithDir(platform Platform, configDir string) *Manager {
 	}
 }
 
+// SetDefaultWidth overrides the fallback width used when a window is created without one.
+func (m *Manager) SetDefaultWidth(width int) {
+	if width > 0 {
+		m.defaultWidth = width
+	}
+}
+
+// SetDefaultHeight overrides the fallback height used when a window is created without one.
+func (m *Manager) SetDefaultHeight(height int) {
+	if height > 0 {
+		m.defaultHeight = height
+	}
+}
+
 // Open creates a window using functional options, applies saved state, and tracks it.
 func (m *Manager) Open(opts ...WindowOption) (PlatformWindow, error) {
 	w, err := ApplyOptions(opts...)
@@ -85,10 +101,18 @@ func (m *Manager) Create(w *Window) (PlatformWindow, error) {
 		w.Title = "Core"
 	}
 	if w.Width == 0 {
-		w.Width = 1280
+		if m.defaultWidth > 0 {
+			w.Width = m.defaultWidth
+		} else {
+			w.Width = 1280
+		}
 	}
 	if w.Height == 0 {
-		w.Height = 800
+		if m.defaultHeight > 0 {
+			w.Height = m.defaultHeight
+		} else {
+			w.Height = 800
+		}
 	}
 	if w.URL == "" {
 		w.URL = "/"
