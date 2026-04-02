@@ -2,14 +2,19 @@ package display
 
 import (
 	"context"
+	"encoding/base64"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"forge.lthn.ai/core/go/pkg/core"
+	"forge.lthn.ai/core/gui/pkg/clipboard"
+	"forge.lthn.ai/core/gui/pkg/dialog"
 	"forge.lthn.ai/core/gui/pkg/menu"
+	"forge.lthn.ai/core/gui/pkg/notification"
 	"forge.lthn.ai/core/gui/pkg/screen"
 	"forge.lthn.ai/core/gui/pkg/systray"
+	"forge.lthn.ai/core/gui/pkg/webview"
 	"forge.lthn.ai/core/gui/pkg/window"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -29,6 +34,95 @@ func (m *mockScreenPlatform) GetPrimary() *screen.Screen {
 	}
 	return nil
 }
+
+type mockClipboardPlatform struct {
+	text  string
+	ok    bool
+	image []byte
+	imgOk bool
+}
+
+func (m *mockClipboardPlatform) Text() (string, bool) { return m.text, m.ok }
+func (m *mockClipboardPlatform) SetText(text string) bool {
+	m.text = text
+	m.ok = text != ""
+	return true
+}
+func (m *mockClipboardPlatform) Image() ([]byte, bool) { return m.image, m.imgOk }
+func (m *mockClipboardPlatform) SetImage(data []byte) bool {
+	m.image = data
+	m.imgOk = len(data) > 0
+	return true
+}
+
+type mockNotificationPlatform struct {
+	permGranted bool
+	sendCalled  bool
+	clearCalled bool
+	lastOpts    notification.NotificationOptions
+}
+
+func (m *mockNotificationPlatform) Send(opts notification.NotificationOptions) error {
+	m.sendCalled = true
+	m.lastOpts = opts
+	return nil
+}
+func (m *mockNotificationPlatform) SendWithActions(opts notification.NotificationOptions) error {
+	m.sendCalled = true
+	m.lastOpts = opts
+	return nil
+}
+func (m *mockNotificationPlatform) RequestPermission() (bool, error) { return m.permGranted, nil }
+func (m *mockNotificationPlatform) CheckPermission() (bool, error)   { return m.permGranted, nil }
+func (m *mockNotificationPlatform) Clear() error {
+	m.clearCalled = true
+	return nil
+}
+
+type mockDialogPlatform struct {
+	button string
+	last   dialog.MessageDialogOptions
+}
+
+func (m *mockDialogPlatform) OpenFile(opts dialog.OpenFileOptions) ([]string, error) { return nil, nil }
+func (m *mockDialogPlatform) SaveFile(opts dialog.SaveFileOptions) (string, error)   { return "", nil }
+func (m *mockDialogPlatform) OpenDirectory(opts dialog.OpenDirectoryOptions) (string, error) {
+	return "", nil
+}
+func (m *mockDialogPlatform) MessageDialog(opts dialog.MessageDialogOptions) (string, error) {
+	m.last = opts
+	if m.button != "" {
+		return m.button, nil
+	}
+	return "OK", nil
+}
+
+type mockWebviewConnector struct{}
+
+func (m *mockWebviewConnector) Navigate(url string) error                 { return nil }
+func (m *mockWebviewConnector) Click(selector string) error               { return nil }
+func (m *mockWebviewConnector) Type(selector, text string) error          { return nil }
+func (m *mockWebviewConnector) Hover(selector string) error               { return nil }
+func (m *mockWebviewConnector) Select(selector, value string) error       { return nil }
+func (m *mockWebviewConnector) Check(selector string, checked bool) error { return nil }
+func (m *mockWebviewConnector) Evaluate(script string) (any, error)       { return nil, nil }
+func (m *mockWebviewConnector) Screenshot() ([]byte, error)               { return nil, nil }
+func (m *mockWebviewConnector) GetURL() (string, error)                   { return "", nil }
+func (m *mockWebviewConnector) GetTitle() (string, error)                 { return "", nil }
+func (m *mockWebviewConnector) GetHTML(selector string) (string, error)   { return "", nil }
+func (m *mockWebviewConnector) QuerySelector(selector string) (*webview.ElementInfo, error) {
+	return nil, nil
+}
+func (m *mockWebviewConnector) QuerySelectorAll(selector string) ([]*webview.ElementInfo, error) {
+	return nil, nil
+}
+func (m *mockWebviewConnector) GetConsole() []webview.ConsoleMessage { return nil }
+func (m *mockWebviewConnector) ClearConsole()                        {}
+func (m *mockWebviewConnector) SetViewport(width, height int) error  { return nil }
+func (m *mockWebviewConnector) UploadFile(selector string, paths []string) error {
+	return nil
+}
+func (m *mockWebviewConnector) Close() error { return nil }
 
 // --- Test helpers ---
 
@@ -61,6 +155,36 @@ func newTestConclave(t *testing.T) *core.Core {
 		})),
 		core.WithService(systray.Register(systray.NewMockPlatform())),
 		core.WithService(menu.Register(menu.NewMockPlatform())),
+		core.WithServiceLock(),
+	)
+	require.NoError(t, err)
+	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+	return c
+}
+
+func newExtendedTestConclave(t *testing.T) *core.Core {
+	t.Helper()
+	clipboardPlatform := &mockClipboardPlatform{text: "hello", ok: true, image: []byte{1, 2, 3}, imgOk: true}
+	notificationPlatform := &mockNotificationPlatform{permGranted: true}
+	dialogPlatform := &mockDialogPlatform{button: "OK"}
+
+	c, err := core.New(
+		core.WithService(Register(nil)),
+		core.WithService(window.Register(window.NewMockPlatform())),
+		core.WithService(screen.Register(&mockScreenPlatform{
+			screens: []screen.Screen{{
+				ID: "primary", Name: "Primary", IsPrimary: true,
+				Size:     screen.Size{Width: 2560, Height: 1440},
+				Bounds:   screen.Rect{X: 0, Y: 0, Width: 2560, Height: 1440},
+				WorkArea: screen.Rect{X: 0, Y: 0, Width: 2560, Height: 1440},
+			}},
+		})),
+		core.WithService(systray.Register(systray.NewMockPlatform())),
+		core.WithService(menu.Register(menu.NewMockPlatform())),
+		core.WithService(clipboard.Register(clipboardPlatform)),
+		core.WithService(notification.Register(notificationPlatform)),
+		core.WithService(dialog.Register(dialogPlatform)),
+		core.WithService(webview.Register()),
 		core.WithServiceLock(),
 	)
 	require.NoError(t, err)
@@ -545,4 +669,105 @@ func TestHandleConfigTask_Persists_Good(t *testing.T) {
 	data, err := os.ReadFile(cfgPath)
 	require.NoError(t, err)
 	assert.Contains(t, string(data), "default_width")
+}
+
+func TestHandleWSMessage_Extended_Good(t *testing.T) {
+	c := newExtendedTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+
+	_ = svc.OpenWindow(
+		window.WithName("editor"),
+		window.WithTitle("Editor"),
+		window.WithSize(1200, 800),
+	)
+	_ = svc.OpenWindow(
+		window.WithName("assistant"),
+		window.WithTitle("Assistant"),
+		window.WithSize(900, 800),
+	)
+
+	t.Run("layout suggest", func(t *testing.T) {
+		result, handled, err := svc.handleWSMessage(WSMessage{Action: "layout:suggest"})
+		require.NoError(t, err)
+		assert.True(t, handled)
+		suggestion, ok := result.(window.LayoutSuggestion)
+		require.True(t, ok)
+		assert.Equal(t, "side-by-side", suggestion.Mode)
+	})
+
+	t.Run("clipboard image read", func(t *testing.T) {
+		result, handled, err := svc.handleWSMessage(WSMessage{Action: "clipboard:read-image"})
+		require.NoError(t, err)
+		assert.True(t, handled)
+		content, ok := result.(clipboard.ClipboardImageContent)
+		require.True(t, ok)
+		assert.True(t, content.HasContent)
+		assert.NotEmpty(t, content.Base64)
+	})
+
+	t.Run("clipboard image write", func(t *testing.T) {
+		payload := base64.StdEncoding.EncodeToString([]byte{9, 8, 7})
+		_, handled, err := svc.handleWSMessage(WSMessage{
+			Action: "clipboard:write-image",
+			Data:   map[string]any{"data": payload},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+	})
+
+	t.Run("notification actions", func(t *testing.T) {
+		_, handled, err := svc.handleWSMessage(WSMessage{
+			Action: "notification:with-actions",
+			Data: map[string]any{
+				"title":   "Heads up",
+				"message": "Choose one",
+				"actions": []any{
+					map[string]any{"id": "ok", "label": "OK"},
+				},
+			},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+	})
+
+	t.Run("notification clear", func(t *testing.T) {
+		_, handled, err := svc.handleWSMessage(WSMessage{Action: "notification:clear"})
+		require.NoError(t, err)
+		assert.True(t, handled)
+	})
+
+	t.Run("webview devtools", func(t *testing.T) {
+		_, handled, err := svc.handleWSMessage(WSMessage{
+			Action: "webview:devtools-open",
+			Data:   map[string]any{"window": "editor"},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+
+		_, handled, err = svc.handleWSMessage(WSMessage{
+			Action: "webview:devtools-close",
+			Data:   map[string]any{"window": "editor"},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+	})
+
+	t.Run("tray message", func(t *testing.T) {
+		_, handled, err := svc.handleWSMessage(WSMessage{
+			Action: "tray:show-message",
+			Data:   map[string]any{"title": "Core", "message": "Ready"},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+	})
+
+	t.Run("prompt dialog", func(t *testing.T) {
+		result, handled, err := svc.handleWSMessage(WSMessage{
+			Action: "dialog:prompt",
+			Data:   map[string]any{"title": "Question", "message": "Continue?"},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+		assert.Equal(t, "OK", result)
+	})
 }

@@ -2,6 +2,7 @@ package display
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,6 +13,7 @@ import (
 	"forge.lthn.ai/core/go/pkg/core"
 
 	"forge.lthn.ai/core/gui/pkg/browser"
+	"forge.lthn.ai/core/gui/pkg/clipboard"
 	"forge.lthn.ai/core/gui/pkg/contextmenu"
 	"forge.lthn.ai/core/gui/pkg/dialog"
 	"forge.lthn.ai/core/gui/pkg/dock"
@@ -464,6 +466,120 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 			return nil, false, e
 		}
 		result, handled, err = s.Core().QUERY(webview.QueryTitle{Window: w})
+	case "webview:devtools-open":
+		w, e := wsRequire(msg.Data, "window")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = s.Core().PERFORM(webview.TaskOpenDevTools{Window: w})
+	case "webview:devtools-close":
+		w, e := wsRequire(msg.Data, "window")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = s.Core().PERFORM(webview.TaskCloseDevTools{Window: w})
+	case "layout:beside-editor":
+		editor, _ := msg.Data["editor"].(string)
+		windowName, _ := msg.Data["window"].(string)
+		result, handled, err = s.Core().PERFORM(window.TaskBesideEditor{
+			Editor: editor,
+			Window: windowName,
+		})
+	case "layout:suggest":
+		windowCount := 0
+		if count, ok := msg.Data["windowCount"].(float64); ok {
+			windowCount = int(count)
+		}
+		screenWidth := 0
+		if width, ok := msg.Data["screenWidth"].(float64); ok {
+			screenWidth = int(width)
+		}
+		screenHeight := 0
+		if height, ok := msg.Data["screenHeight"].(float64); ok {
+			screenHeight = int(height)
+		}
+		if windowCount <= 0 {
+			windowCount = len(s.ListWindowInfos())
+		}
+		if screenWidth <= 0 || screenHeight <= 0 {
+			screenWidth, screenHeight = s.primaryScreenSize()
+		}
+		result, handled, err = s.Core().QUERY(window.QueryLayoutSuggestion{
+			WindowCount:  windowCount,
+			ScreenWidth:  screenWidth,
+			ScreenHeight: screenHeight,
+		})
+	case "clipboard:read-image":
+		result, handled, err = s.Core().QUERY(clipboard.QueryImage{})
+	case "clipboard:write-image":
+		data, ok := msg.Data["data"].(string)
+		if !ok || data == "" {
+			return nil, false, fmt.Errorf("ws: missing required field %q", "data")
+		}
+		decoded, decodeErr := base64.StdEncoding.DecodeString(data)
+		if decodeErr != nil {
+			return nil, false, fmt.Errorf("ws: invalid base64 image data: %w", decodeErr)
+		}
+		result, handled, err = s.Core().PERFORM(clipboard.TaskSetImage{Data: decoded})
+	case "notification:with-actions":
+		title, e := wsRequire(msg.Data, "title")
+		if e != nil {
+			return nil, false, e
+		}
+		message, e := wsRequire(msg.Data, "message")
+		if e != nil {
+			return nil, false, e
+		}
+		subtitle, _ := msg.Data["subtitle"].(string)
+		actions := make([]notification.NotificationAction, 0)
+		if raw, ok := msg.Data["actions"]; ok {
+			encoded, _ := json.Marshal(raw)
+			_ = json.Unmarshal(encoded, &actions)
+		}
+		result, handled, err = s.Core().PERFORM(notification.TaskSend{
+			Opts: notification.NotificationOptions{
+				Title:    title,
+				Message:  message,
+				Subtitle: subtitle,
+				Actions:  actions,
+			},
+		})
+	case "notification:clear":
+		result, handled, err = s.Core().PERFORM(notification.TaskClear{})
+	case "notification:permission-request":
+		result, handled, err = s.Core().PERFORM(notification.TaskRequestPermission{})
+	case "notification:permission-check":
+		result, handled, err = s.Core().QUERY(notification.QueryPermission{})
+	case "tray:show-message":
+		title, e := wsRequire(msg.Data, "title")
+		if e != nil {
+			return nil, false, e
+		}
+		message, e := wsRequire(msg.Data, "message")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = s.Core().PERFORM(systray.TaskShowMessage{
+			Title:   title,
+			Message: message,
+		})
+	case "dialog:prompt":
+		title, e := wsRequire(msg.Data, "title")
+		if e != nil {
+			return nil, false, e
+		}
+		message, e := wsRequire(msg.Data, "message")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = s.Core().PERFORM(dialog.TaskMessageDialog{
+			Opts: dialog.MessageDialogOptions{
+				Type:    dialog.DialogInfo,
+				Title:   title,
+				Message: message,
+				Buttons: []string{"OK", "Cancel"},
+			},
+		})
 	default:
 		return nil, false, nil
 	}
