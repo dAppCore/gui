@@ -1415,6 +1415,7 @@ func (s *Service) GetWindowTitle(name string) (string, error) {
 }
 
 // ResetWindowState clears saved window positions.
+// Use: _ = svc.ResetWindowState()
 func (s *Service) ResetWindowState() error {
 	ws := s.windowService()
 	if ws != nil {
@@ -1424,6 +1425,7 @@ func (s *Service) ResetWindowState() error {
 }
 
 // GetSavedWindowStates returns all saved window states.
+// Use: states := svc.GetSavedWindowStates()
 func (s *Service) GetSavedWindowStates() map[string]window.WindowState {
 	ws := s.windowService()
 	if ws == nil {
