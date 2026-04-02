@@ -1126,98 +1126,46 @@ func (s *Service) CloseWindow(name string) error {
 	return err
 }
 
-// RestoreWindow restores a maximized/minimized window.
-// Uses direct Manager access (no IPC task for restore yet).
+// RestoreWindow restores a maximized/minimized window via IPC.
 func (s *Service) RestoreWindow(name string) error {
-	ws := s.windowService()
-	if ws == nil {
-		return fmt.Errorf("window service not available")
-	}
-	pw, ok := ws.Manager().Get(name)
-	if !ok {
-		return fmt.Errorf("window not found: %s", name)
-	}
-	pw.Restore()
-	return nil
+	_, _, err := s.Core().PERFORM(window.TaskRestore{Name: name})
+	return err
 }
 
-// SetWindowVisibility shows or hides a window.
-// Uses direct Manager access (no IPC task for visibility yet).
+// SetWindowVisibility shows or hides a window via IPC.
 func (s *Service) SetWindowVisibility(name string, visible bool) error {
-	ws := s.windowService()
-	if ws == nil {
-		return fmt.Errorf("window service not available")
-	}
-	pw, ok := ws.Manager().Get(name)
-	if !ok {
-		return fmt.Errorf("window not found: %s", name)
-	}
-	pw.SetVisibility(visible)
-	return nil
+	_, _, err := s.Core().PERFORM(window.TaskSetVisibility{Name: name, Visible: visible})
+	return err
 }
 
-// SetWindowAlwaysOnTop sets whether a window stays on top.
-// Uses direct Manager access (no IPC task for always-on-top yet).
+// SetWindowAlwaysOnTop sets whether a window stays on top via IPC.
 func (s *Service) SetWindowAlwaysOnTop(name string, alwaysOnTop bool) error {
-	ws := s.windowService()
-	if ws == nil {
-		return fmt.Errorf("window service not available")
-	}
-	pw, ok := ws.Manager().Get(name)
-	if !ok {
-		return fmt.Errorf("window not found: %s", name)
-	}
-	pw.SetAlwaysOnTop(alwaysOnTop)
-	return nil
+	_, _, err := s.Core().PERFORM(window.TaskSetAlwaysOnTop{Name: name, AlwaysOnTop: alwaysOnTop})
+	return err
 }
 
-// SetWindowTitle changes a window's title.
-// Uses direct Manager access (no IPC task for title yet).
+// SetWindowTitle changes a window's title via IPC.
 func (s *Service) SetWindowTitle(name string, title string) error {
-	ws := s.windowService()
-	if ws == nil {
-		return fmt.Errorf("window service not available")
-	}
-	pw, ok := ws.Manager().Get(name)
-	if !ok {
-		return fmt.Errorf("window not found: %s", name)
-	}
-	pw.SetTitle(title)
-	return nil
+	_, _, err := s.Core().PERFORM(window.TaskSetTitle{Name: name, Title: title})
+	return err
 }
 
-// SetWindowFullscreen sets a window to fullscreen mode.
-// Uses direct Manager access (no IPC task for fullscreen yet).
+// SetWindowFullscreen sets a window to fullscreen mode via IPC.
 func (s *Service) SetWindowFullscreen(name string, fullscreen bool) error {
-	ws := s.windowService()
-	if ws == nil {
-		return fmt.Errorf("window service not available")
-	}
-	pw, ok := ws.Manager().Get(name)
-	if !ok {
-		return fmt.Errorf("window not found: %s", name)
-	}
-	if fullscreen {
-		pw.Fullscreen()
-	} else {
-		pw.UnFullscreen()
-	}
-	return nil
+	_, _, err := s.Core().PERFORM(window.TaskFullscreen{Name: name, Fullscreen: fullscreen})
+	return err
 }
 
-// SetWindowBackgroundColour sets the background colour of a window.
-// Uses direct Manager access (no IPC task for background colour yet).
+// SetWindowBackgroundColour sets the background colour of a window via IPC.
 func (s *Service) SetWindowBackgroundColour(name string, r, g, b, a uint8) error {
-	ws := s.windowService()
-	if ws == nil {
-		return fmt.Errorf("window service not available")
-	}
-	pw, ok := ws.Manager().Get(name)
-	if !ok {
-		return fmt.Errorf("window not found: %s", name)
-	}
-	pw.SetBackgroundColour(r, g, b, a)
-	return nil
+	_, _, err := s.Core().PERFORM(window.TaskSetBackgroundColour{
+		Name:  name,
+		Red:   r,
+		Green: g,
+		Blue:  b,
+		Alpha: a,
+	})
+	return err
 }
 
 // GetFocusedWindow returns the name of the currently focused window.
