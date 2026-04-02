@@ -946,7 +946,14 @@ func (s *Service) handleTrayAction(actionID string) {
 			_, _, _ = s.Core().PERFORM(window.TaskFocus{Name: info.Name})
 		}
 	case "close-desktop":
-		// Hide all windows — future: add TaskHideWindow
+		// Hide all tracked windows using the existing visibility task.
+		infos := s.ListWindowInfos()
+		for _, info := range infos {
+			_, _, _ = s.Core().PERFORM(window.TaskSetVisibility{
+				Name:    info.Name,
+				Visible: false,
+			})
+		}
 	case "env-info":
 		// Query environment info via IPC and show as dialog
 		result, handled, _ := s.Core().QUERY(environment.QueryInfo{})

@@ -1049,6 +1049,14 @@ func TestHandleWSMessage_Extended_Good(t *testing.T) {
 		assert.True(t, handled)
 	})
 
+	t.Run("tray close desktop", func(t *testing.T) {
+		svc.handleTrayAction("close-desktop")
+
+		for _, info := range svc.ListWindowInfos() {
+			assert.False(t, info.Visible, "window should be hidden after close-desktop")
+		}
+	})
+
 	t.Run("tray tooltip", func(t *testing.T) {
 		_, handled, err := svc.handleWSMessage(WSMessage{
 			Action: "tray:set-tooltip",
