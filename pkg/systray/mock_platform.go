@@ -1,11 +1,19 @@
 package systray
 
 // MockPlatform is an exported mock for cross-package integration tests.
+// Use: platform := systray.NewMockPlatform()
 type MockPlatform struct{}
 
+// NewMockPlatform creates a tray platform mock.
+// Use: platform := systray.NewMockPlatform()
 func NewMockPlatform() *MockPlatform { return &MockPlatform{} }
 
+// NewTray creates a mock tray handle for tests.
+// Use: tray := platform.NewTray()
 func (m *MockPlatform) NewTray() PlatformTray { return &exportedMockTray{} }
+
+// NewMenu creates a mock tray menu for tests.
+// Use: menu := platform.NewMenu()
 func (m *MockPlatform) NewMenu() PlatformMenu { return &exportedMockMenu{} }
 
 type exportedMockTray struct {

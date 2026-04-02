@@ -4,6 +4,7 @@ package systray
 import "forge.lthn.ai/core/go/pkg/core"
 
 // SetMenu sets a dynamic menu on the tray from TrayMenuItem descriptors.
+// Use: _ = m.SetMenu([]TrayMenuItem{{Label: "Quit", ActionID: "quit"}})
 func (m *Manager) SetMenu(items []TrayMenuItem) error {
 	if m.tray == nil {
 		return core.E("systray.SetMenu", "tray not initialised", nil)
@@ -54,6 +55,7 @@ func (m *Manager) buildMenuInto(menu PlatformMenu, items []TrayMenuItem) {
 }
 
 // RegisterCallback registers a callback for a menu action ID.
+// Use: m.RegisterCallback("quit", func() { _ = app.Quit() })
 func (m *Manager) RegisterCallback(actionID string, callback func()) {
 	m.mu.Lock()
 	m.callbacks[actionID] = callback
@@ -61,6 +63,7 @@ func (m *Manager) RegisterCallback(actionID string, callback func()) {
 }
 
 // UnregisterCallback removes a callback.
+// Use: m.UnregisterCallback("quit")
 func (m *Manager) UnregisterCallback(actionID string) {
 	m.mu.Lock()
 	delete(m.callbacks, actionID)
@@ -68,6 +71,7 @@ func (m *Manager) UnregisterCallback(actionID string) {
 }
 
 // GetCallback returns the callback for an action ID.
+// Use: callback, ok := m.GetCallback("quit")
 func (m *Manager) GetCallback(actionID string) (func(), bool) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -76,6 +80,7 @@ func (m *Manager) GetCallback(actionID string) (func(), bool) {
 }
 
 // GetInfo returns tray status information.
+// Use: info := m.GetInfo()
 func (m *Manager) GetInfo() map[string]any {
 	return map[string]any{
 		"active":          m.IsActive(),

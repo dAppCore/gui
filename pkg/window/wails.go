@@ -7,15 +7,19 @@ import (
 )
 
 // WailsPlatform implements Platform using Wails v3.
+// Use: platform := window.NewWailsPlatform(app)
 type WailsPlatform struct {
 	app *application.App
 }
 
 // NewWailsPlatform creates a Wails-backed Platform.
+// Use: platform := window.NewWailsPlatform(app)
 func NewWailsPlatform(app *application.App) *WailsPlatform {
 	return &WailsPlatform{app: app}
 }
 
+// CreateWindow opens a new Wails window from platform options.
+// Use: w := wp.CreateWindow(window.PlatformWindowOptions{Name: "editor", URL: "/editor"})
 func (wp *WailsPlatform) CreateWindow(opts PlatformWindowOptions) PlatformWindow {
 	wOpts := application.WebviewWindowOptions{
 		Name:             opts.Name,
@@ -40,6 +44,8 @@ func (wp *WailsPlatform) CreateWindow(opts PlatformWindowOptions) PlatformWindow
 	return &wailsWindow{w: w, title: opts.Title}
 }
 
+// GetWindows returns the live Wails windows.
+// Use: windows := wp.GetWindows()
 func (wp *WailsPlatform) GetWindows() []PlatformWindow {
 	all := wp.app.Window.GetAll()
 	out := make([]PlatformWindow, 0, len(all))

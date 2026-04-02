@@ -255,6 +255,8 @@ type ActionWindowFocused struct{ Name string }
 // Use: _ = c.ACTION(window.ActionWindowBlurred{Name: "editor"})
 type ActionWindowBlurred struct{ Name string }
 
+// ActionFilesDropped is broadcast when files are dropped onto a window.
+// Use: _ = c.ACTION(window.ActionFilesDropped{Name: "editor", Paths: []string{"/tmp/report.pdf"}})
 type ActionFilesDropped struct {
 	Name     string   `json:"name"` // window name
 	Paths    []string `json:"paths"`

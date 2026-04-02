@@ -9,7 +9,7 @@ type Platform interface {
 }
 
 // PlatformWindowOptions are the backend-specific options passed to CreateWindow.
-// Use: opts := window.PlatformWindowOptions{Name: "editor"}
+// Use: opts := window.PlatformWindowOptions{Name: "editor", URL: "/editor"}
 type PlatformWindowOptions struct {
 	Name                string
 	Title               string

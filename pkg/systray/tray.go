@@ -12,10 +12,7 @@ import (
 var defaultIcon []byte
 
 // Manager manages the system tray lifecycle.
-//
-// Example:
-//
-//	manager := systray.NewManager(platform)
+// Use: manager := systray.NewManager(platform)
 type Manager struct {
 	platform        Platform
 	tray            PlatformTray
@@ -30,10 +27,7 @@ type Manager struct {
 }
 
 // NewManager creates a systray Manager.
-//
-// Example:
-//
-//	manager := systray.NewManager(platform)
+// Use: manager := systray.NewManager(platform)
 func NewManager(platform Platform) *Manager {
 	return &Manager{
 		platform:  platform,
@@ -42,6 +36,7 @@ func NewManager(platform Platform) *Manager {
 }
 
 // Setup creates the system tray with default icon and tooltip.
+// Use: _ = manager.Setup("Core", "Core")
 func (m *Manager) Setup(tooltip, label string) error {
 	m.tray = m.platform.NewTray()
 	if m.tray == nil {
@@ -57,6 +52,7 @@ func (m *Manager) Setup(tooltip, label string) error {
 }
 
 // SetIcon sets the tray icon.
+// Use: _ = manager.SetIcon(iconBytes)
 func (m *Manager) SetIcon(data []byte) error {
 	if m.tray == nil {
 		return core.E("systray.SetIcon", "tray not initialised", nil)
@@ -67,6 +63,7 @@ func (m *Manager) SetIcon(data []byte) error {
 }
 
 // SetTemplateIcon sets the template icon (macOS).
+// Use: _ = manager.SetTemplateIcon(iconBytes)
 func (m *Manager) SetTemplateIcon(data []byte) error {
 	if m.tray == nil {
 		return core.E("systray.SetTemplateIcon", "tray not initialised", nil)
@@ -77,6 +74,7 @@ func (m *Manager) SetTemplateIcon(data []byte) error {
 }
 
 // SetTooltip sets the tray tooltip.
+// Use: _ = manager.SetTooltip("Core is ready")
 func (m *Manager) SetTooltip(text string) error {
 	if m.tray == nil {
 		return core.E("systray.SetTooltip", "tray not initialised", nil)
@@ -87,6 +85,7 @@ func (m *Manager) SetTooltip(text string) error {
 }
 
 // SetLabel sets the tray label.
+// Use: _ = manager.SetLabel("Core")
 func (m *Manager) SetLabel(text string) error {
 	if m.tray == nil {
 		return core.E("systray.SetLabel", "tray not initialised", nil)
@@ -97,6 +96,7 @@ func (m *Manager) SetLabel(text string) error {
 }
 
 // AttachWindow attaches a panel window to the tray.
+// Use: _ = manager.AttachWindow(windowHandle)
 func (m *Manager) AttachWindow(w WindowHandle) error {
 	if m.tray == nil {
 		return core.E("systray.AttachWindow", "tray not initialised", nil)
@@ -109,6 +109,7 @@ func (m *Manager) AttachWindow(w WindowHandle) error {
 }
 
 // ShowPanel shows the attached tray panel window if one is configured.
+// Use: _ = manager.ShowPanel()
 func (m *Manager) ShowPanel() error {
 	m.mu.RLock()
 	w := m.panelWindow
@@ -121,6 +122,7 @@ func (m *Manager) ShowPanel() error {
 }
 
 // HidePanel hides the attached tray panel window if one is configured.
+// Use: _ = manager.HidePanel()
 func (m *Manager) HidePanel() error {
 	m.mu.RLock()
 	w := m.panelWindow
@@ -133,11 +135,13 @@ func (m *Manager) HidePanel() error {
 }
 
 // Tray returns the underlying platform tray for direct access.
+// Use: tray := manager.Tray()
 func (m *Manager) Tray() PlatformTray {
 	return m.tray
 }
 
 // IsActive returns whether a tray has been created.
+// Use: active := manager.IsActive()
 func (m *Manager) IsActive() bool {
 	return m.tray != nil
 }

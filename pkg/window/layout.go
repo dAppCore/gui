@@ -29,6 +29,7 @@ type LayoutInfo struct {
 }
 
 // LayoutManager persists named window arrangements to ~/.config/Core/layouts.json.
+// Use: lm := window.NewLayoutManager()
 type LayoutManager struct {
 	configDir string
 	layouts   map[string]Layout

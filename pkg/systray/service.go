@@ -16,10 +16,7 @@ import (
 type Options struct{}
 
 // Service manages system tray operations via Core tasks.
-//
-// Example:
-//
-//	svc := &systray.Service{}
+// Use: svc := &systray.Service{}
 type Service struct {
 	*core.ServiceRuntime[Options]
 	manager  *Manager
@@ -28,10 +25,7 @@ type Service struct {
 }
 
 // OnStartup loads tray config and registers task handlers.
-//
-// Example:
-//
-//	_ = svc.OnStartup(context.Background())
+// Use: _ = svc.OnStartup(context.Background())
 func (s *Service) OnStartup(ctx context.Context) error {
 	cfg, handled, _ := s.Core().QUERY(QueryConfig{})
 	if handled {
@@ -118,6 +112,7 @@ func (s *Service) showTrayMessage(title, message string) error {
 }
 
 // Manager returns the underlying systray Manager.
+// Use: manager := svc.Manager()
 func (s *Service) Manager() *Manager {
 	return s.manager
 }

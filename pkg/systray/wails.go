@@ -6,18 +6,25 @@ import (
 )
 
 // WailsPlatform implements Platform using Wails v3.
+// Use: platform := systray.NewWailsPlatform(app)
 type WailsPlatform struct {
 	app *application.App
 }
 
+// NewWailsPlatform creates a Wails-backed tray platform.
+// Use: platform := systray.NewWailsPlatform(app)
 func NewWailsPlatform(app *application.App) *WailsPlatform {
 	return &WailsPlatform{app: app}
 }
 
+// NewTray creates a Wails system tray handle.
+// Use: tray := platform.NewTray()
 func (wp *WailsPlatform) NewTray() PlatformTray {
 	return &wailsTray{tray: wp.app.SystemTray.New()}
 }
 
+// NewMenu creates a Wails tray menu handle.
+// Use: menu := platform.NewMenu()
 func (wp *WailsPlatform) NewMenu() PlatformMenu {
 	return &wailsTrayMenu{menu: wp.app.NewMenu()}
 }
