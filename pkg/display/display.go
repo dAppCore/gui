@@ -1535,6 +1535,7 @@ func (s *Service) BesideEditor(editorName, windowName string) error {
 // --- Screen management ---
 
 // GetScreens returns all known screens.
+// Use: screens := svc.GetScreens()
 func (s *Service) GetScreens() []screen.Screen {
 	result, handled, _ := s.Core().QUERY(screen.QueryAll{})
 	if !handled {
@@ -1545,6 +1546,7 @@ func (s *Service) GetScreens() []screen.Screen {
 }
 
 // GetScreen returns a screen by ID.
+// Use: screenInfo, err := svc.GetScreen("primary")
 func (s *Service) GetScreen(id string) (*screen.Screen, error) {
 	result, handled, err := s.Core().QUERY(screen.QueryByID{ID: id})
 	if err != nil {
@@ -1558,6 +1560,7 @@ func (s *Service) GetScreen(id string) (*screen.Screen, error) {
 }
 
 // GetPrimaryScreen returns the primary screen.
+// Use: primary, err := svc.GetPrimaryScreen()
 func (s *Service) GetPrimaryScreen() (*screen.Screen, error) {
 	result, handled, err := s.Core().QUERY(screen.QueryPrimary{})
 	if err != nil {
@@ -1571,6 +1574,7 @@ func (s *Service) GetPrimaryScreen() (*screen.Screen, error) {
 }
 
 // GetScreenAtPoint returns the screen containing the specified point.
+// Use: screenInfo, err := svc.GetScreenAtPoint(1280, 720)
 func (s *Service) GetScreenAtPoint(x, y int) (*screen.Screen, error) {
 	result, handled, err := s.Core().QUERY(screen.QueryAtPoint{X: x, Y: y})
 	if err != nil {
@@ -1584,6 +1588,7 @@ func (s *Service) GetScreenAtPoint(x, y int) (*screen.Screen, error) {
 }
 
 // GetScreenForWindow returns the screen containing the named window.
+// Use: screenInfo, err := svc.GetScreenForWindow("editor")
 func (s *Service) GetScreenForWindow(name string) (*screen.Screen, error) {
 	info, err := s.GetWindowInfo(name)
 	if err != nil {
@@ -1602,6 +1607,7 @@ func (s *Service) GetScreenForWindow(name string) (*screen.Screen, error) {
 }
 
 // GetWorkAreas returns the usable area of every screen.
+// Use: areas := svc.GetWorkAreas()
 func (s *Service) GetWorkAreas() []screen.Rect {
 	result, handled, _ := s.Core().QUERY(screen.QueryWorkAreas{})
 	if !handled {
@@ -1614,6 +1620,7 @@ func (s *Service) GetWorkAreas() []screen.Rect {
 // --- Clipboard ---
 
 // ReadClipboard returns the current clipboard text content.
+// Use: text, err := svc.ReadClipboard()
 func (s *Service) ReadClipboard() (string, error) {
 	result, handled, err := s.Core().QUERY(clipboard.QueryText{})
 	if err != nil {
@@ -1627,6 +1634,7 @@ func (s *Service) ReadClipboard() (string, error) {
 }
 
 // WriteClipboard writes text to the clipboard.
+// Use: _ = svc.WriteClipboard("updated")
 func (s *Service) WriteClipboard(text string) error {
 	result, handled, err := s.Core().PERFORM(clipboard.TaskSetText{Text: text})
 	if err != nil {
@@ -2015,11 +2023,11 @@ func (s *Service) SetTrayMenu(items []systray.TrayMenuItem) error {
 // GetTrayInfo returns current tray state information.
 // Use: info := svc.GetTrayInfo()
 func (s *Service) GetTrayInfo() map[string]any {
-	svc, err := core.ServiceFor[*systray.Service](s.Core(), "systray")
-	if err != nil || svc == nil || svc.Manager() == nil {
+	trayService, err := core.ServiceFor[*systray.Service](s.Core(), "systray")
+	if err != nil || trayService == nil || trayService.Manager() == nil {
 		return nil
 	}
-	return svc.Manager().GetInfo()
+	return trayService.Manager().GetInfo()
 }
 
 // ShowTrayMessage shows a tray message or notification.
