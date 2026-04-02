@@ -8,6 +8,12 @@ type Platform interface {
 	CheckPermission() (bool, error)
 }
 
+// NotificationAction represents an interactive notification action.
+type NotificationAction struct {
+	ID    string `json:"id"`
+	Label string `json:"label"`
+}
+
 // NotificationSeverity indicates the severity for dialog fallback.
 type NotificationSeverity int
 
@@ -24,9 +30,18 @@ type NotificationOptions struct {
 	Message  string               `json:"message"`
 	Subtitle string               `json:"subtitle,omitempty"`
 	Severity NotificationSeverity `json:"severity,omitempty"`
+	Actions  []NotificationAction `json:"actions,omitempty"`
 }
 
 // PermissionStatus indicates whether notifications are authorised.
 type PermissionStatus struct {
 	Granted bool `json:"granted"`
+}
+
+type clearer interface {
+	Clear() error
+}
+
+type actionSender interface {
+	SendWithActions(opts NotificationOptions) error
 }

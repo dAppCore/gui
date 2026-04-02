@@ -6,10 +6,14 @@ import "time"
 // --- Queries (read-only) ---
 
 // QueryURL gets the current page URL. Result: string
-type QueryURL struct{ Window string `json:"window"` }
+type QueryURL struct {
+	Window string `json:"window"`
+}
 
 // QueryTitle gets the current page title. Result: string
-type QueryTitle struct{ Window string `json:"window"` }
+type QueryTitle struct {
+	Window string `json:"window"`
+}
 
 // QueryConsole gets captured console messages. Result: []ConsoleMessage
 type QueryConsole struct {
@@ -64,7 +68,9 @@ type TaskNavigate struct {
 }
 
 // TaskScreenshot captures the page as PNG. Result: ScreenshotResult
-type TaskScreenshot struct{ Window string `json:"window"` }
+type TaskScreenshot struct {
+	Window string `json:"window"`
+}
 
 // TaskScroll scrolls to an absolute position (window.scrollTo). Result: nil
 type TaskScroll struct {
@@ -108,7 +114,19 @@ type TaskSetViewport struct {
 }
 
 // TaskClearConsole clears captured console messages. Result: nil
-type TaskClearConsole struct{ Window string `json:"window"` }
+type TaskClearConsole struct {
+	Window string `json:"window"`
+}
+
+// TaskOpenDevTools opens the browser devtools for the target window. Result: nil
+type TaskOpenDevTools struct {
+	Window string `json:"window"`
+}
+
+// TaskCloseDevTools closes the browser devtools for the target window. Result: nil
+type TaskCloseDevTools struct {
+	Window string `json:"window"`
+}
 
 // --- Actions (broadcast) ---
 

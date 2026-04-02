@@ -18,6 +18,12 @@ type TaskShowPanel struct{}
 // TaskHidePanel hides the tray panel window.
 type TaskHidePanel struct{}
 
+// TaskShowMessage shows a tray message or notification.
+type TaskShowMessage struct {
+	Title   string `json:"title"`
+	Message string `json:"message"`
+}
+
 // TaskSaveConfig persists this service's config section via the display orchestrator.
 type TaskSaveConfig struct{ Value map[string]any }
 

@@ -271,6 +271,40 @@ func (s *Subsystem) webviewConsoleClear(_ context.Context, _ *mcp.CallToolReques
 	return nil, WebviewConsoleClearOutput{Success: true}, nil
 }
 
+// --- webview_devtools_open ---
+
+type WebviewDevToolsOpenInput struct {
+	Window string `json:"window"`
+}
+type WebviewDevToolsOpenOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) webviewDevToolsOpen(_ context.Context, _ *mcp.CallToolRequest, input WebviewDevToolsOpenInput) (*mcp.CallToolResult, WebviewDevToolsOpenOutput, error) {
+	_, _, err := s.core.PERFORM(webview.TaskOpenDevTools{Window: input.Window})
+	if err != nil {
+		return nil, WebviewDevToolsOpenOutput{}, err
+	}
+	return nil, WebviewDevToolsOpenOutput{Success: true}, nil
+}
+
+// --- webview_devtools_close ---
+
+type WebviewDevToolsCloseInput struct {
+	Window string `json:"window"`
+}
+type WebviewDevToolsCloseOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) webviewDevToolsClose(_ context.Context, _ *mcp.CallToolRequest, input WebviewDevToolsCloseInput) (*mcp.CallToolResult, WebviewDevToolsCloseOutput, error) {
+	_, _, err := s.core.PERFORM(webview.TaskCloseDevTools{Window: input.Window})
+	if err != nil {
+		return nil, WebviewDevToolsCloseOutput{}, err
+	}
+	return nil, WebviewDevToolsCloseOutput{Success: true}, nil
+}
+
 // --- webview_query ---
 
 type WebviewQueryInput struct {
@@ -405,4 +439,6 @@ func (s *Subsystem) registerWebviewTools(server *mcp.Server) {
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_dom_tree", Description: "Get HTML content of a webview"}, s.webviewDOMTree)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_url", Description: "Get the current URL of a webview"}, s.webviewURL)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_title", Description: "Get the current page title of a webview"}, s.webviewTitle)
+	mcp.AddTool(server, &mcp.Tool{Name: "webview_devtools_open", Description: "Open devtools for a webview window"}, s.webviewDevToolsOpen)
+	mcp.AddTool(server, &mcp.Tool{Name: "webview_devtools_close", Description: "Close devtools for a webview window"}, s.webviewDevToolsClose)
 }

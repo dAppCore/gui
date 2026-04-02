@@ -13,8 +13,9 @@ type Options struct{}
 // Service is a core.Service providing environment queries and theme change events via IPC.
 type Service struct {
 	*core.ServiceRuntime[Options]
-	platform    Platform
-	cancelTheme func() // cancel function for theme change listener
+	platform     Platform
+	cancelTheme  func() // cancel function for theme change listener
+	overrideDark *bool
 }
 
 // Register creates a factory closure that captures the Platform adapter.
@@ -56,6 +57,9 @@ func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
 	switch q.(type) {
 	case QueryTheme:
 		isDark := s.platform.IsDarkMode()
+		if s.overrideDark != nil {
+			isDark = *s.overrideDark
+		}
 		theme := "light"
 		if isDark {
 			theme = "dark"
@@ -74,6 +78,16 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 	switch t := t.(type) {
 	case TaskOpenFileManager:
 		return nil, true, s.platform.OpenFileManager(t.Path, t.Select)
+	case TaskSetTheme:
+		isDark := t.IsDark
+		s.overrideDark = &isDark
+		if setter, ok := s.platform.(interface{ SetTheme(bool) error }); ok {
+			if err := setter.SetTheme(isDark); err != nil {
+				return nil, true, err
+			}
+		}
+		_ = s.Core().ACTION(ActionThemeChanged{IsDark: isDark})
+		return nil, true, nil
 	default:
 		return nil, false, nil
 	}

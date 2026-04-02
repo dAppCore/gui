@@ -17,12 +17,14 @@ type mockPlatform struct {
 	accentColour string
 	openFMErr    error
 	themeHandler func(isDark bool)
+	setThemeSeen bool
+	setThemeDark bool
 	mu           sync.Mutex
 }
 
-func (m *mockPlatform) IsDarkMode() bool        { return m.isDark }
-func (m *mockPlatform) Info() EnvironmentInfo    { return m.info }
-func (m *mockPlatform) AccentColour() string     { return m.accentColour }
+func (m *mockPlatform) IsDarkMode() bool      { return m.isDark }
+func (m *mockPlatform) Info() EnvironmentInfo { return m.info }
+func (m *mockPlatform) AccentColour() string  { return m.accentColour }
 func (m *mockPlatform) OpenFileManager(path string, selectFile bool) error {
 	return m.openFMErr
 }
@@ -35,6 +37,12 @@ func (m *mockPlatform) OnThemeChange(handler func(isDark bool)) func() {
 		m.themeHandler = nil
 		m.mu.Unlock()
 	}
+}
+func (m *mockPlatform) SetTheme(isDark bool) error {
+	m.setThemeSeen = true
+	m.setThemeDark = isDark
+	m.isDark = isDark
+	return nil
 }
 
 // simulateThemeChange triggers the stored handler (test helper).
@@ -130,4 +138,19 @@ func TestThemeChange_ActionBroadcast_Good(t *testing.T) {
 	mu.Unlock()
 	require.NotNil(t, r)
 	assert.False(t, r.IsDark)
+}
+
+func TestTaskSetTheme_Good(t *testing.T) {
+	mock, c := newTestService(t)
+	_, handled, err := c.PERFORM(TaskSetTheme{IsDark: false})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.True(t, mock.setThemeSeen)
+
+	result, handled, err := c.QUERY(QueryTheme{})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	theme := result.(ThemeInfo)
+	assert.False(t, theme.IsDark)
+	assert.Equal(t, "light", theme.Theme)
 }

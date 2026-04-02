@@ -16,6 +16,11 @@ type TaskOpenFileManager struct {
 	Select bool   `json:"select"`
 }
 
+// TaskSetTheme applies an application theme override when supported.
+type TaskSetTheme struct {
+	IsDark bool `json:"isDark"`
+}
+
 // ActionThemeChanged is broadcast when the system theme changes.
 type ActionThemeChanged struct {
 	IsDark bool `json:"isDark"`

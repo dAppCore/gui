@@ -47,9 +47,27 @@ func (s *Subsystem) themeSystem(_ context.Context, _ *mcp.CallToolRequest, _ The
 	return nil, ThemeSystemOutput{Info: info}, nil
 }
 
+// --- theme_set ---
+
+type ThemeSetInput struct {
+	IsDark bool `json:"isDark"`
+}
+type ThemeSetOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) themeSet(_ context.Context, _ *mcp.CallToolRequest, input ThemeSetInput) (*mcp.CallToolResult, ThemeSetOutput, error) {
+	_, _, err := s.core.PERFORM(environment.TaskSetTheme{IsDark: input.IsDark})
+	if err != nil {
+		return nil, ThemeSetOutput{}, err
+	}
+	return nil, ThemeSetOutput{Success: true}, nil
+}
+
 // --- Registration ---
 
 func (s *Subsystem) registerEnvironmentTools(server *mcp.Server) {
 	mcp.AddTool(server, &mcp.Tool{Name: "theme_get", Description: "Get the current application theme"}, s.themeGet)
 	mcp.AddTool(server, &mcp.Tool{Name: "theme_system", Description: "Get system environment and theme information"}, s.themeSystem)
+	mcp.AddTool(server, &mcp.Tool{Name: "theme_set", Description: "Set or override the application theme"}, s.themeSet)
 }

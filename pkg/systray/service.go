@@ -2,8 +2,10 @@ package systray
 
 import (
 	"context"
+	"fmt"
 
 	"forge.lthn.ai/core/go/pkg/core"
+	"forge.lthn.ai/core/gui/pkg/notification"
 )
 
 // Options holds configuration for the systray service.
@@ -60,6 +62,8 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 	case TaskHidePanel:
 		// Panel hide — deferred (requires WindowHandle integration)
 		return nil, true, nil
+	case TaskShowMessage:
+		return nil, true, s.taskShowMessage(t.Title, t.Message)
 	default:
 		return nil, false, nil
 	}
@@ -76,6 +80,27 @@ func (s *Service) taskSetTrayMenu(t TaskSetTrayMenu) error {
 		}
 	}
 	return s.manager.SetMenu(t.Items)
+}
+
+func (s *Service) taskShowMessage(title, message string) error {
+	if s.manager == nil || !s.manager.IsActive() {
+		_, _, err := s.Core().PERFORM(notification.TaskSend{
+			Opts: notification.NotificationOptions{Title: title, Message: message},
+		})
+		return err
+	}
+	tray := s.manager.Tray()
+	if tray == nil {
+		return fmt.Errorf("tray not initialised")
+	}
+	if messenger, ok := tray.(interface{ ShowMessage(title, message string) }); ok {
+		messenger.ShowMessage(title, message)
+		return nil
+	}
+	_, _, err := s.Core().PERFORM(notification.TaskSend{
+		Opts: notification.NotificationOptions{Title: title, Message: message},
+	})
+	return err
 }
 
 // Manager returns the underlying systray Manager.

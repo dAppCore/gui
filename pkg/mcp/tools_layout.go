@@ -4,7 +4,10 @@ package mcp
 import (
 	"context"
 	"fmt"
+	"math"
 
+	"forge.lthn.ai/core/go/pkg/core"
+	"forge.lthn.ai/core/gui/pkg/screen"
 	"forge.lthn.ai/core/gui/pkg/window"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -136,6 +139,113 @@ func (s *Subsystem) layoutSnap(_ context.Context, _ *mcp.CallToolRequest, input 
 	return nil, LayoutSnapOutput{Success: true}, nil
 }
 
+// --- layout_beside_editor ---
+
+type LayoutBesideEditorInput struct {
+	Editor string `json:"editor,omitempty"`
+	Window string `json:"window,omitempty"`
+}
+type LayoutBesideEditorOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) layoutBesideEditor(_ context.Context, _ *mcp.CallToolRequest, input LayoutBesideEditorInput) (*mcp.CallToolResult, LayoutBesideEditorOutput, error) {
+	_, _, err := s.core.PERFORM(window.TaskBesideEditor{Editor: input.Editor, Window: input.Window})
+	if err != nil {
+		return nil, LayoutBesideEditorOutput{}, err
+	}
+	return nil, LayoutBesideEditorOutput{Success: true}, nil
+}
+
+// --- layout_suggest ---
+
+type LayoutSuggestInput struct {
+	WindowCount  int `json:"windowCount,omitempty"`
+	ScreenWidth  int `json:"screenWidth,omitempty"`
+	ScreenHeight int `json:"screenHeight,omitempty"`
+}
+type LayoutSuggestOutput struct {
+	Suggestion window.LayoutSuggestion `json:"suggestion"`
+}
+
+func (s *Subsystem) layoutSuggest(_ context.Context, _ *mcp.CallToolRequest, input LayoutSuggestInput) (*mcp.CallToolResult, LayoutSuggestOutput, error) {
+	windowCount := input.WindowCount
+	if windowCount <= 0 {
+		result, _, err := s.core.QUERY(window.QueryWindowList{})
+		if err != nil {
+			return nil, LayoutSuggestOutput{}, err
+		}
+		windows, ok := result.([]window.WindowInfo)
+		if !ok {
+			return nil, LayoutSuggestOutput{}, fmt.Errorf("unexpected result type from window list query")
+		}
+		windowCount = len(windows)
+	}
+	screenW, screenH := input.ScreenWidth, input.ScreenHeight
+	if screenW <= 0 || screenH <= 0 {
+		screenW, screenH = primaryScreenSize(s.core)
+	}
+	suggestion := suggestLayout(screenW, screenH, windowCount)
+	return nil, LayoutSuggestOutput{Suggestion: window.LayoutSuggestion{
+		Mode:           suggestion.Mode,
+		Columns:        suggestion.Columns,
+		Rows:           suggestion.Rows,
+		PrimaryWidth:   suggestion.PrimaryWidth,
+		SecondaryWidth: suggestion.SecondaryWidth,
+		Description:    suggestion.Description,
+	}}, nil
+}
+
+// --- screen_find_space ---
+
+type ScreenFindSpaceInput struct {
+	Width  int `json:"width,omitempty"`
+	Height int `json:"height,omitempty"`
+}
+type ScreenFindSpaceOutput struct {
+	Space window.SpaceInfo `json:"space"`
+}
+
+func (s *Subsystem) screenFindSpace(_ context.Context, _ *mcp.CallToolRequest, input ScreenFindSpaceInput) (*mcp.CallToolResult, ScreenFindSpaceOutput, error) {
+	screenW, screenH := primaryScreenSize(s.core)
+	if screenW <= 0 || screenH <= 0 {
+		screenW, screenH = 1920, 1080
+	}
+	result, _, err := s.core.QUERY(window.QueryFindSpace{Width: input.Width, Height: input.Height})
+	if err != nil {
+		return nil, ScreenFindSpaceOutput{}, err
+	}
+	space, ok := result.(window.SpaceInfo)
+	if !ok {
+		return nil, ScreenFindSpaceOutput{}, fmt.Errorf("unexpected result type from find space query")
+	}
+	if space.ScreenWidth == 0 {
+		space.ScreenWidth = screenW
+	}
+	if space.ScreenHeight == 0 {
+		space.ScreenHeight = screenH
+	}
+	return nil, ScreenFindSpaceOutput{Space: space}, nil
+}
+
+// --- window_arrange_pair ---
+
+type WindowArrangePairInput struct {
+	First  string `json:"first"`
+	Second string `json:"second"`
+}
+type WindowArrangePairOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) windowArrangePair(_ context.Context, _ *mcp.CallToolRequest, input WindowArrangePairInput) (*mcp.CallToolResult, WindowArrangePairOutput, error) {
+	_, _, err := s.core.PERFORM(window.TaskArrangePair{First: input.First, Second: input.Second})
+	if err != nil {
+		return nil, WindowArrangePairOutput{}, err
+	}
+	return nil, WindowArrangePairOutput{Success: true}, nil
+}
+
 // --- Registration ---
 
 func (s *Subsystem) registerLayoutTools(server *mcp.Server) {
@@ -146,4 +256,69 @@ func (s *Subsystem) registerLayoutTools(server *mcp.Server) {
 	mcp.AddTool(server, &mcp.Tool{Name: "layout_get", Description: "Get a specific layout by name"}, s.layoutGet)
 	mcp.AddTool(server, &mcp.Tool{Name: "layout_tile", Description: "Tile windows in a grid arrangement"}, s.layoutTile)
 	mcp.AddTool(server, &mcp.Tool{Name: "layout_snap", Description: "Snap a window to a screen edge or corner"}, s.layoutSnap)
+	mcp.AddTool(server, &mcp.Tool{Name: "layout_beside_editor", Description: "Place a window beside a detected editor window"}, s.layoutBesideEditor)
+	mcp.AddTool(server, &mcp.Tool{Name: "layout_suggest", Description: "Suggest an optimal layout for the current screen"}, s.layoutSuggest)
+	mcp.AddTool(server, &mcp.Tool{Name: "screen_find_space", Description: "Find an empty area for a new window"}, s.screenFindSpace)
+	mcp.AddTool(server, &mcp.Tool{Name: "window_arrange_pair", Description: "Arrange two windows side-by-side"}, s.windowArrangePair)
+}
+
+func primaryScreenSize(c *core.Core) (int, int) {
+	result, handled, err := c.QUERY(screen.QueryPrimary{})
+	if err == nil && handled {
+		if scr, ok := result.(*screen.Screen); ok && scr != nil {
+			if scr.WorkArea.Width > 0 && scr.WorkArea.Height > 0 {
+				return scr.WorkArea.Width, scr.WorkArea.Height
+			}
+			if scr.Bounds.Width > 0 && scr.Bounds.Height > 0 {
+				return scr.Bounds.Width, scr.Bounds.Height
+			}
+			if scr.Size.Width > 0 && scr.Size.Height > 0 {
+				return scr.Size.Width, scr.Size.Height
+			}
+		}
+	}
+	return 1920, 1080
+}
+
+func suggestLayout(screenW, screenH, windowCount int) window.LayoutSuggestion {
+	if windowCount <= 1 {
+		return window.LayoutSuggestion{
+			Mode:           "single",
+			Columns:        1,
+			Rows:           1,
+			PrimaryWidth:   screenW,
+			SecondaryWidth: 0,
+			Description:    "Focus the primary window and keep the screen uncluttered.",
+		}
+	}
+	if windowCount == 2 {
+		return window.LayoutSuggestion{
+			Mode:           "side-by-side",
+			Columns:        2,
+			Rows:           1,
+			PrimaryWidth:   screenW / 2,
+			SecondaryWidth: screenW - (screenW / 2),
+			Description:    "Split the screen into two equal panes.",
+		}
+	}
+	if windowCount <= 4 {
+		return window.LayoutSuggestion{
+			Mode:           "quadrants",
+			Columns:        2,
+			Rows:           2,
+			PrimaryWidth:   screenW / 2,
+			SecondaryWidth: screenW / 2,
+			Description:    "Use a 2x2 grid for the active windows.",
+		}
+	}
+	cols := 3
+	rows := int(math.Ceil(float64(windowCount) / float64(cols)))
+	return window.LayoutSuggestion{
+		Mode:           "grid",
+		Columns:        cols,
+		Rows:           rows,
+		PrimaryWidth:   screenW / cols,
+		SecondaryWidth: screenW / cols,
+		Description:    "Use a dense grid to keep every window visible.",
+	}
 }

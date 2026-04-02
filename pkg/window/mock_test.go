@@ -37,28 +37,32 @@ type mockWindow struct {
 	fileDropHandlers     []func(paths []string, targetID string)
 }
 
-func (w *mockWindow) Name() string                            { return w.name }
-func (w *mockWindow) Title() string                           { return w.title }
-func (w *mockWindow) Position() (int, int)                    { return w.x, w.y }
-func (w *mockWindow) Size() (int, int)                        { return w.width, w.height }
-func (w *mockWindow) IsMaximised() bool                       { return w.maximised }
-func (w *mockWindow) IsFocused() bool                         { return w.focused }
-func (w *mockWindow) SetTitle(title string)                   { w.title = title }
-func (w *mockWindow) SetPosition(x, y int)                    { w.x = x; w.y = y }
-func (w *mockWindow) SetSize(width, height int)               { w.width = width; w.height = height }
-func (w *mockWindow) SetBackgroundColour(r, g, b, a uint8)    {}
-func (w *mockWindow) SetVisibility(visible bool)              { w.visible = visible }
-func (w *mockWindow) SetAlwaysOnTop(alwaysOnTop bool)         { w.alwaysOnTop = alwaysOnTop }
-func (w *mockWindow) Maximise()                               { w.maximised = true }
-func (w *mockWindow) Restore()                                { w.maximised = false }
-func (w *mockWindow) Minimise()                               {}
-func (w *mockWindow) Focus()                                  { w.focused = true }
-func (w *mockWindow) Close()                                  { w.closed = true }
-func (w *mockWindow) Show()                                   { w.visible = true }
-func (w *mockWindow) Hide()                                   { w.visible = false }
-func (w *mockWindow) Fullscreen()                             {}
-func (w *mockWindow) UnFullscreen()                           {}
-func (w *mockWindow) OnWindowEvent(handler func(WindowEvent)) { w.eventHandlers = append(w.eventHandlers, handler) }
+func (w *mockWindow) Name() string                         { return w.name }
+func (w *mockWindow) Title() string                        { return w.title }
+func (w *mockWindow) Position() (int, int)                 { return w.x, w.y }
+func (w *mockWindow) Size() (int, int)                     { return w.width, w.height }
+func (w *mockWindow) IsMaximised() bool                    { return w.maximised }
+func (w *mockWindow) IsFocused() bool                      { return w.focused }
+func (w *mockWindow) SetTitle(title string)                { w.title = title }
+func (w *mockWindow) SetPosition(x, y int)                 { w.x = x; w.y = y }
+func (w *mockWindow) SetSize(width, height int)            { w.width = width; w.height = height }
+func (w *mockWindow) SetBackgroundColour(r, g, b, a uint8) {}
+func (w *mockWindow) SetVisibility(visible bool)           { w.visible = visible }
+func (w *mockWindow) SetAlwaysOnTop(alwaysOnTop bool)      { w.alwaysOnTop = alwaysOnTop }
+func (w *mockWindow) Maximise()                            { w.maximised = true }
+func (w *mockWindow) Restore()                             { w.maximised = false }
+func (w *mockWindow) Minimise()                            {}
+func (w *mockWindow) Focus()                               { w.focused = true }
+func (w *mockWindow) Close()                               { w.closed = true }
+func (w *mockWindow) Show()                                { w.visible = true }
+func (w *mockWindow) Hide()                                { w.visible = false }
+func (w *mockWindow) Fullscreen()                          {}
+func (w *mockWindow) UnFullscreen()                        {}
+func (w *mockWindow) OpenDevTools()                        {}
+func (w *mockWindow) CloseDevTools()                       {}
+func (w *mockWindow) OnWindowEvent(handler func(WindowEvent)) {
+	w.eventHandlers = append(w.eventHandlers, handler)
+}
 func (w *mockWindow) OnFileDrop(handler func(paths []string, targetID string)) {
 	w.fileDropHandlers = append(w.fileDropHandlers, handler)
 }

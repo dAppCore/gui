@@ -3,8 +3,10 @@ package window
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"forge.lthn.ai/core/go/pkg/core"
+	"forge.lthn.ai/core/gui/pkg/screen"
 )
 
 // Options holds configuration for the window service.
@@ -76,6 +78,12 @@ func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
 			return (*Layout)(nil), true, nil
 		}
 		return &l, true, nil
+	case QueryFindSpace:
+		screenW, screenH := s.primaryScreenSize()
+		return s.manager.FindSpace(screenW, screenH, q.Width, q.Height), true, nil
+	case QueryLayoutSuggestion:
+		screenW, screenH := s.primaryScreenSize()
+		return s.manager.SuggestLayout(screenW, screenH, q.WindowCount), true, nil
 	default:
 		return nil, false, nil
 	}
@@ -149,6 +157,10 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 		return nil, true, s.taskTileWindows(t.Mode, t.Windows)
 	case TaskSnapWindow:
 		return nil, true, s.taskSnapWindow(t.Name, t.Position)
+	case TaskArrangePair:
+		return nil, true, s.taskArrangePair(t.First, t.Second)
+	case TaskBesideEditor:
+		return nil, true, s.taskBesideEditor(t.Editor, t.Window)
 	default:
 		return nil, false, nil
 	}
@@ -370,7 +382,83 @@ func (s *Service) taskSnapWindow(name, position string) error {
 	if !ok {
 		return fmt.Errorf("unknown snap position: %s", position)
 	}
-	return s.manager.SnapWindow(name, pos, 1920, 1080)
+	screenW, screenH := s.primaryScreenSize()
+	return s.manager.SnapWindow(name, pos, screenW, screenH)
+}
+
+func (s *Service) taskArrangePair(first, second string) error {
+	screenW, screenH := s.primaryScreenSize()
+	return s.manager.ArrangePair(first, second, screenW, screenH)
+}
+
+func (s *Service) taskBesideEditor(editorName, windowName string) error {
+	screenW, screenH := s.primaryScreenSize()
+	if editorName == "" {
+		editorName = s.detectEditorWindow()
+	}
+	if editorName == "" {
+		return fmt.Errorf("editor window not found")
+	}
+	if windowName == "" {
+		windowName = s.detectCompanionWindow(editorName)
+	}
+	if windowName == "" {
+		return fmt.Errorf("companion window not found")
+	}
+	return s.manager.BesideEditor(editorName, windowName, screenW, screenH)
+}
+
+func (s *Service) detectEditorWindow() string {
+	for _, info := range s.queryWindowList() {
+		if looksLikeEditor(info.Name, info.Title) {
+			return info.Name
+		}
+	}
+	return ""
+}
+
+func (s *Service) detectCompanionWindow(editorName string) string {
+	for _, info := range s.queryWindowList() {
+		if info.Name == editorName {
+			continue
+		}
+		if !looksLikeEditor(info.Name, info.Title) {
+			return info.Name
+		}
+	}
+	return ""
+}
+
+func looksLikeEditor(name, title string) bool {
+	return containsAny(name, "editor", "ide", "code", "workspace") || containsAny(title, "editor", "ide", "code")
+}
+
+func containsAny(value string, needles ...string) bool {
+	lower := strings.ToLower(value)
+	for _, needle := range needles {
+		if strings.Contains(lower, needle) {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *Service) primaryScreenSize() (int, int) {
+	result, handled, err := s.Core().QUERY(screen.QueryPrimary{})
+	if err == nil && handled {
+		if scr, ok := result.(*screen.Screen); ok && scr != nil {
+			if scr.WorkArea.Width > 0 && scr.WorkArea.Height > 0 {
+				return scr.WorkArea.Width, scr.WorkArea.Height
+			}
+			if scr.Bounds.Width > 0 && scr.Bounds.Height > 0 {
+				return scr.Bounds.Width, scr.Bounds.Height
+			}
+			if scr.Size.Width > 0 && scr.Size.Height > 0 {
+				return scr.Size.Width, scr.Size.Height
+			}
+		}
+	}
+	return 1920, 1080
 }
 
 // Manager returns the underlying window Manager for direct access.

@@ -328,3 +328,43 @@ func TestWorkflowLayout_Good(t *testing.T) {
 	assert.Equal(t, "coding", WorkflowCoding.String())
 	assert.Equal(t, "debugging", WorkflowDebugging.String())
 }
+
+func TestManager_SuggestLayout_Good(t *testing.T) {
+	m, _ := newTestManager()
+	suggestion := m.SuggestLayout(1920, 1080, 3)
+	assert.Equal(t, "quadrants", suggestion.Mode)
+	assert.Equal(t, 2, suggestion.Columns)
+}
+
+func TestManager_FindSpace_Good(t *testing.T) {
+	m, _ := newTestManager()
+	_, _ = m.Open(WithName("one"), WithPosition(0, 0), WithSize(800, 600))
+	space := m.FindSpace(1920, 1080, 400, 300)
+	assert.GreaterOrEqual(t, space.X, 0)
+	assert.GreaterOrEqual(t, space.Y, 0)
+}
+
+func TestManager_ArrangePair_Good(t *testing.T) {
+	m, _ := newTestManager()
+	_, _ = m.Open(WithName("left"), WithSize(800, 600))
+	_, _ = m.Open(WithName("right"), WithSize(800, 600))
+	err := m.ArrangePair("left", "right", 1920, 1080)
+	require.NoError(t, err)
+	left, _ := m.Get("left")
+	x, _ := left.Position()
+	assert.Equal(t, 0, x)
+}
+
+func TestManager_BesideEditor_Good(t *testing.T) {
+	m, _ := newTestManager()
+	_, _ = m.Open(WithName("editor"))
+	_, _ = m.Open(WithName("assistant"))
+	err := m.BesideEditor("editor", "assistant", 1920, 1080)
+	require.NoError(t, err)
+	editor, _ := m.Get("editor")
+	assistant, _ := m.Get("assistant")
+	ex, _ := editor.Size()
+	ax, _ := assistant.Position()
+	assert.Greater(t, ex, 0)
+	assert.Greater(t, ax, 0)
+}

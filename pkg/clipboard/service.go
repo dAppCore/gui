@@ -3,6 +3,7 @@ package clipboard
 
 import (
 	"context"
+	"fmt"
 
 	"forge.lthn.ai/core/go/pkg/core"
 )
@@ -43,6 +44,12 @@ func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
 	case QueryText:
 		text, ok := s.platform.Text()
 		return ClipboardContent{Text: text, HasContent: ok && text != ""}, true, nil
+	case QueryImage:
+		if reader, ok := s.platform.(imageReader); ok {
+			data, _ := reader.Image()
+			return encodeImageContent(data), true, nil
+		}
+		return ClipboardImageContent{MimeType: "image/png"}, true, nil
 	default:
 		return nil, false, nil
 	}
@@ -54,6 +61,11 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 		return s.platform.SetText(t.Text), true, nil
 	case TaskClear:
 		return s.platform.SetText(""), true, nil
+	case TaskSetImage:
+		if writer, ok := s.platform.(imageWriter); ok {
+			return writer.SetImage(t.Data), true, nil
+		}
+		return false, true, fmt.Errorf("clipboard image write not supported")
 	default:
 		return nil, false, nil
 	}

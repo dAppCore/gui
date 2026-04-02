@@ -58,6 +58,11 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 	case TaskRequestPermission:
 		granted, err := s.platform.RequestPermission()
 		return granted, true, err
+	case TaskClear:
+		if clr, ok := s.platform.(clearer); ok {
+			return nil, true, clr.Clear()
+		}
+		return nil, true, nil
 	default:
 		return nil, false, nil
 	}
@@ -68,6 +73,14 @@ func (s *Service) send(opts NotificationOptions) error {
 	// Generate ID if not provided
 	if opts.ID == "" {
 		opts.ID = fmt.Sprintf("core-%d", time.Now().UnixNano())
+	}
+
+	if len(opts.Actions) > 0 {
+		if sender, ok := s.platform.(actionSender); ok {
+			if err := sender.SendWithActions(opts); err == nil {
+				return nil
+			}
+		}
 	}
 
 	if err := s.platform.Send(opts); err != nil {

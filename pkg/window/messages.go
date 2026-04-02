@@ -24,6 +24,19 @@ type QueryWindowByName struct{ Name string }
 // Result: map[string]any
 type QueryConfig struct{}
 
+// QueryFindSpace returns a suggested free placement for a new window.
+type QueryFindSpace struct {
+	Width  int
+	Height int
+}
+
+// QueryLayoutSuggestion returns a layout recommendation for the current screen.
+type QueryLayoutSuggestion struct {
+	WindowCount  int
+	ScreenWidth  int
+	ScreenHeight int
+}
+
 // --- Tasks (side-effects) ---
 
 // TaskOpenWindow creates a new window. Result: WindowInfo
@@ -105,6 +118,18 @@ type TaskSnapWindow struct {
 	Position string // "left", "right", "top", "bottom", "top-left", "top-right", "bottom-left", "bottom-right", "center"
 }
 
+// TaskArrangePair places two windows side-by-side in a balanced split.
+type TaskArrangePair struct {
+	First  string
+	Second string
+}
+
+// TaskBesideEditor places a target window beside an editor/IDE window.
+type TaskBesideEditor struct {
+	Editor string
+	Window string
+}
+
 // TaskSaveConfig persists this service's config section via the display orchestrator.
 type TaskSaveConfig struct{ Value map[string]any }
 
@@ -127,7 +152,28 @@ type ActionWindowFocused struct{ Name string }
 type ActionWindowBlurred struct{ Name string }
 
 type ActionFilesDropped struct {
-	Name     string   `json:"name"`     // window name
+	Name     string   `json:"name"` // window name
 	Paths    []string `json:"paths"`
 	TargetID string   `json:"targetId,omitempty"`
+}
+
+// SpaceInfo describes a suggested empty area on the screen.
+type SpaceInfo struct {
+	X            int    `json:"x"`
+	Y            int    `json:"y"`
+	Width        int    `json:"width"`
+	Height       int    `json:"height"`
+	ScreenWidth  int    `json:"screenWidth"`
+	ScreenHeight int    `json:"screenHeight"`
+	Reason       string `json:"reason,omitempty"`
+}
+
+// LayoutSuggestion describes a recommended layout for a screen.
+type LayoutSuggestion struct {
+	Mode           string `json:"mode"`
+	Columns        int    `json:"columns"`
+	Rows           int    `json:"rows"`
+	PrimaryWidth   int    `json:"primaryWidth"`
+	SecondaryWidth int    `json:"secondaryWidth"`
+	Description    string `json:"description"`
 }

@@ -18,6 +18,7 @@ type mockPlatform struct {
 	permErr     error
 	lastOpts    NotificationOptions
 	sendCalled  bool
+	clearCalled bool
 }
 
 func (m *mockPlatform) Send(opts NotificationOptions) error {
@@ -25,8 +26,14 @@ func (m *mockPlatform) Send(opts NotificationOptions) error {
 	m.lastOpts = opts
 	return m.sendErr
 }
+func (m *mockPlatform) SendWithActions(opts NotificationOptions) error {
+	m.sendCalled = true
+	m.lastOpts = opts
+	return m.sendErr
+}
 func (m *mockPlatform) RequestPermission() (bool, error) { return m.permGranted, m.permErr }
 func (m *mockPlatform) CheckPermission() (bool, error)   { return m.permGranted, m.permErr }
+func (m *mockPlatform) Clear() error                     { m.clearCalled = true; return nil }
 
 // mockDialogPlatform tracks whether MessageDialog was called (for fallback test).
 type mockDialogPlatform struct {
@@ -116,4 +123,27 @@ func TestTaskSend_Bad(t *testing.T) {
 	c, _ := core.New(core.WithServiceLock())
 	_, handled, _ := c.PERFORM(TaskSend{})
 	assert.False(t, handled)
+}
+
+func TestTaskSend_WithActions_Good(t *testing.T) {
+	mock, c := newTestService(t)
+	_, handled, err := c.PERFORM(TaskSend{
+		Opts: NotificationOptions{
+			Title:   "Test",
+			Message: "Hello",
+			Actions: []NotificationAction{{ID: "ok", Label: "OK"}},
+		},
+	})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.True(t, mock.sendCalled)
+	assert.Len(t, mock.lastOpts.Actions, 1)
+}
+
+func TestTaskClear_Good(t *testing.T) {
+	mock, c := newTestService(t)
+	_, handled, err := c.PERFORM(TaskClear{})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.True(t, mock.clearCalled)
 }

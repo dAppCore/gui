@@ -18,23 +18,23 @@ func NewWailsPlatform(app *application.App) *WailsPlatform {
 
 func (wp *WailsPlatform) CreateWindow(opts PlatformWindowOptions) PlatformWindow {
 	wOpts := application.WebviewWindowOptions{
-		Name:              opts.Name,
-		Title:             opts.Title,
-		URL:               opts.URL,
-		Width:             opts.Width,
-		Height:            opts.Height,
-		X:                 opts.X,
-		Y:                 opts.Y,
-		MinWidth:          opts.MinWidth,
-		MinHeight:         opts.MinHeight,
-		MaxWidth:          opts.MaxWidth,
-		MaxHeight:         opts.MaxHeight,
-		Frameless:         opts.Frameless,
-		Hidden:            opts.Hidden,
-		AlwaysOnTop:       opts.AlwaysOnTop,
-		DisableResize:  opts.DisableResize,
-		EnableFileDrop: opts.EnableFileDrop,
-		BackgroundColour:  application.NewRGBA(opts.BackgroundColour[0], opts.BackgroundColour[1], opts.BackgroundColour[2], opts.BackgroundColour[3]),
+		Name:             opts.Name,
+		Title:            opts.Title,
+		URL:              opts.URL,
+		Width:            opts.Width,
+		Height:           opts.Height,
+		X:                opts.X,
+		Y:                opts.Y,
+		MinWidth:         opts.MinWidth,
+		MinHeight:        opts.MinHeight,
+		MaxWidth:         opts.MaxWidth,
+		MaxHeight:        opts.MaxHeight,
+		Frameless:        opts.Frameless,
+		Hidden:           opts.Hidden,
+		AlwaysOnTop:      opts.AlwaysOnTop,
+		DisableResize:    opts.DisableResize,
+		EnableFileDrop:   opts.EnableFileDrop,
+		BackgroundColour: application.NewRGBA(opts.BackgroundColour[0], opts.BackgroundColour[1], opts.BackgroundColour[2], opts.BackgroundColour[3]),
 	}
 	w := wp.app.Window.NewWithOptions(wOpts)
 	return &wailsWindow{w: w, title: opts.Title}
@@ -58,14 +58,14 @@ type wailsWindow struct {
 	title string
 }
 
-func (ww *wailsWindow) Name() string             { return ww.w.Name() }
-func (ww *wailsWindow) Title() string            { return ww.title }
-func (ww *wailsWindow) Position() (int, int)     { return ww.w.Position() }
-func (ww *wailsWindow) Size() (int, int)         { return ww.w.Size() }
-func (ww *wailsWindow) IsMaximised() bool        { return ww.w.IsMaximised() }
-func (ww *wailsWindow) IsFocused() bool          { return ww.w.IsFocused() }
-func (ww *wailsWindow) SetTitle(title string)    { ww.title = title; ww.w.SetTitle(title) }
-func (ww *wailsWindow) SetPosition(x, y int)     { ww.w.SetPosition(x, y) }
+func (ww *wailsWindow) Name() string              { return ww.w.Name() }
+func (ww *wailsWindow) Title() string             { return ww.title }
+func (ww *wailsWindow) Position() (int, int)      { return ww.w.Position() }
+func (ww *wailsWindow) Size() (int, int)          { return ww.w.Size() }
+func (ww *wailsWindow) IsMaximised() bool         { return ww.w.IsMaximised() }
+func (ww *wailsWindow) IsFocused() bool           { return ww.w.IsFocused() }
+func (ww *wailsWindow) SetTitle(title string)     { ww.title = title; ww.w.SetTitle(title) }
+func (ww *wailsWindow) SetPosition(x, y int)      { ww.w.SetPosition(x, y) }
 func (ww *wailsWindow) SetSize(width, height int) { ww.w.SetSize(width, height) }
 func (ww *wailsWindow) SetBackgroundColour(r, g, b, a uint8) {
 	ww.w.SetBackgroundColour(application.NewRGBA(r, g, b, a))
@@ -87,6 +87,8 @@ func (ww *wailsWindow) Show()                           { ww.w.Show() }
 func (ww *wailsWindow) Hide()                           { ww.w.Hide() }
 func (ww *wailsWindow) Fullscreen()                     { ww.w.Fullscreen() }
 func (ww *wailsWindow) UnFullscreen()                   { ww.w.UnFullscreen() }
+func (ww *wailsWindow) OpenDevTools()                   { ww.w.OpenDevTools() }
+func (ww *wailsWindow) CloseDevTools()                  {}
 
 func (ww *wailsWindow) OnWindowEvent(handler func(event WindowEvent)) {
 	name := ww.w.Name()
@@ -111,8 +113,8 @@ func (ww *wailsWindow) OnWindowEvent(handler func(event WindowEvent)) {
 				data["y"] = y
 			case "resize":
 				w, h := ww.w.Size()
-				data["width"] = w
-				data["height"] = h
+				data["w"] = w
+				data["h"] = h
 			}
 			handler(WindowEvent{
 				Type: typeName,
@@ -140,4 +142,3 @@ var _ PlatformWindow = (*wailsWindow)(nil)
 
 // Ensure WailsPlatform satisfies Platform at compile time.
 var _ Platform = (*WailsPlatform)(nil)
-

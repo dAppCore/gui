@@ -61,3 +61,11 @@ func TestTaskSetTrayIcon_Bad(t *testing.T) {
 	_, handled, _ := c.PERFORM(TaskSetTrayIcon{Data: nil})
 	assert.False(t, handled)
 }
+
+func TestTaskShowMessage_Good(t *testing.T) {
+	svc, c := newTestSystrayService(t)
+	require.NoError(t, svc.manager.Setup("Test", "Test"))
+	_, handled, err := c.PERFORM(TaskShowMessage{Title: "Hello", Message: "World"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+}

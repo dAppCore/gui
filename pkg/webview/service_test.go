@@ -37,21 +37,41 @@ type mockConnector struct {
 	consoleClearCalled bool
 }
 
-func (m *mockConnector) Navigate(url string) error        { m.lastNavURL = url; return nil }
-func (m *mockConnector) Click(sel string) error           { m.lastClickSel = sel; return nil }
-func (m *mockConnector) Type(sel, text string) error      { m.lastTypeSel = sel; m.lastTypeText = text; return nil }
-func (m *mockConnector) Hover(sel string) error           { m.lastHoverSel = sel; return nil }
-func (m *mockConnector) Select(sel, val string) error     { m.lastSelectSel = sel; m.lastSelectVal = val; return nil }
-func (m *mockConnector) Check(sel string, c bool) error   { m.lastCheckSel = sel; m.lastCheckVal = c; return nil }
-func (m *mockConnector) Evaluate(s string) (any, error)   { return m.evalResult, nil }
-func (m *mockConnector) Screenshot() ([]byte, error)      { return m.screenshot, nil }
-func (m *mockConnector) GetURL() (string, error)          { return m.url, nil }
-func (m *mockConnector) GetTitle() (string, error)        { return m.title, nil }
+func (m *mockConnector) Navigate(url string) error { m.lastNavURL = url; return nil }
+func (m *mockConnector) Click(sel string) error    { m.lastClickSel = sel; return nil }
+func (m *mockConnector) Type(sel, text string) error {
+	m.lastTypeSel = sel
+	m.lastTypeText = text
+	return nil
+}
+func (m *mockConnector) Hover(sel string) error { m.lastHoverSel = sel; return nil }
+func (m *mockConnector) Select(sel, val string) error {
+	m.lastSelectSel = sel
+	m.lastSelectVal = val
+	return nil
+}
+func (m *mockConnector) Check(sel string, c bool) error {
+	m.lastCheckSel = sel
+	m.lastCheckVal = c
+	return nil
+}
+func (m *mockConnector) Evaluate(s string) (any, error)     { return m.evalResult, nil }
+func (m *mockConnector) Screenshot() ([]byte, error)        { return m.screenshot, nil }
+func (m *mockConnector) GetURL() (string, error)            { return m.url, nil }
+func (m *mockConnector) GetTitle() (string, error)          { return m.title, nil }
 func (m *mockConnector) GetHTML(sel string) (string, error) { return m.html, nil }
-func (m *mockConnector) ClearConsole()                    { m.consoleClearCalled = true }
-func (m *mockConnector) Close() error                     { m.closed = true; return nil }
-func (m *mockConnector) SetViewport(w, h int) error       { m.lastViewportW = w; m.lastViewportH = h; return nil }
-func (m *mockConnector) UploadFile(sel string, p []string) error { m.lastUploadSel = sel; m.lastUploadPaths = p; return nil }
+func (m *mockConnector) ClearConsole()                      { m.consoleClearCalled = true }
+func (m *mockConnector) Close() error                       { m.closed = true; return nil }
+func (m *mockConnector) SetViewport(w, h int) error {
+	m.lastViewportW = w
+	m.lastViewportH = h
+	return nil
+}
+func (m *mockConnector) UploadFile(sel string, p []string) error {
+	m.lastUploadSel = sel
+	m.lastUploadPaths = p
+	return nil
+}
 
 func (m *mockConnector) QuerySelector(sel string) (*ElementInfo, error) {
 	if len(m.elements) > 0 {
@@ -172,6 +192,16 @@ func TestTaskClearConsole_Good(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, handled)
 	assert.True(t, mock.consoleClearCalled)
+}
+
+func TestTaskDevTools_Good(t *testing.T) {
+	_, c := newTestService(t, &mockConnector{})
+	_, handled, err := c.PERFORM(TaskOpenDevTools{Window: "main"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	_, handled, err = c.PERFORM(TaskCloseDevTools{Window: "main"})
+	require.NoError(t, err)
+	assert.True(t, handled)
 }
 
 func TestConnectionCleanup_Good(t *testing.T) {

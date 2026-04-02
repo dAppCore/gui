@@ -75,6 +75,24 @@ func (s *Subsystem) trayInfo(_ context.Context, _ *mcp.CallToolRequest, _ TrayIn
 	return nil, TrayInfoOutput{Config: config}, nil
 }
 
+// --- tray_show_message ---
+
+type TrayShowMessageInput struct {
+	Title   string `json:"title"`
+	Message string `json:"message"`
+}
+type TrayShowMessageOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) trayShowMessage(_ context.Context, _ *mcp.CallToolRequest, input TrayShowMessageInput) (*mcp.CallToolResult, TrayShowMessageOutput, error) {
+	_, _, err := s.core.PERFORM(systray.TaskShowMessage{Title: input.Title, Message: input.Message})
+	if err != nil {
+		return nil, TrayShowMessageOutput{}, err
+	}
+	return nil, TrayShowMessageOutput{Success: true}, nil
+}
+
 // --- Registration ---
 
 func (s *Subsystem) registerTrayTools(server *mcp.Server) {
@@ -82,4 +100,5 @@ func (s *Subsystem) registerTrayTools(server *mcp.Server) {
 	mcp.AddTool(server, &mcp.Tool{Name: "tray_set_tooltip", Description: "Set the system tray tooltip"}, s.traySetTooltip)
 	mcp.AddTool(server, &mcp.Tool{Name: "tray_set_label", Description: "Set the system tray label"}, s.traySetLabel)
 	mcp.AddTool(server, &mcp.Tool{Name: "tray_info", Description: "Get system tray configuration"}, s.trayInfo)
+	mcp.AddTool(server, &mcp.Tool{Name: "tray_show_message", Description: "Show a tray message or notification"}, s.trayShowMessage)
 }

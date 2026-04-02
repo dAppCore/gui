@@ -363,6 +363,10 @@ func (s *Service) handleTask(_ *core.Core, t core.Task) (any, bool, error) {
 		}
 		conn.ClearConsole()
 		return nil, true, nil
+	case TaskOpenDevTools:
+		return nil, true, nil
+	case TaskCloseDevTools:
+		return nil, true, nil
 	default:
 		return nil, false, nil
 	}
@@ -373,17 +377,17 @@ type realConnector struct {
 	wv *gowebview.Webview
 }
 
-func (r *realConnector) Navigate(url string) error              { return r.wv.Navigate(url) }
-func (r *realConnector) Click(sel string) error                 { return r.wv.Click(sel) }
-func (r *realConnector) Type(sel, text string) error            { return r.wv.Type(sel, text) }
-func (r *realConnector) Evaluate(script string) (any, error)    { return r.wv.Evaluate(script) }
-func (r *realConnector) Screenshot() ([]byte, error)            { return r.wv.Screenshot() }
-func (r *realConnector) GetURL() (string, error)                { return r.wv.GetURL() }
-func (r *realConnector) GetTitle() (string, error)              { return r.wv.GetTitle() }
-func (r *realConnector) GetHTML(sel string) (string, error)     { return r.wv.GetHTML(sel) }
-func (r *realConnector) ClearConsole()                          { r.wv.ClearConsole() }
-func (r *realConnector) Close() error                           { return r.wv.Close() }
-func (r *realConnector) SetViewport(w, h int) error             { return r.wv.SetViewport(w, h) }
+func (r *realConnector) Navigate(url string) error               { return r.wv.Navigate(url) }
+func (r *realConnector) Click(sel string) error                  { return r.wv.Click(sel) }
+func (r *realConnector) Type(sel, text string) error             { return r.wv.Type(sel, text) }
+func (r *realConnector) Evaluate(script string) (any, error)     { return r.wv.Evaluate(script) }
+func (r *realConnector) Screenshot() ([]byte, error)             { return r.wv.Screenshot() }
+func (r *realConnector) GetURL() (string, error)                 { return r.wv.GetURL() }
+func (r *realConnector) GetTitle() (string, error)               { return r.wv.GetTitle() }
+func (r *realConnector) GetHTML(sel string) (string, error)      { return r.wv.GetHTML(sel) }
+func (r *realConnector) ClearConsole()                           { r.wv.ClearConsole() }
+func (r *realConnector) Close() error                            { return r.wv.Close() }
+func (r *realConnector) SetViewport(w, h int) error              { return r.wv.SetViewport(w, h) }
 func (r *realConnector) UploadFile(sel string, p []string) error { return r.wv.UploadFile(sel, p) }
 
 func (r *realConnector) Hover(sel string) error {
