@@ -78,12 +78,23 @@ func TestQueryWindowList_Good(t *testing.T) {
 	_, c := newTestWindowService(t)
 	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("a")}})
 	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("b")}})
+	_, _, _ = c.PERFORM(TaskMinimise{Name: "b"})
 
 	result, handled, err := c.QUERY(QueryWindowList{})
 	require.NoError(t, err)
 	assert.True(t, handled)
 	list := result.([]WindowInfo)
 	assert.Len(t, list, 2)
+
+	byName := make(map[string]WindowInfo, len(list))
+	for _, info := range list {
+		byName[info.Name] = info
+	}
+
+	assert.True(t, byName["a"].Visible)
+	assert.False(t, byName["a"].Minimized)
+	assert.False(t, byName["b"].Visible)
+	assert.True(t, byName["b"].Minimized)
 }
 
 func TestQueryWindowByName_Good(t *testing.T) {

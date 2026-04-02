@@ -465,9 +465,20 @@ func TestListWindowInfos_Good(t *testing.T) {
 
 	_ = svc.OpenWindow(window.WithName("win-1"))
 	_ = svc.OpenWindow(window.WithName("win-2"))
+	_ = svc.MinimizeWindow("win-2")
 
 	infos := svc.ListWindowInfos()
 	assert.Len(t, infos, 2)
+
+	byName := make(map[string]window.WindowInfo, len(infos))
+	for _, info := range infos {
+		byName[info.Name] = info
+	}
+
+	assert.True(t, byName["win-1"].Visible)
+	assert.False(t, byName["win-1"].Minimized)
+	assert.False(t, byName["win-2"].Visible)
+	assert.True(t, byName["win-2"].Minimized)
 }
 
 func TestSetWindowPosition_Good(t *testing.T) {

@@ -102,7 +102,14 @@ func (s *Service) queryWindowList() []WindowInfo {
 			x, y := pw.Position()
 			w, h := pw.Size()
 			result = append(result, WindowInfo{
-				Name: name, Title: pw.Title(), X: x, Y: y, Width: w, Height: h,
+				Name:      name,
+				Title:     pw.Title(),
+				X:         x,
+				Y:         y,
+				Width:     w,
+				Height:    h,
+				Visible:   pw.IsVisible(),
+				Minimized: pw.IsMinimised(),
 				Maximized: pw.IsMaximised(),
 				Focused:   pw.IsFocused(),
 			})
