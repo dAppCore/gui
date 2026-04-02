@@ -295,19 +295,19 @@ func (s *Service) taskSetPosition(name string, x, y int) error {
 	return nil
 }
 
-func (s *Service) taskSetSize(name string, width, height, legacyWidth, legacyHeight int) error {
+func (s *Service) taskSetSize(name string, width, height, fallbackWidth, fallbackHeight int) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
 		return fmt.Errorf("window not found: %s", name)
 	}
 	if width == 0 && height == 0 {
-		width, height = legacyWidth, legacyHeight
+		width, height = fallbackWidth, fallbackHeight
 	} else {
 		if width == 0 {
-			width = legacyWidth
+			width = fallbackWidth
 		}
 		if height == 0 {
-			height = legacyHeight
+			height = fallbackHeight
 		}
 	}
 	pw.SetSize(width, height)

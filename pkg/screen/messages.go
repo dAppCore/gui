@@ -16,5 +16,5 @@ type QueryAtPoint struct{ X, Y int }
 // QueryWorkAreas returns work areas for all screens. Result: []Rect
 type QueryWorkAreas struct{}
 
-// ActionScreensChanged is broadcast when displays change (future).
+// ActionScreensChanged is broadcast when displays change.
 type ActionScreensChanged struct{ Screens []Screen }

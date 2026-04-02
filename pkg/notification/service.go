@@ -70,7 +70,7 @@ func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
 func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 	switch t := t.(type) {
 	case TaskSend:
-		return nil, true, s.send(t.Opts)
+		return nil, true, s.sendNotification(t.Opts)
 	case TaskRequestPermission:
 		granted, err := s.platform.RequestPermission()
 		return granted, true, err
@@ -84,9 +84,9 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 	}
 }
 
-// send attempts native notification, falls back to dialog via IPC.
-func (s *Service) send(opts NotificationOptions) error {
-	// Generate ID if not provided
+// sendNotification attempts a native notification and falls back to a dialog via IPC.
+func (s *Service) sendNotification(opts NotificationOptions) error {
+	// Generate an ID when the caller does not provide one.
 	if opts.ID == "" {
 		opts.ID = fmt.Sprintf("core-%d", time.Now().UnixNano())
 	}
@@ -100,15 +100,15 @@ func (s *Service) send(opts NotificationOptions) error {
 	}
 
 	if err := s.platform.Send(opts); err != nil {
-		// Fallback: show as dialog via IPC
-		return s.fallbackDialog(opts)
+		// Fall back to a dialog when the native notification fails.
+		return s.showFallbackDialog(opts)
 	}
 	return nil
 }
 
-// fallbackDialog shows a dialog via IPC when native notifications fail.
-func (s *Service) fallbackDialog(opts NotificationOptions) error {
-	// Map severity to dialog type
+// showFallbackDialog shows a dialog via IPC when native notifications fail.
+func (s *Service) showFallbackDialog(opts NotificationOptions) error {
+	// Map severity to dialog type.
 	var dt dialog.DialogType
 	switch opts.Severity {
 	case SeverityWarning:

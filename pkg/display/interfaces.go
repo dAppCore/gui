@@ -3,9 +3,8 @@ package display
 
 import "github.com/wailsapp/wails/v3/pkg/application"
 
-// App abstracts the Wails application for the orchestrator.
-// After Spec D cleanup, only Quit() and Logger() remain —
-// all other Wails Manager APIs are accessed via IPC.
+// App abstracts the Wails application for the display orchestrator.
+// The service uses Logger() for diagnostics and Quit() for shutdown.
 type App interface {
 	Logger() Logger
 	Quit()

@@ -13,5 +13,5 @@ type TaskRequestPermission struct{}
 // TaskClear clears pending notifications when the backend supports it.
 type TaskClear struct{}
 
-// ActionNotificationClicked is broadcast when a notification is clicked (future).
+// ActionNotificationClicked is broadcast when a notification is clicked.
 type ActionNotificationClicked struct{ ID string }

@@ -1,3 +1,4 @@
+// pkg/systray/service.go
 package systray
 
 import (
@@ -76,7 +77,7 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 	case TaskHidePanel:
 		return nil, true, s.manager.HidePanel()
 	case TaskShowMessage:
-		return nil, true, s.taskShowMessage(t.Title, t.Message)
+		return nil, true, s.showTrayMessage(t.Title, t.Message)
 	default:
 		return nil, false, nil
 	}
@@ -95,7 +96,7 @@ func (s *Service) taskSetTrayMenu(t TaskSetTrayMenu) error {
 	return s.manager.SetMenu(t.Items)
 }
 
-func (s *Service) taskShowMessage(title, message string) error {
+func (s *Service) showTrayMessage(title, message string) error {
 	if s.manager == nil || !s.manager.IsActive() {
 		_, _, err := s.Core().PERFORM(notification.TaskSend{
 			Opts: notification.NotificationOptions{Title: title, Message: message},
@@ -104,7 +105,7 @@ func (s *Service) taskShowMessage(title, message string) error {
 	}
 	tray := s.manager.Tray()
 	if tray == nil {
-		return core.E("systray.taskShowMessage", "tray not initialised", nil)
+		return core.E("systray.showTrayMessage", "tray not initialised", nil)
 	}
 	if messenger, ok := tray.(interface{ ShowMessage(title, message string) }); ok {
 		messenger.ShowMessage(title, message)
