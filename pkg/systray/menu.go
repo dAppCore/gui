@@ -16,16 +16,19 @@ func (m *Manager) SetMenu(items []TrayMenuItem) error {
 // buildMenu recursively builds a PlatformMenu from TrayMenuItem descriptors.
 func (m *Manager) buildMenu(items []TrayMenuItem) PlatformMenu {
 	menu := m.platform.NewMenu()
+	m.buildMenuInto(menu, items)
+	return menu
+}
+
+func (m *Manager) buildMenuInto(menu PlatformMenu, items []TrayMenuItem) {
 	for _, item := range items {
 		if item.Type == "separator" {
 			menu.AddSeparator()
 			continue
 		}
 		if len(item.Submenu) > 0 {
-			sub := m.buildMenu(item.Submenu)
-			mi := menu.Add(item.Label)
-			_ = mi.AddSubmenu()
-			_ = sub // TODO: wire sub into parent via platform
+			sub := menu.AddSubmenu(item.Label)
+			m.buildMenuInto(sub, item.Submenu)
 			continue
 		}
 		mi := menu.Add(item.Label)
@@ -47,7 +50,6 @@ func (m *Manager) buildMenu(items []TrayMenuItem) PlatformMenu {
 			})
 		}
 	}
-	return menu
 }
 
 // RegisterCallback registers a callback for a menu action ID.

@@ -786,6 +786,24 @@ func TestHandleWSMessage_Extended_Good(t *testing.T) {
 		assert.True(t, handled)
 	})
 
+	t.Run("tray tooltip", func(t *testing.T) {
+		_, handled, err := svc.handleWSMessage(WSMessage{
+			Action: "tray:set-tooltip",
+			Data:   map[string]any{"tooltip": "Updated"},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+	})
+
+	t.Run("tray label", func(t *testing.T) {
+		_, handled, err := svc.handleWSMessage(WSMessage{
+			Action: "tray:set-label",
+			Data:   map[string]any{"label": "Updated"},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+	})
+
 	t.Run("prompt dialog", func(t *testing.T) {
 		result, handled, err := svc.handleWSMessage(WSMessage{
 			Action: "dialog:prompt",

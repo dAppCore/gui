@@ -21,6 +21,7 @@ type PlatformTray interface {
 type PlatformMenu interface {
 	Add(label string) PlatformMenuItem
 	AddSeparator()
+	AddSubmenu(label string) PlatformMenu
 }
 
 // PlatformMenuItem is a single item in a tray menu.

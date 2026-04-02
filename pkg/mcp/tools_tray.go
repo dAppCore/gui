@@ -36,8 +36,10 @@ type TraySetTooltipOutput struct {
 }
 
 func (s *Subsystem) traySetTooltip(_ context.Context, _ *mcp.CallToolRequest, input TraySetTooltipInput) (*mcp.CallToolResult, TraySetTooltipOutput, error) {
-	// Tooltip is set via the tray menu items; for now this is a no-op placeholder
-	_ = input.Tooltip
+	_, _, err := s.core.PERFORM(systray.TaskSetTooltip{Tooltip: input.Tooltip})
+	if err != nil {
+		return nil, TraySetTooltipOutput{}, err
+	}
 	return nil, TraySetTooltipOutput{Success: true}, nil
 }
 
@@ -51,8 +53,10 @@ type TraySetLabelOutput struct {
 }
 
 func (s *Subsystem) traySetLabel(_ context.Context, _ *mcp.CallToolRequest, input TraySetLabelInput) (*mcp.CallToolResult, TraySetLabelOutput, error) {
-	// Label is part of the tray configuration; placeholder for now
-	_ = input.Label
+	_, _, err := s.core.PERFORM(systray.TaskSetLabel{Label: input.Label})
+	if err != nil {
+		return nil, TraySetLabelOutput{}, err
+	}
 	return nil, TraySetLabelOutput{Success: true}, nil
 }
 

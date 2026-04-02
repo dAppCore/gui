@@ -56,6 +56,10 @@ func (m *wailsTrayMenu) AddSeparator() {
 	m.menu.AddSeparator()
 }
 
+func (m *wailsTrayMenu) AddSubmenu(label string) PlatformMenu {
+	return &wailsTrayMenu{menu: m.menu.AddSubmenu(label)}
+}
+
 // wailsTrayMenuItem wraps *application.MenuItem for the PlatformMenuItem interface.
 type wailsTrayMenuItem struct {
 	item *application.MenuItem

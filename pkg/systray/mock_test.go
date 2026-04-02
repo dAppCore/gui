@@ -21,7 +21,8 @@ func (p *mockPlatform) NewMenu() PlatformMenu {
 }
 
 type mockTrayMenu struct {
-	items []string
+	items    []string
+	submenus []*mockTrayMenu
 }
 
 func (m *mockTrayMenu) Add(label string) PlatformMenuItem {
@@ -29,10 +30,16 @@ func (m *mockTrayMenu) Add(label string) PlatformMenuItem {
 	return &mockTrayMenuItem{}
 }
 func (m *mockTrayMenu) AddSeparator() { m.items = append(m.items, "---") }
+func (m *mockTrayMenu) AddSubmenu(label string) PlatformMenu {
+	m.items = append(m.items, label)
+	sub := &mockTrayMenu{}
+	m.submenus = append(m.submenus, sub)
+	return sub
+}
 
 type mockTrayMenuItem struct{}
 
-func (mi *mockTrayMenuItem) SetTooltip(text string)  {}
+func (mi *mockTrayMenuItem) SetTooltip(text string)   {}
 func (mi *mockTrayMenuItem) SetChecked(checked bool)  {}
 func (mi *mockTrayMenuItem) SetEnabled(enabled bool)  {}
 func (mi *mockTrayMenuItem) OnClick(fn func())        {}
@@ -45,9 +52,9 @@ type mockTray struct {
 	attachedWindow     WindowHandle
 }
 
-func (t *mockTray) SetIcon(data []byte)        { t.icon = data }
+func (t *mockTray) SetIcon(data []byte)         { t.icon = data }
 func (t *mockTray) SetTemplateIcon(data []byte) { t.templateIcon = data }
 func (t *mockTray) SetTooltip(text string)      { t.tooltip = text }
 func (t *mockTray) SetLabel(text string)        { t.label = text }
 func (t *mockTray) SetMenu(menu PlatformMenu)   { t.menu = menu }
-func (t *mockTray) AttachWindow(w WindowHandle)  { t.attachedWindow = w }
+func (t *mockTray) AttachWindow(w WindowHandle) { t.attachedWindow = w }

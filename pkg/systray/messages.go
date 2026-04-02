@@ -9,6 +9,12 @@ type QueryConfig struct{}
 // TaskSetTrayIcon sets the tray icon.
 type TaskSetTrayIcon struct{ Data []byte }
 
+// TaskSetTooltip updates the tray tooltip text.
+type TaskSetTooltip struct{ Tooltip string }
+
+// TaskSetLabel updates the tray label text.
+type TaskSetLabel struct{ Label string }
+
 // TaskSetTrayMenu sets the tray menu items.
 type TaskSetTrayMenu struct{ Items []TrayMenuItem }
 

@@ -667,6 +667,18 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 			Title:   title,
 			Message: message,
 		})
+	case "tray:set-tooltip":
+		tooltip, e := wsRequire(msg.Data, "tooltip")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = s.Core().PERFORM(systray.TaskSetTooltip{Tooltip: tooltip})
+	case "tray:set-label":
+		label, e := wsRequire(msg.Data, "label")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = s.Core().PERFORM(systray.TaskSetLabel{Label: label})
 	case "dialog:prompt":
 		title, e := wsRequire(msg.Data, "title")
 		if e != nil {

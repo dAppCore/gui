@@ -20,7 +20,10 @@ func (t *exportedMockTray) SetLabel(text string)        { t.label = text }
 func (t *exportedMockTray) SetMenu(menu PlatformMenu)   {}
 func (t *exportedMockTray) AttachWindow(w WindowHandle) {}
 
-type exportedMockMenu struct{ items []exportedMockMenuItem }
+type exportedMockMenu struct {
+	items    []exportedMockMenuItem
+	submenus []*exportedMockMenu
+}
 
 func (m *exportedMockMenu) Add(label string) PlatformMenuItem {
 	mi := &exportedMockMenuItem{label: label}
@@ -28,6 +31,12 @@ func (m *exportedMockMenu) Add(label string) PlatformMenuItem {
 	return mi
 }
 func (m *exportedMockMenu) AddSeparator() {}
+func (m *exportedMockMenu) AddSubmenu(label string) PlatformMenu {
+	sub := &exportedMockMenu{}
+	m.items = append(m.items, exportedMockMenuItem{label: label})
+	m.submenus = append(m.submenus, sub)
+	return sub
+}
 
 type exportedMockMenuItem struct {
 	label, tooltip   string

@@ -39,6 +39,24 @@ func TestTaskSetTrayIcon_Good(t *testing.T) {
 	assert.True(t, handled)
 }
 
+func TestTaskSetTooltip_Good(t *testing.T) {
+	svc, c := newTestSystrayService(t)
+	require.NoError(t, svc.manager.Setup("Test", "Test"))
+
+	_, handled, err := c.PERFORM(TaskSetTooltip{Tooltip: "Updated"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+}
+
+func TestTaskSetLabel_Good(t *testing.T) {
+	svc, c := newTestSystrayService(t)
+	require.NoError(t, svc.manager.Setup("Test", "Test"))
+
+	_, handled, err := c.PERFORM(TaskSetLabel{Label: "Updated"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+}
+
 func TestTaskSetTrayMenu_Good(t *testing.T) {
 	svc, c := newTestSystrayService(t)
 
@@ -52,6 +70,33 @@ func TestTaskSetTrayMenu_Good(t *testing.T) {
 	_, handled, err := c.PERFORM(TaskSetTrayMenu{Items: items})
 	require.NoError(t, err)
 	assert.True(t, handled)
+}
+
+func TestTaskSetTrayMenu_Submenu_Good(t *testing.T) {
+	p := newMockPlatform()
+	c, err := core.New(
+		core.WithService(Register(p)),
+		core.WithServiceLock(),
+	)
+	require.NoError(t, err)
+	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+
+	svc := core.MustServiceFor[*Service](c, "systray")
+	require.NoError(t, svc.manager.Setup("Test", "Test"))
+
+	_, handled, err := c.PERFORM(TaskSetTrayMenu{Items: []TrayMenuItem{
+		{
+			Label: "File",
+			Submenu: []TrayMenuItem{
+				{Label: "Open", ActionID: "open"},
+			},
+		},
+	}})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	require.Len(t, p.trays, 1)
+	require.NotEmpty(t, p.menus)
+	require.Len(t, p.menus[0].submenus, 1)
 }
 
 func TestTaskSetTrayIcon_Bad(t *testing.T) {

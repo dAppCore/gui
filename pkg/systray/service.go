@@ -54,6 +54,10 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 	switch t := t.(type) {
 	case TaskSetTrayIcon:
 		return nil, true, s.manager.SetIcon(t.Data)
+	case TaskSetTooltip:
+		return nil, true, s.manager.SetTooltip(t.Tooltip)
+	case TaskSetLabel:
+		return nil, true, s.manager.SetLabel(t.Label)
 	case TaskSetTrayMenu:
 		return nil, true, s.taskSetTrayMenu(t)
 	case TaskShowPanel:
