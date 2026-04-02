@@ -1,12 +1,21 @@
 // SPDX-Licence-Identifier: EUPL-1.2
 
-import { Component, CUSTOM_ELEMENTS_SCHEMA, Input, OnInit, computed } from '@angular/core';
+import {
+  Component,
+  CUSTOM_ELEMENTS_SCHEMA,
+  HostListener,
+  Input,
+  OnInit,
+  computed,
+  inject,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TranslationService } from '../services/translation.service';
 import { ProviderDiscoveryService } from '../services/provider-discovery.service';
 import { WebSocketService } from '../services/websocket.service';
 import { StatusBarComponent } from '../components/status-bar.component';
+import { UiStateService } from '../services/ui-state.service';
 
 interface NavItem {
   name: string;
@@ -96,6 +105,62 @@ interface NavItem {
         caret-color: var(--accent-strong);
       }
 
+      .application-frame .search-shell {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        min-height: 2.75rem;
+        padding: 0 0.875rem;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.03);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+      }
+
+      .application-frame .search-shell:focus-within {
+        border-color: rgba(103, 232, 249, 0.3);
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .application-frame .search-shell input {
+        min-width: 0;
+        flex: 1;
+        border: 0;
+        background: transparent;
+        outline: none;
+      }
+
+      .application-frame .search-shell input::placeholder {
+        color: rgba(170, 182, 205, 0.72);
+      }
+
+      .application-frame .search-clear {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        cursor: pointer;
+        padding: 0;
+      }
+
+      .application-frame .search-clear:hover {
+        color: var(--text);
+      }
+
+      .application-frame .search-count {
+        display: inline-flex;
+        align-items: center;
+        min-height: 2.25rem;
+        padding: 0 0.8rem;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--muted);
+        white-space: nowrap;
+      }
+
       .application-frame .frame-header button,
       .application-frame .frame-header a {
         transition:
@@ -121,6 +186,7 @@ export class ApplicationFrameComponent implements OnInit {
 
   sidebarOpen = false;
   userMenuOpen = false;
+  private readonly uiState = inject(UiStateService);
 
   /** Static navigation items set by the host application. */
   @Input() staticNavigation: NavItem[] = [];
@@ -137,6 +203,17 @@ export class ApplicationFrameComponent implements OnInit {
       }));
 
     return [...this.staticNavigation, ...dynamicItems];
+  });
+
+  readonly searchQuery = this.uiState.searchQuery;
+  readonly visibleNavigation = computed(() => {
+    const query = this.searchQuery().toLowerCase();
+    const items = this.navigation();
+    if (!query) {
+      return items;
+    }
+
+    return items.filter((item) => `${item.name} ${item.href}`.toLowerCase().includes(query));
   });
 
   userNavigation: NavItem[] = [];
@@ -156,6 +233,31 @@ export class ApplicationFrameComponent implements OnInit {
 
     // Connect WebSocket for real-time updates
     this.wsService.connect();
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.sidebarOpen) {
+      this.sidebarOpen = false;
+      return;
+    }
+
+    if (this.userMenuOpen) {
+      this.userMenuOpen = false;
+      return;
+    }
+
+    if (this.searchQuery()) {
+      this.clearSearch();
+    }
+  }
+
+  onSearchInput(value: string): void {
+    this.uiState.setSearchQuery(value);
+  }
+
+  clearSearch(): void {
+    this.uiState.clearSearchQuery();
   }
 
   private initUserNavigation(): void {

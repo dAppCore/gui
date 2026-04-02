@@ -5,6 +5,7 @@ import { ProviderDiscoveryService, type ProviderInfo } from '../services/provide
 import { TranslationService } from '../services/translation.service';
 import { WebSocketService } from '../services/websocket.service';
 import { ProviderHostComponent } from '../components/provider-host.component';
+import { UiStateService } from '../services/ui-state.service';
 
 @Component({
   selector: 'dashboard-view',
@@ -48,6 +49,10 @@ import { ProviderHostComponent } from '../components/provider-host.component';
             <span class="meta-label">API base</span>
             <strong class="mono">{{ apiBase() }}</strong>
           </div>
+          <div class="meta-card">
+            <span class="meta-label">Search</span>
+            <strong>{{ searchQuery() || 'All providers' }}</strong>
+          </div>
         </div>
       </section>
 
@@ -58,7 +63,9 @@ import { ProviderHostComponent } from '../components/provider-host.component';
               <p class="eyebrow">Discovered providers</p>
               <h2>Renderable capabilities</h2>
             </div>
-            <span class="pill">{{ providerCount() }} total</span>
+            <span class="pill" [class.good]="searchQuery()">
+              {{ filteredProviders().length }} shown / {{ providerCount() }} total
+            </span>
           </div>
 
           <div class="provider-list" *ngIf="featuredProviders().length; else emptyState">
@@ -84,8 +91,16 @@ import { ProviderHostComponent } from '../components/provider-host.component';
 
           <ng-template #emptyState>
             <div class="empty-state">
-              <strong>No providers discovered yet.</strong>
-              <span>The shell will populate this view once the backend exposes provider metadata.</span>
+              <strong>
+                {{ searchQuery() ? 'No providers match the current search.' : 'No providers discovered yet.' }}
+              </strong>
+              <span>
+                {{
+                  searchQuery()
+                    ? 'Clear the search box to restore the full provider list.'
+                    : 'The shell will populate this view once the backend exposes provider metadata.'
+                }}
+              </span>
             </div>
           </ng-template>
         </article>
@@ -102,6 +117,10 @@ import { ProviderHostComponent } from '../components/provider-host.component';
             <li>
               <strong>Provider discovery</strong>
               <span>Loads provider metadata and registers custom element scripts automatically.</span>
+            </li>
+            <li>
+              <strong>Global search</strong>
+              <span>Filters navigation and provider cards from a single shell-level search box.</span>
             </li>
             <li>
               <strong>Realtime status</strong>
@@ -156,6 +175,7 @@ export class DashboardComponent {
   private readonly translations = inject(TranslationService);
   private readonly websocket = inject(WebSocketService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly uiState = inject(UiStateService);
 
   protected readonly title = signal('Core GUI');
   protected readonly subtitle = signal('Desktop orchestration console');
@@ -166,9 +186,31 @@ export class DashboardComponent {
   protected readonly providerCount = computed(() => this.providers().length);
   protected readonly connected = this.websocket.connected;
   protected readonly apiBase = computed(() => this.apiConfig.effectiveBaseUrl);
+  protected readonly searchQuery = this.uiState.searchQuery;
+
+  protected readonly filteredProviders = computed<ProviderInfo[]>(() => {
+    const query = this.searchQuery().trim().toLowerCase();
+    const providers = this.providers();
+    if (!query) {
+      return providers;
+    }
+
+    return providers.filter((provider) => {
+      const haystack = [
+        provider.name,
+        provider.basePath,
+        provider.status ?? '',
+        provider.element?.tag ?? '',
+        provider.element?.source ?? '',
+      ]
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(query);
+    });
+  });
 
   protected readonly featuredProviders = computed<ProviderInfo[]>(() =>
-    this.providers().filter((provider) => provider.element?.tag).slice(0, 6),
+    this.filteredProviders().filter((provider) => provider.element?.tag).slice(0, 6),
   );
 
   protected readonly selectedRenderableProvider = computed<ProviderInfo | null>(() => {
@@ -178,7 +220,7 @@ export class DashboardComponent {
     }
 
     return (
-      this.providers().find((provider) => provider.name === selection && provider.element?.tag) ??
+      this.filteredProviders().find((provider) => provider.name === selection && provider.element?.tag) ??
       this.featuredProviders()[0] ??
       null
     );

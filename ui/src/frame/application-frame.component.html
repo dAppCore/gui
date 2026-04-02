@@ -17,23 +17,33 @@
     <!-- Separator -->
     <div aria-hidden="true" class="h-6 w-px bg-gray-900/10 lg:hidden dark:bg-white/10"></div>
 
-    <div class="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-      <form action="#" method="GET" class="grid flex-1 grid-cols-1">
-        <input
-          name="search"
-          [placeholder]="t._('app.core.ui.search')"
-          aria-label="Search"
-          class="col-start-1 row-start-1 block size-full bg-white pl-8 text-base text-gray-900 outline-hidden placeholder:text-gray-400 sm:text-sm/6 dark:bg-gray-900 dark:text-white dark:placeholder:text-gray-500"
-        />
-        <i
-          class="fa-light fa-xl fa-magnifying-glass pointer-events-none col-start-1 row-start-1 self-center text-gray-400"
-        ></i>
-      </form>
-      <div class="flex items-center gap-x-4 lg:gap-x-6">
-        <button
-          type="button"
-          class="-m-2.5 p-2.5 text-gray-400 hover:text-gray-500 dark:hover:text-white"
-        >
+      <div class="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
+        <form action="#" method="GET" class="grid flex-1 grid-cols-1" (submit)="$event.preventDefault()">
+          <div class="search-shell">
+            <i class="fa-light fa-xl fa-magnifying-glass pointer-events-none text-gray-400"></i>
+            <input
+              #searchInput
+              name="search"
+              [value]="searchQuery()"
+              (input)="onSearchInput(searchInput.value)"
+              [placeholder]="t._('app.core.ui.search')"
+              aria-label="Search"
+              class="text-base text-gray-900 sm:text-sm/6 dark:text-white"
+            />
+            @if (searchQuery()) {
+              <button type="button" class="search-clear" (click)="clearSearch()">
+                <span class="sr-only">Clear search</span>
+                <i class="fa-regular fa-xmark"></i>
+              </button>
+            }
+          </div>
+        </form>
+        <div class="flex items-center gap-x-4 lg:gap-x-6">
+          <span class="search-count">{{ visibleNavigation().length }} visible</span>
+          <button
+            type="button"
+            class="-m-2.5 p-2.5 text-gray-400 hover:text-gray-500 dark:hover:text-white"
+          >
           <span class="sr-only">View notifications</span>
           <i class="fa-light fa-bell fa-xl"></i>
         </button>
@@ -101,7 +111,7 @@
               </div>
               <nav class="flex flex-1 flex-col">
                 <ul role="list" class="-mx-2 flex-1 space-y-1">
-                  @for (item of navigation(); track item.name) {
+                  @for (item of visibleNavigation(); track item.name) {
                     <li>
                       <a
                         [routerLink]="item.href"
@@ -134,7 +144,7 @@
         </button>
         <nav class="relative mt-1">
           <ul role="list" class="flex flex-col items-center space-y-1">
-            @for (item of navigation(); track item.name) {
+            @for (item of visibleNavigation(); track item.name) {
               <li>
                 <a
                   [routerLink]="item.href"
