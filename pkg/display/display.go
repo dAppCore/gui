@@ -78,6 +78,7 @@ func Register(wailsApp *application.App) func(*core.Core) (any, error) {
 // OnStartup loads config and registers IPC handlers synchronously.
 // CRITICAL: config handlers MUST be registered before returning —
 // sub-services depend on them during their own OnStartup.
+// Use: _ = svc.OnStartup(context.Background())
 func (s *Service) OnStartup(ctx context.Context) error {
 	s.loadConfig()
 
@@ -96,6 +97,7 @@ func (s *Service) OnStartup(ctx context.Context) error {
 
 // HandleIPCEvents is auto-discovered and registered by core.WithService.
 // It bridges sub-service IPC actions to WebSocket events for TS apps.
+// Use: _ = svc.HandleIPCEvents(core, msg)
 func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 	switch m := msg.(type) {
 	case core.ActionServiceStartup:
@@ -1225,6 +1227,7 @@ func (s *Service) SetWindowOpacity(name string, opacity float32) error {
 }
 
 // ClearWebviewConsole clears the captured console buffer for a window.
+// Use: _ = svc.ClearWebviewConsole("editor")
 func (s *Service) ClearWebviewConsole(name string) error {
 	_, _, err := s.Core().PERFORM(webview.TaskClearConsole{Window: name})
 	return err
@@ -1608,6 +1611,7 @@ func (s *Service) WriteClipboard(text string) error {
 }
 
 // HasClipboard reports whether the clipboard has text or image content.
+// Use: hasContent := svc.HasClipboard()
 func (s *Service) HasClipboard() bool {
 	textResult, textHandled, _ := s.Core().QUERY(clipboard.QueryText{})
 	if textHandled {
@@ -1625,6 +1629,7 @@ func (s *Service) HasClipboard() bool {
 }
 
 // ClearClipboard clears clipboard text and any image data when supported.
+// Use: _ = svc.ClearClipboard()
 func (s *Service) ClearClipboard() error {
 	result, handled, err := s.Core().PERFORM(clipboard.TaskClear{})
 	if err != nil {
@@ -1640,6 +1645,7 @@ func (s *Service) ClearClipboard() error {
 }
 
 // ReadClipboardImage returns the clipboard image content.
+// Use: image, err := svc.ReadClipboardImage()
 func (s *Service) ReadClipboardImage() (clipboard.ClipboardImageContent, error) {
 	result, handled, err := s.Core().QUERY(clipboard.QueryImage{})
 	if err != nil {
@@ -1653,6 +1659,7 @@ func (s *Service) ReadClipboardImage() (clipboard.ClipboardImageContent, error) 
 }
 
 // WriteClipboardImage writes raw image data to the clipboard.
+// Use: _ = svc.WriteClipboardImage(data)
 func (s *Service) WriteClipboardImage(data []byte) error {
 	result, handled, err := s.Core().PERFORM(clipboard.TaskSetImage{Data: data})
 	if err != nil {
@@ -1670,6 +1677,7 @@ func (s *Service) WriteClipboardImage(data []byte) error {
 // --- Notifications ---
 
 // ShowNotification sends a native notification.
+// Use: _ = svc.ShowNotification(notification.NotificationOptions{Title: "Build complete", Message: "All checks passed"})
 func (s *Service) ShowNotification(opts notification.NotificationOptions) error {
 	_, handled, err := s.Core().PERFORM(notification.TaskSend{Opts: opts})
 	if err != nil {
@@ -1682,6 +1690,7 @@ func (s *Service) ShowNotification(opts notification.NotificationOptions) error 
 }
 
 // ShowInfoNotification sends an informational notification.
+// Use: _ = svc.ShowInfoNotification("Build complete", "All checks passed")
 func (s *Service) ShowInfoNotification(title, message string) error {
 	return s.ShowNotification(notification.NotificationOptions{
 		Title:    title,
@@ -1691,6 +1700,7 @@ func (s *Service) ShowInfoNotification(title, message string) error {
 }
 
 // ShowWarningNotification sends a warning notification.
+// Use: _ = svc.ShowWarningNotification("Build warning", "Tests are flaky")
 func (s *Service) ShowWarningNotification(title, message string) error {
 	return s.ShowNotification(notification.NotificationOptions{
 		Title:    title,
@@ -1700,6 +1710,7 @@ func (s *Service) ShowWarningNotification(title, message string) error {
 }
 
 // ShowErrorNotification sends an error notification.
+// Use: _ = svc.ShowErrorNotification("Build failed", "See the log output")
 func (s *Service) ShowErrorNotification(title, message string) error {
 	return s.ShowNotification(notification.NotificationOptions{
 		Title:    title,
@@ -1709,6 +1720,7 @@ func (s *Service) ShowErrorNotification(title, message string) error {
 }
 
 // RequestNotificationPermission requests notification permission.
+// Use: granted, err := svc.RequestNotificationPermission()
 func (s *Service) RequestNotificationPermission() (bool, error) {
 	result, handled, err := s.Core().PERFORM(notification.TaskRequestPermission{})
 	if err != nil {
@@ -1722,6 +1734,7 @@ func (s *Service) RequestNotificationPermission() (bool, error) {
 }
 
 // CheckNotificationPermission checks notification permission.
+// Use: granted, err := svc.CheckNotificationPermission()
 func (s *Service) CheckNotificationPermission() (bool, error) {
 	result, handled, err := s.Core().QUERY(notification.QueryPermission{})
 	if err != nil {
@@ -1735,6 +1748,7 @@ func (s *Service) CheckNotificationPermission() (bool, error) {
 }
 
 // ClearNotifications clears notifications when supported.
+// Use: _ = svc.ClearNotifications()
 func (s *Service) ClearNotifications() error {
 	_, handled, err := s.Core().PERFORM(notification.TaskClear{})
 	if err != nil {
@@ -1749,6 +1763,7 @@ func (s *Service) ClearNotifications() error {
 // --- Dialogs ---
 
 // OpenFileDialog opens a file picker and returns all selected paths.
+// Use: paths, err := svc.OpenFileDialog(dialog.OpenFileOptions{Title: "Open report"})
 func (s *Service) OpenFileDialog(opts dialog.OpenFileOptions) ([]string, error) {
 	result, handled, err := s.Core().PERFORM(dialog.TaskOpenFile{Opts: opts})
 	if err != nil {
@@ -1762,6 +1777,7 @@ func (s *Service) OpenFileDialog(opts dialog.OpenFileOptions) ([]string, error) 
 }
 
 // OpenSingleFileDialog opens a file picker and returns the first selected path.
+// Use: path, err := svc.OpenSingleFileDialog(dialog.OpenFileOptions{Title: "Open report"})
 func (s *Service) OpenSingleFileDialog(opts dialog.OpenFileOptions) (string, error) {
 	paths, err := s.OpenFileDialog(opts)
 	if err != nil {
@@ -1774,6 +1790,7 @@ func (s *Service) OpenSingleFileDialog(opts dialog.OpenFileOptions) (string, err
 }
 
 // SaveFileDialog opens a save dialog and returns the selected path.
+// Use: path, err := svc.SaveFileDialog(dialog.SaveFileOptions{Title: "Export report"})
 func (s *Service) SaveFileDialog(opts dialog.SaveFileOptions) (string, error) {
 	result, handled, err := s.Core().PERFORM(dialog.TaskSaveFile{Opts: opts})
 	if err != nil {
@@ -1787,6 +1804,7 @@ func (s *Service) SaveFileDialog(opts dialog.SaveFileOptions) (string, error) {
 }
 
 // OpenDirectoryDialog opens a directory picker and returns the selected path.
+// Use: path, err := svc.OpenDirectoryDialog(dialog.OpenDirectoryOptions{Title: "Choose workspace"})
 func (s *Service) OpenDirectoryDialog(opts dialog.OpenDirectoryOptions) (string, error) {
 	result, handled, err := s.Core().PERFORM(dialog.TaskOpenDirectory{Opts: opts})
 	if err != nil {
@@ -1800,6 +1818,7 @@ func (s *Service) OpenDirectoryDialog(opts dialog.OpenDirectoryOptions) (string,
 }
 
 // ConfirmDialog shows a confirmation prompt.
+// Use: confirmed, err := svc.ConfirmDialog("Delete file", "Remove report.txt?")
 func (s *Service) ConfirmDialog(title, message string) (bool, error) {
 	result, handled, err := s.Core().PERFORM(dialog.TaskMessageDialog{
 		Opts: dialog.MessageDialogOptions{
@@ -1820,6 +1839,7 @@ func (s *Service) ConfirmDialog(title, message string) (bool, error) {
 }
 
 // PromptDialog shows a prompt-style dialog and returns the selected button.
+// Use: button, accepted, err := svc.PromptDialog("Rename file", "Enter a new name")
 func (s *Service) PromptDialog(title, message string) (string, bool, error) {
 	result, handled, err := s.Core().PERFORM(dialog.TaskMessageDialog{
 		Opts: dialog.MessageDialogOptions{
@@ -1840,6 +1860,7 @@ func (s *Service) PromptDialog(title, message string) (string, bool, error) {
 }
 
 // DialogMessage shows an informational, warning, or error message via the notification pipeline.
+// Use: _ = svc.DialogMessage("warning", "Build failed", "Check the log output")
 func (s *Service) DialogMessage(kind, title, message string) error {
 	var severity notification.NotificationSeverity
 	switch kind {
@@ -1863,6 +1884,7 @@ func (s *Service) DialogMessage(kind, title, message string) error {
 // --- Theme ---
 
 // GetTheme returns the current theme state.
+// Use: theme := svc.GetTheme()
 func (s *Service) GetTheme() *Theme {
 	result, handled, err := s.Core().QUERY(environment.QueryTheme{})
 	if err != nil || !handled {
@@ -1876,6 +1898,7 @@ func (s *Service) GetTheme() *Theme {
 }
 
 // GetSystemTheme returns the current system theme preference.
+// Use: theme := svc.GetSystemTheme()
 func (s *Service) GetSystemTheme() string {
 	result, handled, err := s.Core().QUERY(environment.QueryTheme{})
 	if err != nil || !handled {
@@ -1892,6 +1915,7 @@ func (s *Service) GetSystemTheme() string {
 }
 
 // SetTheme overrides the application theme.
+// Use: _ = svc.SetTheme(true)
 func (s *Service) SetTheme(isDark bool) error {
 	_, handled, err := s.Core().PERFORM(environment.TaskSetTheme{IsDark: isDark})
 	if err != nil {
@@ -1906,6 +1930,7 @@ func (s *Service) SetTheme(isDark bool) error {
 // --- Tray ---
 
 // SetTrayIcon sets the tray icon image.
+// Use: _ = svc.SetTrayIcon(iconBytes)
 func (s *Service) SetTrayIcon(data []byte) error {
 	_, handled, err := s.Core().PERFORM(systray.TaskSetTrayIcon{Data: data})
 	if err != nil {
@@ -1918,6 +1943,7 @@ func (s *Service) SetTrayIcon(data []byte) error {
 }
 
 // SetTrayTooltip updates the tray tooltip.
+// Use: _ = svc.SetTrayTooltip("Core is ready")
 func (s *Service) SetTrayTooltip(tooltip string) error {
 	_, handled, err := s.Core().PERFORM(systray.TaskSetTooltip{Tooltip: tooltip})
 	if err != nil {
@@ -1930,6 +1956,7 @@ func (s *Service) SetTrayTooltip(tooltip string) error {
 }
 
 // SetTrayLabel updates the tray label.
+// Use: _ = svc.SetTrayLabel("Core")
 func (s *Service) SetTrayLabel(label string) error {
 	_, handled, err := s.Core().PERFORM(systray.TaskSetLabel{Label: label})
 	if err != nil {
@@ -1942,6 +1969,7 @@ func (s *Service) SetTrayLabel(label string) error {
 }
 
 // SetTrayMenu replaces the tray menu items.
+// Use: _ = svc.SetTrayMenu([]systray.TrayMenuItem{{Label: "Quit", ActionID: "quit"}})
 func (s *Service) SetTrayMenu(items []systray.TrayMenuItem) error {
 	_, handled, err := s.Core().PERFORM(systray.TaskSetTrayMenu{Items: items})
 	if err != nil {
@@ -1954,6 +1982,7 @@ func (s *Service) SetTrayMenu(items []systray.TrayMenuItem) error {
 }
 
 // GetTrayInfo returns current tray state information.
+// Use: info := svc.GetTrayInfo()
 func (s *Service) GetTrayInfo() map[string]any {
 	svc, err := core.ServiceFor[*systray.Service](s.Core(), "systray")
 	if err != nil || svc == nil || svc.Manager() == nil {
@@ -1963,6 +1992,7 @@ func (s *Service) GetTrayInfo() map[string]any {
 }
 
 // ShowTrayMessage shows a tray message or notification.
+// Use: _ = svc.ShowTrayMessage("Core", "Sync complete")
 func (s *Service) ShowTrayMessage(title, message string) error {
 	_, handled, err := s.Core().PERFORM(systray.TaskShowMessage{Title: title, Message: message})
 	if err != nil {
@@ -1975,11 +2005,13 @@ func (s *Service) ShowTrayMessage(title, message string) error {
 }
 
 // GetEventManager returns the event manager for WebSocket event subscriptions.
+// Use: events := svc.GetEventManager()
 func (s *Service) GetEventManager() *WSEventManager {
 	return s.events
 }
 
 // GetEventInfo returns a summary of the live WebSocket event server state.
+// Use: info := svc.GetEventInfo()
 func (s *Service) GetEventInfo() EventServerInfo {
 	if s.events == nil {
 		return EventServerInfo{}
