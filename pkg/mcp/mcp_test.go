@@ -250,7 +250,7 @@ func TestMCP_Good_ScreenForWindow(t *testing.T) {
 
 func TestMCP_Good_WebviewErrors(t *testing.T) {
 	c, err := core.New(
-		core.WithService(webview.Register()),
+		core.WithService(webview.Register(webview.Options{})),
 		core.WithServiceLock(),
 	)
 	require.NoError(t, err)

@@ -49,7 +49,7 @@ type connector interface {
 }
 
 // Options holds configuration for the webview service.
-// Use: svc, err := webview.Register()(core.New())
+// Use: svc, err := webview.Register(webview.Options{})(core.New())
 type Options struct {
 	DebugURL     string        // Chrome debug endpoint (default: "http://localhost:9222")
 	Timeout      time.Duration // Operation timeout (default: 30s)
@@ -57,7 +57,7 @@ type Options struct {
 }
 
 // Service is a core.Service managing webview interactions via IPC.
-// Use: svc, err := webview.Register()(core.New())
+// Use: svc, err := webview.Register(webview.Options{})(core.New())
 type Service struct {
 	*core.ServiceRuntime[Options]
 	opts         Options
@@ -68,16 +68,22 @@ type Service struct {
 	watcherSetup func(conn connector, windowName string)              // called after connection creation
 }
 
-// Register creates a factory closure with the given options.
-// Use: core.WithService(webview.Register())
-func Register(opts ...func(*Options)) func(*core.Core) (any, error) {
+// Register creates a factory closure with declarative options.
+// Use: core.WithService(webview.Register(webview.Options{ConsoleLimit: 500}))
+func Register(options Options) func(*core.Core) (any, error) {
 	o := Options{
 		DebugURL:     "http://localhost:9222",
 		Timeout:      30 * time.Second,
 		ConsoleLimit: 1000,
 	}
-	for _, fn := range opts {
-		fn(&o)
+	if options.DebugURL != "" {
+		o.DebugURL = options.DebugURL
+	}
+	if options.Timeout != 0 {
+		o.Timeout = options.Timeout
+	}
+	if options.ConsoleLimit != 0 {
+		o.ConsoleLimit = options.ConsoleLimit
 	}
 	return func(c *core.Core) (any, error) {
 		svc := &Service{

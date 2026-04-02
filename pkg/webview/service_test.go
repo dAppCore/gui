@@ -111,7 +111,7 @@ func (m *mockConnector) GetConsole() []ConsoleMessage { return m.console }
 
 func newTestService(t *testing.T, mock *mockConnector) (*Service, *core.Core) {
 	t.Helper()
-	factory := Register()
+	factory := Register(Options{})
 	c, err := core.New(
 		core.WithService(window.Register(window.NewMockPlatform())),
 		core.WithService(factory),

@@ -246,7 +246,7 @@ func newExtendedTestConclaveWithMocks(t *testing.T) *extendedTestConclave {
 		core.WithService(notification.Register(notificationPlatform)),
 		core.WithService(dialog.Register(dialogPlatform)),
 		core.WithService(environment.Register(environmentPlatform)),
-		core.WithService(webview.Register()),
+		core.WithService(webview.Register(webview.Options{})),
 		core.WithServiceLock(),
 	)
 	require.NoError(t, err)
