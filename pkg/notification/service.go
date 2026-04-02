@@ -11,27 +11,18 @@ import (
 )
 
 // Options configures the notification service.
-//
-// Example:
-//
-//	core.WithService(notification.Register(platform))
+// Use: core.WithService(notification.Register(platform))
 type Options struct{}
 
 // Service manages notifications via Core tasks and queries.
-//
-// Example:
-//
-//	svc := &notification.Service{}
+// Use: svc := &notification.Service{}
 type Service struct {
 	*core.ServiceRuntime[Options]
 	platform Platform
 }
 
 // Register creates a Core service factory for the notification backend.
-//
-// Example:
-//
-//	core.New(core.WithService(notification.Register(platform)))
+// Use: core.New(core.WithService(notification.Register(platform)))
 func Register(p Platform) func(*core.Core) (any, error) {
 	return func(c *core.Core) (any, error) {
 		return &Service{
@@ -42,10 +33,7 @@ func Register(p Platform) func(*core.Core) (any, error) {
 }
 
 // OnStartup registers notification handlers with Core.
-//
-// Example:
-//
-//	_ = svc.OnStartup(context.Background())
+// Use: _ = svc.OnStartup(context.Background())
 func (s *Service) OnStartup(ctx context.Context) error {
 	s.Core().RegisterQuery(s.handleQuery)
 	s.Core().RegisterTask(s.handleTask)

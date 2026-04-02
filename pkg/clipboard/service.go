@@ -8,27 +8,18 @@ import (
 )
 
 // Options configures the clipboard service.
-//
-// Example:
-//
-//	core.WithService(clipboard.Register(platform))
+// Use: core.WithService(clipboard.Register(platform))
 type Options struct{}
 
 // Service manages clipboard operations via Core queries and tasks.
-//
-// Example:
-//
-//	svc := &clipboard.Service{}
+// Use: svc := &clipboard.Service{}
 type Service struct {
 	*core.ServiceRuntime[Options]
 	platform Platform
 }
 
 // Register creates a Core service factory for the clipboard backend.
-//
-// Example:
-//
-//	core.New(core.WithService(clipboard.Register(platform)))
+// Use: core.New(core.WithService(clipboard.Register(platform)))
 func Register(p Platform) func(*core.Core) (any, error) {
 	return func(c *core.Core) (any, error) {
 		return &Service{
@@ -39,10 +30,7 @@ func Register(p Platform) func(*core.Core) (any, error) {
 }
 
 // OnStartup registers clipboard handlers with Core.
-//
-// Example:
-//
-//	_ = svc.OnStartup(context.Background())
+// Use: _ = svc.OnStartup(context.Background())
 func (s *Service) OnStartup(ctx context.Context) error {
 	s.Core().RegisterQuery(s.handleQuery)
 	s.Core().RegisterTask(s.handleTask)

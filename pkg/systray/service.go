@@ -9,10 +9,7 @@ import (
 )
 
 // Options configures the systray service.
-//
-// Example:
-//
-//	core.WithService(systray.Register(platform))
+// Use: core.WithService(systray.Register(platform))
 type Options struct{}
 
 // Service manages system tray operations via Core tasks.
