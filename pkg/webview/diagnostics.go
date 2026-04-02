@@ -1,3 +1,4 @@
+// pkg/webview/diagnostics.go
 package webview
 
 import (

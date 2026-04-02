@@ -1,3 +1,4 @@
+// pkg/display/display.go
 package display
 
 import (

@@ -1,3 +1,4 @@
+// pkg/window/register.go
 package window
 
 import "forge.lthn.ai/core/go/pkg/core"

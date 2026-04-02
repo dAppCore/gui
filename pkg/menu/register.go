@@ -1,3 +1,4 @@
+// pkg/menu/register.go
 package menu
 
 import "forge.lthn.ai/core/go/pkg/core"

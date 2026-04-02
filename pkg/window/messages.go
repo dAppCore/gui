@@ -87,7 +87,8 @@ type TaskSetPosition struct {
 type TaskSetSize struct {
 	Name          string
 	Width, Height int
-	W, H          int
+	// W and H are compatibility aliases for older call sites.
+	W, H int
 }
 
 // TaskMaximise maximises a window.
@@ -244,7 +245,8 @@ type ActionWindowMoved struct {
 type ActionWindowResized struct {
 	Name          string
 	Width, Height int
-	W, H          int
+	// W and H are compatibility aliases for older listeners.
+	W, H int
 }
 
 // ActionWindowFocused is broadcast when a window gains focus.

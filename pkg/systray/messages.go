@@ -1,3 +1,4 @@
+// pkg/systray/messages.go
 package systray
 
 // QueryConfig requests this service's config section from the display orchestrator.

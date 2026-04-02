@@ -1,3 +1,4 @@
+// pkg/window/mock_platform.go
 package window
 
 // MockPlatform is an exported mock for cross-package integration tests.
@@ -76,12 +77,12 @@ func (w *MockWindow) Close() {
 	w.closed = true
 	w.emit(WindowEvent{Type: "close", Name: w.name})
 }
-func (w *MockWindow) Show()                                { w.visible = true }
-func (w *MockWindow) Hide()                                { w.visible = false }
-func (w *MockWindow) Fullscreen()                          {}
-func (w *MockWindow) UnFullscreen()                        {}
-func (w *MockWindow) OpenDevTools()                        {}
-func (w *MockWindow) CloseDevTools()                       {}
+func (w *MockWindow) Show()          { w.visible = true }
+func (w *MockWindow) Hide()          { w.visible = false }
+func (w *MockWindow) Fullscreen()    {}
+func (w *MockWindow) UnFullscreen()  {}
+func (w *MockWindow) OpenDevTools()  {}
+func (w *MockWindow) CloseDevTools() {}
 func (w *MockWindow) OnWindowEvent(handler func(WindowEvent)) {
 	w.eventHandlers = append(w.eventHandlers, handler)
 }

@@ -582,6 +582,7 @@ func (s *Service) primaryScreenSize() (int, int) {
 }
 
 // Manager returns the underlying window Manager for direct access.
+// Use: mgr := svc.Manager()
 func (s *Service) Manager() *Manager {
 	return s.manager
 }

@@ -1,3 +1,4 @@
+// pkg/systray/mock_platform.go
 package systray
 
 // MockPlatform is an exported mock for cross-package integration tests.

@@ -1,3 +1,4 @@
+// pkg/systray/register.go
 package systray
 
 import "forge.lthn.ai/core/go/pkg/core"
