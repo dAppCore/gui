@@ -274,6 +274,22 @@ func TestTaskTileWindows_UsesPrimaryScreenSize(t *testing.T) {
 	assert.Equal(t, 1280, rightInfo.X)
 }
 
+func TestTaskTileWindows_ResetsMaximizedState(t *testing.T) {
+	_, c := newTestWindowServiceWithScreen(t)
+	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("left")}})
+
+	_, _, _ = c.PERFORM(TaskMaximise{Name: "left"})
+	_, handled, err := c.PERFORM(TaskTileWindows{Mode: "left-half", Windows: []string{"left"}})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	result, _, _ := c.QUERY(QueryWindowByName{Name: "left"})
+	info := result.(*WindowInfo)
+	assert.False(t, info.Maximized)
+	assert.Equal(t, 0, info.X)
+	assert.Equal(t, 1280, info.Width)
+}
+
 func TestTaskSetOpacity_Good(t *testing.T) {
 	_, c := newTestWindowService(t)
 	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("test")}})
@@ -334,6 +350,28 @@ func TestTaskApplyWorkflow_Good(t *testing.T) {
 	assistant := assistantResult.(*WindowInfo)
 	assert.Greater(t, editor.Width, assistant.Width)
 	assert.Equal(t, editor.Width, assistant.X)
+}
+
+func TestTaskRestoreLayout_ClearsMaximizedState(t *testing.T) {
+	_, c := newTestWindowServiceWithScreen(t)
+	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("editor")}})
+	_, _, _ = c.PERFORM(TaskMaximise{Name: "editor"})
+
+	svc := core.MustServiceFor[*Service](c, "window")
+	err := svc.Manager().Layout().SaveLayout("restore", map[string]WindowState{
+		"editor": {X: 12, Y: 34, Width: 640, Height: 480, Maximized: false},
+	})
+	require.NoError(t, err)
+
+	_, handled, err := c.PERFORM(TaskRestoreLayout{Name: "restore"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	result, _, _ := c.QUERY(QueryWindowByName{Name: "editor"})
+	info := result.(*WindowInfo)
+	assert.False(t, info.Maximized)
+	assert.Equal(t, 12, info.X)
+	assert.Equal(t, 640, info.Width)
 }
 
 func TestTaskMaximise_Good(t *testing.T) {

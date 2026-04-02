@@ -436,10 +436,15 @@ func (s *Service) taskRestoreLayout(name string) error {
 		if !found {
 			continue
 		}
+		if pw.IsMaximised() || pw.IsMinimised() {
+			pw.Restore()
+		}
 		pw.SetPosition(state.X, state.Y)
 		pw.SetSize(state.Width, state.Height)
 		if state.Maximized {
 			pw.Maximise()
+		} else {
+			pw.Restore()
 		}
 	}
 	return nil
