@@ -86,10 +86,16 @@ func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
 		}
 		return &l, true, nil
 	case QueryFindSpace:
-		screenW, screenH := s.primaryScreenSize()
+		screenW, screenH := q.ScreenWidth, q.ScreenHeight
+		if screenW <= 0 || screenH <= 0 {
+			screenW, screenH = s.primaryScreenSize()
+		}
 		return s.manager.FindSpace(screenW, screenH, q.Width, q.Height), true, nil
 	case QueryLayoutSuggestion:
-		screenW, screenH := s.primaryScreenSize()
+		screenW, screenH := q.ScreenWidth, q.ScreenHeight
+		if screenW <= 0 || screenH <= 0 {
+			screenW, screenH = s.primaryScreenSize()
+		}
 		return s.manager.SuggestLayout(screenW, screenH, q.WindowCount), true, nil
 	default:
 		return nil, false, nil

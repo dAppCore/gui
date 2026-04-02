@@ -57,6 +57,13 @@ type Subscription struct {
 	EventTypes []EventType `json:"eventTypes"`
 }
 
+// EventServerInfo summarises the live WebSocket event server state.
+type EventServerInfo struct {
+	ConnectedClients int `json:"connectedClients"`
+	Subscriptions    int `json:"subscriptions"`
+	BufferedEvents   int `json:"bufferedEvents"`
+}
+
 // WSEventManager manages WebSocket connections and event subscriptions.
 type WSEventManager struct {
 	upgrader    websocket.Upgrader
@@ -305,6 +312,23 @@ func (em *WSEventManager) ConnectedClients() int {
 	em.mu.RLock()
 	defer em.mu.RUnlock()
 	return len(em.clients)
+}
+
+// Info returns a snapshot of the WebSocket event server state.
+func (em *WSEventManager) Info() EventServerInfo {
+	em.mu.RLock()
+	defer em.mu.RUnlock()
+
+	info := EventServerInfo{
+		ConnectedClients: len(em.clients),
+		BufferedEvents:   len(em.eventBuffer),
+	}
+	for _, state := range em.clients {
+		state.mu.RLock()
+		info.Subscriptions += len(state.subscriptions)
+		state.mu.RUnlock()
+	}
+	return info
 }
 
 // Close shuts down the event manager.

@@ -1040,6 +1040,18 @@ func TestHandleWSMessage_Extended_Good(t *testing.T) {
 		assert.True(t, handled)
 	})
 
+	t.Run("webview errors", func(t *testing.T) {
+		result, handled, err := svc.handleWSMessage(WSMessage{
+			Action: "webview:errors",
+			Data:   map[string]any{"window": "editor", "limit": float64(10)},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+		errors, ok := result.([]webview.ExceptionInfo)
+		require.True(t, ok)
+		assert.Len(t, errors, 0)
+	})
+
 	t.Run("tray message", func(t *testing.T) {
 		_, handled, err := svc.handleWSMessage(WSMessage{
 			Action: "tray:show-message",
@@ -1083,5 +1095,15 @@ func TestHandleWSMessage_Extended_Good(t *testing.T) {
 		require.NoError(t, err)
 		assert.True(t, handled)
 		assert.Equal(t, "OK", result)
+	})
+
+	t.Run("event info", func(t *testing.T) {
+		result, handled, err := svc.handleWSMessage(WSMessage{Action: "event:info"})
+		require.NoError(t, err)
+		assert.True(t, handled)
+		info, ok := result.(EventServerInfo)
+		require.True(t, ok)
+		assert.Equal(t, 0, info.ConnectedClients)
+		assert.Equal(t, 0, info.Subscriptions)
 	})
 }

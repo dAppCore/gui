@@ -573,6 +573,16 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 			return nil, false, e
 		}
 		result, handled, err = s.Core().PERFORM(webview.TaskCloseDevTools{Window: w})
+	case "webview:errors":
+		w, e := wsRequire(msg.Data, "window")
+		if e != nil {
+			return nil, false, e
+		}
+		limit := 0
+		if l, ok := msg.Data["limit"].(float64); ok {
+			limit = int(l)
+		}
+		result, handled, err = s.Core().QUERY(webview.QueryExceptions{Window: w, Limit: limit})
 	case "layout:beside-editor":
 		editor, _ := msg.Data["editor"].(string)
 		windowName, _ := msg.Data["window"].(string)
@@ -663,9 +673,12 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 		if h, ok := msg.Data["height"].(float64); ok {
 			height = int(h)
 		}
+		screenWidth, screenHeight := s.primaryScreenSize()
 		result, handled, err = s.Core().QUERY(window.QueryFindSpace{
-			Width:  width,
-			Height: height,
+			Width:        width,
+			Height:       height,
+			ScreenWidth:  screenWidth,
+			ScreenHeight: screenHeight,
 		})
 	case "screen:list":
 		result, handled, err = s.Core().QUERY(screen.QueryAll{})
@@ -862,6 +875,8 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 		result, handled, err = s.Core().PERFORM(systray.TaskSetTrayMenu{Items: items})
 	case "tray:info":
 		result, handled, err = s.GetTrayInfo(), true, nil
+	case "event:info":
+		result, handled, err = s.GetEventInfo(), true, nil
 	case "theme:get":
 		result, handled, err = s.GetTheme(), true, nil
 	case "theme:system":
@@ -1962,6 +1977,14 @@ func (s *Service) ShowTrayMessage(title, message string) error {
 // GetEventManager returns the event manager for WebSocket event subscriptions.
 func (s *Service) GetEventManager() *WSEventManager {
 	return s.events
+}
+
+// GetEventInfo returns a summary of the live WebSocket event server state.
+func (s *Service) GetEventInfo() EventServerInfo {
+	if s.events == nil {
+		return EventServerInfo{}
+	}
+	return s.events.Info()
 }
 
 // --- Menu (handlers stay in display, structure delegated via IPC) ---

@@ -40,8 +40,10 @@ type QueryWindowBounds struct{ Name string }
 
 // QueryFindSpace returns a suggested free placement for a new window.
 type QueryFindSpace struct {
-	Width  int
-	Height int
+	Width        int
+	Height       int
+	ScreenWidth  int
+	ScreenHeight int
 }
 
 // QueryLayoutSuggestion returns a layout recommendation for the current screen.
