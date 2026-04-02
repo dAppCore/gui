@@ -16,6 +16,11 @@ export class ApiConfigService {
     return this._baseUrl;
   }
 
+  /** The effective API base URL, falling back to the current origin. */
+  get effectiveBaseUrl(): string {
+    return this._baseUrl || window.location.origin;
+  }
+
   /** Override the base URL. Strips trailing slash if present. */
   set baseUrl(url: string) {
     this._baseUrl = url.replace(/\/+$/, '');
@@ -24,6 +29,6 @@ export class ApiConfigService {
   /** Build a full URL for the given path. */
   url(path: string): string {
     const cleanPath = path.startsWith('/') ? path : `/${path}`;
-    return `${this._baseUrl}${cleanPath}`;
+    return `${this.effectiveBaseUrl}${cleanPath}`;
   }
 }

@@ -165,7 +165,7 @@ export class DashboardComponent {
   protected readonly providers = this.discovery.providers;
   protected readonly providerCount = computed(() => this.providers().length);
   protected readonly connected = this.websocket.connected;
-  protected readonly apiBase = computed(() => this.apiConfig.baseUrl || window.location.origin);
+  protected readonly apiBase = computed(() => this.apiConfig.effectiveBaseUrl);
 
   protected readonly featuredProviders = computed<ProviderInfo[]>(() =>
     this.providers().filter((provider) => provider.element?.tag).slice(0, 6),

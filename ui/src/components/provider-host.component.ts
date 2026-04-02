@@ -110,7 +110,7 @@ export class ProviderHostComponent implements OnInit, OnChanges {
 
     // Create and append the custom element
     const el = this.renderer.createElement(this.tag);
-    const url = this.apiUrl || this.apiConfig.baseUrl;
+    const url = this.apiUrl || this.apiConfig.effectiveBaseUrl;
     if (url) {
       this.renderer.setAttribute(el, 'api-url', url);
     }

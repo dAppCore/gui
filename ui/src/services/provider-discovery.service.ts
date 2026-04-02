@@ -33,42 +33,69 @@ export class ProviderDiscoveryService {
   readonly providers = this._providers.asReadonly();
 
   private discovered = false;
+  private discoveryPromise: Promise<void> | null = null;
+  private discoveryGeneration = 0;
 
   constructor(private apiConfig: ApiConfigService) {}
 
   /** Fetch providers from the API and load custom element scripts. */
-  async discover(): Promise<void> {
-    if (this.discovered) {
+  async discover(force = false): Promise<void> {
+    if (!force && this.discovered) {
       return;
     }
 
+    if (!force && this.discoveryPromise) {
+      return this.discoveryPromise;
+    }
+
+    const generation = ++this.discoveryGeneration;
+    const promise = this.doDiscover(generation);
+    this.discoveryPromise = promise;
+
     try {
-      const res = await fetch(this.apiConfig.url('/api/v1/providers'));
-      if (!res.ok) {
-        console.warn('ProviderDiscoveryService: failed to fetch providers:', res.statusText);
-        return;
-      }
-
-      const data = await res.json();
-      const providers: ProviderInfo[] = data.providers ?? [];
-      this._providers.set(providers);
-      this.discovered = true;
-
-      // Load custom elements for Renderable providers
-      for (const p of providers) {
-        if (p.element?.tag && p.element?.source) {
-          await this.loadElement(p.element.tag, p.element.source);
-        }
-      }
+      await promise;
     } catch (err) {
       console.warn('ProviderDiscoveryService: discovery failed:', err);
+    } finally {
+      if (this.discoveryPromise === promise) {
+        this.discoveryPromise = null;
+      }
     }
   }
 
   /** Refresh the provider list (force re-discovery). */
   async refresh(): Promise<void> {
     this.discovered = false;
-    await this.discover();
+    await this.discover(true);
+  }
+
+  private async doDiscover(generation: number): Promise<void> {
+    const res = await fetch(this.apiConfig.url('/api/v1/providers'));
+    if (!res.ok) {
+      console.warn('ProviderDiscoveryService: failed to fetch providers:', res.statusText);
+      return;
+    }
+
+    const data = await res.json();
+    const providers: ProviderInfo[] = data.providers ?? [];
+
+    if (generation !== this.discoveryGeneration) {
+      return;
+    }
+
+    this._providers.set(providers);
+    this.discovered = true;
+
+    // Load custom elements for renderable providers.
+    for (const provider of providers) {
+      if (generation !== this.discoveryGeneration) {
+        return;
+      }
+
+      if (provider.element?.tag && provider.element?.source) {
+        await this.loadElement(provider.element.tag, provider.element.source);
+      }
+    }
   }
 
   /** Dynamically load a custom element script if not already registered. */

@@ -32,10 +32,10 @@ export class WebSocketService implements OnDestroy {
     }
 
     this.shouldReconnect = true;
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const base = this.apiConfig.baseUrl || window.location.origin;
+    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+    const base = this.apiConfig.effectiveBaseUrl;
     const wsBase = base.replace(/^http/, 'ws');
-    const url = `${wsBase.length > 0 ? wsBase : `${protocol}//${window.location.host}`}${path}`;
+    const url = `${wsBase}${cleanPath}`;
 
     this.ws = new WebSocket(url);
 
