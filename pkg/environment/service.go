@@ -3,6 +3,7 @@ package environment
 
 import (
 	"context"
+	"fmt"
 
 	"forge.lthn.ai/core/go/pkg/core"
 )
@@ -56,10 +57,7 @@ func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
 	switch q.(type) {
 	case QueryTheme:
-		isDark := s.platform.IsDarkMode()
-		if s.overrideDark != nil {
-			isDark = *s.overrideDark
-		}
+		isDark := s.currentTheme()
 		theme := "light"
 		if isDark {
 			theme = "dark"
@@ -79,16 +77,51 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 	case TaskOpenFileManager:
 		return nil, true, s.platform.OpenFileManager(t.Path, t.Select)
 	case TaskSetTheme:
-		isDark := t.IsDark
-		s.overrideDark = &isDark
-		if setter, ok := s.platform.(interface{ SetTheme(bool) error }); ok {
-			if err := setter.SetTheme(isDark); err != nil {
-				return nil, true, err
-			}
+		if err := s.taskSetTheme(t); err != nil {
+			return nil, true, err
 		}
-		_ = s.Core().ACTION(ActionThemeChanged{IsDark: isDark})
 		return nil, true, nil
 	default:
 		return nil, false, nil
 	}
+}
+
+func (s *Service) taskSetTheme(task TaskSetTheme) error {
+	shouldApplyTheme := false
+	switch task.Theme {
+	case "dark":
+		isDark := true
+		s.overrideDark = &isDark
+		shouldApplyTheme = true
+	case "light":
+		isDark := false
+		s.overrideDark = &isDark
+		shouldApplyTheme = true
+	case "system":
+		s.overrideDark = nil
+	case "":
+		isDark := task.IsDark
+		s.overrideDark = &isDark
+		shouldApplyTheme = true
+	default:
+		return fmt.Errorf("invalid theme mode: %s", task.Theme)
+	}
+
+	if shouldApplyTheme {
+		if setter, ok := s.platform.(interface{ SetTheme(bool) error }); ok {
+			if err := setter.SetTheme(s.currentTheme()); err != nil {
+				return err
+			}
+		}
+	}
+
+	_ = s.Core().ACTION(ActionThemeChanged{IsDark: s.currentTheme()})
+	return nil
+}
+
+func (s *Service) currentTheme() bool {
+	if s.overrideDark != nil {
+		return *s.overrideDark
+	}
+	return s.platform.IsDarkMode()
 }

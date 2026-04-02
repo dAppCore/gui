@@ -17,8 +17,10 @@ type TaskOpenFileManager struct {
 }
 
 // TaskSetTheme applies an application theme override when supported.
+// Theme values: "dark", "light", or "system".
 type TaskSetTheme struct {
-	IsDark bool `json:"isDark"`
+	Theme  string `json:"theme,omitempty"`
+	IsDark bool   `json:"isDark,omitempty"`
 }
 
 // ActionThemeChanged is broadcast when the system theme changes.

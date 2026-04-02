@@ -1146,6 +1146,19 @@ func TestHandleWSMessage_Extended_Good(t *testing.T) {
 		assert.True(t, handled)
 	})
 
+	t.Run("theme set", func(t *testing.T) {
+		_, handled, err := svc.handleWSMessage(WSMessage{
+			Action: "theme:set",
+			Data:   map[string]any{"theme": "light"},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+
+		theme := svc.GetTheme()
+		require.NotNil(t, theme)
+		assert.False(t, theme.IsDark)
+	})
+
 	t.Run("webview devtools", func(t *testing.T) {
 		_, handled, err := svc.handleWSMessage(WSMessage{
 			Action: "webview:devtools-open",

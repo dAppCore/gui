@@ -8,6 +8,7 @@ import (
 	"forge.lthn.ai/core/go/pkg/core"
 	"forge.lthn.ai/core/gui/pkg/clipboard"
 	"forge.lthn.ai/core/gui/pkg/display"
+	"forge.lthn.ai/core/gui/pkg/environment"
 	"forge.lthn.ai/core/gui/pkg/notification"
 	"forge.lthn.ai/core/gui/pkg/screen"
 	"forge.lthn.ai/core/gui/pkg/webview"
@@ -53,6 +54,26 @@ func (m *mockNotificationPlatform) Send(opts notification.NotificationOptions) e
 }
 func (m *mockNotificationPlatform) RequestPermission() (bool, error) { return true, nil }
 func (m *mockNotificationPlatform) CheckPermission() (bool, error)   { return true, nil }
+
+type mockEnvironmentPlatform struct {
+	isDark bool
+}
+
+func (m *mockEnvironmentPlatform) IsDarkMode() bool { return m.isDark }
+func (m *mockEnvironmentPlatform) Info() environment.EnvironmentInfo {
+	return environment.EnvironmentInfo{}
+}
+func (m *mockEnvironmentPlatform) AccentColour() string { return "" }
+func (m *mockEnvironmentPlatform) OpenFileManager(path string, selectFile bool) error {
+	return nil
+}
+func (m *mockEnvironmentPlatform) OnThemeChange(handler func(isDark bool)) func() {
+	return func() {}
+}
+func (m *mockEnvironmentPlatform) SetTheme(isDark bool) error {
+	m.isDark = isDark
+	return nil
+}
 
 type mockScreenPlatform struct {
 	screens []screen.Screen
@@ -107,6 +128,23 @@ func TestMCP_Good_DialogMessage(t *testing.T) {
 	assert.True(t, result.Success)
 	assert.True(t, mock.sendCalled)
 	assert.Equal(t, notification.SeverityError, mock.lastOpts.Severity)
+}
+
+func TestMCP_Good_ThemeSetString(t *testing.T) {
+	mock := &mockEnvironmentPlatform{isDark: true}
+	c, err := core.New(
+		core.WithService(environment.Register(mock)),
+		core.WithServiceLock(),
+	)
+	require.NoError(t, err)
+	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+
+	sub := New(c)
+	_, result, err := sub.themeSet(context.Background(), nil, ThemeSetInput{Theme: "light"})
+	require.NoError(t, err)
+	assert.Equal(t, "light", result.Theme.Theme)
+	assert.False(t, result.Theme.IsDark)
+	assert.False(t, mock.isDark)
 }
 
 func TestMCP_Good_WindowTitleSetAlias(t *testing.T) {

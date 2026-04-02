@@ -142,7 +142,7 @@ func TestThemeChange_ActionBroadcast_Good(t *testing.T) {
 
 func TestTaskSetTheme_Good(t *testing.T) {
 	mock, c := newTestService(t)
-	_, handled, err := c.PERFORM(TaskSetTheme{IsDark: false})
+	_, handled, err := c.PERFORM(TaskSetTheme{Theme: "light"})
 	require.NoError(t, err)
 	assert.True(t, handled)
 	assert.True(t, mock.setThemeSeen)
@@ -153,4 +153,19 @@ func TestTaskSetTheme_Good(t *testing.T) {
 	theme := result.(ThemeInfo)
 	assert.False(t, theme.IsDark)
 	assert.Equal(t, "light", theme.Theme)
+}
+
+func TestTaskSetTheme_Compatibility_Good(t *testing.T) {
+	mock, c := newTestService(t)
+	_, handled, err := c.PERFORM(TaskSetTheme{IsDark: true})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.True(t, mock.setThemeSeen)
+
+	result, handled, err := c.QUERY(QueryTheme{})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	theme := result.(ThemeInfo)
+	assert.True(t, theme.IsDark)
+	assert.Equal(t, "dark", theme.Theme)
 }

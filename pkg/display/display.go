@@ -51,9 +51,9 @@ type Service struct {
 	events     *WSEventManager
 }
 
-// New is the constructor for the display service.
-// Use: svc, err := display.New()
-func New() (*Service, error) {
+// NewService creates a display service with empty config sections.
+// Use: svc, err := display.NewService()
+func NewService() (*Service, error) {
 	return &Service{
 		configData: map[string]map[string]any{
 			"window":  {},
@@ -63,12 +63,17 @@ func New() (*Service, error) {
 	}, nil
 }
 
+// Deprecated: use NewService.
+func New() (*Service, error) {
+	return NewService()
+}
+
 // Register creates a factory closure that captures the Wails app.
 // Use: core.WithService(display.Register(app))
 // Pass nil for testing without a Wails runtime.
 func Register(wailsApp *application.App) func(*core.Core) (any, error) {
 	return func(c *core.Core) (any, error) {
-		s, err := New()
+		s, err := NewService()
 		if err != nil {
 			return nil, err
 		}
@@ -1028,6 +1033,10 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 	case "theme:system":
 		result, handled, err = s.GetSystemTheme(), true, nil
 	case "theme:set":
+		if theme, ok := msg.Data["theme"].(string); ok && theme != "" {
+			result, handled, err = nil, true, s.SetThemeMode(theme)
+			break
+		}
 		isDark, _ := msg.Data["isDark"].(bool)
 		result, handled, err = nil, true, s.SetTheme(isDark)
 	case "dialog:open-file":
@@ -2148,7 +2157,16 @@ func (s *Service) GetSystemTheme() string {
 // SetTheme overrides the application theme.
 // Use: _ = svc.SetTheme(true)
 func (s *Service) SetTheme(isDark bool) error {
-	_, handled, err := s.Core().PERFORM(environment.TaskSetTheme{IsDark: isDark})
+	if isDark {
+		return s.SetThemeMode("dark")
+	}
+	return s.SetThemeMode("light")
+}
+
+// SetThemeMode overrides the application theme using a declarative mode string.
+// Use: _ = svc.SetThemeMode("system")
+func (s *Service) SetThemeMode(theme string) error {
+	_, handled, err := s.Core().PERFORM(environment.TaskSetTheme{Theme: theme})
 	if err != nil {
 		return err
 	}
