@@ -695,6 +695,31 @@ func TestHandleWSMessage_Extended_Good(t *testing.T) {
 		assert.Equal(t, "side-by-side", suggestion.Mode)
 	})
 
+	t.Run("layout stack", func(t *testing.T) {
+		_, handled, err := svc.handleWSMessage(WSMessage{
+			Action: "layout:stack",
+			Data: map[string]any{
+				"windows": []any{"editor", "assistant"},
+				"offsetX": 25,
+				"offsetY": 30,
+			},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+	})
+
+	t.Run("layout workflow", func(t *testing.T) {
+		_, handled, err := svc.handleWSMessage(WSMessage{
+			Action: "layout:workflow",
+			Data: map[string]any{
+				"workflow": "coding",
+				"windows":  []any{"editor", "assistant"},
+			},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+	})
+
 	t.Run("clipboard image read", func(t *testing.T) {
 		result, handled, err := svc.handleWSMessage(WSMessage{Action: "clipboard:read-image"})
 		require.NoError(t, err)

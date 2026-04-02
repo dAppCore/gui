@@ -61,6 +61,16 @@ var workflowNames = map[WorkflowLayout]string{
 
 func (w WorkflowLayout) String() string { return workflowNames[w] }
 
+// ParseWorkflowLayout converts a workflow name into its enum value.
+func ParseWorkflowLayout(name string) (WorkflowLayout, bool) {
+	for workflow, workflowName := range workflowNames {
+		if workflowName == name {
+			return workflow, true
+		}
+	}
+	return WorkflowCoding, false
+}
+
 // TileWindows arranges the named windows in the given mode across the screen area.
 func (m *Manager) TileWindows(mode TileMode, names []string, screenW, screenH int) error {
 	windows := make([]PlatformWindow, 0, len(names))

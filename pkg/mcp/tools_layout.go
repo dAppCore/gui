@@ -246,6 +246,54 @@ func (s *Subsystem) windowArrangePair(_ context.Context, _ *mcp.CallToolRequest,
 	return nil, WindowArrangePairOutput{Success: true}, nil
 }
 
+// --- layout_stack ---
+
+type LayoutStackInput struct {
+	Windows []string `json:"windows,omitempty"`
+	OffsetX int      `json:"offsetX,omitempty"`
+	OffsetY int      `json:"offsetY,omitempty"`
+}
+type LayoutStackOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) layoutStack(_ context.Context, _ *mcp.CallToolRequest, input LayoutStackInput) (*mcp.CallToolResult, LayoutStackOutput, error) {
+	_, _, err := s.core.PERFORM(window.TaskStackWindows{
+		Windows: input.Windows,
+		OffsetX: input.OffsetX,
+		OffsetY: input.OffsetY,
+	})
+	if err != nil {
+		return nil, LayoutStackOutput{}, err
+	}
+	return nil, LayoutStackOutput{Success: true}, nil
+}
+
+// --- layout_workflow ---
+
+type LayoutWorkflowInput struct {
+	Workflow string   `json:"workflow"`
+	Windows  []string `json:"windows,omitempty"`
+}
+type LayoutWorkflowOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) layoutWorkflow(_ context.Context, _ *mcp.CallToolRequest, input LayoutWorkflowInput) (*mcp.CallToolResult, LayoutWorkflowOutput, error) {
+	workflow, ok := window.ParseWorkflowLayout(input.Workflow)
+	if !ok {
+		return nil, LayoutWorkflowOutput{}, fmt.Errorf("unknown workflow: %s", input.Workflow)
+	}
+	_, _, err := s.core.PERFORM(window.TaskApplyWorkflow{
+		Workflow: workflow,
+		Windows:  input.Windows,
+	})
+	if err != nil {
+		return nil, LayoutWorkflowOutput{}, err
+	}
+	return nil, LayoutWorkflowOutput{Success: true}, nil
+}
+
 // --- Registration ---
 
 func (s *Subsystem) registerLayoutTools(server *mcp.Server) {
@@ -260,6 +308,8 @@ func (s *Subsystem) registerLayoutTools(server *mcp.Server) {
 	mcp.AddTool(server, &mcp.Tool{Name: "layout_suggest", Description: "Suggest an optimal layout for the current screen"}, s.layoutSuggest)
 	mcp.AddTool(server, &mcp.Tool{Name: "screen_find_space", Description: "Find an empty area for a new window"}, s.screenFindSpace)
 	mcp.AddTool(server, &mcp.Tool{Name: "window_arrange_pair", Description: "Arrange two windows side-by-side"}, s.windowArrangePair)
+	mcp.AddTool(server, &mcp.Tool{Name: "layout_stack", Description: "Cascade windows with an offset"}, s.layoutStack)
+	mcp.AddTool(server, &mcp.Tool{Name: "layout_workflow", Description: "Apply a predefined workflow layout"}, s.layoutWorkflow)
 }
 
 func primaryScreenSize(c *core.Core) (int, int) {

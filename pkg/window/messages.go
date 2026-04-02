@@ -130,6 +130,19 @@ type TaskBesideEditor struct {
 	Window string
 }
 
+// TaskStackWindows cascades windows with a shared offset.
+type TaskStackWindows struct {
+	Windows []string
+	OffsetX int
+	OffsetY int
+}
+
+// TaskApplyWorkflow applies a predefined workflow layout to windows.
+type TaskApplyWorkflow struct {
+	Workflow WorkflowLayout
+	Windows  []string
+}
+
 // TaskSaveConfig persists this service's config section via the display orchestrator.
 type TaskSaveConfig struct{ Value map[string]any }
 

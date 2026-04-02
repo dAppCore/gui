@@ -141,6 +141,45 @@ func TestTaskSetSize_Good(t *testing.T) {
 	assert.Equal(t, 600, info.Height)
 }
 
+func TestTaskStackWindows_Good(t *testing.T) {
+	_, c := newTestWindowService(t)
+	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("one")}})
+	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("two")}})
+
+	_, handled, err := c.PERFORM(TaskStackWindows{
+		Windows: []string{"one", "two"},
+		OffsetX: 20,
+		OffsetY: 30,
+	})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	result, _, _ := c.QUERY(QueryWindowByName{Name: "two"})
+	info := result.(*WindowInfo)
+	assert.Equal(t, 20, info.X)
+	assert.Equal(t, 30, info.Y)
+}
+
+func TestTaskApplyWorkflow_Good(t *testing.T) {
+	_, c := newTestWindowService(t)
+	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("editor")}})
+	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("assistant")}})
+
+	_, handled, err := c.PERFORM(TaskApplyWorkflow{
+		Workflow: WorkflowCoding,
+		Windows:  []string{"editor", "assistant"},
+	})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	editorResult, _, _ := c.QUERY(QueryWindowByName{Name: "editor"})
+	assistantResult, _, _ := c.QUERY(QueryWindowByName{Name: "assistant"})
+	editor := editorResult.(*WindowInfo)
+	assistant := assistantResult.(*WindowInfo)
+	assert.Greater(t, editor.Width, assistant.Width)
+	assert.Equal(t, editor.Width, assistant.X)
+}
+
 func TestTaskMaximise_Good(t *testing.T) {
 	_, c := newTestWindowService(t)
 	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("test")}})

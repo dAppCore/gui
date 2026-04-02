@@ -485,6 +485,43 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 			Editor: editor,
 			Window: windowName,
 		})
+	case "layout:stack":
+		offsetX, _ := msg.Data["offsetX"].(float64)
+		offsetY, _ := msg.Data["offsetY"].(float64)
+		var names []string
+		if raw, ok := msg.Data["windows"].([]any); ok {
+			for _, v := range raw {
+				if name, ok := v.(string); ok && name != "" {
+					names = append(names, name)
+				}
+			}
+		}
+		result, handled, err = s.Core().PERFORM(window.TaskStackWindows{
+			Windows: names,
+			OffsetX: int(offsetX),
+			OffsetY: int(offsetY),
+		})
+	case "layout:workflow":
+		workflowName, e := wsRequire(msg.Data, "workflow")
+		if e != nil {
+			return nil, false, e
+		}
+		workflow, ok := window.ParseWorkflowLayout(workflowName)
+		if !ok {
+			return nil, false, fmt.Errorf("ws: unknown workflow %q", workflowName)
+		}
+		var names []string
+		if raw, ok := msg.Data["windows"].([]any); ok {
+			for _, v := range raw {
+				if name, ok := v.(string); ok && name != "" {
+					names = append(names, name)
+				}
+			}
+		}
+		result, handled, err = s.Core().PERFORM(window.TaskApplyWorkflow{
+			Workflow: workflow,
+			Windows:  names,
+		})
 	case "layout:suggest":
 		windowCount := 0
 		if count, ok := msg.Data["windowCount"].(float64); ok {

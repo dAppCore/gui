@@ -161,6 +161,10 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 		return nil, true, s.taskArrangePair(t.First, t.Second)
 	case TaskBesideEditor:
 		return nil, true, s.taskBesideEditor(t.Editor, t.Window)
+	case TaskStackWindows:
+		return nil, true, s.taskStackWindows(t.Windows, t.OffsetX, t.OffsetY)
+	case TaskApplyWorkflow:
+		return nil, true, s.taskApplyWorkflow(t.Workflow, t.Windows)
 	default:
 		return nil, false, nil
 	}
@@ -406,6 +410,21 @@ func (s *Service) taskBesideEditor(editorName, windowName string) error {
 		return fmt.Errorf("companion window not found")
 	}
 	return s.manager.BesideEditor(editorName, windowName, screenW, screenH)
+}
+
+func (s *Service) taskStackWindows(names []string, offsetX, offsetY int) error {
+	if len(names) == 0 {
+		names = s.manager.List()
+	}
+	return s.manager.StackWindows(names, offsetX, offsetY)
+}
+
+func (s *Service) taskApplyWorkflow(workflow WorkflowLayout, names []string) error {
+	screenW, screenH := s.primaryScreenSize()
+	if len(names) == 0 {
+		names = s.manager.List()
+	}
+	return s.manager.ApplyWorkflow(workflow, names, screenW, screenH)
 }
 
 func (s *Service) detectEditorWindow() string {
