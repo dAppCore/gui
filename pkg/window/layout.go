@@ -11,6 +11,7 @@ import (
 )
 
 // Layout is a named window arrangement.
+// Use: layout := window.Layout{Name: "coding"}
 type Layout struct {
 	Name      string                 `json:"name"`
 	Windows   map[string]WindowState `json:"windows"`
@@ -19,6 +20,7 @@ type Layout struct {
 }
 
 // LayoutInfo is a summary of a layout.
+// Use: info := window.LayoutInfo{Name: "coding", WindowCount: 2}
 type LayoutInfo struct {
 	Name        string `json:"name"`
 	WindowCount int    `json:"windowCount"`
@@ -27,6 +29,7 @@ type LayoutInfo struct {
 }
 
 // LayoutManager persists named window arrangements to ~/.config/Core/layouts.json.
+// Use: lm := window.NewLayoutManager()
 type LayoutManager struct {
 	configDir string
 	layouts   map[string]Layout
@@ -34,6 +37,7 @@ type LayoutManager struct {
 }
 
 // NewLayoutManager creates a LayoutManager loading from the default config directory.
+// Use: lm := window.NewLayoutManager()
 func NewLayoutManager() *LayoutManager {
 	lm := &LayoutManager{
 		layouts: make(map[string]Layout),
@@ -42,30 +46,31 @@ func NewLayoutManager() *LayoutManager {
 	if err == nil {
 		lm.configDir = filepath.Join(configDir, "Core")
 	}
-	lm.load()
+	lm.loadLayouts()
 	return lm
 }
 
 // NewLayoutManagerWithDir creates a LayoutManager loading from a custom config directory.
 // Useful for testing or when the default config directory is not appropriate.
+// Use: lm := window.NewLayoutManagerWithDir(t.TempDir())
 func NewLayoutManagerWithDir(configDir string) *LayoutManager {
 	lm := &LayoutManager{
 		configDir: configDir,
 		layouts:   make(map[string]Layout),
 	}
-	lm.load()
+	lm.loadLayouts()
 	return lm
 }
 
-func (lm *LayoutManager) filePath() string {
+func (lm *LayoutManager) layoutsFilePath() string {
 	return filepath.Join(lm.configDir, "layouts.json")
 }
 
-func (lm *LayoutManager) load() {
+func (lm *LayoutManager) loadLayouts() {
 	if lm.configDir == "" {
 		return
 	}
-	data, err := os.ReadFile(lm.filePath())
+	data, err := os.ReadFile(lm.layoutsFilePath())
 	if err != nil {
 		return
 	}
@@ -74,7 +79,7 @@ func (lm *LayoutManager) load() {
 	_ = json.Unmarshal(data, &lm.layouts)
 }
 
-func (lm *LayoutManager) save() {
+func (lm *LayoutManager) saveLayouts() {
 	if lm.configDir == "" {
 		return
 	}
@@ -85,10 +90,11 @@ func (lm *LayoutManager) save() {
 		return
 	}
 	_ = os.MkdirAll(lm.configDir, 0o755)
-	_ = os.WriteFile(lm.filePath(), data, 0o644)
+	_ = os.WriteFile(lm.layoutsFilePath(), data, 0o644)
 }
 
 // SaveLayout creates or updates a named layout.
+// Use: _ = lm.SaveLayout("coding", windowStates)
 func (lm *LayoutManager) SaveLayout(name string, windowStates map[string]WindowState) error {
 	if name == "" {
 		return fmt.Errorf("layout name cannot be empty")
@@ -108,11 +114,12 @@ func (lm *LayoutManager) SaveLayout(name string, windowStates map[string]WindowS
 	}
 	lm.layouts[name] = layout
 	lm.mu.Unlock()
-	lm.save()
+	lm.saveLayouts()
 	return nil
 }
 
 // GetLayout returns a layout by name.
+// Use: layout, ok := lm.GetLayout("coding")
 func (lm *LayoutManager) GetLayout(name string) (Layout, bool) {
 	lm.mu.RLock()
 	defer lm.mu.RUnlock()
@@ -121,6 +128,7 @@ func (lm *LayoutManager) GetLayout(name string) (Layout, bool) {
 }
 
 // ListLayouts returns info summaries for all layouts.
+// Use: layouts := lm.ListLayouts()
 func (lm *LayoutManager) ListLayouts() []LayoutInfo {
 	lm.mu.RLock()
 	defer lm.mu.RUnlock()
@@ -135,9 +143,10 @@ func (lm *LayoutManager) ListLayouts() []LayoutInfo {
 }
 
 // DeleteLayout removes a layout by name.
+// Use: lm.DeleteLayout("coding")
 func (lm *LayoutManager) DeleteLayout(name string) {
 	lm.mu.Lock()
 	delete(lm.layouts, name)
 	lm.mu.Unlock()
-	lm.save()
+	lm.saveLayouts()
 }

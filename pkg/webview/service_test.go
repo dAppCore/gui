@@ -2,7 +2,13 @@
 package webview
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
+	"image"
+	"image/color"
+	"image/png"
+	"strings"
 	"testing"
 
 	"forge.lthn.ai/core/go/pkg/core"
@@ -12,14 +18,17 @@ import (
 )
 
 type mockConnector struct {
-	url        string
-	title      string
-	html       string
-	evalResult any
-	screenshot []byte
-	console    []ConsoleMessage
-	elements   []*ElementInfo
-	closed     bool
+	url         string
+	title       string
+	html        string
+	evalResult  any
+	evalFn      func(script string) (any, error)
+	screenshot  []byte
+	console     []ConsoleMessage
+	elements    []*ElementInfo
+	closed      bool
+	pdfBytes    []byte
+	printCalled bool
 
 	lastClickSel       string
 	lastTypeSel        string
@@ -35,23 +44,57 @@ type mockConnector struct {
 	lastViewportW      int
 	lastViewportH      int
 	consoleClearCalled bool
+	lastEvalScript     string
 }
 
-func (m *mockConnector) Navigate(url string) error        { m.lastNavURL = url; return nil }
-func (m *mockConnector) Click(sel string) error           { m.lastClickSel = sel; return nil }
-func (m *mockConnector) Type(sel, text string) error      { m.lastTypeSel = sel; m.lastTypeText = text; return nil }
-func (m *mockConnector) Hover(sel string) error           { m.lastHoverSel = sel; return nil }
-func (m *mockConnector) Select(sel, val string) error     { m.lastSelectSel = sel; m.lastSelectVal = val; return nil }
-func (m *mockConnector) Check(sel string, c bool) error   { m.lastCheckSel = sel; m.lastCheckVal = c; return nil }
-func (m *mockConnector) Evaluate(s string) (any, error)   { return m.evalResult, nil }
-func (m *mockConnector) Screenshot() ([]byte, error)      { return m.screenshot, nil }
-func (m *mockConnector) GetURL() (string, error)          { return m.url, nil }
-func (m *mockConnector) GetTitle() (string, error)        { return m.title, nil }
+func (m *mockConnector) Navigate(url string) error { m.lastNavURL = url; return nil }
+func (m *mockConnector) Click(sel string) error    { m.lastClickSel = sel; return nil }
+func (m *mockConnector) Type(sel, text string) error {
+	m.lastTypeSel = sel
+	m.lastTypeText = text
+	return nil
+}
+func (m *mockConnector) Hover(sel string) error { m.lastHoverSel = sel; return nil }
+func (m *mockConnector) Select(sel, val string) error {
+	m.lastSelectSel = sel
+	m.lastSelectVal = val
+	return nil
+}
+func (m *mockConnector) Check(sel string, c bool) error {
+	m.lastCheckSel = sel
+	m.lastCheckVal = c
+	return nil
+}
+func (m *mockConnector) Evaluate(s string) (any, error) {
+	m.lastEvalScript = s
+	if m.evalFn != nil {
+		return m.evalFn(s)
+	}
+	return m.evalResult, nil
+}
+func (m *mockConnector) Screenshot() ([]byte, error)        { return m.screenshot, nil }
+func (m *mockConnector) GetURL() (string, error)            { return m.url, nil }
+func (m *mockConnector) GetTitle() (string, error)          { return m.title, nil }
 func (m *mockConnector) GetHTML(sel string) (string, error) { return m.html, nil }
-func (m *mockConnector) ClearConsole()                    { m.consoleClearCalled = true }
-func (m *mockConnector) Close() error                     { m.closed = true; return nil }
-func (m *mockConnector) SetViewport(w, h int) error       { m.lastViewportW = w; m.lastViewportH = h; return nil }
-func (m *mockConnector) UploadFile(sel string, p []string) error { m.lastUploadSel = sel; m.lastUploadPaths = p; return nil }
+func (m *mockConnector) ClearConsole()                      { m.consoleClearCalled = true }
+func (m *mockConnector) Print() error                       { m.printCalled = true; return nil }
+func (m *mockConnector) Close() error                       { m.closed = true; return nil }
+func (m *mockConnector) SetViewport(w, h int) error {
+	m.lastViewportW = w
+	m.lastViewportH = h
+	return nil
+}
+func (m *mockConnector) PrintToPDF() ([]byte, error) {
+	if len(m.pdfBytes) == 0 {
+		return []byte("%PDF-1.4\n"), nil
+	}
+	return m.pdfBytes, nil
+}
+func (m *mockConnector) UploadFile(sel string, p []string) error {
+	m.lastUploadSel = sel
+	m.lastUploadPaths = p
+	return nil
+}
 
 func (m *mockConnector) QuerySelector(sel string) (*ElementInfo, error) {
 	if len(m.elements) > 0 {
@@ -68,8 +111,12 @@ func (m *mockConnector) GetConsole() []ConsoleMessage { return m.console }
 
 func newTestService(t *testing.T, mock *mockConnector) (*Service, *core.Core) {
 	t.Helper()
-	factory := Register()
-	c, err := core.New(core.WithService(factory), core.WithServiceLock())
+	factory := Register(Options{})
+	c, err := core.New(
+		core.WithService(window.Register(window.NewMockPlatform())),
+		core.WithService(factory),
+		core.WithServiceLock(),
+	)
 	require.NoError(t, err)
 	require.NoError(t, c.ServiceStartup(context.Background(), nil))
 	svc := core.MustServiceFor[*Service](c, "webview")
@@ -127,6 +174,29 @@ func TestQueryConsole_Good_Limit(t *testing.T) {
 	assert.Equal(t, "b", msgs[0].Text) // last 2
 }
 
+func TestQueryExceptions_Good(t *testing.T) {
+	_, c := newTestService(t, &mockConnector{})
+
+	require.NoError(t, c.ACTION(ActionException{
+		Window: "main",
+		Exception: ExceptionInfo{
+			Text:       "boom",
+			URL:        "https://example.com/app.js",
+			Line:       12,
+			Column:     4,
+			StackTrace: "Error: boom",
+		},
+	}))
+
+	result, handled, err := c.QUERY(QueryExceptions{Window: "main"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	exceptions, _ := result.([]ExceptionInfo)
+	require.Len(t, exceptions, 1)
+	assert.Equal(t, "boom", exceptions[0].Text)
+	assert.Equal(t, 12, exceptions[0].Line)
+}
+
 func TestTaskEvaluate_Good(t *testing.T) {
 	_, c := newTestService(t, &mockConnector{evalResult: 42})
 	result, handled, err := c.PERFORM(TaskEvaluate{Window: "main", Script: "21*2"})
@@ -165,6 +235,43 @@ func TestTaskScreenshot_Good(t *testing.T) {
 	assert.NotEmpty(t, sr.Base64)
 }
 
+func TestTaskScreenshotElement_Good(t *testing.T) {
+	img := image.NewRGBA(image.Rect(0, 0, 4, 4))
+	for y := 0; y < 4; y++ {
+		for x := 0; x < 4; x++ {
+			img.SetRGBA(x, y, color.RGBA{R: uint8(x * 40), G: uint8(y * 40), B: 200, A: 255})
+		}
+	}
+	var buf bytes.Buffer
+	require.NoError(t, png.Encode(&buf, img))
+
+	mock := &mockConnector{
+		screenshot: buf.Bytes(),
+		evalFn: func(script string) (any, error) {
+			return map[string]any{
+				"left":             1.0,
+				"top":              1.0,
+				"width":            2.0,
+				"height":           2.0,
+				"devicePixelRatio": 1.0,
+			}, nil
+		},
+	}
+	_, c := newTestService(t, mock)
+
+	result, handled, err := c.PERFORM(TaskScreenshotElement{Window: "main", Selector: "#card"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	sr, ok := result.(ScreenshotResult)
+	require.True(t, ok)
+
+	raw, err := base64.StdEncoding.DecodeString(sr.Base64)
+	require.NoError(t, err)
+	decoded, err := png.Decode(bytes.NewReader(raw))
+	require.NoError(t, err)
+	assert.Equal(t, image.Rect(0, 0, 2, 2), decoded.Bounds())
+}
+
 func TestTaskClearConsole_Good(t *testing.T) {
 	mock := &mockConnector{}
 	_, c := newTestService(t, mock)
@@ -172,6 +279,102 @@ func TestTaskClearConsole_Good(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, handled)
 	assert.True(t, mock.consoleClearCalled)
+}
+
+func TestTaskDevTools_Good(t *testing.T) {
+	_, c := newTestService(t, &mockConnector{})
+	_, _, err := c.PERFORM(window.TaskOpenWindow{Opts: []window.WindowOption{window.WithName("main")}})
+	require.NoError(t, err)
+	_, handled, err := c.PERFORM(TaskOpenDevTools{Window: "main"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	_, handled, err = c.PERFORM(TaskCloseDevTools{Window: "main"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+}
+
+func TestDiagnosticsQueries_Good(t *testing.T) {
+	mock := &mockConnector{
+		evalFn: func(script string) (any, error) {
+			switch {
+			case strings.Contains(script, "getComputedStyle"):
+				return map[string]any{"color": "rgb(1, 2, 3)"}, nil
+			case strings.Contains(script, "performance.getEntriesByType(\"navigation\")"):
+				return map[string]any{
+					"navigationStart":      1.0,
+					"domContentLoaded":     2.0,
+					"loadEventEnd":         3.0,
+					"firstPaint":           4.0,
+					"firstContentfulPaint": 5.0,
+					"usedJSHeapSize":       6.0,
+					"totalJSHeapSize":      7.0,
+				}, nil
+			case strings.Contains(script, "performance.getEntriesByType(\"resource\")"):
+				return []any{
+					map[string]any{"name": "app.js", "entryType": "resource", "initiatorType": "script"},
+				}, nil
+			case strings.Contains(script, "window.__coreNetworkLog"):
+				return []any{
+					map[string]any{"url": "https://example.com", "method": "GET", "status": 200, "resource": "fetch"},
+				}, nil
+			default:
+				return nil, nil
+			}
+		},
+	}
+	_, c := newTestService(t, mock)
+
+	style, handled, err := c.QUERY(QueryComputedStyle{Window: "main", Selector: "#app"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.Equal(t, "rgb(1, 2, 3)", style.(map[string]string)["color"])
+
+	perf, handled, err := c.QUERY(QueryPerformance{Window: "main"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.Equal(t, 1.0, perf.(PerformanceMetrics).NavigationStart)
+
+	resources, handled, err := c.QUERY(QueryResources{Window: "main"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.Len(t, resources.([]ResourceEntry), 1)
+
+	network, handled, err := c.QUERY(QueryNetwork{Window: "main", Limit: 10})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.Len(t, network.([]NetworkEntry), 1)
+}
+
+func TestDiagnosticsTasks_Good(t *testing.T) {
+	mock := &mockConnector{pdfBytes: []byte("%PDF-1.7")}
+	_, c := newTestService(t, mock)
+
+	_, handled, err := c.PERFORM(TaskHighlight{Window: "main", Selector: "#app", Colour: "#00ff00"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.Contains(t, mock.lastEvalScript, "outline")
+
+	_, handled, err = c.PERFORM(TaskInjectNetworkLogging{Window: "main"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.Contains(t, mock.lastEvalScript, "__coreNetworkLog")
+
+	_, handled, err = c.PERFORM(TaskClearNetworkLog{Window: "main"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	_, handled, err = c.PERFORM(TaskPrint{Window: "main"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.True(t, mock.printCalled)
+
+	result, handled, err := c.PERFORM(TaskExportPDF{Window: "main"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	pdf, ok := result.(PDFResult)
+	require.True(t, ok)
+	assert.Equal(t, "application/pdf", pdf.MimeType)
+	assert.NotEmpty(t, pdf.Base64)
 }
 
 func TestConnectionCleanup_Good(t *testing.T) {

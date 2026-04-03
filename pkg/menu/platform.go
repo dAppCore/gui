@@ -2,12 +2,14 @@
 package menu
 
 // Platform abstracts the menu backend.
+// Use: var platform menu.Platform = backend
 type Platform interface {
 	NewMenu() PlatformMenu
 	SetApplicationMenu(menu PlatformMenu)
 }
 
 // PlatformMenu is a live menu handle.
+// Use: var root menu.PlatformMenu = platform.NewMenu()
 type PlatformMenu interface {
 	Add(label string) PlatformMenuItem
 	AddSeparator()
@@ -17,6 +19,7 @@ type PlatformMenu interface {
 }
 
 // PlatformMenuItem is a single menu item.
+// Use: var item menu.PlatformMenuItem = root.Add("Quit")
 type PlatformMenuItem interface {
 	SetAccelerator(accel string) PlatformMenuItem
 	SetTooltip(text string) PlatformMenuItem
@@ -26,6 +29,7 @@ type PlatformMenuItem interface {
 }
 
 // MenuRole is a predefined platform menu role.
+// Use: role := menu.RoleFileMenu
 type MenuRole int
 
 const (

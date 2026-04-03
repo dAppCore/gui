@@ -3,7 +3,20 @@ package window
 
 import "fmt"
 
+// normalizeWindowForLayout clears transient maximise/minimise state before
+// applying a new geometry. This keeps layout helpers effective even when a
+// window was previously maximised.
+func normalizeWindowForLayout(pw PlatformWindow) {
+	if pw == nil {
+		return
+	}
+	if pw.IsMaximised() || pw.IsMinimised() {
+		pw.Restore()
+	}
+}
+
 // TileMode defines how windows are arranged.
+// Use: mode := window.TileModeLeftRight
 type TileMode int
 
 const (
@@ -27,9 +40,12 @@ var tileModeNames = map[TileMode]string{
 	TileModeLeftRight: "left-right", TileModeGrid: "grid",
 }
 
+// String returns the canonical layout name for the tile mode.
+// Use: label := window.TileModeGrid.String()
 func (m TileMode) String() string { return tileModeNames[m] }
 
 // SnapPosition defines where a window snaps to.
+// Use: pos := window.SnapRight
 type SnapPosition int
 
 const (
@@ -45,6 +61,7 @@ const (
 )
 
 // WorkflowLayout is a predefined arrangement for common tasks.
+// Use: workflow := window.WorkflowCoding
 type WorkflowLayout int
 
 const (
@@ -59,7 +76,20 @@ var workflowNames = map[WorkflowLayout]string{
 	WorkflowPresenting: "presenting", WorkflowSideBySide: "side-by-side",
 }
 
+// String returns the canonical workflow name.
+// Use: label := window.WorkflowCoding.String()
 func (w WorkflowLayout) String() string { return workflowNames[w] }
+
+// ParseWorkflowLayout converts a workflow name into its enum value.
+// Use: workflow, ok := window.ParseWorkflowLayout("coding")
+func ParseWorkflowLayout(name string) (WorkflowLayout, bool) {
+	for workflow, workflowName := range workflowNames {
+		if workflowName == name {
+			return workflow, true
+		}
+	}
+	return WorkflowCoding, false
+}
 
 // TileWindows arranges the named windows in the given mode across the screen area.
 func (m *Manager) TileWindows(mode TileMode, names []string, screenW, screenH int) error {
@@ -81,6 +111,7 @@ func (m *Manager) TileWindows(mode TileMode, names []string, screenW, screenH in
 	case TileModeLeftRight:
 		w := screenW / len(windows)
 		for i, pw := range windows {
+			normalizeWindowForLayout(pw)
 			pw.SetPosition(i*w, 0)
 			pw.SetSize(w, screenH)
 		}
@@ -91,6 +122,7 @@ func (m *Manager) TileWindows(mode TileMode, names []string, screenW, screenH in
 		}
 		cellW := screenW / cols
 		for i, pw := range windows {
+			normalizeWindowForLayout(pw)
 			row := i / cols
 			col := i % cols
 			rows := (len(windows) + cols - 1) / cols
@@ -100,41 +132,49 @@ func (m *Manager) TileWindows(mode TileMode, names []string, screenW, screenH in
 		}
 	case TileModeLeftHalf:
 		for _, pw := range windows {
+			normalizeWindowForLayout(pw)
 			pw.SetPosition(0, 0)
 			pw.SetSize(halfW, screenH)
 		}
 	case TileModeRightHalf:
 		for _, pw := range windows {
+			normalizeWindowForLayout(pw)
 			pw.SetPosition(halfW, 0)
 			pw.SetSize(halfW, screenH)
 		}
 	case TileModeTopHalf:
 		for _, pw := range windows {
+			normalizeWindowForLayout(pw)
 			pw.SetPosition(0, 0)
 			pw.SetSize(screenW, halfH)
 		}
 	case TileModeBottomHalf:
 		for _, pw := range windows {
+			normalizeWindowForLayout(pw)
 			pw.SetPosition(0, halfH)
 			pw.SetSize(screenW, halfH)
 		}
 	case TileModeTopLeft:
 		for _, pw := range windows {
+			normalizeWindowForLayout(pw)
 			pw.SetPosition(0, 0)
 			pw.SetSize(halfW, halfH)
 		}
 	case TileModeTopRight:
 		for _, pw := range windows {
+			normalizeWindowForLayout(pw)
 			pw.SetPosition(halfW, 0)
 			pw.SetSize(halfW, halfH)
 		}
 	case TileModeBottomLeft:
 		for _, pw := range windows {
+			normalizeWindowForLayout(pw)
 			pw.SetPosition(0, halfH)
 			pw.SetSize(halfW, halfH)
 		}
 	case TileModeBottomRight:
 		for _, pw := range windows {
+			normalizeWindowForLayout(pw)
 			pw.SetPosition(halfW, halfH)
 			pw.SetSize(halfW, halfH)
 		}
@@ -153,30 +193,39 @@ func (m *Manager) SnapWindow(name string, pos SnapPosition, screenW, screenH int
 
 	switch pos {
 	case SnapLeft:
+		normalizeWindowForLayout(pw)
 		pw.SetPosition(0, 0)
 		pw.SetSize(halfW, screenH)
 	case SnapRight:
+		normalizeWindowForLayout(pw)
 		pw.SetPosition(halfW, 0)
 		pw.SetSize(halfW, screenH)
 	case SnapTop:
+		normalizeWindowForLayout(pw)
 		pw.SetPosition(0, 0)
 		pw.SetSize(screenW, halfH)
 	case SnapBottom:
+		normalizeWindowForLayout(pw)
 		pw.SetPosition(0, halfH)
 		pw.SetSize(screenW, halfH)
 	case SnapTopLeft:
+		normalizeWindowForLayout(pw)
 		pw.SetPosition(0, 0)
 		pw.SetSize(halfW, halfH)
 	case SnapTopRight:
+		normalizeWindowForLayout(pw)
 		pw.SetPosition(halfW, 0)
 		pw.SetSize(halfW, halfH)
 	case SnapBottomLeft:
+		normalizeWindowForLayout(pw)
 		pw.SetPosition(0, halfH)
 		pw.SetSize(halfW, halfH)
 	case SnapBottomRight:
+		normalizeWindowForLayout(pw)
 		pw.SetPosition(halfW, halfH)
 		pw.SetSize(halfW, halfH)
 	case SnapCenter:
+		normalizeWindowForLayout(pw)
 		cw, ch := pw.Size()
 		pw.SetPosition((screenW-cw)/2, (screenH-ch)/2)
 	}
@@ -190,6 +239,7 @@ func (m *Manager) StackWindows(names []string, offsetX, offsetY int) error {
 		if !ok {
 			return fmt.Errorf("window %q not found", name)
 		}
+		normalizeWindowForLayout(pw)
 		pw.SetPosition(i*offsetX, i*offsetY)
 	}
 	return nil
@@ -206,11 +256,13 @@ func (m *Manager) ApplyWorkflow(workflow WorkflowLayout, names []string, screenW
 		// 70/30 split — main editor + terminal
 		mainW := screenW * 70 / 100
 		if pw, ok := m.Get(names[0]); ok {
+			normalizeWindowForLayout(pw)
 			pw.SetPosition(0, 0)
 			pw.SetSize(mainW, screenH)
 		}
 		if len(names) > 1 {
 			if pw, ok := m.Get(names[1]); ok {
+				normalizeWindowForLayout(pw)
 				pw.SetPosition(mainW, 0)
 				pw.SetSize(screenW-mainW, screenH)
 			}
@@ -219,11 +271,13 @@ func (m *Manager) ApplyWorkflow(workflow WorkflowLayout, names []string, screenW
 		// 60/40 split
 		mainW := screenW * 60 / 100
 		if pw, ok := m.Get(names[0]); ok {
+			normalizeWindowForLayout(pw)
 			pw.SetPosition(0, 0)
 			pw.SetSize(mainW, screenH)
 		}
 		if len(names) > 1 {
 			if pw, ok := m.Get(names[1]); ok {
+				normalizeWindowForLayout(pw)
 				pw.SetPosition(mainW, 0)
 				pw.SetSize(screenW-mainW, screenH)
 			}
@@ -231,6 +285,7 @@ func (m *Manager) ApplyWorkflow(workflow WorkflowLayout, names []string, screenW
 	case WorkflowPresenting:
 		// Maximise first window
 		if pw, ok := m.Get(names[0]); ok {
+			normalizeWindowForLayout(pw)
 			pw.SetPosition(0, 0)
 			pw.SetSize(screenW, screenH)
 		}

@@ -117,7 +117,7 @@ export class ProviderNavComponent {
       .filter((p: ProviderInfo) => p.element)
       .map((p: ProviderInfo) => ({
         name: p.name,
-        href: p.name.toLowerCase(),
+        href: `/provider/${encodeURIComponent(p.name.toLowerCase())}`,
         icon: 'fa-regular fa-puzzle-piece fa-2xl',
         element: p.element,
       }));

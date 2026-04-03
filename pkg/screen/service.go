@@ -8,15 +8,18 @@ import (
 )
 
 // Options holds configuration for the screen service.
+// Use: svc, err := screen.Register(platform)(core.New())
 type Options struct{}
 
 // Service is a core.Service providing screen/display queries via IPC.
+// Use: svc, err := screen.Register(platform)(core.New())
 type Service struct {
 	*core.ServiceRuntime[Options]
 	platform Platform
 }
 
 // Register creates a factory closure that captures the Platform adapter.
+// Use: core.WithService(screen.Register(platform))
 func Register(p Platform) func(*core.Core) (any, error) {
 	return func(c *core.Core) (any, error) {
 		return &Service{
@@ -27,12 +30,14 @@ func Register(p Platform) func(*core.Core) (any, error) {
 }
 
 // OnStartup registers IPC handlers.
+// Use: _ = svc.OnStartup(context.Background())
 func (s *Service) OnStartup(ctx context.Context) error {
 	s.Core().RegisterQuery(s.handleQuery)
 	return nil
 }
 
 // HandleIPCEvents is auto-discovered by core.WithService.
+// Use: _ = svc.HandleIPCEvents(core, msg)
 func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 	return nil
 }

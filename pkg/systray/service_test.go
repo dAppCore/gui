@@ -9,6 +9,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type mockWindowHandle struct {
+	name       string
+	showCalled bool
+	hideCalled bool
+}
+
+func (w *mockWindowHandle) Name() string                    { return w.name }
+func (w *mockWindowHandle) Show()                           { w.showCalled = true }
+func (w *mockWindowHandle) Hide()                           { w.hideCalled = true }
+func (w *mockWindowHandle) SetPosition(x, y int)            {}
+func (w *mockWindowHandle) SetSize(width, height int)       {}
+
 func newTestSystrayService(t *testing.T) (*Service, *core.Core) {
 	t.Helper()
 	c, err := core.New(
@@ -39,6 +51,24 @@ func TestTaskSetTrayIcon_Good(t *testing.T) {
 	assert.True(t, handled)
 }
 
+func TestTaskSetTooltip_Good(t *testing.T) {
+	svc, c := newTestSystrayService(t)
+	require.NoError(t, svc.manager.Setup("Test", "Test"))
+
+	_, handled, err := c.PERFORM(TaskSetTooltip{Tooltip: "Updated"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+}
+
+func TestTaskSetLabel_Good(t *testing.T) {
+	svc, c := newTestSystrayService(t)
+	require.NoError(t, svc.manager.Setup("Test", "Test"))
+
+	_, handled, err := c.PERFORM(TaskSetLabel{Label: "Updated"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+}
+
 func TestTaskSetTrayMenu_Good(t *testing.T) {
 	svc, c := newTestSystrayService(t)
 
@@ -54,10 +84,63 @@ func TestTaskSetTrayMenu_Good(t *testing.T) {
 	assert.True(t, handled)
 }
 
+func TestTaskSetTrayMenu_Submenu_Good(t *testing.T) {
+	p := newMockPlatform()
+	c, err := core.New(
+		core.WithService(Register(p)),
+		core.WithServiceLock(),
+	)
+	require.NoError(t, err)
+	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+
+	svc := core.MustServiceFor[*Service](c, "systray")
+	require.NoError(t, svc.manager.Setup("Test", "Test"))
+
+	_, handled, err := c.PERFORM(TaskSetTrayMenu{Items: []TrayMenuItem{
+		{
+			Label: "File",
+			Submenu: []TrayMenuItem{
+				{Label: "Open", ActionID: "open"},
+			},
+		},
+	}})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	require.Len(t, p.trays, 1)
+	require.NotEmpty(t, p.menus)
+	require.Len(t, p.menus[0].submenus, 1)
+}
+
 func TestTaskSetTrayIcon_Bad(t *testing.T) {
 	// No systray service — PERFORM returns handled=false
 	c, err := core.New(core.WithServiceLock())
 	require.NoError(t, err)
 	_, handled, _ := c.PERFORM(TaskSetTrayIcon{Data: nil})
 	assert.False(t, handled)
+}
+
+func TestTaskShowMessage_Good(t *testing.T) {
+	svc, c := newTestSystrayService(t)
+	require.NoError(t, svc.manager.Setup("Test", "Test"))
+	_, handled, err := c.PERFORM(TaskShowMessage{Title: "Hello", Message: "World"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+}
+
+func TestTaskShowHidePanel_Good(t *testing.T) {
+	svc, c := newTestSystrayService(t)
+	require.NoError(t, svc.manager.Setup("Test", "Test"))
+
+	panel := &mockWindowHandle{name: "panel"}
+	require.NoError(t, svc.manager.AttachWindow(panel))
+
+	_, handled, err := c.PERFORM(TaskShowPanel{})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.True(t, panel.showCalled)
+
+	_, handled, err = c.PERFORM(TaskHidePanel{})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.True(t, panel.hideCalled)
 }

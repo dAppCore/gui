@@ -73,6 +73,7 @@ Response:
 | `window_maximize` | Maximize window |
 | `window_minimize` | Minimize window |
 | `window_focus` | Bring window to front |
+| `window_title_set` | Alias for `window_title` |
 
 ### WebView Interaction
 
@@ -84,6 +85,7 @@ Response:
 | `webview_screenshot` | Capture page |
 | `webview_navigate` | Navigate to URL |
 | `webview_console` | Get console messages |
+| `webview_errors` | Get structured JavaScript errors |
 
 ### Screen Management
 
@@ -93,6 +95,8 @@ Response:
 | `screen_primary` | Get primary screen |
 | `screen_at_point` | Get screen at coordinates |
 | `screen_work_areas` | Get usable screen space |
+| `screen_work_area` | Alias for `screen_work_areas` |
+| `screen_for_window` | Get the screen containing a window |
 
 ### Layout Management
 

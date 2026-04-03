@@ -1,3 +1,4 @@
+// pkg/display/events.go
 package display
 
 import (
@@ -12,15 +13,16 @@ import (
 )
 
 // EventType represents the type of event.
+// Use: eventType := display.EventWindowFocus
 type EventType string
 
 const (
-	EventWindowFocus  EventType = "window.focus"
-	EventWindowBlur   EventType = "window.blur"
-	EventWindowMove   EventType = "window.move"
-	EventWindowResize EventType = "window.resize"
-	EventWindowClose  EventType = "window.close"
-	EventWindowCreate EventType = "window.create"
+	EventWindowFocus         EventType = "window.focus"
+	EventWindowBlur          EventType = "window.blur"
+	EventWindowMove          EventType = "window.move"
+	EventWindowResize        EventType = "window.resize"
+	EventWindowClose         EventType = "window.close"
+	EventWindowCreate        EventType = "window.create"
 	EventThemeChange         EventType = "theme.change"
 	EventScreenChange        EventType = "screen.change"
 	EventNotificationClick   EventType = "notification.click"
@@ -43,6 +45,7 @@ const (
 )
 
 // Event represents a display event sent to subscribers.
+// Use: evt := display.Event{Type: display.EventWindowFocus, Window: "editor"}
 type Event struct {
 	Type      EventType      `json:"type"`
 	Timestamp int64          `json:"timestamp"`
@@ -51,12 +54,22 @@ type Event struct {
 }
 
 // Subscription represents a client subscription to events.
+// Use: sub := display.Subscription{ID: "sub-1", EventTypes: []display.EventType{display.EventWindowFocus}}
 type Subscription struct {
 	ID         string      `json:"id"`
 	EventTypes []EventType `json:"eventTypes"`
 }
 
+// EventServerInfo summarises the live WebSocket event server state.
+// Use: info := display.EventServerInfo{ConnectedClients: 1, Subscriptions: 3}
+type EventServerInfo struct {
+	ConnectedClients int `json:"connectedClients"`
+	Subscriptions    int `json:"subscriptions"`
+	BufferedEvents   int `json:"bufferedEvents"`
+}
+
 // WSEventManager manages WebSocket connections and event subscriptions.
+// Use: events := display.NewWSEventManager()
 type WSEventManager struct {
 	upgrader    websocket.Upgrader
 	clients     map[*websocket.Conn]*clientState
@@ -66,12 +79,14 @@ type WSEventManager struct {
 }
 
 // clientState tracks a client's subscriptions.
+// Use: state := &clientState{subscriptions: map[string]*Subscription{}}
 type clientState struct {
 	subscriptions map[string]*Subscription
 	mu            sync.RWMutex
 }
 
 // NewWSEventManager creates a new event manager.
+// Use: events := display.NewWSEventManager()
 func NewWSEventManager() *WSEventManager {
 	em := &WSEventManager{
 		upgrader: websocket.Upgrader{
@@ -303,6 +318,23 @@ func (em *WSEventManager) ConnectedClients() int {
 	em.mu.RLock()
 	defer em.mu.RUnlock()
 	return len(em.clients)
+}
+
+// Info returns a snapshot of the WebSocket event server state.
+func (em *WSEventManager) Info() EventServerInfo {
+	em.mu.RLock()
+	defer em.mu.RUnlock()
+
+	info := EventServerInfo{
+		ConnectedClients: len(em.clients),
+		BufferedEvents:   len(em.eventBuffer),
+	}
+	for _, state := range em.clients {
+		state.mu.RLock()
+		info.Subscriptions += len(state.subscriptions)
+		state.mu.RUnlock()
+	}
+	return info
 }
 
 // Close shuts down the event manager.

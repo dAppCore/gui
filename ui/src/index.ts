@@ -9,6 +9,7 @@ export { ApiConfigService } from './services/api-config.service';
 export { ProviderDiscoveryService, type ProviderInfo, type ElementSpec } from './services/provider-discovery.service';
 export { WebSocketService, type WSMessage } from './services/websocket.service';
 export { TranslationService } from './services/translation.service';
+export { UiStateService } from './services/ui-state.service';
 
 // Components
 export { ProviderHostComponent } from './components/provider-host.component';

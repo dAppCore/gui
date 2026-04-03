@@ -2,17 +2,166 @@ package display
 
 import (
 	"context"
+	"encoding/base64"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"forge.lthn.ai/core/go/pkg/core"
+	"forge.lthn.ai/core/gui/pkg/clipboard"
+	"forge.lthn.ai/core/gui/pkg/dialog"
+	"forge.lthn.ai/core/gui/pkg/environment"
 	"forge.lthn.ai/core/gui/pkg/menu"
+	"forge.lthn.ai/core/gui/pkg/notification"
+	"forge.lthn.ai/core/gui/pkg/screen"
 	"forge.lthn.ai/core/gui/pkg/systray"
+	"forge.lthn.ai/core/gui/pkg/webview"
 	"forge.lthn.ai/core/gui/pkg/window"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+type mockScreenPlatform struct {
+	screens []screen.Screen
+}
+
+func (m *mockScreenPlatform) GetAll() []screen.Screen { return m.screens }
+
+func (m *mockScreenPlatform) GetPrimary() *screen.Screen {
+	for i := range m.screens {
+		if m.screens[i].IsPrimary {
+			return &m.screens[i]
+		}
+	}
+	return nil
+}
+
+type mockClipboardPlatform struct {
+	text  string
+	ok    bool
+	image []byte
+	imgOk bool
+}
+
+func (m *mockClipboardPlatform) Text() (string, bool) { return m.text, m.ok }
+func (m *mockClipboardPlatform) SetText(text string) bool {
+	m.text = text
+	m.ok = text != ""
+	return true
+}
+func (m *mockClipboardPlatform) Image() ([]byte, bool) { return m.image, m.imgOk }
+func (m *mockClipboardPlatform) SetImage(data []byte) bool {
+	m.image = data
+	m.imgOk = len(data) > 0
+	return true
+}
+
+type mockNotificationPlatform struct {
+	permGranted bool
+	sendCalled  bool
+	clearCalled bool
+	lastOpts    notification.NotificationOptions
+}
+
+func (m *mockNotificationPlatform) Send(opts notification.NotificationOptions) error {
+	m.sendCalled = true
+	m.lastOpts = opts
+	return nil
+}
+func (m *mockNotificationPlatform) SendWithActions(opts notification.NotificationOptions) error {
+	m.sendCalled = true
+	m.lastOpts = opts
+	return nil
+}
+func (m *mockNotificationPlatform) RequestPermission() (bool, error) { return m.permGranted, nil }
+func (m *mockNotificationPlatform) CheckPermission() (bool, error)   { return m.permGranted, nil }
+func (m *mockNotificationPlatform) Clear() error {
+	m.clearCalled = true
+	return nil
+}
+
+type mockEnvironmentPlatform struct {
+	isDark bool
+	info   environment.EnvironmentInfo
+	accent string
+}
+
+func (m *mockEnvironmentPlatform) IsDarkMode() bool { return m.isDark }
+func (m *mockEnvironmentPlatform) Info() environment.EnvironmentInfo {
+	return m.info
+}
+func (m *mockEnvironmentPlatform) AccentColour() string { return m.accent }
+func (m *mockEnvironmentPlatform) OpenFileManager(path string, selectFile bool) error {
+	return nil
+}
+func (m *mockEnvironmentPlatform) OnThemeChange(handler func(isDark bool)) func() {
+	return func() {}
+}
+func (m *mockEnvironmentPlatform) SetTheme(isDark bool) error {
+	m.isDark = isDark
+	return nil
+}
+
+type mockDialogPlatform struct {
+	button        string
+	openFilePaths []string
+	saveFilePath  string
+	openDirPath   string
+	last          dialog.MessageDialogOptions
+}
+
+func (m *mockDialogPlatform) OpenFile(opts dialog.OpenFileOptions) ([]string, error) {
+	if len(m.openFilePaths) == 0 {
+		return []string{"/tmp/file.txt"}, nil
+	}
+	return m.openFilePaths, nil
+}
+func (m *mockDialogPlatform) SaveFile(opts dialog.SaveFileOptions) (string, error) {
+	if m.saveFilePath == "" {
+		return "/tmp/save.txt", nil
+	}
+	return m.saveFilePath, nil
+}
+func (m *mockDialogPlatform) OpenDirectory(opts dialog.OpenDirectoryOptions) (string, error) {
+	if m.openDirPath == "" {
+		return "/tmp/dir", nil
+	}
+	return m.openDirPath, nil
+}
+func (m *mockDialogPlatform) MessageDialog(opts dialog.MessageDialogOptions) (string, error) {
+	m.last = opts
+	if m.button != "" {
+		return m.button, nil
+	}
+	return "OK", nil
+}
+
+type mockWebviewConnector struct{}
+
+func (m *mockWebviewConnector) Navigate(url string) error                 { return nil }
+func (m *mockWebviewConnector) Click(selector string) error               { return nil }
+func (m *mockWebviewConnector) Type(selector, text string) error          { return nil }
+func (m *mockWebviewConnector) Hover(selector string) error               { return nil }
+func (m *mockWebviewConnector) Select(selector, value string) error       { return nil }
+func (m *mockWebviewConnector) Check(selector string, checked bool) error { return nil }
+func (m *mockWebviewConnector) Evaluate(script string) (any, error)       { return nil, nil }
+func (m *mockWebviewConnector) Screenshot() ([]byte, error)               { return nil, nil }
+func (m *mockWebviewConnector) GetURL() (string, error)                   { return "", nil }
+func (m *mockWebviewConnector) GetTitle() (string, error)                 { return "", nil }
+func (m *mockWebviewConnector) GetHTML(selector string) (string, error)   { return "", nil }
+func (m *mockWebviewConnector) QuerySelector(selector string) (*webview.ElementInfo, error) {
+	return nil, nil
+}
+func (m *mockWebviewConnector) QuerySelectorAll(selector string) ([]*webview.ElementInfo, error) {
+	return nil, nil
+}
+func (m *mockWebviewConnector) GetConsole() []webview.ConsoleMessage { return nil }
+func (m *mockWebviewConnector) ClearConsole()                        {}
+func (m *mockWebviewConnector) SetViewport(width, height int) error  { return nil }
+func (m *mockWebviewConnector) UploadFile(selector string, paths []string) error {
+	return nil
+}
+func (m *mockWebviewConnector) Close() error { return nil }
 
 // --- Test helpers ---
 
@@ -35,6 +184,14 @@ func newTestConclave(t *testing.T) *core.Core {
 	c, err := core.New(
 		core.WithService(Register(nil)),
 		core.WithService(window.Register(window.NewMockPlatform())),
+		core.WithService(screen.Register(&mockScreenPlatform{
+			screens: []screen.Screen{{
+				ID: "primary", Name: "Primary", IsPrimary: true,
+				Size:     screen.Size{Width: 2560, Height: 1440},
+				Bounds:   screen.Rect{X: 0, Y: 0, Width: 2560, Height: 1440},
+				WorkArea: screen.Rect{X: 0, Y: 0, Width: 2560, Height: 1440},
+			}},
+		})),
 		core.WithService(systray.Register(systray.NewMockPlatform())),
 		core.WithService(menu.Register(menu.NewMockPlatform())),
 		core.WithServiceLock(),
@@ -42,6 +199,65 @@ func newTestConclave(t *testing.T) *core.Core {
 	require.NoError(t, err)
 	require.NoError(t, c.ServiceStartup(context.Background(), nil))
 	return c
+}
+
+func newExtendedTestConclave(t *testing.T) *core.Core {
+	t.Helper()
+	fixture := newExtendedTestConclaveWithMocks(t)
+	return fixture.core
+}
+
+type extendedTestConclave struct {
+	core                 *core.Core
+	clipboardPlatform    *mockClipboardPlatform
+	notificationPlatform *mockNotificationPlatform
+	dialogPlatform       *mockDialogPlatform
+	environmentPlatform  *mockEnvironmentPlatform
+}
+
+func newExtendedTestConclaveWithMocks(t *testing.T) *extendedTestConclave {
+	t.Helper()
+	clipboardPlatform := &mockClipboardPlatform{text: "hello", ok: true, image: []byte{1, 2, 3}, imgOk: true}
+	notificationPlatform := &mockNotificationPlatform{permGranted: true}
+	dialogPlatform := &mockDialogPlatform{button: "OK"}
+	environmentPlatform := &mockEnvironmentPlatform{
+		isDark: true,
+		accent: "rgb(0,122,255)",
+		info: environment.EnvironmentInfo{
+			OS: "darwin", Arch: "arm64",
+			Platform: environment.PlatformInfo{Name: "macOS", Version: "14.0"},
+		},
+	}
+
+	c, err := core.New(
+		core.WithService(Register(nil)),
+		core.WithService(window.Register(window.NewMockPlatform())),
+		core.WithService(screen.Register(&mockScreenPlatform{
+			screens: []screen.Screen{{
+				ID: "primary", Name: "Primary", IsPrimary: true,
+				Size:     screen.Size{Width: 2560, Height: 1440},
+				Bounds:   screen.Rect{X: 0, Y: 0, Width: 2560, Height: 1440},
+				WorkArea: screen.Rect{X: 0, Y: 0, Width: 2560, Height: 1440},
+			}},
+		})),
+		core.WithService(systray.Register(systray.NewMockPlatform())),
+		core.WithService(menu.Register(menu.NewMockPlatform())),
+		core.WithService(clipboard.Register(clipboardPlatform)),
+		core.WithService(notification.Register(notificationPlatform)),
+		core.WithService(dialog.Register(dialogPlatform)),
+		core.WithService(environment.Register(environmentPlatform)),
+		core.WithService(webview.Register(webview.Options{})),
+		core.WithServiceLock(),
+	)
+	require.NoError(t, err)
+	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+	return &extendedTestConclave{
+		core:                 c,
+		clipboardPlatform:    clipboardPlatform,
+		notificationPlatform: notificationPlatform,
+		dialogPlatform:       dialogPlatform,
+		environmentPlatform:  environmentPlatform,
+	}
 }
 
 // --- Tests ---
@@ -210,6 +426,8 @@ func TestGetWindowInfo_Good(t *testing.T) {
 	assert.Equal(t, 200, info.Y)
 	assert.Equal(t, 800, info.Width)
 	assert.Equal(t, 600, info.Height)
+	assert.True(t, info.Visible)
+	assert.False(t, info.Minimized)
 }
 
 func TestGetWindowInfo_Bad(t *testing.T) {
@@ -222,15 +440,45 @@ func TestGetWindowInfo_Bad(t *testing.T) {
 	assert.Nil(t, info)
 }
 
+func TestTileWindows_UsesPrimaryScreenSize(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+
+	_ = svc.OpenWindow(window.WithName("left"))
+	_ = svc.OpenWindow(window.WithName("right"))
+
+	err := svc.TileWindows(window.TileModeLeftRight, []string{"left", "right"})
+	require.NoError(t, err)
+
+	left, err := svc.GetWindowInfo("left")
+	require.NoError(t, err)
+	assert.Equal(t, 1280, left.Width)
+
+	right, err := svc.GetWindowInfo("right")
+	require.NoError(t, err)
+	assert.Equal(t, 1280, right.Width)
+}
+
 func TestListWindowInfos_Good(t *testing.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 
 	_ = svc.OpenWindow(window.WithName("win-1"))
 	_ = svc.OpenWindow(window.WithName("win-2"))
+	_ = svc.MinimizeWindow("win-2")
 
 	infos := svc.ListWindowInfos()
 	assert.Len(t, infos, 2)
+
+	byName := make(map[string]window.WindowInfo, len(infos))
+	for _, info := range infos {
+		byName[info.Name] = info
+	}
+
+	assert.True(t, byName["win-1"].Visible)
+	assert.False(t, byName["win-1"].Minimized)
+	assert.False(t, byName["win-2"].Visible)
+	assert.True(t, byName["win-2"].Minimized)
 }
 
 func TestSetWindowPosition_Good(t *testing.T) {
@@ -324,9 +572,15 @@ func TestSetWindowVisibility_Good(t *testing.T) {
 
 	err := svc.SetWindowVisibility("vis-win", false)
 	assert.NoError(t, err)
+	info, err := svc.GetWindowInfo("vis-win")
+	require.NoError(t, err)
+	assert.False(t, info.Visible)
 
 	err = svc.SetWindowVisibility("vis-win", true)
 	assert.NoError(t, err)
+	info, err = svc.GetWindowInfo("vis-win")
+	require.NoError(t, err)
+	assert.True(t, info.Visible)
 }
 
 func TestSetWindowAlwaysOnTop_Good(t *testing.T) {
@@ -405,6 +659,174 @@ func TestGetSavedWindowStates_Good(t *testing.T) {
 
 	states := svc.GetSavedWindowStates()
 	assert.NotNil(t, states)
+}
+
+func TestServiceWrappers_Good(t *testing.T) {
+	fixture := newExtendedTestConclaveWithMocks(t)
+	svc := core.MustServiceFor[*Service](fixture.core, "display")
+
+	t.Run("screen wrappers", func(t *testing.T) {
+		screens := svc.GetScreens()
+		require.Len(t, screens, 1)
+
+		primary, err := svc.GetPrimaryScreen()
+		require.NoError(t, err)
+		require.NotNil(t, primary)
+		assert.True(t, primary.IsPrimary)
+
+		atPoint, err := svc.GetScreenAtPoint(10, 10)
+		require.NoError(t, err)
+		require.NotNil(t, atPoint)
+
+		workAreas := svc.GetWorkAreas()
+		require.Len(t, workAreas, 1)
+	})
+
+	t.Run("window-screen lookup", func(t *testing.T) {
+		require.NoError(t, svc.OpenWindow(window.WithName("screen-win"), window.WithSize(640, 480)))
+		screenInfo, err := svc.GetScreenForWindow("screen-win")
+		require.NoError(t, err)
+		require.NotNil(t, screenInfo)
+	})
+
+	t.Run("layout helpers", func(t *testing.T) {
+		suggestion, err := svc.SuggestLayout(2, 2560, 1440)
+		require.NoError(t, err)
+		assert.Equal(t, "side-by-side", suggestion.Mode)
+
+		require.NoError(t, svc.OpenWindow(window.WithName("editor-beside"), window.WithSize(800, 600)))
+		require.NoError(t, svc.OpenWindow(window.WithName("assistant-beside"), window.WithSize(400, 600)))
+		require.NoError(t, svc.BesideEditor("editor-beside", "assistant-beside"))
+
+		editorInfo, err := svc.GetWindowInfo("editor-beside")
+		require.NoError(t, err)
+		require.NotNil(t, editorInfo)
+		assert.Equal(t, 0, editorInfo.X)
+		assert.Equal(t, 1792, editorInfo.Width)
+
+		assistantInfo, err := svc.GetWindowInfo("assistant-beside")
+		require.NoError(t, err)
+		require.NotNil(t, assistantInfo)
+		assert.Equal(t, 1792, assistantInfo.X)
+		assert.Equal(t, 768, assistantInfo.Width)
+	})
+
+	t.Run("clipboard wrappers", func(t *testing.T) {
+		text, err := svc.ReadClipboard()
+		require.NoError(t, err)
+		assert.Equal(t, "hello", text)
+		assert.True(t, svc.HasClipboard())
+
+		require.NoError(t, svc.WriteClipboard("updated"))
+		text, err = svc.ReadClipboard()
+		require.NoError(t, err)
+		assert.Equal(t, "updated", text)
+
+		image, err := svc.ReadClipboardImage()
+		require.NoError(t, err)
+		assert.True(t, image.HasContent)
+
+		require.NoError(t, svc.WriteClipboardImage([]byte{9, 8, 7}))
+		require.NoError(t, svc.ClearClipboard())
+		assert.False(t, svc.HasClipboard())
+	})
+
+	t.Run("notification wrappers", func(t *testing.T) {
+		require.NoError(t, svc.ShowInfoNotification("Info", "Hello"))
+		require.True(t, fixture.notificationPlatform.sendCalled)
+		assert.Equal(t, notification.SeverityInfo, fixture.notificationPlatform.lastOpts.Severity)
+
+		granted, err := svc.RequestNotificationPermission()
+		require.NoError(t, err)
+		assert.True(t, granted)
+
+		granted, err = svc.CheckNotificationPermission()
+		require.NoError(t, err)
+		assert.True(t, granted)
+
+		require.NoError(t, svc.ClearNotifications())
+		assert.True(t, fixture.notificationPlatform.clearCalled)
+	})
+
+	t.Run("compatibility aliases", func(t *testing.T) {
+		_ = svc.OpenWindow(window.WithName("alias-win"))
+
+		require.NoError(t, svc.FocusSet("alias-win"))
+		info, err := svc.GetWindowInfo("alias-win")
+		require.NoError(t, err)
+		require.NotNil(t, info)
+		assert.True(t, info.Focused)
+
+		require.NoError(t, svc.DialogMessage("warning", "Alias", "Message"))
+		assert.Equal(t, notification.SeverityWarning, fixture.notificationPlatform.lastOpts.Severity)
+		assert.Equal(t, "Alias", fixture.notificationPlatform.lastOpts.Title)
+		assert.Equal(t, "Message", fixture.notificationPlatform.lastOpts.Message)
+	})
+
+	t.Run("dialog wrappers", func(t *testing.T) {
+		paths, err := svc.OpenFileDialog(dialog.OpenFileOptions{Title: "Pick"})
+		require.NoError(t, err)
+		require.NotEmpty(t, paths)
+
+		path, err := svc.OpenSingleFileDialog(dialog.OpenFileOptions{Title: "Pick"})
+		require.NoError(t, err)
+		assert.Equal(t, paths[0], path)
+
+		path, err = svc.SaveFileDialog(dialog.SaveFileOptions{Filename: "out.txt"})
+		require.NoError(t, err)
+		assert.Equal(t, "/tmp/save.txt", path)
+
+		path, err = svc.OpenDirectoryDialog(dialog.OpenDirectoryOptions{Title: "Pick Dir"})
+		require.NoError(t, err)
+		assert.Equal(t, "/tmp/dir", path)
+
+		confirmed, err := svc.ConfirmDialog("Confirm", "Continue?")
+		require.NoError(t, err)
+		assert.True(t, confirmed)
+
+		button, accepted, err := svc.PromptDialog("Question", "Continue?")
+		require.NoError(t, err)
+		assert.Equal(t, "OK", button)
+		assert.True(t, accepted)
+	})
+
+	t.Run("theme wrappers", func(t *testing.T) {
+		theme := svc.GetTheme()
+		require.NotNil(t, theme)
+		assert.True(t, theme.IsDark)
+		assert.Equal(t, "dark", svc.GetSystemTheme())
+
+		require.NoError(t, svc.SetTheme(false))
+		assert.False(t, fixture.environmentPlatform.isDark)
+		theme = svc.GetTheme()
+		require.NotNil(t, theme)
+		assert.False(t, theme.IsDark)
+		assert.Equal(t, "light", svc.GetSystemTheme())
+	})
+
+	t.Run("tray wrappers", func(t *testing.T) {
+		info := svc.GetTrayInfo()
+		require.NotNil(t, info)
+		assert.True(t, info["active"].(bool))
+
+		require.NoError(t, svc.SetTrayTooltip("Updated Tooltip"))
+		require.NoError(t, svc.SetTrayLabel("Updated Label"))
+		require.NoError(t, svc.SetTrayIcon([]byte{1, 2, 3}))
+		require.NoError(t, svc.SetTrayMenu([]systray.TrayMenuItem{
+			{Label: "One", ActionID: "one"},
+			{Type: "separator"},
+			{Label: "More", Submenu: []systray.TrayMenuItem{{Label: "Two", ActionID: "two"}}},
+		}))
+
+		info = svc.GetTrayInfo()
+		require.NotNil(t, info)
+		assert.Equal(t, "Updated Tooltip", info["tooltip"])
+		assert.Equal(t, "Updated Label", info["label"])
+		assert.True(t, info["hasIcon"].(bool))
+		items, ok := info["menuItems"].([]systray.TrayMenuItem)
+		require.True(t, ok)
+		require.Len(t, items, 3)
+	})
 }
 
 func TestHandleIPCEvents_WindowOpened_Good(t *testing.T) {
@@ -502,4 +924,321 @@ func TestHandleConfigTask_Persists_Good(t *testing.T) {
 	data, err := os.ReadFile(cfgPath)
 	require.NoError(t, err)
 	assert.Contains(t, string(data), "default_width")
+}
+
+func TestHandleWSMessage_Extended_Good(t *testing.T) {
+	c := newExtendedTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+
+	_ = svc.OpenWindow(
+		window.WithName("editor"),
+		window.WithTitle("Editor"),
+		window.WithSize(1200, 800),
+	)
+	_ = svc.OpenWindow(
+		window.WithName("assistant"),
+		window.WithTitle("Assistant"),
+		window.WithSize(900, 800),
+	)
+
+	t.Run("layout suggest", func(t *testing.T) {
+		result, handled, err := svc.handleWSMessage(WSMessage{Action: "layout:suggest"})
+		require.NoError(t, err)
+		assert.True(t, handled)
+		suggestion, ok := result.(window.LayoutSuggestion)
+		require.True(t, ok)
+		assert.Equal(t, "side-by-side", suggestion.Mode)
+	})
+
+	t.Run("window list", func(t *testing.T) {
+		result, handled, err := svc.handleWSMessage(WSMessage{Action: "window:list"})
+		require.NoError(t, err)
+		assert.True(t, handled)
+		windows, ok := result.([]window.WindowInfo)
+		require.True(t, ok)
+		assert.GreaterOrEqual(t, len(windows), 2)
+	})
+
+	t.Run("window get", func(t *testing.T) {
+		result, handled, err := svc.handleWSMessage(WSMessage{
+			Action: "window:get",
+			Data:   map[string]any{"name": "editor"},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+		info, ok := result.(*window.WindowInfo)
+		require.True(t, ok)
+		require.NotNil(t, info)
+		assert.Equal(t, "editor", info.Name)
+	})
+
+	t.Run("window focused", func(t *testing.T) {
+		require.NoError(t, svc.FocusWindow("assistant"))
+		result, handled, err := svc.handleWSMessage(WSMessage{Action: "window:focused"})
+		require.NoError(t, err)
+		assert.True(t, handled)
+		assert.Equal(t, "assistant", result)
+	})
+
+	t.Run("window title get", func(t *testing.T) {
+		result, handled, err := svc.handleWSMessage(WSMessage{
+			Action: "window:title-get",
+			Data:   map[string]any{"name": "editor"},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+		assert.Equal(t, "Editor", result)
+	})
+
+	t.Run("window position and bounds", func(t *testing.T) {
+		_, handled, err := svc.handleWSMessage(WSMessage{
+			Action: "window:position",
+			Data: map[string]any{
+				"name": "assistant",
+				"x":    float64(40),
+				"y":    float64(50),
+			},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+
+		_, handled, err = svc.handleWSMessage(WSMessage{
+			Action: "window:bounds",
+			Data: map[string]any{
+				"name":   "assistant",
+				"x":      float64(60),
+				"y":      float64(70),
+				"width":  float64(800),
+				"height": float64(640),
+			},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+
+		info, err := svc.GetWindowInfo("assistant")
+		require.NoError(t, err)
+		require.NotNil(t, info)
+		assert.Equal(t, 60, info.X)
+		assert.Equal(t, 70, info.Y)
+		assert.Equal(t, 800, info.Width)
+		assert.Equal(t, 640, info.Height)
+	})
+
+	t.Run("window create and close", func(t *testing.T) {
+		result, handled, err := svc.handleWSMessage(WSMessage{
+			Action: "window:create",
+			Data: map[string]any{
+				"name":   "ws-new",
+				"title":  "WS New",
+				"url":    "/ws-new",
+				"width":  float64(500),
+				"height": float64(350),
+			},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+		created, ok := result.(*window.WindowInfo)
+		require.True(t, ok)
+		require.NotNil(t, created)
+		assert.Equal(t, "ws-new", created.Name)
+
+		_, handled, err = svc.handleWSMessage(WSMessage{
+			Action: "window:close",
+			Data:   map[string]any{"name": "ws-new"},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+	})
+
+	t.Run("layout stack", func(t *testing.T) {
+		_, handled, err := svc.handleWSMessage(WSMessage{
+			Action: "layout:stack",
+			Data: map[string]any{
+				"windows": []any{"editor", "assistant"},
+				"offsetX": 25,
+				"offsetY": 30,
+			},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+	})
+
+	t.Run("layout workflow", func(t *testing.T) {
+		_, handled, err := svc.handleWSMessage(WSMessage{
+			Action: "layout:workflow",
+			Data: map[string]any{
+				"workflow": "coding",
+				"windows":  []any{"editor", "assistant"},
+			},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+	})
+
+	t.Run("window arrange pair", func(t *testing.T) {
+		_, handled, err := svc.handleWSMessage(WSMessage{
+			Action: "window:arrange-pair",
+			Data: map[string]any{
+				"first":  "editor",
+				"second": "assistant",
+			},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+	})
+
+	t.Run("screen find space", func(t *testing.T) {
+		result, handled, err := svc.handleWSMessage(WSMessage{
+			Action: "screen:find-space",
+			Data: map[string]any{
+				"width":  float64(400),
+				"height": float64(300),
+			},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+		space, ok := result.(window.SpaceInfo)
+		require.True(t, ok)
+		assert.Equal(t, 2560, space.ScreenWidth)
+		assert.Equal(t, 1440, space.ScreenHeight)
+		assert.Equal(t, 400, space.Width)
+		assert.Equal(t, 300, space.Height)
+	})
+
+	t.Run("clipboard image read", func(t *testing.T) {
+		result, handled, err := svc.handleWSMessage(WSMessage{Action: "clipboard:read-image"})
+		require.NoError(t, err)
+		assert.True(t, handled)
+		content, ok := result.(clipboard.ClipboardImageContent)
+		require.True(t, ok)
+		assert.True(t, content.HasContent)
+		assert.NotEmpty(t, content.Base64)
+	})
+
+	t.Run("clipboard image write", func(t *testing.T) {
+		payload := base64.StdEncoding.EncodeToString([]byte{9, 8, 7})
+		_, handled, err := svc.handleWSMessage(WSMessage{
+			Action: "clipboard:write-image",
+			Data:   map[string]any{"data": payload},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+	})
+
+	t.Run("notification actions", func(t *testing.T) {
+		_, handled, err := svc.handleWSMessage(WSMessage{
+			Action: "notification:with-actions",
+			Data: map[string]any{
+				"title":   "Heads up",
+				"message": "Choose one",
+				"actions": []any{
+					map[string]any{"id": "ok", "label": "OK"},
+				},
+			},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+	})
+
+	t.Run("notification clear", func(t *testing.T) {
+		_, handled, err := svc.handleWSMessage(WSMessage{Action: "notification:clear"})
+		require.NoError(t, err)
+		assert.True(t, handled)
+	})
+
+	t.Run("theme set", func(t *testing.T) {
+		_, handled, err := svc.handleWSMessage(WSMessage{
+			Action: "theme:set",
+			Data:   map[string]any{"theme": "light"},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+
+		theme := svc.GetTheme()
+		require.NotNil(t, theme)
+		assert.False(t, theme.IsDark)
+	})
+
+	t.Run("webview devtools", func(t *testing.T) {
+		_, handled, err := svc.handleWSMessage(WSMessage{
+			Action: "webview:devtools-open",
+			Data:   map[string]any{"window": "editor"},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+
+		_, handled, err = svc.handleWSMessage(WSMessage{
+			Action: "webview:devtools-close",
+			Data:   map[string]any{"window": "editor"},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+	})
+
+	t.Run("webview errors", func(t *testing.T) {
+		result, handled, err := svc.handleWSMessage(WSMessage{
+			Action: "webview:errors",
+			Data:   map[string]any{"window": "editor", "limit": float64(10)},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+		errors, ok := result.([]webview.ExceptionInfo)
+		require.True(t, ok)
+		assert.Len(t, errors, 0)
+	})
+
+	t.Run("tray message", func(t *testing.T) {
+		_, handled, err := svc.handleWSMessage(WSMessage{
+			Action: "tray:show-message",
+			Data:   map[string]any{"title": "Core", "message": "Ready"},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+	})
+
+	t.Run("tray close desktop", func(t *testing.T) {
+		svc.handleTrayAction("close-desktop")
+
+		for _, info := range svc.ListWindowInfos() {
+			assert.False(t, info.Visible, "window should be hidden after close-desktop")
+		}
+	})
+
+	t.Run("tray tooltip", func(t *testing.T) {
+		_, handled, err := svc.handleWSMessage(WSMessage{
+			Action: "tray:set-tooltip",
+			Data:   map[string]any{"tooltip": "Updated"},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+	})
+
+	t.Run("tray label", func(t *testing.T) {
+		_, handled, err := svc.handleWSMessage(WSMessage{
+			Action: "tray:set-label",
+			Data:   map[string]any{"label": "Updated"},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+	})
+
+	t.Run("prompt dialog", func(t *testing.T) {
+		result, handled, err := svc.handleWSMessage(WSMessage{
+			Action: "dialog:prompt",
+			Data:   map[string]any{"title": "Question", "message": "Continue?"},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+		assert.Equal(t, "OK", result)
+	})
+
+	t.Run("event info", func(t *testing.T) {
+		result, handled, err := svc.handleWSMessage(WSMessage{Action: "event:info"})
+		require.NoError(t, err)
+		assert.True(t, handled)
+		info, ok := result.(EventServerInfo)
+		require.True(t, ok)
+		assert.Equal(t, 0, info.ConnectedClients)
+		assert.Equal(t, 0, info.Subscriptions)
+	})
 }

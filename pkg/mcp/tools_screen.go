@@ -5,6 +5,8 @@ import (
 	"context"
 	"fmt"
 
+	"forge.lthn.ai/core/go/pkg/core"
+	"forge.lthn.ai/core/gui/pkg/display"
 	"forge.lthn.ai/core/gui/pkg/screen"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -109,6 +111,33 @@ func (s *Subsystem) screenWorkAreas(_ context.Context, _ *mcp.CallToolRequest, _
 	return nil, ScreenWorkAreasOutput{WorkAreas: areas}, nil
 }
 
+// --- screen_work_area ---
+
+func (s *Subsystem) screenWorkArea(ctx context.Context, req *mcp.CallToolRequest, input ScreenWorkAreasInput) (*mcp.CallToolResult, ScreenWorkAreasOutput, error) {
+	return s.screenWorkAreas(ctx, req, input)
+}
+
+// --- screen_for_window ---
+
+type ScreenForWindowInput struct {
+	Window string `json:"window"`
+}
+type ScreenForWindowOutput struct {
+	Screen *screen.Screen `json:"screen"`
+}
+
+func (s *Subsystem) screenForWindow(_ context.Context, _ *mcp.CallToolRequest, input ScreenForWindowInput) (*mcp.CallToolResult, ScreenForWindowOutput, error) {
+	svc, err := core.ServiceFor[*display.Service](s.core, "display")
+	if err != nil {
+		return nil, ScreenForWindowOutput{}, err
+	}
+	scr, err := svc.GetScreenForWindow(input.Window)
+	if err != nil {
+		return nil, ScreenForWindowOutput{}, err
+	}
+	return nil, ScreenForWindowOutput{Screen: scr}, nil
+}
+
 // --- Registration ---
 
 func (s *Subsystem) registerScreenTools(server *mcp.Server) {
@@ -117,4 +146,6 @@ func (s *Subsystem) registerScreenTools(server *mcp.Server) {
 	mcp.AddTool(server, &mcp.Tool{Name: "screen_primary", Description: "Get the primary screen"}, s.screenPrimary)
 	mcp.AddTool(server, &mcp.Tool{Name: "screen_at_point", Description: "Get the screen at a specific point"}, s.screenAtPoint)
 	mcp.AddTool(server, &mcp.Tool{Name: "screen_work_areas", Description: "Get work areas for all screens"}, s.screenWorkAreas)
+	mcp.AddTool(server, &mcp.Tool{Name: "screen_work_area", Description: "Alias for screen_work_areas"}, s.screenWorkArea)
+	mcp.AddTool(server, &mcp.Tool{Name: "screen_for_window", Description: "Get the screen containing a window"}, s.screenForWindow)
 }

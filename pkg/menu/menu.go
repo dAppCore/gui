@@ -2,6 +2,7 @@
 package menu
 
 // MenuItem describes a menu item for construction (structure only — no handlers).
+// Use: item := menu.MenuItem{Label: "Quit", OnClick: func() {}}
 type MenuItem struct {
 	Label       string
 	Accelerator string
@@ -15,16 +16,19 @@ type MenuItem struct {
 }
 
 // Manager builds application menus via a Platform backend.
+// Use: mgr := menu.NewManager(platform)
 type Manager struct {
 	platform Platform
 }
 
 // NewManager creates a menu Manager.
+// Use: mgr := menu.NewManager(platform)
 func NewManager(platform Platform) *Manager {
 	return &Manager{platform: platform}
 }
 
 // Build constructs a PlatformMenu from a tree of MenuItems.
+// Use: built := mgr.Build([]menu.MenuItem{{Label: "File"}})
 func (m *Manager) Build(items []MenuItem) PlatformMenu {
 	menu := m.platform.NewMenu()
 	m.buildItems(menu, items)
@@ -60,12 +64,14 @@ func (m *Manager) buildItems(menu PlatformMenu, items []MenuItem) {
 }
 
 // SetApplicationMenu builds and sets the application menu.
+// Use: mgr.SetApplicationMenu([]menu.MenuItem{{Label: "Quit"}})
 func (m *Manager) SetApplicationMenu(items []MenuItem) {
 	menu := m.Build(items)
 	m.platform.SetApplicationMenu(menu)
 }
 
 // Platform returns the underlying platform.
+// Use: backend := mgr.Platform()
 func (m *Manager) Platform() Platform {
 	return m.platform
 }

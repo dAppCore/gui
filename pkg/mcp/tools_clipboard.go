@@ -87,6 +87,42 @@ func (s *Subsystem) clipboardClear(_ context.Context, _ *mcp.CallToolRequest, _ 
 	return nil, ClipboardClearOutput{Success: success}, nil
 }
 
+// --- clipboard_read_image ---
+
+type ClipboardReadImageInput struct{}
+type ClipboardReadImageOutput struct {
+	Image clipboard.ClipboardImageContent `json:"image"`
+}
+
+func (s *Subsystem) clipboardReadImage(_ context.Context, _ *mcp.CallToolRequest, _ ClipboardReadImageInput) (*mcp.CallToolResult, ClipboardReadImageOutput, error) {
+	result, _, err := s.core.QUERY(clipboard.QueryImage{})
+	if err != nil {
+		return nil, ClipboardReadImageOutput{}, err
+	}
+	image, ok := result.(clipboard.ClipboardImageContent)
+	if !ok {
+		return nil, ClipboardReadImageOutput{}, fmt.Errorf("unexpected result type from clipboard image query")
+	}
+	return nil, ClipboardReadImageOutput{Image: image}, nil
+}
+
+// --- clipboard_write_image ---
+
+type ClipboardWriteImageInput struct {
+	Data []byte `json:"data"`
+}
+type ClipboardWriteImageOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) clipboardWriteImage(_ context.Context, _ *mcp.CallToolRequest, input ClipboardWriteImageInput) (*mcp.CallToolResult, ClipboardWriteImageOutput, error) {
+	_, _, err := s.core.PERFORM(clipboard.TaskSetImage{Data: input.Data})
+	if err != nil {
+		return nil, ClipboardWriteImageOutput{}, err
+	}
+	return nil, ClipboardWriteImageOutput{Success: true}, nil
+}
+
 // --- Registration ---
 
 func (s *Subsystem) registerClipboardTools(server *mcp.Server) {
@@ -94,4 +130,6 @@ func (s *Subsystem) registerClipboardTools(server *mcp.Server) {
 	mcp.AddTool(server, &mcp.Tool{Name: "clipboard_write", Description: "Write text to the clipboard"}, s.clipboardWrite)
 	mcp.AddTool(server, &mcp.Tool{Name: "clipboard_has", Description: "Check if the clipboard has content"}, s.clipboardHas)
 	mcp.AddTool(server, &mcp.Tool{Name: "clipboard_clear", Description: "Clear the clipboard"}, s.clipboardClear)
+	mcp.AddTool(server, &mcp.Tool{Name: "clipboard_read_image", Description: "Read an image from the clipboard"}, s.clipboardReadImage)
+	mcp.AddTool(server, &mcp.Tool{Name: "clipboard_write_image", Description: "Write an image to the clipboard"}, s.clipboardWriteImage)
 }

@@ -2,12 +2,14 @@
 package systray
 
 // Platform abstracts the system tray backend.
+// Use: var p systray.Platform
 type Platform interface {
 	NewTray() PlatformTray
 	NewMenu() PlatformMenu // Menu factory for building tray menus
 }
 
 // PlatformTray is a live tray handle from the backend.
+// Use: var tray systray.PlatformTray
 type PlatformTray interface {
 	SetIcon(data []byte)
 	SetTemplateIcon(data []byte)
@@ -18,12 +20,15 @@ type PlatformTray interface {
 }
 
 // PlatformMenu is a tray menu built by the backend.
+// Use: var menu systray.PlatformMenu
 type PlatformMenu interface {
 	Add(label string) PlatformMenuItem
 	AddSeparator()
+	AddSubmenu(label string) PlatformMenu
 }
 
 // PlatformMenuItem is a single item in a tray menu.
+// Use: var item systray.PlatformMenuItem
 type PlatformMenuItem interface {
 	SetTooltip(text string)
 	SetChecked(checked bool)
@@ -35,6 +40,7 @@ type PlatformMenuItem interface {
 // WindowHandle is a cross-package interface for window operations.
 // Defined locally to avoid circular imports (display imports systray).
 // pkg/window.PlatformWindow satisfies this implicitly.
+// Use: var w systray.WindowHandle
 type WindowHandle interface {
 	Name() string
 	Show()

@@ -1,3 +1,4 @@
+// pkg/menu/messages.go
 package menu
 
 // QueryConfig requests this service's config section from the display orchestrator.

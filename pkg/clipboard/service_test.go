@@ -11,14 +11,22 @@ import (
 )
 
 type mockPlatform struct {
-	text string
-	ok   bool
+	text  string
+	ok    bool
+	img   []byte
+	imgOk bool
 }
 
 func (m *mockPlatform) Text() (string, bool) { return m.text, m.ok }
 func (m *mockPlatform) SetText(text string) bool {
 	m.text = text
 	m.ok = text != ""
+	return true
+}
+func (m *mockPlatform) Image() ([]byte, bool) { return m.img, m.imgOk }
+func (m *mockPlatform) SetImage(data []byte) bool {
+	m.img = data
+	m.imgOk = len(data) > 0
 	return true
 }
 
@@ -78,4 +86,35 @@ func TestTaskClear_Good(t *testing.T) {
 	r, _, _ := c.QUERY(QueryText{})
 	assert.Equal(t, "", r.(ClipboardContent).Text)
 	assert.False(t, r.(ClipboardContent).HasContent)
+}
+
+func TestQueryImage_Good(t *testing.T) {
+	mock := &mockPlatform{img: []byte{1, 2, 3}, imgOk: true}
+	c, err := core.New(
+		core.WithService(Register(mock)),
+		core.WithServiceLock(),
+	)
+	require.NoError(t, err)
+	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+
+	result, handled, err := c.QUERY(QueryImage{})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	image := result.(ClipboardImageContent)
+	assert.True(t, image.HasContent)
+}
+
+func TestTaskSetImage_Good(t *testing.T) {
+	mock := &mockPlatform{}
+	c, err := core.New(
+		core.WithService(Register(mock)),
+		core.WithServiceLock(),
+	)
+	require.NoError(t, err)
+	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+
+	_, handled, err := c.PERFORM(TaskSetImage{Data: []byte{9, 8, 7}})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.True(t, mock.imgOk)
 }

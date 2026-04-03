@@ -2,10 +2,12 @@
 package window
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 func TestWindowDefaults(t *testing.T) {
@@ -110,6 +112,19 @@ func TestManager_Open_Defaults_Good(t *testing.T) {
 	assert.Equal(t, 800, h)
 }
 
+func TestManager_DefaultSizeOverrides_Good(t *testing.T) {
+	m, _ := newTestManager()
+	m.SetDefaultWidth(1440)
+	m.SetDefaultHeight(900)
+
+	pw, err := m.Open()
+	require.NoError(t, err)
+
+	w, h := pw.Size()
+	assert.Equal(t, 1440, w)
+	assert.Equal(t, 900, h)
+}
+
 func TestManager_Open_Bad(t *testing.T) {
 	m, _ := newTestManager()
 	_, err := m.Open(func(w *Window) error { return assert.AnError })
@@ -146,6 +161,33 @@ func TestManager_Remove_Good(t *testing.T) {
 	m.Remove("temp")
 	_, ok := m.Get("temp")
 	assert.False(t, ok)
+}
+
+func TestWailsWindow_DevToolsToggle_Good(t *testing.T) {
+	app := application.NewApp()
+	platform := NewWailsPlatform(app)
+
+	pw := platform.CreateWindow(PlatformWindowOptions{Name: "devtools"})
+	ww, ok := pw.(*wailsWindow)
+	require.True(t, ok)
+
+	ww.OpenDevTools()
+	assert.True(t, ww.w.DevToolsOpen())
+
+	ww.CloseDevTools()
+	assert.False(t, ww.w.DevToolsOpen())
+}
+
+func TestWailsPlatform_GetWindows_TitleFallback_Good(t *testing.T) {
+	app := application.NewApp()
+	platform := NewWailsPlatform(app)
+
+	pw := platform.CreateWindow(PlatformWindowOptions{Name: "fallback"})
+	require.NotNil(t, pw)
+
+	windows := platform.GetWindows()
+	require.Len(t, windows, 1)
+	assert.Equal(t, "fallback", windows[0].Title())
 }
 
 // --- StateManager Tests ---
@@ -224,6 +266,23 @@ func TestStateManager_Persistence_Good(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, 42, got.X)
 	assert.Equal(t, 500, got.Width)
+}
+
+func TestStateManager_SetPath_Good(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "custom-window-state.json")
+	sm := &StateManager{states: make(map[string]WindowState)}
+
+	sm.SetPath(path)
+	sm.SetState("custom", WindowState{X: 11, Y: 22, Width: 333, Height: 444})
+	sm.ForceSync()
+
+	reloaded := &StateManager{states: make(map[string]WindowState)}
+	reloaded.SetPath(path)
+	got, ok := reloaded.GetState("custom")
+	require.True(t, ok)
+	assert.Equal(t, 11, got.X)
+	assert.Equal(t, 333, got.Width)
 }
 
 // --- LayoutManager Tests ---
@@ -327,4 +386,44 @@ func TestManager_StackWindows_Good(t *testing.T) {
 func TestWorkflowLayout_Good(t *testing.T) {
 	assert.Equal(t, "coding", WorkflowCoding.String())
 	assert.Equal(t, "debugging", WorkflowDebugging.String())
+}
+
+func TestManager_SuggestLayout_Good(t *testing.T) {
+	m, _ := newTestManager()
+	suggestion := m.SuggestLayout(1920, 1080, 3)
+	assert.Equal(t, "quadrants", suggestion.Mode)
+	assert.Equal(t, 2, suggestion.Columns)
+}
+
+func TestManager_FindSpace_Good(t *testing.T) {
+	m, _ := newTestManager()
+	_, _ = m.Open(WithName("one"), WithPosition(0, 0), WithSize(800, 600))
+	space := m.FindSpace(1920, 1080, 400, 300)
+	assert.GreaterOrEqual(t, space.X, 0)
+	assert.GreaterOrEqual(t, space.Y, 0)
+}
+
+func TestManager_ArrangePair_Good(t *testing.T) {
+	m, _ := newTestManager()
+	_, _ = m.Open(WithName("left"), WithSize(800, 600))
+	_, _ = m.Open(WithName("right"), WithSize(800, 600))
+	err := m.ArrangePair("left", "right", 1920, 1080)
+	require.NoError(t, err)
+	left, _ := m.Get("left")
+	x, _ := left.Position()
+	assert.Equal(t, 0, x)
+}
+
+func TestManager_BesideEditor_Good(t *testing.T) {
+	m, _ := newTestManager()
+	_, _ = m.Open(WithName("editor"))
+	_, _ = m.Open(WithName("assistant"))
+	err := m.BesideEditor("editor", "assistant", 1920, 1080)
+	require.NoError(t, err)
+	editor, _ := m.Get("editor")
+	assistant, _ := m.Get("assistant")
+	ex, _ := editor.Size()
+	ax, _ := assistant.Position()
+	assert.Greater(t, ex, 0)
+	assert.Greater(t, ax, 0)
 }

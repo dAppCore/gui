@@ -10,5 +10,8 @@ type TaskSend struct{ Opts NotificationOptions }
 // TaskRequestPermission requests notification authorisation. Result: bool (granted)
 type TaskRequestPermission struct{}
 
-// ActionNotificationClicked is broadcast when a notification is clicked (future).
+// TaskClear clears pending notifications when the backend supports it.
+type TaskClear struct{}
+
+// ActionNotificationClicked is broadcast when a notification is clicked.
 type ActionNotificationClicked struct{ ID string }

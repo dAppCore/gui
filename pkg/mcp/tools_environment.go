@@ -47,9 +47,35 @@ func (s *Subsystem) themeSystem(_ context.Context, _ *mcp.CallToolRequest, _ The
 	return nil, ThemeSystemOutput{Info: info}, nil
 }
 
+// --- theme_set ---
+
+type ThemeSetInput struct {
+	Theme string `json:"theme"`
+}
+type ThemeSetOutput struct {
+	Theme environment.ThemeInfo `json:"theme"`
+}
+
+func (s *Subsystem) themeSet(_ context.Context, _ *mcp.CallToolRequest, input ThemeSetInput) (*mcp.CallToolResult, ThemeSetOutput, error) {
+	_, _, err := s.core.PERFORM(environment.TaskSetTheme{Theme: input.Theme})
+	if err != nil {
+		return nil, ThemeSetOutput{}, err
+	}
+	result, _, err := s.core.QUERY(environment.QueryTheme{})
+	if err != nil {
+		return nil, ThemeSetOutput{}, err
+	}
+	theme, ok := result.(environment.ThemeInfo)
+	if !ok {
+		return nil, ThemeSetOutput{}, fmt.Errorf("unexpected result type from theme query")
+	}
+	return nil, ThemeSetOutput{Theme: theme}, nil
+}
+
 // --- Registration ---
 
 func (s *Subsystem) registerEnvironmentTools(server *mcp.Server) {
 	mcp.AddTool(server, &mcp.Tool{Name: "theme_get", Description: "Get the current application theme"}, s.themeGet)
 	mcp.AddTool(server, &mcp.Tool{Name: "theme_system", Description: "Get system environment and theme information"}, s.themeSystem)
+	mcp.AddTool(server, &mcp.Tool{Name: "theme_set", Description: "Set the application theme override"}, s.themeSet)
 }

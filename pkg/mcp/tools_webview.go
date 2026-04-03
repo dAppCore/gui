@@ -110,6 +110,30 @@ func (s *Subsystem) webviewScreenshot(_ context.Context, _ *mcp.CallToolRequest,
 	return nil, WebviewScreenshotOutput{Base64: sr.Base64, MimeType: sr.MimeType}, nil
 }
 
+// --- webview_screenshot_element ---
+
+type WebviewScreenshotElementInput struct {
+	Window   string `json:"window"`
+	Selector string `json:"selector"`
+}
+
+type WebviewScreenshotElementOutput struct {
+	Base64   string `json:"base64"`
+	MimeType string `json:"mimeType"`
+}
+
+func (s *Subsystem) webviewScreenshotElement(_ context.Context, _ *mcp.CallToolRequest, input WebviewScreenshotElementInput) (*mcp.CallToolResult, WebviewScreenshotElementOutput, error) {
+	result, _, err := s.core.PERFORM(webview.TaskScreenshotElement{Window: input.Window, Selector: input.Selector})
+	if err != nil {
+		return nil, WebviewScreenshotElementOutput{}, err
+	}
+	sr, ok := result.(webview.ScreenshotResult)
+	if !ok {
+		return nil, WebviewScreenshotElementOutput{}, fmt.Errorf("unexpected result type from webview element screenshot")
+	}
+	return nil, WebviewScreenshotElementOutput{Base64: sr.Base64, MimeType: sr.MimeType}, nil
+}
+
 // --- webview_scroll ---
 
 type WebviewScrollInput struct {
@@ -271,6 +295,63 @@ func (s *Subsystem) webviewConsoleClear(_ context.Context, _ *mcp.CallToolReques
 	return nil, WebviewConsoleClearOutput{Success: true}, nil
 }
 
+// --- webview_errors ---
+
+type WebviewErrorsInput struct {
+	Window string `json:"window"`
+	Limit  int    `json:"limit,omitempty"`
+}
+
+type WebviewErrorsOutput struct {
+	Errors []webview.ExceptionInfo `json:"errors"`
+}
+
+func (s *Subsystem) webviewErrors(_ context.Context, _ *mcp.CallToolRequest, input WebviewErrorsInput) (*mcp.CallToolResult, WebviewErrorsOutput, error) {
+	result, _, err := s.core.QUERY(webview.QueryExceptions{Window: input.Window, Limit: input.Limit})
+	if err != nil {
+		return nil, WebviewErrorsOutput{}, err
+	}
+	errors, ok := result.([]webview.ExceptionInfo)
+	if !ok {
+		return nil, WebviewErrorsOutput{}, fmt.Errorf("unexpected result type from webview errors query")
+	}
+	return nil, WebviewErrorsOutput{Errors: errors}, nil
+}
+
+// --- webview_devtools_open ---
+
+type WebviewDevToolsOpenInput struct {
+	Window string `json:"window"`
+}
+type WebviewDevToolsOpenOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) webviewDevToolsOpen(_ context.Context, _ *mcp.CallToolRequest, input WebviewDevToolsOpenInput) (*mcp.CallToolResult, WebviewDevToolsOpenOutput, error) {
+	_, _, err := s.core.PERFORM(webview.TaskOpenDevTools{Window: input.Window})
+	if err != nil {
+		return nil, WebviewDevToolsOpenOutput{}, err
+	}
+	return nil, WebviewDevToolsOpenOutput{Success: true}, nil
+}
+
+// --- webview_devtools_close ---
+
+type WebviewDevToolsCloseInput struct {
+	Window string `json:"window"`
+}
+type WebviewDevToolsCloseOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) webviewDevToolsClose(_ context.Context, _ *mcp.CallToolRequest, input WebviewDevToolsCloseInput) (*mcp.CallToolResult, WebviewDevToolsCloseOutput, error) {
+	_, _, err := s.core.PERFORM(webview.TaskCloseDevTools{Window: input.Window})
+	if err != nil {
+		return nil, WebviewDevToolsCloseOutput{}, err
+	}
+	return nil, WebviewDevToolsCloseOutput{Success: true}, nil
+}
+
 // --- webview_query ---
 
 type WebviewQueryInput struct {
@@ -292,6 +373,12 @@ func (s *Subsystem) webviewQuery(_ context.Context, _ *mcp.CallToolRequest, inpu
 		return nil, WebviewQueryOutput{}, fmt.Errorf("unexpected result type from webview query")
 	}
 	return nil, WebviewQueryOutput{Element: el}, nil
+}
+
+// --- webview_element_info ---
+
+func (s *Subsystem) webviewElementInfo(_ context.Context, _ *mcp.CallToolRequest, input WebviewQueryInput) (*mcp.CallToolResult, WebviewQueryOutput, error) {
+	return s.webviewQuery(nil, nil, input)
 }
 
 // --- webview_query_all ---
@@ -338,6 +425,199 @@ func (s *Subsystem) webviewDOMTree(_ context.Context, _ *mcp.CallToolRequest, in
 		return nil, WebviewDOMTreeOutput{}, fmt.Errorf("unexpected result type from webview DOM tree query")
 	}
 	return nil, WebviewDOMTreeOutput{HTML: html}, nil
+}
+
+// --- webview_source ---
+
+func (s *Subsystem) webviewSource(_ context.Context, _ *mcp.CallToolRequest, input WebviewDOMTreeInput) (*mcp.CallToolResult, WebviewDOMTreeOutput, error) {
+	return s.webviewDOMTree(nil, nil, input)
+}
+
+// --- webview_computed_style ---
+
+type WebviewComputedStyleInput struct {
+	Window   string `json:"window"`
+	Selector string `json:"selector"`
+}
+
+type WebviewComputedStyleOutput struct {
+	Style map[string]string `json:"style"`
+}
+
+func (s *Subsystem) webviewComputedStyle(_ context.Context, _ *mcp.CallToolRequest, input WebviewComputedStyleInput) (*mcp.CallToolResult, WebviewComputedStyleOutput, error) {
+	result, _, err := s.core.QUERY(webview.QueryComputedStyle{Window: input.Window, Selector: input.Selector})
+	if err != nil {
+		return nil, WebviewComputedStyleOutput{}, err
+	}
+	style, ok := result.(map[string]string)
+	if !ok {
+		return nil, WebviewComputedStyleOutput{}, fmt.Errorf("unexpected result type from webview computed style query")
+	}
+	return nil, WebviewComputedStyleOutput{Style: style}, nil
+}
+
+// --- webview_performance ---
+
+type WebviewPerformanceInput struct {
+	Window string `json:"window"`
+}
+
+type WebviewPerformanceOutput struct {
+	Metrics webview.PerformanceMetrics `json:"metrics"`
+}
+
+func (s *Subsystem) webviewPerformance(_ context.Context, _ *mcp.CallToolRequest, input WebviewPerformanceInput) (*mcp.CallToolResult, WebviewPerformanceOutput, error) {
+	result, _, err := s.core.QUERY(webview.QueryPerformance{Window: input.Window})
+	if err != nil {
+		return nil, WebviewPerformanceOutput{}, err
+	}
+	metrics, ok := result.(webview.PerformanceMetrics)
+	if !ok {
+		return nil, WebviewPerformanceOutput{}, fmt.Errorf("unexpected result type from webview performance query")
+	}
+	return nil, WebviewPerformanceOutput{Metrics: metrics}, nil
+}
+
+// --- webview_resources ---
+
+type WebviewResourcesInput struct {
+	Window string `json:"window"`
+}
+
+type WebviewResourcesOutput struct {
+	Resources []webview.ResourceEntry `json:"resources"`
+}
+
+func (s *Subsystem) webviewResources(_ context.Context, _ *mcp.CallToolRequest, input WebviewResourcesInput) (*mcp.CallToolResult, WebviewResourcesOutput, error) {
+	result, _, err := s.core.QUERY(webview.QueryResources{Window: input.Window})
+	if err != nil {
+		return nil, WebviewResourcesOutput{}, err
+	}
+	resources, ok := result.([]webview.ResourceEntry)
+	if !ok {
+		return nil, WebviewResourcesOutput{}, fmt.Errorf("unexpected result type from webview resources query")
+	}
+	return nil, WebviewResourcesOutput{Resources: resources}, nil
+}
+
+// --- webview_network ---
+
+type WebviewNetworkInput struct {
+	Window string `json:"window"`
+	Limit  int    `json:"limit,omitempty"`
+}
+
+type WebviewNetworkOutput struct {
+	Requests []webview.NetworkEntry `json:"requests"`
+}
+
+func (s *Subsystem) webviewNetwork(_ context.Context, _ *mcp.CallToolRequest, input WebviewNetworkInput) (*mcp.CallToolResult, WebviewNetworkOutput, error) {
+	result, _, err := s.core.QUERY(webview.QueryNetwork{Window: input.Window, Limit: input.Limit})
+	if err != nil {
+		return nil, WebviewNetworkOutput{}, err
+	}
+	requests, ok := result.([]webview.NetworkEntry)
+	if !ok {
+		return nil, WebviewNetworkOutput{}, fmt.Errorf("unexpected result type from webview network query")
+	}
+	return nil, WebviewNetworkOutput{Requests: requests}, nil
+}
+
+// --- webview_network_inject ---
+
+type WebviewNetworkInjectInput struct {
+	Window string `json:"window"`
+}
+
+type WebviewNetworkInjectOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) webviewNetworkInject(_ context.Context, _ *mcp.CallToolRequest, input WebviewNetworkInjectInput) (*mcp.CallToolResult, WebviewNetworkInjectOutput, error) {
+	_, _, err := s.core.PERFORM(webview.TaskInjectNetworkLogging{Window: input.Window})
+	if err != nil {
+		return nil, WebviewNetworkInjectOutput{}, err
+	}
+	return nil, WebviewNetworkInjectOutput{Success: true}, nil
+}
+
+// --- webview_network_clear ---
+
+type WebviewNetworkClearInput struct {
+	Window string `json:"window"`
+}
+
+type WebviewNetworkClearOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) webviewNetworkClear(_ context.Context, _ *mcp.CallToolRequest, input WebviewNetworkClearInput) (*mcp.CallToolResult, WebviewNetworkClearOutput, error) {
+	_, _, err := s.core.PERFORM(webview.TaskClearNetworkLog{Window: input.Window})
+	if err != nil {
+		return nil, WebviewNetworkClearOutput{}, err
+	}
+	return nil, WebviewNetworkClearOutput{Success: true}, nil
+}
+
+// --- webview_highlight ---
+
+type WebviewHighlightInput struct {
+	Window   string `json:"window"`
+	Selector string `json:"selector"`
+	Colour   string `json:"colour,omitempty"`
+}
+
+type WebviewHighlightOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) webviewHighlight(_ context.Context, _ *mcp.CallToolRequest, input WebviewHighlightInput) (*mcp.CallToolResult, WebviewHighlightOutput, error) {
+	_, _, err := s.core.PERFORM(webview.TaskHighlight{Window: input.Window, Selector: input.Selector, Colour: input.Colour})
+	if err != nil {
+		return nil, WebviewHighlightOutput{}, err
+	}
+	return nil, WebviewHighlightOutput{Success: true}, nil
+}
+
+// --- webview_print ---
+
+type WebviewPrintInput struct {
+	Window string `json:"window"`
+}
+
+type WebviewPrintOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) webviewPrint(_ context.Context, _ *mcp.CallToolRequest, input WebviewPrintInput) (*mcp.CallToolResult, WebviewPrintOutput, error) {
+	_, _, err := s.core.PERFORM(webview.TaskPrint{Window: input.Window})
+	if err != nil {
+		return nil, WebviewPrintOutput{}, err
+	}
+	return nil, WebviewPrintOutput{Success: true}, nil
+}
+
+// --- webview_pdf ---
+
+type WebviewPDFInput struct {
+	Window string `json:"window"`
+}
+
+type WebviewPDFOutput struct {
+	Base64   string `json:"base64"`
+	MimeType string `json:"mimeType"`
+}
+
+func (s *Subsystem) webviewPDF(_ context.Context, _ *mcp.CallToolRequest, input WebviewPDFInput) (*mcp.CallToolResult, WebviewPDFOutput, error) {
+	result, _, err := s.core.PERFORM(webview.TaskExportPDF{Window: input.Window})
+	if err != nil {
+		return nil, WebviewPDFOutput{}, err
+	}
+	pdf, ok := result.(webview.PDFResult)
+	if !ok {
+		return nil, WebviewPDFOutput{}, fmt.Errorf("unexpected result type from webview pdf task")
+	}
+	return nil, WebviewPDFOutput{Base64: pdf.Base64, MimeType: pdf.MimeType}, nil
 }
 
 // --- webview_url ---
@@ -392,6 +672,7 @@ func (s *Subsystem) registerWebviewTools(server *mcp.Server) {
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_type", Description: "Type text into an element in a webview"}, s.webviewType)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_navigate", Description: "Navigate a webview to a URL"}, s.webviewNavigate)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_screenshot", Description: "Capture a webview screenshot as base64 PNG"}, s.webviewScreenshot)
+	mcp.AddTool(server, &mcp.Tool{Name: "webview_screenshot_element", Description: "Capture a specific element as base64 PNG"}, s.webviewScreenshotElement)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_scroll", Description: "Scroll a webview to an absolute position"}, s.webviewScroll)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_hover", Description: "Hover over an element in a webview"}, s.webviewHover)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_select", Description: "Select an option in a select element"}, s.webviewSelect)
@@ -400,9 +681,24 @@ func (s *Subsystem) registerWebviewTools(server *mcp.Server) {
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_viewport", Description: "Set the webview viewport dimensions"}, s.webviewViewport)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_console", Description: "Get captured console messages from a webview"}, s.webviewConsole)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_console_clear", Description: "Clear captured console messages"}, s.webviewConsoleClear)
+	mcp.AddTool(server, &mcp.Tool{Name: "webview_clear_console", Description: "Alias for webview_console_clear"}, s.webviewConsoleClear)
+	mcp.AddTool(server, &mcp.Tool{Name: "webview_errors", Description: "Get captured JavaScript exceptions from a webview"}, s.webviewErrors)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_query", Description: "Find a single DOM element by CSS selector"}, s.webviewQuery)
+	mcp.AddTool(server, &mcp.Tool{Name: "webview_element_info", Description: "Get detailed information about a DOM element"}, s.webviewElementInfo)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_query_all", Description: "Find all DOM elements matching a CSS selector"}, s.webviewQueryAll)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_dom_tree", Description: "Get HTML content of a webview"}, s.webviewDOMTree)
+	mcp.AddTool(server, &mcp.Tool{Name: "webview_source", Description: "Get page HTML source"}, s.webviewSource)
+	mcp.AddTool(server, &mcp.Tool{Name: "webview_computed_style", Description: "Get computed styles for an element"}, s.webviewComputedStyle)
+	mcp.AddTool(server, &mcp.Tool{Name: "webview_performance", Description: "Get page performance metrics"}, s.webviewPerformance)
+	mcp.AddTool(server, &mcp.Tool{Name: "webview_resources", Description: "List loaded page resources"}, s.webviewResources)
+	mcp.AddTool(server, &mcp.Tool{Name: "webview_network", Description: "Get captured network requests"}, s.webviewNetwork)
+	mcp.AddTool(server, &mcp.Tool{Name: "webview_network_inject", Description: "Inject fetch/XHR network logging"}, s.webviewNetworkInject)
+	mcp.AddTool(server, &mcp.Tool{Name: "webview_network_clear", Description: "Clear captured network requests"}, s.webviewNetworkClear)
+	mcp.AddTool(server, &mcp.Tool{Name: "webview_highlight", Description: "Visually highlight an element"}, s.webviewHighlight)
+	mcp.AddTool(server, &mcp.Tool{Name: "webview_print", Description: "Open the browser print dialog"}, s.webviewPrint)
+	mcp.AddTool(server, &mcp.Tool{Name: "webview_pdf", Description: "Export the current page as a PDF"}, s.webviewPDF)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_url", Description: "Get the current URL of a webview"}, s.webviewURL)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_title", Description: "Get the current page title of a webview"}, s.webviewTitle)
+	mcp.AddTool(server, &mcp.Tool{Name: "webview_devtools_open", Description: "Open devtools for a webview window"}, s.webviewDevToolsOpen)
+	mcp.AddTool(server, &mcp.Tool{Name: "webview_devtools_close", Description: "Close devtools for a webview window"}, s.webviewDevToolsClose)
 }

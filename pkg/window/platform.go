@@ -2,29 +2,32 @@
 package window
 
 // Platform abstracts the windowing backend (Wails v3).
+// Use: var p window.Platform
 type Platform interface {
 	CreateWindow(opts PlatformWindowOptions) PlatformWindow
 	GetWindows() []PlatformWindow
 }
 
 // PlatformWindowOptions are the backend-specific options passed to CreateWindow.
+// Use: opts := window.PlatformWindowOptions{Name: "editor", URL: "/editor"}
 type PlatformWindowOptions struct {
-	Name                  string
-	Title                 string
-	URL                   string
-	Width, Height         int
-	X, Y                  int
-	MinWidth, MinHeight   int
-	MaxWidth, MaxHeight   int
-	Frameless             bool
-	Hidden                bool
-	AlwaysOnTop           bool
-	BackgroundColour      [4]uint8 // RGBA
-	DisableResize         bool
-	EnableFileDrop        bool
+	Name                string
+	Title               string
+	URL                 string
+	Width, Height       int
+	X, Y                int
+	MinWidth, MinHeight int
+	MaxWidth, MaxHeight int
+	Frameless           bool
+	Hidden              bool
+	AlwaysOnTop         bool
+	BackgroundColour    [4]uint8 // RGBA
+	DisableResize       bool
+	EnableFileDrop      bool
 }
 
 // PlatformWindow is a live window handle from the backend.
+// Use: var w window.PlatformWindow
 type PlatformWindow interface {
 	// Identity
 	Name() string
@@ -33,6 +36,8 @@ type PlatformWindow interface {
 	// Queries
 	Position() (int, int)
 	Size() (int, int)
+	IsVisible() bool
+	IsMinimised() bool
 	IsMaximised() bool
 	IsFocused() bool
 
@@ -41,6 +46,7 @@ type PlatformWindow interface {
 	SetPosition(x, y int)
 	SetSize(width, height int)
 	SetBackgroundColour(r, g, b, a uint8)
+	SetOpacity(opacity float32)
 	SetVisibility(visible bool)
 	SetAlwaysOnTop(alwaysOnTop bool)
 
@@ -54,6 +60,8 @@ type PlatformWindow interface {
 	Hide()
 	Fullscreen()
 	UnFullscreen()
+	OpenDevTools()
+	CloseDevTools()
 
 	// Events
 	OnWindowEvent(handler func(event WindowEvent))
@@ -63,6 +71,7 @@ type PlatformWindow interface {
 }
 
 // WindowEvent is emitted by the backend for window state changes.
+// Use: evt := window.WindowEvent{Type: "focus", Name: "editor"}
 type WindowEvent struct {
 	Type string // "focus", "blur", "move", "resize", "close"
 	Name string // window name
