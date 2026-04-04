@@ -1,11 +1,11 @@
-module forge.lthn.ai/core/gui
+module dappco.re/go/core/gui
 
 go 1.26.0
 
 require (
-	forge.lthn.ai/core/config v0.1.8
-	forge.lthn.ai/core/go v0.3.3
-	forge.lthn.ai/core/go-webview v0.1.7
+	dappco.re/go/core/config v0.1.8
+	dappco.re/go/core v0.3.3
+	dappco.re/go/core/webview v0.1.7
 	github.com/gorilla/websocket v1.5.3
 	github.com/modelcontextprotocol/go-sdk v1.4.1
 	github.com/stretchr/testify v1.11.1
@@ -15,8 +15,8 @@ require (
 replace github.com/wailsapp/wails/v3 => ./stubs/wails/v3
 
 require (
-	forge.lthn.ai/core/go-io v0.1.7 // indirect
-	forge.lthn.ai/core/go-log v0.0.4 // indirect
+	dappco.re/go/core/io v0.1.7 // indirect
+	dappco.re/go/core/log v0.0.4 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
