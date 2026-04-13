@@ -2,9 +2,10 @@
 package window
 
 import (
-	"fmt"
 	"math"
 	"sync"
+
+	corego "dappco.re/go/core"
 )
 
 // Window is CoreGUI's own window descriptor — NOT a Wails type alias.
@@ -94,7 +95,7 @@ func (m *Manager) SetDefaultHeight(height int) {
 func (m *Manager) Open(opts ...WindowOption) (PlatformWindow, error) {
 	w, err := ApplyOptions(opts...)
 	if err != nil {
-		return nil, fmt.Errorf("window.Manager.Open: %w", err)
+		return nil, corego.Wrap(err, "window.Manager.Open", "failed to apply options")
 	}
 	return m.Create(w)
 }
@@ -288,11 +289,11 @@ func (m *Manager) FindSpace(screenW, screenH, width, height int) SpaceInfo {
 func (m *Manager) ArrangePair(first, second string, screenW, screenH int) error {
 	left, ok := m.Get(first)
 	if !ok {
-		return fmt.Errorf("window %q not found", first)
+		return corego.E("window.ArrangePair", corego.Sprintf("window %q not found", first), nil)
 	}
 	right, ok := m.Get(second)
 	if !ok {
-		return fmt.Errorf("window %q not found", second)
+		return corego.E("window.ArrangePair", corego.Sprintf("window %q not found", second), nil)
 	}
 
 	leftW := screenW / 2
@@ -309,11 +310,11 @@ func (m *Manager) ArrangePair(first, second string, screenW, screenH int) error 
 func (m *Manager) BesideEditor(editorName, windowName string, screenW, screenH int) error {
 	editor, ok := m.Get(editorName)
 	if !ok {
-		return fmt.Errorf("window %q not found", editorName)
+		return corego.E("window.BesideEditor", corego.Sprintf("window %q not found", editorName), nil)
 	}
 	target, ok := m.Get(windowName)
 	if !ok {
-		return fmt.Errorf("window %q not found", windowName)
+		return corego.E("window.BesideEditor", corego.Sprintf("window %q not found", windowName), nil)
 	}
 
 	editorW := screenW * 70 / 100

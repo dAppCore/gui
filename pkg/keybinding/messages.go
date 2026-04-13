@@ -1,11 +1,11 @@
 // pkg/keybinding/messages.go
 package keybinding
 
-import "errors"
+import corego "dappco.re/go/core"
 
 // ErrAlreadyRegistered is returned when attempting to add a binding
 // that already exists. Callers must TaskRemove first to rebind.
-var ErrAlreadyRegistered = errors.New("keybinding: accelerator already registered")
+var ErrAlreadyRegistered = corego.NewError("keybinding: accelerator already registered")
 
 // BindingInfo describes a registered keyboard shortcut.
 type BindingInfo struct {

@@ -3,9 +3,9 @@ package mcp
 
 import (
 	"context"
-	"fmt"
 
-	"forge.lthn.ai/core/gui/pkg/clipboard"
+	corego "dappco.re/go/core"
+	"dappco.re/go/core/gui/pkg/clipboard"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -23,7 +23,7 @@ func (s *Subsystem) clipboardRead(_ context.Context, _ *mcp.CallToolRequest, _ C
 	}
 	content, ok := result.(clipboard.ClipboardContent)
 	if !ok {
-		return nil, ClipboardReadOutput{}, fmt.Errorf("unexpected result type from clipboard read query")
+		return nil, ClipboardReadOutput{}, corego.E("mcp.clipboard", "unexpected result type from clipboard read query", nil)
 	}
 	return nil, ClipboardReadOutput{Content: content.Text}, nil
 }
@@ -44,7 +44,7 @@ func (s *Subsystem) clipboardWrite(_ context.Context, _ *mcp.CallToolRequest, in
 	}
 	success, ok := result.(bool)
 	if !ok {
-		return nil, ClipboardWriteOutput{}, fmt.Errorf("unexpected result type from clipboard write task")
+		return nil, ClipboardWriteOutput{}, corego.E("mcp.clipboard", "unexpected result type from clipboard write task", nil)
 	}
 	return nil, ClipboardWriteOutput{Success: success}, nil
 }
@@ -63,7 +63,7 @@ func (s *Subsystem) clipboardHas(_ context.Context, _ *mcp.CallToolRequest, _ Cl
 	}
 	content, ok := result.(clipboard.ClipboardContent)
 	if !ok {
-		return nil, ClipboardHasOutput{}, fmt.Errorf("unexpected result type from clipboard has query")
+		return nil, ClipboardHasOutput{}, corego.E("mcp.clipboard", "unexpected result type from clipboard has query", nil)
 	}
 	return nil, ClipboardHasOutput{HasContent: content.HasContent}, nil
 }
@@ -82,7 +82,7 @@ func (s *Subsystem) clipboardClear(_ context.Context, _ *mcp.CallToolRequest, _ 
 	}
 	success, ok := result.(bool)
 	if !ok {
-		return nil, ClipboardClearOutput{}, fmt.Errorf("unexpected result type from clipboard clear task")
+		return nil, ClipboardClearOutput{}, corego.E("mcp.clipboard", "unexpected result type from clipboard clear task", nil)
 	}
 	return nil, ClipboardClearOutput{Success: success}, nil
 }
@@ -101,7 +101,7 @@ func (s *Subsystem) clipboardReadImage(_ context.Context, _ *mcp.CallToolRequest
 	}
 	image, ok := result.(clipboard.ClipboardImageContent)
 	if !ok {
-		return nil, ClipboardReadImageOutput{}, fmt.Errorf("unexpected result type from clipboard image query")
+		return nil, ClipboardReadImageOutput{}, corego.E("mcp.clipboard", "unexpected result type from clipboard image query", nil)
 	}
 	return nil, ClipboardReadImageOutput{Image: image}, nil
 }

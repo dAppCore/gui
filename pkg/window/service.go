@@ -3,11 +3,10 @@ package window
 
 import (
 	"context"
-	"fmt"
-	"strings"
 
+	corego "dappco.re/go/core"
+	"dappco.re/go/core/gui/pkg/screen"
 	"forge.lthn.ai/core/go/pkg/core"
-	"forge.lthn.ai/core/gui/pkg/screen"
 )
 
 // Options holds configuration for the window service.
@@ -280,7 +279,7 @@ func (s *Service) trackWindow(pw PlatformWindow) {
 func (s *Service) taskCloseWindow(name string) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return corego.E("window.service", corego.Sprintf("window not found: %s", name), nil)
 	}
 	// Persist state BEFORE closing (spec requirement)
 	s.manager.State().CaptureState(pw)
@@ -292,7 +291,7 @@ func (s *Service) taskCloseWindow(name string) error {
 func (s *Service) taskSetPosition(name string, x, y int) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return corego.E("window.service", corego.Sprintf("window not found: %s", name), nil)
 	}
 	pw.SetPosition(x, y)
 	s.manager.State().UpdatePosition(name, x, y)
@@ -302,7 +301,7 @@ func (s *Service) taskSetPosition(name string, x, y int) error {
 func (s *Service) taskSetSize(name string, width, height, fallbackWidth, fallbackHeight int) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return corego.E("window.service", corego.Sprintf("window not found: %s", name), nil)
 	}
 	if width == 0 && height == 0 {
 		width, height = fallbackWidth, fallbackHeight
@@ -322,7 +321,7 @@ func (s *Service) taskSetSize(name string, width, height, fallbackWidth, fallbac
 func (s *Service) taskMaximise(name string) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return corego.E("window.service", corego.Sprintf("window not found: %s", name), nil)
 	}
 	pw.Maximise()
 	s.manager.State().UpdateMaximized(name, true)
@@ -332,7 +331,7 @@ func (s *Service) taskMaximise(name string) error {
 func (s *Service) taskMinimise(name string) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return corego.E("window.service", corego.Sprintf("window not found: %s", name), nil)
 	}
 	pw.Minimise()
 	return nil
@@ -341,7 +340,7 @@ func (s *Service) taskMinimise(name string) error {
 func (s *Service) taskFocus(name string) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return corego.E("window.service", corego.Sprintf("window not found: %s", name), nil)
 	}
 	pw.Focus()
 	return nil
@@ -350,7 +349,7 @@ func (s *Service) taskFocus(name string) error {
 func (s *Service) taskRestore(name string) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return corego.E("window.service", corego.Sprintf("window not found: %s", name), nil)
 	}
 	pw.Restore()
 	s.manager.State().UpdateMaximized(name, false)
@@ -360,7 +359,7 @@ func (s *Service) taskRestore(name string) error {
 func (s *Service) taskSetTitle(name, title string) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return corego.E("window.service", corego.Sprintf("window not found: %s", name), nil)
 	}
 	pw.SetTitle(title)
 	return nil
@@ -369,7 +368,7 @@ func (s *Service) taskSetTitle(name, title string) error {
 func (s *Service) taskSetAlwaysOnTop(name string, alwaysOnTop bool) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return corego.E("window.service", corego.Sprintf("window not found: %s", name), nil)
 	}
 	pw.SetAlwaysOnTop(alwaysOnTop)
 	return nil
@@ -378,7 +377,7 @@ func (s *Service) taskSetAlwaysOnTop(name string, alwaysOnTop bool) error {
 func (s *Service) taskSetBackgroundColour(name string, red, green, blue, alpha uint8) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return corego.E("window.service", corego.Sprintf("window not found: %s", name), nil)
 	}
 	pw.SetBackgroundColour(red, green, blue, alpha)
 	return nil
@@ -386,11 +385,11 @@ func (s *Service) taskSetBackgroundColour(name string, red, green, blue, alpha u
 
 func (s *Service) taskSetOpacity(name string, opacity float32) error {
 	if opacity < 0 || opacity > 1 {
-		return fmt.Errorf("opacity must be between 0 and 1")
+		return corego.E("window.setOpacity", "opacity must be between 0 and 1", nil)
 	}
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return corego.E("window.service", corego.Sprintf("window not found: %s", name), nil)
 	}
 	pw.SetOpacity(opacity)
 	return nil
@@ -399,7 +398,7 @@ func (s *Service) taskSetOpacity(name string, opacity float32) error {
 func (s *Service) taskSetVisibility(name string, visible bool) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return corego.E("window.service", corego.Sprintf("window not found: %s", name), nil)
 	}
 	pw.SetVisibility(visible)
 	return nil
@@ -408,7 +407,7 @@ func (s *Service) taskSetVisibility(name string, visible bool) error {
 func (s *Service) taskFullscreen(name string, fullscreen bool) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return fmt.Errorf("window not found: %s", name)
+		return corego.E("window.service", corego.Sprintf("window not found: %s", name), nil)
 	}
 	if fullscreen {
 		pw.Fullscreen()
@@ -433,7 +432,7 @@ func (s *Service) taskSaveLayout(name string) error {
 func (s *Service) taskRestoreLayout(name string) error {
 	layout, ok := s.manager.Layout().GetLayout(name)
 	if !ok {
-		return fmt.Errorf("layout not found: %s", name)
+		return corego.E("window.restoreLayout", corego.Sprintf("layout not found: %s", name), nil)
 	}
 	for winName, state := range layout.Windows {
 		pw, found := s.manager.Get(winName)
@@ -465,7 +464,7 @@ var tileModeMap = map[string]TileMode{
 func (s *Service) taskTileWindows(mode string, names []string) error {
 	tm, ok := tileModeMap[mode]
 	if !ok {
-		return fmt.Errorf("unknown tile mode: %s", mode)
+		return corego.E("window.tileWindows", corego.Sprintf("unknown tile mode: %s", mode), nil)
 	}
 	if len(names) == 0 {
 		names = s.manager.List()
@@ -485,7 +484,7 @@ var snapPosMap = map[string]SnapPosition{
 func (s *Service) taskSnapWindow(name, position string) error {
 	pos, ok := snapPosMap[position]
 	if !ok {
-		return fmt.Errorf("unknown snap position: %s", position)
+		return corego.E("window.snapWindow", corego.Sprintf("unknown snap position: %s", position), nil)
 	}
 	screenW, screenH := s.primaryScreenSize()
 	return s.manager.SnapWindow(name, pos, screenW, screenH)
@@ -502,13 +501,13 @@ func (s *Service) taskBesideEditor(editorName, windowName string) error {
 		editorName = s.detectEditorWindow()
 	}
 	if editorName == "" {
-		return fmt.Errorf("editor window not found")
+		return corego.E("window.besideEditor", "editor window not found", nil)
 	}
 	if windowName == "" {
 		windowName = s.detectCompanionWindow(editorName)
 	}
 	if windowName == "" {
-		return fmt.Errorf("companion window not found")
+		return corego.E("window.besideEditor", "companion window not found", nil)
 	}
 	return s.manager.BesideEditor(editorName, windowName, screenW, screenH)
 }
@@ -554,9 +553,9 @@ func looksLikeEditor(name, title string) bool {
 }
 
 func containsAny(value string, needles ...string) bool {
-	lower := strings.ToLower(value)
+	lower := corego.Lower(value)
 	for _, needle := range needles {
-		if strings.Contains(lower, needle) {
+		if corego.Contains(lower, needle) {
 			return true
 		}
 	}

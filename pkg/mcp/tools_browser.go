@@ -4,7 +4,7 @@ package mcp
 import (
 	"context"
 
-	"forge.lthn.ai/core/gui/pkg/browser"
+	"dappco.re/go/core/gui/pkg/browser"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 

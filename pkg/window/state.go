@@ -2,11 +2,11 @@
 package window
 
 import (
-	"encoding/json"
 	"os"
-	"path/filepath"
 	"sync"
 	"time"
+
+	corego "dappco.re/go/core"
 )
 
 // WindowState holds the persisted position/size of a window.
@@ -41,7 +41,7 @@ func NewStateManager() *StateManager {
 	}
 	configDir, err := os.UserConfigDir()
 	if err == nil {
-		sm.configDir = filepath.Join(configDir, "Core")
+		sm.configDir = corego.JoinPath(configDir, "Core")
 	}
 	sm.load()
 	return sm
@@ -63,12 +63,12 @@ func (sm *StateManager) filePath() string {
 	if sm.statePath != "" {
 		return sm.statePath
 	}
-	return filepath.Join(sm.configDir, "window_state.json")
+	return corego.JoinPath(sm.configDir, "window_state.json")
 }
 
 func (sm *StateManager) dataDir() string {
 	if sm.statePath != "" {
-		return filepath.Dir(sm.statePath)
+		return corego.PathDir(sm.statePath)
 	}
 	return sm.configDir
 }
@@ -100,7 +100,7 @@ func (sm *StateManager) load() {
 	}
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
-	_ = json.Unmarshal(data, &sm.states)
+	_ = corego.JSONUnmarshal(data, &sm.states)
 }
 
 func (sm *StateManager) save() {
@@ -108,11 +108,12 @@ func (sm *StateManager) save() {
 		return
 	}
 	sm.mu.RLock()
-	data, err := json.MarshalIndent(sm.states, "", "  ")
+	r := corego.JSONMarshal(sm.states)
 	sm.mu.RUnlock()
-	if err != nil {
+	if !r.OK {
 		return
 	}
+	data := r.Value.([]byte)
 	_ = os.MkdirAll(sm.dataDir(), 0o755)
 	_ = os.WriteFile(sm.filePath(), data, 0o644)
 }

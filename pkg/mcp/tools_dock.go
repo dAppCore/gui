@@ -4,7 +4,7 @@ package mcp
 import (
 	"context"
 
-	"forge.lthn.ai/core/gui/pkg/dock"
+	"dappco.re/go/core/gui/pkg/dock"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 

@@ -3,9 +3,9 @@ package mcp
 
 import (
 	"context"
-	"fmt"
 
-	"forge.lthn.ai/core/gui/pkg/systray"
+	corego "dappco.re/go/core"
+	"dappco.re/go/core/gui/pkg/systray"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -74,7 +74,7 @@ func (s *Subsystem) trayInfo(_ context.Context, _ *mcp.CallToolRequest, _ TrayIn
 	}
 	config, ok := result.(map[string]any)
 	if !ok {
-		return nil, TrayInfoOutput{}, fmt.Errorf("unexpected result type from tray config query")
+		return nil, TrayInfoOutput{}, corego.E("mcp.trayInfo", "unexpected result type from tray config query", nil)
 	}
 	return nil, TrayInfoOutput{Config: config}, nil
 }

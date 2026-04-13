@@ -3,11 +3,11 @@ package mcp
 
 import (
 	"context"
-	"fmt"
 
+	corego "dappco.re/go/core"
+	"dappco.re/go/core/gui/pkg/screen"
+	"dappco.re/go/core/gui/pkg/window"
 	"forge.lthn.ai/core/go/pkg/core"
-	"forge.lthn.ai/core/gui/pkg/screen"
-	"forge.lthn.ai/core/gui/pkg/window"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -59,7 +59,7 @@ func (s *Subsystem) layoutList(_ context.Context, _ *mcp.CallToolRequest, _ Layo
 	}
 	layouts, ok := result.([]window.LayoutInfo)
 	if !ok {
-		return nil, LayoutListOutput{}, fmt.Errorf("unexpected result type from layout list query")
+		return nil, LayoutListOutput{}, corego.E("mcp.layout", "unexpected result type from layout list query", nil)
 	}
 	return nil, LayoutListOutput{Layouts: layouts}, nil
 }
@@ -97,7 +97,7 @@ func (s *Subsystem) layoutGet(_ context.Context, _ *mcp.CallToolRequest, input L
 	}
 	layout, ok := result.(*window.Layout)
 	if !ok {
-		return nil, LayoutGetOutput{}, fmt.Errorf("unexpected result type from layout get query")
+		return nil, LayoutGetOutput{}, corego.E("mcp.layout", "unexpected result type from layout get query", nil)
 	}
 	return nil, LayoutGetOutput{Layout: layout}, nil
 }
@@ -176,7 +176,7 @@ func (s *Subsystem) layoutSuggest(_ context.Context, _ *mcp.CallToolRequest, inp
 		}
 		windows, ok := result.([]window.WindowInfo)
 		if !ok {
-			return nil, LayoutSuggestOutput{}, fmt.Errorf("unexpected result type from window list query")
+			return nil, LayoutSuggestOutput{}, corego.E("mcp.layout", "unexpected result type from window list query", nil)
 		}
 		windowCount = len(windows)
 	}
@@ -193,11 +193,11 @@ func (s *Subsystem) layoutSuggest(_ context.Context, _ *mcp.CallToolRequest, inp
 		return nil, LayoutSuggestOutput{}, err
 	}
 	if !handled {
-		return nil, LayoutSuggestOutput{}, fmt.Errorf("window service not available")
+		return nil, LayoutSuggestOutput{}, corego.E("mcp.layout", "window service not available", nil)
 	}
 	suggestion, ok := result.(window.LayoutSuggestion)
 	if !ok {
-		return nil, LayoutSuggestOutput{}, fmt.Errorf("unexpected result type from layout suggestion query")
+		return nil, LayoutSuggestOutput{}, corego.E("mcp.layout", "unexpected result type from layout suggestion query", nil)
 	}
 	return nil, LayoutSuggestOutput{Suggestion: suggestion}, nil
 }
@@ -227,11 +227,11 @@ func (s *Subsystem) screenFindSpace(_ context.Context, _ *mcp.CallToolRequest, i
 		return nil, ScreenFindSpaceOutput{}, err
 	}
 	if !handled {
-		return nil, ScreenFindSpaceOutput{}, fmt.Errorf("window service not available")
+		return nil, ScreenFindSpaceOutput{}, corego.E("mcp.layout", "window service not available", nil)
 	}
 	space, ok := result.(window.SpaceInfo)
 	if !ok {
-		return nil, ScreenFindSpaceOutput{}, fmt.Errorf("unexpected result type from find space query")
+		return nil, ScreenFindSpaceOutput{}, corego.E("mcp.layout", "unexpected result type from find space query", nil)
 	}
 	if space.ScreenWidth == 0 {
 		space.ScreenWidth = screenW
@@ -296,7 +296,7 @@ type LayoutWorkflowOutput struct {
 func (s *Subsystem) layoutWorkflow(_ context.Context, _ *mcp.CallToolRequest, input LayoutWorkflowInput) (*mcp.CallToolResult, LayoutWorkflowOutput, error) {
 	workflow, ok := window.ParseWorkflowLayout(input.Workflow)
 	if !ok {
-		return nil, LayoutWorkflowOutput{}, fmt.Errorf("unknown workflow: %s", input.Workflow)
+		return nil, LayoutWorkflowOutput{}, corego.E("mcp.layout", corego.Sprintf("unknown workflow: %s", input.Workflow), nil)
 	}
 	_, _, err := s.core.PERFORM(window.TaskApplyWorkflow{
 		Workflow: workflow,

@@ -5,22 +5,20 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
-	"encoding/json"
-	"fmt"
 	"image"
 	"image/draw"
 	"image/png"
 	"math"
 	"reflect"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 	"unsafe"
 
+	corego "dappco.re/go/core"
+	"dappco.re/go/core/gui/pkg/window"
 	gowebview "forge.lthn.ai/core/go-webview"
 	"forge.lthn.ai/core/go/pkg/core"
-	"forge.lthn.ai/core/gui/pkg/window"
 )
 
 // connector abstracts go-webview for testing. The real implementation wraps
@@ -108,7 +106,7 @@ func defaultNewConn(opts Options) func(string, string) (connector, error) {
 		}
 		var wsURL string
 		for _, t := range targets {
-			if t.Type == "page" && (strings.Contains(t.Title, windowName) || strings.Contains(t.URL, windowName)) {
+			if t.Type == "page" && (corego.Contains(t.Title, windowName) || corego.Contains(t.URL, windowName)) {
 				wsURL = t.WebSocketDebuggerURL
 				break
 			}
@@ -473,7 +471,7 @@ func (s *Service) handleTask(_ *core.Core, t core.Task) (any, bool, error) {
 		}
 		pw, ok := ws.Manager().Get(t.Window)
 		if !ok {
-			return nil, true, fmt.Errorf("window not found: %s", t.Window)
+			return nil, true, corego.E("webview", corego.Sprintf("window not found: %s", t.Window), nil)
 		}
 		pw.OpenDevTools()
 		return nil, true, nil
@@ -484,7 +482,7 @@ func (s *Service) handleTask(_ *core.Core, t core.Task) (any, bool, error) {
 		}
 		pw, ok := ws.Manager().Get(t.Window)
 		if !ok {
-			return nil, true, fmt.Errorf("window not found: %s", t.Window)
+			return nil, true, corego.E("webview", corego.Sprintf("window not found: %s", t.Window), nil)
 		}
 		pw.CloseDevTools()
 		return nil, true, nil
@@ -550,12 +548,13 @@ func (s *Service) queryExceptions(windowName string, limit int) []ExceptionInfo 
 
 func coerceJSON[T any](v any) (T, error) {
 	var out T
-	raw, err := json.Marshal(v)
-	if err != nil {
-		return out, err
+	r := corego.JSONMarshal(v)
+	if !r.OK {
+		return out, r.Value.(error)
 	}
-	if err := json.Unmarshal(raw, &out); err != nil {
-		return out, err
+	r2 := corego.JSONUnmarshal(r.Value.([]byte), &out)
+	if !r2.OK {
+		return out, r2.Value.(error)
 	}
 	return out, nil
 }
@@ -586,7 +585,7 @@ type elementScreenshotBounds struct {
 
 func elementScreenshotScript(selector string) string {
 	sel := jsQuote(selector)
-	return fmt.Sprintf(`(function(){
+	return corego.Sprintf(`(function(){
   const el = document.querySelector(%s);
   if (!el) return null;
   try { el.scrollIntoView({block: "center", inline: "center"}); } catch (e) {}
@@ -607,14 +606,14 @@ func captureElementScreenshot(conn connector, selector string) ([]byte, error) {
 		return nil, err
 	}
 	if result == nil {
-		return nil, fmt.Errorf("webview: element not found: %s", selector)
+		return nil, corego.E("webview", corego.Sprintf("element not found: %s", selector), nil)
 	}
 	bounds, err := coerceJSON[elementScreenshotBounds](result)
 	if err != nil {
 		return nil, err
 	}
 	if bounds.Width <= 0 || bounds.Height <= 0 {
-		return nil, fmt.Errorf("webview: element has no measurable bounds: %s", selector)
+		return nil, corego.E("webview", corego.Sprintf("element has no measurable bounds: %s", selector), nil)
 	}
 	raw, err := conn.Screenshot()
 	if err != nil {
@@ -648,7 +647,7 @@ func captureElementScreenshot(conn connector, selector string) ([]byte, error) {
 		bottom = srcBounds.Max.Y
 	}
 	if right <= left || bottom <= top {
-		return nil, fmt.Errorf("webview: element is outside the captured screenshot: %s", selector)
+		return nil, corego.E("webview", corego.Sprintf("element is outside the captured screenshot: %s", selector), nil)
 	}
 
 	crop := image.NewRGBA(image.Rect(0, 0, right-left, bottom-top))
@@ -695,7 +694,7 @@ func (r *realConnector) PrintToPDF() ([]byte, error) {
 	}
 	data, ok := result["data"].(string)
 	if !ok || data == "" {
-		return nil, fmt.Errorf("webview: missing PDF data")
+		return nil, corego.E("webview", "missing PDF data", nil)
 	}
 	return base64.StdEncoding.DecodeString(data)
 }
@@ -703,17 +702,17 @@ func (r *realConnector) PrintToPDF() ([]byte, error) {
 func (r *realConnector) cdpClient() (*gowebview.CDPClient, error) {
 	rv := reflect.ValueOf(r.wv)
 	if rv.Kind() != reflect.Ptr || rv.IsNil() {
-		return nil, fmt.Errorf("webview: invalid connector")
+		return nil, corego.E("webview", "invalid connector", nil)
 	}
 	elem := rv.Elem()
 	field := elem.FieldByName("client")
 	if !field.IsValid() || field.IsNil() {
-		return nil, fmt.Errorf("webview: CDP client not available")
+		return nil, corego.E("webview", "CDP client not available", nil)
 	}
 	ptr := reflect.NewAt(field.Type(), unsafe.Pointer(field.UnsafeAddr())).Elem().Interface()
 	client, ok := ptr.(*gowebview.CDPClient)
 	if !ok || client == nil {
-		return nil, fmt.Errorf("webview: unexpected CDP client type")
+		return nil, corego.E("webview", "unexpected CDP client type", nil)
 	}
 	return client, nil
 }

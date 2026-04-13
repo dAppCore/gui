@@ -3,8 +3,8 @@ package contextmenu
 
 import (
 	"context"
-	"fmt"
 
+	corego "dappco.re/go/core"
 	"forge.lthn.ai/core/go/pkg/core"
 )
 
@@ -92,7 +92,7 @@ func (s *Service) taskAdd(t TaskAdd) error {
 		})
 	})
 	if err != nil {
-		return fmt.Errorf("contextmenu: platform add failed: %w", err)
+		return corego.Wrap(err, "contextmenu.add", "platform add failed")
 	}
 
 	s.menus[t.Name] = t.Menu
@@ -106,7 +106,7 @@ func (s *Service) taskRemove(t TaskRemove) error {
 
 	err := s.platform.Remove(t.Name)
 	if err != nil {
-		return fmt.Errorf("contextmenu: platform remove failed: %w", err)
+		return corego.Wrap(err, "contextmenu.remove", "platform remove failed")
 	}
 
 	delete(s.menus, t.Name)

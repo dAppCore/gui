@@ -2,13 +2,12 @@
 package display
 
 import (
-	"encoding/json"
-	"fmt"
 	"net/http"
 	"sync"
 	"time"
 
-	"forge.lthn.ai/core/gui/pkg/window"
+	"dappco.re/go/core"
+	"dappco.re/go/core/gui/pkg/window"
 	"github.com/gorilla/websocket"
 )
 
@@ -144,13 +143,13 @@ func (em *WSEventManager) sendEvent(conn *websocket.Conn, event Event) {
 		return
 	}
 
-	data, err := json.Marshal(event)
-	if err != nil {
+	r := core.JSONMarshal(event)
+	if !r.OK {
 		return
 	}
 
 	conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-	if err := conn.WriteMessage(websocket.TextMessage, data); err != nil {
+	if err := conn.WriteMessage(websocket.TextMessage, r.Value.([]byte)); err != nil {
 		em.removeClient(conn)
 	}
 }
@@ -188,7 +187,7 @@ func (em *WSEventManager) handleMessages(conn *websocket.Conn) {
 			EventTypes []EventType `json:"eventTypes,omitempty"`
 		}
 
-		if err := json.Unmarshal(message, &msg); err != nil {
+		if r := core.JSONUnmarshal(message, &msg); !r.OK {
 			continue
 		}
 
@@ -217,7 +216,7 @@ func (em *WSEventManager) subscribe(conn *websocket.Conn, id string, eventTypes 
 	if id == "" {
 		em.mu.Lock()
 		em.nextSubID++
-		id = fmt.Sprintf("sub-%d", em.nextSubID)
+		id = core.Sprintf("sub-%d", em.nextSubID)
 		em.mu.Unlock()
 	}
 
@@ -234,8 +233,10 @@ func (em *WSEventManager) subscribe(conn *websocket.Conn, id string, eventTypes 
 		"id":         id,
 		"eventTypes": eventTypes,
 	}
-	data, _ := json.Marshal(response)
-	conn.WriteMessage(websocket.TextMessage, data)
+	r := core.JSONMarshal(response)
+	if r.OK {
+		conn.WriteMessage(websocket.TextMessage, r.Value.([]byte))
+	}
 }
 
 // unsubscribe removes a subscription for a client.
@@ -257,8 +258,10 @@ func (em *WSEventManager) unsubscribe(conn *websocket.Conn, id string) {
 		"type": "unsubscribed",
 		"id":   id,
 	}
-	data, _ := json.Marshal(response)
-	conn.WriteMessage(websocket.TextMessage, data)
+	r := core.JSONMarshal(response)
+	if r.OK {
+		conn.WriteMessage(websocket.TextMessage, r.Value.([]byte))
+	}
 }
 
 // listSubscriptions sends a list of active subscriptions to a client.
@@ -282,8 +285,10 @@ func (em *WSEventManager) listSubscriptions(conn *websocket.Conn) {
 		"type":          "subscriptions",
 		"subscriptions": subs,
 	}
-	data, _ := json.Marshal(response)
-	conn.WriteMessage(websocket.TextMessage, data)
+	r := core.JSONMarshal(response)
+	if r.OK {
+		conn.WriteMessage(websocket.TextMessage, r.Value.([]byte))
+	}
 }
 
 // removeClient removes a client and its subscriptions.

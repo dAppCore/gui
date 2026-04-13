@@ -2,19 +2,16 @@
 package webview
 
 import (
-	"encoding/json"
-	"fmt"
-	"strings"
+	corego "dappco.re/go/core"
 )
 
 func jsQuote(v string) string {
-	b, _ := json.Marshal(v)
-	return string(b)
+	return corego.JSONMarshalString(v)
 }
 
 func computedStyleScript(selector string) string {
 	sel := jsQuote(selector)
-	return fmt.Sprintf(`(function(){
+	return corego.Sprintf(`(function(){
   const el = document.querySelector(%s);
   if (!el) return null;
   const style = window.getComputedStyle(el);
@@ -33,7 +30,7 @@ func highlightScript(selector, colour string) string {
 		colour = "#ff9800"
 	}
 	col := jsQuote(colour)
-	return fmt.Sprintf(`(function(){
+	return corego.Sprintf(`(function(){
   const el = document.querySelector(%s);
   if (!el) return false;
   if (el.__coreHighlightOrigOutline === undefined) {
@@ -150,9 +147,9 @@ func networkLogScript(limit int) string {
 	if limit <= 0 {
 		return `(window.__coreNetworkLog || [])`
 	}
-	return fmt.Sprintf(`(window.__coreNetworkLog || []).slice(-%d)`, limit)
+	return corego.Sprintf(`(window.__coreNetworkLog || []).slice(-%d)`, limit)
 }
 
 func normalizeWhitespace(s string) string {
-	return strings.TrimSpace(s)
+	return corego.Trim(s)
 }

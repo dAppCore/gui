@@ -3,8 +3,8 @@ package environment
 
 import (
 	"context"
-	"fmt"
 
+	corego "dappco.re/go/core"
 	"forge.lthn.ai/core/go/pkg/core"
 )
 
@@ -104,7 +104,7 @@ func (s *Service) taskSetTheme(task TaskSetTheme) error {
 		s.overrideDark = &isDark
 		shouldApplyTheme = true
 	default:
-		return fmt.Errorf("invalid theme mode: %s", task.Theme)
+		return corego.E("environment.setTheme", corego.Sprintf("invalid theme mode: %s", task.Theme), nil)
 	}
 
 	if shouldApplyTheme {

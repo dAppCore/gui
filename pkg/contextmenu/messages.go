@@ -1,11 +1,11 @@
 // pkg/contextmenu/messages.go
 package contextmenu
 
-import "errors"
+import corego "dappco.re/go/core"
 
 // ErrMenuNotFound is returned when attempting to remove or get a menu
 // that does not exist in the registry.
-var ErrMenuNotFound = errors.New("contextmenu: menu not found")
+var ErrMenuNotFound = corego.NewError("contextmenu: menu not found")
 
 // --- Queries ---
 

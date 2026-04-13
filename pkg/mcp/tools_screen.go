@@ -3,11 +3,11 @@ package mcp
 
 import (
 	"context"
-	"fmt"
 
+	corego "dappco.re/go/core"
+	"dappco.re/go/core/gui/pkg/display"
+	"dappco.re/go/core/gui/pkg/screen"
 	"forge.lthn.ai/core/go/pkg/core"
-	"forge.lthn.ai/core/gui/pkg/display"
-	"forge.lthn.ai/core/gui/pkg/screen"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -25,7 +25,7 @@ func (s *Subsystem) screenList(_ context.Context, _ *mcp.CallToolRequest, _ Scre
 	}
 	screens, ok := result.([]screen.Screen)
 	if !ok {
-		return nil, ScreenListOutput{}, fmt.Errorf("unexpected result type from screen list query")
+		return nil, ScreenListOutput{}, corego.E("mcp.screen", "unexpected result type from screen list query", nil)
 	}
 	return nil, ScreenListOutput{Screens: screens}, nil
 }
@@ -46,7 +46,7 @@ func (s *Subsystem) screenGet(_ context.Context, _ *mcp.CallToolRequest, input S
 	}
 	scr, ok := result.(*screen.Screen)
 	if !ok {
-		return nil, ScreenGetOutput{}, fmt.Errorf("unexpected result type from screen get query")
+		return nil, ScreenGetOutput{}, corego.E("mcp.screen", "unexpected result type from screen get query", nil)
 	}
 	return nil, ScreenGetOutput{Screen: scr}, nil
 }
@@ -65,7 +65,7 @@ func (s *Subsystem) screenPrimary(_ context.Context, _ *mcp.CallToolRequest, _ S
 	}
 	scr, ok := result.(*screen.Screen)
 	if !ok {
-		return nil, ScreenPrimaryOutput{}, fmt.Errorf("unexpected result type from screen primary query")
+		return nil, ScreenPrimaryOutput{}, corego.E("mcp.screen", "unexpected result type from screen primary query", nil)
 	}
 	return nil, ScreenPrimaryOutput{Screen: scr}, nil
 }
@@ -87,7 +87,7 @@ func (s *Subsystem) screenAtPoint(_ context.Context, _ *mcp.CallToolRequest, inp
 	}
 	scr, ok := result.(*screen.Screen)
 	if !ok {
-		return nil, ScreenAtPointOutput{}, fmt.Errorf("unexpected result type from screen at point query")
+		return nil, ScreenAtPointOutput{}, corego.E("mcp.screen", "unexpected result type from screen at point query", nil)
 	}
 	return nil, ScreenAtPointOutput{Screen: scr}, nil
 }
@@ -106,7 +106,7 @@ func (s *Subsystem) screenWorkAreas(_ context.Context, _ *mcp.CallToolRequest, _
 	}
 	areas, ok := result.([]screen.Rect)
 	if !ok {
-		return nil, ScreenWorkAreasOutput{}, fmt.Errorf("unexpected result type from screen work areas query")
+		return nil, ScreenWorkAreasOutput{}, corego.E("mcp.screen", "unexpected result type from screen work areas query", nil)
 	}
 	return nil, ScreenWorkAreasOutput{WorkAreas: areas}, nil
 }

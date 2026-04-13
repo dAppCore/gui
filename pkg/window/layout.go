@@ -2,12 +2,11 @@
 package window
 
 import (
-	"encoding/json"
-	"fmt"
 	"os"
-	"path/filepath"
 	"sync"
 	"time"
+
+	corego "dappco.re/go/core"
 )
 
 // Layout is a named window arrangement.
@@ -44,7 +43,7 @@ func NewLayoutManager() *LayoutManager {
 	}
 	configDir, err := os.UserConfigDir()
 	if err == nil {
-		lm.configDir = filepath.Join(configDir, "Core")
+		lm.configDir = corego.JoinPath(configDir, "Core")
 	}
 	lm.loadLayouts()
 	return lm
@@ -63,7 +62,7 @@ func NewLayoutManagerWithDir(configDir string) *LayoutManager {
 }
 
 func (lm *LayoutManager) layoutsFilePath() string {
-	return filepath.Join(lm.configDir, "layouts.json")
+	return corego.JoinPath(lm.configDir, "layouts.json")
 }
 
 func (lm *LayoutManager) loadLayouts() {
@@ -76,7 +75,7 @@ func (lm *LayoutManager) loadLayouts() {
 	}
 	lm.mu.Lock()
 	defer lm.mu.Unlock()
-	_ = json.Unmarshal(data, &lm.layouts)
+	_ = corego.JSONUnmarshal(data, &lm.layouts)
 }
 
 func (lm *LayoutManager) saveLayouts() {
@@ -84,20 +83,20 @@ func (lm *LayoutManager) saveLayouts() {
 		return
 	}
 	lm.mu.RLock()
-	data, err := json.MarshalIndent(lm.layouts, "", "  ")
+	r := corego.JSONMarshal(lm.layouts)
 	lm.mu.RUnlock()
-	if err != nil {
+	if !r.OK {
 		return
 	}
 	_ = os.MkdirAll(lm.configDir, 0o755)
-	_ = os.WriteFile(lm.layoutsFilePath(), data, 0o644)
+	_ = os.WriteFile(lm.layoutsFilePath(), r.Value.([]byte), 0o644)
 }
 
 // SaveLayout creates or updates a named layout.
 // Use: _ = lm.SaveLayout("coding", windowStates)
 func (lm *LayoutManager) SaveLayout(name string, windowStates map[string]WindowState) error {
 	if name == "" {
-		return fmt.Errorf("layout name cannot be empty")
+		return corego.E("layout.save", "layout name cannot be empty", nil)
 	}
 	now := time.Now().UnixMilli()
 	lm.mu.Lock()

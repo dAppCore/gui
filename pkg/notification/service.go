@@ -3,11 +3,11 @@ package notification
 
 import (
 	"context"
-	"fmt"
 	"time"
 
+	corego "dappco.re/go/core"
+	"dappco.re/go/core/gui/pkg/dialog"
 	"forge.lthn.ai/core/go/pkg/core"
-	"forge.lthn.ai/core/gui/pkg/dialog"
 )
 
 // Options configures the notification service.
@@ -76,7 +76,7 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 func (s *Service) sendNotification(opts NotificationOptions) error {
 	// Generate an ID when the caller does not provide one.
 	if opts.ID == "" {
-		opts.ID = fmt.Sprintf("core-%d", time.Now().UnixNano())
+		opts.ID = corego.Sprintf("core-%d", time.Now().UnixNano())
 	}
 
 	if len(opts.Actions) > 0 {

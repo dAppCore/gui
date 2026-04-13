@@ -1,4 +1,6 @@
 cloud.google.com/go/compute/metadata v0.3.0/go.mod h1:zFmK7XCadkQkj6TtorcaGlCW1hT1fIilQDwofLpJ20k=
+dappco.re/go/core v0.3.3 h1:TaE7/SObQ3YEZj4ov1BAXWwLJEIttkrxzncVGewR3Bs=
+dappco.re/go/core v0.3.3/go.mod h1:Cp4ac25pghvO2iqOu59t1GyngTKVOzKB5/VPdhRi9CQ=
 forge.lthn.ai/Snider/Borg v0.3.1/go.mod h1:Z7DJD0yHXsxSyM7Mjl6/g4gH1NBsIz44Bf5AFlV76Wg=
 forge.lthn.ai/core/config v0.1.8 h1:xP2hys7T94QGVF/OTh84/Zr5Dm/dL/0vzjht8zi+LOg=
 forge.lthn.ai/core/config v0.1.8/go.mod h1:8epZrkwoCt+5ayrqdinOUU/+w6UoxOyv9ZrdgVOgYfQ=

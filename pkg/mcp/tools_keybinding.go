@@ -4,7 +4,7 @@ package mcp
 import (
 	"context"
 
-	"forge.lthn.ai/core/gui/pkg/keybinding"
+	"dappco.re/go/core/gui/pkg/keybinding"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 

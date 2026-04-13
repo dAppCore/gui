@@ -4,29 +4,27 @@ package display
 import (
 	"context"
 	"encoding/base64"
-	"fmt"
 	"os"
-	"path/filepath"
 	"runtime"
 
-	"encoding/json"
+	corego "dappco.re/go/core"
 	"forge.lthn.ai/core/config"
 	"forge.lthn.ai/core/go/pkg/core"
 
-	"forge.lthn.ai/core/gui/pkg/browser"
-	"forge.lthn.ai/core/gui/pkg/clipboard"
-	"forge.lthn.ai/core/gui/pkg/contextmenu"
-	"forge.lthn.ai/core/gui/pkg/dialog"
-	"forge.lthn.ai/core/gui/pkg/dock"
-	"forge.lthn.ai/core/gui/pkg/environment"
-	"forge.lthn.ai/core/gui/pkg/keybinding"
-	"forge.lthn.ai/core/gui/pkg/lifecycle"
-	"forge.lthn.ai/core/gui/pkg/menu"
-	"forge.lthn.ai/core/gui/pkg/notification"
-	"forge.lthn.ai/core/gui/pkg/screen"
-	"forge.lthn.ai/core/gui/pkg/systray"
-	"forge.lthn.ai/core/gui/pkg/webview"
-	"forge.lthn.ai/core/gui/pkg/window"
+	"dappco.re/go/core/gui/pkg/browser"
+	"dappco.re/go/core/gui/pkg/clipboard"
+	"dappco.re/go/core/gui/pkg/contextmenu"
+	"dappco.re/go/core/gui/pkg/dialog"
+	"dappco.re/go/core/gui/pkg/dock"
+	"dappco.re/go/core/gui/pkg/environment"
+	"dappco.re/go/core/gui/pkg/keybinding"
+	"dappco.re/go/core/gui/pkg/lifecycle"
+	"dappco.re/go/core/gui/pkg/menu"
+	"dappco.re/go/core/gui/pkg/notification"
+	"dappco.re/go/core/gui/pkg/screen"
+	"dappco.re/go/core/gui/pkg/systray"
+	"dappco.re/go/core/gui/pkg/webview"
+	"dappco.re/go/core/gui/pkg/window"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
@@ -259,7 +257,7 @@ type WSMessage struct {
 func wsRequire(data map[string]any, key string) (string, error) {
 	v, _ := data[key].(string)
 	if v == "" {
-		return "", fmt.Errorf("ws: missing required field %q", key)
+		return "", corego.NewError(corego.Sprintf("ws: missing required field %q", key))
 	}
 	return v, nil
 }
@@ -302,10 +300,11 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 		result, handled, err = s.GetFocusedWindow(), true, nil
 	case "window:create":
 		var opts CreateWindowOptions
-		encoded, _ := json.Marshal(msg.Data)
-		if err := json.Unmarshal(encoded, &opts); err != nil {
-			return nil, false, fmt.Errorf("ws: invalid window create options: %w", err)
+		encodedR := corego.JSONMarshal(msg.Data)
+		if encodedR.OK {
+			_ = corego.JSONUnmarshal(encodedR.Value.([]byte), &opts)
 		}
+			return nil, false, corego.Wrap(err, "display.ws", "ws: invalid window create options")
 		info, createErr := s.CreateWindow(opts)
 		if createErr != nil {
 			return nil, false, createErr
@@ -444,9 +443,11 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 		result, handled, err = s.Core().QUERY(dock.QueryVisible{})
 	case "contextmenu:add":
 		name, _ := msg.Data["name"].(string)
-		menuJSON, _ := json.Marshal(msg.Data["menu"])
+		menuR := corego.JSONMarshal(msg.Data["menu"])
 		var menuDef contextmenu.ContextMenuDef
-		_ = json.Unmarshal(menuJSON, &menuDef)
+		if menuR.OK {
+			_ = corego.JSONUnmarshal(menuR.Value.([]byte), &menuDef)
+		}
 		result, handled, err = s.Core().PERFORM(contextmenu.TaskAdd{
 			Name: name, Menu: menuDef,
 		})
@@ -768,7 +769,7 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 		}
 		workflow, ok := window.ParseWorkflowLayout(workflowName)
 		if !ok {
-			return nil, false, fmt.Errorf("ws: unknown workflow %q", workflowName)
+			return nil, false, corego.NewError(corego.Sprintf("ws: unknown workflow %q", workflowName))
 		}
 		var names []string
 		if raw, ok := msg.Data["windows"].([]any); ok {
@@ -899,17 +900,19 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 	case "clipboard:write-image":
 		data, ok := msg.Data["data"].(string)
 		if !ok || data == "" {
-			return nil, false, fmt.Errorf("ws: missing required field %q", "data")
+			return nil, false, corego.NewError(corego.Sprintf("ws: missing required field %q", "data"))
 		}
 		decoded, decodeErr := base64.StdEncoding.DecodeString(data)
 		if decodeErr != nil {
-			return nil, false, fmt.Errorf("ws: invalid base64 image data: %w", decodeErr)
+			return nil, false, corego.Wrap(decodeErr, "display.ws", "ws: invalid base64 image data")
 		}
 		result, handled, err = s.Core().PERFORM(clipboard.TaskSetImage{Data: decoded})
 	case "notification:show":
 		var opts notification.NotificationOptions
-		encoded, _ := json.Marshal(msg.Data)
-		_ = json.Unmarshal(encoded, &opts)
+		encodedR := corego.JSONMarshal(msg.Data)
+		if encodedR.OK {
+			_ = corego.JSONUnmarshal(encodedR.Value.([]byte), &opts)
+		}
 		result, handled, err = s.Core().PERFORM(notification.TaskSend{Opts: opts})
 	case "notification:info":
 		title, e := wsRequire(msg.Data, "title")
@@ -965,8 +968,10 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 		subtitle, _ := msg.Data["subtitle"].(string)
 		actions := make([]notification.NotificationAction, 0)
 		if raw, ok := msg.Data["actions"]; ok {
-			encoded, _ := json.Marshal(raw)
-			_ = json.Unmarshal(encoded, &actions)
+			encodedR := corego.JSONMarshal(raw)
+			if encodedR.OK {
+				_ = corego.JSONUnmarshal(encodedR.Value.([]byte), &actions)
+			}
 		}
 		result, handled, err = s.Core().PERFORM(notification.TaskSend{
 			Opts: notification.NotificationOptions{
@@ -1014,18 +1019,20 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 		}
 		decoded, decodeErr := base64.StdEncoding.DecodeString(data)
 		if decodeErr != nil {
-			return nil, false, fmt.Errorf("ws: invalid base64 tray icon data: %w", decodeErr)
+			return nil, false, corego.Wrap(decodeErr, "display.ws", "ws: invalid base64 tray icon data")
 		}
 		result, handled, err = s.Core().PERFORM(systray.TaskSetTrayIcon{Data: decoded})
 	case "tray:set-menu":
 		raw, ok := msg.Data["items"]
 		if !ok {
-			return nil, false, fmt.Errorf("ws: missing required field %q", "items")
+			return nil, false, corego.NewError(corego.Sprintf("ws: missing required field %q", "items"))
 		}
-		encoded, _ := json.Marshal(raw)
+		encodedItemsR := corego.JSONMarshal(raw)
 		var items []systray.TrayMenuItem
-		if err := json.Unmarshal(encoded, &items); err != nil {
-			return nil, false, fmt.Errorf("ws: invalid tray menu items: %w", err)
+		if encodedItemsR.OK {
+			if r := corego.JSONUnmarshal(encodedItemsR.Value.([]byte), &items); !r.OK {
+				return nil, false, corego.E("display.ws", "invalid tray menu items", nil)
+			}
 		}
 		result, handled, err = s.Core().PERFORM(systray.TaskSetTrayMenu{Items: items})
 	case "tray:info":
@@ -1045,10 +1052,11 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 		result, handled, err = nil, true, s.SetTheme(isDark)
 	case "dialog:open-file":
 		var opts dialog.OpenFileOptions
-		encoded, _ := json.Marshal(msg.Data)
-		if err := json.Unmarshal(encoded, &opts); err != nil {
-			return nil, false, fmt.Errorf("ws: invalid open file options: %w", err)
+		encodedR := corego.JSONMarshal(msg.Data)
+		if encodedR.OK {
+			_ = corego.JSONUnmarshal(encodedR.Value.([]byte), &opts)
 		}
+			return nil, false, corego.Wrap(err, "display.ws", "ws: invalid open file options")
 		paths, openErr := s.OpenFileDialog(opts)
 		if openErr != nil {
 			return nil, false, openErr
@@ -1056,10 +1064,11 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 		result, handled, err = paths, true, nil
 	case "dialog:save-file":
 		var opts dialog.SaveFileOptions
-		encoded, _ := json.Marshal(msg.Data)
-		if err := json.Unmarshal(encoded, &opts); err != nil {
-			return nil, false, fmt.Errorf("ws: invalid save file options: %w", err)
+		encodedR := corego.JSONMarshal(msg.Data)
+		if encodedR.OK {
+			_ = corego.JSONUnmarshal(encodedR.Value.([]byte), &opts)
 		}
+			return nil, false, corego.Wrap(err, "display.ws", "ws: invalid save file options")
 		path, saveErr := s.SaveFileDialog(opts)
 		if saveErr != nil {
 			return nil, false, saveErr
@@ -1067,10 +1076,11 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 		result, handled, err = path, true, nil
 	case "dialog:open-directory":
 		var opts dialog.OpenDirectoryOptions
-		encoded, _ := json.Marshal(msg.Data)
-		if err := json.Unmarshal(encoded, &opts); err != nil {
-			return nil, false, fmt.Errorf("ws: invalid open directory options: %w", err)
+		encodedR := corego.JSONMarshal(msg.Data)
+		if encodedR.OK {
+			_ = corego.JSONUnmarshal(encodedR.Value.([]byte), &opts)
 		}
+			return nil, false, corego.Wrap(err, "display.ws", "ws: invalid open directory options")
 		path, dirErr := s.OpenDirectoryDialog(opts)
 		if dirErr != nil {
 			return nil, false, dirErr
@@ -1135,7 +1145,7 @@ func (s *Service) handleTrayAction(actionID string) {
 		result, handled, _ := s.Core().QUERY(environment.QueryInfo{})
 		if handled {
 			info := result.(environment.EnvironmentInfo)
-			details := fmt.Sprintf("OS: %s\nArch: %s\nPlatform: %s %s",
+			details := corego.Sprintf("OS: %s\nArch: %s\nPlatform: %s %s",
 				info.OS, info.Arch, info.Platform.Name, info.Platform.Version)
 			_, _, _ = s.Core().PERFORM(dialog.TaskMessageDialog{
 				Opts: dialog.MessageDialogOptions{
@@ -1154,9 +1164,9 @@ func (s *Service) handleTrayAction(actionID string) {
 func guiConfigPath() string {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return filepath.Join(".core", "gui", "config.yaml")
+		return corego.JoinPath(".core", "gui", "config.yaml")
 	}
-	return filepath.Join(home, ".core", "gui", "config.yaml")
+	return corego.JoinPath(home, ".core", "gui", "config.yaml")
 }
 
 func (s *Service) loadConfig() {
@@ -1250,7 +1260,7 @@ func (s *Service) GetWindowInfo(name string) (*window.WindowInfo, error) {
 		return nil, err
 	}
 	if !handled {
-		return nil, fmt.Errorf("window service not available")
+		return nil, corego.NewError(corego.Sprintf("window service not available"))
 	}
 	info, _ := result.(*window.WindowInfo)
 	return info, nil
@@ -1410,7 +1420,7 @@ func (s *Service) GetWindowTitle(name string) (string, error) {
 		return "", err
 	}
 	if info == nil {
-		return "", fmt.Errorf("window not found: %s", name)
+		return "", corego.NewError(corego.Sprintf("window not found: %s", name))
 	}
 	return info.Title, nil
 }
@@ -1459,7 +1469,7 @@ type CreateWindowOptions struct {
 // Use: info, err := svc.CreateWindow(display.CreateWindowOptions{Name: "editor", URL: "/editor"})
 func (s *Service) CreateWindow(opts CreateWindowOptions) (*window.WindowInfo, error) {
 	if opts.Name == "" {
-		return nil, fmt.Errorf("window name is required")
+		return nil, corego.NewError(corego.Sprintf("window name is required"))
 	}
 	result, _, err := s.Core().PERFORM(window.TaskOpenWindow{
 		Window: &window.Window{
@@ -1488,7 +1498,7 @@ func (s *Service) CreateWindow(opts CreateWindowOptions) (*window.WindowInfo, er
 func (s *Service) SaveLayout(name string) error {
 	ws := s.windowService()
 	if ws == nil {
-		return fmt.Errorf("window service not available")
+		return corego.NewError(corego.Sprintf("window service not available"))
 	}
 	states := make(map[string]window.WindowState)
 	for _, n := range ws.Manager().List() {
@@ -1506,11 +1516,11 @@ func (s *Service) SaveLayout(name string) error {
 func (s *Service) RestoreLayout(name string) error {
 	ws := s.windowService()
 	if ws == nil {
-		return fmt.Errorf("window service not available")
+		return corego.NewError(corego.Sprintf("window service not available"))
 	}
 	layout, ok := ws.Manager().Layout().GetLayout(name)
 	if !ok {
-		return fmt.Errorf("layout not found: %s", name)
+		return corego.NewError(corego.Sprintf("layout not found: %s", name))
 	}
 	for wName, state := range layout.Windows {
 		if pw, ok := ws.Manager().Get(wName); ok {
@@ -1541,7 +1551,7 @@ func (s *Service) ListLayouts() []window.LayoutInfo {
 func (s *Service) DeleteLayout(name string) error {
 	ws := s.windowService()
 	if ws == nil {
-		return fmt.Errorf("window service not available")
+		return corego.NewError(corego.Sprintf("window service not available"))
 	}
 	ws.Manager().Layout().DeleteLayout(name)
 	return nil
@@ -1568,7 +1578,7 @@ func (s *Service) GetLayout(name string) *window.Layout {
 func (s *Service) TileWindows(mode window.TileMode, windowNames []string) error {
 	ws := s.windowService()
 	if ws == nil {
-		return fmt.Errorf("window service not available")
+		return corego.NewError(corego.Sprintf("window service not available"))
 	}
 	screenWidth, screenHeight := s.primaryScreenSize()
 	return ws.Manager().TileWindows(mode, windowNames, screenWidth, screenHeight)
@@ -1579,7 +1589,7 @@ func (s *Service) TileWindows(mode window.TileMode, windowNames []string) error 
 func (s *Service) SnapWindow(name string, position window.SnapPosition) error {
 	ws := s.windowService()
 	if ws == nil {
-		return fmt.Errorf("window service not available")
+		return corego.NewError(corego.Sprintf("window service not available"))
 	}
 	screenWidth, screenHeight := s.primaryScreenSize()
 	return ws.Manager().SnapWindow(name, position, screenWidth, screenHeight)
@@ -1617,7 +1627,7 @@ func (s *Service) primaryScreenSize() (int, int) {
 func (s *Service) StackWindows(windowNames []string, offsetX, offsetY int) error {
 	ws := s.windowService()
 	if ws == nil {
-		return fmt.Errorf("window service not available")
+		return corego.NewError(corego.Sprintf("window service not available"))
 	}
 	return ws.Manager().StackWindows(windowNames, offsetX, offsetY)
 }
@@ -1627,7 +1637,7 @@ func (s *Service) StackWindows(windowNames []string, offsetX, offsetY int) error
 func (s *Service) ApplyWorkflowLayout(workflow window.WorkflowLayout) error {
 	ws := s.windowService()
 	if ws == nil {
-		return fmt.Errorf("window service not available")
+		return corego.NewError(corego.Sprintf("window service not available"))
 	}
 	screenWidth, screenHeight := s.primaryScreenSize()
 	return ws.Manager().ApplyWorkflow(workflow, ws.Manager().List(), screenWidth, screenHeight)
@@ -1638,7 +1648,7 @@ func (s *Service) ApplyWorkflowLayout(workflow window.WorkflowLayout) error {
 func (s *Service) ArrangeWindowPair(first, second string) error {
 	ws := s.windowService()
 	if ws == nil {
-		return fmt.Errorf("window service not available")
+		return corego.NewError(corego.Sprintf("window service not available"))
 	}
 	screenWidth, screenHeight := s.primaryScreenSize()
 	return ws.Manager().ArrangePair(first, second, screenWidth, screenHeight)
@@ -1649,7 +1659,7 @@ func (s *Service) ArrangeWindowPair(first, second string) error {
 func (s *Service) FindSpace(width, height int) (window.SpaceInfo, error) {
 	ws := s.windowService()
 	if ws == nil {
-		return window.SpaceInfo{}, fmt.Errorf("window service not available")
+		return window.SpaceInfo{}, corego.NewError(corego.Sprintf("window service not available"))
 	}
 	screenWidth, screenHeight := s.primaryScreenSize()
 	if width <= 0 {
@@ -1673,7 +1683,7 @@ func (s *Service) SuggestLayout(windowCount, screenWidth, screenHeight int) (win
 		return window.LayoutSuggestion{}, err
 	}
 	if !handled {
-		return window.LayoutSuggestion{}, fmt.Errorf("window service not available")
+		return window.LayoutSuggestion{}, corego.NewError(corego.Sprintf("window service not available"))
 	}
 	suggestion, _ := result.(window.LayoutSuggestion)
 	return suggestion, nil
@@ -1710,7 +1720,7 @@ func (s *Service) GetScreen(id string) (*screen.Screen, error) {
 		return nil, err
 	}
 	if !handled {
-		return nil, fmt.Errorf("screen service not available")
+		return nil, corego.NewError(corego.Sprintf("screen service not available"))
 	}
 	scr, _ := result.(*screen.Screen)
 	return scr, nil
@@ -1724,7 +1734,7 @@ func (s *Service) GetPrimaryScreen() (*screen.Screen, error) {
 		return nil, err
 	}
 	if !handled {
-		return nil, fmt.Errorf("screen service not available")
+		return nil, corego.NewError(corego.Sprintf("screen service not available"))
 	}
 	scr, _ := result.(*screen.Screen)
 	return scr, nil
@@ -1738,7 +1748,7 @@ func (s *Service) GetScreenAtPoint(x, y int) (*screen.Screen, error) {
 		return nil, err
 	}
 	if !handled {
-		return nil, fmt.Errorf("screen service not available")
+		return nil, corego.NewError(corego.Sprintf("screen service not available"))
 	}
 	scr, _ := result.(*screen.Screen)
 	return scr, nil
@@ -1923,7 +1933,7 @@ func (s *Service) RequestNotificationPermission() (bool, error) {
 		return false, err
 	}
 	if !handled {
-		return false, fmt.Errorf("notification service not available")
+		return false, corego.NewError(corego.Sprintf("notification service not available"))
 	}
 	granted, _ := result.(bool)
 	return granted, nil
@@ -1937,7 +1947,7 @@ func (s *Service) CheckNotificationPermission() (bool, error) {
 		return false, err
 	}
 	if !handled {
-		return false, fmt.Errorf("notification service not available")
+		return false, corego.NewError(corego.Sprintf("notification service not available"))
 	}
 	status, _ := result.(notification.PermissionStatus)
 	return status.Granted, nil
@@ -1951,7 +1961,7 @@ func (s *Service) ClearNotifications() error {
 		return err
 	}
 	if !handled {
-		return fmt.Errorf("notification service not available")
+		return corego.NewError(corego.Sprintf("notification service not available"))
 	}
 	return nil
 }
@@ -1966,7 +1976,7 @@ func (s *Service) OpenFileDialog(opts dialog.OpenFileOptions) ([]string, error) 
 		return nil, err
 	}
 	if !handled {
-		return nil, fmt.Errorf("dialog service not available")
+		return nil, corego.NewError(corego.Sprintf("dialog service not available"))
 	}
 	paths, _ := result.([]string)
 	return paths, nil
@@ -1993,7 +2003,7 @@ func (s *Service) SaveFileDialog(opts dialog.SaveFileOptions) (string, error) {
 		return "", err
 	}
 	if !handled {
-		return "", fmt.Errorf("dialog service not available")
+		return "", corego.NewError(corego.Sprintf("dialog service not available"))
 	}
 	path, _ := result.(string)
 	return path, nil
@@ -2007,7 +2017,7 @@ func (s *Service) OpenDirectoryDialog(opts dialog.OpenDirectoryOptions) (string,
 		return "", err
 	}
 	if !handled {
-		return "", fmt.Errorf("dialog service not available")
+		return "", corego.NewError(corego.Sprintf("dialog service not available"))
 	}
 	path, _ := result.(string)
 	return path, nil
@@ -2028,7 +2038,7 @@ func (s *Service) ConfirmDialog(title, message string) (bool, error) {
 		return false, err
 	}
 	if !handled {
-		return false, fmt.Errorf("dialog service not available")
+		return false, corego.NewError(corego.Sprintf("dialog service not available"))
 	}
 	button, _ := result.(string)
 	return button == "Yes" || button == "OK", nil
@@ -2060,7 +2070,7 @@ func (s *Service) PromptDialog(title, message string) (string, bool, error) {
 		return "", false, err
 	}
 	if !handled {
-		return "", false, fmt.Errorf("dialog service not available")
+		return "", false, corego.NewError(corego.Sprintf("dialog service not available"))
 	}
 	button, _ := result.(string)
 	return button, button == "OK", nil
@@ -2075,27 +2085,27 @@ func (s *Service) promptViaWebView(title, message string) (string, bool, error) 
 		}
 	}
 	if windowName == "" {
-		return "", false, fmt.Errorf("no webview window available")
+		return "", false, corego.NewError(corego.Sprintf("no webview window available"))
 	}
 
-	encodedTitle, err := json.Marshal(title)
-	if err != nil {
-		return "", false, err
+	encodedTitleR := corego.JSONMarshal(title)
+	if !encodedTitleR.OK {
+		return "", false, corego.E("display.showDialog", "failed to marshal title", nil)
 	}
-	encodedMessage, err := json.Marshal(message)
-	if err != nil {
-		return "", false, err
+	encodedMessageR := corego.JSONMarshal(message)
+	if !encodedMessageR.OK {
+		return "", false, corego.E("display.showDialog", "failed to marshal message", nil)
 	}
 
 	result, handled, err := s.Core().PERFORM(webview.TaskEvaluate{
 		Window: windowName,
-		Script: "window.prompt(" + string(encodedTitle) + "," + string(encodedMessage) + ")",
+		Script: "window.prompt(" + string(encodedTitleR.Value.([]byte)) + "," + string(encodedMessageR.Value.([]byte)) + ")",
 	})
 	if err != nil {
 		return "", false, err
 	}
 	if !handled {
-		return "", false, fmt.Errorf("webview service not available")
+		return "", false, corego.NewError(corego.Sprintf("webview service not available"))
 	}
 	if result == nil {
 		return "", false, nil
@@ -2103,7 +2113,7 @@ func (s *Service) promptViaWebView(title, message string) (string, bool, error) 
 	if text, ok := result.(string); ok {
 		return text, true, nil
 	}
-	return fmt.Sprint(result), true, nil
+	return corego.Sprint(result), true, nil
 }
 
 // DialogMessage shows an informational, warning, or error message via the notification pipeline.
@@ -2178,7 +2188,7 @@ func (s *Service) SetThemeMode(theme string) error {
 		return err
 	}
 	if !handled {
-		return fmt.Errorf("environment service not available")
+		return corego.NewError(corego.Sprintf("environment service not available"))
 	}
 	return nil
 }
@@ -2193,7 +2203,7 @@ func (s *Service) SetTrayIcon(data []byte) error {
 		return err
 	}
 	if !handled {
-		return fmt.Errorf("systray service not available")
+		return corego.NewError(corego.Sprintf("systray service not available"))
 	}
 	return nil
 }
@@ -2206,7 +2216,7 @@ func (s *Service) SetTrayTooltip(tooltip string) error {
 		return err
 	}
 	if !handled {
-		return fmt.Errorf("systray service not available")
+		return corego.NewError(corego.Sprintf("systray service not available"))
 	}
 	return nil
 }
@@ -2219,7 +2229,7 @@ func (s *Service) SetTrayLabel(label string) error {
 		return err
 	}
 	if !handled {
-		return fmt.Errorf("systray service not available")
+		return corego.NewError(corego.Sprintf("systray service not available"))
 	}
 	return nil
 }
@@ -2232,7 +2242,7 @@ func (s *Service) SetTrayMenu(items []systray.TrayMenuItem) error {
 		return err
 	}
 	if !handled {
-		return fmt.Errorf("systray service not available")
+		return corego.NewError(corego.Sprintf("systray service not available"))
 	}
 	return nil
 }
@@ -2255,7 +2265,7 @@ func (s *Service) ShowTrayMessage(title, message string) error {
 		return err
 	}
 	if !handled {
-		return fmt.Errorf("systray service not available")
+		return corego.NewError(corego.Sprintf("systray service not available"))
 	}
 	return nil
 }

@@ -5,7 +5,7 @@ import (
 	"context"
 
 	"forge.lthn.ai/core/go/pkg/core"
-	"forge.lthn.ai/core/gui/pkg/notification"
+	"dappco.re/go/core/gui/pkg/notification"
 )
 
 // Options configures the systray service.
