@@ -92,6 +92,35 @@ func (s *Subsystem) dialogOpenDirectory(_ context.Context, _ *mcp.CallToolReques
 	return nil, DialogOpenDirectoryOutput{Path: path}, nil
 }
 
+// --- dialog_message ---
+
+type DialogMessageInput struct {
+	Type    dialog.DialogType `json:"type"`
+	Title   string            `json:"title"`
+	Message string            `json:"message"`
+	Buttons []string          `json:"buttons,omitempty"`
+}
+type DialogMessageOutput struct {
+	Button string `json:"button"`
+}
+
+func (s *Subsystem) dialogMessage(_ context.Context, _ *mcp.CallToolRequest, input DialogMessageInput) (*mcp.CallToolResult, DialogMessageOutput, error) {
+	result, _, err := s.core.PERFORM(dialog.TaskMessageDialog{Options: dialog.MessageDialogOptions{
+		Type:    input.Type,
+		Title:   input.Title,
+		Message: input.Message,
+		Buttons: input.Buttons,
+	}})
+	if err != nil {
+		return nil, DialogMessageOutput{}, err
+	}
+	button, ok := result.(string)
+	if !ok {
+		return nil, DialogMessageOutput{}, coreerr.E("mcp.dialogMessage", "unexpected result type", nil)
+	}
+	return nil, DialogMessageOutput{Button: button}, nil
+}
+
 // --- dialog_confirm ---
 
 type DialogConfirmInput struct {
@@ -153,6 +182,7 @@ func (s *Subsystem) registerDialogTools(server *mcp.Server) {
 	mcp.AddTool(server, &mcp.Tool{Name: "dialog_open_file", Description: "Show an open file dialog"}, s.dialogOpenFile)
 	mcp.AddTool(server, &mcp.Tool{Name: "dialog_save_file", Description: "Show a save file dialog"}, s.dialogSaveFile)
 	mcp.AddTool(server, &mcp.Tool{Name: "dialog_open_directory", Description: "Show a directory picker dialog"}, s.dialogOpenDirectory)
+	mcp.AddTool(server, &mcp.Tool{Name: "dialog_message", Description: "Show a message dialog"}, s.dialogMessage)
 	mcp.AddTool(server, &mcp.Tool{Name: "dialog_confirm", Description: "Show a confirmation dialog"}, s.dialogConfirm)
 	mcp.AddTool(server, &mcp.Tool{Name: "dialog_prompt", Description: "Show a prompt dialog"}, s.dialogPrompt)
 }

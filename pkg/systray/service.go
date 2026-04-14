@@ -48,8 +48,14 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 	switch t := t.(type) {
 	case TaskSetTrayIcon:
 		return nil, true, s.manager.SetIcon(t.Data)
+	case TaskSetTrayTooltip:
+		return nil, true, s.manager.SetTooltip(t.Tooltip)
+	case TaskSetTrayLabel:
+		return nil, true, s.manager.SetLabel(t.Label)
 	case TaskSetTrayMenu:
 		return nil, true, s.taskSetTrayMenu(t)
+	case TaskShowMessage:
+		return nil, true, s.manager.ShowMessage(t.Title, t.Message)
 	case TaskShowPanel:
 		// Panel show — deferred (requires WindowHandle integration)
 		return nil, true, nil

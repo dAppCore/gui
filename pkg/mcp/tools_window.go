@@ -5,6 +5,7 @@ import (
 	"context"
 
 	coreerr "forge.lthn.ai/core/go-log"
+	"forge.lthn.ai/core/gui/pkg/screen"
 	"forge.lthn.ai/core/gui/pkg/window"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -258,6 +259,23 @@ func (s *Subsystem) windowFocus(_ context.Context, _ *mcp.CallToolRequest, input
 	return nil, WindowFocusOutput{Success: true}, nil
 }
 
+// --- focus_set ---
+
+type FocusSetInput struct {
+	Name string `json:"name"`
+}
+type FocusSetOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) focusSet(ctx context.Context, req *mcp.CallToolRequest, input FocusSetInput) (*mcp.CallToolResult, FocusSetOutput, error) {
+	_, out, err := s.windowFocus(ctx, req, WindowFocusInput{Name: input.Name})
+	if err != nil {
+		return nil, FocusSetOutput{}, err
+	}
+	return nil, FocusSetOutput{Success: out.Success}, nil
+}
+
 // --- window_title ---
 
 type WindowTitleInput struct {
@@ -374,6 +392,94 @@ func (s *Subsystem) windowFullscreen(_ context.Context, _ *mcp.CallToolRequest, 
 	return nil, WindowFullscreenOutput{Success: true}, nil
 }
 
+type arrangedPair struct {
+	First  screen.Rect
+	Second screen.Rect
+}
+
+func (s *Subsystem) arrangePairOnScreen(firstName, secondName string, scr *screen.Screen, orientation string) (arrangedPair, error) {
+	workArea := workAreaRect(scr)
+	if workArea.Width == 0 || workArea.Height == 0 {
+		return arrangedPair{}, coreerr.E("mcp.arrangePairOnScreen", "screen work area is empty", nil)
+	}
+	if orientation == "" {
+		if workArea.Width >= workArea.Height {
+			orientation = "horizontal"
+		} else {
+			orientation = "vertical"
+		}
+	}
+
+	var firstRect screen.Rect
+	var secondRect screen.Rect
+	switch orientation {
+	case "vertical", "stacked":
+		firstHeight := workArea.Height / 2
+		firstRect = screen.Rect{X: workArea.X, Y: workArea.Y, Width: workArea.Width, Height: firstHeight}
+		secondRect = screen.Rect{X: workArea.X, Y: workArea.Y + firstHeight, Width: workArea.Width, Height: workArea.Height - firstHeight}
+	default:
+		firstWidth := workArea.Width / 2
+		firstRect = screen.Rect{X: workArea.X, Y: workArea.Y, Width: firstWidth, Height: workArea.Height}
+		secondRect = screen.Rect{X: workArea.X + firstWidth, Y: workArea.Y, Width: workArea.Width - firstWidth, Height: workArea.Height}
+	}
+
+	if err := applyRect(s.core, firstName, firstRect); err != nil {
+		return arrangedPair{}, err
+	}
+	if err := applyRect(s.core, secondName, secondRect); err != nil {
+		return arrangedPair{}, err
+	}
+	return arrangedPair{First: firstRect, Second: secondRect}, nil
+}
+
+// --- window_arrange_pair ---
+
+type WindowArrangePairInput struct {
+	First       string `json:"first"`
+	Second      string `json:"second"`
+	ScreenID    string `json:"screenId,omitempty"`
+	Orientation string `json:"orientation,omitempty"`
+}
+type WindowArrangePairOutput struct {
+	FirstBounds  screen.Rect `json:"firstBounds"`
+	SecondBounds screen.Rect `json:"secondBounds"`
+}
+
+func (s *Subsystem) windowArrangePair(_ context.Context, _ *mcp.CallToolRequest, input WindowArrangePairInput) (*mcp.CallToolResult, WindowArrangePairOutput, error) {
+	screens, err := s.allScreens()
+	if err != nil {
+		return nil, WindowArrangePairOutput{}, err
+	}
+	windows, err := s.allWindows()
+	if err != nil {
+		return nil, WindowArrangePairOutput{}, err
+	}
+
+	var targetScreen *screen.Screen
+	if input.ScreenID != "" {
+		targetScreen = chooseScreenByIDOrPrimary(screens, input.ScreenID)
+	} else {
+		for _, info := range windows {
+			if info.Name == input.First {
+				targetScreen = screenForWindowInfo(screens, info)
+				break
+			}
+		}
+		if targetScreen == nil {
+			targetScreen = chooseScreenByIDOrPrimary(screens, "")
+		}
+	}
+	if targetScreen == nil {
+		return nil, WindowArrangePairOutput{}, coreerr.E("mcp.windowArrangePair", "no screen available", nil)
+	}
+
+	arranged, err := s.arrangePairOnScreen(input.First, input.Second, targetScreen, input.Orientation)
+	if err != nil {
+		return nil, WindowArrangePairOutput{}, err
+	}
+	return nil, WindowArrangePairOutput{FirstBounds: arranged.First, SecondBounds: arranged.Second}, nil
+}
+
 // --- Registration ---
 
 func (s *Subsystem) registerWindowTools(server *mcp.Server) {
@@ -389,10 +495,12 @@ func (s *Subsystem) registerWindowTools(server *mcp.Server) {
 	mcp.AddTool(server, &mcp.Tool{Name: "window_minimize", Description: "Minimise a window"}, s.windowMinimize)
 	mcp.AddTool(server, &mcp.Tool{Name: "window_restore", Description: "Restore a maximised or minimised window"}, s.windowRestore)
 	mcp.AddTool(server, &mcp.Tool{Name: "window_focus", Description: "Bring a window to the front"}, s.windowFocus)
+	mcp.AddTool(server, &mcp.Tool{Name: "focus_set", Description: "Set focus to a specific window"}, s.focusSet)
 	mcp.AddTool(server, &mcp.Tool{Name: "window_title", Description: "Set the title of a window"}, s.windowTitle)
 	mcp.AddTool(server, &mcp.Tool{Name: "window_title_get", Description: "Get the title of a window"}, s.windowTitleGet)
 	mcp.AddTool(server, &mcp.Tool{Name: "window_visibility", Description: "Show or hide a window"}, s.windowVisibility)
 	mcp.AddTool(server, &mcp.Tool{Name: "window_always_on_top", Description: "Pin a window above others"}, s.windowAlwaysOnTop)
 	mcp.AddTool(server, &mcp.Tool{Name: "window_background_colour", Description: "Set a window background colour"}, s.windowBackgroundColour)
 	mcp.AddTool(server, &mcp.Tool{Name: "window_fullscreen", Description: "Set a window to fullscreen mode"}, s.windowFullscreen)
+	mcp.AddTool(server, &mcp.Tool{Name: "window_arrange_pair", Description: "Arrange two windows side-by-side or stacked on a screen"}, s.windowArrangePair)
 }

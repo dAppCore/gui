@@ -59,13 +59,13 @@ This document tracks the implementation of display server features that enable A
 ### Smart Layout
 - [x] `layout_tile` - Auto-tile windows (left/right/top/bottom/quadrants/grid)
 - [x] `layout_stack` - Stack windows in cascade pattern
-- [ ] `layout_beside_editor` - Position window beside detected IDE window
-- [ ] `layout_suggest` - Given screen dimensions, suggest optimal arrangement
+- [x] `layout_beside_editor` - Position window beside detected IDE window
+- [x] `layout_suggest` - Given screen dimensions, suggest optimal arrangement
 - [x] `layout_snap` - Snap window to screen edge/corner/center
 
 ### AI-Optimized Layout
-- [ ] `screen_find_space` - Find empty screen space for new window
-- [ ] `window_arrange_pair` - Put two windows side-by-side optimally
+- [x] `screen_find_space` - Find empty screen space for new window
+- [x] `window_arrange_pair` - Put two windows side-by-side optimally
 - [x] `layout_workflow` - Preset layouts: "coding", "debugging", "presenting", "side-by-side"
 
 ---
@@ -124,8 +124,8 @@ This document tracks the implementation of display server features that enable A
 ### Clipboard
 - [x] `clipboard_read` - Read clipboard text content
 - [x] `clipboard_write` - Write text to clipboard
-- [ ] `clipboard_read_image` - Read image from clipboard
-- [ ] `clipboard_write_image` - Write image to clipboard
+- [x] `clipboard_read_image` - Read image from clipboard
+- [x] `clipboard_write_image` - Write image to clipboard
 - [x] `clipboard_has` - Check clipboard content type
 - [x] `clipboard_clear` - Clear clipboard contents
 
@@ -133,8 +133,8 @@ This document tracks the implementation of display server features that enable A
 - [x] `notification_show` - Show native system notification (macOS/Windows/Linux)
 - [x] `notification_permission_request` - Request notification permission
 - [x] `notification_permission_check` - Check notification authorization status
-- [ ] `notification_clear` - Clear notifications
-- [ ] `notification_with_actions` - Interactive notifications with buttons
+- [x] `notification_clear` - Clear notifications
+- [x] `notification_with_actions` - Interactive notifications with buttons
 
 ### Dialogs
 - [x] `dialog_open_file` - Show file open dialog
@@ -146,7 +146,7 @@ This document tracks the implementation of display server features that enable A
 
 ### Theme & Appearance
 - [x] `theme_get` - Get current theme (dark/light)
-- [ ] `theme_set` - Set application theme
+- [x] `theme_set` - Set application theme
 - [x] `theme_system` - Get system theme preference
 - [x] `theme_on_change` - Subscribe to theme changes (via WebSocket events)
 
@@ -173,7 +173,7 @@ This document tracks the implementation of display server features that enable A
 - [x] `tray_set_label` - Set tray label text
 - [x] `tray_set_menu` - Set tray menu items (with nested submenus)
 - [x] `tray_info` - Get tray status info
-- [ ] `tray_show_message` - Show tray balloon notification
+- [x] `tray_show_message` - Show tray balloon notification
 
 ---
 
@@ -193,7 +193,7 @@ This document tracks the implementation of display server features that enable A
 ### Phase 3 - Layouts (DONE)
 - [x] layout_save, layout_restore, layout_list
 - [x] layout_delete, layout_get
-- [ ] layout_tile, layout_beside_editor (future)
+- [x] layout_tile, layout_beside_editor
 
 ### Phase 4 - WebView Debug (DONE)
 - [x] webview_screenshot, webview_screenshot_element
@@ -202,7 +202,7 @@ This document tracks the implementation of display server features that enable A
 - [x] webview_scroll, webview_hover, webview_select, webview_check
 - [x] webview_highlight, webview_errors
 - [x] webview_performance, webview_resources
-- [ ] webview_network, webview_devtools (future)
+- [~] webview_network complete; webview_devtools pending
 
 ### Phase 5 - System Integration (DONE)
 - [x] clipboard_read, clipboard_write, clipboard_has, clipboard_clear
@@ -236,8 +236,8 @@ This document tracks the implementation of display server features that enable A
 
 ### Phase 8 - Remaining Features (Future)
 - [ ] window_opacity (true opacity if Wails adds support)
-- [ ] layout_beside_editor, layout_suggest
+- [x] layout_beside_editor, layout_suggest
 - [ ] webview_devtools_open, webview_devtools_close
-- [ ] clipboard_read_image, clipboard_write_image
-- [ ] notification_with_actions, notification_clear
-- [ ] tray_show_message - Balloon notifications
+- [x] clipboard_read_image, clipboard_write_image
+- [x] notification_with_actions, notification_clear
+- [x] tray_show_message - Balloon notifications

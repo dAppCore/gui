@@ -20,9 +20,9 @@ type mockPlatform struct {
 	mu           sync.Mutex
 }
 
-func (m *mockPlatform) IsDarkMode() bool        { return m.isDark }
-func (m *mockPlatform) Info() EnvironmentInfo    { return m.info }
-func (m *mockPlatform) AccentColour() string     { return m.accentColour }
+func (m *mockPlatform) IsDarkMode() bool      { return m.isDark }
+func (m *mockPlatform) Info() EnvironmentInfo { return m.info }
+func (m *mockPlatform) AccentColour() string  { return m.accentColour }
 func (m *mockPlatform) OpenFileManager(path string, selectFile bool) error {
 	return m.openFMErr
 }
@@ -131,4 +131,38 @@ func TestThemeChange_ActionBroadcast_Good(t *testing.T) {
 	mu.Unlock()
 	require.NotNil(t, r)
 	assert.False(t, r.IsDark)
+}
+
+func TestTaskSetTheme_Good(t *testing.T) {
+	_, c := newTestService(t)
+
+	_, handled, err := c.PERFORM(TaskSetTheme{Theme: "light"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	result, handled, err := c.QUERY(QueryTheme{})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	theme := result.(ThemeInfo)
+	assert.False(t, theme.IsDark)
+	assert.Equal(t, "light", theme.Theme)
+}
+
+func TestTaskSetTheme_Good_SystemClearsOverride(t *testing.T) {
+	mock, c := newTestService(t)
+
+	_, _, err := c.PERFORM(TaskSetTheme{Theme: "light"})
+	require.NoError(t, err)
+
+	mock.isDark = true
+	_, handled, err := c.PERFORM(TaskSetTheme{Theme: "system"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	result, handled, err := c.QUERY(QueryTheme{})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	theme := result.(ThemeInfo)
+	assert.True(t, theme.IsDark)
+	assert.Equal(t, "dark", theme.Theme)
 }

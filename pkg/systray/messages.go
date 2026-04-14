@@ -4,7 +4,16 @@ type QueryConfig struct{}
 
 type TaskSetTrayIcon struct{ Data []byte }
 
+type TaskSetTrayTooltip struct{ Tooltip string }
+
+type TaskSetTrayLabel struct{ Label string }
+
 type TaskSetTrayMenu struct{ Items []TrayMenuItem }
+
+type TaskShowMessage struct {
+	Title   string `json:"title"`
+	Message string `json:"message"`
+}
 
 type TaskShowPanel struct{}
 

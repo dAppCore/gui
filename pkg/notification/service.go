@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	coreerr "forge.lthn.ai/core/go-log"
 	"forge.lthn.ai/core/go/pkg/core"
 	"forge.lthn.ai/core/gui/pkg/dialog"
 )
@@ -57,6 +58,12 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 		return nil, true, s.platform.RevokePermission()
 	case TaskRegisterCategory:
 		return nil, true, s.platform.RegisterCategory(t.Category)
+	case TaskClear:
+		clearPlatform, ok := s.platform.(ClearPlatform)
+		if !ok {
+			return nil, true, coreerr.E("notification.handleTask", "notification clearing is not supported by this platform", nil)
+		}
+		return nil, true, clearPlatform.Clear(t.ID)
 	default:
 		return nil, false, nil
 	}
@@ -67,6 +74,20 @@ func (s *Service) send(options NotificationOptions) error {
 	// Generate ID if not provided
 	if options.ID == "" {
 		options.ID = "core-" + strconv.FormatInt(time.Now().UnixNano(), 10)
+	}
+
+	if len(options.Actions) > 0 {
+		categoryID := options.CategoryID
+		if categoryID == "" {
+			categoryID = options.ID
+		}
+		if err := s.platform.RegisterCategory(NotificationCategory{
+			ID:      categoryID,
+			Actions: options.Actions,
+		}); err != nil {
+			return err
+		}
+		options.CategoryID = categoryID
 	}
 
 	if err := s.platform.Send(options); err != nil {

@@ -11,14 +11,22 @@ import (
 )
 
 type mockPlatform struct {
-	text string
-	ok   bool
+	text     string
+	ok       bool
+	image    []byte
+	hasImage bool
 }
 
 func (m *mockPlatform) Text() (string, bool) { return m.text, m.ok }
 func (m *mockPlatform) SetText(text string) bool {
 	m.text = text
 	m.ok = text != ""
+	return true
+}
+func (m *mockPlatform) Image() ([]byte, bool) { return m.image, m.hasImage }
+func (m *mockPlatform) SetImage(data []byte) bool {
+	m.image = append([]byte(nil), data...)
+	m.hasImage = len(data) > 0
 	return true
 }
 
@@ -78,4 +86,18 @@ func TestTaskClear_Good(t *testing.T) {
 	r, _, _ := c.QUERY(QueryText{})
 	assert.Equal(t, "", r.(ClipboardContent).Text)
 	assert.False(t, r.(ClipboardContent).HasContent)
+}
+
+func TestQueryImage_Good(t *testing.T) {
+	_, c := newTestService(t)
+	_, handled, err := c.PERFORM(TaskSetImage{Data: []byte{0x89, 0x50, 0x4e, 0x47}})
+	require.NoError(t, err)
+	assert.True(t, handled)
+
+	result, handled, err := c.QUERY(QueryImage{})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	content := result.(ImageContent)
+	assert.True(t, content.HasImage)
+	assert.Equal(t, []byte{0x89, 0x50, 0x4e, 0x47}, content.Data)
 }

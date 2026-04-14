@@ -43,6 +43,12 @@ func (wt *wailsTray) AttachWindow(w WindowHandle) {
 	// The caller must pass an appropriate wrapper.
 }
 
+func (wt *wailsTray) ShowMessage(title, message string) error {
+	_ = title
+	_ = message
+	return nil
+}
+
 // wailsTrayMenu wraps *application.Menu for the PlatformMenu interface.
 type wailsTrayMenu struct {
 	menu *application.Menu

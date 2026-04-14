@@ -3,6 +3,7 @@ package mcp
 
 import (
 	"context"
+	"encoding/base64"
 
 	coreerr "forge.lthn.ai/core/go-log"
 	"forge.lthn.ai/core/gui/pkg/clipboard"
@@ -87,11 +88,60 @@ func (s *Subsystem) clipboardClear(_ context.Context, _ *mcp.CallToolRequest, _ 
 	return nil, ClipboardClearOutput{Success: success}, nil
 }
 
+// --- clipboard_read_image ---
+
+type ClipboardReadImageInput struct{}
+type ClipboardReadImageOutput struct {
+	Base64 string `json:"base64"`
+}
+
+func (s *Subsystem) clipboardReadImage(_ context.Context, _ *mcp.CallToolRequest, _ ClipboardReadImageInput) (*mcp.CallToolResult, ClipboardReadImageOutput, error) {
+	result, _, err := s.core.QUERY(clipboard.QueryImage{})
+	if err != nil {
+		return nil, ClipboardReadImageOutput{}, err
+	}
+	content, ok := result.(clipboard.ImageContent)
+	if !ok {
+		return nil, ClipboardReadImageOutput{}, coreerr.E("mcp.clipboardReadImage", "unexpected result type", nil)
+	}
+	if !content.HasImage {
+		return nil, ClipboardReadImageOutput{}, nil
+	}
+	return nil, ClipboardReadImageOutput{Base64: base64.StdEncoding.EncodeToString(content.Data)}, nil
+}
+
+// --- clipboard_write_image ---
+
+type ClipboardWriteImageInput struct {
+	Base64 string `json:"base64"`
+}
+type ClipboardWriteImageOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) clipboardWriteImage(_ context.Context, _ *mcp.CallToolRequest, input ClipboardWriteImageInput) (*mcp.CallToolResult, ClipboardWriteImageOutput, error) {
+	data, err := base64.StdEncoding.DecodeString(input.Base64)
+	if err != nil {
+		return nil, ClipboardWriteImageOutput{}, err
+	}
+	result, _, err := s.core.PERFORM(clipboard.TaskSetImage{Data: data})
+	if err != nil {
+		return nil, ClipboardWriteImageOutput{}, err
+	}
+	success, ok := result.(bool)
+	if !ok {
+		return nil, ClipboardWriteImageOutput{}, coreerr.E("mcp.clipboardWriteImage", "unexpected result type", nil)
+	}
+	return nil, ClipboardWriteImageOutput{Success: success}, nil
+}
+
 // --- Registration ---
 
 func (s *Subsystem) registerClipboardTools(server *mcp.Server) {
 	mcp.AddTool(server, &mcp.Tool{Name: "clipboard_read", Description: "Read the current clipboard content"}, s.clipboardRead)
 	mcp.AddTool(server, &mcp.Tool{Name: "clipboard_write", Description: "Write text to the clipboard"}, s.clipboardWrite)
 	mcp.AddTool(server, &mcp.Tool{Name: "clipboard_has", Description: "Check if the clipboard has content"}, s.clipboardHas)
+	mcp.AddTool(server, &mcp.Tool{Name: "clipboard_read_image", Description: "Read image data from the clipboard as base64"}, s.clipboardReadImage)
+	mcp.AddTool(server, &mcp.Tool{Name: "clipboard_write_image", Description: "Write base64 image data to the clipboard"}, s.clipboardWriteImage)
 	mcp.AddTool(server, &mcp.Tool{Name: "clipboard_clear", Description: "Clear the clipboard"}, s.clipboardClear)
 }

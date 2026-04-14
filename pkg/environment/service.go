@@ -3,7 +3,9 @@ package environment
 
 import (
 	"context"
+	"strings"
 
+	coreerr "forge.lthn.ai/core/go-log"
 	"forge.lthn.ai/core/go/pkg/core"
 )
 
@@ -13,6 +15,7 @@ type Service struct {
 	*core.ServiceRuntime[Options]
 	platform    Platform
 	cancelTheme func() // returned by Platform.OnThemeChange — called on shutdown
+	override    *bool
 }
 
 // Register(p) binds the environment service to a Core instance.
@@ -32,6 +35,9 @@ func (s *Service) OnStartup(ctx context.Context) error {
 
 	// Register theme change callback — broadcasts ActionThemeChanged via IPC
 	s.cancelTheme = s.platform.OnThemeChange(func(isDark bool) {
+		if s.override != nil {
+			isDark = *s.override
+		}
 		_ = s.Core().ACTION(ActionThemeChanged{IsDark: isDark})
 	})
 	return nil
@@ -51,7 +57,7 @@ func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
 	switch q.(type) {
 	case QueryTheme:
-		isDark := s.platform.IsDarkMode()
+		isDark := s.currentThemeIsDark()
 		theme := "light"
 		if isDark {
 			theme = "dark"
@@ -70,9 +76,36 @@ func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
 
 func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 	switch t := t.(type) {
+	case TaskSetTheme:
+		return nil, true, s.setThemeOverride(strings.ToLower(strings.TrimSpace(t.Theme)))
 	case TaskOpenFileManager:
 		return nil, true, s.platform.OpenFileManager(t.Path, t.Select)
 	default:
 		return nil, false, nil
 	}
+}
+
+func (s *Service) currentThemeIsDark() bool {
+	if s.override != nil {
+		return *s.override
+	}
+	return s.platform.IsDarkMode()
+}
+
+func (s *Service) setThemeOverride(theme string) error {
+	switch theme {
+	case "", "system":
+		s.override = nil
+	case "dark":
+		value := true
+		s.override = &value
+	case "light":
+		value := false
+		s.override = &value
+	default:
+		return coreerr.E("environment.setThemeOverride", "theme must be one of: light, dark, system", nil)
+	}
+
+	_ = s.Core().ACTION(ActionThemeChanged{IsDark: s.currentThemeIsDark()})
+	return nil
 }

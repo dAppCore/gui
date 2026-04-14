@@ -54,6 +54,38 @@ func TestTaskSetTrayMenu_Good(t *testing.T) {
 	assert.True(t, handled)
 }
 
+func TestTaskSetTrayTooltip_Good(t *testing.T) {
+	svc, c := newTestSystrayService(t)
+	require.NoError(t, svc.manager.Setup("Test", "Test"))
+
+	_, handled, err := c.PERFORM(TaskSetTrayTooltip{Tooltip: "Updated"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.Equal(t, "Updated", svc.manager.Tray().(*mockTray).tooltip)
+}
+
+func TestTaskSetTrayLabel_Good(t *testing.T) {
+	svc, c := newTestSystrayService(t)
+	require.NoError(t, svc.manager.Setup("Test", "Test"))
+
+	_, handled, err := c.PERFORM(TaskSetTrayLabel{Label: "CoreGUI"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.Equal(t, "CoreGUI", svc.manager.Tray().(*mockTray).label)
+}
+
+func TestTaskShowMessage_Good(t *testing.T) {
+	svc, c := newTestSystrayService(t)
+	require.NoError(t, svc.manager.Setup("Test", "Test"))
+
+	_, handled, err := c.PERFORM(TaskShowMessage{Title: "Heads up", Message: "Background work finished"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	tray := svc.manager.Tray().(*mockTray)
+	assert.Equal(t, "Heads up", tray.lastMessageTitle)
+	assert.Equal(t, "Background work finished", tray.lastMessageBody)
+}
+
 func TestTaskSetTrayIcon_Bad(t *testing.T) {
 	// No systray service — PERFORM returns handled=false
 	c, err := core.New(core.WithServiceLock())

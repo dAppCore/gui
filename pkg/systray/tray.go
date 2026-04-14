@@ -87,6 +87,14 @@ func (m *Manager) AttachWindow(w WindowHandle) error {
 	return nil
 }
 
+// ShowMessage displays a tray message if the backend supports it.
+func (m *Manager) ShowMessage(title, message string) error {
+	if m.tray == nil {
+		return coreerr.E("systray.ShowMessage", "tray not initialised", nil)
+	}
+	return m.tray.ShowMessage(title, message)
+}
+
 // Tray returns the underlying platform tray for direct access.
 func (m *Manager) Tray() PlatformTray {
 	return m.tray

@@ -13,16 +13,19 @@ import (
 )
 
 type mockPlatform struct {
-	sendErr              error
-	permGranted          bool
-	permErr              error
-	revokeErr            error
-	registerCategoryErr  error
-	lastOpts             NotificationOptions
-	lastCategory         NotificationCategory
-	sendCalled           bool
-	revokeCalled         bool
+	sendErr                error
+	permGranted            bool
+	permErr                error
+	revokeErr              error
+	registerCategoryErr    error
+	clearErr               error
+	lastOpts               NotificationOptions
+	lastCategory           NotificationCategory
+	sendCalled             bool
+	revokeCalled           bool
 	registerCategoryCalled bool
+	clearCalled            bool
+	lastClearedID          string
 }
 
 func (m *mockPlatform) Send(opts NotificationOptions) error {
@@ -40,6 +43,11 @@ func (m *mockPlatform) RegisterCategory(category NotificationCategory) error {
 	m.registerCategoryCalled = true
 	m.lastCategory = category
 	return m.registerCategoryErr
+}
+func (m *mockPlatform) Clear(id string) error {
+	m.clearCalled = true
+	m.lastClearedID = id
+	return m.clearErr
 }
 
 // mockDialogPlatform tracks whether MessageDialog was called (for fallback test).
@@ -169,6 +177,36 @@ func TestTaskRegisterCategory_Bad_NoService(t *testing.T) {
 	c, _ := core.New(core.WithServiceLock())
 	_, handled, _ := c.PERFORM(TaskRegisterCategory{})
 	assert.False(t, handled)
+}
+
+func TestTaskSendWithActions_Good(t *testing.T) {
+	mock, c := newTestService(t)
+
+	_, handled, err := c.PERFORM(TaskSend{
+		Options: NotificationOptions{
+			Title:   "Message",
+			Message: "Reply?",
+			Actions: []NotificationAction{
+				{ID: "reply", Title: "Reply"},
+				{ID: "dismiss", Title: "Dismiss"},
+			},
+		},
+	})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.True(t, mock.registerCategoryCalled)
+	assert.Len(t, mock.lastCategory.Actions, 2)
+	assert.NotEmpty(t, mock.lastOpts.CategoryID)
+}
+
+func TestTaskClear_Good(t *testing.T) {
+	mock, c := newTestService(t)
+
+	_, handled, err := c.PERFORM(TaskClear{ID: "notif-1"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.True(t, mock.clearCalled)
+	assert.Equal(t, "notif-1", mock.lastClearedID)
 }
 
 func TestActionNotificationActionTriggered_Ugly(t *testing.T) {

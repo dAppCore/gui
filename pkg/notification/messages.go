@@ -19,6 +19,9 @@ type TaskRevokePermission struct{}
 // _, _, err := c.PERFORM(TaskRegisterCategory{Category: NotificationCategory{ID: "message", Actions: [...]}})
 type TaskRegisterCategory struct{ Category NotificationCategory }
 
+// TaskClear removes a notification by ID. An empty ID clears all notifications if supported.
+type TaskClear struct{ ID string }
+
 // ActionNotificationClicked is broadcast when the user clicks a notification.
 type ActionNotificationClicked struct{ ID string }
 

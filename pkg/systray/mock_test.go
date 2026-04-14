@@ -49,6 +49,8 @@ type mockTray struct {
 	tooltip, label     string
 	menu               PlatformMenu
 	attachedWindow     WindowHandle
+	lastMessageTitle   string
+	lastMessageBody    string
 }
 
 func (t *mockTray) SetIcon(data []byte)         { t.icon = data }
@@ -57,3 +59,8 @@ func (t *mockTray) SetTooltip(text string)      { t.tooltip = text }
 func (t *mockTray) SetLabel(text string)        { t.label = text }
 func (t *mockTray) SetMenu(menu PlatformMenu)   { t.menu = menu }
 func (t *mockTray) AttachWindow(w WindowHandle) { t.attachedWindow = w }
+func (t *mockTray) ShowMessage(title, message string) error {
+	t.lastMessageTitle = title
+	t.lastMessageBody = message
+	return nil
+}

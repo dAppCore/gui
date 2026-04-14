@@ -10,6 +10,11 @@ type QueryInfo struct{}
 // QueryAccentColour returns the system accent colour. Result: string
 type QueryAccentColour struct{}
 
+// TaskSetTheme overrides the application theme. Theme values: "light", "dark", "system".
+type TaskSetTheme struct {
+	Theme string `json:"theme"`
+}
+
 // TaskOpenFileManager opens the system file manager. Result: error only
 type TaskOpenFileManager struct {
 	Path   string `json:"path"`
