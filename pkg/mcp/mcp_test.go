@@ -8,6 +8,7 @@ import (
 	"dappco.re/go/core/gui/pkg/clipboard"
 	"dappco.re/go/core/gui/pkg/display"
 	"dappco.re/go/core/gui/pkg/environment"
+	"dappco.re/go/core/gui/pkg/menu"
 	"dappco.re/go/core/gui/pkg/notification"
 	"dappco.re/go/core/gui/pkg/screen"
 	"dappco.re/go/core/gui/pkg/webview"
@@ -217,6 +218,131 @@ func TestMCP_Good_ChatConversationSaveAndAttachments(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, listed.Attachments, 1)
 	assert.Equal(t, attachments.Attachments[0].ID, listed.Attachments[0].ID)
+}
+
+func TestMCP_Good_ChatStreamingThinkingAndToolCalls(t *testing.T) {
+	c, err := core.New(
+		core.WithService(display.Register(nil)),
+		core.WithServiceLock(),
+	)
+	require.NoError(t, err)
+	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+
+	sub := New(c)
+
+	_, created, err := sub.chatConversationNew(context.Background(), nil, ChatConversationNewInput{})
+	require.NoError(t, err)
+
+	_, sent, err := sub.chatSend(context.Background(), nil, ChatSendInput{
+		ConversationID: created.Conversation.ID,
+		Content:        "Use a local tool while streaming.",
+	})
+	require.NoError(t, err)
+	require.Len(t, sent.Conversation.Messages, 2)
+
+	_, thinkingStart, err := sub.chatThinkingStart(context.Background(), nil, ChatThinkingStartInput{
+		ConversationID: created.Conversation.ID,
+	})
+	require.NoError(t, err)
+	assert.True(t, thinkingStart.Thinking.Active)
+
+	_, thinkingAppend, err := sub.chatThinkingAppend(context.Background(), nil, ChatThinkingAppendInput{
+		ConversationID: created.Conversation.ID,
+		Content:        "Inspecting local tool availability.",
+	})
+	require.NoError(t, err)
+	assert.Contains(t, thinkingAppend.Thinking.Content, "local tool availability")
+
+	_, streamStart, err := sub.chatStreamStart(context.Background(), nil, ChatStreamStartInput{
+		ConversationID: created.Conversation.ID,
+	})
+	require.NoError(t, err)
+	require.Len(t, streamStart.Conversation.Messages, 2)
+	assert.True(t, streamStart.Conversation.Messages[1].Streaming)
+
+	_, streamAppend, err := sub.chatStreamAppend(context.Background(), nil, ChatStreamAppendInput{
+		ConversationID: created.Conversation.ID,
+		Content:        "Tool output ready.",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "Tool output ready.", streamAppend.Conversation.Messages[1].Content)
+
+	_, thinkingEnd, err := sub.chatThinkingEnd(context.Background(), nil, ChatThinkingEndInput{
+		ConversationID: created.Conversation.ID,
+	})
+	require.NoError(t, err)
+	assert.False(t, thinkingEnd.Thinking.Active)
+
+	_, streamFinish, err := sub.chatStreamFinish(context.Background(), nil, ChatStreamFinishInput{
+		ConversationID: created.Conversation.ID,
+		FinishReason:   "stop",
+	})
+	require.NoError(t, err)
+	assert.False(t, streamFinish.Conversation.Messages[1].Streaming)
+	assert.Equal(t, "stop", streamFinish.Conversation.Messages[1].FinishReason)
+
+	_, recorded, err := sub.chatRecordToolCall(context.Background(), nil, ChatRecordToolCallInput{
+		ConversationID: created.Conversation.ID,
+		Call: display.ToolCall{
+			ID:   "tool-1",
+			Name: "chat_models",
+			Arguments: map[string]any{
+				"scope": "local",
+			},
+		},
+		Result: display.ToolResult{
+			ToolCallID: "tool-1",
+			Content:    "lemer, lemma, lemmy",
+		},
+	})
+	require.NoError(t, err)
+	require.Len(t, recorded.Conversation.Messages[1].ToolCalls, 1)
+	assert.Equal(t, "chat_models", recorded.Conversation.Messages[1].ToolCalls[0].Call.Name)
+
+	_, history, err := sub.chatHistory(context.Background(), nil, ChatHistoryInput{
+		ConversationID: created.Conversation.ID,
+	})
+	require.NoError(t, err)
+	require.Len(t, history.Messages, 2)
+	assert.Contains(t, history.Messages[1].Thinking.Content, "local tool availability")
+	require.Len(t, history.Messages[1].ToolCalls, 1)
+	assert.Equal(t, "lemer, lemma, lemmy", history.Messages[1].ToolCalls[0].Result.Content)
+}
+
+func TestMCP_Good_MenuRoundTrip(t *testing.T) {
+	c, err := core.New(
+		core.WithService(menu.Register(menu.NewMockPlatform())),
+		core.WithServiceLock(),
+	)
+	require.NoError(t, err)
+	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+
+	sub := New(c)
+
+	items := []MenuItemSpec{
+		{
+			Label: "File",
+			Children: []MenuItemSpec{
+				{Label: "Export", Accelerator: "CmdOrCtrl+E"},
+				{Type: "separator"},
+				{Label: "Close", Accelerator: "CmdOrCtrl+W"},
+			},
+		},
+		{
+			Role: "help",
+		},
+	}
+
+	_, updated, err := sub.menuSet(context.Background(), nil, MenuSetInput{Items: items})
+	require.NoError(t, err)
+	require.Len(t, updated.Items, 2)
+	assert.Equal(t, "File", updated.Items[0].Label)
+	require.Len(t, updated.Items[0].Children, 3)
+	assert.Equal(t, "help", updated.Items[1].Role)
+
+	_, fetched, err := sub.menuGet(context.Background(), nil, MenuGetInput{})
+	require.NoError(t, err)
+	assert.Equal(t, updated.Items, fetched.Items)
 }
 
 func TestMCP_Good_ScreenWorkAreaAlias(t *testing.T) {

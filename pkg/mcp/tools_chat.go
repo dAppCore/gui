@@ -350,6 +350,142 @@ func (s *Subsystem) chatDetachImage(_ context.Context, _ *mcp.CallToolRequest, i
 	return nil, ChatAttachmentsOutput{Attachments: attachments}, nil
 }
 
+type ChatThinkingStartInput struct {
+	ConversationID string `json:"conversation_id"`
+}
+
+type ChatThinkingAppendInput struct {
+	ConversationID string `json:"conversation_id"`
+	Content        string `json:"content"`
+}
+
+type ChatThinkingEndInput struct {
+	ConversationID string `json:"conversation_id"`
+}
+
+type ChatThinkingOutput struct {
+	Thinking display.ThinkingState `json:"thinking"`
+}
+
+func (s *Subsystem) chatThinkingStart(_ context.Context, _ *mcp.CallToolRequest, input ChatThinkingStartInput) (*mcp.CallToolResult, ChatThinkingOutput, error) {
+	result, _, err := s.core.PERFORM(display.TaskThinkingStart{ConversationID: input.ConversationID})
+	if err != nil {
+		return nil, ChatThinkingOutput{}, err
+	}
+	thinking, ok := result.(display.ThinkingState)
+	if !ok {
+		return nil, ChatThinkingOutput{}, coreerr.E("mcp.chatThinkingStart", "unexpected result type", nil)
+	}
+	return nil, ChatThinkingOutput{Thinking: thinking}, nil
+}
+
+func (s *Subsystem) chatThinkingAppend(_ context.Context, _ *mcp.CallToolRequest, input ChatThinkingAppendInput) (*mcp.CallToolResult, ChatThinkingOutput, error) {
+	result, _, err := s.core.PERFORM(display.TaskThinkingAppend{
+		ConversationID: input.ConversationID,
+		Content:        input.Content,
+	})
+	if err != nil {
+		return nil, ChatThinkingOutput{}, err
+	}
+	thinking, ok := result.(display.ThinkingState)
+	if !ok {
+		return nil, ChatThinkingOutput{}, coreerr.E("mcp.chatThinkingAppend", "unexpected result type", nil)
+	}
+	return nil, ChatThinkingOutput{Thinking: thinking}, nil
+}
+
+func (s *Subsystem) chatThinkingEnd(_ context.Context, _ *mcp.CallToolRequest, input ChatThinkingEndInput) (*mcp.CallToolResult, ChatThinkingOutput, error) {
+	result, _, err := s.core.PERFORM(display.TaskThinkingEnd{ConversationID: input.ConversationID})
+	if err != nil {
+		return nil, ChatThinkingOutput{}, err
+	}
+	thinking, ok := result.(display.ThinkingState)
+	if !ok {
+		return nil, ChatThinkingOutput{}, coreerr.E("mcp.chatThinkingEnd", "unexpected result type", nil)
+	}
+	return nil, ChatThinkingOutput{Thinking: thinking}, nil
+}
+
+type ChatStreamStartInput struct {
+	ConversationID string `json:"conversation_id"`
+}
+
+type ChatStreamAppendInput struct {
+	ConversationID string `json:"conversation_id"`
+	Content        string `json:"content"`
+}
+
+type ChatStreamFinishInput struct {
+	ConversationID string `json:"conversation_id"`
+	FinishReason   string `json:"finish_reason,omitempty"`
+}
+
+func (s *Subsystem) chatStreamStart(_ context.Context, _ *mcp.CallToolRequest, input ChatStreamStartInput) (*mcp.CallToolResult, ChatConversationOutput, error) {
+	result, _, err := s.core.PERFORM(display.TaskChatStreamStart{ConversationID: input.ConversationID})
+	if err != nil {
+		return nil, ChatConversationOutput{}, err
+	}
+	conv, ok := result.(display.Conversation)
+	if !ok {
+		return nil, ChatConversationOutput{}, coreerr.E("mcp.chatStreamStart", "unexpected result type", nil)
+	}
+	return nil, ChatConversationOutput{Conversation: conv}, nil
+}
+
+func (s *Subsystem) chatStreamAppend(_ context.Context, _ *mcp.CallToolRequest, input ChatStreamAppendInput) (*mcp.CallToolResult, ChatConversationOutput, error) {
+	result, _, err := s.core.PERFORM(display.TaskChatStreamAppend{
+		ConversationID: input.ConversationID,
+		Content:        input.Content,
+	})
+	if err != nil {
+		return nil, ChatConversationOutput{}, err
+	}
+	conv, ok := result.(display.Conversation)
+	if !ok {
+		return nil, ChatConversationOutput{}, coreerr.E("mcp.chatStreamAppend", "unexpected result type", nil)
+	}
+	return nil, ChatConversationOutput{Conversation: conv}, nil
+}
+
+func (s *Subsystem) chatStreamFinish(_ context.Context, _ *mcp.CallToolRequest, input ChatStreamFinishInput) (*mcp.CallToolResult, ChatConversationOutput, error) {
+	result, _, err := s.core.PERFORM(display.TaskChatStreamFinish{
+		ConversationID: input.ConversationID,
+		FinishReason:   input.FinishReason,
+	})
+	if err != nil {
+		return nil, ChatConversationOutput{}, err
+	}
+	conv, ok := result.(display.Conversation)
+	if !ok {
+		return nil, ChatConversationOutput{}, coreerr.E("mcp.chatStreamFinish", "unexpected result type", nil)
+	}
+	return nil, ChatConversationOutput{Conversation: conv}, nil
+}
+
+type ChatRecordToolCallInput struct {
+	ConversationID string             `json:"conversation_id"`
+	Call           display.ToolCall   `json:"call"`
+	Result         display.ToolResult `json:"result"`
+	Error          string             `json:"error,omitempty"`
+}
+
+func (s *Subsystem) chatRecordToolCall(_ context.Context, _ *mcp.CallToolRequest, input ChatRecordToolCallInput) (*mcp.CallToolResult, ChatConversationOutput, error) {
+	result, _, err := s.core.PERFORM(display.TaskRecordToolCall{
+		ConversationID: input.ConversationID,
+		Call:           input.Call,
+		Result:         input.Result,
+		Error:          input.Error,
+	})
+	if err != nil {
+		return nil, ChatConversationOutput{}, err
+	}
+	conv, ok := result.(display.Conversation)
+	if !ok {
+		return nil, ChatConversationOutput{}, coreerr.E("mcp.chatRecordToolCall", "unexpected result type", nil)
+	}
+	return nil, ChatConversationOutput{Conversation: conv}, nil
+}
+
 func (s *Subsystem) registerChatTools(server *mcp.Server) {
 	mcp.AddTool(server, &mcp.Tool{Name: "chat_models", Description: "List locally available chat models and the currently selected model"}, s.chatModels)
 	mcp.AddTool(server, &mcp.Tool{Name: "chat_select_model", Description: "Select the active local chat model"}, s.chatSelectModel)
@@ -370,4 +506,11 @@ func (s *Subsystem) registerChatTools(server *mcp.Server) {
 	mcp.AddTool(server, &mcp.Tool{Name: "chat_attachments_get", Description: "List queued image attachments for the next message"}, s.chatAttachmentsGet)
 	mcp.AddTool(server, &mcp.Tool{Name: "chat_attach_image", Description: "Queue an image attachment for the next chat message"}, s.chatAttachImage)
 	mcp.AddTool(server, &mcp.Tool{Name: "chat_detach_image", Description: "Remove a queued image attachment"}, s.chatDetachImage)
+	mcp.AddTool(server, &mcp.Tool{Name: "chat_thinking_start", Description: "Start a thinking state for the active assistant response"}, s.chatThinkingStart)
+	mcp.AddTool(server, &mcp.Tool{Name: "chat_thinking_append", Description: "Append model thinking text to the active assistant response"}, s.chatThinkingAppend)
+	mcp.AddTool(server, &mcp.Tool{Name: "chat_thinking_end", Description: "Finish the current thinking state"}, s.chatThinkingEnd)
+	mcp.AddTool(server, &mcp.Tool{Name: "chat_stream_start", Description: "Start streaming the assistant response for a conversation"}, s.chatStreamStart)
+	mcp.AddTool(server, &mcp.Tool{Name: "chat_stream_append", Description: "Append a streaming assistant response fragment"}, s.chatStreamAppend)
+	mcp.AddTool(server, &mcp.Tool{Name: "chat_stream_finish", Description: "Finish the active assistant response stream"}, s.chatStreamFinish)
+	mcp.AddTool(server, &mcp.Tool{Name: "chat_record_tool_call", Description: "Record an MCP tool invocation against the latest assistant response"}, s.chatRecordToolCall)
 }

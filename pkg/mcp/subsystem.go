@@ -32,6 +32,7 @@ func (s *Subsystem) RegisterTools(server *mcp.Server) {
 	s.registerScreenTools(server)
 	s.registerClipboardTools(server)
 	s.registerDialogTools(server)
+	s.registerMenuTools(server)
 	s.registerNotificationTools(server)
 	s.registerTrayTools(server)
 	s.registerEnvironmentTools(server)

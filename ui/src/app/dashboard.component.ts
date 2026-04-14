@@ -677,6 +677,16 @@ interface ConversationGroup {
         margin: 0 0 0.8rem;
       }
 
+      .markdown ul,
+      .markdown ol {
+        margin: 0 0 0.8rem 1.25rem;
+        padding: 0;
+      }
+
+      .markdown li + li {
+        margin-top: 0.35rem;
+      }
+
       .markdown a {
         color: #7dd3fc;
       }
@@ -1069,15 +1079,7 @@ export class DashboardComponent implements AfterViewChecked {
   }
 
   protected renderMarkdown(content: string): string {
-    const escaped = escapeHtml(content);
-    return escaped
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer">$1</a>')
-      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-      .replace(/`([^`]+)`/g, '<code>$1</code>')
-      .split(/\n{2,}/)
-      .map((block) => `<p>${block.replace(/\n/g, '<br />')}</p>`)
-      .join('');
+    return renderMarkdownContent(content);
   }
 
   protected async copyText(value: string): Promise<void> {
@@ -1252,4 +1254,79 @@ function hasImageFiles(dataTransfer: DataTransfer | null): boolean {
     return false;
   }
   return Array.from(dataTransfer.items).some((item) => item.type.startsWith('image/'));
+}
+
+function renderMarkdownContent(content: string): string {
+  const formatted = formatInlineMarkdown(escapeHtml(content));
+  const lines = formatted.split('\n');
+  const blocks: string[] = [];
+  let paragraph: string[] = [];
+  let listType: 'ul' | 'ol' | null = null;
+  let listItems: string[] = [];
+
+  const flushParagraph = (): void => {
+    if (paragraph.length === 0) {
+      return;
+    }
+    blocks.push(`<p>${paragraph.join('<br />')}</p>`);
+    paragraph = [];
+  };
+
+  const flushList = (): void => {
+    if (!listType || listItems.length === 0) {
+      listType = null;
+      listItems = [];
+      return;
+    }
+    blocks.push(`<${listType}>${listItems.join('')}</${listType}>`);
+    listType = null;
+    listItems = [];
+  };
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line) {
+      flushParagraph();
+      flushList();
+      continue;
+    }
+
+    const unordered = line.match(/^[-*]\s+(.*)$/);
+    if (unordered) {
+      flushParagraph();
+      if (listType !== 'ul') {
+        flushList();
+        listType = 'ul';
+      }
+      listItems.push(`<li>${unordered[1]}</li>`);
+      continue;
+    }
+
+    const ordered = line.match(/^\d+\.\s+(.*)$/);
+    if (ordered) {
+      flushParagraph();
+      if (listType !== 'ol') {
+        flushList();
+        listType = 'ol';
+      }
+      listItems.push(`<li>${ordered[1]}</li>`);
+      continue;
+    }
+
+    flushList();
+    paragraph.push(line);
+  }
+
+  flushParagraph();
+  flushList();
+
+  return blocks.join('');
+}
+
+function formatInlineMarkdown(value: string): string {
+  return value
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer">$1</a>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>');
 }
