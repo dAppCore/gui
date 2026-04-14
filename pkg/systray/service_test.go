@@ -15,11 +15,11 @@ type mockWindowHandle struct {
 	hideCalled bool
 }
 
-func (w *mockWindowHandle) Name() string                    { return w.name }
-func (w *mockWindowHandle) Show()                           { w.showCalled = true }
-func (w *mockWindowHandle) Hide()                           { w.hideCalled = true }
-func (w *mockWindowHandle) SetPosition(x, y int)            {}
-func (w *mockWindowHandle) SetSize(width, height int)       {}
+func (w *mockWindowHandle) Name() string              { return w.name }
+func (w *mockWindowHandle) Show()                     { w.showCalled = true }
+func (w *mockWindowHandle) Hide()                     { w.hideCalled = true }
+func (w *mockWindowHandle) SetPosition(x, y int)      {}
+func (w *mockWindowHandle) SetSize(width, height int) {}
 
 func newTestSystrayService(t *testing.T) (*Service, *core.Core) {
 	t.Helper()
@@ -55,7 +55,7 @@ func TestTaskSetTooltip_Good(t *testing.T) {
 	svc, c := newTestSystrayService(t)
 	require.NoError(t, svc.manager.Setup("Test", "Test"))
 
-	_, handled, err := c.PERFORM(TaskSetTooltip{Tooltip: "Updated"})
+	_, handled, err := c.PERFORM(TaskSetTrayTooltip{Tooltip: "Updated"})
 	require.NoError(t, err)
 	assert.True(t, handled)
 }
@@ -64,7 +64,7 @@ func TestTaskSetLabel_Good(t *testing.T) {
 	svc, c := newTestSystrayService(t)
 	require.NoError(t, svc.manager.Setup("Test", "Test"))
 
-	_, handled, err := c.PERFORM(TaskSetLabel{Label: "Updated"})
+	_, handled, err := c.PERFORM(TaskSetTrayLabel{Label: "Updated"})
 	require.NoError(t, err)
 	assert.True(t, handled)
 }
@@ -124,7 +124,7 @@ func TestTaskSetTrayIcon_Bad(t *testing.T) {
 	assert.False(t, handled)
 }
 
-func TestTaskShowMessage_Good(t *testing.T) {
+func TestTaskShowMessage_Smoke(t *testing.T) {
 	svc, c := newTestSystrayService(t)
 	require.NoError(t, svc.manager.Setup("Test", "Test"))
 	_, handled, err := c.PERFORM(TaskShowMessage{Title: "Hello", Message: "World"})

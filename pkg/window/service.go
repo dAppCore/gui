@@ -210,6 +210,8 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 		return nil, true, s.taskSnapWindow(t.Name, t.Position)
 	case TaskApplyWorkflow:
 		return nil, true, s.taskApplyWorkflow(t.Workflow, t.Windows)
+	case TaskArrangePair:
+		return s.taskArrangePair(t.First, t.Second)
 	default:
 		return nil, false, nil
 	}
@@ -246,6 +248,32 @@ func (s *Service) primaryScreenArea() (int, int, int, int) {
 	}
 
 	return x, y, width, height
+}
+
+func (s *Service) primaryScreenSize() (int, int) {
+	_, _, width, height := s.primaryScreenArea()
+	return width, height
+}
+
+func (s *Service) taskArrangePair(first, second string) (any, bool, error) {
+	screenWidth, screenHeight := s.primaryScreenSize()
+	if err := s.manager.ArrangePair(first, second, screenWidth, screenHeight); err != nil {
+		return nil, true, err
+	}
+
+	left, ok := s.manager.Get(first)
+	if !ok {
+		return nil, true, coreerr.E("window.taskArrangePair", "window not found after arrange: "+first, nil)
+	}
+	right, ok := s.manager.Get(second)
+	if !ok {
+		return nil, true, coreerr.E("window.taskArrangePair", "window not found after arrange: "+second, nil)
+	}
+
+	return ArrangedPair{
+		First:  left.GetBounds(),
+		Second: right.GetBounds(),
+	}, true, nil
 }
 
 func (s *Service) taskOpenWindow(t TaskOpenWindow) (any, bool, error) {

@@ -76,11 +76,29 @@ type QueryLayoutList struct{}
 
 type QueryLayoutGet struct{ Name string }
 
+type QueryFindSpace struct {
+	Width        int `json:"width"`
+	Height       int `json:"height"`
+	ScreenWidth  int `json:"screenWidth"`
+	ScreenHeight int `json:"screenHeight"`
+}
+
+type QueryLayoutSuggestion struct {
+	WindowCount  int `json:"windowCount"`
+	ScreenWidth  int `json:"screenWidth"`
+	ScreenHeight int `json:"screenHeight"`
+}
+
 type TaskSaveLayout struct{ Name string }
 
 type TaskRestoreLayout struct{ Name string }
 
 type TaskDeleteLayout struct{ Name string }
+
+type TaskArrangePair struct {
+	First  string `json:"first"`
+	Second string `json:"second"`
+}
 
 type TaskTileWindows struct {
 	Mode    string   // "left-right", "grid", "left-half", "right-half", etc.
@@ -210,4 +228,9 @@ type LayoutSuggestion struct {
 	PrimaryWidth   int    `json:"primaryWidth"`
 	SecondaryWidth int    `json:"secondaryWidth"`
 	Description    string `json:"description"`
+}
+
+type ArrangedPair struct {
+	First  Bounds `json:"first"`
+	Second Bounds `json:"second"`
 }

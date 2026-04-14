@@ -544,7 +544,7 @@ func (s *Service) recordException(windowName string, exc ExceptionInfo) {
 	defer s.mu.Unlock()
 
 	exceptions := append(s.exceptions[windowName], exc)
-	if limit := s.opts.ConsoleLimit; limit > 0 && len(exceptions) > limit {
+	if limit := s.options.ConsoleLimit; limit > 0 && len(exceptions) > limit {
 		exceptions = exceptions[len(exceptions)-limit:]
 	}
 	s.exceptions[windowName] = exceptions
@@ -692,6 +692,10 @@ func (r *realConnector) ClearConsole()                           { r.wv.ClearCon
 func (r *realConnector) Close() error                            { return r.wv.Close() }
 func (r *realConnector) SetViewport(w, h int) error              { return r.wv.SetViewport(w, h) }
 func (r *realConnector) UploadFile(sel string, p []string) error { return r.wv.UploadFile(sel, p) }
+func (r *realConnector) Print() error {
+	_, err := r.wv.Evaluate("window.print()")
+	return err
+}
 func (r *realConnector) PrintToPDF() ([]byte, error) {
 	client, err := r.cdpClient()
 	if err != nil {

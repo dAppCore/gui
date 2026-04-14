@@ -95,6 +95,15 @@ func (m *Manager) captureState(pw PlatformWindow) {
 	m.state.CaptureState(pw)
 }
 
+func normalizeWindowForLayout(pw PlatformWindow) {
+	if pw == nil {
+		return
+	}
+	if pw.IsMaximised() || pw.IsMinimised() {
+		pw.Restore()
+	}
+}
+
 // TileWindows arranges the named windows in the given mode across the screen area.
 func (m *Manager) TileWindows(mode TileMode, names []string, screenW, screenH int, origin ...int) error {
 	originX, originY := layoutOrigin(origin)

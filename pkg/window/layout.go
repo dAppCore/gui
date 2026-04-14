@@ -4,6 +4,8 @@ package window
 import (
 	"encoding/json"
 	"os"
+	"path/filepath"
+	"sort"
 	"sync"
 	"time"
 
@@ -45,7 +47,7 @@ func NewLayoutManager() *LayoutManager {
 	}
 	configDir, err := os.UserConfigDir()
 	if err == nil {
-		lm.configDir = corego.JoinPath(configDir, "Core")
+		lm.configDir = filepath.Join(configDir, "Core")
 	}
 	lm.loadLayouts()
 	return lm
@@ -64,14 +66,14 @@ func NewLayoutManagerWithDir(configDir string) *LayoutManager {
 }
 
 func (lm *LayoutManager) layoutsFilePath() string {
-	return corego.JoinPath(lm.configDir, "layouts.json")
+	return filepath.Join(lm.configDir, "layouts.json")
 }
 
 func (lm *LayoutManager) loadLayouts() {
 	if lm.configDir == "" {
 		return
 	}
-	content, err := coreio.Local.Read(lm.filePath())
+	content, err := coreio.Local.Read(lm.layoutsFilePath())
 	if err != nil {
 		return
 	}
@@ -85,13 +87,13 @@ func (lm *LayoutManager) saveLayouts() {
 		return
 	}
 	lm.mu.RLock()
-	r := corego.JSONMarshal(lm.layouts)
+	data, err := json.Marshal(lm.layouts)
 	lm.mu.RUnlock()
-	if !r.OK {
+	if err != nil {
 		return
 	}
 	_ = coreio.Local.EnsureDir(lm.configDir)
-	_ = coreio.Local.Write(lm.filePath(), string(data))
+	_ = coreio.Local.Write(lm.layoutsFilePath(), string(data))
 }
 
 // SaveLayout creates or updates a named layout.
@@ -140,6 +142,12 @@ func (lm *LayoutManager) ListLayouts() []LayoutInfo {
 			CreatedAt: l.CreatedAt, UpdatedAt: l.UpdatedAt,
 		})
 	}
+	sort.Slice(infos, func(i, j int) bool {
+		if infos[i].UpdatedAt == infos[j].UpdatedAt {
+			return infos[i].Name < infos[j].Name
+		}
+		return infos[i].UpdatedAt > infos[j].UpdatedAt
+	})
 	return infos
 }
 

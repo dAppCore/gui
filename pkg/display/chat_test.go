@@ -442,3 +442,141 @@ func TestResolveScheme_Good(t *testing.T) {
 	assert.Contains(t, modelsResponse.Data, "selected_model")
 	assert.Contains(t, modelsResponse.Data, "models")
 }
+
+func TestConversationSearchIncludesThinkingToolsAndAttachments_Good(t *testing.T) {
+	_, c := newTestDisplayService(t)
+
+	result, handled, err := c.PERFORM(TaskConversationSave{
+		Conversation: Conversation{
+			Title: "Invoice debugger",
+			Messages: []ChatMessage{
+				{
+					Role: "user",
+					Attachments: []ImageAttachment{
+						{
+							Filename: "receipt.png",
+							MimeType: "image/png",
+							Data:     "ZmFrZQ==",
+						},
+					},
+				},
+				{
+					Role: "assistant",
+					Thinking: &ThinkingState{
+						Content: "Tracing invoice 42 through the local store.",
+					},
+					ToolCalls: []ToolInvocation{
+						{
+							Call: ToolCall{
+								Name: "store.lookup",
+								Arguments: map[string]any{
+									"q": "invoice-42",
+								},
+							},
+							Result: ToolResult{
+								Content: "invoice 42 marked paid",
+							},
+						},
+					},
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.True(t, handled)
+	conv := result.(Conversation)
+	require.NotEmpty(t, conv.ID)
+
+	for _, query := range []string{
+		"receipt.png",
+		"image/png",
+		"tracing invoice 42",
+		"store.lookup",
+		"invoice-42",
+		"marked paid",
+	} {
+		searchResult, handled, err := c.QUERY(QueryConversationsSearch{Query: query})
+		require.NoError(t, err)
+		require.True(t, handled)
+		matches := searchResult.([]Conversation)
+		require.Len(t, matches, 1, query)
+		assert.Equal(t, conv.ID, matches[0].ID, query)
+	}
+}
+
+func TestRouteQueriesAndStoreGroups_Good(t *testing.T) {
+	svc, c := newTestDisplayService(t)
+
+	_, handled, err := c.PERFORM(TaskConversationSave{
+		Conversation: Conversation{
+			Title: "Invoice notes",
+			Messages: []ChatMessage{
+				{
+					Role: "assistant",
+					ToolCalls: []ToolInvocation{
+						{
+							Call: ToolCall{
+								Name: "store.lookup",
+								Arguments: map[string]any{
+									"q": "invoice",
+								},
+							},
+							Result: ToolResult{
+								Content: "invoice status is paid",
+							},
+						},
+					},
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.True(t, handled)
+
+	require.NoError(t, svc.SaveBrowserStorageState("https://app.example.com", OriginStorageState{
+		LocalStorage: map[string]string{
+			"invoice_status": "paid",
+		},
+	}))
+
+	settingsResult, handled, err := c.QUERY(QueryRouteSettings{})
+	require.NoError(t, err)
+	require.True(t, handled)
+	settingsData := settingsResult.(map[string]any)
+	assert.Contains(t, settingsData, "settings")
+	assert.Contains(t, settingsData, "models")
+
+	modelsResult, handled, err := c.QUERY(QueryRouteModels{})
+	require.NoError(t, err)
+	require.True(t, handled)
+	modelsData := modelsResult.(map[string]any)
+	assert.Contains(t, modelsData, "selected_model")
+	assert.Contains(t, modelsData, "models")
+
+	resolveResult, handled, err := c.QUERY(QueryRouteResolve{URL: "core://models"})
+	require.NoError(t, err)
+	require.True(t, handled)
+	resolved := resolveResult.(SchemeResponse)
+	assert.Equal(t, "models", resolved.Path)
+	assert.Contains(t, resolved.Data, "selected_model")
+
+	storeResult, handled, err := c.QUERY(QueryRouteStore{Query: "invoice"})
+	require.NoError(t, err)
+	require.True(t, handled)
+	storeData := storeResult.(map[string]any)
+
+	results := storeData["results"].([]StoreSearchResult)
+	require.Len(t, results, 2)
+
+	groups := storeData["groups"].([]StoreSearchGroup)
+	require.Len(t, groups, 2)
+
+	origins := []string{groups[0].Origin, groups[1].Origin}
+	assert.ElementsMatch(t, []string{"chat://conversations", "https://app.example.com"}, origins)
+
+	var snippets []string
+	for _, result := range results {
+		snippets = append(snippets, result.Snippet)
+	}
+	assert.Contains(t, snippets, "invoice status is paid")
+}

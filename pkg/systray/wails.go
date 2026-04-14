@@ -48,12 +48,7 @@ func (wt *wailsTray) AttachWindow(w WindowHandle) {
 	if wt.tray == nil {
 		return
 	}
-	window, ok := w.(interface {
-		Show()
-		Hide()
-		Focus()
-		IsVisible() bool
-	})
+	window, ok := w.(application.Window)
 	if !ok {
 		return
 	}

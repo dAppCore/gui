@@ -165,13 +165,13 @@ func (s *BrowserStorageStore) PolyfillState(origin string) BrowserStoragePolyfil
 	state := cloneOriginStorageState(s.origins[normalizeOrigin(origin)])
 	return BrowserStoragePolyfillState{
 		Origin:         normalizeOrigin(origin),
-		LocalStorage:   cloneStringMap(state.LocalStorage),
-		SessionStorage: cloneStringMap(state.SessionStorage),
+		LocalStorage:   cloneStorageStringMap(state.LocalStorage),
+		SessionStorage: cloneStorageStringMap(state.SessionStorage),
 		Cookies:        append([]BrowserCookie(nil), state.Cookies...),
-		IndexedDB:      cloneNestedStringMap(state.IndexedDB),
-		CacheStorage:   cloneStringMap(state.CacheStorage),
-		StorageBuckets: cloneNestedStringMap(state.StorageBuckets),
-		OPFS:           cloneStringMap(state.OPFS),
+		IndexedDB:      cloneStorageNestedStringMap(state.IndexedDB),
+		CacheStorage:   cloneStorageStringMap(state.CacheStorage),
+		StorageBuckets: cloneStorageNestedStringMap(state.StorageBuckets),
+		OPFS:           cloneStorageStringMap(state.OPFS),
 	}
 }
 
@@ -245,7 +245,7 @@ func (s *Service) BrowserStorageState(origin string) (OriginStorageState, bool) 
 	return s.browserStorage.Origin(origin)
 }
 
-// PreloadScript composes storage, Electron, and local-ML shims for an origin.
+// PreloadScript composes storage, background-service, Electron, and local-ML shims for an origin.
 // Use: script, _ := svc.PreloadScript("https://app.example.com")
 func (s *Service) PreloadScript(origin string) (string, error) {
 	if s.browserStorage == nil {
@@ -260,6 +260,7 @@ func (s *Service) PreloadScript(origin string) (string, error) {
 	scripts := []string{
 		storageScript,
 		buildCoreMLScript(),
+		buildBackgroundServiceScript(),
 		buildElectronShimScript(),
 	}
 	scripts = append(scripts, s.appPreloadScripts(origin)...)
@@ -810,6 +811,371 @@ func buildCoreMLScript() string {
 })();`
 }
 
+func buildBackgroundServiceScript() string {
+	return `(function () {
+  const root = globalThis;
+  const navigatorObject = root.navigator || {};
+  const registrations = new Map();
+  const syncTags = new Map();
+  const periodicSyncTags = new Map();
+  const backgroundFetches = new Map();
+  const pushSubscriptions = new Map();
+
+  const invoke = (action, payload = {}) => {
+    const bridge = root.__coreGUIBridge;
+    if (!bridge || typeof bridge !== 'object') {
+      return Promise.reject(new Error('CoreGUI bridge unavailable for ' + action));
+    }
+    if (typeof bridge.invoke === 'function') {
+      return Promise.resolve(bridge.invoke(action, payload));
+    }
+    if (typeof bridge.call === 'function') {
+      return Promise.resolve(bridge.call(action, payload));
+    }
+    return Promise.reject(new Error('CoreGUI bridge unavailable for ' + action));
+  };
+
+  const nativeNotificationCtor = () => {
+    if (typeof root.Notification === 'function' && root.Notification !== CoreBrowserNotification) {
+      return root.Notification;
+    }
+    return null;
+  };
+
+  const notificationPayload = (title, options = {}) => ({
+    title: String(title ?? ''),
+    message: String(options.body ?? options.message ?? ''),
+    subtitle: typeof options.subtitle === 'string' ? options.subtitle : '',
+    icon: typeof options.icon === 'string' ? options.icon : '',
+    silent: Boolean(options.silent),
+    actions: Array.isArray(options.actions) ? options.actions : [],
+  });
+
+  const showNotification = (title, options = {}) => {
+    const payload = notificationPayload(title, options);
+    return invoke('notification:show', payload).catch(() => {
+      const NativeNotification = nativeNotificationCtor();
+      if (!NativeNotification) {
+        return { id: '', title: payload.title, body: payload.message };
+      }
+      if (NativeNotification.permission === 'granted') {
+        return new NativeNotification(payload.title || 'Notification', {
+          body: payload.message,
+          icon: payload.icon || undefined,
+          silent: payload.silent,
+        });
+      }
+      if (typeof NativeNotification.requestPermission !== 'function') {
+        return { id: '', title: payload.title, body: payload.message };
+      }
+      return Promise.resolve(NativeNotification.requestPermission()).then((permission) => {
+        if (permission !== 'granted') {
+          return { id: '', title: payload.title, body: payload.message, denied: true };
+        }
+        return new NativeNotification(payload.title || 'Notification', {
+          body: payload.message,
+          icon: payload.icon || undefined,
+          silent: payload.silent,
+        });
+      });
+    });
+  };
+
+  class CoreBrowserNotification {
+    constructor(title, options = {}) {
+      this.title = String(title ?? '');
+      this.options = options && typeof options === 'object' ? { ...options } : {};
+      this.onclick = null;
+      this.onerror = null;
+      this.onshow = null;
+      this.onclose = null;
+      this._closed = false;
+      this._result = showNotification(this.title, this.options)
+        .then((result) => {
+          if (typeof this.onshow === 'function') {
+            this.onshow({ target: result });
+          }
+          return result;
+        })
+        .catch((error) => {
+          if (typeof this.onerror === 'function') {
+            this.onerror(error);
+          }
+          throw error;
+        });
+    }
+
+    static get permission() {
+      const NativeNotification = nativeNotificationCtor();
+      if (NativeNotification && typeof NativeNotification.permission === 'string') {
+        return NativeNotification.permission;
+      }
+      return 'granted';
+    }
+
+    static requestPermission(callback) {
+      const NativeNotification = nativeNotificationCtor();
+      const request = NativeNotification && typeof NativeNotification.requestPermission === 'function'
+        ? Promise.resolve(NativeNotification.requestPermission())
+        : Promise.resolve('granted');
+      return request
+        .catch(() => 'granted')
+        .then((permission) => {
+          if (typeof callback === 'function') {
+            callback(permission);
+          }
+          return permission;
+        });
+    }
+
+    close() {
+      if (this._closed) {
+        return;
+      }
+      this._closed = true;
+      if (typeof this.onclose === 'function') {
+        this.onclose({ target: this });
+      }
+    }
+  }
+
+  if (typeof root.Notification !== 'function') {
+    root.Notification = CoreBrowserNotification;
+  }
+
+  const createPushSubscription = (scope, options = {}) => ({
+    endpoint: 'core://push/' + encodeURIComponent(scope || '/'),
+    options,
+    async unsubscribe() {
+      pushSubscriptions.delete(String(scope || '/'));
+      return true;
+    },
+    toJSON() {
+      return {
+        endpoint: this.endpoint,
+        options: this.options,
+      };
+    },
+  });
+
+  const createRegistration = (scope, scriptURL) => {
+    const registration = {
+      scope,
+      scriptURL,
+      active: {
+        scriptURL,
+        state: 'activated',
+        postMessage() {},
+      },
+      installing: null,
+      waiting: null,
+      navigationPreload: {
+        async disable() {
+          return undefined;
+        },
+        async enable() {
+          return undefined;
+        },
+        async setHeaderValue() {
+          return undefined;
+        },
+      },
+      async showNotification(title, options = {}) {
+        return showNotification(title, options);
+      },
+      async unregister() {
+        syncTags.delete(scope);
+        periodicSyncTags.delete(scope);
+        pushSubscriptions.delete(scope);
+        registrations.delete(scope);
+        return true;
+      },
+      async update() {
+        return registration;
+      },
+      sync: {
+        async getTags() {
+          return Array.from(syncTags.get(scope) || []);
+        },
+        async register(tag) {
+          const tags = syncTags.get(scope) || new Set();
+          tags.add(String(tag));
+          syncTags.set(scope, tags);
+          return undefined;
+        },
+      },
+      periodicSync: {
+        async getTags() {
+          const tags = periodicSyncTags.get(scope);
+          return tags ? Array.from(tags.keys()) : [];
+        },
+        async register(tag, options = {}) {
+          const tags = periodicSyncTags.get(scope) || new Map();
+          tags.set(String(tag), options);
+          periodicSyncTags.set(scope, tags);
+          return undefined;
+        },
+        async unregister(tag) {
+          const tags = periodicSyncTags.get(scope);
+          if (tags) {
+            tags.delete(String(tag));
+          }
+          return undefined;
+        },
+      },
+      backgroundFetch: {
+        async fetch(id, requests, options = {}) {
+          const entries = (Array.isArray(requests) ? requests : [requests]).map((request) => {
+            if (typeof request === 'string') {
+              return { url: request, init: {} };
+            }
+            return {
+              url: String(request?.url ?? request),
+              init: request?.init ?? {},
+            };
+          });
+
+          const record = {
+            id: String(id || 'fetch-' + Date.now()),
+            downloaded: 0,
+            downloads: [],
+            failureReason: '',
+            options,
+            recordsAvailable: false,
+            requests: entries,
+            result: 'success',
+          };
+
+          try {
+            if (typeof root.fetch === 'function') {
+              const downloads = await Promise.all(entries.map(async (entry) => {
+                const response = await root.fetch(entry.url, entry.init);
+                const body = response && typeof response.text === 'function'
+                  ? await response.text()
+                  : '';
+                return {
+                  body,
+                  ok: Boolean(response && response.ok),
+                  status: response ? response.status : 0,
+                  url: entry.url,
+                };
+              }));
+              record.downloads = downloads;
+              record.downloaded = downloads.reduce((total, download) => total + download.body.length, 0);
+              record.recordsAvailable = downloads.length > 0;
+            }
+          } catch (error) {
+            record.result = 'failure';
+            record.failureReason = error && error.message ? error.message : 'background fetch failed';
+          }
+
+          backgroundFetches.set(scope + '::' + record.id, record);
+          return record;
+        },
+        async get(id) {
+          return backgroundFetches.get(scope + '::' + String(id)) || null;
+        },
+      },
+      pushManager: {
+        async getSubscription() {
+          return pushSubscriptions.get(scope) || null;
+        },
+        async permissionState() {
+          return 'granted';
+        },
+        async subscribe(options = {}) {
+          const subscription = createPushSubscription(scope, options);
+          pushSubscriptions.set(scope, subscription);
+          return subscription;
+        },
+      },
+      paymentManager: {
+        instruments: {
+          async clear() {
+            return undefined;
+          },
+          async delete() {
+            return true;
+          },
+          async get() {
+            return null;
+          },
+          async has() {
+            return false;
+          },
+          async keys() {
+            return [];
+          },
+          async set() {
+            return undefined;
+          },
+        },
+        async enableDelegations() {
+          return undefined;
+        },
+      },
+    };
+
+    return registration;
+  };
+
+  const ensureDefaultRegistration = () => {
+    if (!registrations.has('/')) {
+      registrations.set('/', createRegistration('/', '/coregui-service-worker.js'));
+    }
+    return registrations.get('/');
+  };
+
+  const serviceWorkerContainer = {
+    controller: null,
+    ready: Promise.resolve().then(() => ensureDefaultRegistration()),
+    addEventListener() {},
+    dispatchEvent() {
+      return true;
+    },
+    async getRegistration(clientURL) {
+      if (typeof clientURL === 'string' && clientURL) {
+        return registrations.get(clientURL) || null;
+      }
+      return ensureDefaultRegistration();
+    },
+    async getRegistrations() {
+      ensureDefaultRegistration();
+      return Array.from(registrations.values());
+    },
+    async register(scriptURL, options = {}) {
+      const scope = String(options.scope ?? '/');
+      const registration = createRegistration(scope, String(scriptURL ?? '/coregui-service-worker.js'));
+      registrations.set(scope, registration);
+      serviceWorkerContainer.controller = registration.active;
+      return registration;
+    },
+    removeEventListener() {},
+  };
+
+  if (!navigatorObject.serviceWorker) {
+    navigatorObject.serviceWorker = serviceWorkerContainer;
+  }
+
+  root.core = root.core || {};
+  root.core.background = root.core.background || {
+    fetch(id, requests, options) {
+      return navigatorObject.serviceWorker
+        .register('/coregui-service-worker.js')
+        .then((registration) => registration.backgroundFetch.fetch(id, requests, options));
+    },
+    notify(title, options) {
+      return showNotification(title, options);
+    },
+    sync(tag) {
+      return navigatorObject.serviceWorker
+        .register('/coregui-service-worker.js')
+        .then((registration) => registration.sync.register(tag));
+    },
+  };
+})();`
+}
+
 func buildElectronShimScript() string {
 	return `(function () {
   const root = globalThis;
@@ -1032,18 +1398,18 @@ func newStorageSearchResult(origin string, area string, key string, value string
 
 func cloneOriginStorageState(state OriginStorageState) OriginStorageState {
 	return OriginStorageState{
-		LocalStorage:   cloneStringMap(state.LocalStorage),
-		SessionStorage: cloneStringMap(state.SessionStorage),
+		LocalStorage:   cloneStorageStringMap(state.LocalStorage),
+		SessionStorage: cloneStorageStringMap(state.SessionStorage),
 		Cookies:        append([]BrowserCookie(nil), state.Cookies...),
-		IndexedDB:      cloneNestedStringMap(state.IndexedDB),
-		CacheStorage:   cloneStringMap(state.CacheStorage),
-		StorageBuckets: cloneNestedStringMap(state.StorageBuckets),
-		OPFS:           cloneStringMap(state.OPFS),
+		IndexedDB:      cloneStorageNestedStringMap(state.IndexedDB),
+		CacheStorage:   cloneStorageStringMap(state.CacheStorage),
+		StorageBuckets: cloneStorageNestedStringMap(state.StorageBuckets),
+		OPFS:           cloneStorageStringMap(state.OPFS),
 		UpdatedAt:      state.UpdatedAt,
 	}
 }
 
-func cloneStringMap(source map[string]string) map[string]string {
+func cloneStorageStringMap(source map[string]string) map[string]string {
 	if len(source) == 0 {
 		return map[string]string{}
 	}
@@ -1054,13 +1420,13 @@ func cloneStringMap(source map[string]string) map[string]string {
 	return cloned
 }
 
-func cloneNestedStringMap(source map[string]map[string]string) map[string]map[string]string {
+func cloneStorageNestedStringMap(source map[string]map[string]string) map[string]map[string]string {
 	if len(source) == 0 {
 		return map[string]map[string]string{}
 	}
 	cloned := make(map[string]map[string]string, len(source))
 	for key, values := range source {
-		cloned[key] = cloneStringMap(values)
+		cloned[key] = cloneStorageStringMap(values)
 	}
 	return cloned
 }

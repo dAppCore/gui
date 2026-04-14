@@ -3,6 +3,7 @@ package display
 
 import (
 	"context"
+	"encoding/base64"
 	"runtime"
 
 	corego "dappco.re/go/core"
@@ -12,6 +13,7 @@ import (
 	"forge.lthn.ai/core/go/pkg/core"
 
 	"dappco.re/go/core/gui/pkg/browser"
+	"dappco.re/go/core/gui/pkg/clipboard"
 	"dappco.re/go/core/gui/pkg/contextmenu"
 	"dappco.re/go/core/gui/pkg/dialog"
 	"dappco.re/go/core/gui/pkg/dock"
@@ -93,6 +95,7 @@ func (s *Service) OnStartup(ctx context.Context) error {
 	s.Core().RegisterTask(s.handleConfigTask)
 	s.Core().RegisterQuery(s.handleChatQuery)
 	s.Core().RegisterTask(s.handleChatTask)
+	s.Core().RegisterQuery(s.handleRouteQuery)
 
 	s.registerBuiltinSchemes()
 
@@ -324,15 +327,21 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 	case "window:create":
 		var opts CreateWindowOptions
 		encodedR := corego.JSONMarshal(msg.Data)
-		if encodedR.OK {
-			_ = corego.JSONUnmarshal(encodedR.Value.([]byte), &opts)
+		if !encodedR.OK {
+			return nil, false, corego.NewError("ws: invalid window create options")
 		}
-		return nil, false, corego.Wrap(err, "display.ws", "ws: invalid window create options")
+		_ = corego.JSONUnmarshal(encodedR.Value.([]byte), &opts)
 		info, createErr := s.CreateWindow(opts)
 		if createErr != nil {
 			return nil, false, createErr
 		}
 		result, handled, err = info, true, nil
+	case "route:resolve":
+		rawURL, e := wsRequire(msg.Data, "url")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = s.Core().QUERY(QueryRouteResolve{URL: rawURL})
 	case "window:close":
 		name, e := wsRequire(msg.Data, "name")
 		if e != nil {
@@ -763,10 +772,7 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 	case "layout:beside-editor":
 		editor, _ := msg.Data["editor"].(string)
 		windowName, _ := msg.Data["window"].(string)
-		result, handled, err = s.Core().PERFORM(window.TaskBesideEditor{
-			Editor: editor,
-			Window: windowName,
-		})
+		result, handled, err = nil, true, s.BesideEditor(editor, windowName)
 	case "layout:stack":
 		offsetX, _ := msg.Data["offsetX"].(float64)
 		offsetY, _ := msg.Data["offsetY"].(float64)
@@ -788,10 +794,6 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 		if e != nil {
 			return nil, false, e
 		}
-		workflow, ok := window.ParseWorkflowLayout(workflowName)
-		if !ok {
-			return nil, false, corego.NewError(corego.Sprintf("ws: unknown workflow %q", workflowName))
-		}
 		var names []string
 		if raw, ok := msg.Data["windows"].([]any); ok {
 			for _, v := range raw {
@@ -801,7 +803,7 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 			}
 		}
 		result, handled, err = s.Core().PERFORM(window.TaskApplyWorkflow{
-			Workflow: workflow,
+			Workflow: workflowName,
 			Windows:  names,
 		})
 	case "window:arrange-pair":
@@ -910,6 +912,8 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 			if imageHandled {
 				if content, ok := imageResult.(clipboard.ClipboardImageContent); ok {
 					hasContent = content.HasContent
+				} else if content, ok := imageResult.(clipboard.ImageContent); ok {
+					hasContent = content.HasImage
 				}
 			}
 		}
@@ -917,7 +921,20 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 	case "clipboard:clear":
 		result, handled, err = s.Core().PERFORM(clipboard.TaskClear{})
 	case "clipboard:read-image":
-		result, handled, err = s.Core().QUERY(clipboard.QueryImage{})
+		imageResult, imageHandled, imageErr := s.Core().QUERY(clipboard.QueryImage{})
+		if imageErr != nil {
+			return nil, false, imageErr
+		}
+		if content, ok := imageResult.(clipboard.ImageContent); ok {
+			result = clipboard.ClipboardImageContent{
+				Base64:     base64.StdEncoding.EncodeToString(content.Data),
+				MimeType:   "image/png",
+				HasContent: content.HasImage,
+			}
+			handled, err = imageHandled, nil
+			break
+		}
+		result, handled, err = imageResult, imageHandled, nil
 	case "clipboard:write-image":
 		data, ok := msg.Data["data"].(string)
 		if !ok || data == "" {
@@ -934,7 +951,7 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 		if encodedR.OK {
 			_ = corego.JSONUnmarshal(encodedR.Value.([]byte), &opts)
 		}
-		result, handled, err = s.Core().PERFORM(notification.TaskSend{Opts: opts})
+		result, handled, err = s.Core().PERFORM(notification.TaskSend{Options: opts})
 	case "notification:info":
 		title, e := wsRequire(msg.Data, "title")
 		if e != nil {
@@ -944,7 +961,7 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 		if e != nil {
 			return nil, false, e
 		}
-		result, handled, err = s.Core().PERFORM(notification.TaskSend{Opts: notification.NotificationOptions{
+		result, handled, err = s.Core().PERFORM(notification.TaskSend{Options: notification.NotificationOptions{
 			Title:    title,
 			Message:  message,
 			Severity: notification.SeverityInfo,
@@ -958,7 +975,7 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 		if e != nil {
 			return nil, false, e
 		}
-		result, handled, err = s.Core().PERFORM(notification.TaskSend{Opts: notification.NotificationOptions{
+		result, handled, err = s.Core().PERFORM(notification.TaskSend{Options: notification.NotificationOptions{
 			Title:    title,
 			Message:  message,
 			Severity: notification.SeverityWarning,
@@ -972,7 +989,7 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 		if e != nil {
 			return nil, false, e
 		}
-		result, handled, err = s.Core().PERFORM(notification.TaskSend{Opts: notification.NotificationOptions{
+		result, handled, err = s.Core().PERFORM(notification.TaskSend{Options: notification.NotificationOptions{
 			Title:    title,
 			Message:  message,
 			Severity: notification.SeverityError,
@@ -995,7 +1012,7 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 			}
 		}
 		result, handled, err = s.Core().PERFORM(notification.TaskSend{
-			Opts: notification.NotificationOptions{
+			Options: notification.NotificationOptions{
 				Title:    title,
 				Message:  message,
 				Subtitle: subtitle,
@@ -1026,13 +1043,13 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 		if e != nil {
 			return nil, false, e
 		}
-		result, handled, err = s.Core().PERFORM(systray.TaskSetTooltip{Tooltip: tooltip})
+		result, handled, err = s.Core().PERFORM(systray.TaskSetTrayTooltip{Tooltip: tooltip})
 	case "tray:set-label":
 		label, e := wsRequire(msg.Data, "label")
 		if e != nil {
 			return nil, false, e
 		}
-		result, handled, err = s.Core().PERFORM(systray.TaskSetLabel{Label: label})
+		result, handled, err = s.Core().PERFORM(systray.TaskSetTrayLabel{Label: label})
 	case "tray:set-icon":
 		data, e := wsRequire(msg.Data, "data")
 		if e != nil {
@@ -1077,7 +1094,6 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 		if encodedR.OK {
 			_ = corego.JSONUnmarshal(encodedR.Value.([]byte), &opts)
 		}
-		return nil, false, corego.Wrap(err, "display.ws", "ws: invalid open file options")
 		paths, openErr := s.OpenFileDialog(opts)
 		if openErr != nil {
 			return nil, false, openErr
@@ -1089,7 +1105,6 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 		if encodedR.OK {
 			_ = corego.JSONUnmarshal(encodedR.Value.([]byte), &opts)
 		}
-		return nil, false, corego.Wrap(err, "display.ws", "ws: invalid save file options")
 		path, saveErr := s.SaveFileDialog(opts)
 		if saveErr != nil {
 			return nil, false, saveErr
@@ -1101,7 +1116,6 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 		if encodedR.OK {
 			_ = corego.JSONUnmarshal(encodedR.Value.([]byte), &opts)
 		}
-		return nil, false, corego.Wrap(err, "display.ws", "ws: invalid open directory options")
 		path, dirErr := s.OpenDirectoryDialog(opts)
 		if dirErr != nil {
 			return nil, false, dirErr
@@ -1405,6 +1419,411 @@ func (s *Service) SetWindowBackgroundColour(name string, r, g, b, a uint8) error
 	_, _, err := s.Core().PERFORM(window.TaskSetBackgroundColour{
 		Name: name, Red: r, Green: g, Blue: b, Alpha: a,
 	})
+	return err
+}
+
+// SetWindowOpacity updates a window's opacity when the platform supports it.
+func (s *Service) SetWindowOpacity(name string, opacity float32) error {
+	if opacity < 0 || opacity > 1 {
+		return coreerr.E("display.SetWindowOpacity", "opacity must be between 0 and 1", nil)
+	}
+	ws := s.windowService()
+	if ws == nil {
+		return coreerr.E("display.SetWindowOpacity", "window service not available", nil)
+	}
+	pw, ok := ws.Manager().Get(name)
+	if !ok {
+		return coreerr.E("display.SetWindowOpacity", "window not found: "+name, nil)
+	}
+	pw.SetOpacity(opacity)
+	return nil
+}
+
+func (s *Service) primaryScreenSize() (int, int) {
+	primary, err := s.GetPrimaryScreen()
+	if err != nil || primary == nil {
+		return 1920, 1080
+	}
+	if primary.WorkArea.Width > 0 && primary.WorkArea.Height > 0 {
+		return primary.WorkArea.Width, primary.WorkArea.Height
+	}
+	if primary.Bounds.Width > 0 && primary.Bounds.Height > 0 {
+		return primary.Bounds.Width, primary.Bounds.Height
+	}
+	return 1920, 1080
+}
+
+// GetScreens returns all known screens via IPC.
+func (s *Service) GetScreens() []screen.Screen {
+	result, handled, _ := s.Core().QUERY(screen.QueryAll{})
+	if !handled {
+		return nil
+	}
+	items, _ := result.([]screen.Screen)
+	return items
+}
+
+// GetPrimaryScreen returns the primary screen.
+func (s *Service) GetPrimaryScreen() (*screen.Screen, error) {
+	result, handled, err := s.Core().QUERY(screen.QueryPrimary{})
+	if err != nil {
+		return nil, err
+	}
+	if !handled {
+		return nil, coreerr.E("display.GetPrimaryScreen", "screen service not available", nil)
+	}
+	info, _ := result.(*screen.Screen)
+	return info, nil
+}
+
+// GetScreenAtPoint resolves the screen containing the provided point.
+func (s *Service) GetScreenAtPoint(x, y int) (*screen.Screen, error) {
+	result, handled, err := s.Core().QUERY(screen.QueryAtPoint{X: x, Y: y})
+	if err != nil {
+		return nil, err
+	}
+	if !handled {
+		return nil, coreerr.E("display.GetScreenAtPoint", "screen service not available", nil)
+	}
+	info, _ := result.(*screen.Screen)
+	return info, nil
+}
+
+// GetWorkAreas returns the work area bounds for all screens.
+func (s *Service) GetWorkAreas() []screen.Rect {
+	result, handled, _ := s.Core().QUERY(screen.QueryWorkAreas{})
+	if !handled {
+		return nil
+	}
+	items, _ := result.([]screen.Rect)
+	return items
+}
+
+// GetScreenForWindow resolves the screen containing the center of the named window.
+func (s *Service) GetScreenForWindow(name string) (*screen.Screen, error) {
+	info, err := s.GetWindowInfo(name)
+	if err != nil {
+		return nil, err
+	}
+	if info == nil {
+		return nil, coreerr.E("display.GetScreenForWindow", "window not found: "+name, nil)
+	}
+	return s.GetScreenAtPoint(info.X+info.Width/2, info.Y+info.Height/2)
+}
+
+// SuggestLayout returns a recommended layout for a screen.
+func (s *Service) SuggestLayout(windowCount, screenWidth, screenHeight int) (*window.LayoutSuggestion, error) {
+	result, handled, err := s.Core().QUERY(window.QueryLayoutSuggestion{
+		WindowCount:  windowCount,
+		ScreenWidth:  screenWidth,
+		ScreenHeight: screenHeight,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if !handled {
+		return nil, coreerr.E("display.SuggestLayout", "window service not available", nil)
+	}
+	suggestion, _ := result.(window.LayoutSuggestion)
+	return &suggestion, nil
+}
+
+// BesideEditor arranges a target window beside an editor using a 70/30 split.
+func (s *Service) BesideEditor(editorName, windowName string) error {
+	ws := s.windowService()
+	if ws == nil {
+		return coreerr.E("display.BesideEditor", "window service not available", nil)
+	}
+	screenWidth, screenHeight := s.primaryScreenSize()
+	return ws.Manager().BesideEditor(editorName, windowName, screenWidth, screenHeight)
+}
+
+// ReadClipboard returns the current clipboard text.
+func (s *Service) ReadClipboard() (string, error) {
+	result, handled, err := s.Core().QUERY(clipboard.QueryText{})
+	if err != nil {
+		return "", err
+	}
+	if !handled {
+		return "", coreerr.E("display.ReadClipboard", "clipboard service not available", nil)
+	}
+	content, _ := result.(clipboard.ClipboardContent)
+	return content.Text, nil
+}
+
+// WriteClipboard writes text to the clipboard.
+func (s *Service) WriteClipboard(text string) error {
+	_, _, err := s.Core().PERFORM(clipboard.TaskSetText{Text: text})
+	return err
+}
+
+// ReadClipboardImage returns encoded clipboard image content.
+func (s *Service) ReadClipboardImage() (clipboard.ClipboardImageContent, error) {
+	result, handled, err := s.Core().QUERY(clipboard.QueryImage{})
+	if err != nil {
+		return clipboard.ClipboardImageContent{}, err
+	}
+	if !handled {
+		return clipboard.ClipboardImageContent{}, coreerr.E("display.ReadClipboardImage", "clipboard service not available", nil)
+	}
+	switch content := result.(type) {
+	case clipboard.ImageContent:
+		return clipboard.ClipboardImageContent{
+			Base64:     base64.StdEncoding.EncodeToString(content.Data),
+			MimeType:   "image/png",
+			HasContent: content.HasImage,
+		}, nil
+	case clipboard.ClipboardImageContent:
+		return content, nil
+	default:
+		return clipboard.ClipboardImageContent{}, nil
+	}
+}
+
+// WriteClipboardImage writes image bytes to the clipboard.
+func (s *Service) WriteClipboardImage(data []byte) error {
+	_, _, err := s.Core().PERFORM(clipboard.TaskSetImage{Data: data})
+	return err
+}
+
+// ClearClipboard removes clipboard contents.
+func (s *Service) ClearClipboard() error {
+	_, _, err := s.Core().PERFORM(clipboard.TaskClear{})
+	return err
+}
+
+// HasClipboard reports whether the clipboard contains text or image content.
+func (s *Service) HasClipboard() bool {
+	text, err := s.ReadClipboard()
+	if err == nil && text != "" {
+		return true
+	}
+	image, err := s.ReadClipboardImage()
+	return err == nil && image.HasContent
+}
+
+// ShowInfoNotification sends an informational notification.
+func (s *Service) ShowInfoNotification(title, message string) error {
+	_, _, err := s.Core().PERFORM(notification.TaskSend{
+		Options: notification.NotificationOptions{
+			Title:    title,
+			Message:  message,
+			Severity: notification.SeverityInfo,
+		},
+	})
+	return err
+}
+
+// RequestNotificationPermission asks the OS for notification permission.
+func (s *Service) RequestNotificationPermission() (bool, error) {
+	result, handled, err := s.Core().PERFORM(notification.TaskRequestPermission{})
+	if err != nil {
+		return false, err
+	}
+	if !handled {
+		return false, coreerr.E("display.RequestNotificationPermission", "notification service not available", nil)
+	}
+	granted, _ := result.(bool)
+	return granted, nil
+}
+
+// CheckNotificationPermission returns the current notification permission state.
+func (s *Service) CheckNotificationPermission() (bool, error) {
+	result, handled, err := s.Core().QUERY(notification.QueryPermission{})
+	if err != nil {
+		return false, err
+	}
+	if !handled {
+		return false, coreerr.E("display.CheckNotificationPermission", "notification service not available", nil)
+	}
+	status, _ := result.(notification.PermissionStatus)
+	return status.Granted, nil
+}
+
+// ClearNotifications clears visible notifications when supported.
+func (s *Service) ClearNotifications() error {
+	_, _, err := s.Core().PERFORM(notification.TaskClear{})
+	return err
+}
+
+// DialogMessage maps legacy dialog aliases to notifications.
+func (s *Service) DialogMessage(kind, title, message string) error {
+	severity := notification.SeverityInfo
+	switch kind {
+	case "warning":
+		severity = notification.SeverityWarning
+	case "error":
+		severity = notification.SeverityError
+	}
+	_, _, err := s.Core().PERFORM(notification.TaskSend{
+		Options: notification.NotificationOptions{
+			Title:    title,
+			Message:  message,
+			Severity: severity,
+		},
+	})
+	return err
+}
+
+// OpenFileDialog opens a file picker dialog.
+func (s *Service) OpenFileDialog(options dialog.OpenFileOptions) ([]string, error) {
+	result, handled, err := s.Core().PERFORM(dialog.TaskOpenFile{Options: options})
+	if err != nil {
+		return nil, err
+	}
+	if !handled {
+		return nil, coreerr.E("display.OpenFileDialog", "dialog service not available", nil)
+	}
+	paths, _ := result.([]string)
+	return paths, nil
+}
+
+// OpenSingleFileDialog opens a file picker and returns the first selected file.
+func (s *Service) OpenSingleFileDialog(options dialog.OpenFileOptions) (string, error) {
+	paths, err := s.OpenFileDialog(options)
+	if err != nil || len(paths) == 0 {
+		return "", err
+	}
+	return paths[0], nil
+}
+
+// SaveFileDialog opens a save dialog.
+func (s *Service) SaveFileDialog(options dialog.SaveFileOptions) (string, error) {
+	result, handled, err := s.Core().PERFORM(dialog.TaskSaveFile{Options: options})
+	if err != nil {
+		return "", err
+	}
+	if !handled {
+		return "", coreerr.E("display.SaveFileDialog", "dialog service not available", nil)
+	}
+	path, _ := result.(string)
+	return path, nil
+}
+
+// OpenDirectoryDialog opens a directory picker.
+func (s *Service) OpenDirectoryDialog(options dialog.OpenDirectoryOptions) (string, error) {
+	result, handled, err := s.Core().PERFORM(dialog.TaskOpenDirectory{Options: options})
+	if err != nil {
+		return "", err
+	}
+	if !handled {
+		return "", coreerr.E("display.OpenDirectoryDialog", "dialog service not available", nil)
+	}
+	path, _ := result.(string)
+	return path, nil
+}
+
+func (s *Service) messageDialog(options dialog.MessageDialogOptions) (string, error) {
+	result, handled, err := s.Core().PERFORM(dialog.TaskMessageDialog{Options: options})
+	if err != nil {
+		return "", err
+	}
+	if !handled {
+		return "", coreerr.E("display.messageDialog", "dialog service not available", nil)
+	}
+	button, _ := result.(string)
+	return button, nil
+}
+
+// ConfirmDialog asks for confirmation and returns whether the action was accepted.
+func (s *Service) ConfirmDialog(title, message string) (bool, error) {
+	button, err := s.messageDialog(dialog.MessageDialogOptions{
+		Type:    dialog.DialogQuestion,
+		Title:   title,
+		Message: message,
+		Buttons: []string{"OK", "Cancel"},
+	})
+	if err != nil {
+		return false, err
+	}
+	return button != "" && button != "Cancel" && button != "No", nil
+}
+
+// PromptDialog returns the clicked button and whether it represents acceptance.
+func (s *Service) PromptDialog(title, message string) (string, bool, error) {
+	button, err := s.messageDialog(dialog.MessageDialogOptions{
+		Type:    dialog.DialogQuestion,
+		Title:   title,
+		Message: message,
+		Buttons: []string{"OK", "Cancel"},
+	})
+	if err != nil {
+		return "", false, err
+	}
+	return button, button != "" && button != "Cancel" && button != "No", nil
+}
+
+// GetTheme returns the current theme information.
+func (s *Service) GetTheme() *environment.ThemeInfo {
+	result, handled, _ := s.Core().QUERY(environment.QueryTheme{})
+	if !handled {
+		return nil
+	}
+	info, _ := result.(environment.ThemeInfo)
+	return &info
+}
+
+// GetSystemTheme returns the current system theme label.
+func (s *Service) GetSystemTheme() string {
+	theme := s.GetTheme()
+	if theme == nil {
+		return ""
+	}
+	return theme.Theme
+}
+
+// SetTheme applies a theme override.
+func (s *Service) SetTheme(theme any) error {
+	value := "system"
+	switch theme := theme.(type) {
+	case string:
+		value = theme
+	case bool:
+		if theme {
+			value = "dark"
+		} else {
+			value = "light"
+		}
+	}
+	_, _, err := s.Core().PERFORM(environment.TaskSetTheme{Theme: value})
+	return err
+}
+
+// SetThemeMode applies a named theme mode.
+func (s *Service) SetThemeMode(theme string) error {
+	return s.SetTheme(theme)
+}
+
+// GetTrayInfo returns the current tray status.
+func (s *Service) GetTrayInfo() map[string]any {
+	svc, err := core.ServiceFor[*systray.Service](s.Core(), "systray")
+	if err != nil || svc == nil {
+		return map[string]any{"active": false}
+	}
+	return svc.Manager().GetInfo()
+}
+
+// SetTrayTooltip updates the tray tooltip.
+func (s *Service) SetTrayTooltip(tooltip string) error {
+	_, _, err := s.Core().PERFORM(systray.TaskSetTrayTooltip{Tooltip: tooltip})
+	return err
+}
+
+// SetTrayLabel updates the tray label.
+func (s *Service) SetTrayLabel(label string) error {
+	_, _, err := s.Core().PERFORM(systray.TaskSetTrayLabel{Label: label})
+	return err
+}
+
+// SetTrayIcon updates the tray icon bytes.
+func (s *Service) SetTrayIcon(data []byte) error {
+	_, _, err := s.Core().PERFORM(systray.TaskSetTrayIcon{Data: data})
+	return err
+}
+
+// SetTrayMenu replaces the tray menu.
+func (s *Service) SetTrayMenu(items []systray.TrayMenuItem) error {
+	_, _, err := s.Core().PERFORM(systray.TaskSetTrayMenu{Items: items})
 	return err
 }
 

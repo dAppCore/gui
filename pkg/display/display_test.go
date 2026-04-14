@@ -2,11 +2,18 @@ package display
 
 import (
 	"context"
+	"encoding/base64"
 	"testing"
 
 	coreutil "dappco.re/go/core"
+	"dappco.re/go/core/gui/pkg/clipboard"
+	"dappco.re/go/core/gui/pkg/dialog"
+	"dappco.re/go/core/gui/pkg/environment"
 	"dappco.re/go/core/gui/pkg/menu"
+	"dappco.re/go/core/gui/pkg/notification"
+	"dappco.re/go/core/gui/pkg/screen"
 	"dappco.re/go/core/gui/pkg/systray"
+	"dappco.re/go/core/gui/pkg/webview"
 	"dappco.re/go/core/gui/pkg/window"
 	coreio "forge.lthn.ai/core/go-io"
 	"forge.lthn.ai/core/go/pkg/core"
@@ -27,6 +34,17 @@ func (m *mockScreenPlatform) GetPrimary() *screen.Screen {
 		}
 	}
 	return nil
+}
+
+func (m *mockScreenPlatform) GetCurrent() *screen.Screen {
+	primary := m.GetPrimary()
+	if primary != nil {
+		return primary
+	}
+	if len(m.screens) == 0 {
+		return nil
+	}
+	return &m.screens[0]
 }
 
 type mockClipboardPlatform struct {
@@ -68,6 +86,14 @@ func (m *mockNotificationPlatform) SendWithActions(opts notification.Notificatio
 }
 func (m *mockNotificationPlatform) RequestPermission() (bool, error) { return m.permGranted, nil }
 func (m *mockNotificationPlatform) CheckPermission() (bool, error)   { return m.permGranted, nil }
+func (m *mockNotificationPlatform) RevokePermission() error {
+	m.permGranted = false
+	return nil
+}
+func (m *mockNotificationPlatform) RegisterCategory(category notification.NotificationCategory) error {
+	_ = category
+	return nil
+}
 func (m *mockNotificationPlatform) Clear() error {
 	m.clearCalled = true
 	return nil
@@ -87,6 +113,7 @@ func (m *mockEnvironmentPlatform) AccentColour() string { return m.accent }
 func (m *mockEnvironmentPlatform) OpenFileManager(path string, selectFile bool) error {
 	return nil
 }
+func (m *mockEnvironmentPlatform) HasFocusFollowsMouse() bool { return false }
 func (m *mockEnvironmentPlatform) OnThemeChange(handler func(isDark bool)) func() {
 	return func() {}
 }
@@ -154,7 +181,9 @@ func (m *mockWebviewConnector) SetViewport(width, height int) error  { return ni
 func (m *mockWebviewConnector) UploadFile(selector string, paths []string) error {
 	return nil
 }
-func (m *mockWebviewConnector) Close() error { return nil }
+func (m *mockWebviewConnector) Print() error                { return nil }
+func (m *mockWebviewConnector) PrintToPDF() ([]byte, error) { return nil, nil }
+func (m *mockWebviewConnector) Close() error                { return nil }
 
 // --- Test helpers ---
 
@@ -168,6 +197,7 @@ func newTestDisplayService(t *testing.T) (*Service, *core.Core) {
 	require.NoError(t, err)
 	require.NoError(t, c.ServiceStartup(context.Background(), nil))
 	svc := core.MustServiceFor[*Service](c, "display")
+	svc.loadConfigFrom(coreutil.JoinPath(t.TempDir(), "gui.yaml"))
 	return svc, c
 }
 
@@ -191,7 +221,81 @@ func newTestConclave(t *testing.T) *core.Core {
 	)
 	require.NoError(t, err)
 	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+	svc := core.MustServiceFor[*Service](c, "display")
+	svc.loadConfigFrom(coreutil.JoinPath(t.TempDir(), "gui.yaml"))
 	return c
+}
+
+type extendedTestFixture struct {
+	core                 *core.Core
+	clipboardPlatform    *mockClipboardPlatform
+	notificationPlatform *mockNotificationPlatform
+	environmentPlatform  *mockEnvironmentPlatform
+	dialogPlatform       *mockDialogPlatform
+}
+
+func newExtendedTestConclaveWithMocks(t *testing.T) *extendedTestFixture {
+	t.Helper()
+
+	screenPlatform := &mockScreenPlatform{
+		screens: []screen.Screen{{
+			ID: "primary", Name: "Primary", IsPrimary: true,
+			Size:     screen.Size{Width: 2560, Height: 1440},
+			Bounds:   screen.Rect{X: 0, Y: 0, Width: 2560, Height: 1440},
+			WorkArea: screen.Rect{X: 0, Y: 0, Width: 2560, Height: 1440},
+		}},
+	}
+	clipboardPlatform := &mockClipboardPlatform{
+		text:  "hello",
+		ok:    true,
+		image: []byte{0x89, 0x50, 0x4e, 0x47},
+		imgOk: true,
+	}
+	notificationPlatform := &mockNotificationPlatform{permGranted: true}
+	environmentPlatform := &mockEnvironmentPlatform{
+		isDark: false,
+		info: environment.EnvironmentInfo{
+			OS:   "linux",
+			Arch: "amd64",
+			Platform: environment.PlatformInfo{
+				Name:    "linux",
+				Version: "test",
+			},
+		},
+		accent: "#336699",
+	}
+	dialogPlatform := &mockDialogPlatform{}
+
+	c, err := core.New(
+		core.WithService(Register(nil)),
+		core.WithService(window.Register(window.NewMockPlatform())),
+		core.WithService(screen.Register(screenPlatform)),
+		core.WithService(systray.Register(systray.NewMockPlatform())),
+		core.WithService(menu.Register(menu.NewMockPlatform())),
+		core.WithService(clipboard.Register(clipboardPlatform)),
+		core.WithService(notification.Register(notificationPlatform)),
+		core.WithService(environment.Register(environmentPlatform)),
+		core.WithService(dialog.Register(dialogPlatform)),
+		core.WithService(webview.Register()),
+		core.WithServiceLock(),
+	)
+	require.NoError(t, err)
+	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+	svc := core.MustServiceFor[*Service](c, "display")
+	svc.loadConfigFrom(coreutil.JoinPath(t.TempDir(), "gui.yaml"))
+
+	return &extendedTestFixture{
+		core:                 c,
+		clipboardPlatform:    clipboardPlatform,
+		notificationPlatform: notificationPlatform,
+		environmentPlatform:  environmentPlatform,
+		dialogPlatform:       dialogPlatform,
+	}
+}
+
+func newExtendedTestConclave(t *testing.T) *core.Core {
+	t.Helper()
+	return newExtendedTestConclaveWithMocks(t).core
 }
 
 func requireCreateWindow(t *testing.T, svc *Service, options CreateWindowOptions) {

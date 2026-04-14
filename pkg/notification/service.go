@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"dappco.re/go/core/gui/pkg/dialog"
 	coreerr "forge.lthn.ai/core/go-log"
 	"forge.lthn.ai/core/go/pkg/core"
 )

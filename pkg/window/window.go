@@ -2,8 +2,10 @@
 package window
 
 import (
+	"math"
 	"sync"
 
+	corego "dappco.re/go/core"
 	coreerr "forge.lthn.ai/core/go-log"
 )
 

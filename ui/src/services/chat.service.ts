@@ -816,17 +816,66 @@ function describeConversationMatches(conversations: Conversation[], query: strin
     .join(', ')}.`;
 }
 
+function messageStoreSearchText(conversation: Conversation, message: ChatMessage): string {
+  return [
+    conversation.title,
+    message.role,
+    message.content,
+    message.thinking?.content ?? '',
+    ...(message.attachments ?? []).flatMap((attachment) => [
+      attachment.filename,
+      attachment.mimeType,
+    ]),
+    ...(message.toolCalls ?? []).flatMap((toolCall) => [
+      toolCall.name,
+      JSON.stringify(toolCall.arguments ?? {}),
+      toolCall.result,
+      toolCall.error ?? '',
+    ]),
+  ]
+    .join(' ')
+    .toLowerCase();
+}
+
+function messageStoreSnippet(message: ChatMessage): string {
+  if (message.content.trim().length > 0) {
+    return message.content.trim().slice(0, 80);
+  }
+
+  if ((message.thinking?.content ?? '').trim().length > 0) {
+    return message.thinking?.content.trim().slice(0, 80) ?? '';
+  }
+
+  for (const toolCall of message.toolCalls ?? []) {
+    const result = toolCall.result.trim();
+    if (result.length > 0) {
+      return result.slice(0, 80);
+    }
+    const error = (toolCall.error ?? '').trim();
+    if (error.length > 0) {
+      return error.slice(0, 80);
+    }
+  }
+
+  const attachmentNames = (message.attachments ?? []).map((attachment) => attachment.filename);
+  if (attachmentNames.length > 0) {
+    return `[attachments] ${attachmentNames.join(', ')}`.slice(0, 80);
+  }
+
+  return '[message]';
+}
+
 function describeStoreMatches(conversations: Conversation[], query: string): string {
   const needle = query.trim().toLowerCase();
   const snippets = conversations.flatMap((conversation) =>
     conversation.messages.flatMap((message) => {
       const attachments = (message.attachments ?? []).map((attachment) => attachment.filename);
-      const haystack = `${conversation.title} ${message.content} ${attachments.join(' ')}`.toLowerCase();
+      const haystack = messageStoreSearchText(conversation, message);
       if (needle && !haystack.includes(needle)) {
         return [];
       }
       return [
-        `${conversation.title}: ${message.content.trim().slice(0, 80) || '[attachment only]'}${
+        `${conversation.title}: ${messageStoreSnippet(message)}${
           attachments.length > 0 ? ` (attachments: ${attachments.join(', ')})` : ''
         }`,
       ];

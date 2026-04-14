@@ -116,6 +116,30 @@ func (m *Manager) ShowMessage(title, message string) error {
 	return m.tray.ShowMessage(title, message)
 }
 
+// ShowPanel reveals the attached tray panel window.
+func (m *Manager) ShowPanel() error {
+	m.mu.RLock()
+	panel := m.panelWindow
+	m.mu.RUnlock()
+	if panel == nil {
+		return coreerr.E("systray.ShowPanel", "panel window not attached", nil)
+	}
+	panel.Show()
+	return nil
+}
+
+// HidePanel hides the attached tray panel window.
+func (m *Manager) HidePanel() error {
+	m.mu.RLock()
+	panel := m.panelWindow
+	m.mu.RUnlock()
+	if panel == nil {
+		return coreerr.E("systray.HidePanel", "panel window not attached", nil)
+	}
+	panel.Hide()
+	return nil
+}
+
 // Tray returns the underlying platform tray for direct access.
 // Use: tray := manager.Tray()
 func (m *Manager) Tray() PlatformTray {

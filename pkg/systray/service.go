@@ -4,7 +4,6 @@ package systray
 import (
 	"context"
 
-	"dappco.re/go/core/gui/pkg/notification"
 	"forge.lthn.ai/core/go/pkg/core"
 )
 
@@ -62,8 +61,6 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 		return nil, true, s.manager.ShowPanel()
 	case TaskHidePanel:
 		return nil, true, s.manager.HidePanel()
-	case TaskShowMessage:
-		return nil, true, s.showTrayMessage(t.Title, t.Message)
 	default:
 		return nil, false, nil
 	}

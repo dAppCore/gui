@@ -9,6 +9,9 @@ func (m *Manager) SetMenu(items []TrayMenuItem) error {
 	if m.tray == nil {
 		return coreerr.E("systray.SetMenu", "tray not initialised", nil)
 	}
+	m.mu.Lock()
+	m.menuItems = append([]TrayMenuItem(nil), items...)
+	m.mu.Unlock()
 	menu := m.platform.NewMenu()
 	m.buildMenu(menu, items)
 	m.tray.SetMenu(menu)

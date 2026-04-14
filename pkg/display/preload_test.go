@@ -45,6 +45,8 @@ func TestPreloadScript_Good(t *testing.T) {
 
 	assert.Contains(t, script, "window.__appPreloadLoaded = true;")
 	assert.Contains(t, script, "root.core.ml.generate")
+	assert.Contains(t, script, "navigatorObject.serviceWorker")
+	assert.Contains(t, script, "root.core.background")
 	assert.Contains(t, script, "root.electron = root.electron ||")
 	assert.Contains(t, script, "root.electron.Notification")
 	assert.Contains(t, script, "notification:show")
@@ -62,6 +64,7 @@ func TestInjectPreload_Good(t *testing.T) {
 
 	assert.Contains(t, target.script, "root.core.ml.generate")
 	assert.Contains(t, target.script, "root.core.storage")
+	assert.Contains(t, target.script, "root.core.background")
 	assert.Contains(t, target.script, "root.electron.Notification")
 }
 

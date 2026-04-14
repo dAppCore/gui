@@ -1,7 +1,4 @@
-// pkg/clipboard/platform.go
 package clipboard
-
-import "encoding/base64"
 
 // Platform abstracts the system clipboard backend.
 type Platform interface {

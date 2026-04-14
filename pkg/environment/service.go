@@ -80,11 +80,6 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 		return nil, true, s.setThemeOverride(strings.ToLower(strings.TrimSpace(t.Theme)))
 	case TaskOpenFileManager:
 		return nil, true, s.platform.OpenFileManager(t.Path, t.Select)
-	case TaskSetTheme:
-		if err := s.taskSetTheme(t); err != nil {
-			return nil, true, err
-		}
-		return nil, true, nil
 	default:
 		return nil, false, nil
 	}

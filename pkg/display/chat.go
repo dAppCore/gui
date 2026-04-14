@@ -459,15 +459,8 @@ func (s *ChatStore) SearchConversations(query string) []Conversation {
 
 	var items []Conversation
 	for _, conv := range s.conversations {
-		if strings.Contains(strings.ToLower(conv.Title), query) {
+		if conversationMatchesSearchQuery(conv, query) {
 			items = append(items, cloneConversation(conv))
-			continue
-		}
-		for _, msg := range conv.Messages {
-			if strings.Contains(strings.ToLower(msg.Content), query) {
-				items = append(items, cloneConversation(conv))
-				break
-			}
 		}
 	}
 
@@ -1294,6 +1287,40 @@ func deriveConversationTitle(content string) string {
 		return content
 	}
 	return strings.TrimSpace(string(runes[:50])) + "..."
+}
+
+func conversationMatchesSearchQuery(conv Conversation, query string) bool {
+	if query == "" {
+		return true
+	}
+	return strings.Contains(strings.ToLower(conversationSearchHaystack(conv)), query)
+}
+
+func conversationSearchHaystack(conv Conversation) string {
+	parts := []string{conv.Title, conv.Model}
+	for _, message := range conv.Messages {
+		parts = append(parts, messageSearchHaystack(message))
+	}
+	return strings.Join(parts, " ")
+}
+
+func messageSearchHaystack(message ChatMessage) string {
+	parts := []string{message.Role, message.Content}
+	if message.Thinking != nil {
+		parts = append(parts, message.Thinking.Content)
+	}
+	for _, attachment := range message.Attachments {
+		parts = append(parts, attachment.Filename, attachment.MimeType)
+	}
+	for _, invocation := range message.ToolCalls {
+		parts = append(parts, invocation.Call.Name, invocation.Result.Content, invocation.Error)
+		if len(invocation.Call.Arguments) > 0 {
+			if encoded, err := json.Marshal(invocation.Call.Arguments); err == nil {
+				parts = append(parts, string(encoded))
+			}
+		}
+	}
+	return strings.Join(parts, " ")
 }
 
 func buildAssistantPlaceholder(model, prompt string) string {

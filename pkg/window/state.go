@@ -2,7 +2,9 @@
 package window
 
 import (
+	"encoding/json"
 	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -41,7 +43,7 @@ func NewStateManager() *StateManager {
 	}
 	configDir, err := os.UserConfigDir()
 	if err == nil {
-		sm.configDir = corego.JoinPath(configDir, "Core")
+		sm.configDir = filepath.Join(configDir, "Core")
 	}
 	sm.load()
 	return sm
@@ -106,9 +108,9 @@ func (sm *StateManager) save() {
 		return
 	}
 	sm.mu.RLock()
-	r := corego.JSONMarshal(sm.states)
+	data, err := json.Marshal(sm.states)
 	sm.mu.RUnlock()
-	if !r.OK {
+	if err != nil {
 		return
 	}
 	if dir := sm.dataDir(); dir != "" {

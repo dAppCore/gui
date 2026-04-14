@@ -139,6 +139,7 @@ type SystemTray struct {
 	label          string
 	menu           *Menu
 	attachedWindow Window
+	onClick        func()
 }
 
 func (t *SystemTray) SetIcon(data []byte)         { t.icon = append([]byte(nil), data...) }
@@ -146,9 +147,33 @@ func (t *SystemTray) SetTemplateIcon(data []byte) { t.templateIcon = append([]by
 func (t *SystemTray) SetTooltip(text string)      { t.tooltip = text }
 func (t *SystemTray) SetLabel(text string)        { t.label = text }
 func (t *SystemTray) SetMenu(menu *Menu)          { t.menu = menu }
+func (t *SystemTray) OnClick(callback func()) *SystemTray {
+	t.onClick = callback
+	return t
+}
 
 // AttachWindow associates a window with the tray icon (shown on click).
-func (t *SystemTray) AttachWindow(w Window) { t.attachedWindow = w }
+func (t *SystemTray) AttachWindow(w Window) {
+	t.attachedWindow = w
+	t.OnClick(func() {
+		if t.attachedWindow == nil {
+			return
+		}
+		if t.attachedWindow.IsVisible() {
+			t.attachedWindow.Hide()
+			return
+		}
+		t.attachedWindow.Show()
+		t.attachedWindow.Focus()
+	})
+}
+
+// Click triggers the registered tray click handler.
+func (t *SystemTray) Click() {
+	if t.onClick != nil {
+		t.onClick()
+	}
+}
 
 // SystemTrayManager creates tray instances.
 type SystemTrayManager struct{}
@@ -768,6 +793,9 @@ type App struct {
 	Screen      ScreenManager
 	KeyBinding  KeyBindingManager
 }
+
+// NewApp creates a zero-config in-memory application stub.
+func NewApp() *App { return &App{} }
 
 // Quit is a no-op in the stub.
 func (a *App) Quit() {}

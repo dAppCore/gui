@@ -35,6 +35,8 @@ type mockWindow struct {
 	closed                bool
 	minimised             bool
 	fullscreened          bool
+	devtoolsOpen          bool
+	opacity               float32
 	zoom                  float64
 	html                  string
 	lastJS                string
@@ -49,12 +51,15 @@ func (w *mockWindow) Name() string                         { return w.name }
 func (w *mockWindow) Title() string                        { return w.title }
 func (w *mockWindow) Position() (int, int)                 { return w.x, w.y }
 func (w *mockWindow) Size() (int, int)                     { return w.width, w.height }
+func (w *mockWindow) IsVisible() bool                      { return w.visible }
+func (w *mockWindow) IsMinimised() bool                    { return w.minimised }
 func (w *mockWindow) IsMaximised() bool                    { return w.maximised }
 func (w *mockWindow) IsFocused() bool                      { return w.focused }
 func (w *mockWindow) SetTitle(title string)                { w.title = title }
 func (w *mockWindow) SetPosition(x, y int)                 { w.x = x; w.y = y }
 func (w *mockWindow) SetSize(width, height int)            { w.width = width; w.height = height }
 func (w *mockWindow) SetBackgroundColour(r, g, b, a uint8) { w.backgroundColour = [4]uint8{r, g, b, a} }
+func (w *mockWindow) SetOpacity(opacity float32)           { w.opacity = opacity }
 func (w *mockWindow) SetVisibility(visible bool)           { w.visible = visible }
 func (w *mockWindow) SetAlwaysOnTop(alwaysOnTop bool)      { w.alwaysOnTop = alwaysOnTop }
 func (w *mockWindow) Maximise()                            { w.maximised = true }
@@ -66,6 +71,8 @@ func (w *mockWindow) Show()                                { w.visible = true }
 func (w *mockWindow) Hide()                                { w.visible = false }
 func (w *mockWindow) Fullscreen()                          { w.fullscreened = true }
 func (w *mockWindow) UnFullscreen()                        { w.fullscreened = false }
+func (w *mockWindow) OpenDevTools()                        { w.devtoolsOpen = true }
+func (w *mockWindow) CloseDevTools()                       { w.devtoolsOpen = false }
 func (w *mockWindow) GetZoom() float64                     { return w.zoom }
 func (w *mockWindow) SetZoom(factor float64)               { w.zoom = factor }
 func (w *mockWindow) ZoomIn()                              { w.zoom += 0.1 }
@@ -82,8 +89,8 @@ func (w *mockWindow) SetBounds(bounds Bounds) {
 	w.width = bounds.Width
 	w.height = bounds.Height
 }
-func (w *mockWindow) ToggleFullscreen() { w.toggleFullscreenCount++ }
-func (w *mockWindow) Print() error      { w.printCalled = true; return nil }
+func (w *mockWindow) ToggleFullscreen()  { w.toggleFullscreenCount++ }
+func (w *mockWindow) Print() error       { w.printCalled = true; return nil }
 func (w *mockWindow) Flash(enabled bool) { w.flashing = enabled }
 func (w *mockWindow) OnWindowEvent(handler func(WindowEvent)) {
 	w.eventHandlers = append(w.eventHandlers, handler)

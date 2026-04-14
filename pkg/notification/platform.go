@@ -15,12 +15,6 @@ type ClearPlatform interface {
 	Clear(id string) error
 }
 
-// NotificationAction represents an interactive notification action.
-type NotificationAction struct {
-	ID    string `json:"id"`
-	Label string `json:"label"`
-}
-
 // NotificationSeverity indicates the severity for dialog fallback.
 type NotificationSeverity int
 

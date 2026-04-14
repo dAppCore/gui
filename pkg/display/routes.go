@@ -9,6 +9,7 @@ import (
 	"time"
 
 	coreerr "forge.lthn.ai/core/go-log"
+	"forge.lthn.ai/core/go/pkg/core"
 )
 
 type SchemeResponse struct {
@@ -31,6 +32,24 @@ type StoreSearchResult struct {
 	Snippet        string    `json:"snippet"`
 	UpdatedAt      time.Time `json:"updated_at"`
 }
+
+type StoreSearchGroup struct {
+	Origin    string              `json:"origin"`
+	UpdatedAt time.Time           `json:"updated_at"`
+	Results   []StoreSearchResult `json:"results"`
+}
+
+type QueryRouteResolve struct {
+	URL string `json:"url"`
+}
+
+type QueryRouteStore struct {
+	Query string `json:"q"`
+}
+
+type QueryRouteSettings struct{}
+
+type QueryRouteModels struct{}
 
 func (s *Service) registerBuiltinSchemes() {
 	s.HandleScheme("core", s.handleCoreScheme)
@@ -65,45 +84,47 @@ func (s *Service) ResolveScheme(ctx context.Context, rawURL string) (SchemeRespo
 	return handler(ctx, strings.Trim(path, "/"), parsed.Query())
 }
 
+func (s *Service) handleRouteQuery(_ *core.Core, q core.Query) (any, bool, error) {
+	switch q := q.(type) {
+	case QueryRouteResolve:
+		response, err := s.ResolveScheme(context.Background(), q.URL)
+		return response, true, err
+	case QueryRouteStore:
+		return s.storeRouteData(q.Query), true, nil
+	case QueryRouteSettings:
+		return s.settingsRouteData(), true, nil
+	case QueryRouteModels:
+		return s.modelsRouteData(), true, nil
+	default:
+		return nil, false, nil
+	}
+}
+
 func (s *Service) handleCoreScheme(_ context.Context, path string, params url.Values) (SchemeResponse, error) {
 	switch path {
 	case "settings":
-		settings := s.chat.Settings()
-		models := s.chat.Models()
 		return SchemeResponse{
 			Scheme:      "core",
 			Path:        "settings",
 			ContentType: "application/json",
 			StatusCode:  200,
-			Data: map[string]any{
-				"settings": settings,
-				"models":   models,
-			},
+			Data:        s.settingsRouteData(),
 		}, nil
 	case "models":
-		models := s.chat.Models()
 		return SchemeResponse{
 			Scheme:      "core",
 			Path:        "models",
 			ContentType: "application/json",
 			StatusCode:  200,
-			Data: map[string]any{
-				"selected_model": s.chat.SelectedModel(),
-				"models":         models,
-			},
+			Data:        s.modelsRouteData(),
 		}, nil
 	case "store":
-		query := strings.TrimSpace(params.Get("q"))
-		results := s.searchStore(query)
 		return SchemeResponse{
 			Scheme:      "core",
 			Path:        "store",
 			ContentType: "application/json",
 			StatusCode:  200,
-			Data: map[string]any{
-				"query":   query,
-				"results": results,
-			},
+			Data:        s.storeRouteData(params.Get("q")),
 		}, nil
 	case "network":
 		return SchemeResponse{
@@ -170,7 +191,8 @@ func (s *Service) searchStore(query string) []StoreSearchResult {
 
 	for _, conv := range s.chat.ListConversations() {
 		for _, msg := range conv.Messages {
-			if query != "" && !strings.Contains(strings.ToLower(msg.Content), query) && !strings.Contains(strings.ToLower(conv.Title), query) {
+			haystack := strings.ToLower(strings.Join([]string{conv.Title, messageSearchHaystack(msg)}, " "))
+			if query != "" && !strings.Contains(haystack, query) {
 				continue
 			}
 			results = append(results, StoreSearchResult{
@@ -178,7 +200,7 @@ func (s *Service) searchStore(query string) []StoreSearchResult {
 				ConversationID: conv.ID,
 				Title:          conv.Title,
 				Role:           msg.Role,
-				Snippet:        trimSnippet(msg.Content),
+				Snippet:        trimSnippet(messageStoreSnippet(msg)),
 				UpdatedAt:      conv.UpdatedAt,
 			})
 		}
@@ -192,6 +214,87 @@ func (s *Service) searchStore(query string) []StoreSearchResult {
 		return results[i].UpdatedAt.After(results[j].UpdatedAt)
 	})
 	return results
+}
+
+func (s *Service) settingsRouteData() map[string]any {
+	return map[string]any{
+		"settings": s.chat.Settings(),
+		"models":   s.chat.Models(),
+	}
+}
+
+func (s *Service) modelsRouteData() map[string]any {
+	return map[string]any{
+		"selected_model": s.chat.SelectedModel(),
+		"models":         s.chat.Models(),
+	}
+}
+
+func (s *Service) storeRouteData(query string) map[string]any {
+	results := s.searchStore(query)
+	return map[string]any{
+		"query":   strings.TrimSpace(query),
+		"results": results,
+		"groups":  groupStoreSearchResults(results),
+	}
+}
+
+func groupStoreSearchResults(results []StoreSearchResult) []StoreSearchGroup {
+	byOrigin := make(map[string][]StoreSearchResult)
+	for _, result := range results {
+		byOrigin[result.Origin] = append(byOrigin[result.Origin], result)
+	}
+
+	groups := make([]StoreSearchGroup, 0, len(byOrigin))
+	for origin, groupResults := range byOrigin {
+		sort.Slice(groupResults, func(i, j int) bool {
+			return groupResults[i].UpdatedAt.After(groupResults[j].UpdatedAt)
+		})
+		updatedAt := time.Time{}
+		if len(groupResults) > 0 {
+			updatedAt = groupResults[0].UpdatedAt
+		}
+		groups = append(groups, StoreSearchGroup{
+			Origin:    origin,
+			UpdatedAt: updatedAt,
+			Results:   groupResults,
+		})
+	}
+
+	sort.Slice(groups, func(i, j int) bool {
+		if groups[i].UpdatedAt.Equal(groups[j].UpdatedAt) {
+			return groups[i].Origin < groups[j].Origin
+		}
+		return groups[i].UpdatedAt.After(groups[j].UpdatedAt)
+	})
+	return groups
+}
+
+func messageStoreSnippet(message ChatMessage) string {
+	if content := strings.TrimSpace(message.Content); content != "" {
+		return content
+	}
+	if message.Thinking != nil {
+		if content := strings.TrimSpace(message.Thinking.Content); content != "" {
+			return content
+		}
+	}
+	for _, invocation := range message.ToolCalls {
+		if content := strings.TrimSpace(invocation.Result.Content); content != "" {
+			return content
+		}
+		if content := strings.TrimSpace(invocation.Error); content != "" {
+			return content
+		}
+	}
+	if len(message.Attachments) > 0 {
+		names := make([]string, 0, len(message.Attachments))
+		for _, attachment := range message.Attachments {
+			names = append(names, attachment.Filename)
+		}
+		return "Attachments: " + strings.Join(names, ", ")
+	}
+	return ""
 }
 
 func trimSnippet(content string) string {
