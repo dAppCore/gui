@@ -6,8 +6,11 @@ import (
 	"testing"
 
 	"dappco.re/go/core/gui/pkg/clipboard"
+	"dappco.re/go/core/gui/pkg/display"
 	"dappco.re/go/core/gui/pkg/environment"
+	"dappco.re/go/core/gui/pkg/notification"
 	"dappco.re/go/core/gui/pkg/screen"
+	"dappco.re/go/core/gui/pkg/webview"
 	"dappco.re/go/core/gui/pkg/window"
 	"forge.lthn.ai/core/go/pkg/core"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -131,6 +134,89 @@ func TestMCP_Good_WindowTitleSetAlias(t *testing.T) {
 	require.True(t, ok)
 	require.NotNil(t, info)
 	assert.Equal(t, "Updated", info.Title)
+}
+
+func TestMCP_Good_ChatRoundTrip(t *testing.T) {
+	c, err := core.New(
+		core.WithService(display.Register(nil)),
+		core.WithServiceLock(),
+	)
+	require.NoError(t, err)
+	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+
+	sub := New(c)
+
+	_, created, err := sub.chatConversationNew(context.Background(), nil, ChatConversationNewInput{})
+	require.NoError(t, err)
+	require.NotEmpty(t, created.Conversation.ID)
+
+	_, models, err := sub.chatModels(context.Background(), nil, ChatModelsInput{})
+	require.NoError(t, err)
+	assert.Equal(t, "lemer", models.SelectedModel)
+
+	_, selected, err := sub.chatSelectModel(context.Background(), nil, ChatSelectModelInput{Model: "lemma"})
+	require.NoError(t, err)
+	assert.Equal(t, "lemma", selected.SelectedModel)
+
+	_, sent, err := sub.chatSend(context.Background(), nil, ChatSendInput{
+		ConversationID: created.Conversation.ID,
+		Content:        "Summarise the RFC delta.",
+	})
+	require.NoError(t, err)
+	require.Len(t, sent.Conversation.Messages, 2)
+	assert.Equal(t, "lemma", sent.Conversation.Model)
+
+	_, history, err := sub.chatHistory(context.Background(), nil, ChatHistoryInput{
+		ConversationID: created.Conversation.ID,
+	})
+	require.NoError(t, err)
+	require.Len(t, history.Messages, 2)
+
+	_, exported, err := sub.chatConversationExport(context.Background(), nil, ChatConversationExportInput{
+		ID: created.Conversation.ID,
+	})
+	require.NoError(t, err)
+	assert.Contains(t, exported.Markdown, "Summarise the RFC delta.")
+}
+
+func TestMCP_Good_ChatConversationSaveAndAttachments(t *testing.T) {
+	c, err := core.New(
+		core.WithService(display.Register(nil)),
+		core.WithServiceLock(),
+	)
+	require.NoError(t, err)
+	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+
+	sub := New(c)
+
+	_, saved, err := sub.chatConversationSave(context.Background(), nil, ChatConversationSaveInput{
+		Conversation: display.Conversation{
+			Messages: []display.ChatMessage{
+				{Role: "user", Content: "Imported via MCP."},
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, saved.Conversation.ID)
+	assert.Equal(t, "Imported via MCP.", saved.Conversation.Title)
+
+	_, attachments, err := sub.chatAttachImage(context.Background(), nil, ChatAttachImageInput{
+		ConversationID: saved.Conversation.ID,
+		Attachment: display.ImageAttachment{
+			Filename: "diagram.png",
+			MimeType: "image/png",
+			Data:     "ZmFrZQ==",
+		},
+	})
+	require.NoError(t, err)
+	require.Len(t, attachments.Attachments, 1)
+
+	_, listed, err := sub.chatAttachmentsGet(context.Background(), nil, ChatAttachmentsGetInput{
+		ConversationID: saved.Conversation.ID,
+	})
+	require.NoError(t, err)
+	require.Len(t, listed.Attachments, 1)
+	assert.Equal(t, attachments.Attachments[0].ID, listed.Attachments[0].ID)
 }
 
 func TestMCP_Good_ScreenWorkAreaAlias(t *testing.T) {

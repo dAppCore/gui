@@ -274,6 +274,12 @@ func (s *ChatStore) Models() []ModelEntry {
 	return append([]ModelEntry(nil), s.models...)
 }
 
+func (s *ChatStore) SelectedModel() string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.selectedModel
+}
+
 func (s *ChatStore) SelectModel(name string) ([]ModelEntry, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -323,6 +329,54 @@ func (s *ChatStore) ResetSettings() ChatSettings {
 	return s.SaveSettings(defaultChatSettings())
 }
 
+func (s *ChatStore) SaveConversation(input Conversation) (Conversation, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	now := time.Now().UTC()
+	conv := cloneConversation(input)
+	existing, exists := s.conversations[conv.ID]
+
+	if conv.ID == "" {
+		conv.ID = s.nextIdentifier("conv")
+	}
+	if conv.CreatedAt.IsZero() {
+		switch {
+		case exists && !existing.CreatedAt.IsZero():
+			conv.CreatedAt = existing.CreatedAt
+		default:
+			conv.CreatedAt = now
+		}
+	}
+	if conv.Model == "" {
+		conv.Model = s.nextResponseModelLocked(conv)
+	}
+	if conv.Settings == nil && exists && existing.Settings != nil {
+		copySettings := *existing.Settings
+		conv.Settings = &copySettings
+	}
+
+	conv.Messages = s.normalizeMessagesLocked(conv.Messages, conv.CreatedAt)
+	if strings.TrimSpace(conv.Title) == "" {
+		conv.Title = deriveConversationTitle(firstUserMessage(conv.Messages))
+	}
+	if strings.TrimSpace(conv.Title) == "" {
+		conv.Title = "New conversation"
+	}
+	if conv.UpdatedAt.IsZero() {
+		conv.UpdatedAt = conv.CreatedAt
+		if len(conv.Messages) > 0 {
+			conv.UpdatedAt = conv.Messages[len(conv.Messages)-1].CreatedAt
+		}
+	}
+	if conv.UpdatedAt.Before(conv.CreatedAt) {
+		conv.UpdatedAt = conv.CreatedAt
+	}
+
+	s.conversations[conv.ID] = conv
+	return cloneConversation(conv), nil
+}
+
 func (s *ChatStore) NewConversation() Conversation {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -368,6 +422,16 @@ func (s *ChatStore) Conversation(id string) (Conversation, bool) {
 		return Conversation{}, false
 	}
 	return cloneConversation(conv), true
+}
+
+func (s *ChatStore) QueuedImages(conversationID string) ([]ImageAttachment, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	if _, ok := s.conversations[conversationID]; !ok {
+		return nil, coreerr.E("display.chat.QueuedImages", "conversation not found: "+conversationID, nil)
+	}
+	return append([]ImageAttachment(nil), s.queuedImages[conversationID]...), nil
 }
 
 func (s *ChatStore) DeleteConversation(id string) bool {
@@ -446,8 +510,16 @@ func (s *ChatStore) QueueImage(conversationID string, attachment ImageAttachment
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if _, ok := s.conversations[conversationID]; !ok {
+	conv, ok := s.conversations[conversationID]
+	if !ok {
 		return nil, coreerr.E("display.chat.QueueImage", "conversation not found: "+conversationID, nil)
+	}
+	if err := validateImageAttachment(attachment); err != nil {
+		return nil, coreerr.E("display.chat.QueueImage", err.Error(), nil)
+	}
+	model := s.nextResponseModelLocked(conv)
+	if model != "" && !s.modelSupportsVisionLocked(model) {
+		return nil, coreerr.E("display.chat.QueueImage", "selected model does not support vision: "+model, nil)
 	}
 	if attachment.ID == "" {
 		attachment.ID = s.nextIdentifier("img")
@@ -501,6 +573,7 @@ func (s *ChatStore) SendMessage(conversationID, content string) (Conversation, C
 	}
 
 	now := time.Now().UTC()
+	model := s.nextResponseModelLocked(conv)
 	userMessage := ChatMessage{
 		ID:          s.nextIdentifier("msg"),
 		Role:        "user",
@@ -511,7 +584,7 @@ func (s *ChatStore) SendMessage(conversationID, content string) (Conversation, C
 	assistantMessage := ChatMessage{
 		ID:        s.nextIdentifier("msg"),
 		Role:      "assistant",
-		Content:   buildAssistantPlaceholder(conv.Model, content),
+		Content:   buildAssistantPlaceholder(model, content),
 		CreatedAt: now.Add(250 * time.Millisecond),
 		Streaming: false,
 	}
@@ -528,9 +601,7 @@ func (s *ChatStore) SendMessage(conversationID, content string) (Conversation, C
 		conv.Title = deriveConversationTitle(content)
 	}
 	conv.UpdatedAt = assistantMessage.CreatedAt
-	if conv.Model == "" {
-		conv.Model = s.selectedModel
-	}
+	conv.Model = model
 	s.conversations[conversationID] = conv
 	delete(s.queuedImages, conversationID)
 	delete(s.streamingMessage, conversationID)
@@ -548,6 +619,7 @@ func (s *ChatStore) StartStreaming(conversationID string) (Conversation, ChatMes
 	}
 
 	now := time.Now().UTC()
+	conv.Model = s.nextResponseModelLocked(conv)
 	var assistantMessage *ChatMessage
 	if canReuseAssistantForStreaming(conv) {
 		assistantMessage = &conv.Messages[len(conv.Messages)-1]
@@ -658,6 +730,9 @@ func (s *ChatStore) AppendThinking(conversationID, content string) (ThinkingStat
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if _, ok := s.conversations[conversationID]; !ok {
+		return ThinkingState{}, coreerr.E("display.chat.AppendThinking", "conversation not found: "+conversationID, nil)
+	}
 	state, ok := s.thinking[conversationID]
 	if !ok {
 		state = ThinkingState{Active: true, StartedAt: time.Now().UTC()}
@@ -692,14 +767,16 @@ func (s *ChatStore) RecordToolResult(conversationID string, call ToolCall, resul
 	if !ok {
 		return Conversation{}, coreerr.E("display.chat.RecordToolResult", "conversation not found: "+conversationID, nil)
 	}
-	if len(conv.Messages) == 0 {
-		return Conversation{}, coreerr.E("display.chat.RecordToolResult", "conversation has no messages", nil)
+	index := latestAssistantIndex(conv.Messages)
+	if index < 0 {
+		return Conversation{}, coreerr.E("display.chat.RecordToolResult", "assistant message not found", nil)
 	}
-	last := &conv.Messages[len(conv.Messages)-1]
+	last := &conv.Messages[index]
+	startedAt := time.Now().UTC()
 	last.ToolCalls = append(last.ToolCalls, ToolInvocation{
 		Call:      call,
 		Result:    result,
-		StartedAt: time.Now().UTC(),
+		StartedAt: startedAt,
 		EndedAt:   time.Now().UTC(),
 		Error:     errText,
 	})
@@ -842,6 +919,10 @@ type QueryConversationsSearch struct {
 	Query string `json:"q"`
 }
 
+type QueryQueuedImages struct {
+	ConversationID string `json:"conversation_id"`
+}
+
 type QueryConversationExport struct {
 	ID string `json:"id"`
 }
@@ -851,6 +932,10 @@ type TaskConversationDelete struct {
 }
 
 type TaskConversationNew struct{}
+
+type TaskConversationSave struct {
+	Conversation Conversation `json:"conversation"`
+}
 
 type TaskConversationRename struct {
 	ID    string `json:"id"`
@@ -920,6 +1005,9 @@ func (s *Service) handleChatQuery(_ *core.Core, q core.Query) (any, bool, error)
 		return conv, true, nil
 	case QueryConversationsSearch:
 		return s.chat.SearchConversations(q.Query), true, nil
+	case QueryQueuedImages:
+		attachments, err := s.chat.QueuedImages(q.ConversationID)
+		return attachments, true, err
 	case QueryConversationExport:
 		content, err := s.chat.ExportConversationMarkdown(q.ID)
 		return content, true, err
@@ -932,6 +1020,28 @@ func (s *Service) handleChatTask(_ *core.Core, t core.Task) (any, bool, error) {
 	switch t := t.(type) {
 	case TaskConversationNew:
 		conv := s.chat.NewConversation()
+		if s.events != nil {
+			s.events.Emit(Event{
+				Type: "chat.conversation.created",
+				Data: map[string]any{
+					"conversation": conv,
+				},
+			})
+		}
+		return conv, true, s.chat.persist(s.configFile)
+	case TaskConversationSave:
+		conv, err := s.chat.SaveConversation(t.Conversation)
+		if err != nil {
+			return nil, true, err
+		}
+		if s.events != nil {
+			s.events.Emit(Event{
+				Type: "chat.conversation.saved",
+				Data: map[string]any{
+					"conversation": conv,
+				},
+			})
+		}
 		return conv, true, s.chat.persist(s.configFile)
 	case TaskConversationRename:
 		conv, err := s.chat.RenameConversation(t.ID, t.Title)
@@ -969,23 +1079,64 @@ func (s *Service) handleChatTask(_ *core.Core, t core.Task) (any, bool, error) {
 		if err != nil {
 			return nil, true, err
 		}
+		if s.events != nil {
+			s.events.Emit(Event{
+				Type: "chat.cleared",
+				Data: map[string]any{
+					"conversation_id": conv.ID,
+				},
+			})
+		}
 		return conv, true, s.chat.persist(s.configFile)
 	case TaskSelectModel:
 		models, err := s.chat.SelectModel(t.Model)
 		if err != nil {
 			return nil, true, err
 		}
+		if s.events != nil {
+			s.events.Emit(Event{
+				Type: "chat.model.selected",
+				Data: map[string]any{
+					"model":  t.Model,
+					"models": models,
+				},
+			})
+		}
 		return models, true, s.chat.persist(s.configFile)
 	case TaskChatSettingsSave:
 		settings := s.chat.SaveSettings(t.Settings)
+		if s.events != nil {
+			s.events.Emit(Event{
+				Type: "chat.settings.updated",
+				Data: map[string]any{
+					"settings": settings,
+				},
+			})
+		}
 		return settings, true, s.chat.persist(s.configFile)
 	case TaskChatSettingsReset:
 		settings := s.chat.ResetSettings()
+		if s.events != nil {
+			s.events.Emit(Event{
+				Type: "chat.settings.updated",
+				Data: map[string]any{
+					"settings": settings,
+				},
+			})
+		}
 		return settings, true, s.chat.persist(s.configFile)
 	case TaskConversationDelete:
 		deleted := s.chat.DeleteConversation(t.ID)
 		if !deleted {
 			return nil, true, coreerr.E("display.chat.TaskConversationDelete", "conversation not found: "+t.ID, nil)
+		}
+		if s.events != nil {
+			s.events.Emit(Event{
+				Type: "chat.conversation.deleted",
+				Data: map[string]any{
+					"conversation_id": t.ID,
+				},
+			})
 		}
 		return deleted, true, s.chat.persist(s.configFile)
 	case TaskAttachImage:
@@ -1023,11 +1174,30 @@ func (s *Service) handleChatTask(_ *core.Core, t core.Task) (any, bool, error) {
 		if err != nil {
 			return nil, true, err
 		}
+		if s.events != nil {
+			s.events.Emit(Event{
+				Type: "chat.thinking.start",
+				Data: map[string]any{
+					"conversation_id": t.ConversationID,
+					"thinking":        state,
+				},
+			})
+		}
 		return state, true, s.chat.persist(s.configFile)
 	case TaskThinkingAppend:
 		state, err := s.chat.AppendThinking(t.ConversationID, t.Content)
 		if err != nil {
 			return nil, true, err
+		}
+		if s.events != nil {
+			s.events.Emit(Event{
+				Type: "chat.thinking.delta",
+				Data: map[string]any{
+					"conversation_id": t.ConversationID,
+					"thinking":        state,
+					"delta":           t.Content,
+				},
+			})
 		}
 		return state, true, s.chat.persist(s.configFile)
 	case TaskThinkingEnd:
@@ -1035,11 +1205,31 @@ func (s *Service) handleChatTask(_ *core.Core, t core.Task) (any, bool, error) {
 		if err != nil {
 			return nil, true, err
 		}
+		if s.events != nil {
+			s.events.Emit(Event{
+				Type: "chat.thinking.end",
+				Data: map[string]any{
+					"conversation_id": t.ConversationID,
+					"thinking":        state,
+				},
+			})
+		}
 		return state, true, s.chat.persist(s.configFile)
 	case TaskRecordToolCall:
 		conv, err := s.chat.RecordToolResult(t.ConversationID, t.Call, t.Result, t.Error)
 		if err != nil {
 			return nil, true, err
+		}
+		if s.events != nil {
+			s.events.Emit(Event{
+				Type: "chat.tool.call",
+				Data: map[string]any{
+					"conversation_id": t.ConversationID,
+					"call":            t.Call,
+					"result":          t.Result,
+					"error":           t.Error,
+				},
+			})
 		}
 		return conv, true, s.chat.persist(s.configFile)
 	case TaskChatStreamStart:
@@ -1275,6 +1465,15 @@ func latestStreamingAssistantIndex(messages []ChatMessage) int {
 	return -1
 }
 
+func latestAssistantIndex(messages []ChatMessage) int {
+	for index := len(messages) - 1; index >= 0; index-- {
+		if messages[index].Role == "assistant" {
+			return index
+		}
+	}
+	return -1
+}
+
 func (s *ChatStore) syncThinkingToStreamingMessageLocked(conversationID string, state ThinkingState) {
 	conv, ok := s.conversations[conversationID]
 	if !ok {
@@ -1312,5 +1511,70 @@ func (s *ChatStore) ensureAttachmentIdentifiersLocked() {
 		if changed {
 			s.conversations[conversationID] = conv
 		}
+	}
+}
+
+func (s *ChatStore) nextResponseModelLocked(conv Conversation) string {
+	if s.selectedModel != "" {
+		return s.selectedModel
+	}
+	if conv.Model != "" {
+		return conv.Model
+	}
+	return s.settings.DefaultModel
+}
+
+func (s *ChatStore) modelSupportsVisionLocked(name string) bool {
+	for _, model := range s.models {
+		if model.Name == name {
+			return model.SupportsVision
+		}
+	}
+	return false
+}
+
+func (s *ChatStore) normalizeMessagesLocked(messages []ChatMessage, base time.Time) []ChatMessage {
+	if base.IsZero() {
+		base = time.Now().UTC()
+	}
+	normalized := make([]ChatMessage, 0, len(messages))
+	for index, message := range messages {
+		if message.ID == "" {
+			message.ID = s.nextIdentifier("msg")
+		}
+		if message.CreatedAt.IsZero() {
+			message.CreatedAt = base.Add(time.Duration(index) * time.Millisecond)
+		}
+		for attachmentIndex := range message.Attachments {
+			if message.Attachments[attachmentIndex].ID == "" {
+				message.Attachments[attachmentIndex].ID = s.nextIdentifier("img")
+			}
+		}
+		normalized = append(normalized, message)
+	}
+	return normalized
+}
+
+func firstUserMessage(messages []ChatMessage) string {
+	for _, message := range messages {
+		if message.Role == "user" && strings.TrimSpace(message.Content) != "" {
+			return message.Content
+		}
+	}
+	return ""
+}
+
+func validateImageAttachment(attachment ImageAttachment) error {
+	if strings.TrimSpace(attachment.Filename) == "" {
+		return coreerr.E("display.chat.validateImageAttachment", "attachment filename is required", nil)
+	}
+	if strings.TrimSpace(attachment.Data) == "" {
+		return coreerr.E("display.chat.validateImageAttachment", "attachment data is required", nil)
+	}
+	switch strings.TrimSpace(strings.ToLower(attachment.MimeType)) {
+	case "image/png", "image/jpeg", "image/webp", "image/gif":
+		return nil
+	default:
+		return coreerr.E("display.chat.validateImageAttachment", "unsupported image type: "+attachment.MimeType, nil)
 	}
 }

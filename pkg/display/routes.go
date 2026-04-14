@@ -78,6 +78,18 @@ func (s *Service) handleCoreScheme(_ context.Context, path string, params url.Va
 				"models":   models,
 			},
 		}, nil
+	case "models":
+		models := s.chat.Models()
+		return SchemeResponse{
+			Scheme:      "core",
+			Path:        "models",
+			ContentType: "application/json",
+			StatusCode:  200,
+			Data: map[string]any{
+				"selected_model": s.chat.SelectedModel(),
+				"models":         models,
+			},
+		}, nil
 	case "store":
 		query := strings.TrimSpace(params.Get("q"))
 		results := s.searchStore(query)
