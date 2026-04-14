@@ -42,6 +42,8 @@ type Service struct {
 	configData map[string]map[string]any
 	configFile *config.Config // config instance for file persistence
 	events     *WSEventManager
+	chat       *ChatStore
+	schemes    map[string]SchemeHandler
 }
 
 // NewService returns a display Service with empty config sections.
@@ -53,6 +55,8 @@ func NewService() (*Service, error) {
 			"systray": {},
 			"menu":    {},
 		},
+		chat:    NewChatStore(),
+		schemes: make(map[string]SchemeHandler),
 	}, nil
 }
 
@@ -84,6 +88,10 @@ func (s *Service) OnStartup(ctx context.Context) error {
 	// Register config query/task handlers — available NOW for sub-services
 	s.Core().RegisterQuery(s.handleConfigQuery)
 	s.Core().RegisterTask(s.handleConfigTask)
+	s.Core().RegisterQuery(s.handleChatQuery)
+	s.Core().RegisterTask(s.handleChatTask)
+
+	s.registerBuiltinSchemes()
 
 	// Initialise Wails wrappers if app is available (nil in tests)
 	if s.wailsApp != nil {
@@ -1200,6 +1208,8 @@ func (s *Service) loadConfigFrom(path string) {
 			s.configData[section] = data
 		}
 	}
+
+	s.chat.Load(configFile)
 }
 
 func (s *Service) handleConfigQuery(c *core.Core, q core.Query) (any, bool, error) {
