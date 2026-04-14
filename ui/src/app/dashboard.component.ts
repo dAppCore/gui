@@ -14,7 +14,12 @@ import {
   ChatService,
   Conversation,
   ImageAttachment,
+  SUPPORTED_CHAT_IMAGE_ACCEPT,
+  SUPPORTED_CHAT_IMAGE_LABEL,
   ToolInvocation,
+  conversationSearchText,
+  isSupportedChatImageFile,
+  isSupportedChatImageMimeType,
 } from '../services/chat.service';
 import { UiStateService } from '../services/ui-state.service';
 
@@ -346,7 +351,7 @@ interface ConversationGroup {
               <input
                 #filePicker
                 type="file"
-                accept="image/*"
+                [attr.accept]="attachmentAccept"
                 hidden
                 [disabled]="!selectedModelSupportsVision()"
                 (change)="onFilePicked($event)"
@@ -1009,6 +1014,7 @@ export class DashboardComponent implements AfterViewChecked {
 
   protected readonly searchQuery = this.uiState.searchQuery;
   protected readonly activeConversation = this.chat.activeConversation;
+  protected readonly attachmentAccept = SUPPORTED_CHAT_IMAGE_ACCEPT;
   protected readonly selectedModelSupportsVision = computed(
     () => this.chat.selectedModelEntry()?.supportsVision !== false,
   );
@@ -1019,8 +1025,7 @@ export class DashboardComponent implements AfterViewChecked {
 
     for (const conversation of this.chat.conversations()) {
       if (query) {
-        const haystack = `${conversation.title} ${conversation.messages.map((message) => message.content).join(' ')}`.toLowerCase();
-        if (!haystack.includes(query)) {
+        if (!conversationSearchText(conversation).includes(query)) {
           continue;
         }
       }
@@ -1343,11 +1348,29 @@ export class DashboardComponent implements AfterViewChecked {
       }
       return;
     }
+
+    const supportedFiles = imageFiles.filter((file) => isSupportedChatImageFile(file));
+    const skippedFiles = imageFiles.length - supportedFiles.length;
+    if (supportedFiles.length === 0) {
+      this.showComposerNotice(`Supported image formats: ${SUPPORTED_CHAT_IMAGE_LABEL}.`);
+      return;
+    }
     if (!this.selectedModelSupportsVision()) {
       this.showComposerNotice('The selected model does not support image input.');
       return;
     }
-    await this.chat.addAttachments(imageFiles);
+
+    try {
+      await this.chat.addAttachments(supportedFiles);
+      if (skippedFiles > 0) {
+        this.showComposerNotice(
+          `Skipped ${skippedFiles} unsupported attachment${skippedFiles === 1 ? '' : 's'}. Supported formats: ${SUPPORTED_CHAT_IMAGE_LABEL}.`,
+        );
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : `Supported image formats: ${SUPPORTED_CHAT_IMAGE_LABEL}.`;
+      this.showComposerNotice(message);
+    }
   }
 
   private showComposerNotice(message: string): void {
@@ -1407,7 +1430,7 @@ function hasImageFiles(dataTransfer: DataTransfer | null): boolean {
   if (!dataTransfer) {
     return false;
   }
-  return Array.from(dataTransfer.items).some((item) => item.type.startsWith('image/'));
+  return Array.from(dataTransfer.items).some((item) => isSupportedChatImageMimeType(item.type));
 }
 
 function renderMarkdownContent(content: string): string {

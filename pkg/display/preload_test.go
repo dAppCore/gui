@@ -46,6 +46,8 @@ func TestPreloadScript_Good(t *testing.T) {
 	assert.Contains(t, script, "window.__appPreloadLoaded = true;")
 	assert.Contains(t, script, "root.core.ml.generate")
 	assert.Contains(t, script, "root.electron = root.electron ||")
+	assert.Contains(t, script, "root.electron.Notification")
+	assert.Contains(t, script, "notification:show")
 	assert.Contains(t, script, `"theme":"dark"`)
 	assert.Contains(t, script, `"session_id":"abc123"`)
 }
@@ -60,6 +62,7 @@ func TestInjectPreload_Good(t *testing.T) {
 
 	assert.Contains(t, target.script, "root.core.ml.generate")
 	assert.Contains(t, target.script, "root.core.storage")
+	assert.Contains(t, target.script, "root.electron.Notification")
 }
 
 func TestBrowserStoragePersistenceAndSearch_Good(t *testing.T) {

@@ -835,49 +835,139 @@ func buildElectronShimScript() string {
     return () => {};
   };
 
-  root.electron = root.electron || {
-    clipboard: {
-      readText() {
-        return invoke('clipboard:read').then((result) => {
-          if (result && typeof result === 'object' && 'text' in result) {
-            return String(result.text ?? '');
+  class CoreElectronNotification {
+    constructor(options = {}) {
+      this.options = options && typeof options === 'object' ? { ...options } : {};
+      this.onclick = null;
+      this.onshow = null;
+      this.onclose = null;
+      this.onerror = null;
+      this._fallback = null;
+    }
+
+    static isSupported() {
+      return Boolean(root.__coreGUIBridge) || Boolean(fallbackNotification());
+    }
+
+    show() {
+      const payload = {
+        title: String(this.options.title ?? ''),
+        message: String(this.options.body ?? this.options.message ?? ''),
+        subtitle: typeof this.options.subtitle === 'string' ? this.options.subtitle : '',
+        icon: typeof this.options.icon === 'string' ? this.options.icon : '',
+        silent: Boolean(this.options.silent),
+        actions: Array.isArray(this.options.actions) ? this.options.actions : [],
+      };
+
+      return invoke('notification:show', payload)
+        .catch((error) => {
+          const NativeNotification = fallbackNotification();
+          if (!NativeNotification) {
+            throw error;
           }
-          return String(result ?? '');
+
+          const nativeNotification = new NativeNotification(payload.title || 'Notification', {
+            body: payload.message,
+            icon: payload.icon || undefined,
+            silent: payload.silent,
+          });
+
+          this._fallback = nativeNotification;
+          if (typeof nativeNotification.addEventListener === 'function') {
+            nativeNotification.addEventListener('click', () => {
+              if (typeof this.onclick === 'function') {
+                this.onclick({ target: nativeNotification });
+              }
+            });
+            nativeNotification.addEventListener('close', () => {
+              if (typeof this.onclose === 'function') {
+                this.onclose({ target: nativeNotification });
+              }
+            });
+          } else {
+            nativeNotification.onclick = (event) => {
+              if (typeof this.onclick === 'function') {
+                this.onclick(event);
+              }
+            };
+          }
+
+          return nativeNotification;
+        })
+        .then((result) => {
+          if (typeof this.onshow === 'function') {
+            this.onshow({ target: result });
+          }
+          return result;
+        })
+        .catch((error) => {
+          if (typeof this.onerror === 'function') {
+            this.onerror(error);
+          }
+          throw error;
         });
-      },
-      writeText(text) {
-        return invoke('clipboard:write', { text: String(text ?? '') });
-      },
+    }
+
+    close() {
+      if (this._fallback && typeof this._fallback.close === 'function') {
+        this._fallback.close();
+      }
+      if (typeof this.onclose === 'function') {
+        this.onclose({ target: this });
+      }
+    }
+  }
+
+  const fallbackNotification = () => {
+    if (typeof root.Notification === 'function' && root.Notification !== CoreElectronNotification) {
+      return root.Notification;
+    }
+    return null;
+  };
+
+  root.electron = root.electron || {};
+  root.electron.Notification = root.electron.Notification || CoreElectronNotification;
+  root.electron.clipboard = root.electron.clipboard || {
+    readText() {
+      return invoke('clipboard:read').then((result) => {
+        if (result && typeof result === 'object' && 'text' in result) {
+          return String(result.text ?? '');
+        }
+        return String(result ?? '');
+      });
     },
-    dialog: {
-      showMessageBox(options) {
-        return invoke('dialog:message', options ?? {});
-      },
-      showOpenDialog(options) {
-        return invoke('dialog:open-file', options ?? {});
-      },
-      showSaveDialog(options) {
-        return invoke('dialog:save-file', options ?? {});
-      },
+    writeText(text) {
+      return invoke('clipboard:write', { text: String(text ?? '') });
     },
-    ipcRenderer: {
-      invoke(channel, payload) {
-        return invoke('core.ipc.query', { channel, payload });
-      },
-      on(channel, handler) {
-        return subscribe(channel, handler);
-      },
-      send(channel, payload) {
-        return invoke('core.ipc.action', { channel, payload });
-      },
+  };
+  root.electron.dialog = root.electron.dialog || {
+    showMessageBox(options) {
+      return invoke('dialog:message', options ?? {});
     },
-    shell: {
-      openExternal(target) {
-        return invoke('browser:open-url', { url: String(target ?? '') });
-      },
-      openPath(target) {
-        return invoke('browser:open-file', { path: String(target ?? '') });
-      },
+    showOpenDialog(options) {
+      return invoke('dialog:open-file', options ?? {});
+    },
+    showSaveDialog(options) {
+      return invoke('dialog:save-file', options ?? {});
+    },
+  };
+  root.electron.ipcRenderer = root.electron.ipcRenderer || {
+    invoke(channel, payload) {
+      return invoke('core.ipc.query', { channel, payload });
+    },
+    on(channel, handler) {
+      return subscribe(channel, handler);
+    },
+    send(channel, payload) {
+      return invoke('core.ipc.action', { channel, payload });
+    },
+  };
+  root.electron.shell = root.electron.shell || {
+    openExternal(target) {
+      return invoke('browser:open-url', { url: String(target ?? '') });
+    },
+    openPath(target) {
+      return invoke('browser:open-file', { path: String(target ?? '') });
     },
   };
 

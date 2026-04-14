@@ -68,6 +68,47 @@ export interface Conversation {
 }
 
 const STORAGE_KEY = 'core.gui.chat.state';
+export const SUPPORTED_CHAT_IMAGE_MIME_TYPES = [
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+  'image/gif',
+] as const;
+export const SUPPORTED_CHAT_IMAGE_LABEL = 'PNG, JPEG, WebP, or GIF';
+export const SUPPORTED_CHAT_IMAGE_ACCEPT = SUPPORTED_CHAT_IMAGE_MIME_TYPES.join(',');
+
+interface ChatToolDefinition {
+  name: string;
+  description: string;
+  parameters: Record<string, string>;
+}
+
+const REGISTERED_CHAT_TOOLS: ChatToolDefinition[] = [
+  {
+    name: 'gui.chat.settings.load',
+    description: 'Load the persisted inference defaults for the chat shell.',
+    parameters: {},
+  },
+  {
+    name: 'gui.chat.models',
+    description: 'List the locally available chat models and which model is selected.',
+    parameters: {},
+  },
+  {
+    name: 'gui.chat.conversations.search',
+    description: 'Search saved conversation history by title, content, tool calls, and attachments.',
+    parameters: {
+      q: 'Search string',
+    },
+  },
+  {
+    name: 'gui.route.store',
+    description: 'Search the local CoreGUI store surface for matching chat data.',
+    parameters: {
+      q: 'Search string',
+    },
+  },
+];
 
 function defaultSettings(): ChatSettings {
   return {
@@ -111,6 +152,69 @@ function defaultModels(): ModelEntry[] {
       supportsVision: false,
     },
   ];
+}
+
+export function normaliseChatImageMimeType(mimeType: string): string {
+  return mimeType.trim().toLowerCase();
+}
+
+function inferChatImageMimeType(fileName: string): string {
+  const normalized = fileName.trim().toLowerCase();
+  if (normalized.endsWith('.png')) {
+    return 'image/png';
+  }
+  if (normalized.endsWith('.jpg') || normalized.endsWith('.jpeg')) {
+    return 'image/jpeg';
+  }
+  if (normalized.endsWith('.webp')) {
+    return 'image/webp';
+  }
+  if (normalized.endsWith('.gif')) {
+    return 'image/gif';
+  }
+  return '';
+}
+
+function resolveChatImageMimeType(file: Pick<File, 'name' | 'type'>): string {
+  const mimeType = normaliseChatImageMimeType(file.type ?? '');
+  if (mimeType) {
+    return mimeType;
+  }
+  return inferChatImageMimeType(file.name ?? '');
+}
+
+export function isSupportedChatImageMimeType(mimeType: string): boolean {
+  return SUPPORTED_CHAT_IMAGE_MIME_TYPES.includes(
+    normaliseChatImageMimeType(mimeType) as (typeof SUPPORTED_CHAT_IMAGE_MIME_TYPES)[number],
+  );
+}
+
+export function isSupportedChatImageFile(file: Pick<File, 'name' | 'type'>): boolean {
+  return isSupportedChatImageMimeType(resolveChatImageMimeType(file));
+}
+
+export function conversationSearchText(conversation: Conversation): string {
+  return [
+    conversation.title,
+    conversation.model,
+    ...conversation.messages.flatMap((message) => [
+      message.role,
+      message.content,
+      message.thinking?.content ?? '',
+      ...(message.attachments ?? []).flatMap((attachment) => [
+        attachment.filename,
+        attachment.mimeType,
+      ]),
+      ...(message.toolCalls ?? []).flatMap((toolCall) => [
+        toolCall.name,
+        JSON.stringify(toolCall.arguments ?? {}),
+        toolCall.result,
+        toolCall.error ?? '',
+      ]),
+    ]),
+  ]
+    .join(' ')
+    .toLowerCase();
 }
 
 @Injectable({ providedIn: 'root' })
@@ -247,12 +351,17 @@ export class ChatService {
   }
 
   async addAttachment(file: File): Promise<void> {
+    const mimeType = resolveChatImageMimeType(file);
+    if (!isSupportedChatImageMimeType(mimeType)) {
+      throw new Error(`Supported image formats: ${SUPPORTED_CHAT_IMAGE_LABEL}.`);
+    }
+
     const dataUrl = await readAsDataURL(file);
     const dimensions = await readImageSize(dataUrl);
     const attachment: ImageAttachment = {
       id: crypto.randomUUID(),
       filename: file.name,
-      mimeType: file.type || 'application/octet-stream',
+      mimeType,
       data: dataUrl,
       width: dimensions.width,
       height: dimensions.height,
@@ -694,8 +803,7 @@ function describeConversationMatches(conversations: Conversation[], query: strin
     if (!needle) {
       return true;
     }
-    const haystack = `${conversation.title} ${conversation.messages.map((message) => message.content).join(' ')}`.toLowerCase();
-    return haystack.includes(needle);
+    return conversationSearchText(conversation).includes(needle);
   });
 
   if (matches.length === 0) {
@@ -733,16 +841,30 @@ function describeStoreMatches(conversations: Conversation[], query: string): str
 }
 
 function buildToolAwarePrompt(prompt: string, toolOutputs: string[]): string {
-  if (toolOutputs.length === 0) {
-    return prompt;
+  const sections = [
+    'System tool manifest:',
+    buildToolManifest(),
+    '',
+    'User prompt:',
+    prompt,
+  ];
+
+  if (toolOutputs.length > 0) {
+    sections.push('', 'Tool context:', ...toolOutputs.map((output) => `- ${output}`));
   }
 
-  return [
-    prompt,
-    '',
-    'Tool context:',
-    ...toolOutputs.map((output) => `- ${output}`),
-  ].join('\n');
+  return sections.join('\n');
+}
+
+function buildToolManifest(): string {
+  return REGISTERED_CHAT_TOOLS.map((tool) => {
+    const params = Object.entries(tool.parameters)
+      .map(([name, description]) => `${name}: ${description}`)
+      .join(', ');
+    return params
+      ? `- ${tool.name}: ${tool.description} Parameters: ${params}.`
+      : `- ${tool.name}: ${tool.description}`;
+  }).join('\n');
 }
 
 function readAsDataURL(file: File): Promise<string> {
