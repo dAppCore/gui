@@ -26,6 +26,8 @@ type StoreSearchResult struct {
 	ConversationID string    `json:"conversation_id"`
 	Title          string    `json:"title"`
 	Role           string    `json:"role"`
+	StorageArea    string    `json:"storage_area,omitempty"`
+	Key            string    `json:"key,omitempty"`
 	Snippet        string    `json:"snippet"`
 	UpdatedAt      time.Time `json:"updated_at"`
 }
@@ -103,6 +105,60 @@ func (s *Service) handleCoreScheme(_ context.Context, path string, params url.Va
 				"results": results,
 			},
 		}, nil
+	case "network":
+		return SchemeResponse{
+			Scheme:      "core",
+			Path:        "network",
+			ContentType: "application/json",
+			StatusCode:  200,
+			Data: map[string]any{
+				"available":     false,
+				"connections":   []any{},
+				"fleet_nodes":   []any{},
+				"peer_count":    0,
+				"websocketInfo": s.GetEventInfo(),
+			},
+		}, nil
+	case "agent":
+		return SchemeResponse{
+			Scheme:      "core",
+			Path:        "agent",
+			ContentType: "application/json",
+			StatusCode:  200,
+			Data: map[string]any{
+				"available":        false,
+				"dispatch_queue":   []any{},
+				"sessions":         []any{},
+				"workspace_status": "unavailable",
+			},
+		}, nil
+	case "wallet":
+		return SchemeResponse{
+			Scheme:      "core",
+			Path:        "wallet",
+			ContentType: "application/json",
+			StatusCode:  200,
+			Data: map[string]any{
+				"available":    false,
+				"balance":      "0",
+				"staking":      []any{},
+				"transactions": []any{},
+			},
+		}, nil
+	case "identity":
+		return SchemeResponse{
+			Scheme:      "core",
+			Path:        "identity",
+			ContentType: "application/json",
+			StatusCode:  200,
+			Data: map[string]any{
+				"available":     false,
+				"certificates":  []any{},
+				"consent_state": "unknown",
+				"did":           "",
+				"keys":          []any{},
+			},
+		}, nil
 	default:
 		return SchemeResponse{}, coreerr.E("display.handleCoreScheme", "unknown core route: "+path, nil)
 	}
@@ -126,6 +182,10 @@ func (s *Service) searchStore(query string) []StoreSearchResult {
 				UpdatedAt:      conv.UpdatedAt,
 			})
 		}
+	}
+
+	if s.browserStorage != nil {
+		results = append(results, s.browserStorage.Search(query)...)
 	}
 
 	sort.Slice(results, func(i, j int) bool {

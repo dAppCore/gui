@@ -311,7 +311,11 @@ export class ChatService {
     this.queuedAttachmentsState.set([]);
     this.busyState.set(true);
 
-    const response = buildResponse(content, this.selectedModelState(), this.settingsState());
+    const response = await generateAssistantResponse(
+      content,
+      this.selectedModelState(),
+      this.settingsState(),
+    );
     await streamIntoMessage(response, (fragment, done) => {
       this.updateMessage(updatedConversation.id, assistantMessage.id, (message) => ({
         ...message,
@@ -435,8 +439,26 @@ function inferToolCalls(content: string): ToolInvocation[] {
   ];
 }
 
-function buildResponse(content: string, model: string, settings: ChatSettings): string {
+async function generateAssistantResponse(
+  content: string,
+  model: string,
+  settings: ChatSettings,
+): Promise<string> {
   const prompt = content.trim() || 'your multimodal prompt';
+  try {
+    if (typeof window.core?.ml?.generate === 'function') {
+      const generated = await window.core.ml.generate(prompt);
+      if (generated.trim()) {
+        return generated;
+      }
+    }
+  } catch {
+    // Fall back to the local RFC demo response below.
+  }
+  return buildFallbackResponse(prompt, model, settings);
+}
+
+function buildFallbackResponse(prompt: string, model: string, settings: ChatSettings): string {
   return [
     `Using ${model} with temperature ${settings.temperature.toFixed(1)}.`,
     '',
@@ -448,7 +470,7 @@ function buildResponse(content: string, model: string, settings: ChatSettings): 
     `const response = await window.core.ml.generate(${JSON.stringify(prompt)});`,
     '```',
     '',
-    'The actual inference bridge is not present in this workspace, so this shell demonstrates the RFC flow with local state, progressive rendering, tool-call blocks, and multimodal attachments.',
+    'The live CoreGUI inference bridge was unavailable, so this shell fell back to the local RFC demo response with progressive rendering, tool-call blocks, and multimodal attachments.',
   ].join('\n');
 }
 

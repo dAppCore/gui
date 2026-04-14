@@ -37,13 +37,15 @@ type WindowInfo = window.WindowInfo
 // Bridges IPC actions to WebSocket events for TypeScript apps.
 type Service struct {
 	*core.ServiceRuntime[Options]
-	wailsApp   *application.App
-	app        App
-	configData map[string]map[string]any
-	configFile *config.Config // config instance for file persistence
-	events     *WSEventManager
-	chat       *ChatStore
-	schemes    map[string]SchemeHandler
+	wailsApp       *application.App
+	app            App
+	configData     map[string]map[string]any
+	configFile     *config.Config // config instance for file persistence
+	events         *WSEventManager
+	chat           *ChatStore
+	browserStorage *BrowserStorageStore
+	viewManifest   ViewManifest
+	schemes        map[string]SchemeHandler
 }
 
 // NewService returns a display Service with empty config sections.
@@ -55,8 +57,9 @@ func NewService() (*Service, error) {
 			"systray": {},
 			"menu":    {},
 		},
-		chat:    NewChatStore(),
-		schemes: make(map[string]SchemeHandler),
+		chat:           NewChatStore(),
+		browserStorage: NewBrowserStorageStore(),
+		schemes:        make(map[string]SchemeHandler),
 	}, nil
 }
 
@@ -1104,6 +1107,13 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 			return nil, false, dirErr
 		}
 		result, handled, err = path, true, nil
+	case "dialog:message":
+		var opts dialog.MessageDialogOptions
+		encodedR := corego.JSONMarshal(msg.Data)
+		if encodedR.OK {
+			_ = corego.JSONUnmarshal(encodedR.Value.([]byte), &opts)
+		}
+		result, handled, err = s.Core().PERFORM(dialog.TaskMessageDialog{Options: opts})
 	case "dialog:confirm":
 		title, e := wsRequire(msg.Data, "title")
 		if e != nil {
@@ -1210,6 +1220,8 @@ func (s *Service) loadConfigFrom(path string) {
 	}
 
 	s.chat.Load(configFile)
+	s.browserStorage.Load(configFile)
+	s.loadViewManifest(viewManifestPath(path))
 }
 
 func (s *Service) handleConfigQuery(c *core.Core, q core.Query) (any, bool, error) {
@@ -1480,6 +1492,9 @@ func (s *Service) CreateWindow(options CreateWindowOptions) (*window.WindowInfo,
 		return nil, err
 	}
 	info := result.(window.WindowInfo)
+	if injectErr := s.InjectWindowPreload(options.Name, deriveOrigin(options.URL)); injectErr != nil && s.windowService() != nil {
+		return nil, injectErr
+	}
 	return &info, nil
 }
 
