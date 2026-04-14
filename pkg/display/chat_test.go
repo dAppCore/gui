@@ -30,7 +30,31 @@ func TestChatLifecycle_Good(t *testing.T) {
 	conv := convResult.(Conversation)
 	require.NotEmpty(t, conv.ID)
 
-	_, handled, err = c.PERFORM(TaskAttachImage{
+	updatedAttachments, handled, err := c.PERFORM(TaskAttachImage{
+		ConversationID: conv.ID,
+		Attachment: ImageAttachment{
+			Filename: "diagram.png",
+			MimeType: "image/png",
+			Data:     "ZmFrZQ==",
+			Width:    640,
+			Height:   480,
+		},
+	})
+	require.NoError(t, err)
+	require.True(t, handled)
+	attachments := updatedAttachments.([]ImageAttachment)
+	require.Len(t, attachments, 1)
+	require.NotEmpty(t, attachments[0].ID)
+
+	remainingResult, handled, err := c.PERFORM(TaskDetachImage{
+		ConversationID: conv.ID,
+		AttachmentID:   attachments[0].ID,
+	})
+	require.NoError(t, err)
+	require.True(t, handled)
+	assert.Empty(t, remainingResult.([]ImageAttachment))
+
+	updatedAttachments, handled, err = c.PERFORM(TaskAttachImage{
 		ConversationID: conv.ID,
 		Attachment: ImageAttachment{
 			Filename: "diagram.png",
@@ -81,6 +105,22 @@ func TestChatLifecycle_Good(t *testing.T) {
 	require.True(t, handled)
 	require.Len(t, searchResult.([]Conversation), 1)
 
+	renamedResult, handled, err := c.PERFORM(TaskConversationRename{
+		ID:    conv.ID,
+		Title: "Local inference notes",
+	})
+	require.NoError(t, err)
+	require.True(t, handled)
+	assert.Equal(t, "Local inference notes", renamedResult.(Conversation).Title)
+
+	exportedResult, handled, err := c.QUERY(QueryConversationExport{ID: conv.ID})
+	require.NoError(t, err)
+	require.True(t, handled)
+	exported := exportedResult.(string)
+	assert.Contains(t, exported, "# Local inference notes")
+	assert.Contains(t, exported, "## User")
+	assert.Contains(t, exported, "diagram.png")
+
 	settingsResult, handled, err := c.PERFORM(TaskChatSettingsSave{
 		Settings: ChatSettings{
 			Temperature:   0.7,
@@ -103,6 +143,82 @@ func TestChatLifecycle_Good(t *testing.T) {
 	assert.True(t, models[1].Loaded)
 
 	require.NoError(t, svc.chat.persist(svc.configFile))
+}
+
+func TestChatStreamingLifecycle_Good(t *testing.T) {
+	_, c := newTestDisplayService(t)
+
+	convResult, handled, err := c.PERFORM(TaskConversationNew{})
+	require.NoError(t, err)
+	require.True(t, handled)
+	conv := convResult.(Conversation)
+
+	_, handled, err = c.PERFORM(TaskChatSend{
+		ConversationID: conv.ID,
+		Content:        "Stream the answer instead.",
+	})
+	require.NoError(t, err)
+	require.True(t, handled)
+
+	startResult, handled, err := c.PERFORM(TaskChatStreamStart{ConversationID: conv.ID})
+	require.NoError(t, err)
+	require.True(t, handled)
+	started := startResult.(Conversation)
+	require.Len(t, started.Messages, 2)
+	assert.True(t, started.Messages[1].Streaming)
+	assert.Empty(t, started.Messages[1].Content)
+
+	_, handled, err = c.PERFORM(TaskThinkingStart{ConversationID: conv.ID})
+	require.NoError(t, err)
+	require.True(t, handled)
+
+	_, handled, err = c.PERFORM(TaskThinkingAppend{
+		ConversationID: conv.ID,
+		Content:        "Streaming through the local bridge.",
+	})
+	require.NoError(t, err)
+	require.True(t, handled)
+
+	appendResult, handled, err := c.PERFORM(TaskChatStreamAppend{
+		ConversationID: conv.ID,
+		Content:        "Hello",
+	})
+	require.NoError(t, err)
+	require.True(t, handled)
+	appended := appendResult.(Conversation)
+	require.Len(t, appended.Messages, 2)
+	assert.Equal(t, "Hello", appended.Messages[1].Content)
+	if assert.NotNil(t, appended.Messages[1].Thinking) {
+		assert.Contains(t, appended.Messages[1].Thinking.Content, "local bridge")
+	}
+
+	appendResult, handled, err = c.PERFORM(TaskChatStreamAppend{
+		ConversationID: conv.ID,
+		Content:        " world",
+	})
+	require.NoError(t, err)
+	require.True(t, handled)
+	appended = appendResult.(Conversation)
+	assert.Equal(t, "Hello world", appended.Messages[1].Content)
+
+	finishResult, handled, err := c.PERFORM(TaskChatStreamFinish{
+		ConversationID: conv.ID,
+		FinishReason:   "stop",
+	})
+	require.NoError(t, err)
+	require.True(t, handled)
+	finished := finishResult.(Conversation)
+	require.Len(t, finished.Messages, 2)
+	assert.False(t, finished.Messages[1].Streaming)
+	assert.Equal(t, "stop", finished.Messages[1].FinishReason)
+
+	historyResult, handled, err := c.QUERY(QueryChatHistory{ConversationID: conv.ID})
+	require.NoError(t, err)
+	require.True(t, handled)
+	history := historyResult.([]ChatMessage)
+	require.Len(t, history, 2)
+	assert.Equal(t, "Hello world", history[1].Content)
+	assert.False(t, history[1].Streaming)
 }
 
 func TestChatPersistence_Good(t *testing.T) {

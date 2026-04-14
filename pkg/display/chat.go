@@ -1,6 +1,7 @@
 package display
 
 import (
+	"encoding/json"
 	"sort"
 	"strings"
 	"sync"
@@ -34,6 +35,7 @@ type ChatSettings struct {
 }
 
 type ImageAttachment struct {
+	ID       string `json:"id,omitempty"`
 	Filename string `json:"filename"`
 	MimeType string `json:"mime_type"`
 	Data     string `json:"data"`
@@ -68,13 +70,15 @@ type ThinkingState struct {
 }
 
 type ChatMessage struct {
-	ID          string            `json:"id"`
-	Role        string            `json:"role"`
-	Content     string            `json:"content"`
-	CreatedAt   time.Time         `json:"created_at"`
-	Attachments []ImageAttachment `json:"attachments,omitempty"`
-	Thinking    *ThinkingState    `json:"thinking,omitempty"`
-	ToolCalls   []ToolInvocation  `json:"tool_calls,omitempty"`
+	ID           string            `json:"id"`
+	Role         string            `json:"role"`
+	Content      string            `json:"content"`
+	CreatedAt    time.Time         `json:"created_at"`
+	Streaming    bool              `json:"streaming,omitempty"`
+	FinishReason string            `json:"finish_reason,omitempty"`
+	Attachments  []ImageAttachment `json:"attachments,omitempty"`
+	Thinking     *ThinkingState    `json:"thinking,omitempty"`
+	ToolCalls    []ToolInvocation  `json:"tool_calls,omitempty"`
 }
 
 type Conversation struct {
@@ -219,8 +223,21 @@ func (s *ChatStore) Load(cfg *config.Config) {
 			if n := parseCounter(msg.ID); n > s.nextID {
 				s.nextID = n
 			}
+			for _, attachment := range msg.Attachments {
+				if n := parseCounter(attachment.ID); n > s.nextID {
+					s.nextID = n
+				}
+			}
 		}
 	}
+	for _, attachments := range s.queuedImages {
+		for _, attachment := range attachments {
+			if n := parseCounter(attachment.ID); n > s.nextID {
+				s.nextID = n
+			}
+		}
+	}
+	s.ensureAttachmentIdentifiersLocked()
 }
 
 func (s *ChatStore) Snapshot() ChatSnapshot {
@@ -404,7 +421,7 @@ func (s *ChatStore) History(conversationID string) ([]ChatMessage, error) {
 	if !ok {
 		return nil, coreerr.E("display.chat.History", "conversation not found: "+conversationID, nil)
 	}
-	return append([]ChatMessage(nil), conv.Messages...), nil
+	return cloneMessages(conv.Messages), nil
 }
 
 func (s *ChatStore) ClearConversation(conversationID string) (Conversation, error) {
@@ -432,7 +449,42 @@ func (s *ChatStore) QueueImage(conversationID string, attachment ImageAttachment
 	if _, ok := s.conversations[conversationID]; !ok {
 		return nil, coreerr.E("display.chat.QueueImage", "conversation not found: "+conversationID, nil)
 	}
+	if attachment.ID == "" {
+		attachment.ID = s.nextIdentifier("img")
+	}
 	s.queuedImages[conversationID] = append(s.queuedImages[conversationID], attachment)
+	return append([]ImageAttachment(nil), s.queuedImages[conversationID]...), nil
+}
+
+func (s *ChatStore) RemoveQueuedImage(conversationID, attachmentID string) ([]ImageAttachment, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if _, ok := s.conversations[conversationID]; !ok {
+		return nil, coreerr.E("display.chat.RemoveQueuedImage", "conversation not found: "+conversationID, nil)
+	}
+	if attachmentID == "" {
+		return nil, coreerr.E("display.chat.RemoveQueuedImage", "attachment id is required", nil)
+	}
+
+	attachments := s.queuedImages[conversationID]
+	filtered := attachments[:0]
+	removed := false
+	for _, attachment := range attachments {
+		if attachment.ID == attachmentID {
+			removed = true
+			continue
+		}
+		filtered = append(filtered, attachment)
+	}
+	if !removed {
+		return nil, coreerr.E("display.chat.RemoveQueuedImage", "attachment not found: "+attachmentID, nil)
+	}
+	if len(filtered) == 0 {
+		delete(s.queuedImages, conversationID)
+		return []ImageAttachment{}, nil
+	}
+	s.queuedImages[conversationID] = append([]ImageAttachment(nil), filtered...)
 	return append([]ImageAttachment(nil), s.queuedImages[conversationID]...), nil
 }
 
@@ -461,6 +513,7 @@ func (s *ChatStore) SendMessage(conversationID, content string) (Conversation, C
 		Role:      "assistant",
 		Content:   buildAssistantPlaceholder(conv.Model, content),
 		CreatedAt: now.Add(250 * time.Millisecond),
+		Streaming: false,
 	}
 	if thinking, ok := s.thinking[conversationID]; ok && strings.TrimSpace(thinking.Content) != "" {
 		copyThinking := thinking
@@ -485,6 +538,106 @@ func (s *ChatStore) SendMessage(conversationID, content string) (Conversation, C
 	return cloneConversation(conv), userMessage, assistantMessage, nil
 }
 
+func (s *ChatStore) StartStreaming(conversationID string) (Conversation, ChatMessage, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	conv, ok := s.conversations[conversationID]
+	if !ok {
+		return Conversation{}, ChatMessage{}, coreerr.E("display.chat.StartStreaming", "conversation not found: "+conversationID, nil)
+	}
+
+	now := time.Now().UTC()
+	var assistantMessage *ChatMessage
+	if canReuseAssistantForStreaming(conv) {
+		assistantMessage = &conv.Messages[len(conv.Messages)-1]
+		assistantMessage.Content = ""
+		assistantMessage.Streaming = true
+		assistantMessage.FinishReason = ""
+		if thinking, ok := s.thinking[conversationID]; ok {
+			copyThinking := thinking
+			assistantMessage.Thinking = &copyThinking
+		}
+	} else {
+		message := ChatMessage{
+			ID:        s.nextIdentifier("msg"),
+			Role:      "assistant",
+			Content:   "",
+			CreatedAt: now,
+			Streaming: true,
+		}
+		if thinking, ok := s.thinking[conversationID]; ok {
+			copyThinking := thinking
+			message.Thinking = &copyThinking
+		}
+		conv.Messages = append(conv.Messages, message)
+		assistantMessage = &conv.Messages[len(conv.Messages)-1]
+	}
+
+	s.streamingMessage[conversationID] = assistantMessage.Content
+	conv.UpdatedAt = now
+	s.conversations[conversationID] = conv
+	return cloneConversation(conv), cloneMessage(*assistantMessage), nil
+}
+
+func (s *ChatStore) AppendStreaming(conversationID, content string) (Conversation, ChatMessage, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	conv, ok := s.conversations[conversationID]
+	if !ok {
+		return Conversation{}, ChatMessage{}, coreerr.E("display.chat.AppendStreaming", "conversation not found: "+conversationID, nil)
+	}
+
+	index := latestStreamingAssistantIndex(conv.Messages)
+	if index < 0 {
+		return Conversation{}, ChatMessage{}, coreerr.E("display.chat.AppendStreaming", "streaming assistant message not found: "+conversationID, nil)
+	}
+
+	conv.Messages[index].Content += content
+	if thinking, ok := s.thinking[conversationID]; ok {
+		copyThinking := thinking
+		conv.Messages[index].Thinking = &copyThinking
+	}
+	s.streamingMessage[conversationID] = conv.Messages[index].Content
+	conv.UpdatedAt = time.Now().UTC()
+	s.conversations[conversationID] = conv
+	return cloneConversation(conv), cloneMessage(conv.Messages[index]), nil
+}
+
+func (s *ChatStore) FinishStreaming(conversationID, finishReason string) (Conversation, ChatMessage, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	conv, ok := s.conversations[conversationID]
+	if !ok {
+		return Conversation{}, ChatMessage{}, coreerr.E("display.chat.FinishStreaming", "conversation not found: "+conversationID, nil)
+	}
+
+	index := latestStreamingAssistantIndex(conv.Messages)
+	if index < 0 {
+		return Conversation{}, ChatMessage{}, coreerr.E("display.chat.FinishStreaming", "streaming assistant message not found: "+conversationID, nil)
+	}
+
+	conv.Messages[index].Streaming = false
+	conv.Messages[index].FinishReason = strings.TrimSpace(finishReason)
+	if thinking, ok := s.thinking[conversationID]; ok {
+		copyThinking := thinking
+		if copyThinking.Active {
+			copyThinking.Active = false
+			if copyThinking.FinishedAt.IsZero() {
+				copyThinking.FinishedAt = time.Now().UTC()
+			}
+			s.thinking[conversationID] = copyThinking
+		}
+		conv.Messages[index].Thinking = &copyThinking
+	}
+	delete(s.streamingMessage, conversationID)
+	conv.UpdatedAt = time.Now().UTC()
+	s.conversations[conversationID] = conv
+	return cloneConversation(conv), cloneMessage(conv.Messages[index]), nil
+}
+
 func (s *ChatStore) StartThinking(conversationID string) (ThinkingState, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -497,6 +650,7 @@ func (s *ChatStore) StartThinking(conversationID string) (ThinkingState, error) 
 		StartedAt: time.Now().UTC(),
 	}
 	s.thinking[conversationID] = state
+	s.syncThinkingToStreamingMessageLocked(conversationID, state)
 	return state, nil
 }
 
@@ -511,6 +665,7 @@ func (s *ChatStore) AppendThinking(conversationID, content string) (ThinkingStat
 	state.Active = true
 	state.Content += content
 	s.thinking[conversationID] = state
+	s.syncThinkingToStreamingMessageLocked(conversationID, state)
 	return state, nil
 }
 
@@ -525,6 +680,7 @@ func (s *ChatStore) EndThinking(conversationID string) (ThinkingState, error) {
 	state.Active = false
 	state.FinishedAt = time.Now().UTC()
 	s.thinking[conversationID] = state
+	s.syncThinkingToStreamingMessageLocked(conversationID, state)
 	return state, nil
 }
 
@@ -550,6 +706,103 @@ func (s *ChatStore) RecordToolResult(conversationID string, call ToolCall, resul
 	conv.UpdatedAt = time.Now().UTC()
 	s.conversations[conversationID] = conv
 	return cloneConversation(conv), nil
+}
+
+func (s *ChatStore) RenameConversation(id, title string) (Conversation, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	conv, ok := s.conversations[id]
+	if !ok {
+		return Conversation{}, coreerr.E("display.chat.RenameConversation", "conversation not found: "+id, nil)
+	}
+
+	cleanTitle := strings.TrimSpace(title)
+	if cleanTitle == "" {
+		cleanTitle = "Untitled conversation"
+	}
+	conv.Title = cleanTitle
+	conv.UpdatedAt = time.Now().UTC()
+	s.conversations[id] = conv
+	return cloneConversation(conv), nil
+}
+
+func (s *ChatStore) ExportConversationMarkdown(id string) (string, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	conv, ok := s.conversations[id]
+	if !ok {
+		return "", coreerr.E("display.chat.ExportConversationMarkdown", "conversation not found: "+id, nil)
+	}
+
+	var builder strings.Builder
+	builder.WriteString("# ")
+	builder.WriteString(conv.Title)
+	builder.WriteString("\n\n")
+	builder.WriteString("- Conversation ID: ")
+	builder.WriteString(conv.ID)
+	builder.WriteString("\n")
+	builder.WriteString("- Model: ")
+	builder.WriteString(conv.Model)
+	builder.WriteString("\n")
+	builder.WriteString("- Updated: ")
+	builder.WriteString(conv.UpdatedAt.UTC().Format(time.RFC3339))
+	builder.WriteString("\n")
+
+	for _, message := range conv.Messages {
+		builder.WriteString("\n## ")
+		builder.WriteString(roleHeading(message.Role))
+		builder.WriteString("\n\n")
+		builder.WriteString(message.Content)
+		builder.WriteString("\n")
+
+		if len(message.Attachments) > 0 {
+			builder.WriteString("\n### Attachments\n")
+			for _, attachment := range message.Attachments {
+				builder.WriteString("- ")
+				builder.WriteString(attachment.Filename)
+				builder.WriteString(" (")
+				builder.WriteString(attachment.MimeType)
+				builder.WriteString(")\n")
+			}
+		}
+
+		if message.Thinking != nil && strings.TrimSpace(message.Thinking.Content) != "" {
+			builder.WriteString("\n### Thinking\n\n")
+			builder.WriteString(message.Thinking.Content)
+			builder.WriteString("\n")
+		}
+
+		if len(message.ToolCalls) > 0 {
+			builder.WriteString("\n### Tool Calls\n")
+			for _, invocation := range message.ToolCalls {
+				builder.WriteString("\n#### ")
+				builder.WriteString(invocation.Call.Name)
+				builder.WriteString("\n\n")
+				if len(invocation.Call.Arguments) > 0 {
+					arguments, err := json.MarshalIndent(invocation.Call.Arguments, "", "  ")
+					if err == nil {
+						builder.WriteString("```json\n")
+						builder.Write(arguments)
+						builder.WriteString("\n```\n")
+					}
+				}
+				if invocation.Result.Content != "" {
+					builder.WriteString("\n")
+					builder.WriteString(invocation.Result.Content)
+					builder.WriteString("\n")
+				}
+				if invocation.Error != "" {
+					builder.WriteString("\nError: ")
+					builder.WriteString(invocation.Error)
+					builder.WriteString("\n")
+				}
+			}
+		}
+	}
+
+	return builder.String(), nil
 }
 
 type QueryChatHistory struct {
@@ -589,15 +842,29 @@ type QueryConversationsSearch struct {
 	Query string `json:"q"`
 }
 
+type QueryConversationExport struct {
+	ID string `json:"id"`
+}
+
 type TaskConversationDelete struct {
 	ID string `json:"id"`
 }
 
 type TaskConversationNew struct{}
 
+type TaskConversationRename struct {
+	ID    string `json:"id"`
+	Title string `json:"title"`
+}
+
 type TaskAttachImage struct {
 	ConversationID string          `json:"conversation_id"`
 	Attachment     ImageAttachment `json:"attachment"`
+}
+
+type TaskDetachImage struct {
+	ConversationID string `json:"conversation_id"`
+	AttachmentID   string `json:"attachment_id"`
 }
 
 type TaskThinkingStart struct {
@@ -620,6 +887,20 @@ type TaskRecordToolCall struct {
 	Error          string     `json:"error,omitempty"`
 }
 
+type TaskChatStreamStart struct {
+	ConversationID string `json:"conversation_id"`
+}
+
+type TaskChatStreamAppend struct {
+	ConversationID string `json:"conversation_id"`
+	Content        string `json:"content"`
+}
+
+type TaskChatStreamFinish struct {
+	ConversationID string `json:"conversation_id"`
+	FinishReason   string `json:"finish_reason,omitempty"`
+}
+
 func (s *Service) handleChatQuery(_ *core.Core, q core.Query) (any, bool, error) {
 	switch q := q.(type) {
 	case QueryChatHistory:
@@ -639,6 +920,9 @@ func (s *Service) handleChatQuery(_ *core.Core, q core.Query) (any, bool, error)
 		return conv, true, nil
 	case QueryConversationsSearch:
 		return s.chat.SearchConversations(q.Query), true, nil
+	case QueryConversationExport:
+		content, err := s.chat.ExportConversationMarkdown(q.ID)
+		return content, true, err
 	default:
 		return nil, false, nil
 	}
@@ -648,6 +932,21 @@ func (s *Service) handleChatTask(_ *core.Core, t core.Task) (any, bool, error) {
 	switch t := t.(type) {
 	case TaskConversationNew:
 		conv := s.chat.NewConversation()
+		return conv, true, s.chat.persist(s.configFile)
+	case TaskConversationRename:
+		conv, err := s.chat.RenameConversation(t.ID, t.Title)
+		if err != nil {
+			return nil, true, err
+		}
+		if s.events != nil {
+			s.events.Emit(Event{
+				Type: "chat.conversation.renamed",
+				Data: map[string]any{
+					"conversation_id": conv.ID,
+					"title":           conv.Title,
+				},
+			})
+		}
 		return conv, true, s.chat.persist(s.configFile)
 	case TaskChatSend:
 		conv, userMessage, assistantMessage, err := s.chat.SendMessage(t.ConversationID, t.Content)
@@ -694,6 +993,30 @@ func (s *Service) handleChatTask(_ *core.Core, t core.Task) (any, bool, error) {
 		if err != nil {
 			return nil, true, err
 		}
+		if s.events != nil {
+			s.events.Emit(Event{
+				Type: "chat.attachments.updated",
+				Data: map[string]any{
+					"conversation_id": t.ConversationID,
+					"attachments":     attachments,
+				},
+			})
+		}
+		return attachments, true, s.chat.persist(s.configFile)
+	case TaskDetachImage:
+		attachments, err := s.chat.RemoveQueuedImage(t.ConversationID, t.AttachmentID)
+		if err != nil {
+			return nil, true, err
+		}
+		if s.events != nil {
+			s.events.Emit(Event{
+				Type: "chat.attachments.updated",
+				Data: map[string]any{
+					"conversation_id": t.ConversationID,
+					"attachments":     attachments,
+				},
+			})
+		}
 		return attachments, true, s.chat.persist(s.configFile)
 	case TaskThinkingStart:
 		state, err := s.chat.StartThinking(t.ConversationID)
@@ -717,6 +1040,53 @@ func (s *Service) handleChatTask(_ *core.Core, t core.Task) (any, bool, error) {
 		conv, err := s.chat.RecordToolResult(t.ConversationID, t.Call, t.Result, t.Error)
 		if err != nil {
 			return nil, true, err
+		}
+		return conv, true, s.chat.persist(s.configFile)
+	case TaskChatStreamStart:
+		conv, message, err := s.chat.StartStreaming(t.ConversationID)
+		if err != nil {
+			return nil, true, err
+		}
+		if s.events != nil {
+			s.events.Emit(Event{
+				Type: "chat.stream.start",
+				Data: map[string]any{
+					"conversation_id": t.ConversationID,
+					"message":         message,
+				},
+			})
+		}
+		return conv, true, s.chat.persist(s.configFile)
+	case TaskChatStreamAppend:
+		conv, message, err := s.chat.AppendStreaming(t.ConversationID, t.Content)
+		if err != nil {
+			return nil, true, err
+		}
+		if s.events != nil {
+			s.events.Emit(Event{
+				Type: "chat.stream.delta",
+				Data: map[string]any{
+					"conversation_id": t.ConversationID,
+					"message":         message,
+					"delta":           t.Content,
+				},
+			})
+		}
+		return conv, true, s.chat.persist(s.configFile)
+	case TaskChatStreamFinish:
+		conv, message, err := s.chat.FinishStreaming(t.ConversationID, t.FinishReason)
+		if err != nil {
+			return nil, true, err
+		}
+		if s.events != nil {
+			s.events.Emit(Event{
+				Type: "chat.stream.end",
+				Data: map[string]any{
+					"conversation_id": t.ConversationID,
+					"message":         message,
+					"finish_reason":   t.FinishReason,
+				},
+			})
 		}
 		return conv, true, s.chat.persist(s.configFile)
 	default:
@@ -746,6 +1116,35 @@ func buildAssistantPlaceholder(model, prompt string) string {
 	}
 	return "Local inference is not wired in this workspace yet. " +
 		"Captured your prompt for " + model + " and stored it in chat history."
+}
+
+func roleHeading(role string) string {
+	if role == "" {
+		return "Message"
+	}
+	lower := strings.ToLower(role)
+	return strings.ToUpper(lower[:1]) + lower[1:]
+}
+
+func canReuseAssistantForStreaming(conv Conversation) bool {
+	if len(conv.Messages) == 0 {
+		return false
+	}
+	last := conv.Messages[len(conv.Messages)-1]
+	if last.Role != "assistant" {
+		return false
+	}
+	if last.Streaming {
+		return true
+	}
+	if len(conv.Messages) < 2 {
+		return false
+	}
+	previous := conv.Messages[len(conv.Messages)-2]
+	if previous.Role != "user" {
+		return false
+	}
+	return last.Content == buildAssistantPlaceholder(conv.Model, previous.Content)
 }
 
 func parseCounter(value string) uint64 {
@@ -791,7 +1190,44 @@ func cloneConversationMap(src map[string]Conversation) map[string]Conversation {
 
 func cloneConversation(conv Conversation) Conversation {
 	clone := conv
-	clone.Messages = append([]ChatMessage(nil), conv.Messages...)
+	clone.Messages = cloneMessages(conv.Messages)
+	return clone
+}
+
+func cloneMessages(messages []ChatMessage) []ChatMessage {
+	clones := make([]ChatMessage, 0, len(messages))
+	for _, message := range messages {
+		clones = append(clones, cloneMessage(message))
+	}
+	return clones
+}
+
+func cloneMessage(message ChatMessage) ChatMessage {
+	clone := message
+	clone.Attachments = append([]ImageAttachment(nil), message.Attachments...)
+	if message.Thinking != nil {
+		copyThinking := *message.Thinking
+		clone.Thinking = &copyThinking
+	}
+	if len(message.ToolCalls) > 0 {
+		clone.ToolCalls = make([]ToolInvocation, 0, len(message.ToolCalls))
+		for _, invocation := range message.ToolCalls {
+			clone.ToolCalls = append(clone.ToolCalls, ToolInvocation{
+				Call: ToolCall{
+					ID:        invocation.Call.ID,
+					Name:      invocation.Call.Name,
+					Arguments: cloneAnyMap(invocation.Call.Arguments),
+				},
+				Result: ToolResult{
+					ToolCallID: invocation.Result.ToolCallID,
+					Content:    invocation.Result.Content,
+				},
+				StartedAt: invocation.StartedAt,
+				EndedAt:   invocation.EndedAt,
+				Error:     invocation.Error,
+			})
+		}
+	}
 	return clone
 }
 
@@ -817,4 +1253,64 @@ func cloneStringMap(src map[string]string) map[string]string {
 		dst[key] = value
 	}
 	return dst
+}
+
+func cloneAnyMap(src map[string]any) map[string]any {
+	if len(src) == 0 {
+		return nil
+	}
+	dst := make(map[string]any, len(src))
+	for key, value := range src {
+		dst[key] = value
+	}
+	return dst
+}
+
+func latestStreamingAssistantIndex(messages []ChatMessage) int {
+	for index := len(messages) - 1; index >= 0; index-- {
+		if messages[index].Role == "assistant" && messages[index].Streaming {
+			return index
+		}
+	}
+	return -1
+}
+
+func (s *ChatStore) syncThinkingToStreamingMessageLocked(conversationID string, state ThinkingState) {
+	conv, ok := s.conversations[conversationID]
+	if !ok {
+		return
+	}
+	index := latestStreamingAssistantIndex(conv.Messages)
+	if index < 0 {
+		return
+	}
+	copyThinking := state
+	conv.Messages[index].Thinking = &copyThinking
+	s.conversations[conversationID] = conv
+}
+
+func (s *ChatStore) ensureAttachmentIdentifiersLocked() {
+	for conversationID, attachments := range s.queuedImages {
+		for index := range attachments {
+			if attachments[index].ID == "" {
+				attachments[index].ID = s.nextIdentifier("img")
+			}
+		}
+		s.queuedImages[conversationID] = attachments
+	}
+	for conversationID, conv := range s.conversations {
+		changed := false
+		for messageIndex := range conv.Messages {
+			for attachmentIndex := range conv.Messages[messageIndex].Attachments {
+				if conv.Messages[messageIndex].Attachments[attachmentIndex].ID != "" {
+					continue
+				}
+				conv.Messages[messageIndex].Attachments[attachmentIndex].ID = s.nextIdentifier("img")
+				changed = true
+			}
+		}
+		if changed {
+			s.conversations[conversationID] = conv
+		}
+	}
 }
