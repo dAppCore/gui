@@ -42,6 +42,9 @@ export interface ToolInvocation {
   arguments: Record<string, unknown>;
   result: string;
   error?: string;
+  status?: 'pending' | 'success' | 'error';
+  startedAt?: string;
+  endedAt?: string;
 }
 
 export interface ChatMessage {
@@ -275,6 +278,7 @@ export class ChatService {
     }
 
     const now = new Date().toISOString();
+    const toolCalls = inferToolCalls(content);
     const userMessage: ChatMessage = {
       id: crypto.randomUUID(),
       role: 'user',
@@ -294,7 +298,7 @@ export class ChatService {
         content: `Inspecting the request through ${this.selectedModelState()}...`,
         startedAt: now,
       },
-      toolCalls: inferToolCalls(content),
+      toolCalls,
     };
 
     const title = conversation.messages.length === 0 ? deriveTitle(content) : conversation.title;
@@ -311,40 +315,77 @@ export class ChatService {
     this.queuedAttachmentsState.set([]);
     this.busyState.set(true);
 
-    const response = await generateAssistantResponse(
-      content,
-      this.selectedModelState(),
-      this.settingsState(),
-    );
-    await streamIntoMessage(response, (fragment, done) => {
-      this.updateMessage(updatedConversation.id, assistantMessage.id, (message) => ({
-        ...message,
-        content: fragment,
-        streaming: !done,
-        thinking: message.thinking
-          ? {
-              ...message.thinking,
-              active: !done,
-              finishedAt: done ? new Date().toISOString() : undefined,
-            }
-          : undefined,
-      }));
-      if (done) {
-        this.busyState.set(false);
-      }
-    });
+    try {
+      const toolOutputs = await this.runToolCalls(updatedConversation.id, assistantMessage.id, content);
+      const response = await generateAssistantResponse(
+        content,
+        this.selectedModelState(),
+        this.settingsState(),
+        toolOutputs,
+      );
+      await streamIntoMessage(response, (fragment, done) => {
+        this.updateMessage(updatedConversation.id, assistantMessage.id, (message) => ({
+          ...message,
+          content: fragment,
+          streaming: !done,
+          thinking: message.thinking
+            ? {
+                ...message.thinking,
+                active: !done,
+                finishedAt: done ? new Date().toISOString() : undefined,
+              }
+            : undefined,
+        }));
+      });
+    } finally {
+      this.busyState.set(false);
+    }
   }
 
   exportConversation(conversation: Conversation): string {
-    return conversation.messages
+    const body = conversation.messages
       .map((message) => {
         const heading = message.role === 'user' ? '## User' : '## Assistant';
         const attachments = (message.attachments ?? [])
           .map((attachment) => `- ${attachment.filename} (${attachment.mimeType})`)
           .join('\n');
-        return [heading, message.content, attachments].filter(Boolean).join('\n\n');
+        const thinking = message.thinking?.content
+          ? ['### Thinking', message.thinking.content].join('\n\n')
+          : '';
+        const toolCalls = (message.toolCalls ?? [])
+          .map((toolCall) =>
+            [
+              `#### ${toolCall.name}`,
+              '```json',
+              JSON.stringify(toolCall.arguments, null, 2),
+              '```',
+              toolCall.result,
+              toolCall.error ? `Error: ${toolCall.error}` : '',
+            ]
+              .filter(Boolean)
+              .join('\n\n'),
+          )
+          .join('\n\n');
+        return [
+          heading,
+          message.content,
+          attachments ? `### Attachments\n${attachments}` : '',
+          thinking,
+          toolCalls ? `### Tool Calls\n\n${toolCalls}` : '',
+        ]
+          .filter(Boolean)
+          .join('\n\n');
       })
       .join('\n\n---\n\n');
+
+    return [
+      `# ${conversation.title}`,
+      `- Conversation ID: ${conversation.id}`,
+      `- Model: ${conversation.model}`,
+      `- Updated: ${conversation.updatedAt}`,
+      '',
+      body,
+    ].join('\n');
   }
 
   private hydrate(): void {
@@ -360,7 +401,9 @@ export class ChatService {
         models?: ModelEntry[];
         settings?: ChatSettings;
       };
-      this.conversationsState.set(parsed.conversations ?? []);
+      this.conversationsState.set(
+        (parsed.conversations ?? []).map((conversation) => this.normaliseConversation(conversation)),
+      );
       this.activeConversationIdState.set(parsed.activeConversationId ?? '');
       this.selectedModelState.set(parsed.selectedModel ?? 'lemer');
       this.modelsState.set(parsed.models ?? defaultModels());
@@ -386,7 +429,7 @@ export class ChatService {
   private replaceConversation(conversation: Conversation): void {
     this.conversationsState.update((items) =>
       items
-        .map((item) => (item.id === conversation.id ? conversation : item))
+        .map((item) => (item.id === conversation.id ? this.normaliseConversation(conversation) : item))
         .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt)),
     );
     this.persist();
@@ -414,6 +457,92 @@ export class ChatService {
       ),
     }));
   }
+
+  private normaliseConversation(conversation: Conversation): Conversation {
+    return {
+      ...conversation,
+      messages: conversation.messages.map((message) => ({
+        ...message,
+        toolCalls: (message.toolCalls ?? []).map((toolCall) => ({
+          ...toolCall,
+          status: toolCall.status ?? (toolCall.error ? 'error' : toolCall.result ? 'success' : 'pending'),
+        })),
+      })),
+    };
+  }
+
+  private async runToolCalls(
+    conversationId: string,
+    messageId: string,
+    prompt: string,
+  ): Promise<string[]> {
+    const conversation = this.conversationsState().find((item) => item.id === conversationId);
+    const message = conversation?.messages.find((item) => item.id === messageId);
+    const toolCalls = message?.toolCalls ?? [];
+    if (toolCalls.length === 0) {
+      return [];
+    }
+
+    const outputs: string[] = [];
+    for (const toolCall of toolCalls) {
+      await pause(140);
+      try {
+        const result = this.executeToolCall(toolCall, prompt);
+        outputs.push(`${toolCall.name}: ${result}`);
+        this.updateToolCall(conversationId, messageId, toolCall.id, {
+          result,
+          status: 'success',
+          endedAt: new Date().toISOString(),
+        });
+      } catch (error) {
+        const messageText = error instanceof Error ? error.message : 'Tool execution failed.';
+        outputs.push(`${toolCall.name}: ${messageText}`);
+        this.updateToolCall(conversationId, messageId, toolCall.id, {
+          error: messageText,
+          status: 'error',
+          endedAt: new Date().toISOString(),
+        });
+      }
+    }
+
+    return outputs;
+  }
+
+  private updateToolCall(
+    conversationId: string,
+    messageId: string,
+    toolId: string,
+    patch: Partial<ToolInvocation>,
+  ): void {
+    this.updateMessage(conversationId, messageId, (message) => ({
+      ...message,
+      toolCalls: (message.toolCalls ?? []).map((toolCall) =>
+        toolCall.id === toolId ? { ...toolCall, ...patch } : toolCall,
+      ),
+    }));
+  }
+
+  private executeToolCall(toolCall: ToolInvocation, prompt: string): string {
+    if (/\b(tool error|fail tool|tool failure)\b/i.test(prompt)) {
+      throw new Error('Simulated MCP tool failure for the RFC chat shell.');
+    }
+
+    switch (toolCall.name) {
+      case 'gui.chat.settings.load':
+        return describeSettings(this.settingsState());
+      case 'gui.chat.models':
+        return describeModels(this.modelsState(), this.selectedModelState());
+      case 'gui.chat.conversations.search':
+        return describeConversationMatches(
+          this.conversationsState(),
+          String(toolCall.arguments['q'] ?? ''),
+        );
+      case 'gui.route.store':
+        return describeStoreMatches(this.conversationsState(), String(toolCall.arguments['q'] ?? ''));
+      default:
+        throw new Error(`Tool not registered in the chat shell: ${toolCall.name}`);
+    }
+  }
 }
 
 function deriveTitle(content: string): string {
@@ -421,33 +550,54 @@ function deriveTitle(content: string): string {
   if (!trimmed) {
     return 'New conversation';
   }
-  return trimmed.length > 52 ? `${trimmed.slice(0, 52).trim()}...` : trimmed;
+  return trimmed.length > 50 ? `${trimmed.slice(0, 50).trim()}...` : trimmed;
 }
 
 function inferToolCalls(content: string): ToolInvocation[] {
   const normalized = content.toLowerCase();
-  if (!normalized.includes('tool')) {
-    return [];
-  }
-  return [
-    {
+  const query = extractSearchQuery(content);
+  const toolCalls: ToolInvocation[] = [];
+  const push = (name: string, args: Record<string, unknown>) => {
+    if (toolCalls.some((toolCall) => toolCall.name === name)) {
+      return;
+    }
+    toolCalls.push({
       id: crypto.randomUUID(),
-      name: 'gui.store.search',
-      arguments: { q: content.slice(0, 40) },
-      result: 'Local tool manifest execution is simulated in the chat shell.',
-    },
-  ];
+      name,
+      arguments: args,
+      result: '',
+      status: 'pending',
+      startedAt: new Date().toISOString(),
+    });
+  };
+
+  if (/\b(setting|temperature|context|prompt)\b/.test(normalized)) {
+    push('gui.chat.settings.load', {});
+  }
+  if (/\bmodel|models\b/.test(normalized)) {
+    push('gui.chat.models', {});
+  }
+  if (/\b(history|conversation|conversations|find|search)\b/.test(normalized)) {
+    push('gui.chat.conversations.search', { q: query });
+  }
+  if (/\b(store|storage|cache|local data|tool)\b/.test(normalized)) {
+    push('gui.route.store', { q: query });
+  }
+
+  return toolCalls.slice(0, 3);
 }
 
 async function generateAssistantResponse(
   content: string,
   model: string,
   settings: ChatSettings,
+  toolOutputs: string[] = [],
 ): Promise<string> {
   const prompt = content.trim() || 'your multimodal prompt';
+  const promptWithTools = buildToolAwarePrompt(prompt, toolOutputs);
   try {
     if (typeof window.core?.ml?.generate === 'function') {
-      const generated = await window.core.ml.generate(prompt);
+      const generated = await window.core.ml.generate(promptWithTools);
       if (generated.trim()) {
         return generated;
       }
@@ -455,16 +605,26 @@ async function generateAssistantResponse(
   } catch {
     // Fall back to the local RFC demo response below.
   }
-  return buildFallbackResponse(prompt, model, settings);
+  return buildFallbackResponse(prompt, model, settings, toolOutputs);
 }
 
-function buildFallbackResponse(prompt: string, model: string, settings: ChatSettings): string {
+function buildFallbackResponse(
+  prompt: string,
+  model: string,
+  settings: ChatSettings,
+  toolOutputs: string[],
+): string {
+  const toolSection =
+    toolOutputs.length > 0
+      ? ['', 'Tool results:', ...toolOutputs.map((output) => `- ${output}`), '']
+      : [];
   return [
     `Using ${model} with temperature ${settings.temperature.toFixed(1)}.`,
     '',
     `I stored this exchange locally and can keep the conversation context across sessions.`,
     '',
     `Prompt summary: ${prompt}`,
+    ...toolSection,
     '',
     '```ts',
     `const response = await window.core.ml.generate(${JSON.stringify(prompt)});`,
@@ -486,6 +646,103 @@ async function streamIntoMessage(
     await new Promise((resolve) => window.setTimeout(resolve, 45));
   }
   onUpdate(assembled, true);
+}
+
+function pause(ms: number): Promise<void> {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+function extractSearchQuery(content: string): string {
+  const quoted = content.match(/"([^"]+)"/);
+  if (quoted?.[1]) {
+    return quoted[1];
+  }
+
+  const afterFor = content.match(/\b(?:for|about|named)\s+(.+)/i);
+  if (afterFor?.[1]) {
+    return afterFor[1].trim().slice(0, 48);
+  }
+
+  return content.trim().slice(0, 48);
+}
+
+function describeSettings(settings: ChatSettings): string {
+  return [
+    `temperature=${settings.temperature.toFixed(1)}`,
+    `topP=${settings.topP.toFixed(2)}`,
+    `topK=${settings.topK}`,
+    `maxTokens=${settings.maxTokens}`,
+    `contextWindow=${settings.contextWindow}`,
+    `defaultModel=${settings.defaultModel}`,
+  ].join(', ');
+}
+
+function describeModels(models: ModelEntry[], selectedModel: string): string {
+  const summary = models
+    .map((model) => {
+      const marker = model.name === selectedModel ? '[selected]' : '[available]';
+      const vision = model.supportsVision === false ? 'text-only' : 'vision';
+      return `${marker} ${model.name} (${model.architecture}, ${vision}, ${model.backend})`;
+    })
+    .join('; ');
+  return summary || 'No local models are currently listed.';
+}
+
+function describeConversationMatches(conversations: Conversation[], query: string): string {
+  const needle = query.trim().toLowerCase();
+  const matches = conversations.filter((conversation) => {
+    if (!needle) {
+      return true;
+    }
+    const haystack = `${conversation.title} ${conversation.messages.map((message) => message.content).join(' ')}`.toLowerCase();
+    return haystack.includes(needle);
+  });
+
+  if (matches.length === 0) {
+    return `No conversations matched "${query.trim() || 'the current query'}".`;
+  }
+
+  return `Found ${matches.length} conversation(s): ${matches
+    .slice(0, 3)
+    .map((conversation) => `"${conversation.title}"`)
+    .join(', ')}.`;
+}
+
+function describeStoreMatches(conversations: Conversation[], query: string): string {
+  const needle = query.trim().toLowerCase();
+  const snippets = conversations.flatMap((conversation) =>
+    conversation.messages.flatMap((message) => {
+      const attachments = (message.attachments ?? []).map((attachment) => attachment.filename);
+      const haystack = `${conversation.title} ${message.content} ${attachments.join(' ')}`.toLowerCase();
+      if (needle && !haystack.includes(needle)) {
+        return [];
+      }
+      return [
+        `${conversation.title}: ${message.content.trim().slice(0, 80) || '[attachment only]'}${
+          attachments.length > 0 ? ` (attachments: ${attachments.join(', ')})` : ''
+        }`,
+      ];
+    }),
+  );
+
+  if (snippets.length === 0) {
+    return `The local store search found no matches for "${query.trim() || 'the current query'}".`;
+  }
+
+  return `Store hits (${snippets.length}): ${snippets.slice(0, 3).join(' | ')}.`;
+}
+
+function buildToolAwarePrompt(prompt: string, toolOutputs: string[]): string {
+  if (toolOutputs.length === 0) {
+    return prompt;
+  }
+
+  return [
+    prompt,
+    '',
+    'Tool context:',
+    ...toolOutputs.map((output) => `- ${output}`),
+  ].join('\n');
 }
 
 function readAsDataURL(file: File): Promise<string> {

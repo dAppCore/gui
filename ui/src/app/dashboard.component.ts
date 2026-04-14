@@ -14,6 +14,7 @@ import {
   ChatService,
   Conversation,
   ImageAttachment,
+  ToolInvocation,
 } from '../services/chat.service';
 import { UiStateService } from '../services/ui-state.service';
 
@@ -120,6 +121,13 @@ interface ConversationGroup {
                       >
                         Rename
                       </button>
+                      <button
+                        type="button"
+                        class="row-icon danger"
+                        (click)="deleteConversation(conversation, $event)"
+                      >
+                        Delete
+                      </button>
                     </div>
                   }
                 </article>
@@ -153,6 +161,14 @@ interface ConversationGroup {
               (click)="exportActiveConversation()"
             >
               Export
+            </button>
+            <button
+              type="button"
+              class="ghost-button"
+              [disabled]="!activeConversation()"
+              (click)="clearActiveConversation()"
+            >
+              Clear
             </button>
             <button
               type="button"
@@ -206,7 +222,12 @@ interface ConversationGroup {
                   @if (message.thinking?.content) {
                     <section class="thinking-panel">
                       <button type="button" class="collapse-toggle" (click)="toggleThinking(message.id)">
-                        <span>Thinking{{ message.thinking?.active ? '...' : '' }}</span>
+                        <span class="thinking-label" [class.active]="message.thinking?.active">
+                          @if (message.thinking?.active) {
+                            <span class="thinking-pulse" aria-hidden="true"></span>
+                          }
+                          Thinking{{ message.thinking?.active ? '...' : '' }}
+                        </span>
                         <small>{{ thinkingDuration(message) }}</small>
                       </button>
                       @if (thinkingExpanded(message.id)) {
@@ -224,7 +245,7 @@ interface ConversationGroup {
                           <span>{{ segment.language || 'text' }}</span>
                           <button type="button" (click)="copyText(segment.content)">Copy</button>
                         </div>
-                        <pre><code>{{ segment.content }}</code></pre>
+                        <pre><code [innerHTML]="renderCodeBlock(segment)"></code></pre>
                       </div>
                     }
                   }
@@ -238,12 +259,25 @@ interface ConversationGroup {
                           (click)="toggleTool(tool.id)"
                         >
                           <span>{{ tool.name }}</span>
-                          <small>Tool call</small>
+                          <small
+                            class="tool-status"
+                            [class.pending]="toolStatus(tool) === 'pending'"
+                            [class.error]="toolStatus(tool) === 'error'"
+                          >
+                            @if (toolStatus(tool) === 'pending') {
+                              <span class="tool-spinner" aria-hidden="true"></span>
+                            }
+                            {{ toolStatusLabel(tool) }}
+                          </small>
                         </button>
                         @if (toolExpanded(tool.id)) {
                           <div class="tool-body">
                             <pre>{{ tool.arguments | json }}</pre>
-                            <p>{{ tool.result }}</p>
+                            @if (tool.result) {
+                              <p>{{ tool.result }}</p>
+                            } @else if (toolStatus(tool) === 'pending') {
+                              <p>Waiting for the local MCP tool result...</p>
+                            }
                             @if (tool.error) {
                               <strong class="error-text">{{ tool.error }}</strong>
                             }
@@ -446,6 +480,10 @@ interface ConversationGroup {
       }
 
       .ghost-button.danger {
+        color: #fca5a5;
+      }
+
+      .row-icon.danger {
         color: #fca5a5;
       }
 
@@ -860,6 +898,59 @@ interface ConversationGroup {
         color: #fda4af;
       }
 
+      .tool-status,
+      .thinking-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+      }
+
+      .tool-status.pending,
+      .thinking-label.active {
+        color: #fde68a;
+      }
+
+      .tool-status.error {
+        color: #fda4af;
+      }
+
+      .tool-spinner,
+      .thinking-pulse {
+        width: 0.72rem;
+        height: 0.72rem;
+        border-radius: 999px;
+        flex: 0 0 auto;
+      }
+
+      .tool-spinner {
+        border: 2px solid rgba(253, 224, 71, 0.26);
+        border-top-color: #facc15;
+        animation: spin 0.8s linear infinite;
+      }
+
+      .thinking-pulse {
+        background: #f59e0b;
+        box-shadow: 0 0 0.8rem rgba(245, 158, 11, 0.45);
+        animation: pulse-dot 0.9s ease-in-out infinite;
+      }
+
+      :host ::ng-deep .code-block code .token-keyword,
+      :host ::ng-deep .code-block code .token-boolean {
+        color: #93c5fd;
+      }
+
+      :host ::ng-deep .code-block code .token-string {
+        color: #86efac;
+      }
+
+      :host ::ng-deep .code-block code .token-comment {
+        color: #94a3b8;
+      }
+
+      :host ::ng-deep .code-block code .token-number {
+        color: #fca5a5;
+      }
+
       .composer-notice {
         margin: 0 0 0.85rem;
         color: #fcd34d;
@@ -886,6 +977,15 @@ interface ConversationGroup {
         50% {
           transform: scale(0.82);
           opacity: 0.7;
+        }
+      }
+
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
         }
       }
     `,
@@ -957,10 +1057,22 @@ export class DashboardComponent implements AfterViewChecked {
     if (!active) {
       return;
     }
-    if (!window.confirm(`Delete "${active.title}"?`)) {
+    if (!this.confirmDeleteConversation(active.title)) {
       return;
     }
     this.chat.deleteConversation(active.id);
+    this.cancelRename();
+  }
+
+  protected clearActiveConversation(): void {
+    const active = this.chat.activeConversation();
+    if (!active) {
+      return;
+    }
+    if (!window.confirm(`Clear every message from "${active.title}"?`)) {
+      return;
+    }
+    this.chat.clearActiveConversation();
     this.cancelRename();
   }
 
@@ -976,6 +1088,15 @@ export class DashboardComponent implements AfterViewChecked {
     anchor.download = `${active.title.replace(/\s+/g, '-').toLowerCase() || 'conversation'}.md`;
     anchor.click();
     URL.revokeObjectURL(url);
+  }
+
+  protected deleteConversation(conversation: Conversation, event: Event): void {
+    event.stopPropagation();
+    if (!this.confirmDeleteConversation(conversation.title)) {
+      return;
+    }
+    this.chat.deleteConversation(conversation.id);
+    this.cancelRename();
   }
 
   protected resizeComposer(textarea: HTMLTextAreaElement, reset = false): void {
@@ -1082,6 +1203,10 @@ export class DashboardComponent implements AfterViewChecked {
     return renderMarkdownContent(content);
   }
 
+  protected renderCodeBlock(segment: MessageSegment): string {
+    return renderCodeContent(segment.content, segment.language);
+  }
+
   protected async copyText(value: string): Promise<void> {
     await navigator.clipboard.writeText(value);
   }
@@ -1174,7 +1299,7 @@ export class DashboardComponent implements AfterViewChecked {
     }
     const start = new Date(thinking.startedAt).getTime();
     const end = thinking.finishedAt ? new Date(thinking.finishedAt).getTime() : Date.now();
-    return `${Math.max(end - start, 0) / 1000}s`;
+    return `${(Math.max(end - start, 0) / 1000).toFixed(1)}s`;
   }
 
   protected toggleTool(id: string): void {
@@ -1183,6 +1308,31 @@ export class DashboardComponent implements AfterViewChecked {
 
   protected toolExpanded(id: string): boolean {
     return this.expandedToolIds().has(id);
+  }
+
+  protected toolStatus(tool: ToolInvocation): 'pending' | 'success' | 'error' {
+    if (tool.status) {
+      return tool.status;
+    }
+    if (tool.error) {
+      return 'error';
+    }
+    if (tool.result) {
+      return 'success';
+    }
+    return 'pending';
+  }
+
+  protected toolStatusLabel(tool: ToolInvocation): string {
+    const status = this.toolStatus(tool);
+    if (status === 'pending') {
+      return 'Running';
+    }
+    const duration = toolRuntime(tool);
+    if (status === 'error') {
+      return duration ? `Error · ${duration}` : 'Error';
+    }
+    return duration ? `Done · ${duration}` : 'Done';
   }
 
   private async attachFiles(files: File[]): Promise<void> {
@@ -1209,6 +1359,10 @@ export class DashboardComponent implements AfterViewChecked {
       this.composerNotice.set('');
       this.composerNoticeTimer = null;
     }, 2600);
+  }
+
+  private confirmDeleteConversation(title: string): boolean {
+    return window.confirm(`Delete "${title}"?`);
   }
 }
 
@@ -1329,4 +1483,169 @@ function formatInlineMarkdown(value: string): string {
     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
     .replace(/\*([^*]+)\*/g, '<em>$1</em>')
     .replace(/`([^`]+)`/g, '<code>$1</code>');
+}
+
+function renderCodeContent(content: string, language?: string): string {
+  const normalizedLanguage = (language ?? 'text').toLowerCase();
+  const escaped = escapeHtml(content);
+
+  if (normalizedLanguage === 'json') {
+    return highlightJsonCode(escaped);
+  }
+
+  const keywords = languageKeywords(normalizedLanguage);
+  if (keywords.length === 0) {
+    return escaped;
+  }
+
+  return highlightSourceCode(
+    escaped,
+    keywords,
+    normalizedLanguage === 'sh' || normalizedLanguage === 'bash',
+  );
+}
+
+function languageKeywords(language: string): string[] {
+  switch (language) {
+    case 'ts':
+    case 'tsx':
+    case 'typescript':
+    case 'js':
+    case 'jsx':
+    case 'javascript':
+      return [
+        'async',
+        'await',
+        'break',
+        'case',
+        'catch',
+        'class',
+        'const',
+        'continue',
+        'default',
+        'else',
+        'export',
+        'extends',
+        'false',
+        'finally',
+        'for',
+        'function',
+        'if',
+        'import',
+        'interface',
+        'let',
+        'new',
+        'null',
+        'return',
+        'static',
+        'switch',
+        'throw',
+        'true',
+        'try',
+        'type',
+        'undefined',
+      ];
+    case 'go':
+      return [
+        'break',
+        'case',
+        'chan',
+        'const',
+        'continue',
+        'default',
+        'defer',
+        'else',
+        'fallthrough',
+        'false',
+        'for',
+        'func',
+        'go',
+        'if',
+        'import',
+        'interface',
+        'map',
+        'package',
+        'range',
+        'return',
+        'select',
+        'struct',
+        'switch',
+        'true',
+        'type',
+        'var',
+      ];
+    case 'sh':
+    case 'bash':
+      return [
+        'case',
+        'do',
+        'done',
+        'echo',
+        'elif',
+        'else',
+        'esac',
+        'export',
+        'fi',
+        'for',
+        'function',
+        'if',
+        'in',
+        'local',
+        'return',
+        'then',
+        'while',
+      ];
+    default:
+      return [];
+  }
+}
+
+function highlightSourceCode(
+  escapedCode: string,
+  keywords: string[],
+  hashComments: boolean,
+): string {
+  const stashedTokens: string[] = [];
+  const stash = (source: string, pattern: RegExp, className: string): string =>
+    source.replace(pattern, (match) => {
+      const token = `@@${stashedTokens.length}@@`;
+      stashedTokens.push(`<span class="${className}">${match}</span>`);
+      return token;
+    });
+
+  let highlighted = escapedCode;
+  highlighted = stash(
+    highlighted,
+    /(`[^`]*`|&quot;(?:\\.|[\s\S])*?&quot;|&#39;(?:\\.|[\s\S])*?&#39;)/g,
+    'token-string',
+  );
+  highlighted = stash(
+    highlighted,
+    hashComments ? /(\/\/.*$|#.*$)/gm : /\/\/.*$/gm,
+    'token-comment',
+  );
+  highlighted = highlighted.replace(
+    new RegExp(`\\b(${keywords.join('|')})\\b`, 'g'),
+    '<span class="token-keyword">$1</span>',
+  );
+  highlighted = highlighted.replace(/\b(\d+(?:\.\d+)?)\b/g, '<span class="token-number">$1</span>');
+
+  return highlighted.replace(/@@(\d+)@@/g, (_, index) => stashedTokens[Number(index)] ?? '');
+}
+
+function highlightJsonCode(escapedCode: string): string {
+  return escapedCode
+    .replace(/(&quot;.*?&quot;)(?=\s*:)/g, '<span class="token-keyword">$1</span>')
+    .replace(/(:\s*)(&quot;.*?&quot;)/g, '$1<span class="token-string">$2</span>')
+    .replace(/\b(true|false|null)\b/g, '<span class="token-boolean">$1</span>')
+    .replace(/\b(\d+(?:\.\d+)?)\b/g, '<span class="token-number">$1</span>');
+}
+
+function toolRuntime(tool: ToolInvocation): string {
+  if (!tool.startedAt || !tool.endedAt) {
+    return '';
+  }
+
+  const duration = Math.max(new Date(tool.endedAt).getTime() - new Date(tool.startedAt).getTime(), 0);
+  return `${(duration / 1000).toFixed(1)}s`;
 }

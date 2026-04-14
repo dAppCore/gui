@@ -84,6 +84,7 @@ interface NavItem {
 export class ApplicationFrameComponent {
   readonly sidebarOpen = signal(false);
   readonly userMenuOpen = signal(false);
+  protected readonly version = 'v0.1.0';
 
   private readonly uiState = inject(UiStateService);
   protected readonly t = inject(TranslationService);
