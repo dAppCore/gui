@@ -3,9 +3,10 @@ package mcp
 
 import (
 	"context"
+	"encoding/base64"
 
-	corego "dappco.re/go/core"
-	"dappco.re/go/core/gui/pkg/clipboard"
+	coreerr "forge.lthn.ai/core/go-log"
+	"forge.lthn.ai/core/gui/pkg/clipboard"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -23,7 +24,7 @@ func (s *Subsystem) clipboardRead(_ context.Context, _ *mcp.CallToolRequest, _ C
 	}
 	content, ok := result.(clipboard.ClipboardContent)
 	if !ok {
-		return nil, ClipboardReadOutput{}, corego.E("mcp.clipboard", "unexpected result type from clipboard read query", nil)
+		return nil, ClipboardReadOutput{}, coreerr.E("mcp.clipboardRead", "unexpected result type", nil)
 	}
 	return nil, ClipboardReadOutput{Content: content.Text}, nil
 }
@@ -44,7 +45,7 @@ func (s *Subsystem) clipboardWrite(_ context.Context, _ *mcp.CallToolRequest, in
 	}
 	success, ok := result.(bool)
 	if !ok {
-		return nil, ClipboardWriteOutput{}, corego.E("mcp.clipboard", "unexpected result type from clipboard write task", nil)
+		return nil, ClipboardWriteOutput{}, coreerr.E("mcp.clipboardWrite", "unexpected result type", nil)
 	}
 	return nil, ClipboardWriteOutput{Success: success}, nil
 }
@@ -63,7 +64,7 @@ func (s *Subsystem) clipboardHas(_ context.Context, _ *mcp.CallToolRequest, _ Cl
 	}
 	content, ok := result.(clipboard.ClipboardContent)
 	if !ok {
-		return nil, ClipboardHasOutput{}, corego.E("mcp.clipboard", "unexpected result type from clipboard has query", nil)
+		return nil, ClipboardHasOutput{}, coreerr.E("mcp.clipboardHas", "unexpected result type", nil)
 	}
 	return nil, ClipboardHasOutput{HasContent: content.HasContent}, nil
 }
@@ -82,7 +83,7 @@ func (s *Subsystem) clipboardClear(_ context.Context, _ *mcp.CallToolRequest, _ 
 	}
 	success, ok := result.(bool)
 	if !ok {
-		return nil, ClipboardClearOutput{}, corego.E("mcp.clipboard", "unexpected result type from clipboard clear task", nil)
+		return nil, ClipboardClearOutput{}, coreerr.E("mcp.clipboardClear", "unexpected result type", nil)
 	}
 	return nil, ClipboardClearOutput{Success: success}, nil
 }
@@ -91,7 +92,7 @@ func (s *Subsystem) clipboardClear(_ context.Context, _ *mcp.CallToolRequest, _ 
 
 type ClipboardReadImageInput struct{}
 type ClipboardReadImageOutput struct {
-	Image clipboard.ClipboardImageContent `json:"image"`
+	Base64 string `json:"base64"`
 }
 
 func (s *Subsystem) clipboardReadImage(_ context.Context, _ *mcp.CallToolRequest, _ ClipboardReadImageInput) (*mcp.CallToolResult, ClipboardReadImageOutput, error) {
@@ -99,28 +100,39 @@ func (s *Subsystem) clipboardReadImage(_ context.Context, _ *mcp.CallToolRequest
 	if err != nil {
 		return nil, ClipboardReadImageOutput{}, err
 	}
-	image, ok := result.(clipboard.ClipboardImageContent)
+	content, ok := result.(clipboard.ImageContent)
 	if !ok {
-		return nil, ClipboardReadImageOutput{}, corego.E("mcp.clipboard", "unexpected result type from clipboard image query", nil)
+		return nil, ClipboardReadImageOutput{}, coreerr.E("mcp.clipboardReadImage", "unexpected result type", nil)
 	}
-	return nil, ClipboardReadImageOutput{Image: image}, nil
+	if !content.HasImage {
+		return nil, ClipboardReadImageOutput{}, nil
+	}
+	return nil, ClipboardReadImageOutput{Base64: base64.StdEncoding.EncodeToString(content.Data)}, nil
 }
 
 // --- clipboard_write_image ---
 
 type ClipboardWriteImageInput struct {
-	Data []byte `json:"data"`
+	Base64 string `json:"base64"`
 }
 type ClipboardWriteImageOutput struct {
 	Success bool `json:"success"`
 }
 
 func (s *Subsystem) clipboardWriteImage(_ context.Context, _ *mcp.CallToolRequest, input ClipboardWriteImageInput) (*mcp.CallToolResult, ClipboardWriteImageOutput, error) {
-	_, _, err := s.core.PERFORM(clipboard.TaskSetImage{Data: input.Data})
+	data, err := base64.StdEncoding.DecodeString(input.Base64)
 	if err != nil {
 		return nil, ClipboardWriteImageOutput{}, err
 	}
-	return nil, ClipboardWriteImageOutput{Success: true}, nil
+	result, _, err := s.core.PERFORM(clipboard.TaskSetImage{Data: data})
+	if err != nil {
+		return nil, ClipboardWriteImageOutput{}, err
+	}
+	success, ok := result.(bool)
+	if !ok {
+		return nil, ClipboardWriteImageOutput{}, coreerr.E("mcp.clipboardWriteImage", "unexpected result type", nil)
+	}
+	return nil, ClipboardWriteImageOutput{Success: success}, nil
 }
 
 // --- Registration ---
@@ -129,6 +141,8 @@ func (s *Subsystem) registerClipboardTools(server *mcp.Server) {
 	mcp.AddTool(server, &mcp.Tool{Name: "clipboard_read", Description: "Read the current clipboard content"}, s.clipboardRead)
 	mcp.AddTool(server, &mcp.Tool{Name: "clipboard_write", Description: "Write text to the clipboard"}, s.clipboardWrite)
 	mcp.AddTool(server, &mcp.Tool{Name: "clipboard_has", Description: "Check if the clipboard has content"}, s.clipboardHas)
+	mcp.AddTool(server, &mcp.Tool{Name: "clipboard_read_image", Description: "Read image data from the clipboard as base64"}, s.clipboardReadImage)
+	mcp.AddTool(server, &mcp.Tool{Name: "clipboard_write_image", Description: "Write base64 image data to the clipboard"}, s.clipboardWriteImage)
 	mcp.AddTool(server, &mcp.Tool{Name: "clipboard_clear", Description: "Clear the clipboard"}, s.clipboardClear)
 	mcp.AddTool(server, &mcp.Tool{Name: "clipboard_read_image", Description: "Read an image from the clipboard"}, s.clipboardReadImage)
 	mcp.AddTool(server, &mcp.Tool{Name: "clipboard_write_image", Description: "Write an image to the clipboard"}, s.clipboardWriteImage)

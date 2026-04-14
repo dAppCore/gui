@@ -28,6 +28,7 @@ func (m *mockPlatform) AccentColour() string  { return m.accentColour }
 func (m *mockPlatform) OpenFileManager(path string, selectFile bool) error {
 	return m.openFMErr
 }
+func (m *mockPlatform) HasFocusFollowsMouse() bool { return false }
 func (m *mockPlatform) OnThemeChange(handler func(isDark bool)) func() {
 	m.mu.Lock()
 	m.themeHandler = handler
@@ -141,11 +142,11 @@ func TestThemeChange_ActionBroadcast_Good(t *testing.T) {
 }
 
 func TestTaskSetTheme_Good(t *testing.T) {
-	mock, c := newTestService(t)
+	_, c := newTestService(t)
+
 	_, handled, err := c.PERFORM(TaskSetTheme{Theme: "light"})
 	require.NoError(t, err)
 	assert.True(t, handled)
-	assert.True(t, mock.setThemeSeen)
 
 	result, handled, err := c.QUERY(QueryTheme{})
 	require.NoError(t, err)
@@ -155,12 +156,16 @@ func TestTaskSetTheme_Good(t *testing.T) {
 	assert.Equal(t, "light", theme.Theme)
 }
 
-func TestTaskSetTheme_Compatibility_Good(t *testing.T) {
+func TestTaskSetTheme_Good_SystemClearsOverride(t *testing.T) {
 	mock, c := newTestService(t)
-	_, handled, err := c.PERFORM(TaskSetTheme{IsDark: true})
+
+	_, _, err := c.PERFORM(TaskSetTheme{Theme: "light"})
+	require.NoError(t, err)
+
+	mock.isDark = true
+	_, handled, err := c.PERFORM(TaskSetTheme{Theme: "system"})
 	require.NoError(t, err)
 	assert.True(t, handled)
-	assert.True(t, mock.setThemeSeen)
 
 	result, handled, err := c.QUERY(QueryTheme{})
 	require.NoError(t, err)

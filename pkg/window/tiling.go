@@ -1,19 +1,7 @@
 // pkg/window/tiling.go
 package window
 
-import corego "dappco.re/go/core"
-
-// normalizeWindowForLayout clears transient maximise/minimise state before
-// applying a new geometry. This keeps layout helpers effective even when a
-// window was previously maximised.
-func normalizeWindowForLayout(pw PlatformWindow) {
-	if pw == nil {
-		return
-	}
-	if pw.IsMaximised() || pw.IsMinimised() {
-		pw.Restore()
-	}
-}
+import coreerr "forge.lthn.ai/core/go-log"
 
 // TileMode defines how windows are arranged.
 // Use: mode := window.TileModeLeftRight
@@ -60,6 +48,16 @@ const (
 	SnapCenter
 )
 
+var snapPositionNames = map[SnapPosition]string{
+	SnapLeft: "left", SnapRight: "right",
+	SnapTop: "top", SnapBottom: "bottom",
+	SnapTopLeft: "top-left", SnapTopRight: "top-right",
+	SnapBottomLeft: "bottom-left", SnapBottomRight: "bottom-right",
+	SnapCenter: "center",
+}
+
+func (p SnapPosition) String() string { return snapPositionNames[p] }
+
 // WorkflowLayout is a predefined arrangement for common tasks.
 // Use: workflow := window.WorkflowCoding
 type WorkflowLayout int
@@ -80,29 +78,36 @@ var workflowNames = map[WorkflowLayout]string{
 // Use: label := window.WorkflowCoding.String()
 func (w WorkflowLayout) String() string { return workflowNames[w] }
 
-// ParseWorkflowLayout converts a workflow name into its enum value.
-// Use: workflow, ok := window.ParseWorkflowLayout("coding")
-func ParseWorkflowLayout(name string) (WorkflowLayout, bool) {
-	for workflow, workflowName := range workflowNames {
-		if workflowName == name {
-			return workflow, true
-		}
+func layoutOrigin(origin []int) (int, int) {
+	if len(origin) == 0 {
+		return 0, 0
 	}
-	return WorkflowCoding, false
+	if len(origin) == 1 {
+		return origin[0], 0
+	}
+	return origin[0], origin[1]
+}
+
+func (m *Manager) captureState(pw PlatformWindow) {
+	if m.state == nil || pw == nil {
+		return
+	}
+	m.state.CaptureState(pw)
 }
 
 // TileWindows arranges the named windows in the given mode across the screen area.
-func (m *Manager) TileWindows(mode TileMode, names []string, screenW, screenH int) error {
+func (m *Manager) TileWindows(mode TileMode, names []string, screenW, screenH int, origin ...int) error {
+	originX, originY := layoutOrigin(origin)
 	windows := make([]PlatformWindow, 0, len(names))
 	for _, name := range names {
 		pw, ok := m.Get(name)
 		if !ok {
-			return corego.E("window.tiling", corego.Sprintf("window %q not found", name), nil)
+			return coreerr.E("window.Manager.TileWindows", "window not found: "+name, nil)
 		}
 		windows = append(windows, pw)
 	}
 	if len(windows) == 0 {
-		return corego.E("window.tiling", "no windows to tile", nil)
+		return coreerr.E("window.Manager.TileWindows", "no windows to tile", nil)
 	}
 
 	halfW, halfH := screenW/2, screenH/2
@@ -111,9 +116,9 @@ func (m *Manager) TileWindows(mode TileMode, names []string, screenW, screenH in
 	case TileModeLeftRight:
 		w := screenW / len(windows)
 		for i, pw := range windows {
-			normalizeWindowForLayout(pw)
-			pw.SetPosition(i*w, 0)
+			pw.SetPosition(originX+i*w, originY)
 			pw.SetSize(w, screenH)
+			m.captureState(pw)
 		}
 	case TileModeGrid:
 		cols := 2
@@ -127,128 +132,125 @@ func (m *Manager) TileWindows(mode TileMode, names []string, screenW, screenH in
 			col := i % cols
 			rows := (len(windows) + cols - 1) / cols
 			cellH := screenH / rows
-			pw.SetPosition(col*cellW, row*cellH)
+			pw.SetPosition(originX+col*cellW, originY+row*cellH)
 			pw.SetSize(cellW, cellH)
+			m.captureState(pw)
 		}
 	case TileModeLeftHalf:
 		for _, pw := range windows {
-			normalizeWindowForLayout(pw)
-			pw.SetPosition(0, 0)
+			pw.SetPosition(originX, originY)
 			pw.SetSize(halfW, screenH)
+			m.captureState(pw)
 		}
 	case TileModeRightHalf:
 		for _, pw := range windows {
-			normalizeWindowForLayout(pw)
-			pw.SetPosition(halfW, 0)
+			pw.SetPosition(originX+halfW, originY)
 			pw.SetSize(halfW, screenH)
+			m.captureState(pw)
 		}
 	case TileModeTopHalf:
 		for _, pw := range windows {
-			normalizeWindowForLayout(pw)
-			pw.SetPosition(0, 0)
+			pw.SetPosition(originX, originY)
 			pw.SetSize(screenW, halfH)
+			m.captureState(pw)
 		}
 	case TileModeBottomHalf:
 		for _, pw := range windows {
-			normalizeWindowForLayout(pw)
-			pw.SetPosition(0, halfH)
+			pw.SetPosition(originX, originY+halfH)
 			pw.SetSize(screenW, halfH)
+			m.captureState(pw)
 		}
 	case TileModeTopLeft:
 		for _, pw := range windows {
-			normalizeWindowForLayout(pw)
-			pw.SetPosition(0, 0)
+			pw.SetPosition(originX, originY)
 			pw.SetSize(halfW, halfH)
+			m.captureState(pw)
 		}
 	case TileModeTopRight:
 		for _, pw := range windows {
-			normalizeWindowForLayout(pw)
-			pw.SetPosition(halfW, 0)
+			pw.SetPosition(originX+halfW, originY)
 			pw.SetSize(halfW, halfH)
+			m.captureState(pw)
 		}
 	case TileModeBottomLeft:
 		for _, pw := range windows {
-			normalizeWindowForLayout(pw)
-			pw.SetPosition(0, halfH)
+			pw.SetPosition(originX, originY+halfH)
 			pw.SetSize(halfW, halfH)
+			m.captureState(pw)
 		}
 	case TileModeBottomRight:
 		for _, pw := range windows {
-			normalizeWindowForLayout(pw)
-			pw.SetPosition(halfW, halfH)
+			pw.SetPosition(originX+halfW, originY+halfH)
 			pw.SetSize(halfW, halfH)
+			m.captureState(pw)
 		}
 	}
 	return nil
 }
 
 // SnapWindow snaps a window to a screen edge/corner/centre.
-func (m *Manager) SnapWindow(name string, pos SnapPosition, screenW, screenH int) error {
+func (m *Manager) SnapWindow(name string, pos SnapPosition, screenW, screenH int, origin ...int) error {
+	originX, originY := layoutOrigin(origin)
 	pw, ok := m.Get(name)
 	if !ok {
-		return corego.E("window.tiling", corego.Sprintf("window %q not found", name), nil)
+		return coreerr.E("window.Manager.SnapWindow", "window not found: "+name, nil)
 	}
 
 	halfW, halfH := screenW/2, screenH/2
 
 	switch pos {
 	case SnapLeft:
-		normalizeWindowForLayout(pw)
-		pw.SetPosition(0, 0)
+		pw.SetPosition(originX, originY)
 		pw.SetSize(halfW, screenH)
 	case SnapRight:
-		normalizeWindowForLayout(pw)
-		pw.SetPosition(halfW, 0)
+		pw.SetPosition(originX+halfW, originY)
 		pw.SetSize(halfW, screenH)
 	case SnapTop:
-		normalizeWindowForLayout(pw)
-		pw.SetPosition(0, 0)
+		pw.SetPosition(originX, originY)
 		pw.SetSize(screenW, halfH)
 	case SnapBottom:
-		normalizeWindowForLayout(pw)
-		pw.SetPosition(0, halfH)
+		pw.SetPosition(originX, originY+halfH)
 		pw.SetSize(screenW, halfH)
 	case SnapTopLeft:
-		normalizeWindowForLayout(pw)
-		pw.SetPosition(0, 0)
+		pw.SetPosition(originX, originY)
 		pw.SetSize(halfW, halfH)
 	case SnapTopRight:
-		normalizeWindowForLayout(pw)
-		pw.SetPosition(halfW, 0)
+		pw.SetPosition(originX+halfW, originY)
 		pw.SetSize(halfW, halfH)
 	case SnapBottomLeft:
-		normalizeWindowForLayout(pw)
-		pw.SetPosition(0, halfH)
+		pw.SetPosition(originX, originY+halfH)
 		pw.SetSize(halfW, halfH)
 	case SnapBottomRight:
-		normalizeWindowForLayout(pw)
-		pw.SetPosition(halfW, halfH)
+		pw.SetPosition(originX+halfW, originY+halfH)
 		pw.SetSize(halfW, halfH)
 	case SnapCenter:
 		normalizeWindowForLayout(pw)
 		cw, ch := pw.Size()
-		pw.SetPosition((screenW-cw)/2, (screenH-ch)/2)
+		pw.SetPosition(originX+(screenW-cw)/2, originY+(screenH-ch)/2)
 	}
+	m.captureState(pw)
 	return nil
 }
 
 // StackWindows cascades windows with an offset.
-func (m *Manager) StackWindows(names []string, offsetX, offsetY int) error {
+func (m *Manager) StackWindows(names []string, offsetX, offsetY int, origin ...int) error {
+	originX, originY := layoutOrigin(origin)
 	for i, name := range names {
 		pw, ok := m.Get(name)
 		if !ok {
-			return corego.E("window.tiling", corego.Sprintf("window %q not found", name), nil)
+			return coreerr.E("window.Manager.StackWindows", "window not found: "+name, nil)
 		}
-		normalizeWindowForLayout(pw)
-		pw.SetPosition(i*offsetX, i*offsetY)
+		pw.SetPosition(originX+i*offsetX, originY+i*offsetY)
+		m.captureState(pw)
 	}
 	return nil
 }
 
 // ApplyWorkflow arranges windows in a predefined workflow layout.
-func (m *Manager) ApplyWorkflow(workflow WorkflowLayout, names []string, screenW, screenH int) error {
+func (m *Manager) ApplyWorkflow(workflow WorkflowLayout, names []string, screenW, screenH int, origin ...int) error {
+	originX, originY := layoutOrigin(origin)
 	if len(names) == 0 {
-		return corego.E("window.tiling", "no windows for workflow", nil)
+		return coreerr.E("window.Manager.ApplyWorkflow", "no windows for workflow", nil)
 	}
 
 	switch workflow {
@@ -256,41 +258,41 @@ func (m *Manager) ApplyWorkflow(workflow WorkflowLayout, names []string, screenW
 		// 70/30 split — main editor + terminal
 		mainW := screenW * 70 / 100
 		if pw, ok := m.Get(names[0]); ok {
-			normalizeWindowForLayout(pw)
-			pw.SetPosition(0, 0)
+			pw.SetPosition(originX, originY)
 			pw.SetSize(mainW, screenH)
+			m.captureState(pw)
 		}
 		if len(names) > 1 {
 			if pw, ok := m.Get(names[1]); ok {
-				normalizeWindowForLayout(pw)
-				pw.SetPosition(mainW, 0)
+				pw.SetPosition(originX+mainW, originY)
 				pw.SetSize(screenW-mainW, screenH)
+				m.captureState(pw)
 			}
 		}
 	case WorkflowDebugging:
 		// 60/40 split
 		mainW := screenW * 60 / 100
 		if pw, ok := m.Get(names[0]); ok {
-			normalizeWindowForLayout(pw)
-			pw.SetPosition(0, 0)
+			pw.SetPosition(originX, originY)
 			pw.SetSize(mainW, screenH)
+			m.captureState(pw)
 		}
 		if len(names) > 1 {
 			if pw, ok := m.Get(names[1]); ok {
-				normalizeWindowForLayout(pw)
-				pw.SetPosition(mainW, 0)
+				pw.SetPosition(originX+mainW, originY)
 				pw.SetSize(screenW-mainW, screenH)
+				m.captureState(pw)
 			}
 		}
 	case WorkflowPresenting:
 		// Maximise first window
 		if pw, ok := m.Get(names[0]); ok {
-			normalizeWindowForLayout(pw)
-			pw.SetPosition(0, 0)
+			pw.SetPosition(originX, originY)
 			pw.SetSize(screenW, screenH)
+			m.captureState(pw)
 		}
 	case WorkflowSideBySide:
-		return m.TileWindows(TileModeLeftRight, names, screenW, screenH)
+		return m.TileWindows(TileModeLeftRight, names, screenW, screenH, originX, originY)
 	}
 	return nil
 }

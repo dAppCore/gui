@@ -3,9 +3,16 @@ package notification
 
 // Platform abstracts the native notification backend.
 type Platform interface {
-	Send(opts NotificationOptions) error
+	Send(options NotificationOptions) error
 	RequestPermission() (bool, error)
 	CheckPermission() (bool, error)
+	RevokePermission() error
+	RegisterCategory(category NotificationCategory) error
+}
+
+// ClearPlatform is an optional extension for removing notifications.
+type ClearPlatform interface {
+	Clear(id string) error
 }
 
 // NotificationAction represents an interactive notification action.
@@ -25,12 +32,13 @@ const (
 
 // NotificationOptions contains options for sending a notification.
 type NotificationOptions struct {
-	ID       string               `json:"id,omitempty"`
-	Title    string               `json:"title"`
-	Message  string               `json:"message"`
-	Subtitle string               `json:"subtitle,omitempty"`
-	Severity NotificationSeverity `json:"severity,omitempty"`
-	Actions  []NotificationAction `json:"actions,omitempty"`
+	ID         string               `json:"id,omitempty"`
+	Title      string               `json:"title"`
+	Message    string               `json:"message"`
+	Subtitle   string               `json:"subtitle,omitempty"`
+	Severity   NotificationSeverity `json:"severity,omitempty"`
+	CategoryID string               `json:"categoryId,omitempty"`
+	Actions    []NotificationAction `json:"actions,omitempty"`
 }
 
 // PermissionStatus indicates whether notifications are authorised.
@@ -38,10 +46,15 @@ type PermissionStatus struct {
 	Granted bool `json:"granted"`
 }
 
-type clearer interface {
-	Clear() error
+// NotificationAction describes a tappable action button on a notification.
+type NotificationAction struct {
+	ID    string `json:"id"`
+	Title string `json:"title"`
 }
 
-type actionSender interface {
-	SendWithActions(opts NotificationOptions) error
+// NotificationCategory groups a set of actions that can appear on notifications.
+// Register categories on startup so the OS knows the available action buttons.
+type NotificationCategory struct {
+	ID      string               `json:"id"`
+	Actions []NotificationAction `json:"actions"`
 }

@@ -8,12 +8,8 @@ import (
 	"dappco.re/go/core/gui/pkg/notification"
 )
 
-// Options configures the systray service.
-// Use: core.WithService(systray.Register(platform))
 type Options struct{}
 
-// Service manages system tray operations via Core tasks.
-// Use: svc := &systray.Service{}
 type Service struct {
 	*core.ServiceRuntime[Options]
 	manager  *Manager
@@ -21,34 +17,31 @@ type Service struct {
 	iconPath string
 }
 
-// OnStartup loads tray config and registers task handlers.
-// Use: _ = svc.OnStartup(context.Background())
 func (s *Service) OnStartup(ctx context.Context) error {
-	cfg, handled, _ := s.Core().QUERY(QueryConfig{})
+	configValue, handled, _ := s.Core().QUERY(QueryConfig{})
 	if handled {
-		if tCfg, ok := cfg.(map[string]any); ok {
-			s.applyConfig(tCfg)
+		if trayConfig, ok := configValue.(map[string]any); ok {
+			s.applyConfig(trayConfig)
 		}
 	}
 	s.Core().RegisterTask(s.handleTask)
 	return nil
 }
 
-func (s *Service) applyConfig(cfg map[string]any) {
-	tooltip, _ := cfg["tooltip"].(string)
+func (s *Service) applyConfig(configData map[string]any) {
+	tooltip, _ := configData["tooltip"].(string)
 	if tooltip == "" {
 		tooltip = "Core"
 	}
 	_ = s.manager.Setup(tooltip, tooltip)
 
-	if iconPath, ok := cfg["icon"].(string); ok && iconPath != "" {
+	if iconPath, ok := configData["icon"].(string); ok && iconPath != "" {
 		// Icon loading is deferred to when assets are available.
 		// Store the path for later use.
 		s.iconPath = iconPath
 	}
 }
 
-// HandleIPCEvents satisfies Core's IPC hook.
 func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 	return nil
 }
@@ -57,12 +50,14 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 	switch t := t.(type) {
 	case TaskSetTrayIcon:
 		return nil, true, s.manager.SetIcon(t.Data)
-	case TaskSetTooltip:
+	case TaskSetTrayTooltip:
 		return nil, true, s.manager.SetTooltip(t.Tooltip)
-	case TaskSetLabel:
+	case TaskSetTrayLabel:
 		return nil, true, s.manager.SetLabel(t.Label)
 	case TaskSetTrayMenu:
 		return nil, true, s.taskSetTrayMenu(t)
+	case TaskShowMessage:
+		return nil, true, s.manager.ShowMessage(t.Title, t.Message)
 	case TaskShowPanel:
 		return nil, true, s.manager.ShowPanel()
 	case TaskHidePanel:
@@ -87,29 +82,6 @@ func (s *Service) taskSetTrayMenu(t TaskSetTrayMenu) error {
 	return s.manager.SetMenu(t.Items)
 }
 
-func (s *Service) showTrayMessage(title, message string) error {
-	if s.manager == nil || !s.manager.IsActive() {
-		_, _, err := s.Core().PERFORM(notification.TaskSend{
-			Opts: notification.NotificationOptions{Title: title, Message: message},
-		})
-		return err
-	}
-	tray := s.manager.Tray()
-	if tray == nil {
-		return core.E("systray.showTrayMessage", "tray not initialised", nil)
-	}
-	if messenger, ok := tray.(interface{ ShowMessage(title, message string) }); ok {
-		messenger.ShowMessage(title, message)
-		return nil
-	}
-	_, _, err := s.Core().PERFORM(notification.TaskSend{
-		Opts: notification.NotificationOptions{Title: title, Message: message},
-	})
-	return err
-}
-
-// Manager returns the underlying systray Manager.
-// Use: manager := svc.Manager()
 func (s *Service) Manager() *Manager {
 	return s.manager
 }

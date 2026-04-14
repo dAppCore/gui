@@ -1,10 +1,9 @@
-// pkg/dock/register.go
 package dock
 
 import "forge.lthn.ai/core/go/pkg/core"
 
-// Register creates a factory closure that captures the Platform adapter.
-// The returned function has the signature WithService requires: func(*Core) (any, error).
+// Register(p) binds the dock service to a Core instance.
+// core.WithService(dock.Register(wailsDock))
 func Register(p Platform) func(*core.Core) (any, error) {
 	return func(c *core.Core) (any, error) {
 		return &Service{

@@ -65,30 +65,17 @@ func (m *mockConnector) Check(sel string, c bool) error {
 	m.lastCheckVal = c
 	return nil
 }
-func (m *mockConnector) Evaluate(s string) (any, error) {
-	m.lastEvalScript = s
-	if m.evalFn != nil {
-		return m.evalFn(s)
-	}
-	return m.evalResult, nil
-}
+func (m *mockConnector) Evaluate(s string) (any, error)     { return m.evalResult, nil }
 func (m *mockConnector) Screenshot() ([]byte, error)        { return m.screenshot, nil }
 func (m *mockConnector) GetURL() (string, error)            { return m.url, nil }
 func (m *mockConnector) GetTitle() (string, error)          { return m.title, nil }
 func (m *mockConnector) GetHTML(sel string) (string, error) { return m.html, nil }
 func (m *mockConnector) ClearConsole()                      { m.consoleClearCalled = true }
-func (m *mockConnector) Print() error                       { m.printCalled = true; return nil }
 func (m *mockConnector) Close() error                       { m.closed = true; return nil }
 func (m *mockConnector) SetViewport(w, h int) error {
 	m.lastViewportW = w
 	m.lastViewportH = h
 	return nil
-}
-func (m *mockConnector) PrintToPDF() ([]byte, error) {
-	if len(m.pdfBytes) == 0 {
-		return []byte("%PDF-1.4\n"), nil
-	}
-	return m.pdfBytes, nil
 }
 func (m *mockConnector) UploadFile(sel string, p []string) error {
 	m.lastUploadSel = sel
@@ -111,12 +98,8 @@ func (m *mockConnector) GetConsole() []ConsoleMessage { return m.console }
 
 func newTestService(t *testing.T, mock *mockConnector) (*Service, *core.Core) {
 	t.Helper()
-	factory := Register(Options{})
-	c, err := core.New(
-		core.WithService(window.Register(window.NewMockPlatform())),
-		core.WithService(factory),
-		core.WithServiceLock(),
-	)
+	factory := RegisterWithOptions(Options{})
+	c, err := core.New(core.WithService(factory), core.WithServiceLock())
 	require.NoError(t, err)
 	require.NoError(t, c.ServiceStartup(context.Background(), nil))
 	svc := core.MustServiceFor[*Service](c, "webview")
@@ -125,7 +108,7 @@ func newTestService(t *testing.T, mock *mockConnector) (*Service, *core.Core) {
 	return svc, c
 }
 
-func TestRegister_Good(t *testing.T) {
+func TestRegisterWithOptions_Good(t *testing.T) {
 	svc, _ := newTestService(t, &mockConnector{})
 	assert.NotNil(t, svc)
 }

@@ -2,11 +2,13 @@
 package window
 
 import (
+	"encoding/json"
 	"os"
 	"sync"
 	"time"
 
-	corego "dappco.re/go/core"
+	coreio "forge.lthn.ai/core/go-io"
+	coreerr "forge.lthn.ai/core/go-log"
 )
 
 // Layout is a named window arrangement.
@@ -69,13 +71,13 @@ func (lm *LayoutManager) loadLayouts() {
 	if lm.configDir == "" {
 		return
 	}
-	data, err := os.ReadFile(lm.layoutsFilePath())
+	content, err := coreio.Local.Read(lm.filePath())
 	if err != nil {
 		return
 	}
 	lm.mu.Lock()
 	defer lm.mu.Unlock()
-	_ = corego.JSONUnmarshal(data, &lm.layouts)
+	_ = json.Unmarshal([]byte(content), &lm.layouts)
 }
 
 func (lm *LayoutManager) saveLayouts() {
@@ -88,15 +90,15 @@ func (lm *LayoutManager) saveLayouts() {
 	if !r.OK {
 		return
 	}
-	_ = os.MkdirAll(lm.configDir, 0o755)
-	_ = os.WriteFile(lm.layoutsFilePath(), r.Value.([]byte), 0o644)
+	_ = coreio.Local.EnsureDir(lm.configDir)
+	_ = coreio.Local.Write(lm.filePath(), string(data))
 }
 
 // SaveLayout creates or updates a named layout.
 // Use: _ = lm.SaveLayout("coding", windowStates)
 func (lm *LayoutManager) SaveLayout(name string, windowStates map[string]WindowState) error {
 	if name == "" {
-		return corego.E("layout.save", "layout name cannot be empty", nil)
+		return coreerr.E("window.LayoutManager.SaveLayout", "layout name cannot be empty", nil)
 	}
 	now := time.Now().UnixMilli()
 	lm.mu.Lock()

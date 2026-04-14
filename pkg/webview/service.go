@@ -46,19 +46,37 @@ type connector interface {
 	Close() error
 }
 
-// Options holds configuration for the webview service.
-// Use: svc, err := webview.Register(webview.Options{})(core.New())
 type Options struct {
 	DebugURL     string        // Chrome debug endpoint (default: "http://localhost:9222")
 	Timeout      time.Duration // Operation timeout (default: 30s)
 	ConsoleLimit int           // Max console messages per window (default: 1000)
 }
 
-// Service is a core.Service managing webview interactions via IPC.
-// Use: svc, err := webview.Register(webview.Options{})(core.New())
+func defaultOptions() Options {
+	return Options{
+		DebugURL:     "http://localhost:9222",
+		Timeout:      30 * time.Second,
+		ConsoleLimit: 1000,
+	}
+}
+
+func normalizeOptions(options Options) Options {
+	defaults := defaultOptions()
+	if options.DebugURL == "" {
+		options.DebugURL = defaults.DebugURL
+	}
+	if options.Timeout == 0 {
+		options.Timeout = defaults.Timeout
+	}
+	if options.ConsoleLimit == 0 {
+		options.ConsoleLimit = defaults.ConsoleLimit
+	}
+	return options
+}
+
 type Service struct {
 	*core.ServiceRuntime[Options]
-	opts         Options
+	options      Options
 	connections  map[string]connector
 	exceptions   map[string][]ExceptionInfo
 	mu           sync.RWMutex
@@ -66,27 +84,14 @@ type Service struct {
 	watcherSetup func(conn connector, windowName string)              // called after connection creation
 }
 
-// Register creates a factory closure with declarative options.
-// Use: core.WithService(webview.Register(webview.Options{ConsoleLimit: 500}))
-func Register(options Options) func(*core.Core) (any, error) {
-	o := Options{
-		DebugURL:     "http://localhost:9222",
-		Timeout:      30 * time.Second,
-		ConsoleLimit: 1000,
-	}
-	if options.DebugURL != "" {
-		o.DebugURL = options.DebugURL
-	}
-	if options.Timeout != 0 {
-		o.Timeout = options.Timeout
-	}
-	if options.ConsoleLimit != 0 {
-		o.ConsoleLimit = options.ConsoleLimit
-	}
+// RegisterWithOptions binds the webview service to a Core instance using a declarative Options literal.
+// core.WithService(webview.RegisterWithOptions(webview.Options{DebugURL: "http://localhost:9223", Timeout: 30 * time.Second, ConsoleLimit: 1000}))
+func RegisterWithOptions(options Options) func(*core.Core) (any, error) {
+	o := normalizeOptions(options)
 	return func(c *core.Core) (any, error) {
 		svc := &Service{
 			ServiceRuntime: core.NewServiceRuntime[Options](c, o),
-			opts:           o,
+			options:        o,
 			connections:    make(map[string]connector),
 			exceptions:     make(map[string][]ExceptionInfo),
 			newConn:        defaultNewConn(o),
@@ -96,8 +101,19 @@ func Register(options Options) func(*core.Core) (any, error) {
 	}
 }
 
+// Deprecated: use RegisterWithOptions(webview.Options{DebugURL: "http://localhost:9223", Timeout: 30 * time.Second, ConsoleLimit: 1000}).
+func Register(optionFns ...func(*Options)) func(*core.Core) (any, error) {
+	options := defaultOptions()
+	for _, fn := range optionFns {
+		if fn != nil {
+			fn(&options)
+		}
+	}
+	return RegisterWithOptions(options)
+}
+
 // defaultNewConn creates real go-webview connections.
-func defaultNewConn(opts Options) func(string, string) (connector, error) {
+func defaultNewConn(options Options) func(string, string) (connector, error) {
 	return func(debugURL, windowName string) (connector, error) {
 		// Enumerate targets, match by title/URL containing window name
 		targets, err := gowebview.ListTargets(debugURL)
@@ -106,7 +122,7 @@ func defaultNewConn(opts Options) func(string, string) (connector, error) {
 		}
 		var wsURL string
 		for _, t := range targets {
-			if t.Type == "page" && (corego.Contains(t.Title, windowName) || corego.Contains(t.URL, windowName)) {
+			if t.Type == "page" && (bytes.Contains([]byte(t.Title), []byte(windowName)) || bytes.Contains([]byte(t.URL), []byte(windowName))) {
 				wsURL = t.WebSocketDebuggerURL
 				break
 			}
@@ -125,8 +141,8 @@ func defaultNewConn(opts Options) func(string, string) (connector, error) {
 		}
 		wv, err := gowebview.New(
 			gowebview.WithDebugURL(debugURL),
-			gowebview.WithTimeout(opts.Timeout),
-			gowebview.WithConsoleLimit(opts.ConsoleLimit),
+			gowebview.WithTimeout(options.Timeout),
+			gowebview.WithConsoleLimit(options.ConsoleLimit),
 		)
 		if err != nil {
 			return nil, err
@@ -174,7 +190,6 @@ func (s *Service) defaultWatcherSetup(conn connector, windowName string) {
 	})
 }
 
-// OnStartup registers IPC handlers.
 func (s *Service) OnStartup(_ context.Context) error {
 	s.Core().RegisterQuery(s.handleQuery)
 	s.Core().RegisterTask(s.handleTask)
@@ -224,7 +239,7 @@ func (s *Service) getConn(windowName string) (connector, error) {
 	if conn, ok := s.connections[windowName]; ok {
 		return conn, nil
 	}
-	conn, err := s.newConn(s.opts.DebugURL, windowName)
+	conn, err := s.newConn(s.options.DebugURL, windowName)
 	if err != nil {
 		return nil, err
 	}
@@ -674,7 +689,6 @@ func (r *realConnector) GetURL() (string, error)                 { return r.wv.G
 func (r *realConnector) GetTitle() (string, error)               { return r.wv.GetTitle() }
 func (r *realConnector) GetHTML(sel string) (string, error)      { return r.wv.GetHTML(sel) }
 func (r *realConnector) ClearConsole()                           { r.wv.ClearConsole() }
-func (r *realConnector) Print() error                            { _, err := r.wv.Evaluate("window.print()"); return err }
 func (r *realConnector) Close() error                            { return r.wv.Close() }
 func (r *realConnector) SetViewport(w, h int) error              { return r.wv.SetViewport(w, h) }
 func (r *realConnector) UploadFile(sel string, p []string) error { return r.wv.UploadFile(sel, p) }

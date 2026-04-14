@@ -4,8 +4,8 @@ package mcp
 import (
 	"context"
 
-	corego "dappco.re/go/core"
-	"dappco.re/go/core/gui/pkg/dialog"
+	coreerr "forge.lthn.ai/core/go-log"
+	"forge.lthn.ai/core/gui/pkg/dialog"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -22,7 +22,7 @@ type DialogOpenFileOutput struct {
 }
 
 func (s *Subsystem) dialogOpenFile(_ context.Context, _ *mcp.CallToolRequest, input DialogOpenFileInput) (*mcp.CallToolResult, DialogOpenFileOutput, error) {
-	result, _, err := s.core.PERFORM(dialog.TaskOpenFile{Opts: dialog.OpenFileOptions{
+	result, _, err := s.core.PERFORM(dialog.TaskOpenFile{Options: dialog.OpenFileOptions{
 		Title:         input.Title,
 		Directory:     input.Directory,
 		Filters:       input.Filters,
@@ -33,7 +33,7 @@ func (s *Subsystem) dialogOpenFile(_ context.Context, _ *mcp.CallToolRequest, in
 	}
 	paths, ok := result.([]string)
 	if !ok {
-		return nil, DialogOpenFileOutput{}, corego.E("mcp.dialog", "unexpected result type from open file dialog", nil)
+		return nil, DialogOpenFileOutput{}, coreerr.E("mcp.dialogOpenFile", "unexpected result type", nil)
 	}
 	return nil, DialogOpenFileOutput{Paths: paths}, nil
 }
@@ -51,7 +51,7 @@ type DialogSaveFileOutput struct {
 }
 
 func (s *Subsystem) dialogSaveFile(_ context.Context, _ *mcp.CallToolRequest, input DialogSaveFileInput) (*mcp.CallToolResult, DialogSaveFileOutput, error) {
-	result, _, err := s.core.PERFORM(dialog.TaskSaveFile{Opts: dialog.SaveFileOptions{
+	result, _, err := s.core.PERFORM(dialog.TaskSaveFile{Options: dialog.SaveFileOptions{
 		Title:     input.Title,
 		Directory: input.Directory,
 		Filename:  input.Filename,
@@ -62,7 +62,7 @@ func (s *Subsystem) dialogSaveFile(_ context.Context, _ *mcp.CallToolRequest, in
 	}
 	path, ok := result.(string)
 	if !ok {
-		return nil, DialogSaveFileOutput{}, corego.E("mcp.dialog", "unexpected result type from save file dialog", nil)
+		return nil, DialogSaveFileOutput{}, coreerr.E("mcp.dialogSaveFile", "unexpected result type", nil)
 	}
 	return nil, DialogSaveFileOutput{Path: path}, nil
 }
@@ -78,7 +78,7 @@ type DialogOpenDirectoryOutput struct {
 }
 
 func (s *Subsystem) dialogOpenDirectory(_ context.Context, _ *mcp.CallToolRequest, input DialogOpenDirectoryInput) (*mcp.CallToolResult, DialogOpenDirectoryOutput, error) {
-	result, _, err := s.core.PERFORM(dialog.TaskOpenDirectory{Opts: dialog.OpenDirectoryOptions{
+	result, _, err := s.core.PERFORM(dialog.TaskOpenDirectory{Options: dialog.OpenDirectoryOptions{
 		Title:     input.Title,
 		Directory: input.Directory,
 	}})
@@ -87,9 +87,38 @@ func (s *Subsystem) dialogOpenDirectory(_ context.Context, _ *mcp.CallToolReques
 	}
 	path, ok := result.(string)
 	if !ok {
-		return nil, DialogOpenDirectoryOutput{}, corego.E("mcp.dialog", "unexpected result type from open directory dialog", nil)
+		return nil, DialogOpenDirectoryOutput{}, coreerr.E("mcp.dialogOpenDirectory", "unexpected result type", nil)
 	}
 	return nil, DialogOpenDirectoryOutput{Path: path}, nil
+}
+
+// --- dialog_message ---
+
+type DialogMessageInput struct {
+	Type    dialog.DialogType `json:"type"`
+	Title   string            `json:"title"`
+	Message string            `json:"message"`
+	Buttons []string          `json:"buttons,omitempty"`
+}
+type DialogMessageOutput struct {
+	Button string `json:"button"`
+}
+
+func (s *Subsystem) dialogMessage(_ context.Context, _ *mcp.CallToolRequest, input DialogMessageInput) (*mcp.CallToolResult, DialogMessageOutput, error) {
+	result, _, err := s.core.PERFORM(dialog.TaskMessageDialog{Options: dialog.MessageDialogOptions{
+		Type:    input.Type,
+		Title:   input.Title,
+		Message: input.Message,
+		Buttons: input.Buttons,
+	}})
+	if err != nil {
+		return nil, DialogMessageOutput{}, err
+	}
+	button, ok := result.(string)
+	if !ok {
+		return nil, DialogMessageOutput{}, coreerr.E("mcp.dialogMessage", "unexpected result type", nil)
+	}
+	return nil, DialogMessageOutput{Button: button}, nil
 }
 
 // --- dialog_confirm ---
@@ -104,7 +133,7 @@ type DialogConfirmOutput struct {
 }
 
 func (s *Subsystem) dialogConfirm(_ context.Context, _ *mcp.CallToolRequest, input DialogConfirmInput) (*mcp.CallToolResult, DialogConfirmOutput, error) {
-	result, _, err := s.core.PERFORM(dialog.TaskMessageDialog{Opts: dialog.MessageDialogOptions{
+	result, _, err := s.core.PERFORM(dialog.TaskMessageDialog{Options: dialog.MessageDialogOptions{
 		Type:    dialog.DialogQuestion,
 		Title:   input.Title,
 		Message: input.Message,
@@ -115,7 +144,7 @@ func (s *Subsystem) dialogConfirm(_ context.Context, _ *mcp.CallToolRequest, inp
 	}
 	button, ok := result.(string)
 	if !ok {
-		return nil, DialogConfirmOutput{}, corego.E("mcp.dialog", "unexpected result type from confirm dialog", nil)
+		return nil, DialogConfirmOutput{}, coreerr.E("mcp.dialogConfirm", "unexpected result type", nil)
 	}
 	return nil, DialogConfirmOutput{Button: button}, nil
 }
@@ -131,7 +160,7 @@ type DialogPromptOutput struct {
 }
 
 func (s *Subsystem) dialogPrompt(_ context.Context, _ *mcp.CallToolRequest, input DialogPromptInput) (*mcp.CallToolResult, DialogPromptOutput, error) {
-	result, _, err := s.core.PERFORM(dialog.TaskMessageDialog{Opts: dialog.MessageDialogOptions{
+	result, _, err := s.core.PERFORM(dialog.TaskMessageDialog{Options: dialog.MessageDialogOptions{
 		Type:    dialog.DialogInfo,
 		Title:   input.Title,
 		Message: input.Message,
@@ -142,7 +171,7 @@ func (s *Subsystem) dialogPrompt(_ context.Context, _ *mcp.CallToolRequest, inpu
 	}
 	button, ok := result.(string)
 	if !ok {
-		return nil, DialogPromptOutput{}, corego.E("mcp.dialog", "unexpected result type from prompt dialog", nil)
+		return nil, DialogPromptOutput{}, coreerr.E("mcp.dialogPrompt", "unexpected result type", nil)
 	}
 	return nil, DialogPromptOutput{Button: button}, nil
 }
@@ -153,6 +182,7 @@ func (s *Subsystem) registerDialogTools(server *mcp.Server) {
 	mcp.AddTool(server, &mcp.Tool{Name: "dialog_open_file", Description: "Show an open file dialog"}, s.dialogOpenFile)
 	mcp.AddTool(server, &mcp.Tool{Name: "dialog_save_file", Description: "Show a save file dialog"}, s.dialogSaveFile)
 	mcp.AddTool(server, &mcp.Tool{Name: "dialog_open_directory", Description: "Show a directory picker dialog"}, s.dialogOpenDirectory)
+	mcp.AddTool(server, &mcp.Tool{Name: "dialog_message", Description: "Show a message dialog"}, s.dialogMessage)
 	mcp.AddTool(server, &mcp.Tool{Name: "dialog_confirm", Description: "Show a confirmation dialog"}, s.dialogConfirm)
 	mcp.AddTool(server, &mcp.Tool{Name: "dialog_prompt", Description: "Show a prompt dialog"}, s.dialogPrompt)
 }

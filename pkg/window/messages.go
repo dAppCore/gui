@@ -1,8 +1,6 @@
 // pkg/window/messages.go
 package window
 
-// WindowInfo contains information about a window.
-// Use: info := window.WindowInfo{Name: "editor", Title: "Core Editor"}
 type WindowInfo struct {
 	Name      string `json:"name"`
 	Title     string `json:"title"`
@@ -16,113 +14,46 @@ type WindowInfo struct {
 	Focused   bool   `json:"focused"`
 }
 
-// Bounds describes the position and size of a window.
-// Use: bounds := window.Bounds{X: 10, Y: 10, Width: 1280, Height: 800}
-type Bounds struct {
-	X      int `json:"x"`
-	Y      int `json:"y"`
-	Width  int `json:"width"`
-	Height int `json:"height"`
-}
-
-// --- Queries (read-only) ---
-
-// QueryWindowList returns all tracked windows. Result: []WindowInfo
-// Use: result, _, err := c.QUERY(window.QueryWindowList{})
 type QueryWindowList struct{}
 
-// QueryWindowByName returns a single window by name. Result: *WindowInfo (nil if not found)
-// Use: result, _, err := c.QUERY(window.QueryWindowByName{Name: "editor"})
 type QueryWindowByName struct{ Name string }
 
-// QueryConfig requests this service's config section from the display orchestrator.
-// Result: map[string]any
-// Use: result, _, err := c.QUERY(window.QueryConfig{})
 type QueryConfig struct{}
 
-// QueryWindowBounds returns the current bounds for a window.
-// Use: result, _, err := c.QUERY(window.QueryWindowBounds{Name: "editor"})
-type QueryWindowBounds struct{ Name string }
+// TaskOpenWindow opens a concrete Window descriptor.
+// window.TaskOpenWindow{Window: &window.Window{Name: "settings", URL: "/", Width: 800, Height: 600}}
+type TaskOpenWindow struct{ Window *Window }
 
-// QueryFindSpace returns a suggested free placement for a new window.
-// Use: result, _, err := c.QUERY(window.QueryFindSpace{Width: 1280, Height: 800})
-type QueryFindSpace struct {
-	Width        int
-	Height       int
-	ScreenWidth  int
-	ScreenHeight int
-}
-
-// QueryLayoutSuggestion returns a layout recommendation for the current screen.
-// Use: result, _, err := c.QUERY(window.QueryLayoutSuggestion{WindowCount: 2})
-type QueryLayoutSuggestion struct {
-	WindowCount  int
-	ScreenWidth  int
-	ScreenHeight int
-}
-
-// --- Tasks (side-effects) ---
-
-// TaskOpenWindow creates a new window. Result: WindowInfo
-// Use: _, _, err := c.PERFORM(window.TaskOpenWindow{Opts: []window.WindowOption{window.WithName("editor")}})
-type TaskOpenWindow struct {
-	Window *Window
-	Opts   []WindowOption
-}
-
-// TaskCloseWindow closes a window after persisting state.
-// Platform close events emit ActionWindowClosed through the tracked window handler.
-// Use: _, _, err := c.PERFORM(window.TaskCloseWindow{Name: "editor"})
 type TaskCloseWindow struct{ Name string }
 
-// TaskSetPosition moves a window.
-// Use: _, _, err := c.PERFORM(window.TaskSetPosition{Name: "editor", X: 160, Y: 120})
 type TaskSetPosition struct {
 	Name string
 	X, Y int
 }
 
-// TaskSetSize resizes a window.
-// Use: _, _, err := c.PERFORM(window.TaskSetSize{Name: "editor", Width: 1280, Height: 800})
 type TaskSetSize struct {
 	Name          string
 	Width, Height int
-	// W and H are compatibility aliases for older call sites.
-	W, H int
 }
 
-// TaskMaximise maximises a window.
-// Use: _, _, err := c.PERFORM(window.TaskMaximise{Name: "editor"})
 type TaskMaximise struct{ Name string }
 
-// TaskMinimise minimises a window.
-// Use: _, _, err := c.PERFORM(window.TaskMinimise{Name: "editor"})
 type TaskMinimise struct{ Name string }
 
-// TaskFocus brings a window to the front.
-// Use: _, _, err := c.PERFORM(window.TaskFocus{Name: "editor"})
 type TaskFocus struct{ Name string }
 
-// TaskRestore restores a maximised or minimised window to its normal state.
-// Use: _, _, err := c.PERFORM(window.TaskRestore{Name: "editor"})
 type TaskRestore struct{ Name string }
 
-// TaskSetTitle changes a window's title.
-// Use: _, _, err := c.PERFORM(window.TaskSetTitle{Name: "editor", Title: "Core Editor"})
 type TaskSetTitle struct {
 	Name  string
 	Title string
 }
 
-// TaskSetAlwaysOnTop pins a window above others.
-// Use: _, _, err := c.PERFORM(window.TaskSetAlwaysOnTop{Name: "editor", AlwaysOnTop: true})
 type TaskSetAlwaysOnTop struct {
 	Name        string
 	AlwaysOnTop bool
 }
 
-// TaskSetBackgroundColour updates the window background colour.
-// Use: _, _, err := c.PERFORM(window.TaskSetBackgroundColour{Name: "editor", Red: 0, Green: 0, Blue: 0, Alpha: 0})
 type TaskSetBackgroundColour struct {
 	Name  string
 	Red   uint8
@@ -131,99 +62,94 @@ type TaskSetBackgroundColour struct {
 	Alpha uint8
 }
 
-// TaskSetOpacity updates the window opacity as a value between 0 and 1.
-// Use: _, _, err := c.PERFORM(window.TaskSetOpacity{Name: "editor", Opacity: 0.85})
-type TaskSetOpacity struct {
-	Name    string
-	Opacity float32
-}
-
-// TaskSetVisibility shows or hides a window.
-// Use: _, _, err := c.PERFORM(window.TaskSetVisibility{Name: "editor", Visible: false})
 type TaskSetVisibility struct {
 	Name    string
 	Visible bool
 }
 
-// TaskFullscreen enters or exits fullscreen mode.
-// Use: _, _, err := c.PERFORM(window.TaskFullscreen{Name: "editor", Fullscreen: true})
 type TaskFullscreen struct {
 	Name       string
 	Fullscreen bool
 }
 
-// --- Layout Queries ---
-
-// QueryLayoutList returns summaries of all saved layouts. Result: []LayoutInfo
-// Use: result, _, err := c.QUERY(window.QueryLayoutList{})
 type QueryLayoutList struct{}
 
-// QueryLayoutGet returns a layout by name. Result: *Layout (nil if not found)
-// Use: result, _, err := c.QUERY(window.QueryLayoutGet{Name: "coding"})
 type QueryLayoutGet struct{ Name string }
 
-// --- Layout Tasks ---
-
-// TaskSaveLayout saves the current window arrangement as a named layout. Result: bool
-// Use: _, _, err := c.PERFORM(window.TaskSaveLayout{Name: "coding"})
 type TaskSaveLayout struct{ Name string }
 
-// TaskRestoreLayout restores a saved layout by name.
-// Use: _, _, err := c.PERFORM(window.TaskRestoreLayout{Name: "coding"})
 type TaskRestoreLayout struct{ Name string }
 
-// TaskDeleteLayout removes a saved layout by name.
-// Use: _, _, err := c.PERFORM(window.TaskDeleteLayout{Name: "coding"})
 type TaskDeleteLayout struct{ Name string }
 
-// TaskTileWindows arranges windows in a tiling mode.
-// Use: _, _, err := c.PERFORM(window.TaskTileWindows{Mode: "grid"})
 type TaskTileWindows struct {
 	Mode    string   // "left-right", "grid", "left-half", "right-half", etc.
 	Windows []string // window names; empty = all
 }
 
-// TaskSnapWindow snaps a window to a screen edge/corner.
-// Use: _, _, err := c.PERFORM(window.TaskSnapWindow{Name: "editor", Position: "left"})
+type TaskStackWindows struct {
+	Windows []string // window names; empty = all
+	OffsetX int
+	OffsetY int
+}
+
 type TaskSnapWindow struct {
 	Name     string // window name
 	Position string // "left", "right", "top", "bottom", "top-left", "top-right", "bottom-left", "bottom-right", "center"
 }
 
-// TaskArrangePair places two windows side-by-side in a balanced split.
-// Use: _, _, err := c.PERFORM(window.TaskArrangePair{First: "editor", Second: "terminal"})
-type TaskArrangePair struct {
-	First  string
-	Second string
-}
-
-// TaskBesideEditor places a target window beside an editor/IDE window.
-// Use: _, _, err := c.PERFORM(window.TaskBesideEditor{Editor: "editor", Window: "terminal"})
-type TaskBesideEditor struct {
-	Editor string
-	Window string
-}
-
-// TaskStackWindows cascades windows with a shared offset.
-// Use: _, _, err := c.PERFORM(window.TaskStackWindows{Windows: []string{"editor", "terminal"}})
-type TaskStackWindows struct {
-	Windows []string
-	OffsetX int
-	OffsetY int
-}
-
-// TaskApplyWorkflow applies a predefined workflow layout to windows.
-// Use: _, _, err := c.PERFORM(window.TaskApplyWorkflow{Workflow: window.WorkflowCoding})
 type TaskApplyWorkflow struct {
-	Workflow WorkflowLayout
-	Windows  []string
+	Workflow string
+	Windows  []string // window names; empty = all
 }
 
-// TaskSaveConfig persists this service's config section via the display orchestrator.
-// Use: _, _, err := c.PERFORM(window.TaskSaveConfig{Value: map[string]any{"default_width": 1280}})
-type TaskSaveConfig struct{ Value map[string]any }
+type TaskSaveConfig struct{ Config map[string]any }
 
-// --- Actions (broadcasts) ---
+// QueryWindowZoom queries the current zoom factor for a named window. Result: float64
+type QueryWindowZoom struct{ Name string }
+
+// QueryWindowBounds queries the current bounds for a named window. Result: *Bounds
+type QueryWindowBounds struct{ Name string }
+
+// TaskSetZoom sets the zoom factor for a named window.
+// c.PERFORM(window.TaskSetZoom{Name: "main", Factor: 1.5})
+type TaskSetZoom struct {
+	Name   string
+	Factor float64
+}
+
+// TaskSetURL navigates a named window to a new URL.
+// c.PERFORM(window.TaskSetURL{Name: "main", URL: "/settings"})
+type TaskSetURL struct {
+	Name string
+	URL  string
+}
+
+// TaskSetHTML replaces the content of a named window with HTML.
+// c.PERFORM(window.TaskSetHTML{Name: "main", HTML: "<h1>Hello</h1>"})
+type TaskSetHTML struct {
+	Name string
+	HTML string
+}
+
+// TaskExecJS evaluates JavaScript in a named window.
+// c.PERFORM(window.TaskExecJS{Name: "main", JS: "document.title = 'Updated'"})
+type TaskExecJS struct {
+	Name string
+	JS   string
+}
+
+// TaskToggleFullscreen toggles fullscreen on a named window.
+type TaskToggleFullscreen struct{ Name string }
+
+// TaskPrint triggers the platform print dialog for a named window.
+type TaskPrint struct{ Name string }
+
+// TaskFlash flashes (or stops flashing) the taskbar entry for a named window (Windows).
+type TaskFlash struct {
+	Name    string
+	Enabled bool
+}
 
 // ActionWindowOpened is broadcast when a window is created.
 // Use: _ = c.ACTION(window.ActionWindowOpened{Name: "editor"})
@@ -245,8 +171,6 @@ type ActionWindowMoved struct {
 type ActionWindowResized struct {
 	Name          string
 	Width, Height int
-	// W and H are compatibility aliases for older listeners.
-	W, H int
 }
 
 // ActionWindowFocused is broadcast when a window gains focus.

@@ -4,30 +4,24 @@ package contextmenu
 import (
 	"context"
 
-	corego "dappco.re/go/core"
+	coreerr "forge.lthn.ai/core/go-log"
 	"forge.lthn.ai/core/go/pkg/core"
 )
 
-// Options holds configuration for the context menu service.
 type Options struct{}
 
-// Service is a core.Service managing context menus via IPC.
-// It maintains an in-memory registry of menus (map[string]ContextMenuDef)
-// and delegates platform-level registration to the Platform interface.
 type Service struct {
 	*core.ServiceRuntime[Options]
-	platform Platform
-	menus    map[string]ContextMenuDef
+	platform        Platform
+	registeredMenus map[string]ContextMenuDef
 }
 
-// OnStartup registers IPC handlers.
 func (s *Service) OnStartup(ctx context.Context) error {
 	s.Core().RegisterQuery(s.handleQuery)
 	s.Core().RegisterTask(s.handleTask)
 	return nil
 }
 
-// HandleIPCEvents is auto-discovered and registered by core.WithService.
 func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 	return nil
 }
@@ -40,24 +34,28 @@ func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
 		return s.queryGet(q), true, nil
 	case QueryList:
 		return s.queryList(), true, nil
+	case QueryGetAll:
+		menus := make([]ContextMenuDef, 0, len(s.registeredMenus))
+		for _, menu := range s.registeredMenus {
+			menus = append(menus, menu)
+		}
+		return menus, true, nil
 	default:
 		return nil, false, nil
 	}
 }
 
-// queryGet returns a single menu definition by name, or nil if not found.
 func (s *Service) queryGet(q QueryGet) *ContextMenuDef {
-	menu, ok := s.menus[q.Name]
+	menu, ok := s.registeredMenus[q.Name]
 	if !ok {
 		return nil
 	}
 	return &menu
 }
 
-// queryList returns a copy of all registered menus.
 func (s *Service) queryList() map[string]ContextMenuDef {
-	result := make(map[string]ContextMenuDef, len(s.menus))
-	for k, v := range s.menus {
+	result := make(map[string]ContextMenuDef, len(s.registeredMenus))
+	for k, v := range s.registeredMenus {
 		result[k] = v
 	}
 	return result
@@ -71,6 +69,20 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 		return nil, true, s.taskAdd(t)
 	case TaskRemove:
 		return nil, true, s.taskRemove(t)
+	case TaskUpdate:
+		if _, exists := s.registeredMenus[t.Name]; !exists {
+			return nil, true, ErrorMenuNotFound
+		}
+		_ = s.platform.Remove(t.Name)
+		delete(s.registeredMenus, t.Name)
+		return nil, true, s.taskAdd(TaskAdd{Name: t.Name, Menu: t.Menu})
+	case TaskDestroy:
+		if _, exists := s.registeredMenus[t.Name]; !exists {
+			return nil, true, ErrorMenuNotFound
+		}
+		_ = s.platform.Remove(t.Name)
+		delete(s.registeredMenus, t.Name)
+		return nil, true, nil
 	default:
 		return nil, false, nil
 	}
@@ -78,9 +90,9 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 
 func (s *Service) taskAdd(t TaskAdd) error {
 	// If menu already exists, remove it first (replace semantics)
-	if _, exists := s.menus[t.Name]; exists {
+	if _, exists := s.registeredMenus[t.Name]; exists {
 		_ = s.platform.Remove(t.Name)
-		delete(s.menus, t.Name)
+		delete(s.registeredMenus, t.Name)
 	}
 
 	// Register on platform with a callback that broadcasts ActionItemClicked
@@ -92,23 +104,23 @@ func (s *Service) taskAdd(t TaskAdd) error {
 		})
 	})
 	if err != nil {
-		return corego.Wrap(err, "contextmenu.add", "platform add failed")
+		return coreerr.E("contextmenu.taskAdd", "platform add failed", err)
 	}
 
-	s.menus[t.Name] = t.Menu
+	s.registeredMenus[t.Name] = t.Menu
 	return nil
 }
 
 func (s *Service) taskRemove(t TaskRemove) error {
-	if _, exists := s.menus[t.Name]; !exists {
-		return ErrMenuNotFound
+	if _, exists := s.registeredMenus[t.Name]; !exists {
+		return ErrorMenuNotFound
 	}
 
 	err := s.platform.Remove(t.Name)
 	if err != nil {
-		return corego.Wrap(err, "contextmenu.remove", "platform remove failed")
+		return coreerr.E("contextmenu.taskRemove", "platform remove failed", err)
 	}
 
-	delete(s.menus, t.Name)
+	delete(s.registeredMenus, t.Name)
 	return nil
 }

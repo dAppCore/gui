@@ -4,8 +4,8 @@ package mcp
 import (
 	"context"
 
-	corego "dappco.re/go/core"
-	"dappco.re/go/core/gui/pkg/environment"
+	coreerr "forge.lthn.ai/core/go-log"
+	"forge.lthn.ai/core/gui/pkg/environment"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -23,7 +23,7 @@ func (s *Subsystem) themeGet(_ context.Context, _ *mcp.CallToolRequest, _ ThemeG
 	}
 	theme, ok := result.(environment.ThemeInfo)
 	if !ok {
-		return nil, ThemeGetOutput{}, corego.E("mcp.environment", "unexpected result type from theme query", nil)
+		return nil, ThemeGetOutput{}, coreerr.E("mcp.themeGet", "unexpected result type", nil)
 	}
 	return nil, ThemeGetOutput{Theme: theme}, nil
 }
@@ -42,7 +42,7 @@ func (s *Subsystem) themeSystem(_ context.Context, _ *mcp.CallToolRequest, _ The
 	}
 	info, ok := result.(environment.EnvironmentInfo)
 	if !ok {
-		return nil, ThemeSystemOutput{}, corego.E("mcp.environment", "unexpected result type from environment info query", nil)
+		return nil, ThemeSystemOutput{}, coreerr.E("mcp.themeSystem", "unexpected result type", nil)
 	}
 	return nil, ThemeSystemOutput{Info: info}, nil
 }
@@ -53,7 +53,7 @@ type ThemeSetInput struct {
 	Theme string `json:"theme"`
 }
 type ThemeSetOutput struct {
-	Theme environment.ThemeInfo `json:"theme"`
+	Success bool `json:"success"`
 }
 
 func (s *Subsystem) themeSet(_ context.Context, _ *mcp.CallToolRequest, input ThemeSetInput) (*mcp.CallToolResult, ThemeSetOutput, error) {
@@ -61,21 +61,14 @@ func (s *Subsystem) themeSet(_ context.Context, _ *mcp.CallToolRequest, input Th
 	if err != nil {
 		return nil, ThemeSetOutput{}, err
 	}
-	result, _, err := s.core.QUERY(environment.QueryTheme{})
-	if err != nil {
-		return nil, ThemeSetOutput{}, err
-	}
-	theme, ok := result.(environment.ThemeInfo)
-	if !ok {
-		return nil, ThemeSetOutput{}, corego.E("mcp.environment", "unexpected result type from theme query", nil)
-	}
-	return nil, ThemeSetOutput{Theme: theme}, nil
+	return nil, ThemeSetOutput{Success: true}, nil
 }
 
 // --- Registration ---
 
 func (s *Subsystem) registerEnvironmentTools(server *mcp.Server) {
 	mcp.AddTool(server, &mcp.Tool{Name: "theme_get", Description: "Get the current application theme"}, s.themeGet)
+	mcp.AddTool(server, &mcp.Tool{Name: "theme_set", Description: "Override the application theme to light, dark, or system"}, s.themeSet)
 	mcp.AddTool(server, &mcp.Tool{Name: "theme_system", Description: "Get system environment and theme information"}, s.themeSystem)
 	mcp.AddTool(server, &mcp.Tool{Name: "theme_set", Description: "Set the application theme override"}, s.themeSet)
 }

@@ -1,28 +1,22 @@
 // pkg/systray/menu.go
 package systray
 
-import "forge.lthn.ai/core/go/pkg/core"
+import coreerr "forge.lthn.ai/core/go-log"
 
 // SetMenu sets a dynamic menu on the tray from TrayMenuItem descriptors.
 // Use: _ = m.SetMenu([]TrayMenuItem{{Label: "Quit", ActionID: "quit"}})
 func (m *Manager) SetMenu(items []TrayMenuItem) error {
 	if m.tray == nil {
-		return core.E("systray.SetMenu", "tray not initialised", nil)
+		return coreerr.E("systray.SetMenu", "tray not initialised", nil)
 	}
-	m.menuItems = append([]TrayMenuItem(nil), items...)
-	menu := m.buildMenu(items)
+	menu := m.platform.NewMenu()
+	m.buildMenu(menu, items)
 	m.tray.SetMenu(menu)
 	return nil
 }
 
 // buildMenu recursively builds a PlatformMenu from TrayMenuItem descriptors.
-func (m *Manager) buildMenu(items []TrayMenuItem) PlatformMenu {
-	menu := m.platform.NewMenu()
-	m.buildMenuInto(menu, items)
-	return menu
-}
-
-func (m *Manager) buildMenuInto(menu PlatformMenu, items []TrayMenuItem) {
+func (m *Manager) buildMenu(menu PlatformMenu, items []TrayMenuItem) {
 	for _, item := range items {
 		if item.Type == "separator" {
 			menu.AddSeparator()
@@ -30,7 +24,7 @@ func (m *Manager) buildMenuInto(menu PlatformMenu, items []TrayMenuItem) {
 		}
 		if len(item.Submenu) > 0 {
 			sub := menu.AddSubmenu(item.Label)
-			m.buildMenuInto(sub, item.Submenu)
+			m.buildMenu(sub, item.Submenu)
 			continue
 		}
 		mi := menu.Add(item.Label)

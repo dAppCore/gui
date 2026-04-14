@@ -3,57 +3,49 @@ package display
 
 import (
 	"context"
-	"encoding/base64"
-	"os"
 	"runtime"
 
 	corego "dappco.re/go/core"
 	"forge.lthn.ai/core/config"
+	coreerr "forge.lthn.ai/core/go-log"
 	"forge.lthn.ai/core/go/pkg/core"
+	coreutil "dappco.re/go/core"
 
-	"dappco.re/go/core/gui/pkg/browser"
-	"dappco.re/go/core/gui/pkg/clipboard"
-	"dappco.re/go/core/gui/pkg/contextmenu"
-	"dappco.re/go/core/gui/pkg/dialog"
-	"dappco.re/go/core/gui/pkg/dock"
-	"dappco.re/go/core/gui/pkg/environment"
-	"dappco.re/go/core/gui/pkg/keybinding"
-	"dappco.re/go/core/gui/pkg/lifecycle"
-	"dappco.re/go/core/gui/pkg/menu"
-	"dappco.re/go/core/gui/pkg/notification"
-	"dappco.re/go/core/gui/pkg/screen"
-	"dappco.re/go/core/gui/pkg/systray"
-	"dappco.re/go/core/gui/pkg/webview"
-	"dappco.re/go/core/gui/pkg/window"
+	"forge.lthn.ai/core/gui/pkg/browser"
+	"forge.lthn.ai/core/gui/pkg/contextmenu"
+	"forge.lthn.ai/core/gui/pkg/dialog"
+	"forge.lthn.ai/core/gui/pkg/dock"
+	"forge.lthn.ai/core/gui/pkg/environment"
+	"forge.lthn.ai/core/gui/pkg/events"
+	"forge.lthn.ai/core/gui/pkg/keybinding"
+	"forge.lthn.ai/core/gui/pkg/lifecycle"
+	"forge.lthn.ai/core/gui/pkg/menu"
+	"forge.lthn.ai/core/gui/pkg/notification"
+	"forge.lthn.ai/core/gui/pkg/screen"
+	"forge.lthn.ai/core/gui/pkg/systray"
+	"forge.lthn.ai/core/gui/pkg/webview"
+	"forge.lthn.ai/core/gui/pkg/window"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
-// Options holds configuration for the display service.
-// Use: svc, err := display.NewService()
 type Options struct{}
 
 // WindowInfo is an alias for window.WindowInfo (backward compatibility).
 type WindowInfo = window.WindowInfo
 
-// LayoutSuggestion is an alias for window.LayoutSuggestion (backward compatibility).
-type LayoutSuggestion = window.LayoutSuggestion
-
-// Service manages windowing, dialogs, and other visual elements.
-// It orchestrates sub-services (window, systray, menu) via IPC and bridges
-// IPC actions to WebSocket events for TypeScript apps.
-// Use: svc, err := display.NewService()
+// Service orchestrates window, systray, and menu sub-services via IPC.
+// Bridges IPC actions to WebSocket events for TypeScript apps.
 type Service struct {
 	*core.ServiceRuntime[Options]
 	wailsApp   *application.App
 	app        App
-	config     Options
 	configData map[string]map[string]any
-	cfg        *config.Config // config instance for file persistence
+	configFile *config.Config // config instance for file persistence
 	events     *WSEventManager
 }
 
-// NewService creates a display service with empty config sections.
-// Use: svc, err := display.NewService()
+// NewService returns a display Service with empty config sections.
+// svc, _ := display.NewService(); _, _ = svc.CreateWindow(display.CreateWindowOptions{Name: "settings", URL: "/settings", Width: 800, Height: 600})
 func NewService() (*Service, error) {
 	return &Service{
 		configData: map[string]map[string]any{
@@ -64,15 +56,14 @@ func NewService() (*Service, error) {
 	}, nil
 }
 
-// Deprecated: use NewService.
-// Use: svc, err := display.New()
+// Deprecated: use NewService().
 func New() (*Service, error) {
 	return NewService()
 }
 
-// Register creates a factory closure that captures the Wails app.
-// Use: core.WithService(display.Register(app))
-// Pass nil for testing without a Wails runtime.
+// Register binds the display service to a Core instance.
+// core.WithService(display.Register(app))      // production (Wails app)
+// core.WithService(display.Register(nil))      // tests (no Wails runtime)
 func Register(wailsApp *application.App) func(*core.Core) (any, error) {
 	return func(c *core.Core) (any, error) {
 		s, err := NewService()
@@ -85,10 +76,8 @@ func Register(wailsApp *application.App) func(*core.Core) (any, error) {
 	}
 }
 
-// OnStartup loads config and registers IPC handlers synchronously.
-// CRITICAL: config handlers MUST be registered before returning —
-// sub-services depend on them during their own OnStartup.
-// Use: _ = svc.OnStartup(context.Background())
+// OnStartup loads config and registers handlers before sub-services start.
+// Config handlers are registered first — sub-services query them during their own OnStartup.
 func (s *Service) OnStartup(ctx context.Context) error {
 	s.loadConfig()
 
@@ -105,9 +94,7 @@ func (s *Service) OnStartup(ctx context.Context) error {
 	return nil
 }
 
-// HandleIPCEvents is auto-discovered and registered by core.WithService.
-// It bridges sub-service IPC actions to WebSocket events for TS apps.
-// Use: _ = svc.HandleIPCEvents(core, msg)
+// HandleIPCEvents bridges IPC actions from sub-services to WebSocket events for TS apps.
 func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 	switch m := msg.(type) {
 	case core.ActionServiceStartup:
@@ -132,7 +119,7 @@ func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 	case window.ActionWindowResized:
 		if s.events != nil {
 			s.events.Emit(Event{Type: EventWindowResize, Window: m.Name,
-				Data: map[string]any{"w": m.W, "h": m.H}})
+				Data: map[string]any{"w": m.Width, "h": m.Height}})
 		}
 	case window.ActionWindowFocused:
 		if s.events != nil {
@@ -238,6 +225,31 @@ func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 			s.events.Emit(Event{Type: EventWebviewException, Window: m.Window,
 				Data: map[string]any{"exception": m.Exception}})
 		}
+	case events.ActionEventFired:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventCustomEvent,
+				Data: map[string]any{"name": m.Name, "data": m.Data}})
+		}
+	case dock.ActionProgressChanged:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventDockProgress,
+				Data: map[string]any{"value": m.Value}})
+		}
+	case dock.ActionBounceStarted:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventDockBounce,
+				Data: map[string]any{"bounceId": m.BounceID, "type": m.Type}})
+		}
+	case notification.ActionNotificationActionTriggered:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventNotificationAction,
+				Data: map[string]any{"notificationId": m.NotificationID, "actionId": m.ActionID}})
+		}
+	case notification.ActionNotificationDismissed:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventNotificationDismiss,
+				Data: map[string]any{"notificationId": m.NotificationID}})
+		}
 	case ActionIDECommand:
 		if s.events != nil {
 			s.events.Emit(Event{Type: EventIDECommand,
@@ -257,7 +269,7 @@ type WSMessage struct {
 func wsRequire(data map[string]any, key string) (string, error) {
 	v, _ := data[key].(string)
 	if v == "" {
-		return "", corego.NewError(corego.Sprintf("ws: missing required field %q", key))
+		return "", coreerr.E("display.wsRequire", "missing required field \""+key+"\"", nil)
 	}
 	return v, nil
 }
@@ -443,11 +455,9 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 		result, handled, err = s.Core().QUERY(dock.QueryVisible{})
 	case "contextmenu:add":
 		name, _ := msg.Data["name"].(string)
-		menuR := corego.JSONMarshal(msg.Data["menu"])
+		menuJSON := coreutil.JSONMarshalString(msg.Data["menu"])
 		var menuDef contextmenu.ContextMenuDef
-		if menuR.OK {
-			_ = corego.JSONUnmarshal(menuR.Value.([]byte), &menuDef)
-		}
+		_ = coreutil.JSONUnmarshalString(menuJSON, &menuDef)
 		result, handled, err = s.Core().PERFORM(contextmenu.TaskAdd{
 			Name: name, Menu: menuDef,
 		})
@@ -1145,10 +1155,10 @@ func (s *Service) handleTrayAction(actionID string) {
 		result, handled, _ := s.Core().QUERY(environment.QueryInfo{})
 		if handled {
 			info := result.(environment.EnvironmentInfo)
-			details := corego.Sprintf("OS: %s\nArch: %s\nPlatform: %s %s",
-				info.OS, info.Arch, info.Platform.Name, info.Platform.Version)
+			details := "OS: " + info.OS + "\nArch: " + info.Arch + "\nPlatform: " +
+				info.Platform.Name + " " + info.Platform.Version
 			_, _, _ = s.Core().PERFORM(dialog.TaskMessageDialog{
-				Opts: dialog.MessageDialogOptions{
+				Options: dialog.MessageDialogOptions{
 					Type: dialog.DialogInfo, Title: "Environment",
 					Message: details, Buttons: []string{"OK"},
 				},
@@ -1162,31 +1172,31 @@ func (s *Service) handleTrayAction(actionID string) {
 }
 
 func guiConfigPath() string {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return corego.JoinPath(".core", "gui", "config.yaml")
+	home := coreutil.Env("DIR_HOME")
+	if home == "" {
+		return coreutil.JoinPath(".core", "gui", "config.yaml")
 	}
-	return corego.JoinPath(home, ".core", "gui", "config.yaml")
+	return coreutil.JoinPath(home, ".core", "gui", "config.yaml")
 }
 
 func (s *Service) loadConfig() {
-	if s.cfg != nil {
+	if s.configFile != nil {
 		return // Already loaded (e.g., via loadConfigFrom in tests)
 	}
 	s.loadConfigFrom(guiConfigPath())
 }
 
 func (s *Service) loadConfigFrom(path string) {
-	cfg, err := config.New(config.WithPath(path))
+	configFile, err := config.New(config.WithPath(path))
 	if err != nil {
 		// Non-critical — continue with empty configData
 		return
 	}
-	s.cfg = cfg
+	s.configFile = configFile
 
 	for _, section := range []string{"window", "systray", "menu"} {
 		var data map[string]any
-		if err := cfg.Get(section, &data); err == nil && data != nil {
+		if err := configFile.Get(section, &data); err == nil && data != nil {
 			s.configData[section] = data
 		}
 	}
@@ -1208,16 +1218,16 @@ func (s *Service) handleConfigQuery(c *core.Core, q core.Query) (any, bool, erro
 func (s *Service) handleConfigTask(c *core.Core, t core.Task) (any, bool, error) {
 	switch t := t.(type) {
 	case window.TaskSaveConfig:
-		s.configData["window"] = t.Value
-		s.persistSection("window", t.Value)
+		s.configData["window"] = t.Config
+		s.persistSection("window", t.Config)
 		return nil, true, nil
 	case systray.TaskSaveConfig:
-		s.configData["systray"] = t.Value
-		s.persistSection("systray", t.Value)
+		s.configData["systray"] = t.Config
+		s.persistSection("systray", t.Config)
 		return nil, true, nil
 	case menu.TaskSaveConfig:
-		s.configData["menu"] = t.Value
-		s.persistSection("menu", t.Value)
+		s.configData["menu"] = t.Config
+		s.persistSection("menu", t.Config)
 		return nil, true, nil
 	default:
 		return nil, false, nil
@@ -1225,11 +1235,11 @@ func (s *Service) handleConfigTask(c *core.Core, t core.Task) (any, bool, error)
 }
 
 func (s *Service) persistSection(key string, value map[string]any) {
-	if s.cfg == nil {
+	if s.configFile == nil {
 		return
 	}
-	_ = s.cfg.Set(key, value)
-	_ = s.cfg.Commit()
+	_ = s.configFile.Set(key, value)
+	_ = s.configFile.Commit()
 }
 
 // --- Service accessors ---
@@ -1245,10 +1255,13 @@ func (s *Service) windowService() *window.Service {
 
 // --- Window Management (delegates via IPC) ---
 
-// OpenWindow creates a new window via IPC.
-// Use: _ = svc.OpenWindow(window.WithName("editor"), window.WithURL("/editor"))
-func (s *Service) OpenWindow(opts ...window.WindowOption) error {
-	_, _, err := s.Core().PERFORM(window.TaskOpenWindow{Opts: opts})
+// Deprecated: use CreateWindow(display.CreateWindowOptions{Name: "settings", URL: "/settings", Width: 800, Height: 600}).
+func (s *Service) OpenWindow(options ...window.WindowOption) error {
+	spec, err := window.ApplyOptions(options...)
+	if err != nil {
+		return err
+	}
+	_, _, err = s.Core().PERFORM(window.TaskOpenWindow{Window: spec})
 	return err
 }
 
@@ -1260,7 +1273,7 @@ func (s *Service) GetWindowInfo(name string) (*window.WindowInfo, error) {
 		return nil, err
 	}
 	if !handled {
-		return nil, corego.NewError(corego.Sprintf("window service not available"))
+		return nil, coreerr.E("display.GetWindowInfo", "window service not available", nil)
 	}
 	info, _ := result.(*window.WindowInfo)
 	return info, nil
@@ -1287,7 +1300,7 @@ func (s *Service) SetWindowPosition(name string, x, y int) error {
 // SetWindowSize resizes a window via IPC.
 // Use: _ = svc.SetWindowSize("editor", 1280, 800)
 func (s *Service) SetWindowSize(name string, width, height int) error {
-	_, _, err := s.Core().PERFORM(window.TaskSetSize{Name: name, W: width, H: height})
+	_, _, err := s.Core().PERFORM(window.TaskSetSize{Name: name, Width: width, Height: height})
 	return err
 }
 
@@ -1297,7 +1310,7 @@ func (s *Service) SetWindowBounds(name string, x, y, width, height int) error {
 	if _, _, err := s.Core().PERFORM(window.TaskSetPosition{Name: name, X: x, Y: y}); err != nil {
 		return err
 	}
-	_, _, err := s.Core().PERFORM(window.TaskSetSize{Name: name, W: width, H: height})
+	_, _, err := s.Core().PERFORM(window.TaskSetSize{Name: name, Width: width, Height: height})
 	return err
 }
 
@@ -1335,68 +1348,41 @@ func (s *Service) CloseWindow(name string) error {
 	return err
 }
 
-// RestoreWindow restores a maximized/minimized window via IPC.
-// Use: _ = svc.RestoreWindow("editor")
+// RestoreWindow restores a maximized/minimized window.
 func (s *Service) RestoreWindow(name string) error {
 	_, _, err := s.Core().PERFORM(window.TaskRestore{Name: name})
 	return err
 }
 
-// SetWindowVisibility shows or hides a window via IPC.
-// Use: _ = svc.SetWindowVisibility("editor", false)
+// SetWindowVisibility shows or hides a window.
 func (s *Service) SetWindowVisibility(name string, visible bool) error {
 	_, _, err := s.Core().PERFORM(window.TaskSetVisibility{Name: name, Visible: visible})
 	return err
 }
 
-// SetWindowAlwaysOnTop sets whether a window stays on top via IPC.
-// Use: _ = svc.SetWindowAlwaysOnTop("editor", true)
+// SetWindowAlwaysOnTop sets whether a window stays on top.
 func (s *Service) SetWindowAlwaysOnTop(name string, alwaysOnTop bool) error {
 	_, _, err := s.Core().PERFORM(window.TaskSetAlwaysOnTop{Name: name, AlwaysOnTop: alwaysOnTop})
 	return err
 }
 
-// SetWindowTitle changes a window's title via IPC.
-// Use: _ = svc.SetWindowTitle("editor", "Core Editor")
+// SetWindowTitle changes a window's title.
 func (s *Service) SetWindowTitle(name string, title string) error {
 	_, _, err := s.Core().PERFORM(window.TaskSetTitle{Name: name, Title: title})
 	return err
 }
 
-// SetWindowFullscreen sets a window to fullscreen mode via IPC.
-// Use: _ = svc.SetWindowFullscreen("editor", true)
+// SetWindowFullscreen sets a window to fullscreen mode.
 func (s *Service) SetWindowFullscreen(name string, fullscreen bool) error {
 	_, _, err := s.Core().PERFORM(window.TaskFullscreen{Name: name, Fullscreen: fullscreen})
 	return err
 }
 
-// SetWindowBackgroundColour sets the background colour of a window via IPC.
-// Use: _ = svc.SetWindowBackgroundColour("editor", 0, 0, 0, 0)
+// SetWindowBackgroundColour sets the background colour of a window.
 func (s *Service) SetWindowBackgroundColour(name string, r, g, b, a uint8) error {
 	_, _, err := s.Core().PERFORM(window.TaskSetBackgroundColour{
-		Name:  name,
-		Red:   r,
-		Green: g,
-		Blue:  b,
-		Alpha: a,
+		Name: name, Red: r, Green: g, Blue: b, Alpha: a,
 	})
-	return err
-}
-
-// SetWindowOpacity updates a window's opacity via IPC.
-// Use: _ = svc.SetWindowOpacity("editor", 0.85)
-func (s *Service) SetWindowOpacity(name string, opacity float32) error {
-	_, _, err := s.Core().PERFORM(window.TaskSetOpacity{
-		Name:    name,
-		Opacity: opacity,
-	})
-	return err
-}
-
-// ClearWebviewConsole clears the captured console buffer for a window.
-// Use: _ = svc.ClearWebviewConsole("editor")
-func (s *Service) ClearWebviewConsole(name string) error {
-	_, _, err := s.Core().PERFORM(webview.TaskClearConsole{Window: name})
 	return err
 }
 
@@ -1420,7 +1406,7 @@ func (s *Service) GetWindowTitle(name string) (string, error) {
 		return "", err
 	}
 	if info == nil {
-		return "", corego.NewError(corego.Sprintf("window not found: %s", name))
+		return "", coreerr.E("display.GetWindowTitle", "window not found: "+name, nil)
 	}
 	return info.Title, nil
 }
@@ -1451,8 +1437,8 @@ func (s *Service) GetSavedWindowStates() map[string]window.WindowState {
 	return result
 }
 
-// CreateWindowOptions contains options for creating a new window.
-// Use: opts := display.CreateWindowOptions{Name: "editor", URL: "/editor"}
+// CreateWindowOptions specifies the initial state for a new named window.
+// svc.CreateWindow(display.CreateWindowOptions{Name: "settings", URL: "/settings", Width: 800, Height: 600})
 type CreateWindowOptions struct {
 	Name             string   `json:"name"`
 	Title            string   `json:"title,omitempty"`
@@ -1465,23 +1451,19 @@ type CreateWindowOptions struct {
 	BackgroundColour [4]uint8 `json:"backgroundColour,omitempty"`
 }
 
-// CreateWindow creates a new window with the specified options.
-// Use: info, err := svc.CreateWindow(display.CreateWindowOptions{Name: "editor", URL: "/editor"})
-func (s *Service) CreateWindow(opts CreateWindowOptions) (*window.WindowInfo, error) {
-	if opts.Name == "" {
-		return nil, corego.NewError(corego.Sprintf("window name is required"))
+func (s *Service) CreateWindow(options CreateWindowOptions) (*window.WindowInfo, error) {
+	if options.Name == "" {
+		return nil, coreerr.E("display.CreateWindow", "window name is required", nil)
 	}
 	result, _, err := s.Core().PERFORM(window.TaskOpenWindow{
 		Window: &window.Window{
-			Name:             opts.Name,
-			Title:            opts.Title,
-			URL:              opts.URL,
-			X:                opts.X,
-			Y:                opts.Y,
-			Width:            opts.Width,
-			Height:           opts.Height,
-			AlwaysOnTop:      opts.AlwaysOnTop,
-			BackgroundColour: opts.BackgroundColour,
+			Name:   options.Name,
+			Title:  options.Title,
+			URL:    options.URL,
+			Width:  options.Width,
+			Height: options.Height,
+			X:      options.X,
+			Y:      options.Y,
 		},
 	})
 	if err != nil {
@@ -1496,79 +1478,44 @@ func (s *Service) CreateWindow(opts CreateWindowOptions) (*window.WindowInfo, er
 // SaveLayout saves the current window arrangement as a named layout.
 // Use: _ = svc.SaveLayout("coding")
 func (s *Service) SaveLayout(name string) error {
-	ws := s.windowService()
-	if ws == nil {
-		return corego.NewError(corego.Sprintf("window service not available"))
-	}
-	states := make(map[string]window.WindowState)
-	for _, n := range ws.Manager().List() {
-		if pw, ok := ws.Manager().Get(n); ok {
-			x, y := pw.Position()
-			w, h := pw.Size()
-			states[n] = window.WindowState{X: x, Y: y, Width: w, Height: h, Maximized: pw.IsMaximised()}
-		}
-	}
-	return ws.Manager().Layout().SaveLayout(name, states)
+	_, _, err := s.Core().PERFORM(window.TaskSaveLayout{Name: name})
+	return err
 }
 
 // RestoreLayout applies a saved layout.
 // Use: _ = svc.RestoreLayout("coding")
 func (s *Service) RestoreLayout(name string) error {
-	ws := s.windowService()
-	if ws == nil {
-		return corego.NewError(corego.Sprintf("window service not available"))
-	}
-	layout, ok := ws.Manager().Layout().GetLayout(name)
-	if !ok {
-		return corego.NewError(corego.Sprintf("layout not found: %s", name))
-	}
-	for wName, state := range layout.Windows {
-		if pw, ok := ws.Manager().Get(wName); ok {
-			pw.SetPosition(state.X, state.Y)
-			pw.SetSize(state.Width, state.Height)
-			if state.Maximized {
-				pw.Maximise()
-			} else {
-				pw.Restore()
-			}
-		}
-	}
-	return nil
+	_, _, err := s.Core().PERFORM(window.TaskRestoreLayout{Name: name})
+	return err
 }
 
 // ListLayouts returns all saved layout names with metadata.
 // Use: layouts := svc.ListLayouts()
 func (s *Service) ListLayouts() []window.LayoutInfo {
-	ws := s.windowService()
-	if ws == nil {
+	result, handled, _ := s.Core().QUERY(window.QueryLayoutList{})
+	if !handled {
 		return nil
 	}
-	return ws.Manager().Layout().ListLayouts()
+	layouts, _ := result.([]window.LayoutInfo)
+	return layouts
 }
 
 // DeleteLayout removes a saved layout by name.
 // Use: _ = svc.DeleteLayout("coding")
 func (s *Service) DeleteLayout(name string) error {
-	ws := s.windowService()
-	if ws == nil {
-		return corego.NewError(corego.Sprintf("window service not available"))
-	}
-	ws.Manager().Layout().DeleteLayout(name)
-	return nil
+	_, _, err := s.Core().PERFORM(window.TaskDeleteLayout{Name: name})
+	return err
 }
 
 // GetLayout returns a specific layout by name.
 // Use: layout := svc.GetLayout("coding")
 func (s *Service) GetLayout(name string) *window.Layout {
-	ws := s.windowService()
-	if ws == nil {
+	result, handled, _ := s.Core().QUERY(window.QueryLayoutGet{Name: name})
+	if !handled {
 		return nil
 	}
-	layout, ok := ws.Manager().Layout().GetLayout(name)
-	if !ok {
-		return nil
-	}
-	return &layout
+	layout, _ := result.(*window.Layout)
+	return layout
 }
 
 // --- Tiling/snapping delegation ---
@@ -1576,698 +1523,31 @@ func (s *Service) GetLayout(name string) *window.Layout {
 // TileWindows arranges windows in a tiled layout.
 // Use: _ = svc.TileWindows(window.TileModeLeftRight, []string{"left", "right"})
 func (s *Service) TileWindows(mode window.TileMode, windowNames []string) error {
-	ws := s.windowService()
-	if ws == nil {
-		return corego.NewError(corego.Sprintf("window service not available"))
-	}
-	screenWidth, screenHeight := s.primaryScreenSize()
-	return ws.Manager().TileWindows(mode, windowNames, screenWidth, screenHeight)
+	_, _, err := s.Core().PERFORM(window.TaskTileWindows{Mode: mode.String(), Windows: windowNames})
+	return err
 }
 
 // SnapWindow snaps a window to a screen edge or corner.
 // Use: _ = svc.SnapWindow("editor", window.SnapRight)
 func (s *Service) SnapWindow(name string, position window.SnapPosition) error {
-	ws := s.windowService()
-	if ws == nil {
-		return corego.NewError(corego.Sprintf("window service not available"))
-	}
-	screenWidth, screenHeight := s.primaryScreenSize()
-	return ws.Manager().SnapWindow(name, position, screenWidth, screenHeight)
-}
-
-func (s *Service) primaryScreenSize() (int, int) {
-	const fallbackWidth = 1920
-	const fallbackHeight = 1080
-
-	result, handled, err := s.Core().QUERY(screen.QueryPrimary{})
-	if err != nil || !handled {
-		return fallbackWidth, fallbackHeight
-	}
-
-	primary, ok := result.(*screen.Screen)
-	if !ok || primary == nil {
-		return fallbackWidth, fallbackHeight
-	}
-
-	width := primary.WorkArea.Width
-	height := primary.WorkArea.Height
-	if width <= 0 || height <= 0 {
-		width = primary.Bounds.Width
-		height = primary.Bounds.Height
-	}
-	if width <= 0 || height <= 0 {
-		return fallbackWidth, fallbackHeight
-	}
-
-	return width, height
+	_, _, err := s.Core().PERFORM(window.TaskSnapWindow{Name: name, Position: position.String()})
+	return err
 }
 
 // StackWindows arranges windows in a cascade pattern.
 // Use: _ = svc.StackWindows([]string{"editor", "terminal"}, 24, 24)
 func (s *Service) StackWindows(windowNames []string, offsetX, offsetY int) error {
-	ws := s.windowService()
-	if ws == nil {
-		return corego.NewError(corego.Sprintf("window service not available"))
-	}
-	return ws.Manager().StackWindows(windowNames, offsetX, offsetY)
+	_, _, err := s.Core().PERFORM(window.TaskStackWindows{Windows: windowNames, OffsetX: offsetX, OffsetY: offsetY})
+	return err
 }
 
 // ApplyWorkflowLayout applies a predefined layout for a specific workflow.
 // Use: _ = svc.ApplyWorkflowLayout(window.WorkflowCoding)
 func (s *Service) ApplyWorkflowLayout(workflow window.WorkflowLayout) error {
-	ws := s.windowService()
-	if ws == nil {
-		return corego.NewError(corego.Sprintf("window service not available"))
-	}
-	screenWidth, screenHeight := s.primaryScreenSize()
-	return ws.Manager().ApplyWorkflow(workflow, ws.Manager().List(), screenWidth, screenHeight)
-}
-
-// ArrangeWindowPair places two windows side by side using the window manager's balanced split.
-// Use: _ = svc.ArrangeWindowPair("editor", "terminal")
-func (s *Service) ArrangeWindowPair(first, second string) error {
-	ws := s.windowService()
-	if ws == nil {
-		return corego.NewError(corego.Sprintf("window service not available"))
-	}
-	screenWidth, screenHeight := s.primaryScreenSize()
-	return ws.Manager().ArrangePair(first, second, screenWidth, screenHeight)
-}
-
-// FindSpace returns a free placement suggestion for a new window.
-// Use: space, err := svc.FindSpace(800, 600)
-func (s *Service) FindSpace(width, height int) (window.SpaceInfo, error) {
-	ws := s.windowService()
-	if ws == nil {
-		return window.SpaceInfo{}, corego.NewError(corego.Sprintf("window service not available"))
-	}
-	screenWidth, screenHeight := s.primaryScreenSize()
-	if width <= 0 {
-		width = screenWidth / 2
-	}
-	if height <= 0 {
-		height = screenHeight / 2
-	}
-	return ws.Manager().FindSpace(screenWidth, screenHeight, width, height), nil
-}
-
-// SuggestLayout returns a recommended arrangement for the current screen.
-// Use: suggestion, err := svc.SuggestLayout(3, 1920, 1080)
-func (s *Service) SuggestLayout(windowCount, screenWidth, screenHeight int) (window.LayoutSuggestion, error) {
-	result, handled, err := s.Core().QUERY(window.QueryLayoutSuggestion{
-		WindowCount:  windowCount,
-		ScreenWidth:  screenWidth,
-		ScreenHeight: screenHeight,
-	})
-	if err != nil {
-		return window.LayoutSuggestion{}, err
-	}
-	if !handled {
-		return window.LayoutSuggestion{}, corego.NewError(corego.Sprintf("window service not available"))
-	}
-	suggestion, _ := result.(window.LayoutSuggestion)
-	return suggestion, nil
-}
-
-// BesideEditor positions a target window beside an editor window.
-// Use: _ = svc.BesideEditor("editor", "assistant")
-func (s *Service) BesideEditor(editorName, windowName string) error {
-	_, _, err := s.Core().PERFORM(window.TaskBesideEditor{
-		Editor: editorName,
-		Window: windowName,
+	_, _, err := s.Core().PERFORM(window.TaskApplyWorkflow{
+		Workflow: workflow.String(),
 	})
 	return err
-}
-
-// --- Screen management ---
-
-// GetScreens returns all known screens.
-// Use: screens := svc.GetScreens()
-func (s *Service) GetScreens() []screen.Screen {
-	result, handled, _ := s.Core().QUERY(screen.QueryAll{})
-	if !handled {
-		return nil
-	}
-	screens, _ := result.([]screen.Screen)
-	return screens
-}
-
-// GetScreen returns a screen by ID.
-// Use: screenInfo, err := svc.GetScreen("primary")
-func (s *Service) GetScreen(id string) (*screen.Screen, error) {
-	result, handled, err := s.Core().QUERY(screen.QueryByID{ID: id})
-	if err != nil {
-		return nil, err
-	}
-	if !handled {
-		return nil, corego.NewError(corego.Sprintf("screen service not available"))
-	}
-	scr, _ := result.(*screen.Screen)
-	return scr, nil
-}
-
-// GetPrimaryScreen returns the primary screen.
-// Use: primary, err := svc.GetPrimaryScreen()
-func (s *Service) GetPrimaryScreen() (*screen.Screen, error) {
-	result, handled, err := s.Core().QUERY(screen.QueryPrimary{})
-	if err != nil {
-		return nil, err
-	}
-	if !handled {
-		return nil, corego.NewError(corego.Sprintf("screen service not available"))
-	}
-	scr, _ := result.(*screen.Screen)
-	return scr, nil
-}
-
-// GetScreenAtPoint returns the screen containing the specified point.
-// Use: screenInfo, err := svc.GetScreenAtPoint(1280, 720)
-func (s *Service) GetScreenAtPoint(x, y int) (*screen.Screen, error) {
-	result, handled, err := s.Core().QUERY(screen.QueryAtPoint{X: x, Y: y})
-	if err != nil {
-		return nil, err
-	}
-	if !handled {
-		return nil, corego.NewError(corego.Sprintf("screen service not available"))
-	}
-	scr, _ := result.(*screen.Screen)
-	return scr, nil
-}
-
-// GetScreenForWindow returns the screen containing the named window.
-// Use: screenInfo, err := svc.GetScreenForWindow("editor")
-func (s *Service) GetScreenForWindow(name string) (*screen.Screen, error) {
-	info, err := s.GetWindowInfo(name)
-	if err != nil {
-		return nil, err
-	}
-	if info == nil {
-		return nil, nil
-	}
-	x := info.X
-	y := info.Y
-	if info.Width > 0 && info.Height > 0 {
-		x += info.Width / 2
-		y += info.Height / 2
-	}
-	return s.GetScreenAtPoint(x, y)
-}
-
-// GetWorkAreas returns the usable area of every screen.
-// Use: areas := svc.GetWorkAreas()
-func (s *Service) GetWorkAreas() []screen.Rect {
-	result, handled, _ := s.Core().QUERY(screen.QueryWorkAreas{})
-	if !handled {
-		return nil
-	}
-	areas, _ := result.([]screen.Rect)
-	return areas
-}
-
-// --- Clipboard ---
-
-// ReadClipboard returns the current clipboard text content.
-// Use: text, err := svc.ReadClipboard()
-func (s *Service) ReadClipboard() (string, error) {
-	result, handled, err := s.Core().QUERY(clipboard.QueryText{})
-	if err != nil {
-		return "", err
-	}
-	if !handled {
-		return "", core.E("display.ReadClipboard", "clipboard service not available", nil)
-	}
-	content, _ := result.(clipboard.ClipboardContent)
-	return content.Text, nil
-}
-
-// WriteClipboard writes text to the clipboard.
-// Use: _ = svc.WriteClipboard("updated")
-func (s *Service) WriteClipboard(text string) error {
-	result, handled, err := s.Core().PERFORM(clipboard.TaskSetText{Text: text})
-	if err != nil {
-		return err
-	}
-	if !handled {
-		return core.E("display.WriteClipboard", "clipboard service not available", nil)
-	}
-	if ok, _ := result.(bool); !ok {
-		return core.E("display.WriteClipboard", "clipboard write failed", nil)
-	}
-	return nil
-}
-
-// HasClipboard reports whether the clipboard has text or image content.
-// Use: hasContent := svc.HasClipboard()
-func (s *Service) HasClipboard() bool {
-	textResult, textHandled, _ := s.Core().QUERY(clipboard.QueryText{})
-	if textHandled {
-		if content, ok := textResult.(clipboard.ClipboardContent); ok && content.HasContent {
-			return true
-		}
-	}
-	imageResult, imageHandled, _ := s.Core().QUERY(clipboard.QueryImage{})
-	if imageHandled {
-		if content, ok := imageResult.(clipboard.ClipboardImageContent); ok && content.HasContent {
-			return true
-		}
-	}
-	return false
-}
-
-// ClearClipboard clears clipboard text and any image data when supported.
-// Use: _ = svc.ClearClipboard()
-func (s *Service) ClearClipboard() error {
-	result, handled, err := s.Core().PERFORM(clipboard.TaskClear{})
-	if err != nil {
-		return err
-	}
-	if !handled {
-		return core.E("display.ClearClipboard", "clipboard service not available", nil)
-	}
-	if ok, _ := result.(bool); !ok {
-		return core.E("display.ClearClipboard", "clipboard clear failed", nil)
-	}
-	return nil
-}
-
-// ReadClipboardImage returns the clipboard image content.
-// Use: image, err := svc.ReadClipboardImage()
-func (s *Service) ReadClipboardImage() (clipboard.ClipboardImageContent, error) {
-	result, handled, err := s.Core().QUERY(clipboard.QueryImage{})
-	if err != nil {
-		return clipboard.ClipboardImageContent{}, err
-	}
-	if !handled {
-		return clipboard.ClipboardImageContent{}, core.E("display.ReadClipboardImage", "clipboard service not available", nil)
-	}
-	content, _ := result.(clipboard.ClipboardImageContent)
-	return content, nil
-}
-
-// WriteClipboardImage writes raw image data to the clipboard.
-// Use: _ = svc.WriteClipboardImage(data)
-func (s *Service) WriteClipboardImage(data []byte) error {
-	result, handled, err := s.Core().PERFORM(clipboard.TaskSetImage{Data: data})
-	if err != nil {
-		return err
-	}
-	if !handled {
-		return core.E("display.WriteClipboardImage", "clipboard service not available", nil)
-	}
-	if ok, _ := result.(bool); !ok {
-		return core.E("display.WriteClipboardImage", "clipboard image write failed", nil)
-	}
-	return nil
-}
-
-// --- Notifications ---
-
-// ShowNotification sends a native notification.
-// Use: _ = svc.ShowNotification(notification.NotificationOptions{Title: "Build complete", Message: "All checks passed"})
-func (s *Service) ShowNotification(opts notification.NotificationOptions) error {
-	_, handled, err := s.Core().PERFORM(notification.TaskSend{Opts: opts})
-	if err != nil {
-		return err
-	}
-	if !handled {
-		return core.E("display.ShowNotification", "notification service not available", nil)
-	}
-	return nil
-}
-
-// ShowInfoNotification sends an informational notification.
-// Use: _ = svc.ShowInfoNotification("Build complete", "All checks passed")
-func (s *Service) ShowInfoNotification(title, message string) error {
-	return s.ShowNotification(notification.NotificationOptions{
-		Title:    title,
-		Message:  message,
-		Severity: notification.SeverityInfo,
-	})
-}
-
-// ShowWarningNotification sends a warning notification.
-// Use: _ = svc.ShowWarningNotification("Build warning", "Tests are flaky")
-func (s *Service) ShowWarningNotification(title, message string) error {
-	return s.ShowNotification(notification.NotificationOptions{
-		Title:    title,
-		Message:  message,
-		Severity: notification.SeverityWarning,
-	})
-}
-
-// ShowErrorNotification sends an error notification.
-// Use: _ = svc.ShowErrorNotification("Build failed", "See the log output")
-func (s *Service) ShowErrorNotification(title, message string) error {
-	return s.ShowNotification(notification.NotificationOptions{
-		Title:    title,
-		Message:  message,
-		Severity: notification.SeverityError,
-	})
-}
-
-// RequestNotificationPermission requests notification permission.
-// Use: granted, err := svc.RequestNotificationPermission()
-func (s *Service) RequestNotificationPermission() (bool, error) {
-	result, handled, err := s.Core().PERFORM(notification.TaskRequestPermission{})
-	if err != nil {
-		return false, err
-	}
-	if !handled {
-		return false, corego.NewError(corego.Sprintf("notification service not available"))
-	}
-	granted, _ := result.(bool)
-	return granted, nil
-}
-
-// CheckNotificationPermission checks notification permission.
-// Use: granted, err := svc.CheckNotificationPermission()
-func (s *Service) CheckNotificationPermission() (bool, error) {
-	result, handled, err := s.Core().QUERY(notification.QueryPermission{})
-	if err != nil {
-		return false, err
-	}
-	if !handled {
-		return false, corego.NewError(corego.Sprintf("notification service not available"))
-	}
-	status, _ := result.(notification.PermissionStatus)
-	return status.Granted, nil
-}
-
-// ClearNotifications clears notifications when supported.
-// Use: _ = svc.ClearNotifications()
-func (s *Service) ClearNotifications() error {
-	_, handled, err := s.Core().PERFORM(notification.TaskClear{})
-	if err != nil {
-		return err
-	}
-	if !handled {
-		return corego.NewError(corego.Sprintf("notification service not available"))
-	}
-	return nil
-}
-
-// --- Dialogs ---
-
-// OpenFileDialog opens a file picker and returns all selected paths.
-// Use: paths, err := svc.OpenFileDialog(dialog.OpenFileOptions{Title: "Open report"})
-func (s *Service) OpenFileDialog(opts dialog.OpenFileOptions) ([]string, error) {
-	result, handled, err := s.Core().PERFORM(dialog.TaskOpenFile{Opts: opts})
-	if err != nil {
-		return nil, err
-	}
-	if !handled {
-		return nil, corego.NewError(corego.Sprintf("dialog service not available"))
-	}
-	paths, _ := result.([]string)
-	return paths, nil
-}
-
-// OpenSingleFileDialog opens a file picker and returns the first selected path.
-// Use: path, err := svc.OpenSingleFileDialog(dialog.OpenFileOptions{Title: "Open report"})
-func (s *Service) OpenSingleFileDialog(opts dialog.OpenFileOptions) (string, error) {
-	paths, err := s.OpenFileDialog(opts)
-	if err != nil {
-		return "", err
-	}
-	if len(paths) == 0 {
-		return "", nil
-	}
-	return paths[0], nil
-}
-
-// SaveFileDialog opens a save dialog and returns the selected path.
-// Use: path, err := svc.SaveFileDialog(dialog.SaveFileOptions{Title: "Export report"})
-func (s *Service) SaveFileDialog(opts dialog.SaveFileOptions) (string, error) {
-	result, handled, err := s.Core().PERFORM(dialog.TaskSaveFile{Opts: opts})
-	if err != nil {
-		return "", err
-	}
-	if !handled {
-		return "", corego.NewError(corego.Sprintf("dialog service not available"))
-	}
-	path, _ := result.(string)
-	return path, nil
-}
-
-// OpenDirectoryDialog opens a directory picker and returns the selected path.
-// Use: path, err := svc.OpenDirectoryDialog(dialog.OpenDirectoryOptions{Title: "Choose workspace"})
-func (s *Service) OpenDirectoryDialog(opts dialog.OpenDirectoryOptions) (string, error) {
-	result, handled, err := s.Core().PERFORM(dialog.TaskOpenDirectory{Opts: opts})
-	if err != nil {
-		return "", err
-	}
-	if !handled {
-		return "", corego.NewError(corego.Sprintf("dialog service not available"))
-	}
-	path, _ := result.(string)
-	return path, nil
-}
-
-// ConfirmDialog shows a confirmation prompt.
-// Use: confirmed, err := svc.ConfirmDialog("Delete file", "Remove report.txt?")
-func (s *Service) ConfirmDialog(title, message string) (bool, error) {
-	result, handled, err := s.Core().PERFORM(dialog.TaskMessageDialog{
-		Opts: dialog.MessageDialogOptions{
-			Type:    dialog.DialogQuestion,
-			Title:   title,
-			Message: message,
-			Buttons: []string{"Yes", "No"},
-		},
-	})
-	if err != nil {
-		return false, err
-	}
-	if !handled {
-		return false, corego.NewError(corego.Sprintf("dialog service not available"))
-	}
-	button, _ := result.(string)
-	return button == "Yes" || button == "OK", nil
-}
-
-// PromptDialog shows a prompt-style dialog and returns entered text when the webview
-// prompt path is available, otherwise it falls back to a button-based message dialog.
-// Use: value, accepted, err := svc.PromptDialog("Rename file", "Enter a new name")
-func (s *Service) PromptDialog(title, message string) (string, bool, error) {
-	if text, ok, err := s.promptViaWebView(title, message); err == nil {
-		if ok {
-			return text, true, nil
-		}
-		return "", false, nil
-	}
-
-	// Fall back to the native message dialog path when no webview prompt is available.
-	// The returned error is intentionally ignored unless the fallback also fails.
-
-	result, handled, err := s.Core().PERFORM(dialog.TaskMessageDialog{
-		Opts: dialog.MessageDialogOptions{
-			Type:    dialog.DialogInfo,
-			Title:   title,
-			Message: message,
-			Buttons: []string{"OK", "Cancel"},
-		},
-	})
-	if err != nil {
-		return "", false, err
-	}
-	if !handled {
-		return "", false, corego.NewError(corego.Sprintf("dialog service not available"))
-	}
-	button, _ := result.(string)
-	return button, button == "OK", nil
-}
-
-func (s *Service) promptViaWebView(title, message string) (string, bool, error) {
-	windowName := s.GetFocusedWindow()
-	if windowName == "" {
-		infos := s.ListWindowInfos()
-		if len(infos) > 0 {
-			windowName = infos[0].Name
-		}
-	}
-	if windowName == "" {
-		return "", false, corego.NewError(corego.Sprintf("no webview window available"))
-	}
-
-	encodedTitleR := corego.JSONMarshal(title)
-	if !encodedTitleR.OK {
-		return "", false, corego.E("display.showDialog", "failed to marshal title", nil)
-	}
-	encodedMessageR := corego.JSONMarshal(message)
-	if !encodedMessageR.OK {
-		return "", false, corego.E("display.showDialog", "failed to marshal message", nil)
-	}
-
-	result, handled, err := s.Core().PERFORM(webview.TaskEvaluate{
-		Window: windowName,
-		Script: "window.prompt(" + string(encodedTitleR.Value.([]byte)) + "," + string(encodedMessageR.Value.([]byte)) + ")",
-	})
-	if err != nil {
-		return "", false, err
-	}
-	if !handled {
-		return "", false, corego.NewError(corego.Sprintf("webview service not available"))
-	}
-	if result == nil {
-		return "", false, nil
-	}
-	if text, ok := result.(string); ok {
-		return text, true, nil
-	}
-	return corego.Sprint(result), true, nil
-}
-
-// DialogMessage shows an informational, warning, or error message via the notification pipeline.
-// Use: _ = svc.DialogMessage("warning", "Build failed", "Check the log output")
-func (s *Service) DialogMessage(kind, title, message string) error {
-	var severity notification.NotificationSeverity
-	switch kind {
-	case "warning":
-		severity = notification.SeverityWarning
-	case "error":
-		severity = notification.SeverityError
-	default:
-		severity = notification.SeverityInfo
-	}
-	_, _, err := s.Core().PERFORM(notification.TaskSend{
-		Opts: notification.NotificationOptions{
-			Title:    title,
-			Message:  message,
-			Severity: severity,
-		},
-	})
-	return err
-}
-
-// --- Theme ---
-
-// GetTheme returns the current theme state.
-// Use: theme := svc.GetTheme()
-func (s *Service) GetTheme() *Theme {
-	result, handled, err := s.Core().QUERY(environment.QueryTheme{})
-	if err != nil || !handled {
-		return nil
-	}
-	theme, ok := result.(environment.ThemeInfo)
-	if !ok {
-		return nil
-	}
-	return &Theme{IsDark: theme.IsDark}
-}
-
-// GetSystemTheme returns the current system theme preference.
-// Use: theme := svc.GetSystemTheme()
-func (s *Service) GetSystemTheme() string {
-	result, handled, err := s.Core().QUERY(environment.QueryTheme{})
-	if err != nil || !handled {
-		return ""
-	}
-	theme, ok := result.(environment.ThemeInfo)
-	if !ok {
-		return ""
-	}
-	if theme.IsDark {
-		return "dark"
-	}
-	return "light"
-}
-
-// SetTheme overrides the application theme.
-// Use: _ = svc.SetTheme(true)
-func (s *Service) SetTheme(isDark bool) error {
-	if isDark {
-		return s.SetThemeMode("dark")
-	}
-	return s.SetThemeMode("light")
-}
-
-// SetThemeMode overrides the application theme using a declarative mode string.
-// Use: _ = svc.SetThemeMode("system")
-func (s *Service) SetThemeMode(theme string) error {
-	_, handled, err := s.Core().PERFORM(environment.TaskSetTheme{Theme: theme})
-	if err != nil {
-		return err
-	}
-	if !handled {
-		return corego.NewError(corego.Sprintf("environment service not available"))
-	}
-	return nil
-}
-
-// --- Tray ---
-
-// SetTrayIcon sets the tray icon image.
-// Use: _ = svc.SetTrayIcon(iconBytes)
-func (s *Service) SetTrayIcon(data []byte) error {
-	_, handled, err := s.Core().PERFORM(systray.TaskSetTrayIcon{Data: data})
-	if err != nil {
-		return err
-	}
-	if !handled {
-		return corego.NewError(corego.Sprintf("systray service not available"))
-	}
-	return nil
-}
-
-// SetTrayTooltip updates the tray tooltip.
-// Use: _ = svc.SetTrayTooltip("Core is ready")
-func (s *Service) SetTrayTooltip(tooltip string) error {
-	_, handled, err := s.Core().PERFORM(systray.TaskSetTooltip{Tooltip: tooltip})
-	if err != nil {
-		return err
-	}
-	if !handled {
-		return corego.NewError(corego.Sprintf("systray service not available"))
-	}
-	return nil
-}
-
-// SetTrayLabel updates the tray label.
-// Use: _ = svc.SetTrayLabel("Core")
-func (s *Service) SetTrayLabel(label string) error {
-	_, handled, err := s.Core().PERFORM(systray.TaskSetLabel{Label: label})
-	if err != nil {
-		return err
-	}
-	if !handled {
-		return corego.NewError(corego.Sprintf("systray service not available"))
-	}
-	return nil
-}
-
-// SetTrayMenu replaces the tray menu items.
-// Use: _ = svc.SetTrayMenu([]systray.TrayMenuItem{{Label: "Quit", ActionID: "quit"}})
-func (s *Service) SetTrayMenu(items []systray.TrayMenuItem) error {
-	_, handled, err := s.Core().PERFORM(systray.TaskSetTrayMenu{Items: items})
-	if err != nil {
-		return err
-	}
-	if !handled {
-		return corego.NewError(corego.Sprintf("systray service not available"))
-	}
-	return nil
-}
-
-// GetTrayInfo returns current tray state information.
-// Use: info := svc.GetTrayInfo()
-func (s *Service) GetTrayInfo() map[string]any {
-	trayService, err := core.ServiceFor[*systray.Service](s.Core(), "systray")
-	if err != nil || trayService == nil || trayService.Manager() == nil {
-		return nil
-	}
-	return trayService.Manager().GetInfo()
-}
-
-// ShowTrayMessage shows a tray message or notification.
-// Use: _ = svc.ShowTrayMessage("Core", "Sync complete")
-func (s *Service) ShowTrayMessage(title, message string) error {
-	_, handled, err := s.Core().PERFORM(systray.TaskShowMessage{Title: title, Message: message})
-	if err != nil {
-		return err
-	}
-	if !handled {
-		return corego.NewError(corego.Sprintf("systray service not available"))
-	}
-	return nil
 }
 
 // GetEventManager returns the event manager for WebSocket event subscriptions.
@@ -2326,11 +1606,12 @@ func ptr[T any](v T) *T { return &v }
 
 func (s *Service) handleNewWorkspace() {
 	_, _, _ = s.Core().PERFORM(window.TaskOpenWindow{
-		Opts: []window.WindowOption{
-			window.WithName("workspace-new"),
-			window.WithTitle("New Workspace"),
-			window.WithURL("/workspace/new"),
-			window.WithSize(500, 400),
+		Window: &window.Window{
+			Name:   "workspace-new",
+			Title:  "New Workspace",
+			URL:    "/workspace/new",
+			Width:  500,
+			Height: 400,
 		},
 	})
 }
@@ -2349,18 +1630,19 @@ func (s *Service) handleListWorkspaces() {
 
 func (s *Service) handleNewFile() {
 	_, _, _ = s.Core().PERFORM(window.TaskOpenWindow{
-		Opts: []window.WindowOption{
-			window.WithName("editor"),
-			window.WithTitle("New File - Editor"),
-			window.WithURL("/#/developer/editor?new=true"),
-			window.WithSize(1200, 800),
+		Window: &window.Window{
+			Name:   "editor",
+			Title:  "New File - Editor",
+			URL:    "/#/developer/editor?new=true",
+			Width:  1200,
+			Height: 800,
 		},
 	})
 }
 
 func (s *Service) handleOpenFile() {
 	result, handled, err := s.Core().PERFORM(dialog.TaskOpenFile{
-		Opts: dialog.OpenFileOptions{
+		Options: dialog.OpenFileOptions{
 			Title:         "Open File",
 			AllowMultiple: false,
 		},
@@ -2373,11 +1655,12 @@ func (s *Service) handleOpenFile() {
 		return
 	}
 	_, _, _ = s.Core().PERFORM(window.TaskOpenWindow{
-		Opts: []window.WindowOption{
-			window.WithName("editor"),
-			window.WithTitle(paths[0] + " - Editor"),
-			window.WithURL("/#/developer/editor?file=" + paths[0]),
-			window.WithSize(1200, 800),
+		Window: &window.Window{
+			Name:   "editor",
+			Title:  paths[0] + " - Editor",
+			URL:    "/#/developer/editor?file=" + paths[0],
+			Width:  1200,
+			Height: 800,
 		},
 	})
 }
@@ -2385,21 +1668,23 @@ func (s *Service) handleOpenFile() {
 func (s *Service) handleSaveFile() { _ = s.Core().ACTION(ActionIDECommand{Command: "save"}) }
 func (s *Service) handleOpenEditor() {
 	_, _, _ = s.Core().PERFORM(window.TaskOpenWindow{
-		Opts: []window.WindowOption{
-			window.WithName("editor"),
-			window.WithTitle("Editor"),
-			window.WithURL("/#/developer/editor"),
-			window.WithSize(1200, 800),
+		Window: &window.Window{
+			Name:   "editor",
+			Title:  "Editor",
+			URL:    "/#/developer/editor",
+			Width:  1200,
+			Height: 800,
 		},
 	})
 }
 func (s *Service) handleOpenTerminal() {
 	_, _, _ = s.Core().PERFORM(window.TaskOpenWindow{
-		Opts: []window.WindowOption{
-			window.WithName("terminal"),
-			window.WithTitle("Terminal"),
-			window.WithURL("/#/developer/terminal"),
-			window.WithSize(800, 500),
+		Window: &window.Window{
+			Name:   "terminal",
+			Title:  "Terminal",
+			URL:    "/#/developer/terminal",
+			Width:  800,
+			Height: 500,
 		},
 	})
 }

@@ -10,18 +10,21 @@ type QueryInfo struct{}
 // QueryAccentColour returns the system accent colour. Result: string
 type QueryAccentColour struct{}
 
+// TaskSetTheme overrides the application theme. Theme values: "light", "dark", "system".
+type TaskSetTheme struct {
+	Theme string `json:"theme"`
+}
+
 // TaskOpenFileManager opens the system file manager. Result: error only
 type TaskOpenFileManager struct {
 	Path   string `json:"path"`
 	Select bool   `json:"select"`
 }
 
-// TaskSetTheme applies an application theme override when supported.
-// Theme values: "dark", "light", or "system".
-type TaskSetTheme struct {
-	Theme  string `json:"theme,omitempty"`
-	IsDark bool   `json:"isDark,omitempty"`
-}
+// QueryFocusFollowsMouse returns whether focus-follows-mouse is enabled. Result: bool
+//
+//	result := c.QUERY(environment.QueryFocusFollowsMouse{})
+type QueryFocusFollowsMouse struct{}
 
 // ActionThemeChanged is broadcast when the system theme changes.
 type ActionThemeChanged struct {

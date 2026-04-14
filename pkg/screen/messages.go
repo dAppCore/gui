@@ -9,6 +9,10 @@ type QueryAll struct{}
 // Use: result, _, err := c.QUERY(screen.QueryPrimary{})
 type QueryPrimary struct{}
 
+// QueryCurrent returns the screen currently in use (e.g. containing the focused window).
+// Result: *Screen (nil if not determinable)
+type QueryCurrent struct{}
+
 // QueryByID returns a screen by ID. Result: *Screen (nil if not found)
 // Use: result, _, err := c.QUERY(screen.QueryByID{ID: "display-1"})
 type QueryByID struct{ ID string }

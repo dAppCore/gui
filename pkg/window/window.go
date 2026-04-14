@@ -2,10 +2,9 @@
 package window
 
 import (
-	"math"
 	"sync"
 
-	corego "dappco.re/go/core"
+	coreerr "forge.lthn.ai/core/go-log"
 )
 
 // Window is CoreGUI's own window descriptor — NOT a Wails type alias.
@@ -53,7 +52,7 @@ type Manager struct {
 }
 
 // NewManager creates a window Manager with the given platform backend.
-// Use: mgr := window.NewManager(platform)
+// window.NewManager(window.NewWailsPlatform(app))
 func NewManager(platform Platform) *Manager {
 	return &Manager{
 		platform: platform,
@@ -64,7 +63,7 @@ func NewManager(platform Platform) *Manager {
 }
 
 // NewManagerWithDir creates a window Manager with a custom config directory for state/layout persistence.
-// Use: mgr := window.NewManagerWithDir(platform, t.TempDir())
+// window.NewManagerWithDir(window.NewMockPlatform(), t.TempDir())
 func NewManagerWithDir(platform Platform, configDir string) *Manager {
 	return &Manager{
 		platform: platform,
@@ -74,69 +73,82 @@ func NewManagerWithDir(platform Platform, configDir string) *Manager {
 	}
 }
 
-// SetDefaultWidth overrides the fallback width used when a window is created without one.
-// Use: mgr.SetDefaultWidth(1280)
 func (m *Manager) SetDefaultWidth(width int) {
 	if width > 0 {
 		m.defaultWidth = width
 	}
 }
 
-// SetDefaultHeight overrides the fallback height used when a window is created without one.
-// Use: mgr.SetDefaultHeight(800)
 func (m *Manager) SetDefaultHeight(height int) {
 	if height > 0 {
 		m.defaultHeight = height
 	}
 }
 
-// Open creates a window using functional options, applies saved state, and tracks it.
-// Use: _, err := mgr.Open(window.WithName("editor"), window.WithURL("/editor"))
-func (m *Manager) Open(opts ...WindowOption) (PlatformWindow, error) {
-	w, err := ApplyOptions(opts...)
+// Deprecated: use CreateWindow(Window{Name: "settings", URL: "/settings", Width: 800, Height: 600}).
+func (m *Manager) Open(options ...WindowOption) (PlatformWindow, error) {
+	w, err := ApplyOptions(options...)
 	if err != nil {
-		return nil, corego.Wrap(err, "window.Manager.Open", "failed to apply options")
+		return nil, coreerr.E("window.Manager.Open", "failed to apply options", err)
 	}
-	return m.Create(w)
+	return m.CreateWindow(*w)
 }
 
-// Create creates a window from a Window descriptor.
-// Use: _, err := mgr.Create(&window.Window{Name: "editor", URL: "/editor"})
+// CreateWindow creates a window from a Window descriptor.
+// window.NewManager(window.NewWailsPlatform(app)).CreateWindow(window.Window{Name: "settings", URL: "/settings", Width: 800, Height: 600})
+func (m *Manager) CreateWindow(spec Window) (PlatformWindow, error) {
+	_, pw, err := m.createWindow(spec)
+	return pw, err
+}
+
+// Deprecated: use CreateWindow(Window{Name: "settings", URL: "/settings", Width: 800, Height: 600}).
 func (m *Manager) Create(w *Window) (PlatformWindow, error) {
-	if w.Name == "" {
-		w.Name = "main"
+	if w == nil {
+		return nil, coreerr.E("window.Manager.Create", "window descriptor is required", nil)
 	}
-	if w.Title == "" {
-		w.Title = "Core"
+	spec, pw, err := m.createWindow(*w)
+	if err != nil {
+		return nil, err
 	}
-	if w.Width == 0 {
+	*w = spec
+	return pw, nil
+}
+
+func (m *Manager) createWindow(spec Window) (Window, PlatformWindow, error) {
+	if spec.Name == "" {
+		spec.Name = "main"
+	}
+	if spec.Title == "" {
+		spec.Title = "Core"
+	}
+	if spec.Width == 0 {
 		if m.defaultWidth > 0 {
-			w.Width = m.defaultWidth
+			spec.Width = m.defaultWidth
 		} else {
-			w.Width = 1280
+			spec.Width = 1280
 		}
 	}
-	if w.Height == 0 {
+	if spec.Height == 0 {
 		if m.defaultHeight > 0 {
-			w.Height = m.defaultHeight
+			spec.Height = m.defaultHeight
 		} else {
-			w.Height = 800
+			spec.Height = 800
 		}
 	}
-	if w.URL == "" {
-		w.URL = "/"
+	if spec.URL == "" {
+		spec.URL = "/"
 	}
 
-	// Apply saved state if available
-	m.state.ApplyState(w)
+	// Apply saved state if available.
+	m.state.ApplyState(&spec)
 
-	pw := m.platform.CreateWindow(w.ToPlatformOptions())
+	pw := m.platform.CreateWindow(spec.ToPlatformOptions())
 
 	m.mu.Lock()
-	m.windows[w.Name] = pw
+	m.windows[spec.Name] = pw
 	m.mu.Unlock()
 
-	return pw, nil
+	return spec, pw, nil
 }
 
 // Get returns a tracked window by name.

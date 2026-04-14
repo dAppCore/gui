@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	corego "dappco.re/go/core"
+	coreio "forge.lthn.ai/core/go-io"
 )
 
 // WindowState holds the persisted position/size of a window.
@@ -63,18 +63,16 @@ func (sm *StateManager) filePath() string {
 	if sm.statePath != "" {
 		return sm.statePath
 	}
-	return corego.JoinPath(sm.configDir, "window_state.json")
+	return filepath.Join(sm.configDir, "window_state.json")
 }
 
 func (sm *StateManager) dataDir() string {
 	if sm.statePath != "" {
-		return corego.PathDir(sm.statePath)
+		return filepath.Dir(sm.statePath)
 	}
 	return sm.configDir
 }
 
-// SetPath overrides the persisted state file path.
-// Use: sm.SetPath(filepath.Join(t.TempDir(), "window_state.json"))
 func (sm *StateManager) SetPath(path string) {
 	if path == "" {
 		return
@@ -94,13 +92,13 @@ func (sm *StateManager) load() {
 	if sm.configDir == "" && sm.statePath == "" {
 		return
 	}
-	data, err := os.ReadFile(sm.filePath())
+	content, err := coreio.Local.Read(sm.filePath())
 	if err != nil {
 		return
 	}
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
-	_ = corego.JSONUnmarshal(data, &sm.states)
+	_ = json.Unmarshal([]byte(content), &sm.states)
 }
 
 func (sm *StateManager) save() {
@@ -113,9 +111,10 @@ func (sm *StateManager) save() {
 	if !r.OK {
 		return
 	}
-	data := r.Value.([]byte)
-	_ = os.MkdirAll(sm.dataDir(), 0o755)
-	_ = os.WriteFile(sm.filePath(), data, 0o644)
+	if dir := sm.dataDir(); dir != "" {
+		_ = coreio.Local.EnsureDir(dir)
+	}
+	_ = coreio.Local.Write(sm.filePath(), string(data))
 }
 
 func (sm *StateManager) scheduleSave() {

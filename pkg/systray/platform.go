@@ -17,6 +17,7 @@ type PlatformTray interface {
 	SetLabel(text string)
 	SetMenu(menu PlatformMenu)
 	AttachWindow(w WindowHandle)
+	ShowMessage(title, message string) error
 }
 
 // PlatformMenu is a tray menu built by the backend.
@@ -34,7 +35,6 @@ type PlatformMenuItem interface {
 	SetChecked(checked bool)
 	SetEnabled(enabled bool)
 	OnClick(fn func())
-	AddSubmenu() PlatformMenu
 }
 
 // WindowHandle is a cross-package interface for window operations.

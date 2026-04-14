@@ -1,16 +1,15 @@
-// pkg/keybinding/register.go
 package keybinding
 
 import "forge.lthn.ai/core/go/pkg/core"
 
-// Register creates a factory closure that captures the Platform adapter.
-// The returned function has the signature WithService requires: func(*Core) (any, error).
+// Register(p) binds the keybinding service to a Core instance.
+// core.WithService(keybinding.Register(wailsKeybinding))
 func Register(p Platform) func(*core.Core) (any, error) {
 	return func(c *core.Core) (any, error) {
 		return &Service{
-			ServiceRuntime: core.NewServiceRuntime[Options](c, Options{}),
-			platform:       p,
-			bindings:       make(map[string]BindingInfo),
+			ServiceRuntime:     core.NewServiceRuntime[Options](c, Options{}),
+			platform:           p,
+			registeredBindings: make(map[string]BindingInfo),
 		}, nil
 	}
 }

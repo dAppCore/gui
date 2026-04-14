@@ -3,10 +3,10 @@ package dialog
 
 // Platform abstracts the native dialog backend.
 type Platform interface {
-	OpenFile(opts OpenFileOptions) ([]string, error)
-	SaveFile(opts SaveFileOptions) (string, error)
-	OpenDirectory(opts OpenDirectoryOptions) (string, error)
-	MessageDialog(opts MessageDialogOptions) (string, error)
+	OpenFile(options OpenFileOptions) ([]string, error)
+	SaveFile(options SaveFileOptions) (string, error)
+	OpenDirectory(options OpenDirectoryOptions) (string, error)
+	MessageDialog(options MessageDialogOptions) (string, error)
 }
 
 // DialogType represents the type of message dialog.
@@ -21,11 +21,14 @@ const (
 
 // OpenFileOptions contains options for the open file dialog.
 type OpenFileOptions struct {
-	Title         string       `json:"title,omitempty"`
-	Directory     string       `json:"directory,omitempty"`
-	Filename      string       `json:"filename,omitempty"`
-	Filters       []FileFilter `json:"filters,omitempty"`
-	AllowMultiple bool         `json:"allowMultiple,omitempty"`
+	Title                string       `json:"title,omitempty"`
+	Directory            string       `json:"directory,omitempty"`
+	Filename             string       `json:"filename,omitempty"`
+	Filters              []FileFilter `json:"filters,omitempty"`
+	AllowMultiple        bool         `json:"allowMultiple,omitempty"`
+	CanChooseDirectories bool         `json:"canChooseDirectories,omitempty"`
+	CanChooseFiles       bool         `json:"canChooseFiles,omitempty"`
+	ShowHiddenFiles      bool         `json:"showHiddenFiles,omitempty"`
 }
 
 // SaveFileOptions contains options for the save file dialog.

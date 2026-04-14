@@ -11,11 +11,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// mockPlatform records Add/Remove calls and allows triggering shortcuts.
+// mockPlatform records Add/Remove/Process calls and allows triggering shortcuts.
 type mockPlatform struct {
-	mu       sync.Mutex
-	handlers map[string]func()
-	removed  []string
+	mu          sync.Mutex
+	handlers    map[string]func()
+	removed     []string
+	processed   []string
+	processErr  error
 }
 
 func newMockPlatform() *mockPlatform {
@@ -34,6 +36,16 @@ func (m *mockPlatform) Remove(accelerator string) error {
 	defer m.mu.Unlock()
 	delete(m.handlers, accelerator)
 	m.removed = append(m.removed, accelerator)
+	return nil
+}
+
+func (m *mockPlatform) Process(accelerator string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.processErr != nil {
+		return m.processErr
+	}
+	m.processed = append(m.processed, accelerator)
 	return nil
 }
 
@@ -99,7 +111,7 @@ func TestTaskAdd_Bad_Duplicate(t *testing.T) {
 	// Second add with same accelerator should fail
 	_, handled, err := c.PERFORM(TaskAdd{Accelerator: "Ctrl+S", Description: "Save Again"})
 	assert.True(t, handled)
-	assert.ErrorIs(t, err, ErrAlreadyRegistered)
+	assert.ErrorIs(t, err, ErrorAlreadyRegistered)
 }
 
 func TestTaskRemove_Good(t *testing.T) {
@@ -121,7 +133,7 @@ func TestTaskRemove_Bad_NotFound(t *testing.T) {
 
 	_, handled, err := c.PERFORM(TaskRemove{Accelerator: "Ctrl+X"})
 	assert.True(t, handled)
-	assert.Error(t, err)
+	assert.ErrorIs(t, err, ErrorNotRegistered)
 }
 
 func TestQueryList_Good(t *testing.T) {
@@ -198,4 +210,48 @@ func TestQueryList_Bad_NoService(t *testing.T) {
 	c, _ := core.New(core.WithServiceLock())
 	_, handled, _ := c.QUERY(QueryList{})
 	assert.False(t, handled)
+}
+
+func TestTaskProcess_Good(t *testing.T) {
+	mp := newMockPlatform()
+	_, c := newTestKeybindingService(t, mp)
+
+	_, _, _ = c.PERFORM(TaskAdd{Accelerator: "Ctrl+P", Description: "Print"})
+
+	_, handled, err := c.PERFORM(TaskProcess{Accelerator: "Ctrl+P"})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.Contains(t, mp.processed, "Ctrl+P")
+}
+
+func TestTaskProcess_Bad_NotRegistered(t *testing.T) {
+	mp := newMockPlatform()
+	_, c := newTestKeybindingService(t, mp)
+
+	_, handled, err := c.PERFORM(TaskProcess{Accelerator: "Ctrl+Z"})
+	assert.True(t, handled)
+	assert.ErrorIs(t, err, ErrorNotRegistered)
+}
+
+func TestTaskProcess_Bad_NoService(t *testing.T) {
+	c, _ := core.New(core.WithServiceLock())
+	_, handled, _ := c.PERFORM(TaskProcess{})
+	assert.False(t, handled)
+}
+
+func TestTaskProcess_Bad_PlatformError(t *testing.T) {
+	mp := newMockPlatform()
+	mp.processErr = assert.AnError
+	_, c := newTestKeybindingService(t, mp)
+
+	_, _, _ = c.PERFORM(TaskAdd{Accelerator: "Ctrl+P", Description: "Print"})
+	_, handled, err := c.PERFORM(TaskProcess{Accelerator: "Ctrl+P"})
+	assert.True(t, handled)
+	assert.Error(t, err)
+}
+
+func TestErrorNotRegistered_Ugly(t *testing.T) {
+	// ErrorNotRegistered and ErrorAlreadyRegistered must be distinct sentinels.
+	assert.NotEqual(t, ErrorNotRegistered, ErrorAlreadyRegistered)
+	assert.NotErrorIs(t, ErrorNotRegistered, ErrorAlreadyRegistered)
 }

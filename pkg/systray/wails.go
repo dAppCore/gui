@@ -60,6 +60,12 @@ func (wt *wailsTray) AttachWindow(w WindowHandle) {
 	wt.tray.AttachWindow(window)
 }
 
+func (wt *wailsTray) ShowMessage(title, message string) error {
+	_ = title
+	_ = message
+	return nil
+}
+
 // wailsTrayMenu wraps *application.Menu for the PlatformMenu interface.
 type wailsTrayMenu struct {
 	menu *application.Menu
@@ -87,8 +93,4 @@ func (mi *wailsTrayMenuItem) SetChecked(checked bool) { mi.item.SetChecked(check
 func (mi *wailsTrayMenuItem) SetEnabled(enabled bool) { mi.item.SetEnabled(enabled) }
 func (mi *wailsTrayMenuItem) OnClick(fn func()) {
 	mi.item.OnClick(func(ctx *application.Context) { fn() })
-}
-func (mi *wailsTrayMenuItem) AddSubmenu() PlatformMenu {
-	// Wails doesn't have a direct AddSubmenu on MenuItem — use Menu.AddSubmenu instead
-	return &wailsTrayMenu{menu: application.NewMenu()}
 }

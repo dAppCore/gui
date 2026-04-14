@@ -194,7 +194,7 @@ This document tracks the implementation of display server features that enable A
 ### Phase 3 - Layouts (DONE)
 - [x] layout_save, layout_restore, layout_list
 - [x] layout_delete, layout_get
-- [ ] layout_tile, layout_beside_editor (future)
+- [x] layout_tile, layout_beside_editor
 
 ### Phase 4 - WebView Debug (DONE)
 - [x] webview_screenshot, webview_screenshot_element
@@ -203,7 +203,7 @@ This document tracks the implementation of display server features that enable A
 - [x] webview_scroll, webview_hover, webview_select, webview_check
 - [x] webview_highlight, webview_errors
 - [x] webview_performance, webview_resources
-- [ ] webview_network, webview_devtools (future)
+- [~] webview_network complete; webview_devtools pending
 
 ### Phase 5 - System Integration (DONE)
 - [x] clipboard_read, clipboard_write, clipboard_has, clipboard_clear
@@ -236,8 +236,9 @@ This document tracks the implementation of display server features that enable A
 - [x] `tray_info` - Get tray status
 
 ### Phase 8 - Remaining Features (Future)
-- [ ] layout_beside_editor, layout_suggest
+- [ ] window_opacity (true opacity if Wails adds support)
+- [x] layout_beside_editor, layout_suggest
 - [ ] webview_devtools_open, webview_devtools_close
-- [ ] clipboard_read_image, clipboard_write_image
-- [ ] notification_with_actions, notification_clear
-- [ ] tray_show_message - Balloon notifications
+- [x] clipboard_read_image, clipboard_write_image
+- [x] notification_with_actions, notification_clear
+- [x] tray_show_message - Balloon notifications

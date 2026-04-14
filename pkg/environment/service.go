@@ -3,23 +3,23 @@ package environment
 
 import (
 	"context"
+	"strings"
 
-	corego "dappco.re/go/core"
+	coreerr "forge.lthn.ai/core/go-log"
 	"forge.lthn.ai/core/go/pkg/core"
 )
 
-// Options holds configuration for the environment service.
 type Options struct{}
 
-// Service is a core.Service providing environment queries and theme change events via IPC.
 type Service struct {
 	*core.ServiceRuntime[Options]
-	platform     Platform
-	cancelTheme  func() // cancel function for theme change listener
-	overrideDark *bool
+	platform    Platform
+	cancelTheme func() // returned by Platform.OnThemeChange — called on shutdown
+	override    *bool
 }
 
-// Register creates a factory closure that captures the Platform adapter.
+// Register(p) binds the environment service to a Core instance.
+// core.WithService(environment.Register(wailsEnvironment))
 func Register(p Platform) func(*core.Core) (any, error) {
 	return func(c *core.Core) (any, error) {
 		return &Service{
@@ -29,19 +29,20 @@ func Register(p Platform) func(*core.Core) (any, error) {
 	}
 }
 
-// OnStartup registers IPC handlers and the theme change listener.
 func (s *Service) OnStartup(ctx context.Context) error {
 	s.Core().RegisterQuery(s.handleQuery)
 	s.Core().RegisterTask(s.handleTask)
 
 	// Register theme change callback — broadcasts ActionThemeChanged via IPC
 	s.cancelTheme = s.platform.OnThemeChange(func(isDark bool) {
+		if s.override != nil {
+			isDark = *s.override
+		}
 		_ = s.Core().ACTION(ActionThemeChanged{IsDark: isDark})
 	})
 	return nil
 }
 
-// OnShutdown cancels the theme change listener.
 func (s *Service) OnShutdown(ctx context.Context) error {
 	if s.cancelTheme != nil {
 		s.cancelTheme()
@@ -49,7 +50,6 @@ func (s *Service) OnShutdown(ctx context.Context) error {
 	return nil
 }
 
-// HandleIPCEvents is auto-discovered by core.WithService.
 func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 	return nil
 }
@@ -57,7 +57,7 @@ func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
 	switch q.(type) {
 	case QueryTheme:
-		isDark := s.currentTheme()
+		isDark := s.currentThemeIsDark()
 		theme := "light"
 		if isDark {
 			theme = "dark"
@@ -67,6 +67,8 @@ func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
 		return s.platform.Info(), true, nil
 	case QueryAccentColour:
 		return s.platform.AccentColour(), true, nil
+	case QueryFocusFollowsMouse:
+		return s.platform.HasFocusFollowsMouse(), true, nil
 	default:
 		return nil, false, nil
 	}
@@ -74,6 +76,8 @@ func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
 
 func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 	switch t := t.(type) {
+	case TaskSetTheme:
+		return nil, true, s.setThemeOverride(strings.ToLower(strings.TrimSpace(t.Theme)))
 	case TaskOpenFileManager:
 		return nil, true, s.platform.OpenFileManager(t.Path, t.Select)
 	case TaskSetTheme:
@@ -86,42 +90,27 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 	}
 }
 
-func (s *Service) taskSetTheme(task TaskSetTheme) error {
-	shouldApplyTheme := false
-	switch task.Theme {
-	case "dark":
-		isDark := true
-		s.overrideDark = &isDark
-		shouldApplyTheme = true
-	case "light":
-		isDark := false
-		s.overrideDark = &isDark
-		shouldApplyTheme = true
-	case "system":
-		s.overrideDark = nil
-	case "":
-		isDark := task.IsDark
-		s.overrideDark = &isDark
-		shouldApplyTheme = true
-	default:
-		return corego.E("environment.setTheme", corego.Sprintf("invalid theme mode: %s", task.Theme), nil)
-	}
-
-	if shouldApplyTheme {
-		if setter, ok := s.platform.(interface{ SetTheme(bool) error }); ok {
-			if err := setter.SetTheme(s.currentTheme()); err != nil {
-				return err
-			}
-		}
-	}
-
-	_ = s.Core().ACTION(ActionThemeChanged{IsDark: s.currentTheme()})
-	return nil
-}
-
-func (s *Service) currentTheme() bool {
-	if s.overrideDark != nil {
-		return *s.overrideDark
+func (s *Service) currentThemeIsDark() bool {
+	if s.override != nil {
+		return *s.override
 	}
 	return s.platform.IsDarkMode()
+}
+
+func (s *Service) setThemeOverride(theme string) error {
+	switch theme {
+	case "", "system":
+		s.override = nil
+	case "dark":
+		value := true
+		s.override = &value
+	case "light":
+		value := false
+		s.override = &value
+	default:
+		return coreerr.E("environment.setThemeOverride", "theme must be one of: light, dark, system", nil)
+	}
+
+	_ = s.Core().ACTION(ActionThemeChanged{IsDark: s.currentThemeIsDark()})
+	return nil
 }

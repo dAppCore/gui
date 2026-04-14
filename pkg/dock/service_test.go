@@ -13,13 +13,21 @@ import (
 // --- Mock Platform ---
 
 type mockPlatform struct {
-	visible   bool
-	badge     string
-	hasBadge  bool
-	showErr   error
-	hideErr   error
-	badgeErr  error
-	removeErr error
+	visible       bool
+	badge         string
+	hasBadge      bool
+	progress      float64
+	hasProgress   bool
+	bounceID      int
+	bounceCount   int
+	stopBounceIDs []int
+	showErr       error
+	hideErr       error
+	badgeErr      error
+	removeErr     error
+	progressErr   error
+	bounceErr     error
+	stopBounceErr error
 }
 
 func (m *mockPlatform) ShowIcon() error {
@@ -57,6 +65,32 @@ func (m *mockPlatform) RemoveBadge() error {
 }
 
 func (m *mockPlatform) IsVisible() bool { return m.visible }
+
+func (m *mockPlatform) SetProgressBar(value float64) error {
+	if m.progressErr != nil {
+		return m.progressErr
+	}
+	m.progress = value
+	m.hasProgress = value >= 0
+	return nil
+}
+
+func (m *mockPlatform) Bounce(bounceType BounceType) (int, error) {
+	if m.bounceErr != nil {
+		return 0, m.bounceErr
+	}
+	m.bounceCount++
+	m.bounceID++
+	return m.bounceID, nil
+}
+
+func (m *mockPlatform) StopBounce(bounceID int) error {
+	if m.stopBounceErr != nil {
+		return m.stopBounceErr
+	}
+	m.stopBounceIDs = append(m.stopBounceIDs, bounceID)
+	return nil
+}
 
 // --- Test helpers ---
 
@@ -191,4 +225,128 @@ func TestTaskSetBadge_Bad(t *testing.T) {
 	_, handled, err := c.PERFORM(TaskSetBadge{Label: "3"})
 	assert.True(t, handled)
 	assert.Error(t, err)
+}
+
+func TestTaskSetProgressBar_Good(t *testing.T) {
+	_, c, mock := newTestDockService(t)
+
+	var received *ActionProgressChanged
+	c.RegisterAction(func(_ *core.Core, msg core.Message) error {
+		if a, ok := msg.(ActionProgressChanged); ok {
+			received = &a
+		}
+		return nil
+	})
+
+	_, handled, err := c.PERFORM(TaskSetProgressBar{Value: 0.75})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.Equal(t, 0.75, mock.progress)
+	assert.True(t, mock.hasProgress)
+	require.NotNil(t, received)
+	assert.Equal(t, 0.75, received.Value)
+}
+
+func TestTaskSetProgressBar_Remove_Good(t *testing.T) {
+	_, c, mock := newTestDockService(t)
+
+	_, _, _ = c.PERFORM(TaskSetProgressBar{Value: 0.5})
+	_, handled, err := c.PERFORM(TaskSetProgressBar{Value: -1.0})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.False(t, mock.hasProgress)
+}
+
+func TestTaskSetProgressBar_Bad(t *testing.T) {
+	_, c, mock := newTestDockService(t)
+	mock.progressErr = assert.AnError
+
+	_, handled, err := c.PERFORM(TaskSetProgressBar{Value: 0.5})
+	assert.True(t, handled)
+	assert.Error(t, err)
+}
+
+func TestTaskBounce_Good(t *testing.T) {
+	_, c, mock := newTestDockService(t)
+
+	var received *ActionBounceStarted
+	c.RegisterAction(func(_ *core.Core, msg core.Message) error {
+		if a, ok := msg.(ActionBounceStarted); ok {
+			received = &a
+		}
+		return nil
+	})
+
+	result, handled, err := c.PERFORM(TaskBounce{Type: BounceInformational})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.Equal(t, 1, mock.bounceCount)
+	bounceID := result.(int)
+	assert.Equal(t, 1, bounceID)
+	require.NotNil(t, received)
+	assert.Equal(t, 1, received.BounceID)
+	assert.Equal(t, BounceInformational, received.Type)
+}
+
+func TestTaskBounce_Critical_Good(t *testing.T) {
+	_, c, mock := newTestDockService(t)
+
+	result, handled, err := c.PERFORM(TaskBounce{Type: BounceCritical})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.Equal(t, 1, mock.bounceCount)
+	assert.Equal(t, 1, result.(int))
+}
+
+func TestTaskBounce_Bad(t *testing.T) {
+	_, c, mock := newTestDockService(t)
+	mock.bounceErr = assert.AnError
+
+	_, handled, err := c.PERFORM(TaskBounce{Type: BounceInformational})
+	assert.True(t, handled)
+	assert.Error(t, err)
+}
+
+func TestTaskStopBounce_Good(t *testing.T) {
+	_, c, mock := newTestDockService(t)
+
+	result, _, _ := c.PERFORM(TaskBounce{Type: BounceInformational})
+	bounceID := result.(int)
+
+	_, handled, err := c.PERFORM(TaskStopBounce{BounceID: bounceID})
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.Contains(t, mock.stopBounceIDs, bounceID)
+}
+
+func TestTaskStopBounce_Bad(t *testing.T) {
+	_, c, mock := newTestDockService(t)
+	mock.stopBounceErr = assert.AnError
+
+	_, handled, err := c.PERFORM(TaskStopBounce{BounceID: 99})
+	assert.True(t, handled)
+	assert.Error(t, err)
+}
+
+func TestBounceType_Ugly(t *testing.T) {
+	// BounceInformational and BounceCritical must be distinct constants.
+	assert.NotEqual(t, BounceInformational, BounceCritical)
+}
+
+func TestTaskSetProgressBar_Bad_NoService(t *testing.T) {
+	c, _ := core.New(core.WithServiceLock())
+	_, handled, _ := c.PERFORM(TaskSetProgressBar{})
+	assert.False(t, handled)
+}
+
+func TestTaskBounce_Bad_NoService(t *testing.T) {
+	c, _ := core.New(core.WithServiceLock())
+	_, handled, _ := c.PERFORM(TaskBounce{})
+	assert.False(t, handled)
+}
+
+func TestTaskStopBounce_Bad_NoService(t *testing.T) {
+	c, _ := core.New(core.WithServiceLock())
+	_, handled, _ := c.PERFORM(TaskStopBounce{})
+	assert.False(t, handled)
 }

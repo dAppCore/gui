@@ -4,70 +4,55 @@ package window
 import (
 	"context"
 
-	corego "dappco.re/go/core"
-	"dappco.re/go/core/gui/pkg/screen"
+	coreerr "forge.lthn.ai/core/go-log"
 	"forge.lthn.ai/core/go/pkg/core"
+	"forge.lthn.ai/core/gui/pkg/screen"
 )
 
-// Options holds configuration for the window service.
-// Use: svc, err := window.Register(platform)(core.New())
 type Options struct{}
 
-// Service is a core.Service managing window lifecycle via IPC.
-// Use: core.WithService(window.Register(window.NewMockPlatform()))
-// It embeds ServiceRuntime for Core access and composes Manager for platform operations.
-// Use: svc, err := window.Register(platform)(core.New())
 type Service struct {
 	*core.ServiceRuntime[Options]
 	manager  *Manager
 	platform Platform
 }
 
-// OnStartup queries config from the display orchestrator and registers IPC handlers.
-// Use: _ = svc.OnStartup(context.Background())
 func (s *Service) OnStartup(ctx context.Context) error {
 	// Query config — display registers its handler before us (registration order guarantee).
 	// If display is not registered, handled=false and we skip config.
-	cfg, handled, _ := s.Core().QUERY(QueryConfig{})
+	configValue, handled, _ := s.Core().QUERY(QueryConfig{})
 	if handled {
-		if wCfg, ok := cfg.(map[string]any); ok {
-			s.applyConfig(wCfg)
+		if windowConfig, ok := configValue.(map[string]any); ok {
+			s.applyConfig(windowConfig)
 		}
 	}
 
-	// Register QUERY and TASK handlers manually.
-	// ACTION handler (HandleIPCEvents) is auto-registered by WithService —
-	// do NOT call RegisterAction here or actions will double-fire.
 	s.Core().RegisterQuery(s.handleQuery)
 	s.Core().RegisterTask(s.handleTask)
 	return nil
 }
 
-func (s *Service) applyConfig(cfg map[string]any) {
-	if width, ok := cfg["default_width"]; ok {
+func (s *Service) applyConfig(configData map[string]any) {
+	if width, ok := configData["default_width"]; ok {
 		if width, ok := width.(int); ok {
 			s.manager.SetDefaultWidth(width)
 		}
 	}
-	if height, ok := cfg["default_height"]; ok {
+	if height, ok := configData["default_height"]; ok {
 		if height, ok := height.(int); ok {
 			s.manager.SetDefaultHeight(height)
 		}
 	}
-	if stateFile, ok := cfg["state_file"]; ok {
+	if stateFile, ok := configData["state_file"]; ok {
 		if stateFile, ok := stateFile.(string); ok {
 			s.manager.State().SetPath(stateFile)
 		}
 	}
 }
 
-// HandleIPCEvents is auto-discovered and registered by core.WithService.
-// Use: _ = svc.HandleIPCEvents(core, msg)
 func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 	return nil
 }
-
-// --- Query Handlers ---
 
 func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
 	switch q := q.(type) {
@@ -75,11 +60,10 @@ func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
 		return s.queryWindowList(), true, nil
 	case QueryWindowByName:
 		return s.queryWindowByName(q.Name), true, nil
+	case QueryWindowZoom:
+		return s.queryWindowZoom(q.Name)
 	case QueryWindowBounds:
-		if info := s.queryWindowByName(q.Name); info != nil {
-			return &Bounds{X: info.X, Y: info.Y, Width: info.Width, Height: info.Height}, true, nil
-		}
-		return (*Bounds)(nil), true, nil
+		return s.queryWindowBounds(q.Name)
 	case QueryLayoutList:
 		return s.manager.Layout().ListLayouts(), true, nil
 	case QueryLayoutGet:
@@ -129,6 +113,23 @@ func (s *Service) queryWindowList() []WindowInfo {
 	return result
 }
 
+func (s *Service) queryWindowZoom(name string) (any, bool, error) {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return nil, true, coreerr.E("window.queryWindowZoom", "window not found: "+name, nil)
+	}
+	return pw.GetZoom(), true, nil
+}
+
+func (s *Service) queryWindowBounds(name string) (any, bool, error) {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return nil, true, coreerr.E("window.queryWindowBounds", "window not found: "+name, nil)
+	}
+	bounds := pw.GetBounds()
+	return &bounds, true, nil
+}
+
 func (s *Service) queryWindowByName(name string) *WindowInfo {
 	pw, ok := s.manager.Get(name)
 	if !ok {
@@ -161,7 +162,7 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 	case TaskSetPosition:
 		return nil, true, s.taskSetPosition(t.Name, t.X, t.Y)
 	case TaskSetSize:
-		return nil, true, s.taskSetSize(t.Name, t.Width, t.Height, t.W, t.H)
+		return nil, true, s.taskSetSize(t.Name, t.Width, t.Height)
 	case TaskMaximise:
 		return nil, true, s.taskMaximise(t.Name)
 	case TaskMinimise:
@@ -176,12 +177,24 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 		return nil, true, s.taskSetAlwaysOnTop(t.Name, t.AlwaysOnTop)
 	case TaskSetBackgroundColour:
 		return nil, true, s.taskSetBackgroundColour(t.Name, t.Red, t.Green, t.Blue, t.Alpha)
-	case TaskSetOpacity:
-		return nil, true, s.taskSetOpacity(t.Name, t.Opacity)
 	case TaskSetVisibility:
 		return nil, true, s.taskSetVisibility(t.Name, t.Visible)
 	case TaskFullscreen:
 		return nil, true, s.taskFullscreen(t.Name, t.Fullscreen)
+	case TaskSetZoom:
+		return nil, true, s.taskSetZoom(t.Name, t.Factor)
+	case TaskSetURL:
+		return nil, true, s.taskSetURL(t.Name, t.URL)
+	case TaskSetHTML:
+		return nil, true, s.taskSetHTML(t.Name, t.HTML)
+	case TaskExecJS:
+		return nil, true, s.taskExecJS(t.Name, t.JS)
+	case TaskToggleFullscreen:
+		return nil, true, s.taskToggleFullscreen(t.Name)
+	case TaskPrint:
+		return nil, true, s.taskPrint(t.Name)
+	case TaskFlash:
+		return nil, true, s.taskFlash(t.Name, t.Enabled)
 	case TaskSaveLayout:
 		return nil, true, s.taskSaveLayout(t.Name)
 	case TaskRestoreLayout:
@@ -191,14 +204,10 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 		return nil, true, nil
 	case TaskTileWindows:
 		return nil, true, s.taskTileWindows(t.Mode, t.Windows)
-	case TaskSnapWindow:
-		return nil, true, s.taskSnapWindow(t.Name, t.Position)
-	case TaskArrangePair:
-		return nil, true, s.taskArrangePair(t.First, t.Second)
-	case TaskBesideEditor:
-		return nil, true, s.taskBesideEditor(t.Editor, t.Window)
 	case TaskStackWindows:
 		return nil, true, s.taskStackWindows(t.Windows, t.OffsetX, t.OffsetY)
+	case TaskSnapWindow:
+		return nil, true, s.taskSnapWindow(t.Name, t.Position)
 	case TaskApplyWorkflow:
 		return nil, true, s.taskApplyWorkflow(t.Workflow, t.Windows)
 	default:
@@ -206,17 +215,44 @@ func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
 	}
 }
 
-func (s *Service) taskOpenWindow(t TaskOpenWindow) (any, bool, error) {
-	var (
-		pw  PlatformWindow
-		err error
-	)
-	if t.Window != nil {
-		spec := *t.Window
-		pw, err = s.manager.Create(&spec)
-	} else {
-		pw, err = s.manager.Open(t.Opts...)
+func (s *Service) primaryScreenArea() (int, int, int, int) {
+	const fallbackX = 0
+	const fallbackY = 0
+	const fallbackWidth = 1920
+	const fallbackHeight = 1080
+
+	result, handled, err := s.Core().QUERY(screen.QueryPrimary{})
+	if err != nil || !handled {
+		return fallbackX, fallbackY, fallbackWidth, fallbackHeight
 	}
+
+	primary, ok := result.(*screen.Screen)
+	if !ok || primary == nil {
+		return fallbackX, fallbackY, fallbackWidth, fallbackHeight
+	}
+
+	x := primary.WorkArea.X
+	y := primary.WorkArea.Y
+	width := primary.WorkArea.Width
+	height := primary.WorkArea.Height
+	if width <= 0 || height <= 0 {
+		x = primary.Bounds.X
+		y = primary.Bounds.Y
+		width = primary.Bounds.Width
+		height = primary.Bounds.Height
+	}
+	if width <= 0 || height <= 0 {
+		return fallbackX, fallbackY, fallbackWidth, fallbackHeight
+	}
+
+	return x, y, width, height
+}
+
+func (s *Service) taskOpenWindow(t TaskOpenWindow) (any, bool, error) {
+	if t.Window == nil {
+		return nil, true, coreerr.E("window.taskOpenWindow", "window descriptor is required", nil)
+	}
+	pw, err := s.manager.CreateWindow(*t.Window)
 	if err != nil {
 		return nil, true, err
 	}
@@ -261,7 +297,7 @@ func (s *Service) trackWindow(pw PlatformWindow) {
 			if data := e.Data; data != nil {
 				w, _ := data["w"].(int)
 				h, _ := data["h"].(int)
-				_ = s.Core().ACTION(ActionWindowResized{Name: e.Name, Width: w, Height: h, W: w, H: h})
+				_ = s.Core().ACTION(ActionWindowResized{Name: e.Name, Width: w, Height: h})
 			}
 		case "close":
 			_ = s.Core().ACTION(ActionWindowClosed{Name: e.Name})
@@ -279,7 +315,7 @@ func (s *Service) trackWindow(pw PlatformWindow) {
 func (s *Service) taskCloseWindow(name string) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return corego.E("window.service", corego.Sprintf("window not found: %s", name), nil)
+		return coreerr.E("window.taskClose", "window not found: "+name, nil)
 	}
 	// Persist state BEFORE closing (spec requirement)
 	s.manager.State().CaptureState(pw)
@@ -291,27 +327,17 @@ func (s *Service) taskCloseWindow(name string) error {
 func (s *Service) taskSetPosition(name string, x, y int) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return corego.E("window.service", corego.Sprintf("window not found: %s", name), nil)
+		return coreerr.E("window.taskSetPosition", "window not found: "+name, nil)
 	}
 	pw.SetPosition(x, y)
 	s.manager.State().UpdatePosition(name, x, y)
 	return nil
 }
 
-func (s *Service) taskSetSize(name string, width, height, fallbackWidth, fallbackHeight int) error {
+func (s *Service) taskSetSize(name string, width, height int) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return corego.E("window.service", corego.Sprintf("window not found: %s", name), nil)
-	}
-	if width == 0 && height == 0 {
-		width, height = fallbackWidth, fallbackHeight
-	} else {
-		if width == 0 {
-			width = fallbackWidth
-		}
-		if height == 0 {
-			height = fallbackHeight
-		}
+		return coreerr.E("window.taskSetSize", "window not found: "+name, nil)
 	}
 	pw.SetSize(width, height)
 	s.manager.State().UpdateSize(name, width, height)
@@ -321,7 +347,7 @@ func (s *Service) taskSetSize(name string, width, height, fallbackWidth, fallbac
 func (s *Service) taskMaximise(name string) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return corego.E("window.service", corego.Sprintf("window not found: %s", name), nil)
+		return coreerr.E("window.taskMaximise", "window not found: "+name, nil)
 	}
 	pw.Maximise()
 	s.manager.State().UpdateMaximized(name, true)
@@ -331,7 +357,7 @@ func (s *Service) taskMaximise(name string) error {
 func (s *Service) taskMinimise(name string) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return corego.E("window.service", corego.Sprintf("window not found: %s", name), nil)
+		return coreerr.E("window.taskMinimise", "window not found: "+name, nil)
 	}
 	pw.Minimise()
 	return nil
@@ -340,7 +366,7 @@ func (s *Service) taskMinimise(name string) error {
 func (s *Service) taskFocus(name string) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return corego.E("window.service", corego.Sprintf("window not found: %s", name), nil)
+		return coreerr.E("window.taskFocus", "window not found: "+name, nil)
 	}
 	pw.Focus()
 	return nil
@@ -349,7 +375,7 @@ func (s *Service) taskFocus(name string) error {
 func (s *Service) taskRestore(name string) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return corego.E("window.service", corego.Sprintf("window not found: %s", name), nil)
+		return coreerr.E("window.taskRestore", "window not found: "+name, nil)
 	}
 	pw.Restore()
 	s.manager.State().UpdateMaximized(name, false)
@@ -359,7 +385,7 @@ func (s *Service) taskRestore(name string) error {
 func (s *Service) taskSetTitle(name, title string) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return corego.E("window.service", corego.Sprintf("window not found: %s", name), nil)
+		return coreerr.E("window.taskSetTitle", "window not found: "+name, nil)
 	}
 	pw.SetTitle(title)
 	return nil
@@ -368,7 +394,7 @@ func (s *Service) taskSetTitle(name, title string) error {
 func (s *Service) taskSetAlwaysOnTop(name string, alwaysOnTop bool) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return corego.E("window.service", corego.Sprintf("window not found: %s", name), nil)
+		return coreerr.E("window.taskSetAlwaysOnTop", "window not found: "+name, nil)
 	}
 	pw.SetAlwaysOnTop(alwaysOnTop)
 	return nil
@@ -377,28 +403,16 @@ func (s *Service) taskSetAlwaysOnTop(name string, alwaysOnTop bool) error {
 func (s *Service) taskSetBackgroundColour(name string, red, green, blue, alpha uint8) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return corego.E("window.service", corego.Sprintf("window not found: %s", name), nil)
+		return coreerr.E("window.taskSetBackgroundColour", "window not found: "+name, nil)
 	}
 	pw.SetBackgroundColour(red, green, blue, alpha)
-	return nil
-}
-
-func (s *Service) taskSetOpacity(name string, opacity float32) error {
-	if opacity < 0 || opacity > 1 {
-		return corego.E("window.setOpacity", "opacity must be between 0 and 1", nil)
-	}
-	pw, ok := s.manager.Get(name)
-	if !ok {
-		return corego.E("window.service", corego.Sprintf("window not found: %s", name), nil)
-	}
-	pw.SetOpacity(opacity)
 	return nil
 }
 
 func (s *Service) taskSetVisibility(name string, visible bool) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return corego.E("window.service", corego.Sprintf("window not found: %s", name), nil)
+		return coreerr.E("window.taskSetVisibility", "window not found: "+name, nil)
 	}
 	pw.SetVisibility(visible)
 	return nil
@@ -407,13 +421,75 @@ func (s *Service) taskSetVisibility(name string, visible bool) error {
 func (s *Service) taskFullscreen(name string, fullscreen bool) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return corego.E("window.service", corego.Sprintf("window not found: %s", name), nil)
+		return coreerr.E("window.taskFullscreen", "window not found: "+name, nil)
 	}
 	if fullscreen {
 		pw.Fullscreen()
 	} else {
 		pw.UnFullscreen()
 	}
+	return nil
+}
+
+func (s *Service) taskSetZoom(name string, factor float64) error {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return coreerr.E("window.taskSetZoom", "window not found: "+name, nil)
+	}
+	pw.SetZoom(factor)
+	return nil
+}
+
+func (s *Service) taskSetURL(name, url string) error {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return coreerr.E("window.taskSetURL", "window not found: "+name, nil)
+	}
+	pw.SetURL(url)
+	return nil
+}
+
+func (s *Service) taskSetHTML(name, html string) error {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return coreerr.E("window.taskSetHTML", "window not found: "+name, nil)
+	}
+	pw.SetHTML(html)
+	return nil
+}
+
+func (s *Service) taskExecJS(name, js string) error {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return coreerr.E("window.taskExecJS", "window not found: "+name, nil)
+	}
+	pw.ExecJS(js)
+	return nil
+}
+
+func (s *Service) taskToggleFullscreen(name string) error {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return coreerr.E("window.taskToggleFullscreen", "window not found: "+name, nil)
+	}
+	pw.ToggleFullscreen()
+	return nil
+}
+
+func (s *Service) taskPrint(name string) error {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return coreerr.E("window.taskPrint", "window not found: "+name, nil)
+	}
+	return pw.Print()
+}
+
+func (s *Service) taskFlash(name string, enabled bool) error {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return coreerr.E("window.taskFlash", "window not found: "+name, nil)
+	}
+	pw.Flash(enabled)
 	return nil
 }
 
@@ -432,7 +508,7 @@ func (s *Service) taskSaveLayout(name string) error {
 func (s *Service) taskRestoreLayout(name string) error {
 	layout, ok := s.manager.Layout().GetLayout(name)
 	if !ok {
-		return corego.E("window.restoreLayout", corego.Sprintf("layout not found: %s", name), nil)
+		return coreerr.E("window.taskRestoreLayout", "layout not found: "+name, nil)
 	}
 	for winName, state := range layout.Windows {
 		pw, found := s.manager.Get(winName)
@@ -449,6 +525,7 @@ func (s *Service) taskRestoreLayout(name string) error {
 		} else {
 			pw.Restore()
 		}
+		s.manager.State().CaptureState(pw)
 	}
 	return nil
 }
@@ -464,13 +541,21 @@ var tileModeMap = map[string]TileMode{
 func (s *Service) taskTileWindows(mode string, names []string) error {
 	tm, ok := tileModeMap[mode]
 	if !ok {
-		return corego.E("window.tileWindows", corego.Sprintf("unknown tile mode: %s", mode), nil)
+		return coreerr.E("window.taskTileWindows", "unknown tile mode: "+mode, nil)
 	}
 	if len(names) == 0 {
 		names = s.manager.List()
 	}
-	screenW, screenH := s.primaryScreenSize()
-	return s.manager.TileWindows(tm, names, screenW, screenH)
+	originX, originY, screenWidth, screenHeight := s.primaryScreenArea()
+	return s.manager.TileWindows(tm, names, screenWidth, screenHeight, originX, originY)
+}
+
+func (s *Service) taskStackWindows(names []string, offsetX, offsetY int) error {
+	if len(names) == 0 {
+		names = s.manager.List()
+	}
+	originX, originY, _, _ := s.primaryScreenArea()
+	return s.manager.StackWindows(names, offsetX, offsetY, originX, originY)
 }
 
 var snapPosMap = map[string]SnapPosition{
@@ -484,100 +569,29 @@ var snapPosMap = map[string]SnapPosition{
 func (s *Service) taskSnapWindow(name, position string) error {
 	pos, ok := snapPosMap[position]
 	if !ok {
-		return corego.E("window.snapWindow", corego.Sprintf("unknown snap position: %s", position), nil)
+		return coreerr.E("window.taskSnapWindow", "unknown snap position: "+position, nil)
 	}
-	screenW, screenH := s.primaryScreenSize()
-	return s.manager.SnapWindow(name, pos, screenW, screenH)
+	originX, originY, screenWidth, screenHeight := s.primaryScreenArea()
+	return s.manager.SnapWindow(name, pos, screenWidth, screenHeight, originX, originY)
 }
 
-func (s *Service) taskArrangePair(first, second string) error {
-	screenW, screenH := s.primaryScreenSize()
-	return s.manager.ArrangePair(first, second, screenW, screenH)
+var workflowLayoutMap = map[string]WorkflowLayout{
+	"coding":       WorkflowCoding,
+	"debugging":    WorkflowDebugging,
+	"presenting":   WorkflowPresenting,
+	"side-by-side": WorkflowSideBySide,
 }
 
-func (s *Service) taskBesideEditor(editorName, windowName string) error {
-	screenW, screenH := s.primaryScreenSize()
-	if editorName == "" {
-		editorName = s.detectEditorWindow()
+func (s *Service) taskApplyWorkflow(workflow string, names []string) error {
+	layout, ok := workflowLayoutMap[workflow]
+	if !ok {
+		return coreerr.E("window.taskApplyWorkflow", "unknown workflow layout: "+workflow, nil)
 	}
-	if editorName == "" {
-		return corego.E("window.besideEditor", "editor window not found", nil)
-	}
-	if windowName == "" {
-		windowName = s.detectCompanionWindow(editorName)
-	}
-	if windowName == "" {
-		return corego.E("window.besideEditor", "companion window not found", nil)
-	}
-	return s.manager.BesideEditor(editorName, windowName, screenW, screenH)
-}
-
-func (s *Service) taskStackWindows(names []string, offsetX, offsetY int) error {
 	if len(names) == 0 {
 		names = s.manager.List()
 	}
-	return s.manager.StackWindows(names, offsetX, offsetY)
-}
-
-func (s *Service) taskApplyWorkflow(workflow WorkflowLayout, names []string) error {
-	screenW, screenH := s.primaryScreenSize()
-	if len(names) == 0 {
-		names = s.manager.List()
-	}
-	return s.manager.ApplyWorkflow(workflow, names, screenW, screenH)
-}
-
-func (s *Service) detectEditorWindow() string {
-	for _, info := range s.queryWindowList() {
-		if looksLikeEditor(info.Name, info.Title) {
-			return info.Name
-		}
-	}
-	return ""
-}
-
-func (s *Service) detectCompanionWindow(editorName string) string {
-	for _, info := range s.queryWindowList() {
-		if info.Name == editorName {
-			continue
-		}
-		if !looksLikeEditor(info.Name, info.Title) {
-			return info.Name
-		}
-	}
-	return ""
-}
-
-func looksLikeEditor(name, title string) bool {
-	return containsAny(name, "editor", "ide", "code", "workspace") || containsAny(title, "editor", "ide", "code")
-}
-
-func containsAny(value string, needles ...string) bool {
-	lower := corego.Lower(value)
-	for _, needle := range needles {
-		if corego.Contains(lower, needle) {
-			return true
-		}
-	}
-	return false
-}
-
-func (s *Service) primaryScreenSize() (int, int) {
-	result, handled, err := s.Core().QUERY(screen.QueryPrimary{})
-	if err == nil && handled {
-		if scr, ok := result.(*screen.Screen); ok && scr != nil {
-			if scr.WorkArea.Width > 0 && scr.WorkArea.Height > 0 {
-				return scr.WorkArea.Width, scr.WorkArea.Height
-			}
-			if scr.Bounds.Width > 0 && scr.Bounds.Height > 0 {
-				return scr.Bounds.Width, scr.Bounds.Height
-			}
-			if scr.Size.Width > 0 && scr.Size.Height > 0 {
-				return scr.Size.Width, scr.Size.Height
-			}
-		}
-	}
-	return 1920, 1080
+	originX, originY, screenWidth, screenHeight := s.primaryScreenArea()
+	return s.manager.ApplyWorkflow(layout, names, screenWidth, screenHeight, originX, originY)
 }
 
 // Manager returns the underlying window Manager for direct access.

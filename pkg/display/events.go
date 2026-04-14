@@ -3,11 +3,12 @@ package display
 
 import (
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
-	"dappco.re/go/core"
-	"dappco.re/go/core/gui/pkg/window"
+	core "dappco.re/go/core"
+	"forge.lthn.ai/core/gui/pkg/window"
 	"github.com/gorilla/websocket"
 )
 
@@ -41,6 +42,11 @@ const (
 	EventContextMenuClick    EventType = "contextmenu.item-clicked"
 	EventWebviewConsole      EventType = "webview.console"
 	EventWebviewException    EventType = "webview.exception"
+	EventCustomEvent         EventType = "event.custom"
+	EventDockProgress        EventType = "dock.progress"
+	EventDockBounce          EventType = "dock.bounce"
+	EventNotificationAction  EventType = "notification.action"
+	EventNotificationDismiss EventType = "notification.dismiss"
 )
 
 // Event represents a display event sent to subscribers.
@@ -143,13 +149,13 @@ func (em *WSEventManager) sendEvent(conn *websocket.Conn, event Event) {
 		return
 	}
 
-	r := core.JSONMarshal(event)
-	if !r.OK {
+	result := core.JSONMarshal(event)
+	if !result.OK {
 		return
 	}
 
 	conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-	if err := conn.WriteMessage(websocket.TextMessage, r.Value.([]byte)); err != nil {
+	if err := conn.WriteMessage(websocket.TextMessage, result.Value.([]byte)); err != nil {
 		em.removeClient(conn)
 	}
 }
@@ -187,7 +193,7 @@ func (em *WSEventManager) handleMessages(conn *websocket.Conn) {
 			EventTypes []EventType `json:"eventTypes,omitempty"`
 		}
 
-		if r := core.JSONUnmarshal(message, &msg); !r.OK {
+		if !core.JSONUnmarshal(message, &msg).OK {
 			continue
 		}
 
@@ -216,7 +222,7 @@ func (em *WSEventManager) subscribe(conn *websocket.Conn, id string, eventTypes 
 	if id == "" {
 		em.mu.Lock()
 		em.nextSubID++
-		id = core.Sprintf("sub-%d", em.nextSubID)
+		id = "sub-" + strconv.Itoa(em.nextSubID)
 		em.mu.Unlock()
 	}
 
@@ -233,8 +239,7 @@ func (em *WSEventManager) subscribe(conn *websocket.Conn, id string, eventTypes 
 		"id":         id,
 		"eventTypes": eventTypes,
 	}
-	r := core.JSONMarshal(response)
-	if r.OK {
+	if r := core.JSONMarshal(response); r.OK {
 		conn.WriteMessage(websocket.TextMessage, r.Value.([]byte))
 	}
 }
@@ -258,8 +263,7 @@ func (em *WSEventManager) unsubscribe(conn *websocket.Conn, id string) {
 		"type": "unsubscribed",
 		"id":   id,
 	}
-	r := core.JSONMarshal(response)
-	if r.OK {
+	if r := core.JSONMarshal(response); r.OK {
 		conn.WriteMessage(websocket.TextMessage, r.Value.([]byte))
 	}
 }
@@ -285,8 +289,7 @@ func (em *WSEventManager) listSubscriptions(conn *websocket.Conn) {
 		"type":          "subscriptions",
 		"subscriptions": subs,
 	}
-	r := core.JSONMarshal(response)
-	if r.OK {
+	if r := core.JSONMarshal(response); r.OK {
 		conn.WriteMessage(websocket.TextMessage, r.Value.([]byte))
 	}
 }

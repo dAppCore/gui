@@ -1,42 +1,57 @@
-// pkg/contextmenu/messages.go
 package contextmenu
 
-import corego "dappco.re/go/core"
+import core "dappco.re/go/core"
 
-// ErrMenuNotFound is returned when attempting to remove or get a menu
-// that does not exist in the registry.
-var ErrMenuNotFound = corego.NewError("contextmenu: menu not found")
+var ErrorMenuNotFound = core.E("contextmenu", "menu not found", nil)
 
-// --- Queries ---
-
-// QueryGet returns a single context menu by name. Result: *ContextMenuDef (nil if not found)
+// QueryGet returns a named context menu definition. Result: *ContextMenuDef (nil if not found)
+//
+//	result := c.QUERY(contextmenu.QueryGet{Name: "editor"})
 type QueryGet struct {
 	Name string `json:"name"`
 }
 
 // QueryList returns all registered context menus. Result: map[string]ContextMenuDef
+//
+//	result := c.QUERY(contextmenu.QueryList{})
 type QueryList struct{}
 
-// --- Tasks ---
+// QueryGetAll returns all context menus as a slice. Result: []ContextMenuDef
+//
+//	result := c.QUERY(contextmenu.QueryGetAll{})
+type QueryGetAll struct{}
 
-// TaskAdd registers a context menu. Result: nil
-// If a menu with the same name already exists it is replaced (remove + re-add).
+// TaskAdd registers a named context menu. Replaces if already exists.
+//
+//	c.PERFORM(contextmenu.TaskAdd{Name: "editor", Menu: def})
 type TaskAdd struct {
 	Name string         `json:"name"`
 	Menu ContextMenuDef `json:"menu"`
 }
 
-// TaskRemove unregisters a context menu. Result: nil
-// Returns ErrMenuNotFound if the menu does not exist.
+// TaskRemove unregisters a context menu by name. Error: ErrorMenuNotFound if missing.
+//
+//	c.PERFORM(contextmenu.TaskRemove{Name: "editor"})
 type TaskRemove struct {
 	Name string `json:"name"`
 }
 
-// --- Actions ---
+// TaskUpdate replaces a context menu definition. Error: ErrorMenuNotFound if missing.
+//
+//	c.PERFORM(contextmenu.TaskUpdate{Name: "editor", Menu: newDef})
+type TaskUpdate struct {
+	Name string         `json:"name"`
+	Menu ContextMenuDef `json:"menu"`
+}
+
+// TaskDestroy removes a context menu and releases resources.
+//
+//	c.PERFORM(contextmenu.TaskDestroy{Name: "editor"})
+type TaskDestroy struct {
+	Name string `json:"name"`
+}
 
 // ActionItemClicked is broadcast when a context menu item is clicked.
-// The Data field is populated from the CSS --custom-contextmenu-data property
-// on the element that triggered the context menu.
 type ActionItemClicked struct {
 	MenuName string `json:"menuName"`
 	ActionID string `json:"actionId"`

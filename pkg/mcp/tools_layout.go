@@ -3,11 +3,11 @@ package mcp
 
 import (
 	"context"
+	"strings"
 
-	corego "dappco.re/go/core"
-	"dappco.re/go/core/gui/pkg/screen"
-	"dappco.re/go/core/gui/pkg/window"
-	"forge.lthn.ai/core/go/pkg/core"
+	coreerr "forge.lthn.ai/core/go-log"
+	"forge.lthn.ai/core/gui/pkg/screen"
+	"forge.lthn.ai/core/gui/pkg/window"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -59,7 +59,7 @@ func (s *Subsystem) layoutList(_ context.Context, _ *mcp.CallToolRequest, _ Layo
 	}
 	layouts, ok := result.([]window.LayoutInfo)
 	if !ok {
-		return nil, LayoutListOutput{}, corego.E("mcp.layout", "unexpected result type from layout list query", nil)
+		return nil, LayoutListOutput{}, coreerr.E("mcp.layoutList", "unexpected result type", nil)
 	}
 	return nil, LayoutListOutput{Layouts: layouts}, nil
 }
@@ -97,7 +97,7 @@ func (s *Subsystem) layoutGet(_ context.Context, _ *mcp.CallToolRequest, input L
 	}
 	layout, ok := result.(*window.Layout)
 	if !ok {
-		return nil, LayoutGetOutput{}, corego.E("mcp.layout", "unexpected result type from layout get query", nil)
+		return nil, LayoutGetOutput{}, coreerr.E("mcp.layoutGet", "unexpected result type", nil)
 	}
 	return nil, LayoutGetOutput{Layout: layout}, nil
 }
@@ -138,145 +138,19 @@ func (s *Subsystem) layoutSnap(_ context.Context, _ *mcp.CallToolRequest, input 
 	return nil, LayoutSnapOutput{Success: true}, nil
 }
 
-// --- layout_beside_editor ---
-
-type LayoutBesideEditorInput struct {
-	Editor string `json:"editor,omitempty"`
-	Window string `json:"window,omitempty"`
-}
-type LayoutBesideEditorOutput struct {
-	Success bool `json:"success"`
-}
-
-func (s *Subsystem) layoutBesideEditor(_ context.Context, _ *mcp.CallToolRequest, input LayoutBesideEditorInput) (*mcp.CallToolResult, LayoutBesideEditorOutput, error) {
-	_, _, err := s.core.PERFORM(window.TaskBesideEditor{Editor: input.Editor, Window: input.Window})
-	if err != nil {
-		return nil, LayoutBesideEditorOutput{}, err
-	}
-	return nil, LayoutBesideEditorOutput{Success: true}, nil
-}
-
-// --- layout_suggest ---
-
-type LayoutSuggestInput struct {
-	WindowCount  int `json:"windowCount,omitempty"`
-	ScreenWidth  int `json:"screenWidth,omitempty"`
-	ScreenHeight int `json:"screenHeight,omitempty"`
-}
-type LayoutSuggestOutput struct {
-	Suggestion window.LayoutSuggestion `json:"suggestion"`
-}
-
-func (s *Subsystem) layoutSuggest(_ context.Context, _ *mcp.CallToolRequest, input LayoutSuggestInput) (*mcp.CallToolResult, LayoutSuggestOutput, error) {
-	windowCount := input.WindowCount
-	if windowCount <= 0 {
-		result, _, err := s.core.QUERY(window.QueryWindowList{})
-		if err != nil {
-			return nil, LayoutSuggestOutput{}, err
-		}
-		windows, ok := result.([]window.WindowInfo)
-		if !ok {
-			return nil, LayoutSuggestOutput{}, corego.E("mcp.layout", "unexpected result type from window list query", nil)
-		}
-		windowCount = len(windows)
-	}
-	screenW, screenH := input.ScreenWidth, input.ScreenHeight
-	if screenW <= 0 || screenH <= 0 {
-		screenW, screenH = primaryScreenSize(s.core)
-	}
-	result, handled, err := s.core.QUERY(window.QueryLayoutSuggestion{
-		WindowCount:  windowCount,
-		ScreenWidth:  screenW,
-		ScreenHeight: screenH,
-	})
-	if err != nil {
-		return nil, LayoutSuggestOutput{}, err
-	}
-	if !handled {
-		return nil, LayoutSuggestOutput{}, corego.E("mcp.layout", "window service not available", nil)
-	}
-	suggestion, ok := result.(window.LayoutSuggestion)
-	if !ok {
-		return nil, LayoutSuggestOutput{}, corego.E("mcp.layout", "unexpected result type from layout suggestion query", nil)
-	}
-	return nil, LayoutSuggestOutput{Suggestion: suggestion}, nil
-}
-
-// --- screen_find_space ---
-
-type ScreenFindSpaceInput struct {
-	Width  int `json:"width,omitempty"`
-	Height int `json:"height,omitempty"`
-}
-type ScreenFindSpaceOutput struct {
-	Space window.SpaceInfo `json:"space"`
-}
-
-func (s *Subsystem) screenFindSpace(_ context.Context, _ *mcp.CallToolRequest, input ScreenFindSpaceInput) (*mcp.CallToolResult, ScreenFindSpaceOutput, error) {
-	screenW, screenH := primaryScreenSize(s.core)
-	if screenW <= 0 || screenH <= 0 {
-		screenW, screenH = 1920, 1080
-	}
-	result, handled, err := s.core.QUERY(window.QueryFindSpace{
-		Width:        input.Width,
-		Height:       input.Height,
-		ScreenWidth:  screenW,
-		ScreenHeight: screenH,
-	})
-	if err != nil {
-		return nil, ScreenFindSpaceOutput{}, err
-	}
-	if !handled {
-		return nil, ScreenFindSpaceOutput{}, corego.E("mcp.layout", "window service not available", nil)
-	}
-	space, ok := result.(window.SpaceInfo)
-	if !ok {
-		return nil, ScreenFindSpaceOutput{}, corego.E("mcp.layout", "unexpected result type from find space query", nil)
-	}
-	if space.ScreenWidth == 0 {
-		space.ScreenWidth = screenW
-	}
-	if space.ScreenHeight == 0 {
-		space.ScreenHeight = screenH
-	}
-	return nil, ScreenFindSpaceOutput{Space: space}, nil
-}
-
-// --- window_arrange_pair ---
-
-type WindowArrangePairInput struct {
-	First  string `json:"first"`
-	Second string `json:"second"`
-}
-type WindowArrangePairOutput struct {
-	Success bool `json:"success"`
-}
-
-func (s *Subsystem) windowArrangePair(_ context.Context, _ *mcp.CallToolRequest, input WindowArrangePairInput) (*mcp.CallToolResult, WindowArrangePairOutput, error) {
-	_, _, err := s.core.PERFORM(window.TaskArrangePair{First: input.First, Second: input.Second})
-	if err != nil {
-		return nil, WindowArrangePairOutput{}, err
-	}
-	return nil, WindowArrangePairOutput{Success: true}, nil
-}
-
 // --- layout_stack ---
 
 type LayoutStackInput struct {
 	Windows []string `json:"windows,omitempty"`
-	OffsetX int      `json:"offsetX,omitempty"`
-	OffsetY int      `json:"offsetY,omitempty"`
+	OffsetX int      `json:"offsetX"`
+	OffsetY int      `json:"offsetY"`
 }
 type LayoutStackOutput struct {
 	Success bool `json:"success"`
 }
 
 func (s *Subsystem) layoutStack(_ context.Context, _ *mcp.CallToolRequest, input LayoutStackInput) (*mcp.CallToolResult, LayoutStackOutput, error) {
-	_, _, err := s.core.PERFORM(window.TaskStackWindows{
-		Windows: input.Windows,
-		OffsetX: input.OffsetX,
-		OffsetY: input.OffsetY,
-	})
+	_, _, err := s.core.PERFORM(window.TaskStackWindows{Windows: input.Windows, OffsetX: input.OffsetX, OffsetY: input.OffsetY})
 	if err != nil {
 		return nil, LayoutStackOutput{}, err
 	}
@@ -294,18 +168,184 @@ type LayoutWorkflowOutput struct {
 }
 
 func (s *Subsystem) layoutWorkflow(_ context.Context, _ *mcp.CallToolRequest, input LayoutWorkflowInput) (*mcp.CallToolResult, LayoutWorkflowOutput, error) {
-	workflow, ok := window.ParseWorkflowLayout(input.Workflow)
-	if !ok {
-		return nil, LayoutWorkflowOutput{}, corego.E("mcp.layout", corego.Sprintf("unknown workflow: %s", input.Workflow), nil)
-	}
-	_, _, err := s.core.PERFORM(window.TaskApplyWorkflow{
-		Workflow: workflow,
-		Windows:  input.Windows,
-	})
+	_, _, err := s.core.PERFORM(window.TaskApplyWorkflow{Workflow: input.Workflow, Windows: input.Windows})
 	if err != nil {
 		return nil, LayoutWorkflowOutput{}, err
 	}
 	return nil, LayoutWorkflowOutput{Success: true}, nil
+}
+
+// --- layout_suggest ---
+
+type LayoutSuggestInput struct {
+	Width       int `json:"width"`
+	Height      int `json:"height"`
+	WindowCount int `json:"windowCount"`
+}
+type LayoutSuggestOutput struct {
+	Mode       string        `json:"mode"`
+	Placements []screen.Rect `json:"placements"`
+}
+
+func (s *Subsystem) layoutSuggest(_ context.Context, _ *mcp.CallToolRequest, input LayoutSuggestInput) (*mcp.CallToolResult, LayoutSuggestOutput, error) {
+	width := input.Width
+	height := input.Height
+	if width <= 0 {
+		width = 1920
+	}
+	if height <= 0 {
+		height = 1080
+	}
+	count := input.WindowCount
+	if count <= 0 {
+		count = 1
+	}
+
+	workArea := screen.Rect{X: 0, Y: 0, Width: width, Height: height}
+	switch {
+	case count == 1:
+		return nil, LayoutSuggestOutput{Mode: "full", Placements: []screen.Rect{workArea}}, nil
+	case count == 2:
+		if width >= height {
+			half := width / 2
+			return nil, LayoutSuggestOutput{
+				Mode: "side-by-side",
+				Placements: []screen.Rect{
+					{X: 0, Y: 0, Width: half, Height: height},
+					{X: half, Y: 0, Width: width - half, Height: height},
+				},
+			}, nil
+		}
+		half := height / 2
+		return nil, LayoutSuggestOutput{
+			Mode: "stacked",
+			Placements: []screen.Rect{
+				{X: 0, Y: 0, Width: width, Height: half},
+				{X: 0, Y: half, Width: width, Height: height - half},
+			},
+		}, nil
+	case count == 3 && width >= height:
+		mainWidth := width * 2 / 3
+		sideHeight := height / 2
+		return nil, LayoutSuggestOutput{
+			Mode: "editor-plus-stack",
+			Placements: []screen.Rect{
+				{X: 0, Y: 0, Width: mainWidth, Height: height},
+				{X: mainWidth, Y: 0, Width: width - mainWidth, Height: sideHeight},
+				{X: mainWidth, Y: sideHeight, Width: width - mainWidth, Height: height - sideHeight},
+			},
+		}, nil
+	default:
+		cols := 2
+		if count > 4 {
+			cols = 3
+		}
+		rows := (count + cols - 1) / cols
+		cellWidth := width / cols
+		cellHeight := height / rows
+		placements := make([]screen.Rect, 0, count)
+		for i := 0; i < count; i++ {
+			row := i / cols
+			col := i % cols
+			placements = append(placements, screen.Rect{
+				X: col * cellWidth, Y: row * cellHeight,
+				Width: cellWidth, Height: cellHeight,
+			})
+		}
+		return nil, LayoutSuggestOutput{Mode: "grid", Placements: placements}, nil
+	}
+}
+
+// --- layout_beside_editor ---
+
+type LayoutBesideEditorInput struct {
+	Name        string   `json:"name"`
+	EditorNames []string `json:"editorNames,omitempty"`
+}
+type LayoutBesideEditorOutput struct {
+	Editor string      `json:"editor"`
+	Bounds screen.Rect `json:"bounds"`
+}
+
+func (s *Subsystem) layoutBesideEditor(_ context.Context, _ *mcp.CallToolRequest, input LayoutBesideEditorInput) (*mcp.CallToolResult, LayoutBesideEditorOutput, error) {
+	windows, err := s.allWindows()
+	if err != nil {
+		return nil, LayoutBesideEditorOutput{}, err
+	}
+	screens, err := s.allScreens()
+	if err != nil {
+		return nil, LayoutBesideEditorOutput{}, err
+	}
+
+	editorHints := map[string]struct{}{}
+	for _, name := range input.EditorNames {
+		editorHints[strings.ToLower(name)] = struct{}{}
+	}
+	defaultHints := []string{"code", "cursor", "vscode", "studio", "goland", "intellij", "webstorm", "xcode", "vim", "nvim", "emacs", "editor"}
+
+	var editor *window.WindowInfo
+	for i := range windows {
+		if windows[i].Name == input.Name {
+			continue
+		}
+		name := strings.ToLower(windows[i].Name)
+		title := strings.ToLower(windows[i].Title)
+		if _, ok := editorHints[name]; ok {
+			editor = &windows[i]
+			break
+		}
+		for _, hint := range defaultHints {
+			if strings.Contains(name, hint) || strings.Contains(title, hint) {
+				editor = &windows[i]
+				break
+			}
+		}
+		if editor != nil {
+			break
+		}
+	}
+	if editor == nil {
+		return nil, LayoutBesideEditorOutput{}, coreerr.E("mcp.layoutBesideEditor", "no editor window detected", nil)
+	}
+
+	editorScreen := screenForWindowInfo(screens, *editor)
+	if editorScreen == nil {
+		editorScreen = chooseScreenByIDOrPrimary(screens, "")
+	}
+	workArea := workAreaRect(editorScreen)
+
+	editorRect := screen.Rect{X: editor.X, Y: editor.Y, Width: editor.Width, Height: editor.Height}
+	candidates := []screen.Rect{
+		{X: workArea.X, Y: workArea.Y, Width: max(0, editorRect.X-workArea.X), Height: workArea.Height},
+		{X: editorRect.X + editorRect.Width, Y: workArea.Y, Width: max(0, workArea.X+workArea.Width-(editorRect.X+editorRect.Width)), Height: workArea.Height},
+		{X: workArea.X, Y: workArea.Y, Width: workArea.Width, Height: max(0, editorRect.Y-workArea.Y)},
+		{X: workArea.X, Y: editorRect.Y + editorRect.Height, Width: workArea.Width, Height: max(0, workArea.Y+workArea.Height-(editorRect.Y+editorRect.Height))},
+	}
+
+	best := screen.Rect{}
+	bestArea := -1
+	for _, candidate := range candidates {
+		area := candidate.Width * candidate.Height
+		if candidate.Width <= 0 || candidate.Height <= 0 {
+			continue
+		}
+		if area > bestArea {
+			bestArea = area
+			best = candidate
+		}
+	}
+	if bestArea <= 0 {
+		arranged, err := s.arrangePairOnScreen(editor.Name, input.Name, editorScreen, "")
+		if err != nil {
+			return nil, LayoutBesideEditorOutput{}, err
+		}
+		return nil, LayoutBesideEditorOutput{Editor: editor.Name, Bounds: arranged.Second}, nil
+	}
+
+	if err := applyRect(s.core, input.Name, best); err != nil {
+		return nil, LayoutBesideEditorOutput{}, err
+	}
+	return nil, LayoutBesideEditorOutput{Editor: editor.Name, Bounds: best}, nil
 }
 
 // --- Registration ---
@@ -317,29 +357,9 @@ func (s *Subsystem) registerLayoutTools(server *mcp.Server) {
 	mcp.AddTool(server, &mcp.Tool{Name: "layout_delete", Description: "Delete a saved layout"}, s.layoutDelete)
 	mcp.AddTool(server, &mcp.Tool{Name: "layout_get", Description: "Get a specific layout by name"}, s.layoutGet)
 	mcp.AddTool(server, &mcp.Tool{Name: "layout_tile", Description: "Tile windows in a grid arrangement"}, s.layoutTile)
+	mcp.AddTool(server, &mcp.Tool{Name: "layout_suggest", Description: "Suggest an optimal arrangement for the given screen size and window count"}, s.layoutSuggest)
+	mcp.AddTool(server, &mcp.Tool{Name: "layout_beside_editor", Description: "Place a window beside a detected editor or IDE window"}, s.layoutBesideEditor)
 	mcp.AddTool(server, &mcp.Tool{Name: "layout_snap", Description: "Snap a window to a screen edge or corner"}, s.layoutSnap)
-	mcp.AddTool(server, &mcp.Tool{Name: "layout_beside_editor", Description: "Place a window beside a detected editor window"}, s.layoutBesideEditor)
-	mcp.AddTool(server, &mcp.Tool{Name: "layout_suggest", Description: "Suggest an optimal layout for the current screen"}, s.layoutSuggest)
-	mcp.AddTool(server, &mcp.Tool{Name: "screen_find_space", Description: "Find an empty area for a new window"}, s.screenFindSpace)
-	mcp.AddTool(server, &mcp.Tool{Name: "window_arrange_pair", Description: "Arrange two windows side-by-side"}, s.windowArrangePair)
-	mcp.AddTool(server, &mcp.Tool{Name: "layout_stack", Description: "Cascade windows with an offset"}, s.layoutStack)
-	mcp.AddTool(server, &mcp.Tool{Name: "layout_workflow", Description: "Apply a predefined workflow layout"}, s.layoutWorkflow)
-}
-
-func primaryScreenSize(c *core.Core) (int, int) {
-	result, handled, err := c.QUERY(screen.QueryPrimary{})
-	if err == nil && handled {
-		if scr, ok := result.(*screen.Screen); ok && scr != nil {
-			if scr.WorkArea.Width > 0 && scr.WorkArea.Height > 0 {
-				return scr.WorkArea.Width, scr.WorkArea.Height
-			}
-			if scr.Bounds.Width > 0 && scr.Bounds.Height > 0 {
-				return scr.Bounds.Width, scr.Bounds.Height
-			}
-			if scr.Size.Width > 0 && scr.Size.Height > 0 {
-				return scr.Size.Width, scr.Size.Height
-			}
-		}
-	}
-	return 1920, 1080
+	mcp.AddTool(server, &mcp.Tool{Name: "layout_stack", Description: "Stack windows in a cascade pattern"}, s.layoutStack)
+	mcp.AddTool(server, &mcp.Tool{Name: "layout_workflow", Description: "Apply a preset workflow layout"}, s.layoutWorkflow)
 }
