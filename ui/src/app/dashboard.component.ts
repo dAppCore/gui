@@ -14,7 +14,6 @@ import {
   ChatService,
   Conversation,
   ImageAttachment,
-  ToolInvocation,
 } from '../services/chat.service';
 import { UiStateService } from '../services/ui-state.service';
 
@@ -47,8 +46,19 @@ interface ConversationGroup {
         </div>
 
         <div class="model-chip">
-          <span>Active model</span>
-          <strong>{{ selectedModelLabel() }}</strong>
+          <div>
+            <span>Active model</span>
+            <strong>{{ selectedModelLabel() }}</strong>
+          </div>
+          <div class="model-status">
+            <span class="status-pill" [class.loading]="chat.modelSwitching()">
+              <span class="status-dot"></span>
+              {{ chat.modelSwitching() ? 'Loading' : 'Loaded' }}
+            </span>
+            <span class="status-pill subtle">
+              {{ selectedModelSupportsVision() ? 'Vision' : 'Text only' }}
+            </span>
+          </div>
         </div>
 
         <div class="history-list">
@@ -56,17 +66,63 @@ interface ConversationGroup {
             <section class="history-group">
               <h2>{{ group.label }}</h2>
               @for (conversation of group.conversations; track conversation.id) {
-                <button
-                  type="button"
+                <article
                   class="history-row"
                   [class.active]="activeConversation()?.id === conversation.id"
-                  (click)="chat.selectConversation(conversation.id)"
                 >
-                  <span class="history-title">{{ conversation.title }}</span>
-                  <span class="history-meta">
-                    {{ conversation.model }} · {{ conversation.updatedAt | date: 'shortTime' }}
-                  </span>
-                </button>
+                  @if (editingConversationId() === conversation.id) {
+                    <div class="history-edit">
+                      <input
+                        #renameInput
+                        type="text"
+                        class="history-title-input"
+                        [ngModel]="renameDraft()"
+                        (ngModelChange)="renameDraft.set($event)"
+                        (keydown)="onRenameKeydown($event, conversation.id)"
+                        (click)="$event.stopPropagation()"
+                        (blur)="commitRename(conversation.id)"
+                      />
+                      <div class="history-actions">
+                        <button
+                          type="button"
+                          class="row-icon save"
+                          (mousedown)="$event.preventDefault()"
+                          (click)="commitRename(conversation.id)"
+                        >
+                          Save
+                        </button>
+                        <button
+                          type="button"
+                          class="row-icon"
+                          (mousedown)="$event.preventDefault()"
+                          (click)="cancelRename()"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  } @else {
+                    <button
+                      type="button"
+                      class="history-main"
+                      (click)="chat.selectConversation(conversation.id)"
+                    >
+                      <span class="history-title">{{ conversation.title }}</span>
+                      <span class="history-meta">
+                        {{ conversation.model }} · {{ conversation.updatedAt | date: 'shortTime' }}
+                      </span>
+                    </button>
+                    <div class="history-actions">
+                      <button
+                        type="button"
+                        class="row-icon"
+                        (click)="startRename(conversation, $event)"
+                      >
+                        Rename
+                      </button>
+                    </div>
+                  }
+                </article>
               }
             </section>
           }
@@ -126,7 +182,9 @@ interface ConversationGroup {
               <article class="message" [class.user]="message.role === 'user'">
                 <div class="message-meta">
                   <span>{{ message.role === 'user' ? 'You' : 'Assistant' }}</span>
-                  <time>{{ message.createdAt | date: 'shortTime' }}</time>
+                  <time [attr.datetime]="message.createdAt" [title]="message.createdAt | date: 'medium'">
+                    {{ message.createdAt | date: 'shortTime' }}
+                  </time>
                 </div>
 
                 <div class="bubble">
@@ -194,6 +252,10 @@ interface ConversationGroup {
                       </section>
                     }
                   }
+
+                  @if (message.streaming) {
+                    <span class="stream-cursor" aria-hidden="true"></span>
+                  }
                 </div>
               </article>
             }
@@ -222,7 +284,19 @@ interface ConversationGroup {
             </div>
           }
 
-          <div class="composer-shell">
+          @if (composerNotice(); as notice) {
+            <p class="composer-notice">{{ notice }}</p>
+          }
+
+          <div
+            class="composer-shell"
+            [class.drag-active]="dragActive()"
+            [class.attach-disabled]="!selectedModelSupportsVision()"
+            (dragenter)="onComposerDragEnter($event)"
+            (dragover)="onComposerDragOver($event)"
+            (dragleave)="onComposerDragLeave($event)"
+            (drop)="onComposerDrop($event)"
+          >
             <textarea
               #composer
               rows="1"
@@ -230,20 +304,34 @@ interface ConversationGroup {
               (ngModelChange)="chat.setDraft($event)"
               (input)="resizeComposer(composer)"
               (keydown)="onComposerKeydown($event)"
+              (paste)="onComposerPaste($event)"
               placeholder="Ask locally, attach images, or describe the task."
             ></textarea>
 
             <div class="composer-actions">
-              <label class="icon-button" title="Attach image">
-                <input type="file" accept="image/*" hidden (change)="onFilePicked($event)" />
+              <input
+                #filePicker
+                type="file"
+                accept="image/*"
+                hidden
+                [disabled]="!selectedModelSupportsVision()"
+                (change)="onFilePicked($event)"
+              />
+              <button
+                type="button"
+                class="icon-button"
+                [disabled]="!selectedModelSupportsVision()"
+                [title]="attachmentButtonTitle()"
+                (click)="openFilePicker(filePicker)"
+              >
                 <i class="fa-regular fa-image"></i>
-              </label>
+              </button>
               <button
                 type="button"
                 class="icon-button"
                 [disabled]="chat.busy()"
-                (click)="pasteImagePlaceholder()"
-                title="Paste hint"
+                (click)="showPasteHint()"
+                [title]="attachmentPasteTitle()"
               >
                 <i class="fa-regular fa-clipboard"></i>
               </button>
@@ -366,6 +454,46 @@ interface ConversationGroup {
         border-radius: 1rem;
         padding: 1rem;
         background: linear-gradient(135deg, rgba(249, 115, 22, 0.28), rgba(59, 130, 246, 0.16));
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+
+      .model-status,
+      .history-actions,
+      .history-edit {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.38rem 0.7rem;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.42);
+        font-size: 0.78rem;
+      }
+
+      .status-pill.subtle {
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .status-dot {
+        width: 0.58rem;
+        height: 0.58rem;
+        border-radius: 999px;
+        background: #86efac;
+        box-shadow: 0 0 0.8rem rgba(134, 239, 172, 0.45);
+      }
+
+      .status-pill.loading .status-dot {
+        background: #facc15;
+        box-shadow: 0 0 0.8rem rgba(250, 204, 21, 0.5);
+        animation: pulse-dot 0.9s ease-in-out infinite;
       }
 
       .model-chip span,
@@ -407,8 +535,10 @@ interface ConversationGroup {
         border-radius: 1rem;
         text-align: left;
         background: rgba(255, 255, 255, 0.04);
-        flex-direction: column;
-        align-items: flex-start;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 0.75rem;
       }
 
       .history-row.active {
@@ -416,8 +546,55 @@ interface ConversationGroup {
         box-shadow: inset 0 0 0 1px rgba(251, 191, 36, 0.18);
       }
 
+      .history-main {
+        border: 0;
+        background: transparent;
+        color: inherit;
+        text-align: left;
+        display: grid;
+        gap: 0.3rem;
+        min-width: 0;
+      }
+
+      .history-main,
+      .history-title-input {
+        width: 100%;
+      }
+
+      .history-edit {
+        min-width: 0;
+        grid-column: 1 / -1;
+      }
+
+      .history-title-input {
+        border: 0;
+        border-radius: 0.8rem;
+        padding: 0.65rem 0.85rem;
+        background: rgba(15, 23, 42, 0.86);
+        color: inherit;
+        font: inherit;
+      }
+
       .history-title {
         font-weight: 700;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .row-icon {
+        border: 0;
+        border-radius: 999px;
+        padding: 0.45rem 0.7rem;
+        background: rgba(255, 255, 255, 0.08);
+        color: rgba(226, 232, 240, 0.9);
+        cursor: pointer;
+        font-size: 0.78rem;
+      }
+
+      .row-icon.save {
+        color: #fde68a;
       }
 
       .thread-shell {
@@ -469,6 +646,16 @@ interface ConversationGroup {
 
       .message.user {
         margin-left: auto;
+      }
+
+      .message-meta time {
+        opacity: 0;
+        transition: opacity 140ms ease;
+      }
+
+      .message:hover .message-meta time,
+      .message:focus-within .message-meta time {
+        opacity: 1;
       }
 
       .bubble {
@@ -526,6 +713,15 @@ interface ConversationGroup {
         cursor: pointer;
       }
 
+      .stream-cursor {
+        display: inline-block;
+        width: 0.7rem;
+        height: 1.15rem;
+        border-radius: 0.15rem;
+        background: linear-gradient(180deg, #f59e0b, #fb7185);
+        animation: blink-cursor 0.9s steps(1, end) infinite;
+      }
+
       .attachment-grid,
       .queued-attachments {
         display: flex;
@@ -561,6 +757,21 @@ interface ConversationGroup {
         padding: 1rem;
         border-radius: 1.25rem;
         background: rgba(255, 255, 255, 0.04);
+        transition:
+          border-color 140ms ease,
+          background-color 140ms ease,
+          box-shadow 140ms ease;
+        border: 1px dashed transparent;
+      }
+
+      .composer-shell.drag-active {
+        background: rgba(14, 116, 144, 0.12);
+        border-color: rgba(125, 211, 252, 0.65);
+        box-shadow: 0 0 0 1px rgba(125, 211, 252, 0.15);
+      }
+
+      .composer-shell.attach-disabled {
+        border-color: rgba(148, 163, 184, 0.2);
       }
 
       textarea,
@@ -588,7 +799,8 @@ interface ConversationGroup {
       }
 
       .send-button:disabled,
-      .ghost-button:disabled {
+      .ghost-button:disabled,
+      .icon-button:disabled {
         opacity: 0.45;
         cursor: default;
       }
@@ -637,6 +849,35 @@ interface ConversationGroup {
       .error-text {
         color: #fda4af;
       }
+
+      .composer-notice {
+        margin: 0 0 0.85rem;
+        color: #fcd34d;
+        font-size: 0.84rem;
+      }
+
+      @keyframes blink-cursor {
+        0%,
+        49% {
+          opacity: 1;
+        }
+        50%,
+        100% {
+          opacity: 0;
+        }
+      }
+
+      @keyframes pulse-dot {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        50% {
+          transform: scale(0.82);
+          opacity: 0.7;
+        }
+      }
     `,
   ],
 })
@@ -648,11 +889,19 @@ export class DashboardComponent implements AfterViewChecked {
 
   readonly lightboxImage = signal<ImageAttachment | null>(null);
   readonly autoScroll = signal(true);
+  readonly dragActive = signal(false);
+  readonly composerNotice = signal('');
+  readonly editingConversationId = signal('');
+  readonly renameDraft = signal('');
   private readonly expandedThinkingIds = signal<Set<string>>(new Set());
   private readonly expandedToolIds = signal<Set<string>>(new Set());
+  private composerNoticeTimer: number | null = null;
 
   protected readonly searchQuery = this.uiState.searchQuery;
   protected readonly activeConversation = this.chat.activeConversation;
+  protected readonly selectedModelSupportsVision = computed(
+    () => this.chat.selectedModelEntry()?.supportsVision !== false,
+  );
 
   protected readonly filteredGroups = computed<ConversationGroup[]>(() => {
     const query = this.searchQuery().toLowerCase();
@@ -684,6 +933,7 @@ export class DashboardComponent implements AfterViewChecked {
   protected createConversation(): void {
     this.chat.createConversation();
     this.uiState.clearSearchQuery();
+    this.cancelRename();
   }
 
   protected async sendMessage(textarea: HTMLTextAreaElement): Promise<void> {
@@ -697,7 +947,11 @@ export class DashboardComponent implements AfterViewChecked {
     if (!active) {
       return;
     }
+    if (!window.confirm(`Delete "${active.title}"?`)) {
+      return;
+    }
     this.chat.deleteConversation(active.id);
+    this.cancelRename();
   }
 
   protected exportActiveConversation(): void {
@@ -733,15 +987,16 @@ export class DashboardComponent implements AfterViewChecked {
 
   protected async onFilePicked(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
-    const files = Array.from(input.files ?? []);
-    for (const file of files) {
-      await this.chat.addAttachment(file);
-    }
+    await this.attachFiles(Array.from(input.files ?? []));
     input.value = '';
   }
 
-  protected pasteImagePlaceholder(): void {
-    this.chat.setDraft(`${this.chat.draft()}\n[Paste image from clipboard here when running inside the desktop shell.]`.trim());
+  protected showPasteHint(): void {
+    if (!this.selectedModelSupportsVision()) {
+      this.showComposerNotice('The selected model does not accept image input.');
+      return;
+    }
+    this.showComposerNotice('Paste an image directly into the composer with Cmd/Ctrl+V.');
   }
 
   protected onThreadScroll(): void {
@@ -765,6 +1020,26 @@ export class DashboardComponent implements AfterViewChecked {
   protected selectedModelLabel(): string {
     const selected = this.chat.models().find((model) => model.name === this.chat.selectedModel());
     return selected ? `${selected.name} · ${selected.architecture}` : this.chat.selectedModel();
+  }
+
+  protected attachmentButtonTitle(): string {
+    return this.selectedModelSupportsVision()
+      ? 'Attach PNG, JPEG, WebP, or GIF'
+      : 'This model does not support vision input';
+  }
+
+  protected attachmentPasteTitle(): string {
+    return this.selectedModelSupportsVision()
+      ? 'Paste an image from the clipboard'
+      : 'Switch to a vision-capable model to paste images';
+  }
+
+  protected openFilePicker(input: HTMLInputElement): void {
+    if (!this.selectedModelSupportsVision()) {
+      this.showComposerNotice('Switch to Lemer or Lemma to attach images.');
+      return;
+    }
+    input.click();
   }
 
   protected segmentsFor(message: ChatMessage): MessageSegment[] {
@@ -809,6 +1084,79 @@ export class DashboardComponent implements AfterViewChecked {
     await navigator.clipboard.writeText(value);
   }
 
+  protected startRename(conversation: Conversation, event: Event): void {
+    event.stopPropagation();
+    this.editingConversationId.set(conversation.id);
+    this.renameDraft.set(conversation.title);
+    this.chat.selectConversation(conversation.id);
+  }
+
+  protected commitRename(id: string): void {
+    if (this.editingConversationId() !== id) {
+      return;
+    }
+    this.chat.renameConversation(id, this.renameDraft());
+    this.cancelRename();
+  }
+
+  protected cancelRename(): void {
+    this.editingConversationId.set('');
+    this.renameDraft.set('');
+  }
+
+  protected onRenameKeydown(event: KeyboardEvent, id: string): void {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      this.commitRename(id);
+      return;
+    }
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.cancelRename();
+    }
+  }
+
+  protected onComposerDragEnter(event: DragEvent): void {
+    if (!hasImageFiles(event.dataTransfer)) {
+      return;
+    }
+    event.preventDefault();
+    this.dragActive.set(true);
+  }
+
+  protected onComposerDragOver(event: DragEvent): void {
+    if (!hasImageFiles(event.dataTransfer)) {
+      return;
+    }
+    event.preventDefault();
+    this.dragActive.set(true);
+  }
+
+  protected onComposerDragLeave(event: DragEvent): void {
+    const nextTarget = event.relatedTarget as Node | null;
+    if (nextTarget && (event.currentTarget as HTMLElement | null)?.contains(nextTarget)) {
+      return;
+    }
+    this.dragActive.set(false);
+  }
+
+  protected async onComposerDrop(event: DragEvent): Promise<void> {
+    event.preventDefault();
+    this.dragActive.set(false);
+    await this.attachFiles(Array.from(event.dataTransfer?.files ?? []));
+  }
+
+  protected async onComposerPaste(event: ClipboardEvent): Promise<void> {
+    const files = Array.from(event.clipboardData?.files ?? []).filter((file) =>
+      file.type.startsWith('image/'),
+    );
+    if (files.length === 0) {
+      return;
+    }
+    event.preventDefault();
+    await this.attachFiles(files);
+  }
+
   protected toggleThinking(id: string): void {
     this.expandedThinkingIds.update((current) => toggleSet(current, id));
   }
@@ -833,6 +1181,32 @@ export class DashboardComponent implements AfterViewChecked {
 
   protected toolExpanded(id: string): boolean {
     return this.expandedToolIds().has(id);
+  }
+
+  private async attachFiles(files: File[]): Promise<void> {
+    const imageFiles = files.filter((file) => file.type.startsWith('image/'));
+    if (imageFiles.length === 0) {
+      if (files.length > 0) {
+        this.showComposerNotice('Only image attachments are supported in the chat composer.');
+      }
+      return;
+    }
+    if (!this.selectedModelSupportsVision()) {
+      this.showComposerNotice('The selected model does not support image input.');
+      return;
+    }
+    await this.chat.addAttachments(imageFiles);
+  }
+
+  private showComposerNotice(message: string): void {
+    this.composerNotice.set(message);
+    if (this.composerNoticeTimer !== null) {
+      window.clearTimeout(this.composerNoticeTimer);
+    }
+    this.composerNoticeTimer = window.setTimeout(() => {
+      this.composerNotice.set('');
+      this.composerNoticeTimer = null;
+    }, 2600);
   }
 }
 
@@ -871,4 +1245,11 @@ function toggleSet(current: Set<string>, value: string): Set<string> {
     next.add(value);
   }
   return next;
+}
+
+function hasImageFiles(dataTransfer: DataTransfer | null): boolean {
+  if (!dataTransfer) {
+    return false;
+  }
+  return Array.from(dataTransfer.items).some((item) => item.type.startsWith('image/'));
 }

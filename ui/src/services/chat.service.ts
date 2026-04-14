@@ -117,19 +117,26 @@ export class ChatService {
   private readonly activeConversationIdState = signal('');
   private readonly selectedModelState = signal('lemer');
   private readonly modelsState = signal<ModelEntry[]>(defaultModels());
+  private readonly modelSwitchingState = signal(false);
   private readonly settingsState = signal<ChatSettings>(defaultSettings());
   private readonly draftState = signal('');
   private readonly queuedAttachmentsState = signal<ImageAttachment[]>([]);
   private readonly busyState = signal(false);
+  private modelSwitchTimer: number | null = null;
 
   readonly conversations = this.conversationsState.asReadonly();
   readonly activeConversationId = this.activeConversationIdState.asReadonly();
   readonly selectedModel = this.selectedModelState.asReadonly();
   readonly models = this.modelsState.asReadonly();
+  readonly modelSwitching = this.modelSwitchingState.asReadonly();
   readonly settings = this.settingsState.asReadonly();
   readonly draft = this.draftState.asReadonly();
   readonly queuedAttachments = this.queuedAttachmentsState.asReadonly();
   readonly busy = this.busyState.asReadonly();
+  readonly selectedModelEntry = computed<ModelEntry | null>(() => {
+    const selected = this.selectedModelState();
+    return this.modelsState().find((model) => model.name === selected) ?? null;
+  });
 
   readonly activeConversation = computed<Conversation | null>(() => {
     const id = this.activeConversationIdState();
@@ -167,6 +174,17 @@ export class ChatService {
   }
 
   selectModel(name: string): void {
+    const current = this.selectedModelState();
+    if (name !== current) {
+      this.modelSwitchingState.set(true);
+      if (this.modelSwitchTimer !== null) {
+        window.clearTimeout(this.modelSwitchTimer);
+      }
+      this.modelSwitchTimer = window.setTimeout(() => {
+        this.modelSwitchingState.set(false);
+        this.modelSwitchTimer = null;
+      }, 420);
+    }
     this.selectedModelState.set(name);
     this.modelsState.update((models) =>
       models.map((model) => ({ ...model, loaded: model.name === name })),
@@ -237,6 +255,12 @@ export class ChatService {
       height: dimensions.height,
     };
     this.queuedAttachmentsState.update((items) => [...items, attachment]);
+  }
+
+  async addAttachments(files: Iterable<File>): Promise<void> {
+    for (const file of files) {
+      await this.addAttachment(file);
+    }
   }
 
   removeAttachment(id: string): void {
