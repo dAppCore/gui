@@ -3,9 +3,9 @@ package mcp
 import (
 	"sort"
 
+	"dappco.re/go/core/gui/pkg/screen"
+	"dappco.re/go/core/gui/pkg/window"
 	"forge.lthn.ai/core/go/pkg/core"
-	"forge.lthn.ai/core/gui/pkg/screen"
-	"forge.lthn.ai/core/gui/pkg/window"
 )
 
 func (s *Subsystem) allWindows() ([]window.WindowInfo, error) {

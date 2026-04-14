@@ -8,7 +8,7 @@ import (
 	"time"
 
 	core "dappco.re/go/core"
-	"forge.lthn.ai/core/gui/pkg/window"
+	"dappco.re/go/core/gui/pkg/window"
 	"github.com/gorilla/websocket"
 )
 

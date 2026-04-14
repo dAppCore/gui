@@ -6,25 +6,25 @@ import (
 	"runtime"
 
 	corego "dappco.re/go/core"
+	coreutil "dappco.re/go/core"
 	"forge.lthn.ai/core/config"
 	coreerr "forge.lthn.ai/core/go-log"
 	"forge.lthn.ai/core/go/pkg/core"
-	coreutil "dappco.re/go/core"
 
-	"forge.lthn.ai/core/gui/pkg/browser"
-	"forge.lthn.ai/core/gui/pkg/contextmenu"
-	"forge.lthn.ai/core/gui/pkg/dialog"
-	"forge.lthn.ai/core/gui/pkg/dock"
-	"forge.lthn.ai/core/gui/pkg/environment"
-	"forge.lthn.ai/core/gui/pkg/events"
-	"forge.lthn.ai/core/gui/pkg/keybinding"
-	"forge.lthn.ai/core/gui/pkg/lifecycle"
-	"forge.lthn.ai/core/gui/pkg/menu"
-	"forge.lthn.ai/core/gui/pkg/notification"
-	"forge.lthn.ai/core/gui/pkg/screen"
-	"forge.lthn.ai/core/gui/pkg/systray"
-	"forge.lthn.ai/core/gui/pkg/webview"
-	"forge.lthn.ai/core/gui/pkg/window"
+	"dappco.re/go/core/gui/pkg/browser"
+	"dappco.re/go/core/gui/pkg/contextmenu"
+	"dappco.re/go/core/gui/pkg/dialog"
+	"dappco.re/go/core/gui/pkg/dock"
+	"dappco.re/go/core/gui/pkg/environment"
+	"dappco.re/go/core/gui/pkg/events"
+	"dappco.re/go/core/gui/pkg/keybinding"
+	"dappco.re/go/core/gui/pkg/lifecycle"
+	"dappco.re/go/core/gui/pkg/menu"
+	"dappco.re/go/core/gui/pkg/notification"
+	"dappco.re/go/core/gui/pkg/screen"
+	"dappco.re/go/core/gui/pkg/systray"
+	"dappco.re/go/core/gui/pkg/webview"
+	"dappco.re/go/core/gui/pkg/window"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
@@ -324,7 +324,7 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 		if encodedR.OK {
 			_ = corego.JSONUnmarshal(encodedR.Value.([]byte), &opts)
 		}
-			return nil, false, corego.Wrap(err, "display.ws", "ws: invalid window create options")
+		return nil, false, corego.Wrap(err, "display.ws", "ws: invalid window create options")
 		info, createErr := s.CreateWindow(opts)
 		if createErr != nil {
 			return nil, false, createErr
@@ -1074,7 +1074,7 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 		if encodedR.OK {
 			_ = corego.JSONUnmarshal(encodedR.Value.([]byte), &opts)
 		}
-			return nil, false, corego.Wrap(err, "display.ws", "ws: invalid open file options")
+		return nil, false, corego.Wrap(err, "display.ws", "ws: invalid open file options")
 		paths, openErr := s.OpenFileDialog(opts)
 		if openErr != nil {
 			return nil, false, openErr
@@ -1086,7 +1086,7 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 		if encodedR.OK {
 			_ = corego.JSONUnmarshal(encodedR.Value.([]byte), &opts)
 		}
-			return nil, false, corego.Wrap(err, "display.ws", "ws: invalid save file options")
+		return nil, false, corego.Wrap(err, "display.ws", "ws: invalid save file options")
 		path, saveErr := s.SaveFileDialog(opts)
 		if saveErr != nil {
 			return nil, false, saveErr
@@ -1098,7 +1098,7 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 		if encodedR.OK {
 			_ = corego.JSONUnmarshal(encodedR.Value.([]byte), &opts)
 		}
-			return nil, false, corego.Wrap(err, "display.ws", "ws: invalid open directory options")
+		return nil, false, corego.Wrap(err, "display.ws", "ws: invalid open directory options")
 		path, dirErr := s.OpenDirectoryDialog(opts)
 		if dirErr != nil {
 			return nil, false, dirErr

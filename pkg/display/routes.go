@@ -22,12 +22,12 @@ type SchemeResponse struct {
 type SchemeHandler func(ctx context.Context, path string, params url.Values) (SchemeResponse, error)
 
 type StoreSearchResult struct {
-	Origin      string    `json:"origin"`
-	ConversationID string  `json:"conversation_id"`
-	Title       string    `json:"title"`
-	Role        string    `json:"role"`
-	Snippet     string    `json:"snippet"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	Origin         string    `json:"origin"`
+	ConversationID string    `json:"conversation_id"`
+	Title          string    `json:"title"`
+	Role           string    `json:"role"`
+	Snippet        string    `json:"snippet"`
+	UpdatedAt      time.Time `json:"updated_at"`
 }
 
 func (s *Service) registerBuiltinSchemes() {

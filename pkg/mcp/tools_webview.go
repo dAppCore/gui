@@ -4,8 +4,8 @@ package mcp
 import (
 	"context"
 
+	"dappco.re/go/core/gui/pkg/webview"
 	coreerr "forge.lthn.ai/core/go-log"
-	"forge.lthn.ai/core/gui/pkg/webview"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 

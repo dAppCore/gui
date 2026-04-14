@@ -69,7 +69,7 @@ export class ProviderHostComponent implements OnInit, OnChanges {
   ) {}
 
   ngOnInit(): void {
-    this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+    this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params: Record<string, string>) => {
       const providerName = this.normalizeProviderName(params['provider']);
       if (providerName) {
         const provider = this.providerService

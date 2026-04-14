@@ -1,13 +1,6 @@
-// SPDX-Licence-Identifier: EUPL-1.2
+import { Component, Input, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { ChatService } from '../services/chat.service';
 
-import { Component, Input, OnDestroy, OnInit, signal } from '@angular/core';
-import { ProviderDiscoveryService } from '../services/provider-discovery.service';
-import { WebSocketService } from '../services/websocket.service';
-
-/**
- * StatusBarComponent renders the footer bar showing time, version,
- * provider count, and connection status.
- */
 @Component({
   selector: 'status-bar',
   standalone: true,
@@ -15,15 +8,19 @@ import { WebSocketService } from '../services/websocket.service';
     <footer class="status-bar" [style.--sidebar-width]="sidebarWidth">
       <div class="status-left">
         <span class="status-item version">{{ version }}</span>
-        <span class="status-item providers">
-          <i class="fa-regular fa-puzzle-piece"></i>
-          {{ providerCount() }} providers
+        <span class="status-item">
+          <i class="fa-regular fa-comments"></i>
+          {{ conversationCount() }} conversations
+        </span>
+        <span class="status-item">
+          <i class="fa-regular fa-microchip-ai"></i>
+          {{ activeModel() }}
         </span>
       </div>
       <div class="status-right">
-        <span class="status-item connection" [class.connected]="wsConnected()">
+        <span class="status-item connection" [class.connected]="!chat.busy()">
           <span class="status-dot"></span>
-          {{ wsConnected() ? 'Connected' : 'Disconnected' }}
+          {{ chat.busy() ? 'Streaming' : 'Ready' }}
         </span>
         <span class="status-item time">{{ time() }}</span>
       </div>
@@ -81,7 +78,7 @@ import { WebSocketService } from '../services/websocket.service';
         width: 7px;
         height: 7px;
         border-radius: 50%;
-        background: rgb(107 114 128);
+        background: rgb(249 115 22);
         margin-right: 0.375rem;
       }
 
@@ -101,16 +98,12 @@ export class StatusBarComponent implements OnInit, OnDestroy {
   @Input() version = 'v0.1.0';
   @Input() sidebarWidth = '5rem';
 
-  readonly time = signal('');
+  protected readonly chat = inject(ChatService);
+  protected readonly time = signal('');
+  protected readonly conversationCount = computed(() => this.chat.conversations().length);
+  protected readonly activeModel = computed(() => this.chat.selectedModel());
+
   private intervalId: ReturnType<typeof setInterval> | undefined;
-
-  constructor(
-    private providerService: ProviderDiscoveryService,
-    private wsService: WebSocketService,
-  ) {}
-
-  readonly providerCount = () => this.providerService.providers().length;
-  readonly wsConnected = () => this.wsService.connected();
 
   ngOnInit(): void {
     this.updateTime();

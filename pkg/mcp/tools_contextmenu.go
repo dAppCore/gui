@@ -5,8 +5,8 @@ import (
 	"context"
 	"encoding/json"
 
+	"dappco.re/go/core/gui/pkg/contextmenu"
 	coreerr "forge.lthn.ai/core/go-log"
-	"forge.lthn.ai/core/gui/pkg/contextmenu"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 

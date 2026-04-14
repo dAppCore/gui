@@ -4,8 +4,8 @@ package systray
 import (
 	"context"
 
-	"forge.lthn.ai/core/go/pkg/core"
 	"dappco.re/go/core/gui/pkg/notification"
+	"forge.lthn.ai/core/go/pkg/core"
 )
 
 type Options struct{}

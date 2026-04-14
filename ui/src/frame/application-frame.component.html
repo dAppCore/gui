@@ -7,7 +7,7 @@
   >
     <button
       type="button"
-      (click)="sidebarOpen = true"
+      (click)="sidebarOpen.set(true)"
       class="-m-2.5 p-2.5 text-gray-700 dark:text-gray-400"
     >
       <span class="sr-only">Open sidebar</span>
@@ -39,7 +39,7 @@
           </div>
         </form>
         <div class="flex items-center gap-x-4 lg:gap-x-6">
-          <span class="search-count">{{ visibleNavigation().length }} visible</span>
+          <span class="search-count">{{ searchQuery() ? 'Filtering history' : 'Search conversations' }}</span>
           <button
             type="button"
             class="-m-2.5 p-2.5 text-gray-400 hover:text-gray-500 dark:hover:text-white"
@@ -56,7 +56,7 @@
 
         <!-- User menu -->
         <div class="relative">
-          <button (click)="userMenuOpen = !userMenuOpen" class="relative flex items-center">
+          <button (click)="userMenuOpen.set(!userMenuOpen())" class="relative flex items-center">
             <span class="absolute -inset-1.5"></span>
             <span class="sr-only">Open user menu</span>
             <span class="hidden lg:flex lg:items-center">
@@ -69,14 +69,14 @@
               <i class="ml-2 fa-regular fa-chevron-down text-sm/6 text-gray-400"></i>
             </span>
           </button>
-          @if (userMenuOpen) {
+          @if (userMenuOpen()) {
             <div
               class="absolute right-0 z-50 mt-2.5 w-48 origin-top-right rounded-md bg-white py-2 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-gray-800 dark:ring-white/10"
             >
               @for (item of userNavigation; track item.name) {
                 <a
                   [routerLink]="item.href"
-                  (click)="userMenuOpen = false"
+                  (click)="userMenuOpen.set(false)"
                   class="flex items-center gap-x-3 px-3 py-1 text-sm/6 text-gray-900 focus:bg-gray-50 focus:outline-hidden dark:text-white dark:focus:bg-white/5 h-8"
                 >
                   <i [class]="item.icon"></i>
@@ -92,13 +92,13 @@
 
   <nav class="frame-nav">
     <!-- Mobile sidebar overlay -->
-    @if (sidebarOpen) {
+    @if (sidebarOpen()) {
       <div class="relative z-50" role="dialog" aria-modal="true">
         <div class="fixed inset-0 bg-gray-900/80"></div>
         <div class="fixed inset-0 flex">
           <div class="relative mr-16 flex w-full max-w-xs flex-1">
             <div class="absolute top-0 left-full flex w-16 justify-center pt-5">
-              <button type="button" (click)="sidebarOpen = false" class="-m-2.5 p-2.5">
+              <button type="button" (click)="sidebarOpen.set(false)" class="-m-2.5 p-2.5">
                 <span class="sr-only">Close sidebar</span>
                 <i class="fa-regular fa-xmark fa-2xl text-white"></i>
               </button>
@@ -117,7 +117,7 @@
                         [routerLink]="item.href"
                         routerLinkActive="bg-gray-800 text-white"
                         [routerLinkActiveOptions]="{ exact: true }"
-                        (click)="sidebarOpen = false"
+                        (click)="sidebarOpen.set(false)"
                         class="text-gray-400 hover:bg-gray-800 hover:text-white group flex justify-center items-center gap-x-3 rounded-md p-4 text-sm/6 font-semibold"
                       >
                         <i [class]="item.icon"></i>
@@ -137,7 +137,7 @@
         class="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:block lg:w-20 lg:overflow-y-auto lg:bg-gray-900 lg:pb-4 dark:before:pointer-events-none dark:before:absolute dark:before:inset-0 dark:before:border-r dark:before:border-white/10 dark:before:bg-black/10"
       >
         <button
-          (click)="sidebarOpen = true"
+          (click)="sidebarOpen.set(true)"
           class="relative flex h-16 w-full shrink-0 items-center justify-center cursor-pointer bg-transparent border-none"
         >
           <i class="fa-regular fa-cube fa-2xl text-indigo-400"></i>

@@ -4,12 +4,12 @@ import (
 	"context"
 	"testing"
 
+	coreutil "dappco.re/go/core"
+	"dappco.re/go/core/gui/pkg/menu"
+	"dappco.re/go/core/gui/pkg/systray"
+	"dappco.re/go/core/gui/pkg/window"
 	coreio "forge.lthn.ai/core/go-io"
 	"forge.lthn.ai/core/go/pkg/core"
-	coreutil "dappco.re/go/core"
-	"forge.lthn.ai/core/gui/pkg/menu"
-	"forge.lthn.ai/core/gui/pkg/systray"
-	"forge.lthn.ai/core/gui/pkg/window"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

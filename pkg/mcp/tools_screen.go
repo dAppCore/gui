@@ -4,9 +4,9 @@ package mcp
 import (
 	"context"
 
+	"dappco.re/go/core/gui/pkg/screen"
+	"dappco.re/go/core/gui/pkg/window"
 	coreerr "forge.lthn.ai/core/go-log"
-	"forge.lthn.ai/core/gui/pkg/screen"
-	"forge.lthn.ai/core/gui/pkg/window"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 

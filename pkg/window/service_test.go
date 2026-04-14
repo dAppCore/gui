@@ -5,8 +5,8 @@ import (
 	"sync"
 	"testing"
 
-	"forge.lthn.ai/core/go/pkg/core"
 	"dappco.re/go/core/gui/pkg/screen"
+	"forge.lthn.ai/core/go/pkg/core"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

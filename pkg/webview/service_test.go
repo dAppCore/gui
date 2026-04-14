@@ -11,8 +11,8 @@ import (
 	"strings"
 	"testing"
 
-	"forge.lthn.ai/core/go/pkg/core"
 	"dappco.re/go/core/gui/pkg/window"
+	"forge.lthn.ai/core/go/pkg/core"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

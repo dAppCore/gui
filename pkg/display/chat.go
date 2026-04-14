@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	coreerr "forge.lthn.ai/core/go-log"
 	"forge.lthn.ai/core/config"
+	coreerr "forge.lthn.ai/core/go-log"
 	"forge.lthn.ai/core/go/pkg/core"
 )
 
@@ -88,13 +88,13 @@ type Conversation struct {
 }
 
 type ChatSnapshot struct {
-	Settings         ChatSettings                  `json:"settings"`
-	SelectedModel    string                        `json:"selected_model"`
-	Conversations    map[string]Conversation       `json:"conversations"`
-	QueuedImages     map[string][]ImageAttachment  `json:"queued_images"`
-	Thinking         map[string]ThinkingState      `json:"thinking"`
-	StreamingMessage map[string]string             `json:"streaming_message"`
-	Models           []ModelEntry                  `json:"models"`
+	Settings         ChatSettings                 `json:"settings"`
+	SelectedModel    string                       `json:"selected_model"`
+	Conversations    map[string]Conversation      `json:"conversations"`
+	QueuedImages     map[string][]ImageAttachment `json:"queued_images"`
+	Thinking         map[string]ThinkingState     `json:"thinking"`
+	StreamingMessage map[string]string            `json:"streaming_message"`
+	Models           []ModelEntry                 `json:"models"`
 }
 
 type ChatStore struct {

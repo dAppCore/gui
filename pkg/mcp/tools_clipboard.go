@@ -5,8 +5,8 @@ import (
 	"context"
 	"encoding/base64"
 
+	"dappco.re/go/core/gui/pkg/clipboard"
 	coreerr "forge.lthn.ai/core/go-log"
-	"forge.lthn.ai/core/gui/pkg/clipboard"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
