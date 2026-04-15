@@ -179,7 +179,15 @@ export class ChatStateService {
     }
   }
 
-  removeQueuedAttachment(index: number): void {
+  async removeQueuedAttachment(index: number): Promise<void> {
+    const activeConversationID = this.activeConversation()?.id;
+    const removed = await this.invoke('gui.chat.removeImage', {
+      conversation_id: activeConversationID,
+      index,
+    });
+    if (!removed) {
+      return;
+    }
     this.queuedAttachments.update((items) => items.filter((_, itemIndex) => itemIndex !== index));
   }
 
@@ -585,6 +593,16 @@ export class ChatStateService {
       const attachment = payload as ImageAttachment;
       this.queuedAttachments.update((items) => [...items, attachment]);
       return payload as T;
+    }
+    if (route === 'gui.chat.removeImage') {
+      const index = (payload as { index?: number })?.index ?? -1;
+      const current = this.queuedAttachments();
+      if (index < 0 || index >= current.length) {
+        return null as T;
+      }
+      const [removed] = current.slice(index, index + 1);
+      this.queuedAttachments.update((items) => items.filter((_, itemIndex) => itemIndex !== index));
+      return removed as T;
     }
     if (route === 'gui.chat.conversations.new') {
       const now = new Date().toISOString();

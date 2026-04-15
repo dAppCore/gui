@@ -32,6 +32,10 @@ export interface ChatRouteMap {
     request: ({ conversation_id?: string } & ImageAttachment);
     response: ImageAttachment;
   };
+  'gui.chat.removeImage': {
+    request: { conversation_id?: string; index: number };
+    response: ImageAttachment;
+  };
   'gui.chat.send': {
     request: { conversation_id?: string; content: string };
     response: Conversation;

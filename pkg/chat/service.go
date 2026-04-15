@@ -86,6 +86,11 @@ type attachImageInput struct {
 	ImageAttachment `json:",inline"`
 }
 
+type removeImageInput struct {
+	ConversationID string `json:"conversation_id,omitempty"`
+	Index          int    `json:"index"`
+}
+
 type openAIRequest struct {
 	Model       string           `json:"model"`
 	Messages    []openAIMessage  `json:"messages"`
@@ -334,6 +339,14 @@ func (s *Service) registerActions() {
 		}
 		s.queueAttachment(coalesce(input.ConversationID, "draft"), input.ImageAttachment)
 		return core.Result{Value: input.ImageAttachment, OK: true}
+	})
+	c.Action("gui.chat.removeImage", func(_ context.Context, opts core.Options) core.Result {
+		input, err := decodeInput[removeImageInput](opts)
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		attachment, err := s.removeAttachment(coalesce(input.ConversationID, "draft"), input.Index)
+		return core.Result{}.New(attachment, err)
 	})
 	c.Action("gui.chat.thinking.start", func(_ context.Context, opts core.Options) core.Result {
 		input, err := decodeInput[thinkingInput](opts)
@@ -687,6 +700,32 @@ func (s *Service) drainAttachments(conversationID string) []ImageAttachment {
 	return attachments
 }
 
+// removeAttachment removes a queued image by index from the pending attachment queue.
+// Use: removed, _ := service.removeAttachment("draft", 0)
+func (s *Service) removeAttachment(conversationID string, index int) (ImageAttachment, error) {
+	key := coalesce(conversationID, "draft")
+	if index < 0 {
+		return ImageAttachment{}, coreerr.E("chat.removeAttachment", "attachment index must be non-negative", nil)
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	attachments := s.pendingAttachments[key]
+	if index >= len(attachments) {
+		return ImageAttachment{}, coreerr.E("chat.removeAttachment", "attachment index is out of range", nil)
+	}
+
+	removed := attachments[index]
+	next := append(attachments[:index:index], attachments[index+1:]...)
+	if len(next) == 0 {
+		delete(s.pendingAttachments, key)
+	} else {
+		s.pendingAttachments[key] = next
+	}
+	return removed, nil
+}
+
 func (s *Service) clearQueuedAttachments(conversationID string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -726,7 +765,7 @@ func (s *Service) mergedSettings(global ChatSettings, override *ChatSettings) Ch
 }
 
 func (s *Service) send(ctx context.Context, input sendInput) (Conversation, error) {
-	if strings.TrimSpace(input.Content) == "" && len(s.pendingAttachments) == 0 {
+	if strings.TrimSpace(input.Content) == "" && !s.hasPendingAttachments(input.ConversationID) {
 		return Conversation{}, coreerr.E("chat.send", "message content is required", nil)
 	}
 
@@ -817,6 +856,19 @@ func (s *Service) send(ctx context.Context, input sendInput) (Conversation, erro
 	}
 
 	return conv, nil
+}
+
+func (s *Service) hasPendingAttachments(conversationID string) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if attachments := s.pendingAttachments[coalesce(conversationID, "draft")]; len(attachments) > 0 {
+		return true
+	}
+	if conversationID != "" && len(s.pendingAttachments["draft"]) > 0 {
+		return true
+	}
+	return false
 }
 
 func (s *Service) streamAssistant(ctx context.Context, conv Conversation, settings ChatSettings) (ChatMessage, error) {
