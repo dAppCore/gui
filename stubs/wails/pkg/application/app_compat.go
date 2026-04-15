@@ -26,7 +26,11 @@ func New(appOptions Options) *App {
 	if globalApplication != nil {
 		return globalApplication
 	}
+	mergeApplicationDefaults(&appOptions)
 	globalApplication = newStubApp(appOptions)
+	if appOptions.OnShutdown != nil {
+		globalApplication.OnShutdown(appOptions.OnShutdown)
+	}
 	return globalApplication
 }
 
@@ -74,8 +78,22 @@ func (a *App) GetPID() int {
 func (a *App) Run() error {
 	state := ensureAppCompatState(a)
 	state.mu.Lock()
+	if state.running {
+		state.mu.Unlock()
+		return nil
+	}
 	state.running = true
+	services := append([]Service(nil), state.services...)
 	state.mu.Unlock()
+
+	for _, service := range services {
+		if err := a.startupService(service); err != nil {
+			state.mu.Lock()
+			state.running = false
+			state.mu.Unlock()
+			return err
+		}
+	}
 	return nil
 }
 

@@ -898,15 +898,23 @@ func NewApp() *App { return newStubApp(Options{}) }
 
 // Quit executes registered shutdown callbacks.
 func (a *App) Quit() {
+	if !a.shouldQuit() {
+		return
+	}
+	a.shutdownServices()
 	state := ensureAppCompatState(a)
 	state.mu.Lock()
 	callbacks := append([]func(){}, state.shutdown...)
+	postShutdown := state.options.PostShutdown
 	state.running = false
 	state.mu.Unlock()
 	for _, callback := range callbacks {
 		if callback != nil {
 			callback()
 		}
+	}
+	if postShutdown != nil {
+		postShutdown()
 	}
 }
 

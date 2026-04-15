@@ -23,6 +23,9 @@ func (m *ContextMenu) Destroy() {
 	if globalApplication != nil {
 		globalApplication.ContextMenu.Remove(m.name)
 	}
+	if m != nil && m.Menu != nil {
+		m.Menu.Destroy()
+	}
 }
 
 // AddCheckbox appends a checkbox item to the menu.
@@ -41,32 +44,7 @@ func (m *Menu) AddRadio(label string, enabled bool) *MenuItem {
 
 // Update normalises menu radio groups.
 func (m *Menu) Update() {
-	var radioGroup []*MenuItem
-	flush := func() {
-		if len(radioGroup) == 0 {
-			return
-		}
-		for _, item := range radioGroup {
-			item.radioGroupMembers = radioGroup
-		}
-		radioGroup = nil
-	}
-	for _, item := range m.Items {
-		if item == nil {
-			continue
-		}
-		if item.itemType != menuItemTypeRadio {
-			flush()
-		}
-		if item.itemType == menuItemTypeSubmenu && item.submenu != nil {
-			item.submenu.Update()
-			continue
-		}
-		if item.itemType == menuItemTypeRadio {
-			radioGroup = append(radioGroup, item)
-		}
-	}
-	flush()
+	m.processRadioGroups()
 }
 
 // Clear removes all menu items.

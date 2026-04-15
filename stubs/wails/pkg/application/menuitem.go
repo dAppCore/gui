@@ -10,13 +10,13 @@ type Role uint
 const (
 	NoRole       Role = iota
 	AppMenu      Role = iota
-	EditMenu      Role = iota
-	ViewMenu      Role = iota
-	WindowMenu    Role = iota
-	ServicesMenu  Role = iota
-	HelpMenu      Role = iota
-	SpeechMenu    Role = iota
-	FileMenu      Role = iota
+	EditMenu     Role = iota
+	ViewMenu     Role = iota
+	WindowMenu   Role = iota
+	ServicesMenu Role = iota
+	HelpMenu     Role = iota
+	SpeechMenu   Role = iota
+	FileMenu     Role = iota
 
 	Hide               Role = iota
 	HideOthers         Role = iota
@@ -105,46 +105,54 @@ func nextMenuItemID() uint {
 //
 //	item := NewMenuItem("Save").OnClick(func(ctx *Context) { save() })
 func NewMenuItem(label string) *MenuItem {
-	return &MenuItem{
+	item := &MenuItem{
 		id:       nextMenuItemID(),
 		label:    label,
 		itemType: menuItemTypeText,
 		disabled: false,
 	}
+	addToMenuItemMap(item)
+	return item
 }
 
 // NewMenuItemSeparator creates a horizontal separator.
 //
 //	menu.AppendItem(NewMenuItemSeparator())
 func NewMenuItemSeparator() *MenuItem {
-	return &MenuItem{
+	item := &MenuItem{
 		id:       nextMenuItemID(),
 		itemType: menuItemTypeSeparator,
 	}
+	addToMenuItemMap(item)
+	return item
 }
 
 // NewMenuItemCheckbox creates a checkable menu item.
 //
 //	item := NewMenuItemCheckbox("Show Toolbar", true)
 func NewMenuItemCheckbox(label string, checked bool) *MenuItem {
-	return &MenuItem{
+	item := &MenuItem{
 		id:       nextMenuItemID(),
 		label:    label,
 		checked:  checked,
 		itemType: menuItemTypeCheckbox,
 	}
+	addToMenuItemMap(item)
+	return item
 }
 
 // NewMenuItemRadio creates a radio-group menu item.
 //
 //	light := NewMenuItemRadio("Light Theme", true)
 func NewMenuItemRadio(label string, checked bool) *MenuItem {
-	return &MenuItem{
+	item := &MenuItem{
 		id:       nextMenuItemID(),
 		label:    label,
 		checked:  checked,
 		itemType: menuItemTypeRadio,
 	}
+	addToMenuItemMap(item)
+	return item
 }
 
 // NewSubMenuItem creates an item that reveals a child menu on hover.
@@ -152,12 +160,14 @@ func NewMenuItemRadio(label string, checked bool) *MenuItem {
 //	sub := NewSubMenuItem("Recent Files")
 //	sub.GetSubmenu().Add("report.pdf")
 func NewSubMenuItem(label string) *MenuItem {
-	return &MenuItem{
+	item := &MenuItem{
 		id:       nextMenuItemID(),
 		label:    label,
 		itemType: menuItemTypeSubmenu,
 		submenu:  &Menu{label: label},
 	}
+	addToMenuItemMap(item)
+	return item
 }
 
 // NewRole creates a platform-managed menu item for the given role.
@@ -170,6 +180,7 @@ func NewRole(role Role) *MenuItem {
 		itemType: menuItemTypeText,
 		role:     role,
 	}
+	addToMenuItemMap(item)
 	return item
 }
 
@@ -376,4 +387,5 @@ func (m *MenuItem) Destroy() {
 	m.callback = nil
 	m.radioGroupMembers = nil
 	m.contextMenuData = nil
+	removeMenuItemByID(m.id)
 }
