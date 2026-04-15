@@ -40,7 +40,7 @@ type Options struct {
 type Service struct {
 	*core.ServiceRuntime[Options]
 	options            Options
-	store              *store.Store
+	store              *store.KeyValueStore
 	httpClient         *http.Client
 	toolExecutor       ToolExecutor
 	toolHandler        *ToolCallHandler
@@ -155,7 +155,7 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		return core.Result{Value: err, OK: false}
 	}
 
-	keyValueStore, err := store.New(s.options.StorePath)
+	keyValueStore, err := store.New(store.Options{Path: s.options.StorePath})
 	if err != nil {
 		return core.Result{Value: err, OK: false}
 	}

@@ -3,6 +3,7 @@ package display
 import (
 	"context"
 	"html"
+	"net/http"
 	"net/url"
 	"sort"
 	"strings"
@@ -16,9 +17,9 @@ import (
 
 type SchemeHandler func(context.Context, string, url.Values) core.Result
 
-type assetHandlerFunc func(w application.ResponseWriter, r *application.Request)
+type assetHandlerFunc func(w http.ResponseWriter, r *http.Request)
 
-func (f assetHandlerFunc) ServeHTTP(w application.ResponseWriter, r *application.Request) {
+func (f assetHandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	f(w, r)
 }
 
@@ -452,9 +453,9 @@ func coalesce(values ...string) string {
 }
 
 func (s *Service) AssetMiddleware() application.Middleware {
-	return func(next application.Handler) application.Handler {
-		return assetHandlerFunc(func(w application.ResponseWriter, r *application.Request) {
-			rawURL := r.URL
+	return func(next http.Handler) http.Handler {
+		return assetHandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			rawURL := r.URL.String()
 			if strings.HasPrefix(strings.ToLower(strings.TrimSpace(rawURL)), "core://") {
 				result := s.ResolveScheme(context.Background(), rawURL)
 				if !result.OK {
