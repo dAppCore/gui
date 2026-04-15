@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -130,7 +131,7 @@ func (i Installer) Install(ctx context.Context, manifest Manifest) (string, erro
 	if err := validateManifestName(manifest.Name); err != nil {
 		return "", err
 	}
-	if err := validateCloneArg("repository", manifest.Repository); err != nil {
+	if err := validateRepositorySource(manifest.Repository); err != nil {
 		return "", err
 	}
 	if err := validateCloneArgOptional("ref", manifest.Ref); err != nil {
@@ -139,16 +140,20 @@ func (i Installer) Install(ctx context.Context, manifest Manifest) (string, erro
 	if err := os.MkdirAll(i.InstallDir, 0o755); err != nil {
 		return "", err
 	}
-	targetDir := filepath.Join(i.InstallDir, safeName(manifest.Name))
 	rootAbs, err := filepath.Abs(i.InstallDir)
 	if err != nil {
 		return "", err
 	}
+	rootResolved, err := filepath.EvalSymlinks(rootAbs)
+	if err != nil {
+		return "", err
+	}
+	targetDir := filepath.Join(rootResolved, safeName(manifest.Name))
 	targetAbs, err := filepath.Abs(targetDir)
 	if err != nil {
 		return "", err
 	}
-	rel, err := filepath.Rel(rootAbs, targetAbs)
+	rel, err := filepath.Rel(rootResolved, targetAbs)
 	if err != nil {
 		return "", err
 	}
@@ -236,6 +241,41 @@ func validateCloneArgOptional(label, value string) error {
 		return nil
 	}
 	return validateCloneArg(label, trimmed)
+}
+
+func validateRepositorySource(value string) error {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return errors.New("repository is required")
+	}
+	if strings.ContainsAny(trimmed, "\x00\r\n") {
+		return errors.New("repository contains invalid control characters")
+	}
+	if strings.HasPrefix(strings.ToLower(trimmed), "ext::") {
+		return errors.New("repository must not use git remote helper protocols")
+	}
+	if strings.HasPrefix(trimmed, "-") {
+		return errors.New("repository must not begin with a dash")
+	}
+	if strings.Contains(trimmed, "://") {
+		parsed, err := url.Parse(trimmed)
+		if err != nil {
+			return err
+		}
+		switch strings.ToLower(parsed.Scheme) {
+		case "http", "https", "ssh", "git":
+		default:
+			return fmt.Errorf("repository scheme %q is not allowed", parsed.Scheme)
+		}
+		return nil
+	}
+	if strings.Contains(trimmed, string(filepath.Separator)) || filepath.IsAbs(trimmed) {
+		return errors.New("repository path clones are not allowed")
+	}
+	if !strings.Contains(trimmed, ":") {
+		return errors.New("repository must be a URL or scp-style remote")
+	}
+	return nil
 }
 
 func DigestManifest(manifest Manifest) string {

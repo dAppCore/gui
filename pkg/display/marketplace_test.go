@@ -124,7 +124,9 @@ func TestMarketplace_registerMarketplaceActions_Good(t *testing.T) {
 	installed, ok := installResult.Value.(map[string]any)
 	require.True(t, ok)
 	assert.Equal(t, installDir, installed["install_dir"])
-	assert.Equal(t, filepath.Join(installDir, "core-ui"), installed["target_dir"])
+	resolvedInstallDir, err := filepath.EvalSymlinks(installDir)
+	require.NoError(t, err)
+	assert.Equal(t, filepath.Join(resolvedInstallDir, "core-ui"), installed["target_dir"])
 
 	contents, err := os.ReadFile(gitLog)
 	require.NoError(t, err)

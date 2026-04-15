@@ -185,7 +185,9 @@ func TestMarketplace_Install_Good(t *testing.T) {
 		Ref:        "main",
 	}))
 	require.NoError(t, err)
-	assert.Equal(t, filepath.Join(targetRoot, "core-ui"), targetDir)
+	resolvedRoot, err := filepath.EvalSymlinks(targetRoot)
+	require.NoError(t, err)
+	assert.Equal(t, filepath.Join(resolvedRoot, "core-ui"), targetDir)
 	_, err = os.Stat(targetDir)
 	require.NoError(t, err)
 
@@ -364,6 +366,25 @@ func TestMarketplace_validateCloneArg_Ugly(t *testing.T) {
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid control characters")
+}
+
+func TestMarketplace_validateRepositorySource_Good(t *testing.T) {
+	require.NoError(t, validateRepositorySource("https://example.com/core-ui.git"))
+	require.NoError(t, validateRepositorySource("git@example.com:core-ui.git"))
+}
+
+func TestMarketplace_validateRepositorySource_Bad(t *testing.T) {
+	err := validateRepositorySource("ext::sh -c id")
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "remote helper")
+}
+
+func TestMarketplace_validateRepositorySource_Ugly(t *testing.T) {
+	err := validateRepositorySource("file:///tmp/core-ui.git")
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "not allowed")
 }
 
 func TestMarketplace_decodeManifestList_Good(t *testing.T) {
