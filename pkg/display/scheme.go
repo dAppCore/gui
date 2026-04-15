@@ -10,6 +10,7 @@ import (
 
 	core "dappco.re/go/core"
 	coreerr "dappco.re/go/core/log"
+	"forge.lthn.ai/core/gui/pkg/chat"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
@@ -30,50 +31,215 @@ func (s *Service) HandleScheme(scheme string, handler SchemeHandler) {
 
 func (s *Service) registerDefaultSchemes() {
 	s.HandleScheme("core", func(ctx context.Context, route string, query url.Values) core.Result {
-		switch route {
-		case "settings":
-			return s.Core().Action("gui.chat.settings.load").Run(ctx, core.NewOptions())
-		case "models":
-			state := s.modelState()
-			return core.Result{
-				Value: map[string]any{
-					"content_type": "application/json",
-					"body":         core.JSONMarshalString(state),
-					"state":        state,
-					"models":       s.chatModels(),
-				},
-				OK: true,
+		return s.resolveCoreRoute(ctx, route, query)
+	})
+}
+
+func (s *Service) resolveCoreRoute(ctx context.Context, route string, query url.Values) core.Result {
+	segment, subpath := splitCoreRoute(route)
+	if segment == "" {
+		segment = "settings"
+	}
+
+	switch segment {
+	case "settings":
+		return s.resolveSettingsRoute(subpath, query)
+	case "store":
+		return s.resolveStoreRoute(subpath, query)
+	case "models":
+		return s.resolveModelsRoute(subpath, query)
+	case "chat":
+		return s.resolveChatRoute(ctx, subpath, query)
+	case "network", "agent", "wallet", "identity":
+		return s.resolveUnavailableCoreRoute(segment, subpath, query)
+	default:
+		return core.Result{
+			Value: map[string]any{
+				"content_type": "text/html",
+				"body":         s.renderSchemeBody(segment, map[string]any{"route": segment, "query": query, "subpath": subpath}),
+				"route":        segment,
+				"subpath":      subpath,
+				"query":        query,
+			},
+			OK: true,
+		}
+	}
+}
+
+func splitCoreRoute(route string) (string, string) {
+	route = strings.Trim(strings.TrimSpace(route), "/")
+	if route == "" {
+		return "", ""
+	}
+	segment, remainder, found := strings.Cut(route, "/")
+	if !found {
+		return segment, ""
+	}
+	return segment, remainder
+}
+
+func (s *Service) resolveSettingsRoute(subpath string, query url.Values) core.Result {
+	key := coalesce(query.Get("key"), subpath)
+	snapshot := s.currentSettingsSnapshot()
+	if key != "" {
+		value, ok := s.currentSettingValue(key)
+		if !ok {
+			return s.resolveUnavailableCoreRoute("settings", subpath, query)
+		}
+		return core.Result{
+			Value: map[string]any{
+				"content_type": "text/html",
+				"body":         s.renderKeyValuePage("core://settings/"+key, key, value, snapshot),
+				"route":        "settings",
+				"key":          key,
+				"value":        value,
+				"settings":     snapshot,
+			},
+			OK: true,
+		}
+	}
+
+	return core.Result{
+		Value: map[string]any{
+			"content_type": "text/html",
+			"body":         s.renderSettingsPage(snapshot),
+			"route":        "settings",
+			"settings":     snapshot,
+		},
+		OK: true,
+	}
+}
+
+func (s *Service) resolveStoreRoute(subpath string, query url.Values) core.Result {
+	if subpath != "" {
+		parts := strings.Split(subpath, "/")
+		if len(parts) >= 2 {
+			bucket := strings.TrimSpace(parts[0])
+			key := strings.TrimSpace(strings.Join(parts[1:], "/"))
+			if entry, ok := s.storage.Get("", bucket, key); ok {
+				return core.Result{
+					Value: map[string]any{
+						"content_type": "text/html",
+						"body":         s.renderStoreEntryPage(entry),
+						"route":        "store",
+						"entry":        entry,
+					},
+					OK: true,
+				}
 			}
-		case "chat":
-			if id := coalesce(query.Get("conversation_id"), query.Get("id")); id != "" {
-				return s.Core().Action("gui.chat.history").Run(ctx, core.NewOptions(
-					core.Option{Key: "conversation_id", Value: id},
-				))
-			}
-			return s.Core().Action("gui.chat.conversations.list").Run(ctx, core.NewOptions())
-		case "store":
-			results := s.searchAllStorage(query.Get("q"))
+		}
+	}
+
+	results := s.searchAllStorage(coalesce(query.Get("q"), subpath))
+	return core.Result{
+		Value: map[string]any{
+			"content_type": "text/html",
+			"body":         s.renderStoreSearchPage(coalesce(query.Get("q"), subpath), results),
+			"route":        "store",
+			"url":          "core://store",
+			"query":        query,
+			"results":      results,
+		},
+		OK: true,
+	}
+}
+
+func (s *Service) resolveModelsRoute(subpath string, query url.Values) core.Result {
+	if modelName := coalesce(query.Get("id"), subpath); modelName != "" {
+		if model, ok := s.findChatModel(modelName); ok {
 			return core.Result{
 				Value: map[string]any{
 					"content_type": "text/html",
-					"body":         s.renderStoreSearchPage(query.Get("q"), results),
-					"route":        route,
-					"url":          "core://store",
-					"query":        query,
-					"results":      results,
-				},
-				OK: true,
-			}
-		default:
-			return core.Result{
-				Value: map[string]any{
-					"route": route,
-					"query": query,
+					"body":         s.renderKeyValuePage("core://models/"+modelName, modelName, model, s.modelState()),
+					"route":        "models",
+					"model":        model,
 				},
 				OK: true,
 			}
 		}
-	})
+		return s.resolveUnavailableCoreRoute("models", subpath, query)
+	}
+
+	state := s.modelState()
+	return core.Result{
+		Value: map[string]any{
+			"content_type": "application/json",
+			"body":         core.JSONMarshalString(state),
+			"state":        state,
+			"models":       s.chatModels(),
+			"route":        "models",
+		},
+		OK: true,
+	}
+}
+
+func (s *Service) resolveChatRoute(ctx context.Context, subpath string, query url.Values) core.Result {
+	if id := coalesce(query.Get("conversation_id"), query.Get("id"), subpath); id != "" {
+		return s.Core().Action("gui.chat.history").Run(ctx, core.NewOptions(
+			core.Option{Key: "conversation_id", Value: id},
+		))
+	}
+	return s.Core().Action("gui.chat.conversations.list").Run(ctx, core.NewOptions())
+}
+
+func (s *Service) resolveUnavailableCoreRoute(route, subpath string, query url.Values) core.Result {
+	return core.Result{
+		Value: map[string]any{
+			"content_type": "text/html",
+			"body":         s.renderUnavailableRoute(route, subpath, query),
+			"route":        route,
+			"subpath":      subpath,
+			"query":        query,
+			"available":    false,
+		},
+		OK: true,
+	}
+}
+
+func (s *Service) currentSettingsSnapshot() map[string]any {
+	if s.configFile != nil {
+		var snapshot map[string]any
+		if err := s.configFile.Get("", &snapshot); err == nil && snapshot != nil {
+			return snapshot
+		}
+	}
+	snapshot := make(map[string]any, len(s.configData))
+	for key, value := range s.configData {
+		if value == nil {
+			continue
+		}
+		snapshot[key] = value
+	}
+	return snapshot
+}
+
+func (s *Service) currentSettingValue(key string) (any, bool) {
+	if s.configFile != nil {
+		var value any
+		if err := s.configFile.Get(key, &value); err == nil {
+			return value, true
+		}
+	}
+	for section, values := range s.configData {
+		if strings.Contains(key, ".") {
+			if nested, ok := values[key]; ok {
+				return nested, true
+			}
+		}
+		if section == key {
+			return values, true
+		}
+	}
+	return nil, false
+}
+
+func (s *Service) findChatModel(name string) (chat.ModelEntry, bool) {
+	for _, model := range s.chatModels() {
+		if strings.EqualFold(model.Name, name) {
+			return model, true
+		}
+	}
+	return chat.ModelEntry{}, false
 }
 
 func (s *Service) ResolveScheme(ctx context.Context, rawURL string) core.Result {
@@ -129,6 +295,52 @@ func (s *Service) renderSchemeBody(route string, value any) string {
 		"</strong></header><main><pre>" +
 		html.EscapeString(pretty) +
 		"</pre></main></body></html>"
+}
+
+func (s *Service) renderSettingsPage(settings map[string]any) string {
+	safeSettings := core.JSONMarshalString(settings)
+	return "<!doctype html><html><head><meta charset=\"utf-8\"><title>core://settings</title><style>body{font:14px/1.5 ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;background:#08111d;color:#e2e8f0;margin:0}header{padding:20px;border-bottom:1px solid #1f2a37;background:linear-gradient(180deg,#0f172a,#08111d)}main{padding:20px;display:grid;gap:16px}section{background:#0b1220;border:1px solid #1f2a37;border-radius:16px;padding:16px}pre{margin:0;white-space:pre-wrap;word-break:break-word}</style></head><body><header><strong>core://settings</strong><div class=\"meta\">Application settings and live config state.</div></header><main><section><pre>" +
+		html.EscapeString(safeSettings) +
+		"</pre></section></main></body></html>"
+}
+
+func (s *Service) renderKeyValuePage(title, key string, value any, snapshot any) string {
+	return "<!doctype html><html><head><meta charset=\"utf-8\"><title>" +
+		html.EscapeString(title) +
+		"</title><style>body{font:14px/1.5 ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;background:#08111d;color:#e2e8f0;margin:0}header{padding:20px;border-bottom:1px solid #1f2a37;background:linear-gradient(180deg,#0f172a,#08111d)}main{padding:20px;display:grid;gap:16px}section{background:#0b1220;border:1px solid #1f2a37;border-radius:16px;padding:16px}pre{margin:0;white-space:pre-wrap;word-break:break-word}code{background:#111827;border-radius:8px;padding:2px 6px}</style></head><body><header><strong>" +
+		html.EscapeString(title) +
+		"</strong></header><main><section><div>Key: <code>" +
+		html.EscapeString(key) +
+		"</code></div><pre>" +
+		html.EscapeString(core.JSONMarshalString(value)) +
+		"</pre></section><section><pre>" +
+		html.EscapeString(core.JSONMarshalString(snapshot)) +
+		"</pre></section></main></body></html>"
+}
+
+func (s *Service) renderStoreEntryPage(entry StorageEntry) string {
+	return "<!doctype html><html><head><meta charset=\"utf-8\"><title>core://store</title><style>body{font:14px/1.5 ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;background:#0f172a;color:#e2e8f0;margin:0}header{padding:20px;border-bottom:1px solid #1e293b;background:linear-gradient(180deg,#111827,#0f172a)}main{padding:20px;display:grid;gap:16px}section{background:#020617;border:1px solid #1e293b;border-radius:16px;padding:16px}code,pre{background:#111827;border-radius:8px;padding:2px 6px}pre{white-space:pre-wrap;word-break:break-word;padding:12px}</style></head><body><header><strong>core://store</strong></header><main><section><div><strong>Origin:</strong> " +
+		html.EscapeString(entry.Origin) +
+		"</div><div><strong>Bucket:</strong> " +
+		html.EscapeString(entry.Bucket) +
+		"</div><div><strong>Key:</strong> " +
+		html.EscapeString(entry.Key) +
+		"</div><div><strong>Updated:</strong> " +
+		html.EscapeString(entry.UpdatedAt.Format(time.RFC3339)) +
+		"</div><pre>" +
+		html.EscapeString(entry.Value) +
+		"</pre></section></main></body></html>"
+}
+
+func (s *Service) renderUnavailableRoute(route, subpath string, query url.Values) string {
+	body := map[string]any{
+		"available": false,
+		"route":     route,
+		"subpath":   subpath,
+		"query":     query,
+		"reason":    "no backend is registered for this route",
+	}
+	return s.renderSchemeBody(route, body)
 }
 
 func (s *Service) renderStoreSearchPage(query string, results []StorageEntry) string {

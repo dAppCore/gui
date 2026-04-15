@@ -37,6 +37,34 @@ func (r *StorageRegistry) Set(origin, bucket, key, value string) {
 	}
 }
 
+func (r *StorageRegistry) Get(origin, bucket, key string) (StorageEntry, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	if entry, ok := r.entries[strings.Join([]string{origin, bucket, key}, "\x00")]; ok {
+		return entry, true
+	}
+
+	var latest StorageEntry
+	found := false
+	for _, entry := range r.entries {
+		if bucket != "" && entry.Bucket != bucket {
+			continue
+		}
+		if key != "" && entry.Key != key {
+			continue
+		}
+		if origin != "" && entry.Origin != origin {
+			continue
+		}
+		if !found || entry.UpdatedAt.After(latest.UpdatedAt) {
+			latest = entry
+			found = true
+		}
+	}
+	return latest, found
+}
+
 func (r *StorageRegistry) Search(query string) []StorageEntry {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

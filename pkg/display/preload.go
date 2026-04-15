@@ -43,9 +43,16 @@ func (s *Service) BuildPreloadScript(pageURL string) (string, error) {
 
 func (s *Service) injectStoragePolyfills(pageOrigin string) string {
 	return `(function() {
-  const __coreOrigin = ` + core.JSONMarshalString(pageOrigin) + `;
+  const __coreOrigin = (() => {
+    try {
+      const parsed = new URL(` + core.JSONMarshalString(pageOrigin) + `, globalThis.location?.href || "http://localhost");
+      return parsed.origin || ` + core.JSONMarshalString(pageOrigin) + `;
+    } catch (_) {
+      return ` + core.JSONMarshalString(pageOrigin) + `;
+    }
+  })();
   const __coreScopes = globalThis.__coreStorageScopes || (globalThis.__coreStorageScopes = {});
-  const __scope = __coreScopes[__coreOrigin] || (__coreScopes[__coreOrigin] = { local: {}, session: {}, cookies: {}, indexedDB: {}, caches: {}, buckets: {}, opfs: {} });
+  const __scope = __coreScopes[__coreOrigin] || (__coreScopes[__coreOrigin] = { localStorage: {}, sessionStorage: {}, cookies: {}, indexedDB: {}, caches: {}, buckets: {}, opfs: {} });
   const __coreBridge = globalThis.__coreBridge || (globalThis.__coreBridge = {
     invoke(route, payload) {
       if (typeof globalThis.__CORE_GUI_INVOKE__ === 'function') {
@@ -57,18 +64,18 @@ func (s *Service) injectStoragePolyfills(pageOrigin string) string {
   const persist = (bucket, key, value) => {
     __coreBridge.invoke('display.storage.set', { origin: __coreOrigin, bucket, key, value }).catch(() => undefined);
   };
-  const createStorage = (bucket) => ({
+  const createStorage = (bucketName, bucket) => ({
     getItem(key) { return Object.prototype.hasOwnProperty.call(bucket, key) ? String(bucket[key]) : null; },
-    setItem(key, value) { bucket[key] = String(value); persist('storage', key, bucket[key]); },
-    removeItem(key) { delete bucket[key]; persist('storage', key, ''); },
-    clear() { Object.keys(bucket).forEach((key) => { delete bucket[key]; persist('storage', key, ''); }); },
+    setItem(key, value) { bucket[key] = String(value); persist(bucketName, key, bucket[key]); },
+    removeItem(key) { delete bucket[key]; persist(bucketName, key, ''); },
+    clear() { Object.keys(bucket).forEach((key) => { delete bucket[key]; persist(bucketName, key, ''); }); },
     key(index) { return Object.keys(bucket)[index] ?? null; },
     get length() { return Object.keys(bucket).length; }
   });
   globalThis.core = globalThis.core || {};
   globalThis.core.storage = globalThis.core.storage || {};
-  globalThis.core.storage.local = createStorage(__scope.local);
-  globalThis.core.storage.session = createStorage(__scope.session);
+  globalThis.core.storage.local = createStorage('localStorage', __scope.localStorage);
+  globalThis.core.storage.session = createStorage('sessionStorage', __scope.sessionStorage);
   globalThis.core.storage.cookies = createStorage(__scope.cookies);
   const cookieEntries = () => Object.entries(__scope.cookies).map(([name, value]) => name + "=" + value).join("; ");
   const setCookie = (value) => {
@@ -302,12 +309,10 @@ func (s *Service) injectElectronShim() string {
   };
   const shell = {
     openExternal(url) {
-      globalThis.open?.(url, "_blank", "noopener,noreferrer");
-      return Promise.resolve();
+      return invokeBridge('browser.openURL', { url }).then(() => undefined);
     },
     openPath(path) {
-      globalThis.location.href = path;
-      return Promise.resolve("");
+      return invokeBridge('browser.openFile', { path }).then(() => "");
     }
   };
   const clipboard = {
@@ -315,7 +320,7 @@ func (s *Service) injectElectronShim() string {
       return globalThis.navigator?.clipboard?.readText?.() ?? Promise.resolve("");
     },
     writeText(text) {
-      return globalThis.navigator?.clipboard?.writeText?.(text) ?? Promise.resolve();
+      return invokeBridge('clipboard.setText', { text }).then(() => undefined);
     }
   };
   const invokeBridge = (route, payload) => (globalThis.__coreBridge?.invoke?.(route, payload) ?? Promise.resolve({ route, payload }));
@@ -347,11 +352,11 @@ func (s *Service) injectElectronShim() string {
     constructor(options = {}) {
       this.options = options;
       this.id = options.id || ('core-window-' + Math.random().toString(36).slice(2));
-      invokeBridge('gui.window.create', { name: this.id, options });
+      invokeBridge('window.open', { name: this.id, options });
     }
-    loadURL(url) { return invokeBridge('gui.webview.navigate', { name: this.id, url }); }
-    show() { return invokeBridge('window.visibility', { name: this.id, visible: true }); }
-    hide() { return invokeBridge('window.visibility', { name: this.id, visible: false }); }
+    loadURL(url) { return invokeBridge('webview.navigate', { name: this.id, url }); }
+    show() { return invokeBridge('window.setVisibility', { name: this.id, visible: true }); }
+    hide() { return invokeBridge('window.setVisibility', { name: this.id, visible: false }); }
     close() { return invokeBridge('window.close', { name: this.id }); }
   }
   globalThis.Notification = globalThis.Notification || CoreNotification;
