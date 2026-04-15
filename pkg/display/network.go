@@ -8,6 +8,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"forge.lthn.ai/core/gui/pkg/p2p"
 )
 
 type NetworkInterfaceState struct {
@@ -21,9 +23,17 @@ type NetworkInterfaceState struct {
 	Loopback     bool     `json:"loopback"`
 }
 
+type NetworkPeerState struct {
+	ID        string    `json:"id"`
+	Topic     string    `json:"topic"`
+	Connected bool      `json:"connected"`
+	SeenAt    time.Time `json:"seen_at"`
+}
+
 type NetworkState struct {
 	Hostname   string                  `json:"hostname"`
 	Interfaces []NetworkInterfaceState `json:"interfaces"`
+	Peers      []NetworkPeerState      `json:"peers,omitempty"`
 	ObservedAt time.Time               `json:"observed_at"`
 }
 
@@ -64,7 +74,53 @@ func (s *Service) networkState() NetworkState {
 		})
 	}
 
+	state.Peers = s.p2pPeers()
 	return state
+}
+
+type peerLister interface {
+	Peers() []p2p.Peer
+}
+
+func (s *Service) p2pPeers() []NetworkPeerState {
+	if s == nil || s.Core() == nil {
+		return nil
+	}
+
+	for _, serviceName := range []string{"p2p", "network"} {
+		serviceResult := s.Core().Service(serviceName)
+		if !serviceResult.OK || serviceResult.Value == nil {
+			continue
+		}
+		lister, ok := serviceResult.Value.(peerLister)
+		if !ok {
+			continue
+		}
+
+		peers := lister.Peers()
+		if len(peers) == 0 {
+			continue
+		}
+
+		peerStates := make([]NetworkPeerState, 0, len(peers))
+		for _, peer := range peers {
+			peerStates = append(peerStates, NetworkPeerState{
+				ID:        peer.ID,
+				Topic:     peer.Topic,
+				Connected: peer.Connected,
+				SeenAt:    peer.SeenAt,
+			})
+		}
+		sort.Slice(peerStates, func(i, j int) bool {
+			if peerStates[i].SeenAt.Equal(peerStates[j].SeenAt) {
+				return strings.ToLower(peerStates[i].ID) < strings.ToLower(peerStates[j].ID)
+			}
+			return peerStates[i].SeenAt.After(peerStates[j].SeenAt)
+		})
+		return peerStates
+	}
+
+	return nil
 }
 
 func (s *Service) renderNetworkPage(state NetworkState) string {
@@ -110,7 +166,30 @@ func (s *Service) renderNetworkPage(state NetworkState) string {
 		}
 	}
 
-	builder.WriteString("</ul></section></main></body></html>")
+	if len(state.Peers) > 0 {
+		builder.WriteString("</ul></section><section><div class=\"meta\">Registered peers</div><ul>")
+		for _, peer := range state.Peers {
+			builder.WriteString("<li class=\"iface\"><div class=\"name\">")
+			builder.WriteString(html.EscapeString(peer.ID))
+			builder.WriteString("</div><div class=\"meta\">")
+			builder.WriteString(html.EscapeString(peer.Topic))
+			builder.WriteString(" · ")
+			if peer.Connected {
+				builder.WriteString("connected")
+			} else {
+				builder.WriteString("disconnected")
+			}
+			if !peer.SeenAt.IsZero() {
+				builder.WriteString(" · ")
+				builder.WriteString(html.EscapeString(peer.SeenAt.Format(time.RFC3339)))
+			}
+			builder.WriteString("</div></li>")
+		}
+		builder.WriteString("</ul></section>")
+	} else {
+		builder.WriteString("</ul></section>")
+	}
+	builder.WriteString("</main></body></html>")
 	return builder.String()
 }
 
@@ -151,7 +230,29 @@ func (s *Service) renderNetworkInterfacePage(state NetworkState, iface NetworkIn
 	} else {
 		builder.WriteString(html.EscapeString(strings.Join(iface.Flags, ", ")))
 	}
-	builder.WriteString("</div></section></main></body></html>")
+	builder.WriteString("</div></section>")
+	if len(state.Peers) > 0 {
+		builder.WriteString("<section><div class=\"meta\">Registered peers</div><ul>")
+		for _, peer := range state.Peers {
+			builder.WriteString("<li class=\"iface\"><div class=\"name\">")
+			builder.WriteString(html.EscapeString(peer.ID))
+			builder.WriteString("</div><div class=\"meta\">")
+			builder.WriteString(html.EscapeString(peer.Topic))
+			builder.WriteString(" · ")
+			if peer.Connected {
+				builder.WriteString("connected")
+			} else {
+				builder.WriteString("disconnected")
+			}
+			if !peer.SeenAt.IsZero() {
+				builder.WriteString(" · ")
+				builder.WriteString(html.EscapeString(peer.SeenAt.Format(time.RFC3339)))
+			}
+			builder.WriteString("</div></li>")
+		}
+		builder.WriteString("</ul></section>")
+	}
+	builder.WriteString("</main></body></html>")
 	return builder.String()
 }
 
