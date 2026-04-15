@@ -1,6 +1,8 @@
 package display
 
 import (
+	"net"
+	"net/url"
 	"strings"
 
 	core "dappco.re/go/core"
@@ -39,10 +41,45 @@ func (s *Service) BuildPreloadScript(pageURL string) (string, error) {
 		s.injectCoreMLShim(),
 		s.buildHLCRFComponents(pageURL),
 	}
-	if appPreloads, err := s.injectAppPreloads(pageURL); err == nil && strings.TrimSpace(appPreloads) != "" {
+	if appPreloads, err := s.injectAppPreloads(pageURL); err != nil {
+		if !strings.Contains(err.Error(), "view manifest not found") {
+			return "", err
+		}
+	} else if strings.TrimSpace(appPreloads) != "" {
 		parts = append(parts, appPreloads)
 	}
 	return strings.Join(parts, "\n"), nil
+}
+
+func validatedLocalMLAPIURL(raw string) string {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		return "http://localhost:8090"
+	}
+	parsed, err := url.Parse(trimmed)
+	if err != nil {
+		return "http://localhost:8090"
+	}
+	switch strings.ToLower(parsed.Scheme) {
+	case "http", "https":
+	default:
+		return "http://localhost:8090"
+	}
+	host := strings.TrimSpace(parsed.Host)
+	if host == "" {
+		return "http://localhost:8090"
+	}
+	name := host
+	if parsedHost, _, err := net.SplitHostPort(host); err == nil {
+		name = parsedHost
+	}
+	name = strings.Trim(strings.ToLower(name), "[]")
+	switch name {
+	case "localhost", "127.0.0.1", "::1":
+		return strings.TrimRight(parsed.String(), "/")
+	default:
+		return "http://localhost:8090"
+	}
 }
 
 func (s *Service) injectStoragePolyfills(pageOrigin string, bootstrap map[string]map[string]string) string {
@@ -569,7 +606,7 @@ func (s *Service) injectBackgroundServiceShims() string {
 
 func (s *Service) injectCoreMLShim() string {
 	return `(function() {
-  const __coreMLApiURL = ` + core.JSONMarshalString(strings.TrimRight(core.Env("CORE_ML_API_URL"), "/")) + ` || "http://localhost:8090";
+  const __coreMLApiURL = ` + core.JSONMarshalString(validatedLocalMLAPIURL(core.Env("CORE_ML_API_URL"))) + ` || "http://localhost:8090";
   globalThis.core = globalThis.core || {};
   globalThis.core.ml = globalThis.core.ml || {
     async generate(input) {

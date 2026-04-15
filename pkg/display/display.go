@@ -754,7 +754,7 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 		}
 		return c.QUERY(webview.QueryTitle{Window: w})
 	default:
-		return core.Result{}
+		return core.Result{Value: coreerr.E("display.handleWSMessage", "unknown websocket action: "+msg.Action, nil), OK: false}
 	}
 }
 

@@ -86,6 +86,7 @@ type WSEventManager struct {
 // clientState tracks a client's subscriptions.
 type clientState struct {
 	subscriptions map[string]*Subscription
+	writeMu       sync.Mutex
 	mu            sync.RWMutex
 }
 
@@ -124,10 +125,13 @@ func trustedWebSocketOrigin(r *http.Request) bool {
 	if !trustedWebSocketHost(r.Host) {
 		return false
 	}
+	if !trustedWSRequestOrigin(r.RemoteAddr) {
+		return false
+	}
 
 	origin := strings.TrimSpace(r.Header.Get("Origin"))
 	if origin == "" || strings.EqualFold(origin, "null") {
-		return trustedWSRequestOrigin(r.RemoteAddr)
+		return true
 	}
 
 	parsed, err := url.Parse(origin)
@@ -221,10 +225,10 @@ func (em *WSEventManager) clientSubscribed(state *clientState, eventType EventTy
 // sendEvent sends an event to a specific client.
 func (em *WSEventManager) sendEvent(conn *websocket.Conn, event Event) {
 	em.mu.RLock()
-	_, exists := em.clients[conn]
+	state, exists := em.clients[conn]
 	em.mu.RUnlock()
 
-	if !exists {
+	if !exists || state == nil {
 		return
 	}
 
@@ -234,8 +238,11 @@ func (em *WSEventManager) sendEvent(conn *websocket.Conn, event Event) {
 	}
 	data, _ := marshalResult.Value.([]byte)
 
+	state.writeMu.Lock()
 	conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-	if err := conn.WriteMessage(websocket.TextMessage, data); err != nil {
+	err := conn.WriteMessage(websocket.TextMessage, data)
+	state.writeMu.Unlock()
+	if err != nil {
 		em.removeClient(conn)
 	}
 }
@@ -258,6 +265,8 @@ func (em *WSEventManager) HandleWebSocket(w http.ResponseWriter, r *http.Request
 	}
 	em.mu.Unlock()
 
+	conn.SetReadLimit(64 * 1024)
+
 	// Handle incoming messages
 	go em.handleMessages(conn)
 }
@@ -279,9 +288,11 @@ func (em *WSEventManager) handleMessages(conn *websocket.Conn) {
 		}
 
 		if unmarshalResult := core.JSONUnmarshal(message, &msg); !unmarshalResult.OK {
-			continue
+			em.closeWithPolicyViolation(conn, "invalid websocket message")
+			return
 		}
 
+		handled := true
 		switch msg.Action {
 		case "subscribe":
 			em.subscribe(conn, msg.ID, msg.EventTypes)
@@ -289,8 +300,26 @@ func (em *WSEventManager) handleMessages(conn *websocket.Conn) {
 			em.unsubscribe(conn, msg.ID)
 		case "list":
 			em.listSubscriptions(conn)
+		default:
+			handled = false
+		}
+		if !handled {
+			em.closeWithPolicyViolation(conn, "unknown websocket action")
+			return
 		}
 	}
+}
+
+func (em *WSEventManager) closeWithPolicyViolation(conn *websocket.Conn, reason string) {
+	em.mu.RLock()
+	state, exists := em.clients[conn]
+	em.mu.RUnlock()
+	if !exists || state == nil {
+		return
+	}
+	state.writeMu.Lock()
+	defer state.writeMu.Unlock()
+	_ = conn.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.ClosePolicyViolation, reason), time.Now().Add(2*time.Second))
 }
 
 // subscribe adds a subscription for a client.
@@ -326,7 +355,7 @@ func (em *WSEventManager) subscribe(conn *websocket.Conn, id string, eventTypes 
 	}
 	if marshalResult := core.JSONMarshal(response); marshalResult.OK {
 		responseData, _ := marshalResult.Value.([]byte)
-		conn.WriteMessage(websocket.TextMessage, responseData)
+		em.writeClientMessage(state, conn, responseData)
 	}
 }
 
@@ -351,7 +380,7 @@ func (em *WSEventManager) unsubscribe(conn *websocket.Conn, id string) {
 	}
 	if marshalResult := core.JSONMarshal(response); marshalResult.OK {
 		responseData, _ := marshalResult.Value.([]byte)
-		conn.WriteMessage(websocket.TextMessage, responseData)
+		em.writeClientMessage(state, conn, responseData)
 	}
 }
 
@@ -378,8 +407,15 @@ func (em *WSEventManager) listSubscriptions(conn *websocket.Conn) {
 	}
 	if marshalResult := core.JSONMarshal(response); marshalResult.OK {
 		responseData, _ := marshalResult.Value.([]byte)
-		conn.WriteMessage(websocket.TextMessage, responseData)
+		em.writeClientMessage(state, conn, responseData)
 	}
+}
+
+func (em *WSEventManager) writeClientMessage(state *clientState, conn *websocket.Conn, data []byte) {
+	state.writeMu.Lock()
+	defer state.writeMu.Unlock()
+	conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+	_ = conn.WriteMessage(websocket.TextMessage, data)
 }
 
 // removeClient removes a client and its subscriptions.

@@ -112,6 +112,17 @@ func TestMarketplace_VerifyManifest_Ugly(t *testing.T) {
 	require.Error(t, VerifyManifest(manifest))
 }
 
+func TestMarketplace_VerifyManifest_RequiresSignature(t *testing.T) {
+	manifest := Manifest{
+		Name:       "core-ui",
+		Version:    "1.2.3",
+		Repository: "https://example.com/core-ui.git",
+		Ref:        "main",
+	}
+
+	require.Error(t, VerifyManifest(manifest))
+}
+
 func TestMarketplace_Install_Good(t *testing.T) {
 	scriptDir := t.TempDir()
 	logFile := filepath.Join(scriptDir, "git.log")
@@ -125,12 +136,12 @@ func TestMarketplace_Install_Good(t *testing.T) {
 		InstallDir: targetRoot,
 	}
 
-	targetDir, err := installer.Install(context.Background(), Manifest{
+	targetDir, err := installer.Install(context.Background(), signedManifest(t, Manifest{
 		Name:       "Core UI",
 		Version:    "1.2.3",
 		Repository: "https://example.com/core-ui.git",
 		Ref:        "main",
-	})
+	}))
 	require.NoError(t, err)
 	assert.Equal(t, filepath.Join(targetRoot, "core-ui"), targetDir)
 	_, err = os.Stat(targetDir)
@@ -150,6 +161,18 @@ func TestMarketplace_Install_Bad(t *testing.T) {
 	assert.Contains(t, err.Error(), "install dir is required")
 }
 
+func TestMarketplace_Install_RejectsTraversalName(t *testing.T) {
+	installer := Installer{InstallDir: t.TempDir()}
+	_, err := installer.Install(context.Background(), signedManifest(t, Manifest{
+		Name:       "../../escape",
+		Version:    "1.2.3",
+		Repository: "https://example.com/core-ui.git",
+		Ref:        "main",
+	}))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "path separators")
+}
+
 func TestMarketplace_Install_Ugly(t *testing.T) {
 	scriptDir := t.TempDir()
 	scriptPath := filepath.Join(scriptDir, "git")
@@ -160,10 +183,10 @@ func TestMarketplace_Install_Ugly(t *testing.T) {
 		InstallDir: t.TempDir(),
 	}
 
-	_, err := installer.Install(context.Background(), Manifest{
+	_, err := installer.Install(context.Background(), signedManifest(t, Manifest{
 		Name:       "core-ui",
 		Repository: "https://example.com/core-ui.git",
-	})
+	}))
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "git clone failed")
 }

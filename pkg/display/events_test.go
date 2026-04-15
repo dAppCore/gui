@@ -153,6 +153,41 @@ func TestWSEventManager_HandleWebSocket_RejectsRemoteOrigin(t *testing.T) {
 	assert.Equal(t, http.StatusForbidden, recorder.Code)
 }
 
+func TestWSEventManager_HandleWebSocket_RejectsLoopbackSpoofedOrigin(t *testing.T) {
+	em := NewWSEventManager()
+
+	req := httptest.NewRequest(http.MethodGet, "http://127.0.0.1/events", nil)
+	req.RemoteAddr = "203.0.113.10:12345"
+	req.Header.Set("Origin", "file://malicious")
+	recorder := httptest.NewRecorder()
+
+	em.HandleWebSocket(recorder, req)
+
+	assert.Equal(t, http.StatusForbidden, recorder.Code)
+}
+
+func TestWSEventManager_HandleWebSocket_ClosesOnMalformedMessage(t *testing.T) {
+	em := NewWSEventManager()
+	conn, cleanup := dialWSEventManager(t, em)
+	defer cleanup()
+
+	require.NoError(t, conn.WriteMessage(websocket.TextMessage, []byte(`{"action":`)))
+
+	_, _, err := conn.ReadMessage()
+	require.Error(t, err)
+}
+
+func TestWSEventManager_HandleWebSocket_ClosesOnUnknownAction(t *testing.T) {
+	em := NewWSEventManager()
+	conn, cleanup := dialWSEventManager(t, em)
+	defer cleanup()
+
+	require.NoError(t, conn.WriteMessage(websocket.TextMessage, []byte(`{"action":"bogus"}`)))
+
+	_, _, err := conn.ReadMessage()
+	require.Error(t, err)
+}
+
 func TestWSEventManager_Emit_Ugly(t *testing.T) {
 	em := &WSEventManager{
 		clients:     map[*websocket.Conn]*clientState{},

@@ -14,6 +14,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"unicode"
 
 	"gopkg.in/yaml.v3"
 )
@@ -40,6 +41,8 @@ type Installer struct {
 	InstallDir string
 }
 
+const maxManifestBytes = 1 << 20
+
 func (i Installer) FetchManifest(ctx context.Context, manifestURL string) (Manifest, error) {
 	client := i.HTTPClient
 	if client == nil {
@@ -57,9 +60,12 @@ func (i Installer) FetchManifest(ctx context.Context, manifestURL string) (Manif
 	if resp.StatusCode >= http.StatusBadRequest {
 		return Manifest{}, fmt.Errorf("manifest fetch failed: %s", resp.Status)
 	}
-	body, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(io.LimitReader(resp.Body, maxManifestBytes+1))
 	if err != nil {
 		return Manifest{}, err
+	}
+	if len(body) > maxManifestBytes {
+		return Manifest{}, fmt.Errorf("manifest fetch failed: manifest exceeds %d bytes", maxManifestBytes)
 	}
 	var manifest Manifest
 	if err := yaml.Unmarshal(body, &manifest); err != nil {
@@ -72,8 +78,11 @@ func (i Installer) FetchManifest(ctx context.Context, manifestURL string) (Manif
 }
 
 func VerifyManifest(manifest Manifest) error {
+	if strings.ToLower(strings.TrimSpace(manifest.Signature.Algorithm)) != "ed25519" {
+		return errors.New("manifest signature algorithm must be ed25519")
+	}
 	if manifest.Signature.Value == "" || manifest.Signature.PublicKey == "" {
-		return nil
+		return errors.New("manifest signature is required")
 	}
 	payload := manifest.Name + "\n" + manifest.Version + "\n" + manifest.Repository + "\n" + manifest.Ref
 	signature, err := base64.StdEncoding.DecodeString(manifest.Signature.Value)
@@ -84,6 +93,12 @@ func VerifyManifest(manifest Manifest) error {
 	if err != nil {
 		return err
 	}
+	if len(signature) != ed25519.SignatureSize {
+		return errors.New("manifest signature has invalid size")
+	}
+	if len(publicKey) != ed25519.PublicKeySize {
+		return errors.New("manifest public key has invalid size")
+	}
 	if !ed25519.Verify(ed25519.PublicKey(publicKey), []byte(payload), signature) {
 		return errors.New("manifest signature verification failed")
 	}
@@ -91,16 +106,34 @@ func VerifyManifest(manifest Manifest) error {
 }
 
 func (i Installer) Install(ctx context.Context, manifest Manifest) (string, error) {
+	if strings.TrimSpace(i.InstallDir) == "" {
+		return "", errors.New("install dir is required")
+	}
 	if err := VerifyManifest(manifest); err != nil {
 		return "", err
 	}
-	if strings.TrimSpace(i.InstallDir) == "" {
-		return "", errors.New("install dir is required")
+	if err := validateManifestName(manifest.Name); err != nil {
+		return "", err
 	}
 	if err := os.MkdirAll(i.InstallDir, 0o755); err != nil {
 		return "", err
 	}
 	targetDir := filepath.Join(i.InstallDir, safeName(manifest.Name))
+	rootAbs, err := filepath.Abs(i.InstallDir)
+	if err != nil {
+		return "", err
+	}
+	targetAbs, err := filepath.Abs(targetDir)
+	if err != nil {
+		return "", err
+	}
+	rel, err := filepath.Rel(rootAbs, targetAbs)
+	if err != nil {
+		return "", err
+	}
+	if rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return "", errors.New("install path escapes install dir")
+	}
 	_ = os.RemoveAll(targetDir)
 	args := []string{"clone", "--depth", "1"}
 	if manifest.Ref != "" {
@@ -118,6 +151,20 @@ func (i Installer) Install(ctx context.Context, manifest Manifest) (string, erro
 	return targetDir, nil
 }
 
+func validateManifestName(value string) error {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return errors.New("manifest name is required")
+	}
+	if strings.ContainsAny(trimmed, `/\`) {
+		return errors.New("manifest name must not contain path separators")
+	}
+	if strings.Contains(trimmed, "..") {
+		return errors.New("manifest name must not contain path traversal segments")
+	}
+	return nil
+}
+
 func DigestManifest(manifest Manifest) string {
 	hash := sha256.Sum256([]byte(manifest.Name + ":" + manifest.Version + ":" + manifest.Repository + ":" + manifest.Ref))
 	return hex.EncodeToString(hash[:])
@@ -125,9 +172,29 @@ func DigestManifest(manifest Manifest) string {
 
 func safeName(value string) string {
 	value = strings.TrimSpace(strings.ToLower(value))
-	value = strings.ReplaceAll(value, " ", "-")
 	if value == "" {
 		return "module"
 	}
-	return value
+	var builder strings.Builder
+	lastDash := false
+	for _, r := range value {
+		switch {
+		case unicode.IsLetter(r), unicode.IsDigit(r):
+			builder.WriteRune(r)
+			lastDash = false
+		case r == '-' || r == '_' || r == '.':
+			builder.WriteRune(r)
+			lastDash = false
+		default:
+			if !lastDash {
+				builder.WriteRune('-')
+				lastDash = true
+			}
+		}
+	}
+	cleaned := strings.Trim(builder.String(), "-._")
+	if cleaned == "" {
+		return "module"
+	}
+	return cleaned
 }
