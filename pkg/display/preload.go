@@ -28,8 +28,12 @@ func (s *Service) InjectPreload(webview PreloadTarget, origin string) error {
 // before page code runs.
 // Use: script, _ := display.BuildPreloadScript("https://example.com")
 func (s *Service) BuildPreloadScript(pageURL string) (string, error) {
+	storageBootstrap := map[string]map[string]string{}
+	if s.storage != nil {
+		storageBootstrap = s.storage.Snapshot(pageURL)
+	}
 	parts := []string{
-		s.injectStoragePolyfills(pageURL),
+		s.injectStoragePolyfills(pageURL, storageBootstrap),
 		s.injectBackgroundServiceShims(),
 		s.injectElectronShim(),
 		s.injectCoreMLShim(),
@@ -41,16 +45,11 @@ func (s *Service) BuildPreloadScript(pageURL string) (string, error) {
 	return strings.Join(parts, "\n"), nil
 }
 
-func (s *Service) injectStoragePolyfills(pageOrigin string) string {
+func (s *Service) injectStoragePolyfills(pageOrigin string, bootstrap map[string]map[string]string) string {
 	return `(function() {
-  const __coreOrigin = (() => {
-    try {
-      const parsed = new URL(` + core.JSONMarshalString(pageOrigin) + `, globalThis.location?.href || "http://localhost");
-      return parsed.origin || ` + core.JSONMarshalString(pageOrigin) + `;
-    } catch (_) {
-      return ` + core.JSONMarshalString(pageOrigin) + `;
-    }
-  })();
+  const __corePageURL = ` + core.JSONMarshalString(pageOrigin) + `;
+  const __coreOrigin = ` + core.JSONMarshalString(storageOriginForPageURL(pageOrigin)) + ` || __corePageURL;
+  const __coreBootstrapStorage = ` + core.JSONMarshalString(bootstrap) + `;
   const __coreScopes = globalThis.__coreStorageScopes || (globalThis.__coreStorageScopes = {});
   const __scope = __coreScopes[__coreOrigin] || (__coreScopes[__coreOrigin] = { localStorage: {}, sessionStorage: {}, cookies: {}, indexedDB: {}, caches: {}, buckets: {}, opfs: {} });
   const __coreBridge = globalThis.__coreBridge || (globalThis.__coreBridge = {
@@ -61,7 +60,84 @@ func (s *Service) injectStoragePolyfills(pageOrigin string) string {
       return Promise.resolve({ route, payload, bridged: false });
     }
   });
+  const hydrateBucket = (bucketName, target, source) => {
+    if (!source || typeof source !== "object") {
+      return;
+    }
+    const parseMaybeJSON = (value) => {
+      if (typeof value !== "string") {
+        return value;
+      }
+      try {
+        return JSON.parse(value);
+      } catch (_) {
+        return value;
+      }
+    };
+    for (const [key, value] of Object.entries(source)) {
+      if (bucketName === "cookies") {
+        try {
+          target[key] = typeof value === "string" ? JSON.parse(value) : value;
+        } catch (_) {
+          target[key] = { value: String(value ?? "") };
+        }
+        continue;
+      }
+      if (bucketName.startsWith("cache:")) {
+        const cacheName = bucketName.slice("cache:".length);
+        target[cacheName] = target[cacheName] || {};
+        target[cacheName][key] = parseMaybeJSON(value);
+        continue;
+      }
+      if (bucketName.startsWith("indexeddb:")) {
+        const databaseName = bucketName.slice("indexeddb:".length);
+        const [storeName, recordKey] = key.split(":", 2);
+        target[databaseName] = target[databaseName] || { stores: {} };
+        target[databaseName].stores = target[databaseName].stores || {};
+        target[databaseName].stores[storeName] = target[databaseName].stores[storeName] || {};
+        target[databaseName].stores[storeName][recordKey] = parseMaybeJSON(value);
+        continue;
+      }
+      if (bucketName.startsWith("storageBucket:")) {
+        const bucketNameValue = bucketName.slice("storageBucket:".length);
+        target[bucketNameValue] = target[bucketNameValue] || { kv: {}, files: {} };
+        target[bucketNameValue].kv = target[bucketNameValue].kv || {};
+        target[bucketNameValue].kv[key] = value;
+        continue;
+      }
+      if (bucketName === "opfs") {
+        target[key] = { contents: value };
+        continue;
+      }
+      target[key] = value;
+    }
+  };
+  Object.entries(__coreBootstrapStorage || {}).forEach(([bucketName, bucket]) => {
+    if (bucketName.startsWith("cache:")) {
+      hydrateBucket(bucketName, __scope.caches, bucket);
+      return;
+    }
+    if (bucketName.startsWith("indexeddb:")) {
+      hydrateBucket(bucketName, __scope.indexedDB, bucket);
+      return;
+    }
+    if (bucketName.startsWith("storageBucket:")) {
+      hydrateBucket(bucketName, __scope.buckets, bucket);
+      return;
+    }
+    if (bucketName === "opfs") {
+      hydrateBucket(bucketName, __scope.opfs, bucket);
+      return;
+    }
+    if (!__scope[bucketName]) {
+      __scope[bucketName] = {};
+    }
+    hydrateBucket(bucketName, __scope[bucketName], bucket);
+  });
   const persist = (bucket, key, value) => {
+    if (bucket === "sessionStorage") {
+      return;
+    }
     __coreBridge.invoke('display.storage.set', { origin: __coreOrigin, bucket, key, value }).catch(() => undefined);
   };
   const createStorage = (bucketName, bucket) => ({
@@ -77,10 +153,51 @@ func (s *Service) injectStoragePolyfills(pageOrigin string) string {
   globalThis.core.storage.local = createStorage('localStorage', __scope.localStorage);
   globalThis.core.storage.session = createStorage('sessionStorage', __scope.sessionStorage);
   globalThis.core.storage.cookies = createStorage('cookies', __scope.cookies);
-  const cookieEntries = () => Object.entries(__scope.cookies).map(([name, value]) => name + "=" + value).join("; ");
+  const currentLocation = () => globalThis.location || {};
+  const cookieValue = (record) => {
+    if (record && typeof record === "object" && !Array.isArray(record)) {
+      return String(record.value ?? "");
+    }
+    return String(record ?? "");
+  };
+  const cookieIsExpired = (record) => {
+    if (!record || typeof record !== "object" || Array.isArray(record)) {
+      return false;
+    }
+    const expiresAt = record.expires ? Date.parse(record.expires) : NaN;
+    return Number.isFinite(expiresAt) && expiresAt <= Date.now();
+  };
+  const cookieMatchesPath = (record) => {
+    const path = String(currentLocation().pathname || "/");
+    const cookiePath = (record && typeof record === "object" && record.path) ? String(record.path) : "/";
+    return path === cookiePath || path.startsWith(cookiePath.endsWith("/") ? cookiePath : cookiePath + "/") || cookiePath === "/";
+  };
+  const cookieMatchesDomain = (record) => {
+    const hostname = String(currentLocation().hostname || "");
+    const domain = (record && typeof record === "object" && record.domain) ? String(record.domain).replace(/^\./, "") : "";
+    if (!domain) {
+      return true;
+    }
+    return hostname === domain || hostname.endsWith("." + domain);
+  };
+  const cookieMatchesSecure = (record) => {
+    if (!record || typeof record !== "object" || Array.isArray(record) || !record.secure) {
+      return true;
+    }
+    const protocol = String(currentLocation().protocol || "");
+    return protocol === "https:" || protocol === "wss:" || currentLocation().hostname === "localhost";
+  };
+  const cookieEntries = () => Object.entries(__scope.cookies)
+    .filter(([, record]) => !cookieIsExpired(record) && cookieMatchesPath(record) && cookieMatchesDomain(record) && cookieMatchesSecure(record))
+    .map(([name, record]) => name + "=" + cookieValue(record))
+    .join("; ");
   const setCookie = (value) => {
     const rawCookie = String(value ?? "");
-    const [pair] = rawCookie.split(";", 1);
+    const parts = rawCookie.split(";").map((part) => part.trim()).filter(Boolean);
+    const [pair, ...attributes] = parts;
+    if (!pair) {
+      return;
+    }
     const separatorIndex = pair.indexOf("=");
     if (separatorIndex < 0) {
       return;
@@ -89,8 +206,54 @@ func (s *Service) injectStoragePolyfills(pageOrigin string) string {
     if (!name) {
       return;
     }
-    __scope.cookies[name] = pair.slice(separatorIndex + 1).trim();
-    persist('cookies', name, __scope.cookies[name]);
+    const record = {
+      value: pair.slice(separatorIndex + 1).trim(),
+      path: "/",
+      domain: String(currentLocation().hostname || ""),
+      secure: false,
+      sameSite: "Lax"
+    };
+    attributes.forEach((attribute) => {
+      const [rawKey, ...rawValue] = attribute.split("=");
+      const key = String(rawKey || "").trim().toLowerCase();
+      const value = rawValue.join("=").trim();
+      switch (key) {
+        case "expires":
+          if (value) {
+            const expiresAt = new Date(value);
+            if (!Number.isNaN(expiresAt.getTime())) {
+              record.expires = expiresAt.toISOString();
+            }
+          }
+          break;
+        case "max-age": {
+          const seconds = Number.parseInt(value, 10);
+          if (Number.isFinite(seconds)) {
+            record.expires = new Date(Date.now() + (seconds * 1000)).toISOString();
+          }
+          break;
+        }
+        case "path":
+          record.path = value || "/";
+          break;
+        case "domain":
+          record.domain = value.replace(/^\./, "");
+          break;
+        case "secure":
+          record.secure = true;
+          break;
+        case "samesite":
+          record.sameSite = value || "Lax";
+          break;
+      }
+    });
+    if (cookieIsExpired(record)) {
+      delete __scope.cookies[name];
+      persist('cookies', name, '');
+      return;
+    }
+    __scope.cookies[name] = record;
+    persist('cookies', name, JSON.stringify(record));
   };
   const asyncResult = (value) => Promise.resolve(value);
   const createIDBRequest = (result) => {
@@ -101,12 +264,12 @@ func (s *Service) injectStoragePolyfills(pageOrigin string) string {
     });
     return request;
   };
-  const createObjectStore = (database, storeName) => ({
+  const createObjectStore = (databaseName, database, storeName) => ({
     put(value, key) {
       database.stores[storeName] = database.stores[storeName] || {};
       const resolvedKey = key ?? value?.id ?? crypto.randomUUID?.() ?? String(Date.now());
       database.stores[storeName][resolvedKey] = value;
-      persist('indexeddb', storeName + ':' + resolvedKey, JSON.stringify(value));
+      persist('indexeddb:' + databaseName, storeName + ':' + resolvedKey, JSON.stringify(value));
       return createIDBRequest(resolvedKey);
     },
     get(key) {
@@ -119,7 +282,7 @@ func (s *Service) injectStoragePolyfills(pageOrigin string) string {
       if (database.stores?.[storeName]) {
         delete database.stores[storeName][key];
       }
-      persist('indexeddb', storeName + ':' + key, '');
+      persist('indexeddb:' + databaseName, storeName + ':' + key, '');
       return createIDBRequest(undefined);
     },
     clear() {
@@ -136,14 +299,14 @@ func (s *Service) injectStoragePolyfills(pageOrigin string) string {
       name,
       createObjectStore(storeName) {
         database.stores[storeName] = database.stores[storeName] || {};
-        return createObjectStore(database, storeName);
+        return createObjectStore(name, database, storeName);
       },
       transaction(storeNames) {
         const names = Array.isArray(storeNames) ? storeNames : [storeNames];
         return {
           objectStore(storeName) {
             const target = names.includes(storeName) ? storeName : names[0];
-            return createObjectStore(database, target);
+            return createObjectStore(name, database, target);
           }
         };
       },
@@ -160,12 +323,12 @@ func (s *Service) injectStoragePolyfills(pageOrigin string) string {
         async put(request, response) {
           const key = typeof request === 'string' ? request : request?.url;
           bucket[key] = response;
-          persist('cache', name + ':' + key, JSON.stringify(response));
+          persist('cache:' + name, key, JSON.stringify(response));
         },
         async delete(request) {
           const key = typeof request === 'string' ? request : request?.url;
           delete bucket[key];
-          persist('cache', name + ':' + key, '');
+          persist('cache:' + name, key, '');
           return true;
         },
         async keys() {

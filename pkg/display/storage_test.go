@@ -92,3 +92,18 @@ func TestStorageRegistry_Search_Ugly(t *testing.T) {
 	results := r.Search("does-not-exist")
 	require.Empty(t, results)
 }
+
+func TestStorageRegistry_Snapshot_Good(t *testing.T) {
+	r := NewStorageRegistry()
+	r.Set("core://settings", "localStorage", "theme", "dark")
+	r.Set("core://settings", "cookies", "session", `{"value":"abc","path":"/","secure":false}`)
+	r.Set("core://other", "localStorage", "theme", "light")
+
+	snapshot := r.Snapshot("core://settings/profile")
+	require.Contains(t, snapshot, "localStorage")
+	require.Contains(t, snapshot, "cookies")
+	assert.Equal(t, "dark", snapshot["localStorage"]["theme"])
+	assert.Equal(t, `{"value":"abc","path":"/","secure":false}`, snapshot["cookies"]["session"])
+	_, otherOriginPresent := snapshot["other"]
+	assert.False(t, otherOriginPresent)
+}

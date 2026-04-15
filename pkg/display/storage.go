@@ -2,6 +2,7 @@ package display
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"sort"
@@ -63,6 +64,44 @@ func storageDatabasePath() string {
 		return ":memory:"
 	}
 	return core.Path(home, ".core", "state", fmt.Sprintf("gui-storage-%d.db", os.Getpid()))
+}
+
+func storageOriginForPageURL(pageURL string) string {
+	trimmed := strings.TrimSpace(pageURL)
+	if trimmed == "" {
+		return ""
+	}
+	parsed, err := url.Parse(trimmed)
+	if err != nil {
+		return trimmed
+	}
+	switch strings.ToLower(strings.TrimSpace(parsed.Scheme)) {
+	case "http", "https":
+		if parsed.Host == "" {
+			return trimmed
+		}
+		return parsed.Scheme + "://" + parsed.Host
+	case "core":
+		if parsed.Host == "" {
+			return "core://"
+		}
+		return "core://" + parsed.Host
+	case "file":
+		if parsed.Path == "" {
+			return trimmed
+		}
+		return "file://" + parsed.Path
+	default:
+		origin := parsed.Scheme + "://" + parsed.Host
+		if parsed.Path != "" {
+			origin += parsed.Path
+		}
+		origin = strings.TrimRight(origin, "/")
+		if strings.TrimSpace(origin) == "://" {
+			return trimmed
+		}
+		return origin
+	}
 }
 
 func makeStorageEntryKey(origin, bucket, key string) string {
@@ -173,6 +212,26 @@ func (r *StorageRegistry) Search(query string) []StorageEntry {
 		return results[i].UpdatedAt.After(results[j].UpdatedAt)
 	})
 	return results
+}
+
+func (r *StorageRegistry) Snapshot(pageURL string) map[string]map[string]string {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	origin := storageOriginForPageURL(pageURL)
+	snapshot := make(map[string]map[string]string)
+	for _, entry := range r.entries {
+		if origin != "" && !strings.EqualFold(entry.Origin, origin) {
+			continue
+		}
+		bucket := snapshot[entry.Bucket]
+		if bucket == nil {
+			bucket = make(map[string]string)
+			snapshot[entry.Bucket] = bucket
+		}
+		bucket[entry.Key] = entry.Value
+	}
+	return snapshot
 }
 
 func (r *StorageRegistry) Close() error {
