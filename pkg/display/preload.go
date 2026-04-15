@@ -30,16 +30,21 @@ func (s *Service) InjectPreload(webview PreloadTarget, origin string) error {
 // before page code runs.
 // Use: script, _ := display.BuildPreloadScript("https://example.com")
 func (s *Service) BuildPreloadScript(pageURL string) (string, error) {
+	trustedOrigin := trustedPreloadOrigin(pageURL)
 	storageBootstrap := map[string]map[string]string{}
 	if s.storage != nil {
 		storageBootstrap = s.storage.Snapshot(pageURL)
 	}
 	parts := []string{
-		s.injectStoragePolyfills(pageURL, storageBootstrap),
-		s.injectBackgroundServiceShims(),
-		s.injectElectronShim(),
-		s.injectCoreMLShim(),
+		s.injectStoragePolyfills(pageURL, storageBootstrap, trustedOrigin),
+		s.injectCoreMLShim(trustedOrigin),
 		s.buildHLCRFComponents(pageURL),
+	}
+	if trustedOrigin {
+		parts = append(parts,
+			s.injectBackgroundServiceShims(),
+			s.injectElectronShim(),
+		)
 	}
 	if appPreloads, err := s.injectAppPreloads(pageURL); err != nil {
 		if !strings.Contains(err.Error(), "view manifest not found") {
@@ -49,6 +54,39 @@ func (s *Service) BuildPreloadScript(pageURL string) (string, error) {
 		parts = append(parts, appPreloads)
 	}
 	return strings.Join(parts, "\n"), nil
+}
+
+func trustedPreloadOrigin(pageURL string) bool {
+	trimmed := strings.TrimSpace(pageURL)
+	if trimmed == "" {
+		return false
+	}
+	parsed, err := url.Parse(trimmed)
+	if err != nil {
+		return false
+	}
+	switch strings.ToLower(parsed.Scheme) {
+	case "core", "file", "wails", "app":
+		return true
+	case "http", "https":
+		host := strings.TrimSpace(parsed.Host)
+		if host == "" {
+			return false
+		}
+		name := host
+		if parsedHost, _, err := net.SplitHostPort(host); err == nil {
+			name = parsedHost
+		}
+		name = strings.Trim(strings.ToLower(name), "[]")
+		switch name {
+		case "localhost", "127.0.0.1", "::1":
+			return true
+		default:
+			return false
+		}
+	default:
+		return false
+	}
 }
 
 func validatedLocalMLAPIURL(raw string) string {
@@ -82,15 +120,19 @@ func validatedLocalMLAPIURL(raw string) string {
 	}
 }
 
-func (s *Service) injectStoragePolyfills(pageOrigin string, bootstrap map[string]map[string]string) string {
+func (s *Service) injectStoragePolyfills(pageOrigin string, bootstrap map[string]map[string]string, trustedOrigin bool) string {
 	return `(function() {
   const __corePageURL = ` + core.JSONMarshalString(pageOrigin) + `;
   const __coreOrigin = ` + core.JSONMarshalString(storageOriginForPageURL(pageOrigin)) + ` || __corePageURL;
+  const __coreCanInvoke = ` + core.JSONMarshalString(trustedOrigin) + `;
   const __coreBootstrapStorage = ` + core.JSONMarshalString(bootstrap) + `;
   const __coreScopes = globalThis.__coreStorageScopes || (globalThis.__coreStorageScopes = {});
   const __scope = __coreScopes[__coreOrigin] || (__coreScopes[__coreOrigin] = { localStorage: {}, sessionStorage: {}, cookies: {}, indexedDB: {}, caches: {}, buckets: {}, opfs: {} });
   const __coreBridge = globalThis.__coreBridge || (globalThis.__coreBridge = {
     invoke(route, payload) {
+      if (!__coreCanInvoke) {
+        return Promise.reject(new Error("Core bridge unavailable for this origin"));
+      }
       if (typeof globalThis.__CORE_GUI_INVOKE__ === 'function') {
         return Promise.resolve(globalThis.__CORE_GUI_INVOKE__(route, payload));
       }
@@ -172,6 +214,9 @@ func (s *Service) injectStoragePolyfills(pageOrigin string, bootstrap map[string
     hydrateBucket(bucketName, __scope[bucketName], bucket);
   });
   const persist = (bucket, key, value) => {
+    if (!__coreCanInvoke) {
+      return;
+    }
     if (bucket === "sessionStorage") {
       return;
     }
@@ -800,9 +845,10 @@ func (s *Service) injectBackgroundServiceShims() string {
 })();`
 }
 
-func (s *Service) injectCoreMLShim() string {
+func (s *Service) injectCoreMLShim(trustedOrigin bool) string {
 	return `(function() {
   const __coreMLApiURL = ` + core.JSONMarshalString(validatedLocalMLAPIURL(core.Env("CORE_ML_API_URL"))) + ` || "http://localhost:8090";
+  const __coreCanInvoke = ` + core.JSONMarshalString(trustedOrigin) + `;
   globalThis.core = globalThis.core || {};
   globalThis.core.ml = globalThis.core.ml || {
     async generate(input) {
@@ -854,6 +900,9 @@ func (s *Service) injectCoreMLShim() string {
       });
     },
     async state() {
+      if (!__coreCanInvoke) {
+        return { available: false, models: [] };
+      }
       return invokeBridge('display.models.state', {}).then((value) => value);
     },
     async models() {

@@ -3,6 +3,7 @@ package display
 import (
 	"context"
 	"os"
+	"strings"
 	"testing"
 
 	core "dappco.re/go/core"
@@ -109,6 +110,20 @@ func TestConfigTask_Good(t *testing.T) {
 	r2 := c.QUERY(window.QueryConfig{})
 	cfg := r2.Value.(map[string]any)
 	assert.Equal(t, 800, cfg["default_width"])
+}
+
+func TestStorageTask_Bad(t *testing.T) {
+	_, c := newTestDisplayService(t)
+
+	r := c.Action("display.storage.set").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "origin", Value: "core://settings"},
+		core.Option{Key: "bucket", Value: "localStorage"},
+		core.Option{Key: "key", Value: strings.Repeat("k", maxStorageKeyBytes+1)},
+		core.Option{Key: "value", Value: "dark"},
+	))
+
+	require.False(t, r.OK)
+	assert.Contains(t, r.Value.(error).Error(), "invalid storage entry")
 }
 
 func TestResolveScheme_StoreRoute_Good(t *testing.T) {

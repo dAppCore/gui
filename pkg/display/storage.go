@@ -14,6 +14,14 @@ import (
 	gostore "dappco.re/go/store"
 )
 
+const (
+	maxStorageOriginBytes   = 512
+	maxStorageBucketBytes   = 128
+	maxStorageKeyBytes      = 1024
+	maxStorageValueBytes    = 1 << 20
+	maxStorageSearchResults = 200
+)
+
 type StorageEntry struct {
 	Origin    string    `json:"origin"`
 	Bucket    string    `json:"bucket"`
@@ -149,7 +157,16 @@ func (r *StorageRegistry) loadPersistedEntries() {
 	}
 }
 
-func (r *StorageRegistry) Set(origin, bucket, key, value string) {
+func (r *StorageRegistry) Set(origin, bucket, key, value string) bool {
+	if !validStorageField(origin, maxStorageOriginBytes) ||
+		!validStorageField(bucket, maxStorageBucketBytes) ||
+		!validStorageField(key, maxStorageKeyBytes) ||
+		(len(value) > maxStorageValueBytes) {
+		return false
+	}
+	origin = strings.TrimSpace(origin)
+	bucket = strings.TrimSpace(bucket)
+	key = strings.TrimSpace(key)
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	entry := StorageEntry{
@@ -162,8 +179,11 @@ func (r *StorageRegistry) Set(origin, bucket, key, value string) {
 	composite := makeStorageEntryKey(origin, bucket, key)
 	r.entries[composite] = entry
 	if r.store != nil {
-		_ = r.store.Set("storage", storageCompositeKey(origin, bucket, key), core.JSONMarshalString(entry))
+		if err := r.store.Set("storage", storageCompositeKey(origin, bucket, key), core.JSONMarshalString(entry)); err != nil {
+			return false
+		}
 	}
+	return true
 }
 
 func (r *StorageRegistry) Get(origin, bucket, key string) (StorageEntry, bool) {
@@ -206,12 +226,20 @@ func (r *StorageRegistry) Search(query string) []StorageEntry {
 			strings.Contains(strings.ToLower(entry.Key), needle) ||
 			strings.Contains(strings.ToLower(entry.Value), needle) {
 			results = append(results, entry)
+			if len(results) >= maxStorageSearchResults {
+				break
+			}
 		}
 	}
 	sort.Slice(results, func(i, j int) bool {
 		return results[i].UpdatedAt.After(results[j].UpdatedAt)
 	})
 	return results
+}
+
+func validStorageField(value string, limit int) bool {
+	trimmed := strings.TrimSpace(value)
+	return trimmed != "" && len(trimmed) <= limit
 }
 
 func (r *StorageRegistry) Snapshot(pageURL string) map[string]map[string]string {

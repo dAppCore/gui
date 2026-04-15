@@ -121,7 +121,12 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		bucket := opts.String("bucket")
 		key := opts.String("key")
 		value := opts.String("value")
-		s.storage.Set(origin, bucket, key, value)
+		if s.storage == nil {
+			return core.Result{Value: coreerr.E("display.storage.set", "storage registry unavailable", nil), OK: false}
+		}
+		if !s.storage.Set(origin, bucket, key, value) {
+			return core.Result{Value: coreerr.E("display.storage.set", "invalid storage entry", nil), OK: false}
+		}
 		return core.Result{Value: map[string]string{"origin": origin, "bucket": bucket, "key": key}, OK: true}
 	})
 	s.Core().Action("display.storage.search", func(_ context.Context, opts core.Options) core.Result {

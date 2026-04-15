@@ -108,6 +108,15 @@ func TestStorageRegistry_Snapshot_Good(t *testing.T) {
 	assert.False(t, otherOriginPresent)
 }
 
+func TestStorageRegistry_Set_Bad(t *testing.T) {
+	r := NewStorageRegistry()
+
+	assert.False(t, r.Set("", "localStorage", "theme", "dark"))
+	assert.False(t, r.Set("core://settings", "", "theme", "dark"))
+	assert.False(t, r.Set("core://settings", "localStorage", "", "dark"))
+	assert.False(t, r.Set("core://settings", "localStorage", "theme", strings.Repeat("x", maxStorageValueBytes+1)))
+}
+
 func TestStorage_StorageOriginForPageURL_Good(t *testing.T) {
 	assert.Equal(t, "https://app.example.com", storageOriginForPageURL("https://app.example.com/path?q=1"))
 	assert.Equal(t, "core://settings", storageOriginForPageURL("core://settings/view"))
