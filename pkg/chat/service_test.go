@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -37,23 +38,37 @@ func (m *mockToolExecutor) CallTool(_ context.Context, name string, arguments ma
 	return `{"mode":"left-right"}`, nil
 }
 
-func newChatCore(t *testing.T, handler http.HandlerFunc, toolExecutor ToolExecutor) *core.Core {
+func newChatCore(t *testing.T, handler http.HandlerFunc, toolExecutor ToolExecutor, optionFns ...func(*Options)) *core.Core {
 	t.Helper()
 	server := httptest.NewServer(handler)
 	t.Cleanup(server.Close)
 
+	options := []func(*Options){
+		func(o *Options) { o.APIURL = server.URL },
+		func(o *Options) { o.StorePath = filepath.Join(t.TempDir(), "chat.db") },
+		func(o *Options) { o.ToolExecutor = toolExecutor },
+		func(o *Options) { o.Now = func() time.Time { return time.Unix(1_700_000_000, 0).UTC() } },
+		func(o *Options) { o.ModelRoots = nil },
+	}
+	options = append(options, optionFns...)
+
 	c := core.New(
-		core.WithService(Register(
-			func(o *Options) { o.APIURL = server.URL },
-			func(o *Options) { o.StorePath = filepath.Join(t.TempDir(), "chat.db") },
-			func(o *Options) { o.ToolExecutor = toolExecutor },
-			func(o *Options) { o.Now = func() time.Time { return time.Unix(1_700_000_000, 0).UTC() } },
-			func(o *Options) { o.ModelRoots = nil },
-		)),
+		core.WithService(Register(options...)),
 		core.WithServiceLock(),
 	)
 	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
 	return c
+}
+
+func createDiscoveredModelRoot(t *testing.T, name, architecture string) string {
+	t.Helper()
+	root := t.TempDir()
+	modelDir := filepath.Join(root, name)
+	require.NoError(t, os.MkdirAll(modelDir, 0o755))
+	configJSON := `{"model_type":"` + architecture + `","quantization":{"bits":4,"group_size":32}}`
+	require.NoError(t, os.WriteFile(filepath.Join(modelDir, "config.json"), []byte(configJSON), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(modelDir, "weights.safetensors"), []byte("fake"), 0o644))
+	return root
 }
 
 func TestService_Good_SendAndHistory(t *testing.T) {
@@ -154,4 +169,62 @@ func TestService_Good_SettingsDefaults(t *testing.T) {
 	actionResult := c.Action("gui.chat.settings.defaults").Run(context.Background(), core.Options{})
 	require.True(t, actionResult.OK)
 	assert.Equal(t, DefaultSettings(), actionResult.Value.(ChatSettings))
+}
+
+func TestService_Bad_SettingsRejectOutOfRangeValues(t *testing.T) {
+	c := newChatCore(t, func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		_, _ = io.WriteString(w, "data: [DONE]\n\n")
+	}, &mockToolExecutor{})
+
+	result := c.Action("gui.chat.settings.save").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "temperature", Value: float32(2.5)},
+		core.Option{Key: "top_p", Value: float32(0.95)},
+		core.Option{Key: "top_k", Value: 64},
+		core.Option{Key: "max_tokens", Value: 2048},
+		core.Option{Key: "context_window", Value: 8192},
+		core.Option{Key: "system_prompt", Value: "You are a helpful assistant."},
+	))
+	require.False(t, result.OK)
+	require.Error(t, result.Value.(error))
+	assert.Contains(t, result.Value.(error).Error(), "temperature must be between 0.0 and 2.0")
+}
+
+func TestService_Bad_SelectModelRejectsUnknownModel(t *testing.T) {
+	modelRoot := createDiscoveredModelRoot(t, "lemer", "gemma3")
+	c := newChatCore(t, func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		_, _ = io.WriteString(w, "data: [DONE]\n\n")
+	}, &mockToolExecutor{}, func(o *Options) { o.ModelRoots = []string{modelRoot} })
+
+	result := c.Action("gui.chat.selectModel").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "model", Value: "missing-model"},
+	))
+	require.False(t, result.OK)
+	require.Error(t, result.Value.(error))
+	assert.Contains(t, result.Value.(error).Error(), "model is not available")
+}
+
+func TestService_Bad_SendImageRejectsNonVisionModel(t *testing.T) {
+	modelRoot := createDiscoveredModelRoot(t, "lemma", "qwen3")
+	c := newChatCore(t, func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		_, _ = io.WriteString(w, "data: [DONE]\n\n")
+	}, &mockToolExecutor{}, func(o *Options) { o.ModelRoots = []string{modelRoot} })
+
+	attach := c.Action("gui.chat.attachImage").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "filename", Value: "photo.png"},
+		core.Option{Key: "mime_type", Value: "image/png"},
+		core.Option{Key: "data", Value: "ZmFrZQ=="},
+		core.Option{Key: "width", Value: 32},
+		core.Option{Key: "height", Value: 32},
+	))
+	require.True(t, attach.OK)
+
+	send := c.Action("gui.chat.send").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "content", Value: "Describe this image"},
+	))
+	require.False(t, send.OK)
+	require.Error(t, send.Value.(error))
+	assert.Contains(t, send.Value.(error).Error(), "does not support image input")
 }

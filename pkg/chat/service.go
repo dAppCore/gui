@@ -461,6 +461,9 @@ func (s *Service) now() time.Time {
 }
 
 func (s *Service) saveSettings(settings ChatSettings) error {
+	if err := s.validateSettings(settings); err != nil {
+		return err
+	}
 	payload := core.JSONMarshalString(settings)
 	return s.store.Set(settingsGroup, settingsKey, payload)
 }
@@ -479,6 +482,9 @@ func (s *Service) loadSettings() ChatSettings {
 }
 
 func (s *Service) selectModel(input selectModelInput) (ChatSettings, error) {
+	if err := s.validateModelName(input.Model); err != nil {
+		return ChatSettings{}, err
+	}
 	settings := s.loadSettings()
 	settings.DefaultModel = input.Model
 	if err := s.saveSettings(settings); err != nil {
@@ -504,6 +510,9 @@ func (s *Service) selectModel(input selectModelInput) (ChatSettings, error) {
 }
 
 func (s *Service) saveConversation(conv Conversation) (Conversation, error) {
+	if err := s.validateConversation(conv); err != nil {
+		return Conversation{}, err
+	}
 	if conv.CreatedAt.IsZero() {
 		conv.CreatedAt = s.now()
 	}
@@ -831,6 +840,9 @@ func (s *Service) send(ctx context.Context, input sendInput) (Conversation, erro
 	for toolRound := 0; toolRound < 3; toolRound++ {
 		effectiveSettings := s.mergedSettings(settings, conv.Settings)
 		conv.Model = s.resolveModel(conv.Model, effectiveSettings.DefaultModel)
+		if err := s.validateAttachmentsForModel(conv.Model, attachmentsForConversationTurn(conv.Messages)); err != nil {
+			return conv, err
+		}
 
 		assistantMessage, err := s.streamAssistant(ctx, conv, effectiveSettings)
 		if err != nil {
@@ -1117,6 +1129,131 @@ func (s *Service) discoverModels() []ModelEntry {
 		results = append(results, models[name])
 	}
 	return results
+}
+
+func (s *Service) validateSettings(settings ChatSettings) error {
+	if settings.Temperature < 0 || settings.Temperature > 2 {
+		return coreerr.E("chat.settings.save", "temperature must be between 0.0 and 2.0", nil)
+	}
+	if settings.TopP < 0 || settings.TopP > 1 {
+		return coreerr.E("chat.settings.save", "top_p must be between 0.0 and 1.0", nil)
+	}
+	if settings.TopK < 0 || settings.TopK > 200 {
+		return coreerr.E("chat.settings.save", "top_k must be between 0 and 200", nil)
+	}
+	if settings.MaxTokens < 64 || settings.MaxTokens > 32768 {
+		return coreerr.E("chat.settings.save", "max_tokens must be between 64 and 32768", nil)
+	}
+	if !validContextWindow(settings.ContextWindow) {
+		return coreerr.E("chat.settings.save", "context_window must be one of 2048, 4096, 8192, 16384, or 32768", nil)
+	}
+	if err := s.validateOptionalModelName(settings.DefaultModel); err != nil {
+		return err
+	}
+	return nil
+}
+
+func validContextWindow(value int) bool {
+	switch value {
+	case 2048, 4096, 8192, 16384, 32768:
+		return true
+	default:
+		return false
+	}
+}
+
+func (s *Service) validateConversation(conv Conversation) error {
+	if strings.TrimSpace(conv.ID) == "" {
+		return coreerr.E("chat.saveConversation", "conversation id is required", nil)
+	}
+	if err := s.validateOptionalModelName(conv.Model); err != nil {
+		return err
+	}
+	if conv.Settings != nil {
+		if err := s.validateSettings(*conv.Settings); err != nil {
+			return err
+		}
+	}
+	for _, message := range conv.Messages {
+		if err := validateMessageAttachments(message); err != nil {
+			return err
+		}
+	}
+	if err := s.validateAttachmentsForModel(s.resolveModel(conv.Model, s.loadSettings().DefaultModel), attachmentsForConversationTurn(conv.Messages)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Service) validateModelName(name string) error {
+	if strings.TrimSpace(name) == "" {
+		return coreerr.E("chat.selectModel", "model is required", nil)
+	}
+	if len(s.discoverModels()) == 0 {
+		return nil
+	}
+	if _, ok := s.findModel(name); ok {
+		return nil
+	}
+	return coreerr.E("chat.selectModel", "model is not available: "+name, nil)
+}
+
+func (s *Service) validateOptionalModelName(name string) error {
+	if strings.TrimSpace(name) == "" {
+		return nil
+	}
+	if len(s.discoverModels()) == 0 || strings.EqualFold(strings.TrimSpace(name), "default") {
+		return nil
+	}
+	if _, ok := s.findModel(name); ok {
+		return nil
+	}
+	return coreerr.E("chat.model", "model is not available: "+name, nil)
+}
+
+func (s *Service) findModel(name string) (ModelEntry, bool) {
+	for _, model := range s.discoverModels() {
+		if strings.EqualFold(model.Name, strings.TrimSpace(name)) {
+			return model, true
+		}
+	}
+	return ModelEntry{}, false
+}
+
+func (s *Service) validateAttachmentsForModel(modelName string, attachments []ImageAttachment) error {
+	if len(attachments) == 0 {
+		return nil
+	}
+	model, ok := s.findModel(modelName)
+	if !ok {
+		return coreerr.E("chat.send", "image attachments require a discovered vision-capable model", nil)
+	}
+	if !model.SupportsVision {
+		return coreerr.E("chat.send", "selected model does not support image input: "+model.Name, nil)
+	}
+	return nil
+}
+
+func validateMessageAttachments(message ChatMessage) error {
+	for _, attachment := range message.Attachments {
+		if err := validateImageAttachment(attachment); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func attachmentsForConversationTurn(messages []ChatMessage) []ImageAttachment {
+	if len(messages) == 0 {
+		return nil
+	}
+	for index := len(messages) - 1; index >= 0; index-- {
+		if messages[index].Role != "user" {
+			continue
+		}
+		return messages[index].Attachments
+	}
+	return nil
 }
 
 func discoverModelsOnDisk(root string) []ModelEntry {
