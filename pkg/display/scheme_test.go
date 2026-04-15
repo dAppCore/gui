@@ -139,6 +139,9 @@ func TestScheme_ResolveScheme_Bad(t *testing.T) {
 	malformedResult := svc.ResolveScheme(context.Background(), "://bad-url")
 	require.False(t, malformedResult.OK)
 
+	rootResult := svc.ResolveScheme(context.Background(), "core://")
+	require.False(t, rootResult.OK)
+
 	noHandlerResult := svc.ResolveScheme(context.Background(), "core://store")
 	require.False(t, noHandlerResult.OK)
 }

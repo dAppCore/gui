@@ -63,7 +63,10 @@ func (s *Service) registerDefaultSchemes() {
 func (s *Service) resolveCoreRoute(ctx context.Context, route string, query url.Values) core.Result {
 	segment, subpath := splitCoreRoute(route)
 	if segment == "" {
-		segment = "settings"
+		return core.Result{
+			Value: coreerr.E("display.resolveCoreRoute", "core route is required", nil),
+			OK:    false,
+		}
 	}
 
 	switch segment {
