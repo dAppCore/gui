@@ -79,14 +79,8 @@ func (s *Service) resolveCoreRoute(ctx context.Context, route string, query url.
 		return s.resolveUnavailableCoreRoute(segment, subpath, query)
 	default:
 		return core.Result{
-			Value: map[string]any{
-				"content_type": "text/html",
-				"body":         s.renderSchemeBody(segment, map[string]any{"route": segment, "query": query, "subpath": subpath}),
-				"route":        segment,
-				"subpath":      subpath,
-				"query":        query,
-			},
-			OK: true,
+			Value: coreerr.E("display.resolveCoreRoute", "unknown core route: "+segment, nil),
+			OK:    false,
 		}
 	}
 }
@@ -114,7 +108,7 @@ func (s *Service) resolveSettingsRoute(subpath string, query url.Values) core.Re
 		return core.Result{
 			Value: map[string]any{
 				"content_type": "text/html",
-				"body":         s.renderKeyValuePage("core://settings/"+key, key, value, snapshot),
+				"body":         s.renderKeyValuePage(coreRouteURL("settings", key), key, value, snapshot),
 				"route":        "settings",
 				"key":          key,
 				"value":        value,
@@ -164,7 +158,7 @@ func (s *Service) resolveModelsRoute(subpath string, query url.Values) core.Resu
 			return core.Result{
 				Value: map[string]any{
 					"content_type": "text/html",
-					"body":         s.renderKeyValuePage("core://models/"+modelName, modelName, model, s.modelState()),
+					"body":         s.renderKeyValuePage(coreRouteURL("models", modelName), modelName, model, s.modelState()),
 					"route":        "models",
 					"model":        model,
 				},
@@ -472,6 +466,17 @@ func coalesce(values ...string) string {
 		}
 	}
 	return ""
+}
+
+func coreRouteURL(segment string, parts ...string) string {
+	route := "core://" + strings.Trim(strings.TrimSpace(segment), "/")
+	for _, part := range parts {
+		if strings.TrimSpace(part) == "" {
+			continue
+		}
+		route += "/" + url.PathEscape(part)
+	}
+	return route
 }
 
 func (s *Service) AssetMiddleware() application.Middleware {

@@ -1,7 +1,6 @@
 package display
 
 import (
-	"errors"
 	"net"
 	"net/http"
 	"net/url"
@@ -450,9 +449,13 @@ func (em *WSEventManager) Close() {
 	close(em.eventBuffer)
 }
 
+type windowEventSource interface {
+	OnWindowEvent(func(event window.WindowEvent))
+}
+
 // AttachWindowListeners attaches event listeners to a specific window.
-// Accepts window.PlatformWindow instead of *application.WebviewWindow.
-func (em *WSEventManager) AttachWindowListeners(pw window.PlatformWindow) {
+// Use: em.AttachWindowListeners(windowHandle)
+func (em *WSEventManager) AttachWindowListeners(pw windowEventSource) {
 	if pw == nil {
 		return
 	}

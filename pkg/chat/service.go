@@ -15,8 +15,8 @@ import (
 	"time"
 
 	core "dappco.re/go/core"
-	"dappco.re/go/core/io/store"
 	coreerr "dappco.re/go/core/log"
+	"dappco.re/go/store"
 	guimcp "forge.lthn.ai/core/gui/pkg/mcp"
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 	"gopkg.in/yaml.v3"
@@ -40,7 +40,7 @@ type Options struct {
 type Service struct {
 	*core.ServiceRuntime[Options]
 	options            Options
-	store              *store.KeyValueStore
+	store              *store.Store
 	httpClient         *http.Client
 	toolExecutor       ToolExecutor
 	toolHandler        *ToolCallHandler
@@ -165,7 +165,7 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		return core.Result{Value: err, OK: false}
 	}
 
-	keyValueStore, err := store.New(store.Options{Path: s.options.StorePath})
+	keyValueStore, err := store.NewConfigured(store.StoreConfig{DatabasePath: s.options.StorePath})
 	if err != nil {
 		return core.Result{Value: err, OK: false}
 	}

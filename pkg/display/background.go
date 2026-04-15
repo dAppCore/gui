@@ -121,9 +121,10 @@ func (s *Service) registerBackgroundActions() {
 		return core.Result{Value: record, OK: true}
 	})
 	s.Core().Action("core.background.push.subscribe", func(_ context.Context, opts core.Options) core.Result {
+		key := strings.TrimSpace(opts.String("applicationServerKey"))
 		record := s.background.AddPush(map[string]any{
-			"endpoint":             "core://push/" + strings.TrimSpace(opts.String("applicationServerKey")),
-			"applicationServerKey": opts.String("applicationServerKey"),
+			"endpoint":             coreRouteURL("push", key),
+			"applicationServerKey": key,
 			"auth":                 "core-local",
 			"updated_at":           time.Now().UTC().Format(time.RFC3339),
 		})
