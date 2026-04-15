@@ -301,6 +301,7 @@ func (s *Service) currentSettingsSnapshot() map[string]any {
 	if s.configFile != nil {
 		var snapshot map[string]any
 		if err := s.configFile.Get("", &snapshot); err == nil && snapshot != nil {
+			snapshot["app_mode"] = string(s.mode)
 			return snapshot
 		}
 	}
@@ -311,6 +312,7 @@ func (s *Service) currentSettingsSnapshot() map[string]any {
 		}
 		snapshot[key] = value
 	}
+	snapshot["app_mode"] = string(s.mode)
 	return snapshot
 }
 

@@ -16,5 +16,11 @@ type QueryStoreRoute struct {
 	Query string `json:"q,omitempty"`
 }
 
+// QueryAppMode reports the detected app mode for the current process.
+//
+//	mode := c.QUERY(display.QueryAppMode{})
+//	// Returns "manager" or "worker" based on CLI flags, config, or env.
+type QueryAppMode struct{}
+
 // EventIDECommand is the WS event type for IDE commands.
 const EventIDECommand EventType = "ide.command"

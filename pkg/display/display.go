@@ -11,6 +11,7 @@ import (
 	"forge.lthn.ai/core/config"
 
 	"forge.lthn.ai/core/gui/pkg/chat"
+	"forge.lthn.ai/core/gui/pkg/container"
 	"forge.lthn.ai/core/gui/pkg/clipboard"
 	"forge.lthn.ai/core/gui/pkg/contextmenu"
 	"forge.lthn.ai/core/gui/pkg/deno"
@@ -42,6 +43,7 @@ type Service struct {
 	app            App
 	configData     map[string]map[string]any
 	configFile     *config.Config // config instance for file persistence
+	mode           container.AppMode
 	events         *WSEventManager
 	schemeHandlers map[string]SchemeHandler
 	manifestCache  map[string]*loadedManifest
@@ -60,6 +62,7 @@ func New() (*Service, error) {
 			"systray": {},
 			"menu":    {},
 		},
+		mode:           container.DetectMode(),
 		schemeHandlers: make(map[string]SchemeHandler),
 		manifestCache:  make(map[string]*loadedManifest),
 		storage:        NewStorageRegistry(),
@@ -86,6 +89,7 @@ func Register(wailsApp *application.App) func(*core.Core) core.Result {
 // Config handlers are registered first — sub-services query them during their own OnStartup.
 func (s *Service) OnStartup(_ context.Context) core.Result {
 	s.loadConfig()
+	s.mode = container.DetectMode()
 
 	// Register config query handler — available NOW for sub-services
 	s.Core().RegisterQuery(s.handleConfigQuery)
@@ -1011,6 +1015,8 @@ func (s *Service) handleConfigQuery(_ *core.Core, q core.Query) core.Result {
 		return core.Result{Value: s.configData["systray"], OK: true}
 	case menu.QueryConfig:
 		return core.Result{Value: s.configData["menu"], OK: true}
+	case QueryAppMode:
+		return core.Result{Value: s.mode, OK: true}
 	case events.QueryServerInfo:
 		if s.events == nil {
 			return core.Result{Value: events.ServerInfo{}, OK: true}
