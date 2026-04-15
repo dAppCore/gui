@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	core "dappco.re/go/core"
+	"forge.lthn.ai/core/gui/pkg/notification"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -85,6 +86,51 @@ func TestTaskShowMessage_Good(t *testing.T) {
 	mockTray := svc.manager.Tray().(*mockTray)
 	assert.Equal(t, "Core", mockTray.lastMessageTitle)
 	assert.Equal(t, "Up", mockTray.lastMessageBody)
+}
+
+type fallbackNotificationPlatform struct {
+	sent bool
+	opts notification.NotificationOptions
+}
+
+func (m *fallbackNotificationPlatform) Send(opts notification.NotificationOptions) error {
+	m.sent = true
+	m.opts = opts
+	return nil
+}
+func (m *fallbackNotificationPlatform) RequestPermission() (bool, error) { return true, nil }
+func (m *fallbackNotificationPlatform) CheckPermission() (bool, error)   { return true, nil }
+func (m *fallbackNotificationPlatform) RevokePermission() error          { return nil }
+func (m *fallbackNotificationPlatform) Clear(id string) error            { return nil }
+
+type failingTrayPlatform struct{}
+
+func (failingTrayPlatform) NewTray() PlatformTray { return &failingTray{} }
+func (failingTrayPlatform) NewMenu() PlatformMenu { return &mockTrayMenu{} }
+
+type failingTray struct{ mockTray }
+
+func (t *failingTray) ShowMessage(title, message string) error {
+	return core.NewError("tray balloon unavailable")
+}
+
+func TestTaskShowMessage_FallbackToNotification_Good(t *testing.T) {
+	notifPlatform := &fallbackNotificationPlatform{}
+	c := core.New(
+		core.WithService(notification.Register(notifPlatform)),
+		core.WithService(Register(failingTrayPlatform{})),
+		core.WithServiceLock(),
+	)
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+
+	svc := core.MustServiceFor[*Service](c, "systray")
+	require.NoError(t, svc.manager.Setup("Test", "Test"))
+
+	r := taskRun(c, "systray.showMessage", TaskShowMessage{Title: "Core", Message: "Up"})
+	require.True(t, r.OK)
+	assert.True(t, notifPlatform.sent)
+	assert.Equal(t, "Core", notifPlatform.opts.Title)
+	assert.Equal(t, "Up", notifPlatform.opts.Message)
 }
 
 func TestQueryInfo_Good(t *testing.T) {

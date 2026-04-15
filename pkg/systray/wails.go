@@ -2,6 +2,7 @@
 package systray
 
 import (
+	coreerr "dappco.re/go/core/log"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
@@ -54,7 +55,7 @@ func (wt *wailsTray) AttachWindow(w WindowHandle) {
 func (wt *wailsTray) ShowMessage(title, message string) error {
 	_ = title
 	_ = message
-	return nil
+	return coreerr.E("systray.wailsTray.ShowMessage", "tray balloon messages are not supported by this backend", nil)
 }
 
 // wailsTrayMenu wraps *application.Menu for the PlatformMenu interface.

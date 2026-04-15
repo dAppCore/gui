@@ -4,6 +4,8 @@ import (
 	"context"
 
 	core "dappco.re/go/core"
+	coreerr "dappco.re/go/core/log"
+	"forge.lthn.ai/core/gui/pkg/notification"
 )
 
 type Options struct{}
@@ -41,7 +43,23 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 	})
 	s.Core().Action("systray.showMessage", func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskShowMessage)
-		return core.Result{Value: nil, OK: true}.New(s.manager.ShowMessage(t.Title, t.Message))
+		if err := s.manager.ShowMessage(t.Title, t.Message); err == nil {
+			return core.Result{OK: true}
+		} else {
+			fallback := s.Core().Action("notification.send").Run(context.Background(), core.NewOptions(
+				core.Option{Key: "task", Value: notification.TaskSend{Options: notification.NotificationOptions{
+					Title:   t.Title,
+					Message: t.Message,
+				}}},
+			))
+			if fallback.OK {
+				return core.Result{OK: true}
+			}
+			if fallbackErr, ok := fallback.Value.(error); ok {
+				return core.Result{Value: coreerr.E("systray.showMessage", "tray message failed and notification fallback failed", fallbackErr), OK: false}
+			}
+			return core.Result{Value: err, OK: false}
+		}
 	})
 	s.Core().Action("systray.showPanel", func(_ context.Context, _ core.Options) core.Result {
 		// Panel show — deferred (requires WindowHandle integration)
