@@ -76,6 +76,10 @@ This document tracks the implementation of display server features that enable A
 - [x] `webview_eval` - Execute JavaScript and return result
 - [x] `webview_list` - List all webview windows
 
+### Browser
+- [x] `browser_open_url` - Open a URL in the default system browser
+- [x] `browser_open_file` - Open a file in the system default application
+
 ### Console & Errors
 - [x] `webview_console` - Get console messages (log, warn, error, info)
 - [x] `webview_errors` - Get structured JS errors with stack traces

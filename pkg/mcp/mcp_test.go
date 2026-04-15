@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	core "dappco.re/go/core"
+	"forge.lthn.ai/core/gui/pkg/browser"
 	"forge.lthn.ai/core/gui/pkg/clipboard"
 	"forge.lthn.ai/core/gui/pkg/dialog"
 	"forge.lthn.ai/core/gui/pkg/events"
@@ -72,6 +73,11 @@ func TestMCP_Bad_NoServices(t *testing.T) {
 
 type manifestScreenPlatform struct{}
 
+type manifestBrowserPlatform struct {
+	lastURL  string
+	lastPath string
+}
+
 func (manifestScreenPlatform) GetAll() []screen.Screen {
 	return []screen.Screen{{
 		ID: "1", Name: "Primary", IsPrimary: true,
@@ -104,6 +110,34 @@ func TestSubsystem_Good_CallTool_LayoutSuggest(t *testing.T) {
 	result, err := sub.CallTool(context.Background(), "layout_suggest", map[string]any{"window_count": 2})
 	require.NoError(t, err)
 	assert.Contains(t, result, "left-right")
+}
+
+func (m *manifestBrowserPlatform) OpenURL(url string) error {
+	m.lastURL = url
+	return nil
+}
+
+func (m *manifestBrowserPlatform) OpenFile(path string) error {
+	m.lastPath = path
+	return nil
+}
+
+func TestSubsystem_Good_CallTool_BrowserOpenFile(t *testing.T) {
+	browserPlatform := &manifestBrowserPlatform{}
+	c := core.New(
+		core.WithService(browser.Register(browserPlatform)),
+		core.WithServiceLock(),
+	)
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+
+	sub := New(c)
+	server := mcp.NewServer(&mcp.Implementation{Name: "test", Version: "0.1.0"}, nil)
+	sub.RegisterTools(server)
+
+	result, err := sub.CallTool(context.Background(), "browser_open_file", map[string]any{"path": "/tmp/readme.txt"})
+	require.NoError(t, err)
+	assert.Contains(t, result, "success")
+	assert.Equal(t, "/tmp/readme.txt", browserPlatform.lastPath)
 }
 
 type aliasDialogPlatform struct {

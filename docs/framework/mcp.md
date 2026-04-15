@@ -65,6 +65,13 @@ The MCP service exposes numerous tools organized by category:
 | `webview_navigate` | Navigate to URL |
 | `webview_console` | Get console logs |
 
+### Browser
+
+| Tool | Description |
+|------|-------------|
+| `browser_open_url` | Open a URL in the default system browser |
+| `browser_open_file` | Open a file with the system default application |
+
 ### Process Management
 
 | Tool | Description |
