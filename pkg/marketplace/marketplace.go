@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"unicode"
 
@@ -43,6 +44,8 @@ type Installer struct {
 }
 
 const maxManifestBytes = 1 << 20
+
+var credentialRedactionPattern = regexp.MustCompile(`(?i)\b([a-z][a-z0-9+.-]*://)([^@\s/]+)@`)
 
 func (i Installer) FetchManifest(ctx context.Context, manifestURL string) (Manifest, error) {
 	client := i.HTTPClient
@@ -164,7 +167,7 @@ func (i Installer) Install(ctx context.Context, manifest Manifest) (string, erro
 	}
 	cmd := exec.CommandContext(ctx, binary, args...)
 	if output, err := cmd.CombinedOutput(); err != nil {
-		return "", fmt.Errorf("git clone failed: %w: %s", err, strings.TrimSpace(string(output)))
+		return "", fmt.Errorf("git clone failed: %w: %s", err, sanitizeCommandOutput(output))
 	}
 	if err := writeInstalledManifest(targetDir, manifest); err != nil {
 		return "", err
@@ -303,4 +306,17 @@ func writeInstalledManifest(targetDir string, manifest Manifest) error {
 		return err
 	}
 	return os.WriteFile(filepath.Join(manifestDir, "marketplace.yaml"), data, 0o644)
+}
+
+func sanitizeCommandOutput(output []byte) string {
+	trimmed := strings.TrimSpace(string(output))
+	if trimmed == "" {
+		return "command produced no output"
+	}
+	sanitized := credentialRedactionPattern.ReplaceAllString(trimmed, "$1[redacted]@")
+	const maxOutputChars = 512
+	if len(sanitized) > maxOutputChars {
+		sanitized = sanitized[:maxOutputChars] + "..."
+	}
+	return sanitized
 }

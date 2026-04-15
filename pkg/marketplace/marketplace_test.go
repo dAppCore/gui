@@ -245,7 +245,7 @@ func TestMarketplace_Install_RejectsDashPrefixedRef(t *testing.T) {
 func TestMarketplace_Install_Ugly(t *testing.T) {
 	scriptDir := t.TempDir()
 	scriptPath := filepath.Join(scriptDir, "git")
-	require.NoError(t, os.WriteFile(scriptPath, []byte("#!/bin/sh\nexit 1\n"), 0o755))
+	require.NoError(t, os.WriteFile(scriptPath, []byte("#!/bin/sh\nprintf '%s\\n' 'fatal: https://token:secret@example.com/repo.git' >&2\nexit 1\n"), 0o755))
 
 	installer := Installer{
 		GitBinary:  scriptPath,
@@ -258,6 +258,8 @@ func TestMarketplace_Install_Ugly(t *testing.T) {
 	}))
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "git clone failed")
+	assert.NotContains(t, err.Error(), "secret")
+	assert.NotContains(t, err.Error(), "token:")
 }
 
 func TestMarketplace_Verify_Good(t *testing.T) {
