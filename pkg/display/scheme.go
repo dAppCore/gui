@@ -5,6 +5,7 @@ import (
 	"html"
 	"net/http"
 	"net/url"
+	"sort"
 	"strings"
 	"time"
 
@@ -130,18 +131,7 @@ func (s *Service) resolveStoreRoute(subpath string, query url.Values) core.Resul
 		}
 	}
 
-	results := s.searchAllStorage(coalesce(query.Get("q"), subpath))
-	return core.Result{
-		Value: map[string]any{
-			"content_type": "text/html",
-			"body":         s.renderStoreSearchPage(coalesce(query.Get("q"), subpath), results),
-			"route":        "store",
-			"url":          "core://store",
-			"query":        query,
-			"results":      results,
-		},
-		OK: true,
-	}
+	return s.handleStoreSearch(context.Background(), query)
 }
 
 func (s *Service) resolveModelsRoute(subpath string, query url.Values) core.Result {
@@ -345,29 +335,63 @@ func (s *Service) renderUnavailableRoute(route, subpath string, query url.Values
 
 func (s *Service) renderStoreSearchPage(query string, results []StorageEntry) string {
 	safeQuery := html.EscapeString(query)
+	type groupedResults struct {
+		Origin    string
+		Entries   []StorageEntry
+		UpdatedAt time.Time
+	}
+
+	groupMap := make(map[string]*groupedResults)
+	for _, item := range results {
+		group := groupMap[item.Origin]
+		if group == nil {
+			group = &groupedResults{Origin: item.Origin}
+			groupMap[item.Origin] = group
+		}
+		group.Entries = append(group.Entries, item)
+		if item.UpdatedAt.After(group.UpdatedAt) {
+			group.UpdatedAt = item.UpdatedAt
+		}
+	}
+
+	groups := make([]groupedResults, 0, len(groupMap))
+	for _, group := range groupMap {
+		groups = append(groups, *group)
+	}
+	sort.Slice(groups, func(i, j int) bool {
+		return groups[i].UpdatedAt.After(groups[j].UpdatedAt)
+	})
+	for i := range groups {
+		sort.Slice(groups[i].Entries, func(a, b int) bool {
+			return groups[i].Entries[a].UpdatedAt.After(groups[i].Entries[b].UpdatedAt)
+		})
+	}
+
 	var items strings.Builder
 	if len(results) == 0 && strings.TrimSpace(query) != "" {
 		items.WriteString("<p class=\"empty\">No matches found in Core storage.</p>")
 	} else if strings.TrimSpace(query) == "" {
 		items.WriteString("<p class=\"meta\">Enter a search term to scan Core storage namespaces.</p>")
 	} else {
-		items.WriteString("<ul>")
-		for _, item := range results {
-			items.WriteString("<li class=\"result\"><div class=\"origin\">")
-			items.WriteString(html.EscapeString(item.Origin))
-			items.WriteString("</div><div class=\"bucket\">")
-			items.WriteString(html.EscapeString(item.Bucket))
-			items.WriteString("</div><div class=\"key\">")
-			items.WriteString(html.EscapeString(item.Key))
-			items.WriteString("</div><div class=\"value\">")
-			items.WriteString(html.EscapeString(item.Value))
-			items.WriteString("</div><div class=\"meta\">Updated ")
-			items.WriteString(html.EscapeString(item.UpdatedAt.Format(time.RFC3339)))
-			items.WriteString("</div></li>")
+		for _, group := range groups {
+			items.WriteString("<section class=\"origin-group\"><div class=\"origin\">")
+			items.WriteString(html.EscapeString(group.Origin))
+			items.WriteString("</div><ul>")
+			for _, item := range group.Entries {
+				items.WriteString("<li class=\"result\"><div class=\"bucket\">")
+				items.WriteString(html.EscapeString(item.Bucket))
+				items.WriteString("</div><div class=\"key\">")
+				items.WriteString(html.EscapeString(item.Key))
+				items.WriteString("</div><div class=\"value\">")
+				items.WriteString(html.EscapeString(item.Value))
+				items.WriteString("</div><div class=\"meta\">Updated ")
+				items.WriteString(html.EscapeString(item.UpdatedAt.Format(time.RFC3339)))
+				items.WriteString("</div></li>")
+			}
+			items.WriteString("</ul></section>")
 		}
-		items.WriteString("</ul>")
 	}
-	return "<!doctype html><html><head><meta charset=\"utf-8\"><title>core://store</title><style>body{font:14px/1.5 ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;background:#0f172a;color:#e2e8f0;margin:0}header{padding:20px;border-bottom:1px solid #1e293b;background:linear-gradient(180deg,#111827,#0f172a)}main{padding:20px;display:grid;gap:16px}form{display:flex;gap:8px;flex-wrap:wrap;align-items:center}input{min-width:min(100%,420px);flex:1 1 320px;border-radius:12px;border:1px solid #334155;background:#020617;color:#e2e8f0;padding:12px 14px}button{border:0;border-radius:12px;background:#38bdf8;color:#082f49;padding:12px 16px;font-weight:700;cursor:pointer}section{background:#020617;border:1px solid #1e293b;border-radius:16px;padding:16px}ul{list-style:none;padding:0;margin:0;display:grid;gap:12px}.result{padding:12px;border:1px solid #1e293b;border-radius:12px;background:#0b1220}.meta{color:#94a3b8}.origin{font-weight:700;color:#7dd3fc}.bucket{color:#cbd5e1;font-size:12px;text-transform:uppercase;letter-spacing:.08em}.key{color:#f8fafc;font-weight:600}.value{white-space:pre-wrap;word-break:break-word;color:#e2e8f0}.empty{color:#94a3b8}code{background:#111827;border-radius:8px;padding:2px 6px}</style></head><body><header><strong>core://store</strong><div class=\"meta\">Search the in-memory storage scopes exposed by the preload shim. Query: <code>" +
+	return "<!doctype html><html><head><meta charset=\"utf-8\"><title>core://store</title><style>body{font:14px/1.5 ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;background:#0f172a;color:#e2e8f0;margin:0}header{padding:20px;border-bottom:1px solid #1e293b;background:linear-gradient(180deg,#111827,#0f172a)}main{padding:20px;display:grid;gap:16px}form{display:flex;gap:8px;flex-wrap:wrap;align-items:center}input{min-width:min(100%,420px);flex:1 1 320px;border-radius:12px;border:1px solid #334155;background:#020617;color:#e2e8f0;padding:12px 14px}button{border:0;border-radius:12px;background:#38bdf8;color:#082f49;padding:12px 16px;font-weight:700;cursor:pointer}section{background:#020617;border:1px solid #1e293b;border-radius:16px;padding:16px}.origin-group{display:grid;gap:12px}.origin-group .origin{font-weight:700;color:#7dd3fc}.origin-group ul{list-style:none;padding:0;margin:0;display:grid;gap:12px}.result{padding:12px;border:1px solid #1e293b;border-radius:12px;background:#0b1220;display:grid;gap:8px}.meta{color:#94a3b8}.bucket{color:#cbd5e1;font-size:12px;text-transform:uppercase;letter-spacing:.08em}.key{color:#f8fafc;font-weight:600}.value{white-space:pre-wrap;word-break:break-word;color:#e2e8f0}.empty{color:#94a3b8}code{background:#111827;border-radius:8px;padding:2px 6px}</style></head><body><header><strong>core://store</strong><div class=\"meta\">Search the in-memory storage scopes exposed by the preload shim. Query: <code>" +
 		safeQuery +
 		"</code></div></header><main><section><form method=\"get\" action=\"core://store\"><input name=\"q\" value=\"" +
 		safeQuery +
@@ -401,6 +425,22 @@ func (s *Service) searchAllStorage(query string) []StorageEntry {
 		}
 	}
 	return results
+}
+
+func (s *Service) handleStoreSearch(_ context.Context, params url.Values) core.Result {
+	query := coalesce(params.Get("q"), params.Get("query"))
+	results := s.searchAllStorage(query)
+	return core.Result{
+		Value: map[string]any{
+			"content_type": "text/html",
+			"body":         s.renderStoreSearchPage(query, results),
+			"route":        "store",
+			"url":          "core://store",
+			"query":        params,
+			"results":      results,
+		},
+		OK: true,
+	}
 }
 
 func coalesce(values ...string) string {

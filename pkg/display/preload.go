@@ -413,7 +413,34 @@ func (s *Service) injectCoreMLShim() string {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
-      return response.json();
+      if (!response.ok) {
+        throw new Error("Core ML request failed: " + response.status + " " + response.statusText);
+      }
+      const body = await response.text();
+      try {
+        const parsed = JSON.parse(body);
+        const content = parsed?.choices?.[0]?.message?.content;
+        if (typeof content === "string") {
+          return content;
+        }
+        if (Array.isArray(content)) {
+          return content.map((part) => {
+            if (typeof part === "string") {
+              return part;
+            }
+            return part?.text ?? "";
+          }).join("");
+        }
+        if (typeof parsed?.content === "string") {
+          return parsed.content;
+        }
+        if (typeof parsed === "string") {
+          return parsed;
+        }
+        return body;
+      } catch (_) {
+        return body;
+      }
     },
     async stream(input) {
       const payload = typeof input === "string"
