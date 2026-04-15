@@ -58,6 +58,14 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 	s.Core().Action("gui.clipboard.write", setText)
 	s.Core().Action("clipboard.setImage", setImage)
 	s.Core().Action("gui.clipboard.writeImage", setImage)
+	s.Core().Action("gui.clipboard.readImage", func(_ context.Context, _ core.Options) core.Result {
+		imgPlatform, ok := s.platform.(ImagePlatform)
+		if !ok {
+			return core.Result{Value: ImageContent{}, OK: true}
+		}
+		data, hasImage := imgPlatform.Image()
+		return core.Result{Value: ImageContent{Data: append([]byte(nil), data...), HasImage: hasImage && len(data) > 0}, OK: true}
+	})
 	s.Core().Action("clipboard.clear", clear)
 	s.Core().Action("gui.clipboard.clear", clear)
 	s.Core().Action("gui.clipboard.read", read)

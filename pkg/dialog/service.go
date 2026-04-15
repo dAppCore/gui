@@ -128,6 +128,7 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 	s.Core().Action("dialog.saveFile", saveFile)
 	s.Core().Action("gui.dialog.save", saveFile)
 	s.Core().Action("dialog.openDirectory", openDirectory)
+	s.Core().Action("gui.dialog.openDirectory", openDirectory)
 	s.Core().Action("dialog.message", messageDialog)
 	s.Core().Action("gui.dialog.message", messageDialog)
 	s.Core().Action("dialog.info", info)

@@ -709,12 +709,26 @@ func (s *Service) injectElectronShim() string {
     },
     writeText(text) {
       return invokeBridge('gui.clipboard.write', { text }).then(() => undefined);
+    },
+    readImage() {
+      return invokeBridge('gui.clipboard.readImage', {}).then((value) => {
+        if (typeof value === "string") {
+          return value;
+        }
+        return value?.base64 ?? value?.Base64 ?? "";
+      });
+    },
+    writeImage(image) {
+      return invokeBridge('gui.clipboard.writeImage', { base64: toBase64(image) }).then(() => undefined);
     }
   };
   const invokeBridge = (route, payload) => (globalThis.__coreBridge?.invoke?.(route, payload) ?? Promise.resolve({ route, payload }));
   const dialog = {
     showOpenDialog(options) {
       return invokeBridge('gui.dialog.open', options);
+    },
+    showOpenDirectoryDialog(options) {
+      return invokeBridge('gui.dialog.openDirectory', options);
     },
     showSaveDialog(options) {
       return invokeBridge('gui.dialog.save', options);
