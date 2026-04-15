@@ -192,6 +192,7 @@ func TestMarketplace_Install_Good(t *testing.T) {
 	assert.Contains(t, string(contents), "clone")
 	assert.Contains(t, string(contents), "--branch")
 	assert.Contains(t, string(contents), "main")
+	assert.Contains(t, string(contents), "--")
 
 	installedManifest, err := os.ReadFile(filepath.Join(targetDir, ".core", "marketplace.yaml"))
 	require.NoError(t, err)
@@ -215,6 +216,30 @@ func TestMarketplace_Install_RejectsTraversalName(t *testing.T) {
 	}))
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "path separators")
+}
+
+func TestMarketplace_Install_RejectsDashPrefixedRepository(t *testing.T) {
+	installer := Installer{InstallDir: t.TempDir()}
+	_, err := installer.Install(context.Background(), signedManifest(t, Manifest{
+		Name:       "core-ui",
+		Version:    "1.2.3",
+		Repository: "--upload-pack=sh",
+		Ref:        "main",
+	}))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "repository must not begin with a dash")
+}
+
+func TestMarketplace_Install_RejectsDashPrefixedRef(t *testing.T) {
+	installer := Installer{InstallDir: t.TempDir()}
+	_, err := installer.Install(context.Background(), signedManifest(t, Manifest{
+		Name:       "core-ui",
+		Version:    "1.2.3",
+		Repository: "https://example.com/core-ui.git",
+		Ref:        "--upload-pack=sh",
+	}))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "ref must not begin with a dash")
 }
 
 func TestMarketplace_Install_Ugly(t *testing.T) {

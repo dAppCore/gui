@@ -127,6 +127,12 @@ func (i Installer) Install(ctx context.Context, manifest Manifest) (string, erro
 	if err := validateManifestName(manifest.Name); err != nil {
 		return "", err
 	}
+	if err := validateCloneArg("repository", manifest.Repository); err != nil {
+		return "", err
+	}
+	if err := validateCloneArgOptional("ref", manifest.Ref); err != nil {
+		return "", err
+	}
 	if err := os.MkdirAll(i.InstallDir, 0o755); err != nil {
 		return "", err
 	}
@@ -151,7 +157,7 @@ func (i Installer) Install(ctx context.Context, manifest Manifest) (string, erro
 	if manifest.Ref != "" {
 		args = append(args, "--branch", manifest.Ref)
 	}
-	args = append(args, manifest.Repository, targetDir)
+	args = append(args, "--", manifest.Repository, targetDir)
 	binary := i.GitBinary
 	if strings.TrimSpace(binary) == "" {
 		binary = "git"
@@ -205,6 +211,28 @@ func validateManifestName(value string) error {
 		return errors.New("manifest name must not contain path traversal segments")
 	}
 	return nil
+}
+
+func validateCloneArg(label, value string) error {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return fmt.Errorf("%s is required", label)
+	}
+	if strings.HasPrefix(trimmed, "-") {
+		return fmt.Errorf("%s must not begin with a dash", label)
+	}
+	if strings.ContainsAny(trimmed, "\x00\r\n") {
+		return fmt.Errorf("%s contains invalid control characters", label)
+	}
+	return nil
+}
+
+func validateCloneArgOptional(label, value string) error {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return nil
+	}
+	return validateCloneArg(label, trimmed)
 }
 
 func DigestManifest(manifest Manifest) string {
