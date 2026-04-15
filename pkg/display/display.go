@@ -11,6 +11,7 @@ import (
 	"forge.lthn.ai/core/config"
 
 	"forge.lthn.ai/core/gui/pkg/chat"
+	"forge.lthn.ai/core/gui/pkg/clipboard"
 	"forge.lthn.ai/core/gui/pkg/contextmenu"
 	"forge.lthn.ai/core/gui/pkg/deno"
 	"forge.lthn.ai/core/gui/pkg/dialog"
@@ -530,6 +531,34 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 		return c.Action("browser.openFile").Run(ctx, core.NewOptions(
 			core.Option{Key: "path", Value: path},
 		))
+	case "clipboard:read":
+		return c.QUERY(clipboard.QueryText{})
+	case "clipboard:write":
+		text, _ := msg.Data["text"].(string)
+		return c.Action("clipboard.setText").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: clipboard.TaskSetText{Text: text}},
+		))
+	case "clipboard:clear":
+		return c.Action("clipboard.clear").Run(ctx, core.NewOptions())
+	case "clipboard:read-image":
+		return c.QUERY(clipboard.QueryImage{})
+	case "clipboard:write-image":
+		data, _ := msg.Data["base64"].(string)
+		return c.Action("clipboard.setImage").Run(ctx, core.NewOptions(
+			core.Option{Key: "data", Value: data},
+		))
+	case "dialog:open-file":
+		return c.Action("dialog.openFile").Run(ctx, wsOptions(msg.Data))
+	case "dialog:save-file":
+		return c.Action("dialog.saveFile").Run(ctx, wsOptions(msg.Data))
+	case "dialog:open-directory":
+		return c.Action("dialog.openDirectory").Run(ctx, wsOptions(msg.Data))
+	case "dialog:confirm":
+		return c.Action("dialog.question").Run(ctx, wsOptions(msg.Data))
+	case "dialog:message":
+		return c.Action("dialog.message").Run(ctx, wsOptions(msg.Data))
+	case "dialog:prompt":
+		return c.Action("dialog.prompt").Run(ctx, wsOptions(msg.Data))
 	case "dock:show":
 		return c.Action("dock.showIcon").Run(ctx, core.NewOptions())
 	case "dock:hide":
@@ -543,6 +572,24 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 		return c.Action("dock.removeBadge").Run(ctx, core.NewOptions())
 	case "dock:visible":
 		return c.QUERY(dock.QueryVisible{})
+	case "notification:show":
+		return c.Action("notification.send").Run(ctx, wsOptions(msg.Data))
+	case "notification:clear":
+		id, _ := msg.Data["id"].(string)
+		return c.Action("notification.clear").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: notification.TaskClear{ID: id}},
+		))
+	case "notification:permission-request":
+		return c.Action("notification.requestPermission").Run(ctx, core.NewOptions())
+	case "notification:permission-check":
+		return c.QUERY(notification.QueryPermission{})
+	case "notification:with-actions":
+		return c.Action("notification.send").Run(ctx, wsOptions(msg.Data))
+	case "theme:set":
+		theme, _ := msg.Data["theme"].(string)
+		return c.Action("environment.setTheme").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: environment.TaskSetTheme{Theme: theme}},
+		))
 	case "contextmenu:add":
 		name, _ := msg.Data["name"].(string)
 		marshalResult := core.JSONMarshal(msg.Data["menu"])
@@ -753,6 +800,75 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 			return core.Result{Value: e, OK: false}
 		}
 		return c.QUERY(webview.QueryTitle{Window: w})
+	case "webview:devtools-open":
+		w, e := wsRequire(msg.Data, "window")
+		if e != nil {
+			return core.Result{Value: e, OK: false}
+		}
+		return c.Action("webview.devtoolsOpen").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: webview.TaskDevToolsOpen{Window: w}},
+		))
+	case "webview:devtools-close":
+		w, e := wsRequire(msg.Data, "window")
+		if e != nil {
+			return core.Result{Value: e, OK: false}
+		}
+		return c.Action("webview.devtoolsClose").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: webview.TaskDevToolsClose{Window: w}},
+		))
+	case "tray:show-message":
+		title, _ := msg.Data["title"].(string)
+		message, _ := msg.Data["message"].(string)
+		return c.Action("systray.showMessage").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: systray.TaskShowMessage{Title: title, Message: message}},
+		))
+	case "layout:beside-editor":
+		name, e := wsRequire(msg.Data, "name")
+		if e != nil {
+			return core.Result{Value: e, OK: false}
+		}
+		editor, _ := msg.Data["editor"].(string)
+		side, _ := msg.Data["side"].(string)
+		ratio, _ := msg.Data["ratio"].(float64)
+		return c.Action("window.layoutBesideEditor").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: window.TaskLayoutBesideEditor{
+				Name: name, Editor: editor, Side: side, Ratio: ratio,
+			}},
+		))
+	case "layout:suggest":
+		screenID, _ := msg.Data["screen_id"].(string)
+		windowCount, _ := msg.Data["window_count"].(float64)
+		return c.Action("window.layoutSuggest").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: window.TaskLayoutSuggest{
+				ScreenID: screenID, WindowCount: int(windowCount),
+			}},
+		))
+	case "screen:find-space":
+		screenID, _ := msg.Data["screen_id"].(string)
+		width, _ := msg.Data["width"].(float64)
+		height, _ := msg.Data["height"].(float64)
+		padding, _ := msg.Data["padding"].(float64)
+		return c.Action("window.findSpace").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: window.TaskScreenFindSpace{
+				ScreenID: screenID, Width: int(width), Height: int(height), Padding: int(padding),
+			}},
+		))
+	case "window:arrange-pair":
+		primary, e := wsRequire(msg.Data, "primary")
+		if e != nil {
+			return core.Result{Value: e, OK: false}
+		}
+		secondary, e := wsRequire(msg.Data, "secondary")
+		if e != nil {
+			return core.Result{Value: e, OK: false}
+		}
+		screenID, _ := msg.Data["screen_id"].(string)
+		ratio, _ := msg.Data["ratio"].(float64)
+		return c.Action("window.arrangePair").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: window.TaskWindowArrangePair{
+				Primary: primary, Secondary: secondary, ScreenID: screenID, Ratio: ratio,
+			}},
+		))
 	default:
 		return core.Result{Value: coreerr.E("display.handleWSMessage", "unknown websocket action: "+msg.Action, nil), OK: false}
 	}
