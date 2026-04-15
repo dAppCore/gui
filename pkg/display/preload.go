@@ -722,7 +722,6 @@ func (s *Service) injectElectronShim() string {
       return invokeBridge('gui.clipboard.writeImage', { base64: toBase64(image) }).then(() => undefined);
     }
   };
-  const invokeBridge = (route, payload) => (globalThis.__coreBridge?.invoke?.(route, payload) ?? Promise.resolve({ route, payload }));
   const dialog = {
     showOpenDialog(options) {
       return invokeBridge('gui.dialog.open', options);
