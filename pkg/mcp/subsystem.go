@@ -44,6 +44,7 @@ func New(c *core.Core) *Subsystem {
 func (s *Subsystem) Name() string { return "display" }
 
 func (s *Subsystem) RegisterTools(server *mcp.Server) {
+	s.registerDisplayTools(server)
 	s.registerWebviewTools(server)
 	s.registerWindowTools(server)
 	s.registerLayoutTools(server)

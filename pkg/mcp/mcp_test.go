@@ -141,6 +141,33 @@ func TestSubsystem_Good_CallTool_BrowserOpenFile(t *testing.T) {
 	assert.Equal(t, "/tmp/readme.txt", browserPlatform.lastPath)
 }
 
+func TestSubsystem_Good_CallTool_SchemeResolve(t *testing.T) {
+	c := core.New(
+		core.WithServiceLock(),
+	)
+	c.Action("display.resolveScheme", func(_ context.Context, opts core.Options) core.Result {
+		return core.Result{
+			Value: map[string]any{
+				"content_type": "text/html",
+				"body":         "<html>core://store</html>",
+				"route":        "store",
+				"url":          opts.String("url"),
+			},
+			OK: true,
+		}
+	})
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+
+	sub := New(c)
+	server := mcp.NewServer(&mcp.Implementation{Name: "test", Version: "0.1.0"}, nil)
+	sub.RegisterTools(server)
+
+	result, err := sub.CallTool(context.Background(), "scheme_resolve", map[string]any{"url": "core://store?q=theme"})
+	require.NoError(t, err)
+	assert.Contains(t, result, "core://store")
+	assert.Contains(t, result, "\"route\":\"store\"")
+}
+
 type aliasDialogPlatform struct {
 	last dialog.MessageDialogOptions
 }
