@@ -3,6 +3,7 @@ package display
 import (
 	"context"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -390,6 +391,119 @@ func TestHandleWSMessage_SetWindowOpacity_Good(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, info)
 	assert.InDelta(t, 0.35, info.Opacity, 0.0001)
+}
+
+func TestDisplay_requireStringField_Good(t *testing.T) {
+	value, err := requireStringField(map[string]any{"window": "main"}, "window")
+
+	require.NoError(t, err)
+	assert.Equal(t, "main", value)
+}
+
+func TestDisplay_requireStringField_Bad(t *testing.T) {
+	value, err := requireStringField(map[string]any{"window": ""}, "window")
+
+	require.Error(t, err)
+	assert.Empty(t, value)
+}
+
+func TestDisplay_requireStringField_Ugly(t *testing.T) {
+	value, err := requireStringField(map[string]any{"window": 42}, "window")
+
+	require.Error(t, err)
+	assert.Empty(t, value)
+}
+
+func TestDisplay_optionsFromMap_Good(t *testing.T) {
+	opts := optionsFromMap(map[string]any{"alpha": "one", "beta": 2})
+
+	require.Equal(t, 2, opts.Len())
+	got := map[string]any{}
+	for _, opt := range opts.Items() {
+		got[opt.Key] = opt.Value
+	}
+	assert.True(t, reflect.DeepEqual(map[string]any{"alpha": "one", "beta": 2}, got))
+}
+
+func TestDisplay_optionsFromMap_Bad(t *testing.T) {
+	opts := optionsFromMap(nil)
+
+	require.NotNil(t, opts)
+	assert.Equal(t, 0, opts.Len())
+}
+
+func TestDisplay_optionsFromMap_Ugly(t *testing.T) {
+	opts := wsOptions(map[string]any{"nested": map[string]any{"value": "x"}})
+
+	require.Equal(t, 1, opts.Len())
+	item := opts.Items()[0]
+	assert.Equal(t, "nested", item.Key)
+	assert.Equal(t, map[string]any{"value": "x"}, item.Value)
+}
+
+func TestDisplay_handleWSMessage_Good(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+	_ = svc.OpenWindow(window.WithName("opacity-win"))
+
+	result := svc.handleWSMessage(WSMessage{
+		Action: "window:set-opacity",
+		Data: map[string]any{
+			"name":    "opacity-win",
+			"opacity": 0.55,
+		},
+	})
+	require.True(t, result.OK)
+
+	info, err := svc.GetWindowInfo("opacity-win")
+	require.NoError(t, err)
+	require.NotNil(t, info)
+	assert.InDelta(t, 0.55, info.Opacity, 0.0001)
+}
+
+func TestDisplay_handleWSMessage_Bad(t *testing.T) {
+	svc, _ := newTestDisplayService(t)
+	result := svc.handleWSMessage(WSMessage{Action: "unknown:action"})
+
+	require.False(t, result.OK)
+	assert.Contains(t, result.Value.(error).Error(), "unknown websocket action")
+}
+
+func TestDisplay_handleWSMessage_Ugly(t *testing.T) {
+	svc, _ := newTestDisplayService(t)
+	result := svc.handleWSMessage(WSMessage{
+		Action: "window:set-opacity",
+		Data: map[string]any{
+			"name": "main",
+		},
+	})
+
+	require.False(t, result.OK)
+	assert.Contains(t, result.Value.(error).Error(), "missing required field \"opacity\"")
+}
+
+func TestDisplay_handleTrayAction_Good(t *testing.T) {
+	platform := window.NewMockPlatform()
+	c := core.New(
+		core.WithService(Register(nil)),
+		core.WithService(window.Register(platform)),
+		core.WithService(systray.Register(systray.NewMockPlatform())),
+		core.WithService(menu.Register(menu.NewMockPlatform())),
+		core.WithServiceLock(),
+	)
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	svc := core.MustServiceFor[*Service](c, "display")
+	_ = svc.OpenWindow(window.WithName("one"))
+	_ = svc.OpenWindow(window.WithName("two"))
+
+	svc.handleTrayAction("open-desktop")
+	require.Len(t, platform.Windows, 2)
+	assert.True(t, platform.Windows[0].IsFocused())
+	assert.True(t, platform.Windows[1].IsFocused())
+
+	svc.handleTrayAction("close-desktop")
+	assert.False(t, platform.Windows[0].IsVisible())
+	assert.False(t, platform.Windows[1].IsVisible())
 }
 
 func TestGetFocusedWindow_Good(t *testing.T) {

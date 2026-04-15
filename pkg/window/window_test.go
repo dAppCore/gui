@@ -2,6 +2,7 @@
 package window
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -159,6 +160,34 @@ func TestManager_Remove_Good(t *testing.T) {
 	m.Remove("temp")
 	_, ok := m.Get("temp")
 	assert.False(t, ok)
+}
+
+func TestManager_NewManagerWithDir_Good(t *testing.T) {
+	dir := t.TempDir()
+	p := newMockPlatform()
+
+	m := NewManagerWithDir(p, dir)
+
+	require.NotNil(t, m)
+	assert.Same(t, p, m.Platform())
+	assert.Equal(t, dir, m.State().dataDir())
+	assert.Equal(t, filepath.Join(dir, "layouts.json"), m.Layout().filePath())
+}
+
+func TestManager_NewManagerWithDir_Bad(t *testing.T) {
+	m := NewManagerWithDir(nil, "")
+
+	require.NotNil(t, m)
+	assert.Nil(t, m.Platform())
+	assert.Empty(t, m.State().dataDir())
+}
+
+func TestManager_NewManagerWithDir_Ugly(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "..", "workspace")
+	m := NewManagerWithDir(nil, dir)
+
+	require.NotNil(t, m)
+	assert.Equal(t, dir, m.State().dataDir())
 }
 
 // --- Tiling Tests ---

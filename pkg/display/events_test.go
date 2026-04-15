@@ -166,6 +166,131 @@ func TestWSEventManager_HandleWebSocket_RejectsLoopbackSpoofedOrigin(t *testing.
 	assert.Equal(t, http.StatusForbidden, recorder.Code)
 }
 
+func TestEvents_trustedWebSocketOrigin_Good(t *testing.T) {
+	tests := []struct {
+		name string
+		req  *http.Request
+		want bool
+	}{
+		{
+			name: "localhost without origin",
+			req: func() *http.Request {
+				r := httptest.NewRequest(http.MethodGet, "http://127.0.0.1/events", nil)
+				r.RemoteAddr = "127.0.0.1:12345"
+				return r
+			}(),
+			want: true,
+		},
+		{
+			name: "local origin",
+			req: func() *http.Request {
+				r := httptest.NewRequest(http.MethodGet, "http://127.0.0.1/events", nil)
+				r.RemoteAddr = "127.0.0.1:12345"
+				r.Header.Set("Origin", "http://localhost:8080")
+				return r
+			}(),
+			want: true,
+		},
+		{
+			name: "file origin",
+			req: func() *http.Request {
+				r := httptest.NewRequest(http.MethodGet, "http://127.0.0.1/events", nil)
+				r.RemoteAddr = "[::1]:12345"
+				r.Header.Set("Origin", "file://local")
+				return r
+			}(),
+			want: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.want, trustedWebSocketOrigin(tc.req))
+		})
+	}
+}
+
+func TestEvents_trustedWebSocketOrigin_Bad(t *testing.T) {
+	tests := []struct {
+		name string
+		req  *http.Request
+	}{
+		{
+			name: "nil request",
+		},
+		{
+			name: "wrong path",
+			req: func() *http.Request {
+				r := httptest.NewRequest(http.MethodGet, "http://127.0.0.1/other", nil)
+				r.RemoteAddr = "127.0.0.1:12345"
+				return r
+			}(),
+		},
+		{
+			name: "remote client",
+			req: func() *http.Request {
+				r := httptest.NewRequest(http.MethodGet, "http://127.0.0.1/events", nil)
+				r.RemoteAddr = "203.0.113.10:2222"
+				return r
+			}(),
+		},
+		{
+			name: "remote origin",
+			req: func() *http.Request {
+				r := httptest.NewRequest(http.MethodGet, "http://127.0.0.1/events", nil)
+				r.RemoteAddr = "127.0.0.1:12345"
+				r.Header.Set("Origin", "https://evil.example")
+				return r
+			}(),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.False(t, trustedWebSocketOrigin(tc.req))
+		})
+	}
+}
+
+func TestEvents_trustedWebSocketOrigin_Ugly(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "http://127.0.0.1/events", nil)
+	req.RemoteAddr = "127.0.0.1:12345"
+	req.Header.Set("Origin", "://bad")
+
+	assert.False(t, trustedWebSocketOrigin(req))
+	assert.False(t, trustedWebSocketOrigin(&http.Request{}))
+}
+
+func TestEvents_trustedWebSocketHost_Good(t *testing.T) {
+	assert.True(t, trustedWebSocketHost("localhost"))
+	assert.True(t, trustedWebSocketHost("127.0.0.1:443"))
+	assert.True(t, trustedWebSocketHost("[::1]:80"))
+}
+
+func TestEvents_trustedWebSocketHost_Bad(t *testing.T) {
+	assert.False(t, trustedWebSocketHost(""))
+	assert.False(t, trustedWebSocketHost("example.com"))
+}
+
+func TestEvents_trustedWebSocketHost_Ugly(t *testing.T) {
+	assert.False(t, trustedWebSocketHost("not a host"))
+}
+
+func TestEvents_isLoopbackHost_Good(t *testing.T) {
+	assert.True(t, isLoopbackHost("localhost"))
+	assert.True(t, isLoopbackHost("127.0.0.1"))
+	assert.True(t, isLoopbackHost("::1"))
+}
+
+func TestEvents_isLoopbackHost_Bad(t *testing.T) {
+	assert.False(t, isLoopbackHost(""))
+	assert.False(t, isLoopbackHost("example.com"))
+}
+
+func TestEvents_isLoopbackHost_Ugly(t *testing.T) {
+	assert.False(t, isLoopbackHost("203.0.113.10"))
+}
+
 func TestWSEventManager_HandleWebSocket_ClosesOnMalformedMessage(t *testing.T) {
 	em := NewWSEventManager()
 	conn, cleanup := dialWSEventManager(t, em)

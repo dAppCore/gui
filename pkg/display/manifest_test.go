@@ -170,3 +170,45 @@ func TestManifest_LoadManifestForOrigin_RejectsOversizedFile(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "exceeds")
 }
+
+func TestManifest_ManifestBaseDir_Good(t *testing.T) {
+	assert.Equal(t, "/tmp/app", manifestBaseDir("/tmp/app/.core/view.yaml"))
+	assert.Equal(t, "/tmp/app/assets", manifestBaseDir("/tmp/app/assets/view.yaml"))
+}
+
+func TestManifest_ManifestBaseDir_Bad(t *testing.T) {
+	assert.Equal(t, ".", manifestBaseDir(".core/view.yaml"))
+}
+
+func TestManifest_ManifestBaseDir_Ugly(t *testing.T) {
+	assert.Equal(t, "/", manifestBaseDir("/.core/view.yaml"))
+}
+
+func TestManifest_SafeManifestRelativePath_Good(t *testing.T) {
+	root := t.TempDir()
+	target := filepath.Join(root, "preload.js")
+	require.NoError(t, os.WriteFile(target, []byte("globalThis.ready = true;"), 0o644))
+	expected, err := filepath.EvalSymlinks(target)
+	require.NoError(t, err)
+
+	got, err := safeManifestRelativePath(root, "preload.js", "preload path")
+
+	require.NoError(t, err)
+	assert.Equal(t, expected, got)
+}
+
+func TestManifest_SafeManifestRelativePath_Bad(t *testing.T) {
+	root := t.TempDir()
+
+	_, err := safeManifestRelativePath(root, "", "preload path")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "empty")
+}
+
+func TestManifest_SafeManifestRelativePath_Ugly(t *testing.T) {
+	root := t.TempDir()
+
+	_, err := safeManifestRelativePath(root, "../escape.js", "preload path")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "escapes")
+}
