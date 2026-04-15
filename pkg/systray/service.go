@@ -26,23 +26,23 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 	}
 	s.Core().RegisterQuery(s.handleQuery)
 	s.Core().Action("systray.setIcon", func(_ context.Context, opts core.Options) core.Result {
-		t, _ := opts.Get("task").Value.(TaskSetTrayIcon)
+		t := taskSetTrayIconFromOptions(opts)
 		return core.Result{Value: nil, OK: true}.New(s.manager.SetIcon(t.Data))
 	})
 	s.Core().Action("systray.setTooltip", func(_ context.Context, opts core.Options) core.Result {
-		t, _ := opts.Get("task").Value.(TaskSetTrayTooltip)
+		t := taskSetTrayTooltipFromOptions(opts)
 		return core.Result{Value: nil, OK: true}.New(s.manager.SetTooltip(t.Tooltip))
 	})
 	s.Core().Action("systray.setLabel", func(_ context.Context, opts core.Options) core.Result {
-		t, _ := opts.Get("task").Value.(TaskSetTrayLabel)
+		t := taskSetTrayLabelFromOptions(opts)
 		return core.Result{Value: nil, OK: true}.New(s.manager.SetLabel(t.Label))
 	})
 	s.Core().Action("systray.setMenu", func(_ context.Context, opts core.Options) core.Result {
-		t, _ := opts.Get("task").Value.(TaskSetTrayMenu)
+		t := taskSetTrayMenuFromOptions(opts)
 		return core.Result{Value: nil, OK: true}.New(s.taskSetTrayMenu(t))
 	})
 	s.Core().Action("systray.showMessage", func(_ context.Context, opts core.Options) core.Result {
-		t, _ := opts.Get("task").Value.(TaskShowMessage)
+		t := taskShowMessageFromOptions(opts)
 		if err := s.manager.ShowMessage(t.Title, t.Message); err == nil {
 			return core.Result{OK: true}
 		} else {
@@ -114,4 +114,107 @@ func (s *Service) taskSetTrayMenu(t TaskSetTrayMenu) error {
 
 func (s *Service) Manager() *Manager {
 	return s.manager
+}
+
+func taskSetTrayIconFromOptions(opts core.Options) TaskSetTrayIcon {
+	if task := opts.Get("task"); task.OK {
+		switch value := task.Value.(type) {
+		case TaskSetTrayIcon:
+			return value
+		case map[string]any:
+			var decoded TaskSetTrayIcon
+			if result := core.JSONUnmarshalString(core.JSONMarshalString(value), &decoded); result.OK {
+				return decoded
+			}
+		}
+	}
+	var decoded TaskSetTrayIcon
+	if result := core.JSONUnmarshalString(core.JSONMarshalString(optsToMap(opts)), &decoded); result.OK {
+		return decoded
+	}
+	return TaskSetTrayIcon{}
+}
+
+func taskSetTrayTooltipFromOptions(opts core.Options) TaskSetTrayTooltip {
+	if task := opts.Get("task"); task.OK {
+		switch value := task.Value.(type) {
+		case TaskSetTrayTooltip:
+			return value
+		case map[string]any:
+			var decoded TaskSetTrayTooltip
+			if result := core.JSONUnmarshalString(core.JSONMarshalString(value), &decoded); result.OK {
+				return decoded
+			}
+		}
+	}
+	var decoded TaskSetTrayTooltip
+	if result := core.JSONUnmarshalString(core.JSONMarshalString(optsToMap(opts)), &decoded); result.OK {
+		return decoded
+	}
+	return TaskSetTrayTooltip{}
+}
+
+func taskSetTrayLabelFromOptions(opts core.Options) TaskSetTrayLabel {
+	if task := opts.Get("task"); task.OK {
+		switch value := task.Value.(type) {
+		case TaskSetTrayLabel:
+			return value
+		case map[string]any:
+			var decoded TaskSetTrayLabel
+			if result := core.JSONUnmarshalString(core.JSONMarshalString(value), &decoded); result.OK {
+				return decoded
+			}
+		}
+	}
+	var decoded TaskSetTrayLabel
+	if result := core.JSONUnmarshalString(core.JSONMarshalString(optsToMap(opts)), &decoded); result.OK {
+		return decoded
+	}
+	return TaskSetTrayLabel{}
+}
+
+func taskSetTrayMenuFromOptions(opts core.Options) TaskSetTrayMenu {
+	if task := opts.Get("task"); task.OK {
+		switch value := task.Value.(type) {
+		case TaskSetTrayMenu:
+			return value
+		case map[string]any:
+			var decoded TaskSetTrayMenu
+			if result := core.JSONUnmarshalString(core.JSONMarshalString(value), &decoded); result.OK {
+				return decoded
+			}
+		}
+	}
+	var decoded TaskSetTrayMenu
+	if result := core.JSONUnmarshalString(core.JSONMarshalString(optsToMap(opts)), &decoded); result.OK {
+		return decoded
+	}
+	return TaskSetTrayMenu{}
+}
+
+func taskShowMessageFromOptions(opts core.Options) TaskShowMessage {
+	if task := opts.Get("task"); task.OK {
+		switch value := task.Value.(type) {
+		case TaskShowMessage:
+			return value
+		case map[string]any:
+			var decoded TaskShowMessage
+			if result := core.JSONUnmarshalString(core.JSONMarshalString(value), &decoded); result.OK {
+				return decoded
+			}
+		}
+	}
+	var decoded TaskShowMessage
+	if result := core.JSONUnmarshalString(core.JSONMarshalString(optsToMap(opts)), &decoded); result.OK {
+		return decoded
+	}
+	return TaskShowMessage{}
+}
+
+func optsToMap(opts core.Options) map[string]any {
+	items := make(map[string]any, opts.Len())
+	for _, item := range opts.Items() {
+		items[item.Key] = item.Value
+	}
+	return items
 }

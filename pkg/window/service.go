@@ -116,7 +116,7 @@ func (s *Service) queryWindowByName(name string) *WindowInfo {
 func (s *Service) registerTaskActions() {
 	c := s.Core()
 	c.Action("window.open", func(_ context.Context, opts core.Options) core.Result {
-		t, _ := opts.Get("task").Value.(TaskOpenWindow)
+		t := taskOpenWindowFromOptions(opts)
 		return s.taskOpenWindow(t)
 	})
 	c.Action("window.close", func(_ context.Context, opts core.Options) core.Result {
@@ -270,6 +270,34 @@ func (s *Service) registerTaskActions() {
 		t, _ := opts.Get("task").Value.(TaskPrint)
 		return core.Result{Value: nil, OK: true}.New(s.taskPrint(t.Name))
 	})
+}
+
+func taskOpenWindowFromOptions(opts core.Options) TaskOpenWindow {
+	if task := opts.Get("task"); task.OK {
+		switch value := task.Value.(type) {
+		case TaskOpenWindow:
+			return value
+		case map[string]any:
+			var decoded TaskOpenWindow
+			if result := core.JSONUnmarshalString(core.JSONMarshalString(value), &decoded); result.OK {
+				return decoded
+			}
+		}
+	}
+
+	var decoded TaskOpenWindow
+	if result := core.JSONUnmarshalString(core.JSONMarshalString(optsToMap(opts)), &decoded); result.OK {
+		return decoded
+	}
+	return TaskOpenWindow{}
+}
+
+func optsToMap(opts core.Options) map[string]any {
+	items := make(map[string]any, opts.Len())
+	for _, item := range opts.Items() {
+		items[item.Key] = item.Value
+	}
+	return items
 }
 
 func (s *Service) primaryScreenArea() (int, int, int, int) {

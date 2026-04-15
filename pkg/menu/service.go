@@ -26,7 +26,7 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 	}
 	s.Core().RegisterQuery(s.handleQuery)
 	s.Core().Action("menu.setAppMenu", func(_ context.Context, opts core.Options) core.Result {
-		t, _ := opts.Get("task").Value.(TaskSetAppMenu)
+		t := taskSetAppMenuFromOptions(opts)
 		s.menuItems = t.Items
 		s.manager.SetApplicationMenu(t.Items)
 		return core.Result{OK: true}
@@ -61,4 +61,32 @@ func (s *Service) handleQuery(_ *core.Core, q core.Query) core.Result {
 
 func (s *Service) Manager() *Manager {
 	return s.manager
+}
+
+func taskSetAppMenuFromOptions(opts core.Options) TaskSetAppMenu {
+	if task := opts.Get("task"); task.OK {
+		switch value := task.Value.(type) {
+		case TaskSetAppMenu:
+			return value
+		case map[string]any:
+			var decoded TaskSetAppMenu
+			if result := core.JSONUnmarshalString(core.JSONMarshalString(value), &decoded); result.OK {
+				return decoded
+			}
+		}
+	}
+
+	var decoded TaskSetAppMenu
+	if result := core.JSONUnmarshalString(core.JSONMarshalString(optsToMap(opts)), &decoded); result.OK {
+		return decoded
+	}
+	return TaskSetAppMenu{}
+}
+
+func optsToMap(opts core.Options) map[string]any {
+	items := make(map[string]any, opts.Len())
+	for _, item := range opts.Items() {
+		items[item.Key] = item.Value
+	}
+	return items
 }

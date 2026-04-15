@@ -478,6 +478,105 @@ func (s *Service) injectElectronShim() string {
   }
   const listeners = new Map();
   const toEventName = (channel) => "__core_electron__:" + channel;
+  const invokeBridge = (route, payload) => (globalThis.__coreBridge?.invoke?.(route, payload) ?? Promise.resolve({ route, payload }));
+  const toInteger = (value) => {
+    const number = Number(value);
+    return Number.isFinite(number) ? Math.trunc(number) : 0;
+  };
+  const toBase64 = (value) => {
+    if (typeof value === "string") {
+      if (value.startsWith("data:")) {
+        const commaIndex = value.indexOf(",");
+        return commaIndex >= 0 ? value.slice(commaIndex + 1) : value;
+      }
+      return value;
+    }
+    if (value instanceof Uint8Array) {
+      let binary = "";
+      for (let i = 0; i < value.length; i++) {
+        binary += String.fromCharCode(value[i]);
+      }
+      return btoa(binary);
+    }
+    if (value instanceof ArrayBuffer) {
+      return toBase64(new Uint8Array(value));
+    }
+    if (ArrayBuffer.isView && ArrayBuffer.isView(value)) {
+      return toBase64(new Uint8Array(value.buffer, value.byteOffset, value.byteLength));
+    }
+    return "";
+  };
+  const roleMap = {
+    appmenu: 0,
+    filemenu: 1,
+    editmenu: 2,
+    viewmenu: 3,
+    windowmenu: 4,
+    helpmenu: 5
+  };
+  const menuRoleToCore = (role) => {
+    const key = String(role ?? "").toLowerCase();
+    return Object.prototype.hasOwnProperty.call(roleMap, key) ? roleMap[key] : undefined;
+  };
+  const menuChildren = (item) => {
+    const rawChildren = Array.isArray(item?.children) ? item.children : Array.isArray(item?.submenu) ? item.submenu : [];
+    return rawChildren.map((child) => menuItemToCore(child)).filter(Boolean);
+  };
+  const menuItemToCore = (item) => {
+    if (!item || typeof item !== "object") {
+      return null;
+    }
+    const mapped = {
+      label: String(item.label ?? ""),
+      accelerator: String(item.accelerator ?? ""),
+      type: String(item.type ?? "normal"),
+      checked: !!item.checked,
+      disabled: !!item.disabled,
+      tooltip: String(item.tooltip ?? "")
+    };
+    const role = menuRoleToCore(item.role);
+    if (role !== undefined) {
+      mapped.role = role;
+    }
+    const children = menuChildren(item);
+    if (children.length > 0) {
+      mapped.children = children;
+    }
+    return mapped;
+  };
+  const trayItemToCore = (item) => {
+    if (!item || typeof item !== "object") {
+      return null;
+    }
+    const mapped = {
+      label: String(item.label ?? ""),
+      type: String(item.type ?? "normal"),
+      checked: !!item.checked,
+      disabled: !!item.disabled,
+      tooltip: String(item.tooltip ?? "")
+    };
+    const actionId = String(item.actionId ?? item.action_id ?? item.id ?? "");
+    if (actionId) {
+      mapped.action_id = actionId;
+    }
+    const submenu = Array.isArray(item.submenu) ? item.submenu.map((child) => trayItemToCore(child)).filter(Boolean) : [];
+    if (submenu.length > 0) {
+      mapped.submenu = submenu;
+    }
+    return mapped;
+  };
+  const normalizeMenuTemplate = (template) => Array.isArray(template) ? template.map((item) => menuItemToCore(item)).filter(Boolean) : [];
+  const normalizeTrayTemplate = (template) => Array.isArray(template) ? template.map((item) => trayItemToCore(item)).filter(Boolean) : [];
+  const createMenu = (template) => {
+    const normalized = normalizeMenuTemplate(template);
+    return {
+      template: normalized,
+      items: normalized,
+      toJSON() {
+        return normalized;
+      }
+    };
+  };
   const ipcRenderer = {
     send(channel, ...args) {
       globalThis.dispatchEvent(new CustomEvent(toEventName(channel), { detail: args }));
@@ -553,11 +652,108 @@ func (s *Service) injectElectronShim() string {
       return Promise.resolve('granted');
     }
   }
+  class Menu {
+    constructor(template = []) {
+      this.template = normalizeMenuTemplate(template);
+      this.items = this.template;
+    }
+    append(item) {
+      const mapped = menuItemToCore(item);
+      if (mapped) {
+        this.template.push(mapped);
+        this.items = this.template;
+      }
+      return this;
+    }
+    popup() {
+      return Promise.resolve(this);
+    }
+    toJSON() {
+      return this.template;
+    }
+    static buildFromTemplate(template = []) {
+      return createMenu(template);
+    }
+    static setApplicationMenu(menu) {
+      return invokeBridge('menu.setAppMenu', { task: { items: normalizeMenuTemplate(menu?.template ?? menu?.items ?? menu) } });
+    }
+  }
+  class Tray {
+    constructor(image) {
+      this.image = image ?? null;
+      if (image !== undefined) {
+        this.setImage(image);
+      }
+    }
+    setImage(image) {
+      this.image = image;
+      const data = toBase64(image);
+      if (data) {
+        return invokeBridge('systray.setIcon', { task: { data } });
+      }
+      return Promise.resolve(undefined);
+    }
+    setToolTip(tooltip) {
+      this.tooltip = String(tooltip ?? "");
+      return invokeBridge('systray.setTooltip', { task: { tooltip: this.tooltip } });
+    }
+    setTitle(label) {
+      this.title = String(label ?? "");
+      return invokeBridge('systray.setLabel', { task: { label: this.title } });
+    }
+    setContextMenu(menu) {
+      const normalized = normalizeTrayTemplate(menu?.template ?? menu?.items ?? menu);
+      this.menu = normalized;
+      return invokeBridge('systray.setMenu', { task: { items: normalized } });
+    }
+    destroy() {}
+  }
   class BrowserWindow {
     constructor(options = {}) {
       this.options = options;
       this.id = options.id || ('core-window-' + Math.random().toString(36).slice(2));
-      invokeBridge('window.open', { name: this.id, options });
+      const backgroundColor = String(options.backgroundColor ?? options.backgroundColour ?? "");
+      const parsedColour = (() => {
+        if (!backgroundColor) {
+          return undefined;
+        }
+        const hex = backgroundColor.replace(/^#/, "");
+        if (hex.length === 6 || hex.length === 8) {
+          const offset = hex.length === 8 ? 2 : 0;
+          const alpha = hex.length === 8 ? parseInt(hex.slice(0, 2), 16) : 255;
+          const red = parseInt(hex.slice(offset, offset + 2), 16);
+          const green = parseInt(hex.slice(offset + 2, offset + 4), 16);
+          const blue = parseInt(hex.slice(offset + 4, offset + 6), 16);
+          if ([red, green, blue, alpha].every((value) => Number.isFinite(value))) {
+            return [red, green, blue, alpha];
+          }
+        }
+        return undefined;
+      })();
+      const windowSpec = {
+        Name: String(options.name ?? this.id ?? ""),
+        Title: String(options.title ?? options.name ?? ""),
+        URL: String(options.url ?? ""),
+        HTML: String(options.html ?? ""),
+        JS: String(options.js ?? ""),
+        Width: toInteger(options.width),
+        Height: toInteger(options.height),
+        X: toInteger(options.x),
+        Y: toInteger(options.y),
+        MinWidth: toInteger(options.minWidth),
+        MinHeight: toInteger(options.minHeight),
+        MaxWidth: toInteger(options.maxWidth),
+        MaxHeight: toInteger(options.maxHeight),
+        Frameless: options.frame === false || !!options.frameless,
+        Hidden: options.show === false || !!options.hidden,
+        AlwaysOnTop: !!options.alwaysOnTop,
+        DisableResize: options.resizable === false || !!options.disableResize,
+        EnableFileDrop: !!options.enableFileDrop
+      };
+      if (parsedColour) {
+        windowSpec.BackgroundColour = parsedColour;
+      }
+      invokeBridge('window.open', { task: { window: windowSpec } });
     }
     loadURL(url) { return invokeBridge('webview.navigate', { name: this.id, url }); }
     show() { return invokeBridge('window.setVisibility', { name: this.id, visible: true }); }
@@ -565,7 +761,7 @@ func (s *Service) injectElectronShim() string {
     close() { return invokeBridge('window.close', { name: this.id }); }
   }
   globalThis.Notification = globalThis.Notification || CoreNotification;
-  globalThis.electron = { ipcRenderer, shell, clipboard, dialog, BrowserWindow, Notification: CoreNotification };
+  globalThis.electron = { ipcRenderer, shell, clipboard, dialog, Menu, Tray, BrowserWindow, Notification: CoreNotification };
   globalThis.require = (name) => name === "electron" ? globalThis.electron : undefined;
 })();`
 }
