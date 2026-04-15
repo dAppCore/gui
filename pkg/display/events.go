@@ -7,6 +7,7 @@ import (
 	"time"
 
 	core "dappco.re/go/core"
+	"forge.lthn.ai/core/gui/pkg/events"
 	"forge.lthn.ai/core/gui/pkg/window"
 	"github.com/gorilla/websocket"
 )
@@ -324,6 +325,28 @@ func (em *WSEventManager) ConnectedClients() int {
 	em.mu.RLock()
 	defer em.mu.RUnlock()
 	return len(em.clients)
+}
+
+// Info returns a snapshot of the live WebSocket event server.
+//
+//	info := display.GetEventManager().Info()
+func (em *WSEventManager) Info() events.ServerInfo {
+	em.mu.RLock()
+	defer em.mu.RUnlock()
+
+	subscriptionCount := 0
+	for _, state := range em.clients {
+		state.mu.RLock()
+		subscriptionCount += len(state.subscriptions)
+		state.mu.RUnlock()
+	}
+
+	return events.ServerInfo{
+		ConnectedClients:  len(em.clients),
+		SubscriptionCount: subscriptionCount,
+		BufferLength:      len(em.eventBuffer),
+		BufferCapacity:    cap(em.eventBuffer),
+	}
 }
 
 // Close shuts down the event manager.

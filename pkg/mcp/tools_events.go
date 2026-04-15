@@ -59,6 +59,26 @@ func (s *Subsystem) eventOn(_ context.Context, _ *mcp.CallToolRequest, input Eve
 	return nil, EventOnOutput{Success: true}, nil
 }
 
+// --- event_subscribe ---
+
+type EventSubscribeInput struct {
+	Name string `json:"name"`
+}
+type EventSubscribeOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) eventSubscribe(ctx context.Context, req *mcp.CallToolRequest, input EventSubscribeInput) (*mcp.CallToolResult, EventSubscribeOutput, error) {
+	result, output, err := s.eventOn(ctx, req, EventOnInput{Name: input.Name})
+	if err != nil {
+		return nil, EventSubscribeOutput{}, err
+	}
+	if result != nil {
+		return result, EventSubscribeOutput{}, nil
+	}
+	return nil, EventSubscribeOutput{Success: output.Success}, nil
+}
+
 // --- event_off ---
 
 type EventOffInput struct {
@@ -79,6 +99,26 @@ func (s *Subsystem) eventOff(_ context.Context, _ *mcp.CallToolRequest, input Ev
 		return nil, EventOffOutput{}, nil
 	}
 	return nil, EventOffOutput{Success: true}, nil
+}
+
+// --- event_unsubscribe ---
+
+type EventUnsubscribeInput struct {
+	Name string `json:"name"`
+}
+type EventUnsubscribeOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) eventUnsubscribe(ctx context.Context, req *mcp.CallToolRequest, input EventUnsubscribeInput) (*mcp.CallToolResult, EventUnsubscribeOutput, error) {
+	result, output, err := s.eventOff(ctx, req, EventOffInput{Name: input.Name})
+	if err != nil {
+		return nil, EventUnsubscribeOutput{}, err
+	}
+	if result != nil {
+		return result, EventUnsubscribeOutput{}, nil
+	}
+	return nil, EventUnsubscribeOutput{Success: output.Success}, nil
 }
 
 // --- event_list ---
@@ -103,11 +143,33 @@ func (s *Subsystem) eventList(_ context.Context, _ *mcp.CallToolRequest, _ Event
 	return nil, EventListOutput{Listeners: listenerInfos}, nil
 }
 
+// --- event_info ---
+
+type EventInfoInput struct{}
+type EventInfoOutput struct {
+	Info events.ServerInfo `json:"info"`
+}
+
+func (s *Subsystem) eventInfo(_ context.Context, _ *mcp.CallToolRequest, _ EventInfoInput) (*mcp.CallToolResult, EventInfoOutput, error) {
+	r := s.core.QUERY(events.QueryServerInfo{})
+	if !r.OK {
+		return nil, EventInfoOutput{}, nil
+	}
+	info, ok := r.Value.(events.ServerInfo)
+	if !ok {
+		return nil, EventInfoOutput{}, coreerr.E("mcp.eventInfo", "unexpected result type", nil)
+	}
+	return nil, EventInfoOutput{Info: info}, nil
+}
+
 // --- Registration ---
 
 func (s *Subsystem) registerEventsTools(server *mcp.Server) {
 	addTool(s, server, &mcp.Tool{Name: "event_emit", Description: "Fire a named custom event with optional data"}, s.eventEmit)
 	addTool(s, server, &mcp.Tool{Name: "event_on", Description: "Register a listener for a named custom event"}, s.eventOn)
+	addTool(s, server, &mcp.Tool{Name: "event_subscribe", Description: "Register a listener for a named custom event"}, s.eventSubscribe)
 	addTool(s, server, &mcp.Tool{Name: "event_off", Description: "Remove all listeners for a named custom event"}, s.eventOff)
+	addTool(s, server, &mcp.Tool{Name: "event_unsubscribe", Description: "Remove all listeners for a named custom event"}, s.eventUnsubscribe)
 	addTool(s, server, &mcp.Tool{Name: "event_list", Description: "Query all registered event listeners"}, s.eventList)
+	addTool(s, server, &mcp.Tool{Name: "event_info", Description: "Get WebSocket event server information"}, s.eventInfo)
 }

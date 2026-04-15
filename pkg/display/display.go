@@ -776,6 +776,11 @@ func (s *Service) handleConfigQuery(_ *core.Core, q core.Query) core.Result {
 		return core.Result{Value: s.configData["systray"], OK: true}
 	case menu.QueryConfig:
 		return core.Result{Value: s.configData["menu"], OK: true}
+	case events.QueryServerInfo:
+		if s.events == nil {
+			return core.Result{Value: events.ServerInfo{}, OK: true}
+		}
+		return core.Result{Value: s.events.Info(), OK: true}
 	default:
 		return core.Result{}
 	}

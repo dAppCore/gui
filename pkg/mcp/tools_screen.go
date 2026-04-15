@@ -4,6 +4,7 @@ package mcp
 import (
 	"context"
 
+	core "dappco.re/go/core"
 	coreerr "dappco.re/go/core/log"
 	"forge.lthn.ai/core/gui/pkg/screen"
 	"forge.lthn.ai/core/gui/pkg/window"
@@ -125,6 +126,37 @@ func (s *Subsystem) screenWorkAreas(_ context.Context, _ *mcp.CallToolRequest, _
 	return nil, ScreenWorkAreasOutput{WorkAreas: areas}, nil
 }
 
+// --- screen_work_area ---
+
+type ScreenWorkAreaInput struct {
+	ID string `json:"id,omitempty"`
+}
+type ScreenWorkAreaOutput struct {
+	WorkArea screen.Rect `json:"workArea"`
+}
+
+func (s *Subsystem) screenWorkArea(_ context.Context, _ *mcp.CallToolRequest, input ScreenWorkAreaInput) (*mcp.CallToolResult, ScreenWorkAreaOutput, error) {
+	var query core.Query = screen.QueryPrimary{}
+	if input.ID != "" {
+		query = screen.QueryByID{ID: input.ID}
+	}
+
+	r := s.core.QUERY(query)
+	if !r.OK {
+		return nil, ScreenWorkAreaOutput{}, nil
+	}
+	scr, _ := r.Value.(*screen.Screen)
+	if scr == nil {
+		return nil, ScreenWorkAreaOutput{}, nil
+	}
+
+	workArea := scr.WorkArea
+	if workArea.IsEmpty() {
+		workArea = scr.Bounds
+	}
+	return nil, ScreenWorkAreaOutput{WorkArea: workArea}, nil
+}
+
 // --- screen_for_window ---
 
 type ScreenForWindowInput struct {
@@ -160,6 +192,7 @@ func (s *Subsystem) registerScreenTools(server *mcp.Server) {
 	addTool(s, server, &mcp.Tool{Name: "screen_get", Description: "Get information about a specific screen"}, s.screenGet)
 	addTool(s, server, &mcp.Tool{Name: "screen_primary", Description: "Get the primary screen"}, s.screenPrimary)
 	addTool(s, server, &mcp.Tool{Name: "screen_at_point", Description: "Get the screen at a specific point"}, s.screenAtPoint)
+	addTool(s, server, &mcp.Tool{Name: "screen_work_area", Description: "Get the usable work area for a screen"}, s.screenWorkArea)
 	addTool(s, server, &mcp.Tool{Name: "screen_work_areas", Description: "Get work areas for all screens"}, s.screenWorkAreas)
 	addTool(s, server, &mcp.Tool{Name: "screen_for_window", Description: "Get the screen containing a window"}, s.screenForWindow)
 }

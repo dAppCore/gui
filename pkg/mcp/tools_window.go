@@ -209,17 +209,10 @@ type WindowBoundsOutput struct {
 }
 
 func (s *Subsystem) windowBounds(_ context.Context, _ *mcp.CallToolRequest, input WindowBoundsInput) (*mcp.CallToolResult, WindowBoundsOutput, error) {
-	r := s.core.Action("window.setPosition").Run(context.Background(), core.NewOptions(
-		core.Option{Key: "task", Value: window.TaskSetPosition{Name: input.Name, X: input.X, Y: input.Y}},
-	))
-	if !r.OK {
-		if e, ok := r.Value.(error); ok {
-			return nil, WindowBoundsOutput{}, e
-		}
-		return nil, WindowBoundsOutput{}, nil
-	}
-	r = s.core.Action("window.setSize").Run(context.Background(), core.NewOptions(
-		core.Option{Key: "task", Value: window.TaskSetSize{Name: input.Name, Width: input.Width, Height: input.Height}},
+	r := s.core.Action("window.setBounds").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskSetBounds{
+			Name: input.Name, X: input.X, Y: input.Y, Width: input.Width, Height: input.Height,
+		}},
 	))
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {
@@ -318,6 +311,26 @@ func (s *Subsystem) windowFocus(_ context.Context, _ *mcp.CallToolRequest, input
 	return nil, WindowFocusOutput{Success: true}, nil
 }
 
+// --- focus_set ---
+
+type FocusSetInput struct {
+	Name string `json:"name"`
+}
+type FocusSetOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) focusSet(ctx context.Context, req *mcp.CallToolRequest, input FocusSetInput) (*mcp.CallToolResult, FocusSetOutput, error) {
+	result, output, err := s.windowFocus(ctx, req, WindowFocusInput{Name: input.Name})
+	if err != nil {
+		return nil, FocusSetOutput{}, err
+	}
+	if result != nil {
+		return result, FocusSetOutput{}, nil
+	}
+	return nil, FocusSetOutput{Success: output.Success}, nil
+}
+
 // --- window_title ---
 
 type WindowTitleInput struct {
@@ -339,6 +352,27 @@ func (s *Subsystem) windowTitle(_ context.Context, _ *mcp.CallToolRequest, input
 		return nil, WindowTitleOutput{}, nil
 	}
 	return nil, WindowTitleOutput{Success: true}, nil
+}
+
+// --- window_title_set ---
+
+type WindowTitleSetInput struct {
+	Name  string `json:"name"`
+	Title string `json:"title"`
+}
+type WindowTitleSetOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) windowTitleSet(ctx context.Context, req *mcp.CallToolRequest, input WindowTitleSetInput) (*mcp.CallToolResult, WindowTitleSetOutput, error) {
+	result, output, err := s.windowTitle(ctx, req, WindowTitleInput{Name: input.Name, Title: input.Title})
+	if err != nil {
+		return nil, WindowTitleSetOutput{}, err
+	}
+	if result != nil {
+		return result, WindowTitleSetOutput{}, nil
+	}
+	return nil, WindowTitleSetOutput{Success: output.Success}, nil
 }
 
 // --- window_title_get ---
@@ -474,7 +508,9 @@ func (s *Subsystem) registerWindowTools(server *mcp.Server) {
 	addTool(s, server, &mcp.Tool{Name: "window_minimize", Description: "Minimise a window"}, s.windowMinimize)
 	addTool(s, server, &mcp.Tool{Name: "window_restore", Description: "Restore a maximised or minimised window"}, s.windowRestore)
 	addTool(s, server, &mcp.Tool{Name: "window_focus", Description: "Bring a window to the front"}, s.windowFocus)
+	addTool(s, server, &mcp.Tool{Name: "focus_set", Description: "Set focus to a specific window"}, s.focusSet)
 	addTool(s, server, &mcp.Tool{Name: "window_title", Description: "Set the title of a window"}, s.windowTitle)
+	addTool(s, server, &mcp.Tool{Name: "window_title_set", Description: "Set the title of a window"}, s.windowTitleSet)
 	addTool(s, server, &mcp.Tool{Name: "window_title_get", Description: "Get the title of a window"}, s.windowTitleGet)
 	addTool(s, server, &mcp.Tool{Name: "window_visibility", Description: "Show or hide a window"}, s.windowVisibility)
 	addTool(s, server, &mcp.Tool{Name: "window_always_on_top", Description: "Pin a window above others"}, s.windowAlwaysOnTop)
