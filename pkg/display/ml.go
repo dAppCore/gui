@@ -41,6 +41,9 @@ func (s *Service) modelState() ModelRuntimeState {
 }
 
 func (s *Service) chatModels() []chat.ModelEntry {
+	if s == nil || s.ServiceRuntime == nil {
+		return nil
+	}
 	result := s.Core().Action("gui.chat.models").Run(context.Background(), core.NewOptions())
 	models, _ := result.Value.([]chat.ModelEntry)
 	return models

@@ -144,15 +144,17 @@ func (s *Service) resolveStoreRoute(subpath string, query url.Values) core.Resul
 		if len(parts) >= 2 {
 			bucket := strings.TrimSpace(parts[0])
 			key := strings.TrimSpace(strings.Join(parts[1:], "/"))
-			if entry, ok := s.storage.Get("", bucket, key); ok {
-				return core.Result{
-					Value: map[string]any{
-						"content_type": "text/html",
-						"body":         s.renderStoreEntryPage(entry),
-						"route":        "store",
-						"entry":        entry,
-					},
-					OK: true,
+			if s != nil && s.storage != nil {
+				if entry, ok := s.storage.Get("", bucket, key); ok {
+					return core.Result{
+						Value: map[string]any{
+							"content_type": "text/html",
+							"body":         s.renderStoreEntryPage(entry),
+							"route":        "store",
+							"entry":        entry,
+						},
+						OK: true,
+					}
 				}
 			}
 		}
@@ -243,6 +245,9 @@ func (s *Service) resolveUnavailableCoreRoute(route, subpath string, query url.V
 }
 
 func (s *Service) resolveServiceBackedCoreRoute(route, subpath string, query url.Values, serviceNames ...string) core.Result {
+	if s == nil || s.ServiceRuntime == nil {
+		return s.resolveUnavailableCoreRoute(route, subpath, query)
+	}
 	for _, serviceName := range serviceNames {
 		serviceName = strings.TrimSpace(serviceName)
 		if serviceName == "" {
@@ -277,6 +282,9 @@ func (s *Service) resolveServiceBackedCoreRoute(route, subpath string, query url
 
 func (s *Service) actionsForService(serviceName string) []string {
 	if strings.TrimSpace(serviceName) == "" {
+		return nil
+	}
+	if s == nil || s.ServiceRuntime == nil {
 		return nil
 	}
 	prefixes := []string{
@@ -593,28 +601,33 @@ func (s *Service) searchAllStorage(query string) []StorageEntry {
 	if strings.TrimSpace(query) == "" {
 		return nil
 	}
-	results := s.storage.Search(query)
-	if conversations := s.Core().QUERY(chat.QueryConversationSearch{Query: query}); conversations.OK {
-		switch list := conversations.Value.(type) {
-		case []any:
-			for _, item := range list {
-				results = append(results, StorageEntry{
-					Origin:    "core://chat",
-					Bucket:    "conversation",
-					Key:       "summary",
-					Value:     core.JSONMarshalString(item),
-					UpdatedAt: time.Now(),
-				})
-			}
-		default:
-			if payload := core.JSONMarshalString(list); payload != "null" && payload != "" && payload != "[]" {
-				results = append(results, StorageEntry{
-					Origin:    "core://chat",
-					Bucket:    "conversation",
-					Key:       "summary",
-					Value:     payload,
-					UpdatedAt: time.Now(),
-				})
+	results := make([]StorageEntry, 0)
+	if s != nil && s.storage != nil {
+		results = append(results, s.storage.Search(query)...)
+	}
+	if s != nil && s.ServiceRuntime != nil {
+		if conversations := s.Core().QUERY(chat.QueryConversationSearch{Query: query}); conversations.OK {
+			switch list := conversations.Value.(type) {
+			case []any:
+				for _, item := range list {
+					results = append(results, StorageEntry{
+						Origin:    "core://chat",
+						Bucket:    "conversation",
+						Key:       "summary",
+						Value:     core.JSONMarshalString(item),
+						UpdatedAt: time.Now(),
+					})
+				}
+			default:
+				if payload := core.JSONMarshalString(list); payload != "null" && payload != "" && payload != "[]" {
+					results = append(results, StorageEntry{
+						Origin:    "core://chat",
+						Bucket:    "conversation",
+						Key:       "summary",
+						Value:     payload,
+						UpdatedAt: time.Now(),
+					})
+				}
 			}
 		}
 	}

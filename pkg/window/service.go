@@ -119,6 +119,14 @@ func (s *Service) registerTaskActions() {
 		t := taskOpenWindowFromOptions(opts)
 		return s.taskOpenWindow(t)
 	})
+	c.Action("gui.window.create", func(_ context.Context, opts core.Options) core.Result {
+		t := taskOpenWindowFromOptions(opts)
+		return s.taskOpenWindow(t)
+	})
+	c.Action("gui.window.open", func(_ context.Context, opts core.Options) core.Result {
+		t := taskOpenWindowFromOptions(opts)
+		return s.taskOpenWindow(t)
+	})
 	c.Action("window.close", func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskCloseWindow)
 		return core.Result{Value: nil, OK: true}.New(s.taskCloseWindow(t.Name))

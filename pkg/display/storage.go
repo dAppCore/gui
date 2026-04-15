@@ -82,13 +82,13 @@ func storageOriginForPageURL(pageURL string) string {
 		return ""
 	}
 	parsed, err := url.Parse(trimmed)
-	if err != nil {
-		return trimmed
+	if err != nil || strings.TrimSpace(parsed.Scheme) == "" {
+		return ""
 	}
 	switch strings.ToLower(strings.TrimSpace(parsed.Scheme)) {
 	case "http", "https":
 		if parsed.Host == "" {
-			return trimmed
+			return ""
 		}
 		return parsed.Scheme + "://" + parsed.Host
 	case "core":
@@ -98,10 +98,13 @@ func storageOriginForPageURL(pageURL string) string {
 		return "core://" + parsed.Host
 	case "file":
 		if parsed.Path == "" {
-			return trimmed
+			return ""
 		}
 		return "file://" + parsed.Path
 	default:
+		if parsed.Host == "" {
+			return ""
+		}
 		origin := parsed.Scheme + "://" + parsed.Host
 		if parsed.Path != "" {
 			origin += parsed.Path
