@@ -420,8 +420,8 @@ func (s *Service) renderKeyValuePage(title, key string, value any, snapshot any)
 }
 
 func (s *Service) renderStoreEntryPage(entry StorageEntry) string {
-	return "<!doctype html><html><head><meta charset=\"utf-8\"><title>core://store</title><style>body{font:14px/1.5 ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;background:#0f172a;color:#e2e8f0;margin:0}header{padding:20px;border-bottom:1px solid #1e293b;background:linear-gradient(180deg,#111827,#0f172a)}main{padding:20px;display:grid;gap:16px}section{background:#020617;border:1px solid #1e293b;border-radius:16px;padding:16px}code,pre{background:#111827;border-radius:8px;padding:2px 6px}pre{white-space:pre-wrap;word-break:break-word;padding:12px}</style></head><body><header><strong>core://store</strong></header><main><section><div><strong>Origin:</strong> " +
-		html.EscapeString(entry.Origin) +
+	return "<!doctype html><html><head><meta charset=\"utf-8\"><title>core://store</title><style>body{font:14px/1.5 ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;background:#0f172a;color:#e2e8f0;margin:0}header{padding:20px;border-bottom:1px solid #1e293b;background:linear-gradient(180deg,#111827,#0f172a)}main{padding:20px;display:grid;gap:16px}section{background:#020617;border:1px solid #1e293b;border-radius:16px;padding:16px}code,pre{background:#111827;border-radius:8px;padding:2px 6px}pre{white-space:pre-wrap;word-break:break-word;padding:12px}.origin-link{color:#7dd3fc;text-decoration:none}.origin-link:hover{text-decoration:underline}</style></head><body><header><strong>core://store</strong></header><main><section><div><strong>Origin:</strong> " +
+		anchorHTML(safeOriginHref(entry.Origin), entry.Origin) +
 		"</div><div><strong>Bucket:</strong> " +
 		html.EscapeString(entry.Bucket) +
 		"</div><div><strong>Key:</strong> " +
@@ -486,7 +486,7 @@ func (s *Service) renderStoreSearchPage(query string, results []StorageEntry) st
 	} else {
 		for _, group := range groups {
 			items.WriteString("<section class=\"origin-group\"><div class=\"origin\">")
-			items.WriteString(html.EscapeString(group.Origin))
+			items.WriteString(anchorHTML(safeOriginHref(group.Origin), group.Origin))
 			items.WriteString("</div><ul>")
 			for _, item := range group.Entries {
 				items.WriteString("<li class=\"result\"><div class=\"bucket\">")
@@ -497,6 +497,8 @@ func (s *Service) renderStoreSearchPage(query string, results []StorageEntry) st
 				items.WriteString(html.EscapeString(item.Value))
 				items.WriteString("</div><div class=\"meta\">Updated ")
 				items.WriteString(html.EscapeString(item.UpdatedAt.Format(time.RFC3339)))
+				items.WriteString(" · ")
+				items.WriteString(anchorHTML(safeOriginHref(item.Origin), "open source app"))
 				items.WriteString("</div></li>")
 			}
 			items.WriteString("</ul></section>")
@@ -572,6 +574,31 @@ func coreRouteURL(segment string, parts ...string) string {
 		route += "/" + url.PathEscape(part)
 	}
 	return route
+}
+
+func safeOriginHref(origin string) string {
+	trimmed := strings.TrimSpace(origin)
+	if trimmed == "" {
+		return "#"
+	}
+	parsed, err := url.Parse(trimmed)
+	if err != nil {
+		return "#"
+	}
+	switch strings.ToLower(parsed.Scheme) {
+	case "http", "https", "file", "core":
+		return parsed.String()
+	default:
+		return "#"
+	}
+}
+
+func anchorHTML(href, text string) string {
+	escapedHref := html.EscapeString(strings.TrimSpace(href))
+	if escapedHref == "" {
+		escapedHref = "#"
+	}
+	return "<a href=\"" + escapedHref + "\">" + html.EscapeString(text) + "</a>"
 }
 
 func (s *Service) AssetMiddleware() application.Middleware {
