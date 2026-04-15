@@ -35,6 +35,8 @@ func TestDisplay_Good_WindowOpenIncludesPreload(t *testing.T) {
 	assert.NotEmpty(t, platform.Windows[0].ExecJSCalls())
 	assert.Contains(t, platform.Windows[0].ExecJSCalls()[0], "globalThis.electron")
 	assert.Contains(t, platform.Windows[0].ExecJSCalls()[0], "globalThis.core.ml")
+	assert.Contains(t, platform.Windows[0].ExecJSCalls()[0], "globalThis.core.storage.cookies")
+	assert.Contains(t, platform.Windows[0].ExecJSCalls()[0], "Document.prototype, 'cookie'")
 }
 
 func TestDisplay_Good_CoreSchemeRoutesThroughBackend(t *testing.T) {

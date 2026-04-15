@@ -10,6 +10,8 @@ type PreloadTarget interface {
 	ExecJS(string)
 }
 
+// InjectPreload injects the page preload script into a live webview.
+// Use: _ = display.InjectPreload(webview, "https://example.com")
 func (s *Service) InjectPreload(webview PreloadTarget, origin string) error {
 	script, err := s.BuildPreloadScript(origin)
 	if err != nil {
@@ -22,21 +24,24 @@ func (s *Service) InjectPreload(webview PreloadTarget, origin string) error {
 	return nil
 }
 
-func (s *Service) BuildPreloadScript(rawURL string) (string, error) {
+// BuildPreloadScript returns the JavaScript bootstrap that CoreGUI injects
+// before page code runs.
+// Use: script, _ := display.BuildPreloadScript("https://example.com")
+func (s *Service) BuildPreloadScript(pageURL string) (string, error) {
 	parts := []string{
-		s.injectStoragePolyfills(rawURL),
+		s.injectStoragePolyfills(pageURL),
 		s.injectElectronShim(),
 		s.injectCoreMLShim(),
-		s.injectAppPreloads(rawURL),
+		s.injectAppPreloads(pageURL),
 	}
 	return strings.Join(parts, "\n"), nil
 }
 
-func (s *Service) injectStoragePolyfills(origin string) string {
+func (s *Service) injectStoragePolyfills(pageOrigin string) string {
 	return `(function() {
-  const __coreOrigin = ` + core.JSONMarshalString(origin) + `;
+  const __coreOrigin = ` + core.JSONMarshalString(pageOrigin) + `;
   const __coreScopes = globalThis.__coreStorageScopes || (globalThis.__coreStorageScopes = {});
-  const __scope = __coreScopes[__coreOrigin] || (__coreScopes[__coreOrigin] = { local: {}, session: {} });
+  const __scope = __coreScopes[__coreOrigin] || (__coreScopes[__coreOrigin] = { local: {}, session: {}, cookies: {} });
   const createStorage = (bucket) => ({
     getItem(key) { return Object.prototype.hasOwnProperty.call(bucket, key) ? String(bucket[key]) : null; },
     setItem(key, value) { bucket[key] = String(value); },
@@ -49,6 +54,21 @@ func (s *Service) injectStoragePolyfills(origin string) string {
   globalThis.core.storage = globalThis.core.storage || {};
   globalThis.core.storage.local = createStorage(__scope.local);
   globalThis.core.storage.session = createStorage(__scope.session);
+  globalThis.core.storage.cookies = createStorage(__scope.cookies);
+  const cookieEntries = () => Object.entries(__scope.cookies).map(([name, value]) => name + "=" + value).join("; ");
+  const setCookie = (value) => {
+    const rawCookie = String(value ?? "");
+    const [pair] = rawCookie.split(";", 1);
+    const separatorIndex = pair.indexOf("=");
+    if (separatorIndex < 0) {
+      return;
+    }
+    const name = pair.slice(0, separatorIndex).trim();
+    if (!name) {
+      return;
+    }
+    __scope.cookies[name] = pair.slice(separatorIndex + 1).trim();
+  };
   try {
     if (!globalThis.localStorage) {
       Object.defineProperty(globalThis, 'localStorage', {
@@ -64,6 +84,16 @@ func (s *Service) injectStoragePolyfills(origin string) string {
         configurable: true,
         enumerable: true,
         get() { return globalThis.core.storage.session; }
+      });
+    }
+  } catch (_) {}
+  try {
+    if (typeof Document !== 'undefined') {
+      Object.defineProperty(Document.prototype, 'cookie', {
+        configurable: true,
+        enumerable: true,
+        get() { return cookieEntries(); },
+        set(value) { setCookie(value); }
       });
     }
   } catch (_) {}
@@ -131,14 +161,14 @@ func (s *Service) injectElectronShim() string {
 
 func (s *Service) injectCoreMLShim() string {
 	return `(function() {
-  const __coreApiURL = ` + core.JSONMarshalString(strings.TrimRight(core.Env("CORE_ML_API_URL"), "/")) + ` || "http://localhost:8090";
+  const __coreMLApiURL = ` + core.JSONMarshalString(strings.TrimRight(core.Env("CORE_ML_API_URL"), "/")) + ` || "http://localhost:8090";
   globalThis.core = globalThis.core || {};
   globalThis.core.ml = globalThis.core.ml || {
     async generate(input) {
       const payload = typeof input === "string"
         ? { messages: [{ role: "user", content: input }], stream: false }
         : { ...input, stream: false };
-      const response = await fetch((__coreApiURL || "http://localhost:8090") + "/v1/chat/completions", {
+      const response = await fetch((__coreMLApiURL || "http://localhost:8090") + "/v1/chat/completions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -149,7 +179,7 @@ func (s *Service) injectCoreMLShim() string {
       const payload = typeof input === "string"
         ? { messages: [{ role: "user", content: input }], stream: true }
         : { ...input, stream: true };
-      return fetch((__coreApiURL || "http://localhost:8090") + "/v1/chat/completions", {
+      return fetch((__coreMLApiURL || "http://localhost:8090") + "/v1/chat/completions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
