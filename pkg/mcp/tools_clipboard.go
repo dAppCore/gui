@@ -4,7 +4,6 @@ package mcp
 import (
 	"context"
 	"encoding/base64"
-	"fmt"
 
 	core "dappco.re/go/core"
 	coreerr "dappco.re/go/core/log"
@@ -130,11 +129,11 @@ type ClipboardWriteImageOutput struct {
 func (s *Subsystem) clipboardWriteImage(_ context.Context, _ *mcp.CallToolRequest, input ClipboardWriteImageInput) (*mcp.CallToolResult, ClipboardWriteImageOutput, error) {
 	maxEncodedLen := ((clipboard.MaxImageBytes + 2) / 3) * 4
 	if len(input.Base64) == 0 || len(input.Base64) > maxEncodedLen {
-		return nil, ClipboardWriteImageOutput{}, fmt.Errorf("clipboard image exceeds %d bytes", clipboard.MaxImageBytes)
+		return nil, ClipboardWriteImageOutput{}, coreerr.E("mcp.clipboardWriteImage", "clipboard image exceeds maximum size", nil)
 	}
 	data, err := base64.StdEncoding.DecodeString(input.Base64)
 	if err != nil {
-		return nil, ClipboardWriteImageOutput{}, err
+		return nil, ClipboardWriteImageOutput{}, coreerr.E("mcp.clipboardWriteImage", "invalid base64 image data", err)
 	}
 	r := s.core.Action("clipboard.setImage").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "data", Value: data},
