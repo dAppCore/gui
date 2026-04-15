@@ -516,6 +516,276 @@ func (s *Subsystem) windowFullscreen(_ context.Context, _ *mcp.CallToolRequest, 
 	return nil, WindowFullscreenOutput{Success: true}, nil
 }
 
+// --- window_zoom_set ---
+
+type WindowZoomSetInput struct {
+	Name          string  `json:"name"`
+	Magnification float64 `json:"magnification"`
+}
+type WindowZoomSetOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) windowZoomSet(_ context.Context, _ *mcp.CallToolRequest, input WindowZoomSetInput) (*mcp.CallToolResult, WindowZoomSetOutput, error) {
+	r := s.core.Action("window.setZoom").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskSetZoom{Name: input.Name, Magnification: input.Magnification}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, WindowZoomSetOutput{}, e
+		}
+		return nil, WindowZoomSetOutput{}, nil
+	}
+	return nil, WindowZoomSetOutput{Success: true}, nil
+}
+
+// --- window_zoom_in ---
+
+type WindowZoomInInput struct {
+	Name string `json:"name"`
+}
+type WindowZoomInOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) windowZoomIn(_ context.Context, _ *mcp.CallToolRequest, input WindowZoomInInput) (*mcp.CallToolResult, WindowZoomInOutput, error) {
+	r := s.core.Action("window.zoomIn").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskZoomIn{Name: input.Name}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, WindowZoomInOutput{}, e
+		}
+		return nil, WindowZoomInOutput{}, nil
+	}
+	return nil, WindowZoomInOutput{Success: true}, nil
+}
+
+// --- window_zoom_out ---
+
+type WindowZoomOutInput struct {
+	Name string `json:"name"`
+}
+type WindowZoomOutOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) windowZoomOut(_ context.Context, _ *mcp.CallToolRequest, input WindowZoomOutInput) (*mcp.CallToolResult, WindowZoomOutOutput, error) {
+	r := s.core.Action("window.zoomOut").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskZoomOut{Name: input.Name}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, WindowZoomOutOutput{}, e
+		}
+		return nil, WindowZoomOutOutput{}, nil
+	}
+	return nil, WindowZoomOutOutput{Success: true}, nil
+}
+
+// --- window_zoom_reset ---
+
+type WindowZoomResetInput struct {
+	Name string `json:"name"`
+}
+type WindowZoomResetOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) windowZoomReset(_ context.Context, _ *mcp.CallToolRequest, input WindowZoomResetInput) (*mcp.CallToolResult, WindowZoomResetOutput, error) {
+	r := s.core.Action("window.zoomReset").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskZoomReset{Name: input.Name}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, WindowZoomResetOutput{}, e
+		}
+		return nil, WindowZoomResetOutput{}, nil
+	}
+	return nil, WindowZoomResetOutput{Success: true}, nil
+}
+
+// --- window_url_set ---
+
+type WindowURLSetInput struct {
+	Name string `json:"name"`
+	URL  string `json:"url"`
+}
+type WindowURLSetOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) windowURLSet(_ context.Context, _ *mcp.CallToolRequest, input WindowURLSetInput) (*mcp.CallToolResult, WindowURLSetOutput, error) {
+	r := s.core.Action("window.setURL").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskSetURL{Name: input.Name, URL: input.URL}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, WindowURLSetOutput{}, e
+		}
+		return nil, WindowURLSetOutput{}, nil
+	}
+	return nil, WindowURLSetOutput{Success: true}, nil
+}
+
+// --- window_html_set ---
+
+type WindowHTMLSetInput struct {
+	Name string `json:"name"`
+	HTML string `json:"html"`
+}
+type WindowHTMLSetOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) windowHTMLSet(_ context.Context, _ *mcp.CallToolRequest, input WindowHTMLSetInput) (*mcp.CallToolResult, WindowHTMLSetOutput, error) {
+	r := s.core.Action("window.setHTML").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskSetHTML{Name: input.Name, HTML: input.HTML}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, WindowHTMLSetOutput{}, e
+		}
+		return nil, WindowHTMLSetOutput{}, nil
+	}
+	return nil, WindowHTMLSetOutput{Success: true}, nil
+}
+
+// --- window_exec_js ---
+
+type WindowExecJSInput struct {
+	Name string `json:"name"`
+	JS   string `json:"js"`
+}
+type WindowExecJSOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) windowExecJS(_ context.Context, _ *mcp.CallToolRequest, input WindowExecJSInput) (*mcp.CallToolResult, WindowExecJSOutput, error) {
+	r := s.core.Action("window.execJS").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskExecJS{Name: input.Name, JS: input.JS}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, WindowExecJSOutput{}, e
+		}
+		return nil, WindowExecJSOutput{}, nil
+	}
+	return nil, WindowExecJSOutput{Success: true}, nil
+}
+
+// --- window_toggle_fullscreen ---
+
+type WindowToggleFullscreenInput struct {
+	Name string `json:"name"`
+}
+type WindowToggleFullscreenOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) windowToggleFullscreen(_ context.Context, _ *mcp.CallToolRequest, input WindowToggleFullscreenInput) (*mcp.CallToolResult, WindowToggleFullscreenOutput, error) {
+	r := s.core.Action("window.toggleFullscreen").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskToggleFullscreen{Name: input.Name}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, WindowToggleFullscreenOutput{}, e
+		}
+		return nil, WindowToggleFullscreenOutput{}, nil
+	}
+	return nil, WindowToggleFullscreenOutput{Success: true}, nil
+}
+
+// --- window_toggle_maximise ---
+
+type WindowToggleMaximiseInput struct {
+	Name string `json:"name"`
+}
+type WindowToggleMaximiseOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) windowToggleMaximise(_ context.Context, _ *mcp.CallToolRequest, input WindowToggleMaximiseInput) (*mcp.CallToolResult, WindowToggleMaximiseOutput, error) {
+	r := s.core.Action("window.toggleMaximise").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskToggleMaximise{Name: input.Name}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, WindowToggleMaximiseOutput{}, e
+		}
+		return nil, WindowToggleMaximiseOutput{}, nil
+	}
+	return nil, WindowToggleMaximiseOutput{Success: true}, nil
+}
+
+// --- window_set_content_protection ---
+
+type WindowSetContentProtectionInput struct {
+	Name       string `json:"name"`
+	Protection bool   `json:"protection"`
+}
+type WindowSetContentProtectionOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) windowSetContentProtection(_ context.Context, _ *mcp.CallToolRequest, input WindowSetContentProtectionInput) (*mcp.CallToolResult, WindowSetContentProtectionOutput, error) {
+	r := s.core.Action("window.setContentProtection").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskSetContentProtection{Name: input.Name, Protection: input.Protection}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, WindowSetContentProtectionOutput{}, e
+		}
+		return nil, WindowSetContentProtectionOutput{}, nil
+	}
+	return nil, WindowSetContentProtectionOutput{Success: true}, nil
+}
+
+// --- window_flash ---
+
+type WindowFlashInput struct {
+	Name    string `json:"name"`
+	Enabled bool   `json:"enabled"`
+}
+type WindowFlashOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) windowFlash(_ context.Context, _ *mcp.CallToolRequest, input WindowFlashInput) (*mcp.CallToolResult, WindowFlashOutput, error) {
+	r := s.core.Action("window.flash").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskFlash{Name: input.Name, Enabled: input.Enabled}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, WindowFlashOutput{}, e
+		}
+		return nil, WindowFlashOutput{}, nil
+	}
+	return nil, WindowFlashOutput{Success: true}, nil
+}
+
+// --- window_print ---
+
+type WindowPrintInput struct {
+	Name string `json:"name"`
+}
+type WindowPrintOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) windowPrint(_ context.Context, _ *mcp.CallToolRequest, input WindowPrintInput) (*mcp.CallToolResult, WindowPrintOutput, error) {
+	r := s.core.Action("window.print").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskPrint{Name: input.Name}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, WindowPrintOutput{}, e
+		}
+		return nil, WindowPrintOutput{}, nil
+	}
+	return nil, WindowPrintOutput{Success: true}, nil
+}
+
 // --- Registration ---
 
 func (s *Subsystem) registerWindowTools(server *mcp.Server) {
@@ -552,4 +822,16 @@ func (s *Subsystem) registerWindowTools(server *mcp.Server) {
 	}, s.windowOpacity)
 	addTool(s, server, &mcp.Tool{Name: "window_background_colour", Description: "Set a window background colour"}, s.windowBackgroundColour)
 	addTool(s, server, &mcp.Tool{Name: "window_fullscreen", Description: "Set a window to fullscreen mode"}, s.windowFullscreen)
+	addTool(s, server, &mcp.Tool{Name: "window_zoom_set", Description: "Set a window zoom level"}, s.windowZoomSet)
+	addTool(s, server, &mcp.Tool{Name: "window_zoom_in", Description: "Zoom a window in"}, s.windowZoomIn)
+	addTool(s, server, &mcp.Tool{Name: "window_zoom_out", Description: "Zoom a window out"}, s.windowZoomOut)
+	addTool(s, server, &mcp.Tool{Name: "window_zoom_reset", Description: "Reset a window zoom level"}, s.windowZoomReset)
+	addTool(s, server, &mcp.Tool{Name: "window_url_set", Description: "Set a window URL"}, s.windowURLSet)
+	addTool(s, server, &mcp.Tool{Name: "window_html_set", Description: "Set a window HTML document"}, s.windowHTMLSet)
+	addTool(s, server, &mcp.Tool{Name: "window_exec_js", Description: "Execute JavaScript in a window"}, s.windowExecJS)
+	addTool(s, server, &mcp.Tool{Name: "window_toggle_fullscreen", Description: "Toggle fullscreen mode for a window"}, s.windowToggleFullscreen)
+	addTool(s, server, &mcp.Tool{Name: "window_toggle_maximise", Description: "Toggle maximised state for a window"}, s.windowToggleMaximise)
+	addTool(s, server, &mcp.Tool{Name: "window_set_content_protection", Description: "Enable or disable content protection for a window"}, s.windowSetContentProtection)
+	addTool(s, server, &mcp.Tool{Name: "window_flash", Description: "Flash a window to request attention"}, s.windowFlash)
+	addTool(s, server, &mcp.Tool{Name: "window_print", Description: "Open the native print dialog for a window"}, s.windowPrint)
 }
