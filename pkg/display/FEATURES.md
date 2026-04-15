@@ -203,7 +203,7 @@ This document tracks the implementation of display server features that enable A
 - [x] webview_scroll, webview_hover, webview_select, webview_check
 - [x] webview_highlight, webview_errors
 - [x] webview_performance, webview_resources
-- [~] webview_network complete; webview_devtools pending
+- [x] webview_network, webview_devtools
 
 ### Phase 5 - System Integration (DONE)
 - [x] clipboard_read, clipboard_write, clipboard_has, clipboard_clear
@@ -238,7 +238,7 @@ This document tracks the implementation of display server features that enable A
 ### Phase 8 - Remaining Features (Future)
 - [ ] window_opacity (true opacity if Wails adds support)
 - [x] layout_beside_editor, layout_suggest
-- [ ] webview_devtools_open, webview_devtools_close
+- [x] webview_devtools_open, webview_devtools_close
 - [x] clipboard_read_image, clipboard_write_image
 - [x] notification_with_actions, notification_clear
 - [x] tray_show_message - Balloon notifications

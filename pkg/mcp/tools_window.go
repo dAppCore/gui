@@ -497,6 +497,7 @@ func (s *Subsystem) registerWindowTools(server *mcp.Server) {
 	mcp.AddTool(server, &mcp.Tool{Name: "window_focus", Description: "Bring a window to the front"}, s.windowFocus)
 	mcp.AddTool(server, &mcp.Tool{Name: "focus_set", Description: "Set focus to a specific window"}, s.focusSet)
 	mcp.AddTool(server, &mcp.Tool{Name: "window_title", Description: "Set the title of a window"}, s.windowTitle)
+	mcp.AddTool(server, &mcp.Tool{Name: "window_title_set", Description: "Alias for window_title"}, s.windowTitle)
 	mcp.AddTool(server, &mcp.Tool{Name: "window_title_get", Description: "Get the title of a window"}, s.windowTitleGet)
 	mcp.AddTool(server, &mcp.Tool{Name: "window_visibility", Description: "Show or hide a window"}, s.windowVisibility)
 	mcp.AddTool(server, &mcp.Tool{Name: "window_always_on_top", Description: "Pin a window above others"}, s.windowAlwaysOnTop)

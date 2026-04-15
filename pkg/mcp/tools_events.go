@@ -4,8 +4,10 @@ package mcp
 import (
 	"context"
 
+	"dappco.re/go/core/gui/pkg/display"
 	"dappco.re/go/core/gui/pkg/events"
 	coreerr "forge.lthn.ai/core/go-log"
+	"forge.lthn.ai/core/go/pkg/core"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -90,11 +92,47 @@ func (s *Subsystem) eventList(_ context.Context, _ *mcp.CallToolRequest, input E
 	return nil, EventListOutput{Count: count}, nil
 }
 
+// --- event_info ---
+
+type EventInfoInput struct {
+	Name string `json:"name,omitempty"`
+}
+type EventInfoOutput struct {
+	Server        display.EventServerInfo `json:"server"`
+	ListenerCount int                     `json:"listenerCount,omitempty"`
+}
+
+func (s *Subsystem) eventInfo(_ context.Context, _ *mcp.CallToolRequest, input EventInfoInput) (*mcp.CallToolResult, EventInfoOutput, error) {
+	output := EventInfoOutput{}
+
+	if input.Name != "" {
+		result, _, err := s.core.QUERY(events.QueryListeners{Name: input.Name})
+		if err != nil {
+			return nil, EventInfoOutput{}, err
+		}
+		count, ok := result.(int)
+		if !ok {
+			return nil, EventInfoOutput{}, coreerr.E("mcp.eventInfo", "unexpected result type", nil)
+		}
+		output.ListenerCount = count
+	}
+
+	displaySvc, err := core.ServiceFor[*display.Service](s.core, "display")
+	if err == nil && displaySvc != nil {
+		output.Server = displaySvc.GetEventInfo()
+	}
+
+	return nil, output, nil
+}
+
 // --- Registration ---
 
 func (s *Subsystem) registerEventTools(server *mcp.Server) {
 	mcp.AddTool(server, &mcp.Tool{Name: "event_emit", Description: "Fire a custom event by name with optional data"}, s.eventEmit)
 	mcp.AddTool(server, &mcp.Tool{Name: "event_on", Description: "Register a persistent listener for a named event"}, s.eventOn)
+	mcp.AddTool(server, &mcp.Tool{Name: "event_subscribe", Description: "Alias for event_on"}, s.eventOn)
 	mcp.AddTool(server, &mcp.Tool{Name: "event_off", Description: "Remove all listeners for a named event"}, s.eventOff)
+	mcp.AddTool(server, &mcp.Tool{Name: "event_unsubscribe", Description: "Alias for event_off"}, s.eventOff)
 	mcp.AddTool(server, &mcp.Tool{Name: "event_list", Description: "Return the number of listeners registered for a named event"}, s.eventList)
+	mcp.AddTool(server, &mcp.Tool{Name: "event_info", Description: "Get display event server info and optional listener counts"}, s.eventInfo)
 }

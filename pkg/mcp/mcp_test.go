@@ -3,12 +3,16 @@ package mcp
 
 import (
 	"context"
+	"os"
+	"regexp"
+	"strings"
 	"testing"
 
 	"dappco.re/go/core/gui/pkg/clipboard"
 	"dappco.re/go/core/gui/pkg/dialog"
 	"dappco.re/go/core/gui/pkg/display"
 	"dappco.re/go/core/gui/pkg/environment"
+	"dappco.re/go/core/gui/pkg/events"
 	"dappco.re/go/core/gui/pkg/menu"
 	"dappco.re/go/core/gui/pkg/screen"
 	"dappco.re/go/core/gui/pkg/webview"
@@ -17,6 +21,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 func TestSubsystem_Good_Name(t *testing.T) {
@@ -31,6 +36,40 @@ func TestSubsystem_Good_RegisterTools(t *testing.T) {
 	// RegisterTools should not panic with a real mcp.Server
 	server := mcp.NewServer(&mcp.Implementation{Name: "test", Version: "0.1.0"}, nil)
 	assert.NotPanics(t, func() { sub.RegisterTools(server) })
+}
+
+func TestSubsystem_Good_RegisterToolNames_AreUniqueAndIncludeRFCAliases(t *testing.T) {
+	entries, err := os.ReadDir(".")
+	require.NoError(t, err)
+
+	pattern := regexp.MustCompile(`mcp\.AddTool\(server,\s*&mcp\.Tool{Name:\s*"([^"]+)"`)
+	counts := make(map[string]int)
+
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasPrefix(entry.Name(), "tools_") || !strings.HasSuffix(entry.Name(), ".go") {
+			continue
+		}
+		content, err := os.ReadFile(entry.Name())
+		require.NoError(t, err)
+		for _, match := range pattern.FindAllStringSubmatch(string(content), -1) {
+			counts[match[1]]++
+		}
+	}
+
+	for name, count := range counts {
+		assert.Equalf(t, 1, count, "duplicate tool registration for %s", name)
+	}
+
+	for _, name := range []string{
+		"window_title_set",
+		"webview_list",
+		"event_subscribe",
+		"event_unsubscribe",
+		"event_info",
+		"theme_on_change",
+	} {
+		assert.Equalf(t, 1, counts[name], "missing RFC tool %s", name)
+	}
 }
 
 // Integration test: verify the IPC round-trip that MCP tool handlers use.
@@ -147,6 +186,28 @@ func TestMCP_Good_WindowTitleSetAlias(t *testing.T) {
 	require.True(t, ok)
 	require.NotNil(t, info)
 	assert.Equal(t, "Updated", info.Title)
+}
+
+func TestMCP_Good_WebviewList(t *testing.T) {
+	c, err := core.New(
+		core.WithService(window.Register(window.NewMockPlatform())),
+		core.WithServiceLock(),
+	)
+	require.NoError(t, err)
+	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+
+	_, _, err = c.PERFORM(window.TaskOpenWindow{Window: &window.Window{Name: "main", Title: "Main", URL: "/"}})
+	require.NoError(t, err)
+	_, _, err = c.PERFORM(window.TaskOpenWindow{Window: &window.Window{Name: "settings", Title: "Settings", URL: "/settings"}})
+	require.NoError(t, err)
+
+	sub := NewSubsystem(c)
+	_, output, err := sub.webviewList(context.Background(), nil, WebviewListInput{})
+	require.NoError(t, err)
+	require.Len(t, output.Windows, 2)
+
+	names := []string{output.Windows[0].Name, output.Windows[1].Name}
+	assert.ElementsMatch(t, []string{"main", "settings"}, names)
 }
 
 func TestMCP_Good_ChatRoundTrip(t *testing.T) {
@@ -478,6 +539,53 @@ func (m *mockEnvPlatform) SetTheme(isDark bool) error {
 	return nil
 }
 
+type mockEventPlatform struct {
+	listeners map[string][]func(*events.CustomEvent)
+}
+
+func newMockEventPlatform() *mockEventPlatform {
+	return &mockEventPlatform{listeners: make(map[string][]func(*events.CustomEvent))}
+}
+
+func (m *mockEventPlatform) Emit(name string, data ...any) bool {
+	payload := any(nil)
+	if len(data) == 1 {
+		payload = data[0]
+	} else if len(data) > 1 {
+		payload = data
+	}
+	for _, listener := range append([]func(*events.CustomEvent){}, m.listeners[name]...) {
+		listener(&events.CustomEvent{Name: name, Data: payload})
+	}
+	return false
+}
+
+func (m *mockEventPlatform) On(name string, callback func(event *events.CustomEvent)) func() {
+	m.listeners[name] = append(m.listeners[name], callback)
+	return func() {
+		callbacks := m.listeners[name]
+		if len(callbacks) == 0 {
+			return
+		}
+		m.listeners[name] = callbacks[1:]
+		if len(m.listeners[name]) == 0 {
+			delete(m.listeners, name)
+		}
+	}
+}
+
+func (m *mockEventPlatform) Off(name string) {
+	delete(m.listeners, name)
+}
+
+func (m *mockEventPlatform) OnMultiple(name string, callback func(event *events.CustomEvent), _ int) {
+	m.listeners[name] = append(m.listeners[name], callback)
+}
+
+func (m *mockEventPlatform) Reset() {
+	m.listeners = make(map[string][]func(*events.CustomEvent))
+}
+
 type mockScreenPlatform struct {
 	screens []screen.Screen
 }
@@ -512,6 +620,46 @@ func TestMCP_Good_ThemeSetRoundTrip(t *testing.T) {
 	theme := result.(environment.ThemeInfo)
 	assert.Equal(t, "light", theme.Theme)
 	assert.False(t, theme.IsDark)
+}
+
+func TestMCP_Good_EventInfo(t *testing.T) {
+	c, err := core.New(
+		core.WithService(display.Register(application.NewApp())),
+		core.WithService(events.Register(newMockEventPlatform())),
+		core.WithServiceLock(),
+	)
+	require.NoError(t, err)
+	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+
+	sub := NewSubsystem(c)
+
+	_, subscribed, err := sub.eventOn(context.Background(), nil, EventOnInput{Name: "build:done"})
+	require.NoError(t, err)
+	assert.True(t, subscribed.Success)
+
+	_, info, err := sub.eventInfo(context.Background(), nil, EventInfoInput{Name: "build:done"})
+	require.NoError(t, err)
+	assert.Equal(t, 1, info.ListenerCount)
+	assert.Equal(t, 0, info.Server.ConnectedClients)
+	assert.Equal(t, 0, info.Server.Subscriptions)
+}
+
+func TestMCP_Good_ThemeOnChange(t *testing.T) {
+	c, err := core.New(
+		core.WithService(display.Register(application.NewApp())),
+		core.WithService(environment.Register(&mockEnvPlatform{isDark: true})),
+		core.WithServiceLock(),
+	)
+	require.NoError(t, err)
+	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+
+	sub := NewSubsystem(c)
+	_, output, err := sub.themeOnChange(context.Background(), nil, ThemeOnChangeInput{})
+	require.NoError(t, err)
+	assert.Equal(t, "theme.change", output.Event)
+	assert.Equal(t, "dark", output.Theme.Theme)
+	assert.True(t, output.Theme.IsDark)
+	assert.Equal(t, 0, output.Server.ConnectedClients)
 }
 
 func TestMCP_Good_ScreenFindSpaceAndArrangePair(t *testing.T) {

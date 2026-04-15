@@ -5,6 +5,7 @@ import (
 	"context"
 
 	"dappco.re/go/core/gui/pkg/webview"
+	"dappco.re/go/core/gui/pkg/window"
 	coreerr "forge.lthn.ai/core/go-log"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -27,6 +28,25 @@ func (s *Subsystem) webviewEval(_ context.Context, _ *mcp.CallToolRequest, input
 		return nil, WebviewEvalOutput{}, err
 	}
 	return nil, WebviewEvalOutput{Result: result, Window: input.Window}, nil
+}
+
+// --- webview_list ---
+
+type WebviewListInput struct{}
+type WebviewListOutput struct {
+	Windows []window.WindowInfo `json:"windows"`
+}
+
+func (s *Subsystem) webviewList(_ context.Context, _ *mcp.CallToolRequest, _ WebviewListInput) (*mcp.CallToolResult, WebviewListOutput, error) {
+	result, _, err := s.core.QUERY(window.QueryWindowList{})
+	if err != nil {
+		return nil, WebviewListOutput{}, err
+	}
+	windows, ok := result.([]window.WindowInfo)
+	if !ok {
+		return nil, WebviewListOutput{}, coreerr.E("mcp.webviewList", "unexpected result type", nil)
+	}
+	return nil, WebviewListOutput{Windows: windows}, nil
 }
 
 // --- webview_click ---
@@ -667,6 +687,7 @@ func (s *Subsystem) webviewTitle(_ context.Context, _ *mcp.CallToolRequest, inpu
 // --- Registration ---
 
 func (s *Subsystem) registerWebviewTools(server *mcp.Server) {
+	mcp.AddTool(server, &mcp.Tool{Name: "webview_list", Description: "List all webview windows"}, s.webviewList)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_eval", Description: "Execute JavaScript in a webview"}, s.webviewEval)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_click", Description: "Click an element in a webview"}, s.webviewClick)
 	mcp.AddTool(server, &mcp.Tool{Name: "webview_type", Description: "Type text into an element in a webview"}, s.webviewType)
