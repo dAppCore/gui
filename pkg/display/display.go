@@ -913,7 +913,13 @@ func (s *Service) handleTrayAction(actionID string) {
 			))
 		}
 	case "close-desktop":
-		// Hide all windows — future: add TaskHideWindow
+		// Hide all tracked windows so the tray action behaves like a real desktop "close" without quitting.
+		infos := s.ListWindowInfos()
+		for _, info := range infos {
+			_ = c.Action("window.setVisibility").Run(ctx, core.NewOptions(
+				core.Option{Key: "task", Value: window.TaskSetVisibility{Name: info.Name, Visible: false}},
+			))
+		}
 	case "env-info":
 		// Query environment info via IPC and show as dialog
 		r := c.QUERY(environment.QueryInfo{})
