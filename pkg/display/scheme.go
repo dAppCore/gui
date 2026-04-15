@@ -107,7 +107,7 @@ func splitCoreRoute(route string) (string, string) {
 }
 
 func (s *Service) resolveSettingsRoute(subpath string, query url.Values) core.Result {
-	key := coalesce(query.Get("key"), subpath)
+		key := firstNonEmpty(query.Get("key"), subpath)
 	snapshot := s.currentSettingsSnapshot()
 	if key != "" {
 		value, ok := s.currentSettingValue(key)
@@ -162,7 +162,7 @@ func (s *Service) resolveStoreRoute(subpath string, query url.Values) core.Resul
 }
 
 func (s *Service) resolveModelsRoute(subpath string, query url.Values) core.Result {
-	if modelName := coalesce(query.Get("id"), subpath); modelName != "" {
+	if modelName := firstNonEmpty(query.Get("id"), subpath); modelName != "" {
 		if model, ok := s.findChatModel(modelName); ok {
 			return core.Result{
 				Value: map[string]any{
@@ -192,7 +192,7 @@ func (s *Service) resolveModelsRoute(subpath string, query url.Values) core.Resu
 
 func (s *Service) resolveNetworkRoute(subpath string, query url.Values) core.Result {
 	state := s.networkState()
-	if interfaceName := coalesce(query.Get("name"), subpath); interfaceName != "" {
+	if interfaceName := firstNonEmpty(query.Get("name"), subpath); interfaceName != "" {
 		for _, iface := range state.Interfaces {
 			if strings.EqualFold(iface.Name, interfaceName) {
 				return core.Result{
@@ -222,7 +222,7 @@ func (s *Service) resolveNetworkRoute(subpath string, query url.Values) core.Res
 }
 
 func (s *Service) resolveChatRoute(_ context.Context, subpath string, query url.Values) core.Result {
-	if id := coalesce(query.Get("conversation_id"), query.Get("id"), subpath); id != "" {
+	if id := firstNonEmpty(query.Get("conversation_id"), query.Get("id"), subpath); id != "" {
 		return s.Core().QUERY(chat.QueryHistory{ConversationID: id})
 	}
 	return s.Core().QUERY(chat.QueryConversationList{})
@@ -543,7 +543,7 @@ func (s *Service) searchAllStorage(query string) []StorageEntry {
 }
 
 func (s *Service) handleStoreSearch(_ context.Context, params url.Values) core.Result {
-	query := coalesce(params.Get("q"), params.Get("query"))
+	query := firstNonEmpty(params.Get("q"), params.Get("query"))
 	results := s.searchAllStorage(query)
 	return core.Result{
 		Value: map[string]any{
@@ -558,7 +558,7 @@ func (s *Service) handleStoreSearch(_ context.Context, params url.Values) core.R
 	}
 }
 
-func coalesce(values ...string) string {
+func firstNonEmpty(values ...string) string {
 	for _, value := range values {
 		if strings.TrimSpace(value) != "" {
 			return value
