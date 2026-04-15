@@ -2,12 +2,10 @@
 package window
 
 import (
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 func TestWindowDefaults_Good(t *testing.T) {

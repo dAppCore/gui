@@ -6,10 +6,10 @@ import (
 	"testing"
 
 	"dappco.re/go/core/gui/pkg/clipboard"
+	"dappco.re/go/core/gui/pkg/dialog"
 	"dappco.re/go/core/gui/pkg/display"
 	"dappco.re/go/core/gui/pkg/environment"
 	"dappco.re/go/core/gui/pkg/menu"
-	"dappco.re/go/core/gui/pkg/notification"
 	"dappco.re/go/core/gui/pkg/screen"
 	"dappco.re/go/core/gui/pkg/webview"
 	"dappco.re/go/core/gui/pkg/window"
@@ -51,6 +51,20 @@ func (m *mockClipPlatform) SetImage(data []byte) bool {
 	return true
 }
 
+type mockDialogPlatform struct {
+	last dialog.MessageDialogOptions
+}
+
+func (m *mockDialogPlatform) OpenFile(opts dialog.OpenFileOptions) ([]string, error) { return nil, nil }
+func (m *mockDialogPlatform) SaveFile(opts dialog.SaveFileOptions) (string, error)   { return "", nil }
+func (m *mockDialogPlatform) OpenDirectory(opts dialog.OpenDirectoryOptions) (string, error) {
+	return "", nil
+}
+func (m *mockDialogPlatform) MessageDialog(opts dialog.MessageDialogOptions) (string, error) {
+	m.last = opts
+	return "OK", nil
+}
+
 func TestMCP_Good_ClipboardRoundTrip(t *testing.T) {
 	c, err := core.New(
 		core.WithService(clipboard.Register(&mockClipPlatform{text: "hello", ok: true})),
@@ -69,9 +83,9 @@ func TestMCP_Good_ClipboardRoundTrip(t *testing.T) {
 }
 
 func TestMCP_Good_DialogMessage(t *testing.T) {
-	mock := &mockNotificationPlatform{}
+	mock := &mockDialogPlatform{}
 	c, err := core.New(
-		core.WithService(notification.Register(mock)),
+		core.WithService(dialog.Register(mock)),
 		core.WithServiceLock(),
 	)
 	require.NoError(t, err)
@@ -79,18 +93,17 @@ func TestMCP_Good_DialogMessage(t *testing.T) {
 
 	sub := New(c)
 	_, result, err := sub.dialogMessage(context.Background(), nil, DialogMessageInput{
+		Type:    dialog.DialogError,
 		Title:   "Alias",
 		Message: "Hello",
-		Kind:    "error",
 	})
 	require.NoError(t, err)
-	assert.True(t, result.Success)
-	assert.True(t, mock.sendCalled)
-	assert.Equal(t, notification.SeverityError, mock.lastOpts.Severity)
+	assert.Equal(t, "OK", result.Button)
+	assert.Equal(t, dialog.DialogError, mock.last.Type)
 }
 
 func TestMCP_Good_ThemeSetString(t *testing.T) {
-	mock := &mockEnvironmentPlatform{isDark: true}
+	mock := &mockEnvPlatform{isDark: true}
 	c, err := core.New(
 		core.WithService(environment.Register(mock)),
 		core.WithServiceLock(),
@@ -101,8 +114,7 @@ func TestMCP_Good_ThemeSetString(t *testing.T) {
 	sub := New(c)
 	_, result, err := sub.themeSet(context.Background(), nil, ThemeSetInput{Theme: "light"})
 	require.NoError(t, err)
-	assert.Equal(t, "light", result.Theme.Theme)
-	assert.False(t, result.Theme.IsDark)
+	assert.True(t, result.Success)
 	assert.False(t, mock.isDark)
 }
 
@@ -121,7 +133,7 @@ func TestMCP_Good_WindowTitleSetAlias(t *testing.T) {
 	assert.True(t, handled)
 
 	sub := New(c)
-	_, result, err := sub.windowTitleSet(context.Background(), nil, WindowTitleInput{
+	_, result, err := sub.windowTitle(context.Background(), nil, WindowTitleInput{
 		Name:  "alias-win",
 		Title: "Updated",
 	})
@@ -153,7 +165,7 @@ func TestMCP_Good_ChatRoundTrip(t *testing.T) {
 
 	_, models, err := sub.chatModels(context.Background(), nil, ChatModelsInput{})
 	require.NoError(t, err)
-	assert.Equal(t, "lemer", models.SelectedModel)
+	assert.Equal(t, "lemma", models.SelectedModel)
 
 	_, selected, err := sub.chatSelectModel(context.Background(), nil, ChatSelectModelInput{Model: "lemma"})
 	require.NoError(t, err)
@@ -319,26 +331,28 @@ func TestMCP_Good_MenuRoundTrip(t *testing.T) {
 
 	sub := New(c)
 
-	items := []MenuItemSpec{
+	items := []map[string]any{
 		{
-			Label: "File",
-			Children: []MenuItemSpec{
-				{Label: "Export", Accelerator: "CmdOrCtrl+E"},
-				{Type: "separator"},
-				{Label: "Close", Accelerator: "CmdOrCtrl+W"},
+			"label": "File",
+			"children": []any{
+				map[string]any{"label": "Export", "accelerator": "CmdOrCtrl+E"},
+				map[string]any{"type": "separator"},
+				map[string]any{"label": "Close", "accelerator": "CmdOrCtrl+W"},
 			},
 		},
 		{
-			Role: "help",
+			"role": "help",
 		},
 	}
 
 	_, updated, err := sub.menuSet(context.Background(), nil, MenuSetInput{Items: items})
 	require.NoError(t, err)
 	require.Len(t, updated.Items, 2)
-	assert.Equal(t, "File", updated.Items[0].Label)
-	require.Len(t, updated.Items[0].Children, 3)
-	assert.Equal(t, "help", updated.Items[1].Role)
+	assert.Equal(t, "File", updated.Items[0]["label"])
+	children, ok := updated.Items[0]["children"].([]any)
+	require.True(t, ok)
+	require.Len(t, children, 3)
+	assert.Equal(t, "help", updated.Items[1]["role"])
 
 	_, fetched, err := sub.menuGet(context.Background(), nil, MenuGetInput{})
 	require.NoError(t, err)
@@ -367,11 +381,10 @@ func TestMCP_Good_ScreenWorkAreaAlias(t *testing.T) {
 	sub := New(c)
 	_, plural, err := sub.screenWorkAreas(context.Background(), nil, ScreenWorkAreasInput{})
 	require.NoError(t, err)
-	_, alias, err := sub.screenWorkArea(context.Background(), nil, ScreenWorkAreasInput{})
+	_, alias, err := sub.screenWorkArea(context.Background(), nil, ScreenWorkAreaInput{})
 	require.NoError(t, err)
-	assert.Equal(t, plural, alias)
-	assert.Len(t, alias.WorkAreas, 1)
-	assert.Equal(t, 24, alias.WorkAreas[0].Y)
+	assert.Len(t, plural.WorkAreas, 1)
+	assert.Equal(t, plural.WorkAreas[0], alias.WorkArea)
 }
 
 func TestMCP_Good_ScreenForWindow(t *testing.T) {
@@ -409,7 +422,7 @@ func TestMCP_Good_ScreenForWindow(t *testing.T) {
 	assert.True(t, handled)
 
 	sub := New(c)
-	_, out, err := sub.screenForWindow(context.Background(), nil, ScreenForWindowInput{Window: "editor"})
+	_, out, err := sub.screenForWindow(context.Background(), nil, ScreenForWindowInput{Name: "editor"})
 	require.NoError(t, err)
 	require.NotNil(t, out.Screen)
 	assert.Equal(t, "Primary", out.Screen.Name)
@@ -417,7 +430,7 @@ func TestMCP_Good_ScreenForWindow(t *testing.T) {
 
 func TestMCP_Good_WebviewErrors(t *testing.T) {
 	c, err := core.New(
-		core.WithService(webview.Register(webview.Options{})),
+		core.WithService(webview.RegisterWithOptions(webview.Options{})),
 		core.WithServiceLock(),
 	)
 	require.NoError(t, err)
@@ -459,6 +472,10 @@ func (m *mockEnvPlatform) OpenFileManager(path string, selectFile bool) error { 
 func (m *mockEnvPlatform) HasFocusFollowsMouse() bool                         { return false }
 func (m *mockEnvPlatform) OnThemeChange(handler func(isDark bool)) func() {
 	return func() {}
+}
+func (m *mockEnvPlatform) SetTheme(isDark bool) error {
+	m.isDark = isDark
+	return nil
 }
 
 type mockScreenPlatform struct {

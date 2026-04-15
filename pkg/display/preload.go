@@ -92,8 +92,8 @@ func (s *BrowserStorageStore) Load(cfg *config.Config) {
 		return
 	}
 
-	var snapshot BrowserStorageSnapshot
-	if err := cfg.Get(browserStorageConfigSection, &snapshot); err != nil {
+	snapshot, err := loadBrowserStorageSnapshot(cfg)
+	if err != nil {
 		return
 	}
 	if snapshot.Origins == nil {
@@ -129,10 +129,34 @@ func (s *BrowserStorageStore) persist(cfg *config.Config) error {
 	if cfg == nil {
 		return nil
 	}
-	if err := cfg.Set(browserStorageConfigSection, s.Snapshot()); err != nil {
+	payload, err := json.Marshal(s.Snapshot())
+	if err != nil {
+		return coreerr.E("display.browserStorage.persist", "marshal browser storage snapshot", err)
+	}
+	if err := cfg.Set(browserStorageConfigSection, string(payload)); err != nil {
 		return err
 	}
 	return cfg.Commit()
+}
+
+func loadBrowserStorageSnapshot(cfg *config.Config) (BrowserStorageSnapshot, error) {
+	var encoded string
+	if err := cfg.Get(browserStorageConfigSection, &encoded); err == nil {
+		encoded = strings.TrimSpace(encoded)
+		if encoded != "" {
+			var snapshot BrowserStorageSnapshot
+			if err := json.Unmarshal([]byte(encoded), &snapshot); err != nil {
+				return BrowserStorageSnapshot{}, coreerr.E("display.loadBrowserStorageSnapshot", "unmarshal browser storage snapshot", err)
+			}
+			return snapshot, nil
+		}
+	}
+
+	var snapshot BrowserStorageSnapshot
+	if err := cfg.Get(browserStorageConfigSection, &snapshot); err != nil {
+		return BrowserStorageSnapshot{}, err
+	}
+	return snapshot, nil
 }
 
 func (s *BrowserStorageStore) SaveOrigin(origin string, state OriginStorageState) {

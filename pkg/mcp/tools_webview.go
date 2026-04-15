@@ -129,7 +129,7 @@ func (s *Subsystem) webviewScreenshotElement(_ context.Context, _ *mcp.CallToolR
 	}
 	sr, ok := result.(webview.ScreenshotResult)
 	if !ok {
-		return nil, WebviewScreenshotElementOutput{}, corego.E("mcp.webview", "unexpected result type from webview element screenshot", nil)
+		return nil, WebviewScreenshotElementOutput{}, coreerr.E("mcp.webview", "unexpected result type from webview element screenshot", nil)
 	}
 	return nil, WebviewScreenshotElementOutput{Base64: sr.Base64, MimeType: sr.MimeType}, nil
 }
@@ -313,7 +313,7 @@ func (s *Subsystem) webviewErrors(_ context.Context, _ *mcp.CallToolRequest, inp
 	}
 	errors, ok := result.([]webview.ExceptionInfo)
 	if !ok {
-		return nil, WebviewErrorsOutput{}, corego.E("mcp.webview", "unexpected result type from webview errors query", nil)
+		return nil, WebviewErrorsOutput{}, coreerr.E("mcp.webview", "unexpected result type from webview errors query", nil)
 	}
 	return nil, WebviewErrorsOutput{Errors: errors}, nil
 }
@@ -451,7 +451,7 @@ func (s *Subsystem) webviewComputedStyle(_ context.Context, _ *mcp.CallToolReque
 	}
 	style, ok := result.(map[string]string)
 	if !ok {
-		return nil, WebviewComputedStyleOutput{}, corego.E("mcp.webview", "unexpected result type from webview computed style query", nil)
+		return nil, WebviewComputedStyleOutput{}, coreerr.E("mcp.webview", "unexpected result type from webview computed style query", nil)
 	}
 	return nil, WebviewComputedStyleOutput{Style: style}, nil
 }
@@ -473,7 +473,7 @@ func (s *Subsystem) webviewPerformance(_ context.Context, _ *mcp.CallToolRequest
 	}
 	metrics, ok := result.(webview.PerformanceMetrics)
 	if !ok {
-		return nil, WebviewPerformanceOutput{}, corego.E("mcp.webview", "unexpected result type from webview performance query", nil)
+		return nil, WebviewPerformanceOutput{}, coreerr.E("mcp.webview", "unexpected result type from webview performance query", nil)
 	}
 	return nil, WebviewPerformanceOutput{Metrics: metrics}, nil
 }
@@ -495,7 +495,7 @@ func (s *Subsystem) webviewResources(_ context.Context, _ *mcp.CallToolRequest, 
 	}
 	resources, ok := result.([]webview.ResourceEntry)
 	if !ok {
-		return nil, WebviewResourcesOutput{}, corego.E("mcp.webview", "unexpected result type from webview resources query", nil)
+		return nil, WebviewResourcesOutput{}, coreerr.E("mcp.webview", "unexpected result type from webview resources query", nil)
 	}
 	return nil, WebviewResourcesOutput{Resources: resources}, nil
 }
@@ -518,7 +518,7 @@ func (s *Subsystem) webviewNetwork(_ context.Context, _ *mcp.CallToolRequest, in
 	}
 	requests, ok := result.([]webview.NetworkEntry)
 	if !ok {
-		return nil, WebviewNetworkOutput{}, corego.E("mcp.webview", "unexpected result type from webview network query", nil)
+		return nil, WebviewNetworkOutput{}, coreerr.E("mcp.webview", "unexpected result type from webview network query", nil)
 	}
 	return nil, WebviewNetworkOutput{Requests: requests}, nil
 }
@@ -615,7 +615,7 @@ func (s *Subsystem) webviewPDF(_ context.Context, _ *mcp.CallToolRequest, input 
 	}
 	pdf, ok := result.(webview.PDFResult)
 	if !ok {
-		return nil, WebviewPDFOutput{}, corego.E("mcp.webview", "unexpected result type from webview pdf task", nil)
+		return nil, WebviewPDFOutput{}, coreerr.E("mcp.webview", "unexpected result type from webview pdf task", nil)
 	}
 	return nil, WebviewPDFOutput{Base64: pdf.Base64, MimeType: pdf.MimeType}, nil
 }

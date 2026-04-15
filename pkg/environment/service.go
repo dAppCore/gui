@@ -93,17 +93,28 @@ func (s *Service) currentThemeIsDark() bool {
 }
 
 func (s *Service) setThemeOverride(theme string) error {
+	var override *bool
 	switch theme {
 	case "", "system":
 		s.override = nil
 	case "dark":
 		value := true
-		s.override = &value
+		override = &value
+		s.override = override
 	case "light":
 		value := false
-		s.override = &value
+		override = &value
+		s.override = override
 	default:
 		return coreerr.E("environment.setThemeOverride", "theme must be one of: light, dark, system", nil)
+	}
+
+	if override != nil {
+		if setter, ok := s.platform.(interface{ SetTheme(bool) error }); ok {
+			if err := setter.SetTheme(*override); err != nil {
+				return err
+			}
+		}
 	}
 
 	_ = s.Core().ACTION(ActionThemeChanged{IsDark: s.currentThemeIsDark()})

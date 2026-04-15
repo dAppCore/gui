@@ -9,25 +9,14 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-type MenuItemSpec struct {
-	Label       string         `json:"label,omitempty"`
-	Accelerator string         `json:"accelerator,omitempty"`
-	Type        string         `json:"type,omitempty"`
-	Checked     bool           `json:"checked,omitempty"`
-	Disabled    bool           `json:"disabled,omitempty"`
-	Tooltip     string         `json:"tooltip,omitempty"`
-	Children    []MenuItemSpec `json:"children,omitempty"`
-	Role        string         `json:"role,omitempty"`
-}
-
 type MenuGetInput struct{}
 
 type MenuOutput struct {
-	Items []MenuItemSpec `json:"items"`
+	Items []map[string]any `json:"items"`
 }
 
 type MenuSetInput struct {
-	Items []MenuItemSpec `json:"items"`
+	Items []map[string]any `json:"items"`
 }
 
 func (s *Subsystem) menuGet(_ context.Context, _ *mcp.CallToolRequest, _ MenuGetInput) (*mcp.CallToolResult, MenuOutput, error) {
@@ -53,7 +42,7 @@ func (s *Subsystem) menuSet(_ context.Context, _ *mcp.CallToolRequest, input Men
 	return nil, MenuOutput{Items: snapshot}, nil
 }
 
-func (s *Subsystem) queryMenuItems() ([]MenuItemSpec, error) {
+func (s *Subsystem) queryMenuItems() ([]map[string]any, error) {
 	result, _, err := s.core.QUERY(menu.QueryGetAppMenu{})
 	if err != nil {
 		return nil, err
@@ -65,55 +54,104 @@ func (s *Subsystem) queryMenuItems() ([]MenuItemSpec, error) {
 	return encodeMenuItems(items), nil
 }
 
-func encodeMenuItems(items []menu.MenuItem) []MenuItemSpec {
+func encodeMenuItems(items []menu.MenuItem) []map[string]any {
 	if len(items) == 0 {
 		return nil
 	}
-	out := make([]MenuItemSpec, 0, len(items))
+	out := make([]map[string]any, 0, len(items))
 	for _, item := range items {
-		spec := MenuItemSpec{
-			Label:       item.Label,
-			Accelerator: item.Accelerator,
-			Type:        item.Type,
-			Checked:     item.Checked,
-			Disabled:    item.Disabled,
-			Tooltip:     item.Tooltip,
-			Children:    encodeMenuItems(item.Children),
+		spec := map[string]any{}
+		if item.Label != "" {
+			spec["label"] = item.Label
+		}
+		if item.Accelerator != "" {
+			spec["accelerator"] = item.Accelerator
+		}
+		if item.Type != "" {
+			spec["type"] = item.Type
+		}
+		if item.Checked {
+			spec["checked"] = item.Checked
+		}
+		if item.Disabled {
+			spec["disabled"] = item.Disabled
+		}
+		if item.Tooltip != "" {
+			spec["tooltip"] = item.Tooltip
+		}
+		if children := encodeMenuItems(item.Children); len(children) > 0 {
+			rawChildren := make([]any, len(children))
+			for i, child := range children {
+				rawChildren[i] = child
+			}
+			spec["children"] = rawChildren
 		}
 		if item.Role != nil {
-			spec.Role = encodeMenuRole(*item.Role)
+			spec["role"] = encodeMenuRole(*item.Role)
 		}
 		out = append(out, spec)
 	}
 	return out
 }
 
-func decodeMenuItems(items []MenuItemSpec) ([]menu.MenuItem, error) {
+func decodeMenuItems(items []map[string]any) ([]menu.MenuItem, error) {
 	if len(items) == 0 {
 		return nil, nil
 	}
 	out := make([]menu.MenuItem, 0, len(items))
 	for _, item := range items {
-		role, err := decodeMenuRole(item.Role)
+		roleName, _ := item["role"].(string)
+		role, err := decodeMenuRole(roleName)
 		if err != nil {
 			return nil, err
 		}
-		children, err := decodeMenuItems(item.Children)
+		children, err := decodeMenuChildren(item["children"])
 		if err != nil {
 			return nil, err
 		}
 		out = append(out, menu.MenuItem{
-			Label:       item.Label,
-			Accelerator: item.Accelerator,
-			Type:        item.Type,
-			Checked:     item.Checked,
-			Disabled:    item.Disabled,
-			Tooltip:     item.Tooltip,
+			Label:       stringValue(item, "label"),
+			Accelerator: stringValue(item, "accelerator"),
+			Type:        stringValue(item, "type"),
+			Checked:     boolValue(item, "checked"),
+			Disabled:    boolValue(item, "disabled"),
+			Tooltip:     stringValue(item, "tooltip"),
 			Children:    children,
 			Role:        role,
 		})
 	}
 	return out, nil
+}
+
+func decodeMenuChildren(value any) ([]menu.MenuItem, error) {
+	switch children := value.(type) {
+	case nil:
+		return nil, nil
+	case []any:
+		items := make([]map[string]any, 0, len(children))
+		for _, child := range children {
+			childMap, ok := child.(map[string]any)
+			if !ok {
+				return nil, coreerr.E("mcp.decodeMenuChildren", "child menu item must be an object", nil)
+			}
+			items = append(items, childMap)
+		}
+		return decodeMenuItems(items)
+	case []map[string]any:
+		return decodeMenuItems(children)
+	default:
+		return nil, coreerr.E("mcp.decodeMenuChildren", "children must be an array", nil)
+	}
+}
+
+func stringValue(item map[string]any, key string) string {
+	value, _ := item[key].(string)
+	return value
+}
+
+func boolValue(item map[string]any, key string) bool {
+	value, _ := item[key].(bool)
+	return value
 }
 
 func encodeMenuRole(role menu.MenuRole) string {

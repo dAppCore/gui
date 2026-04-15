@@ -1219,6 +1219,13 @@ func (s *Service) loadConfig() {
 }
 
 func (s *Service) loadConfigFrom(path string) {
+	for _, section := range []string{"window", "systray", "menu"} {
+		s.configData[section] = map[string]any{}
+	}
+	s.chat = NewChatStore()
+	s.browserStorage = NewBrowserStorageStore()
+	s.viewManifest = ViewManifest{}
+
 	configFile, err := config.New(config.WithPath(path))
 	if err != nil {
 		// Non-critical — continue with empty configData

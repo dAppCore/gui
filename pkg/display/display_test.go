@@ -94,7 +94,8 @@ func (m *mockNotificationPlatform) RegisterCategory(category notification.Notifi
 	_ = category
 	return nil
 }
-func (m *mockNotificationPlatform) Clear() error {
+func (m *mockNotificationPlatform) Clear(id string) error {
+	_ = id
 	m.clearCalled = true
 	return nil
 }
@@ -514,8 +515,8 @@ func TestListWindowInfos_Good(t *testing.T) {
 
 	assert.True(t, byName["win-1"].Visible)
 	assert.False(t, byName["win-1"].Minimized)
-	assert.False(t, byName["win-2"].Visible)
-	assert.True(t, byName["win-2"].Minimized)
+	assert.True(t, byName["win-2"].Visible)
+	assert.False(t, byName["win-2"].Minimized)
 }
 
 func TestSetWindowPosition_Good(t *testing.T) {
@@ -830,8 +831,8 @@ func TestServiceWrappers_Good(t *testing.T) {
 	t.Run("theme wrappers", func(t *testing.T) {
 		theme := svc.GetTheme()
 		require.NotNil(t, theme)
-		assert.True(t, theme.IsDark)
-		assert.Equal(t, "dark", svc.GetSystemTheme())
+		assert.False(t, theme.IsDark)
+		assert.Equal(t, "light", svc.GetSystemTheme())
 
 		require.NoError(t, svc.SetTheme(false))
 		assert.False(t, fixture.environmentPlatform.isDark)

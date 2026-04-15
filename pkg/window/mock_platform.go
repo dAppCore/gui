@@ -19,6 +19,7 @@ func (m *MockPlatform) CreateWindow(options PlatformWindowOptions) PlatformWindo
 		name: options.Name, title: options.Title, url: options.URL,
 		width: options.Width, height: options.Height,
 		x: options.X, y: options.Y,
+		visible: !options.Hidden,
 	}
 	m.Windows = append(m.Windows, w)
 	return w
@@ -68,26 +69,31 @@ func (w *MockWindow) SetPosition(x, y int)                 { w.x = x; w.y = y }
 func (w *MockWindow) SetSize(width, height int)            { w.width = width; w.height = height }
 func (w *MockWindow) SetBackgroundColour(r, g, b, a uint8) { w.backgroundColour = [4]uint8{r, g, b, a} }
 func (w *MockWindow) SetOpacity(opacity float32)           { w.opacity = opacity }
-func (w *MockWindow) SetVisibility(visible bool)           { w.visible = visible }
-func (w *MockWindow) SetAlwaysOnTop(alwaysOnTop bool)      { w.alwaysOnTop = alwaysOnTop }
-func (w *MockWindow) Maximise()                            { w.maximised = true }
-func (w *MockWindow) Restore()                             { w.maximised = false }
-func (w *MockWindow) Minimise()                            { w.minimised = true }
-func (w *MockWindow) Focus()                               { w.focused = true }
-func (w *MockWindow) Close()                               { w.closed = true }
-func (w *MockWindow) Show()                                { w.visible = true }
-func (w *MockWindow) Hide()                                { w.visible = false }
-func (w *MockWindow) Fullscreen()                          {}
-func (w *MockWindow) UnFullscreen()                        {}
-func (w *MockWindow) OpenDevTools()                        { w.devtoolsOpen = true }
-func (w *MockWindow) CloseDevTools()                       { w.devtoolsOpen = false }
-func (w *MockWindow) GetZoom() float64                     { return w.zoom }
-func (w *MockWindow) SetZoom(factor float64)               { w.zoom = factor }
-func (w *MockWindow) ZoomIn()                              { w.zoom += 0.1 }
-func (w *MockWindow) ZoomOut()                             { w.zoom -= 0.1 }
-func (w *MockWindow) SetURL(url string)                    { w.url = url }
-func (w *MockWindow) SetHTML(html string)                  { w.html = html }
-func (w *MockWindow) ExecJS(js string)                     { w.lastJS = js }
+func (w *MockWindow) SetVisibility(visible bool) {
+	w.visible = visible
+	if visible {
+		w.minimised = false
+	}
+}
+func (w *MockWindow) SetAlwaysOnTop(alwaysOnTop bool) { w.alwaysOnTop = alwaysOnTop }
+func (w *MockWindow) Maximise()                       { w.maximised = true }
+func (w *MockWindow) Restore()                        { w.maximised = false; w.minimised = false; w.visible = true }
+func (w *MockWindow) Minimise()                       { w.minimised = true; w.visible = false }
+func (w *MockWindow) Focus()                          { w.focused = true }
+func (w *MockWindow) Close()                          { w.closed = true }
+func (w *MockWindow) Show()                           { w.visible = true; w.minimised = false }
+func (w *MockWindow) Hide()                           { w.visible = false }
+func (w *MockWindow) Fullscreen()                     {}
+func (w *MockWindow) UnFullscreen()                   {}
+func (w *MockWindow) OpenDevTools()                   { w.devtoolsOpen = true }
+func (w *MockWindow) CloseDevTools()                  { w.devtoolsOpen = false }
+func (w *MockWindow) GetZoom() float64                { return w.zoom }
+func (w *MockWindow) SetZoom(factor float64)          { w.zoom = factor }
+func (w *MockWindow) ZoomIn()                         { w.zoom += 0.1 }
+func (w *MockWindow) ZoomOut()                        { w.zoom -= 0.1 }
+func (w *MockWindow) SetURL(url string)               { w.url = url }
+func (w *MockWindow) SetHTML(html string)             { w.html = html }
+func (w *MockWindow) ExecJS(js string)                { w.lastJS = js }
 func (w *MockWindow) GetBounds() Bounds {
 	return Bounds{X: w.x, Y: w.y, Width: w.width, Height: w.height}
 }

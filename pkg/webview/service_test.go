@@ -65,7 +65,13 @@ func (m *mockConnector) Check(sel string, c bool) error {
 	m.lastCheckVal = c
 	return nil
 }
-func (m *mockConnector) Evaluate(s string) (any, error)     { return m.evalResult, nil }
+func (m *mockConnector) Evaluate(s string) (any, error) {
+	m.lastEvalScript = s
+	if m.evalFn != nil {
+		return m.evalFn(s)
+	}
+	return m.evalResult, nil
+}
 func (m *mockConnector) Screenshot() ([]byte, error)        { return m.screenshot, nil }
 func (m *mockConnector) GetURL() (string, error)            { return m.url, nil }
 func (m *mockConnector) GetTitle() (string, error)          { return m.title, nil }
@@ -95,11 +101,20 @@ func (m *mockConnector) QuerySelectorAll(sel string) ([]*ElementInfo, error) {
 }
 
 func (m *mockConnector) GetConsole() []ConsoleMessage { return m.console }
+func (m *mockConnector) Print() error {
+	m.printCalled = true
+	return nil
+}
+func (m *mockConnector) PrintToPDF() ([]byte, error) { return m.pdfBytes, nil }
 
 func newTestService(t *testing.T, mock *mockConnector) (*Service, *core.Core) {
 	t.Helper()
 	factory := RegisterWithOptions(Options{})
-	c, err := core.New(core.WithService(factory), core.WithServiceLock())
+	c, err := core.New(
+		core.WithService(factory),
+		core.WithService(window.Register(window.NewMockPlatform())),
+		core.WithServiceLock(),
+	)
 	require.NoError(t, err)
 	require.NoError(t, c.ServiceStartup(context.Background(), nil))
 	svc := core.MustServiceFor[*Service](c, "webview")
@@ -266,7 +281,7 @@ func TestTaskClearConsole_Good(t *testing.T) {
 
 func TestTaskDevTools_Good(t *testing.T) {
 	_, c := newTestService(t, &mockConnector{})
-	_, _, err := c.PERFORM(window.TaskOpenWindow{Opts: []window.WindowOption{window.WithName("main")}})
+	_, _, err := c.PERFORM(window.TaskOpenWindow{Window: &window.Window{Name: "main"}})
 	require.NoError(t, err)
 	_, handled, err := c.PERFORM(TaskOpenDevTools{Window: "main"})
 	require.NoError(t, err)

@@ -13,6 +13,7 @@ func (m *mockPlatform) CreateWindow(options PlatformWindowOptions) PlatformWindo
 		name: options.Name, title: options.Title, url: options.URL,
 		width: options.Width, height: options.Height,
 		x: options.X, y: options.Y,
+		visible: !options.Hidden,
 	}
 	m.windows = append(m.windows, w)
 	return w
@@ -60,26 +61,31 @@ func (w *mockWindow) SetPosition(x, y int)                 { w.x = x; w.y = y }
 func (w *mockWindow) SetSize(width, height int)            { w.width = width; w.height = height }
 func (w *mockWindow) SetBackgroundColour(r, g, b, a uint8) { w.backgroundColour = [4]uint8{r, g, b, a} }
 func (w *mockWindow) SetOpacity(opacity float32)           { w.opacity = opacity }
-func (w *mockWindow) SetVisibility(visible bool)           { w.visible = visible }
-func (w *mockWindow) SetAlwaysOnTop(alwaysOnTop bool)      { w.alwaysOnTop = alwaysOnTop }
-func (w *mockWindow) Maximise()                            { w.maximised = true }
-func (w *mockWindow) Restore()                             { w.maximised = false }
-func (w *mockWindow) Minimise()                            { w.minimised = true }
-func (w *mockWindow) Focus()                               { w.focused = true }
-func (w *mockWindow) Close()                               { w.closed = true }
-func (w *mockWindow) Show()                                { w.visible = true }
-func (w *mockWindow) Hide()                                { w.visible = false }
-func (w *mockWindow) Fullscreen()                          { w.fullscreened = true }
-func (w *mockWindow) UnFullscreen()                        { w.fullscreened = false }
-func (w *mockWindow) OpenDevTools()                        { w.devtoolsOpen = true }
-func (w *mockWindow) CloseDevTools()                       { w.devtoolsOpen = false }
-func (w *mockWindow) GetZoom() float64                     { return w.zoom }
-func (w *mockWindow) SetZoom(factor float64)               { w.zoom = factor }
-func (w *mockWindow) ZoomIn()                              { w.zoom += 0.1 }
-func (w *mockWindow) ZoomOut()                             { w.zoom -= 0.1 }
-func (w *mockWindow) SetURL(url string)                    { w.url = url }
-func (w *mockWindow) SetHTML(html string)                  { w.html = html }
-func (w *mockWindow) ExecJS(js string)                     { w.lastJS = js }
+func (w *mockWindow) SetVisibility(visible bool) {
+	w.visible = visible
+	if visible {
+		w.minimised = false
+	}
+}
+func (w *mockWindow) SetAlwaysOnTop(alwaysOnTop bool) { w.alwaysOnTop = alwaysOnTop }
+func (w *mockWindow) Maximise()                       { w.maximised = true }
+func (w *mockWindow) Restore()                        { w.maximised = false; w.minimised = false; w.visible = true }
+func (w *mockWindow) Minimise()                       { w.minimised = true; w.visible = false }
+func (w *mockWindow) Focus()                          { w.focused = true }
+func (w *mockWindow) Close()                          { w.closed = true }
+func (w *mockWindow) Show()                           { w.visible = true; w.minimised = false }
+func (w *mockWindow) Hide()                           { w.visible = false }
+func (w *mockWindow) Fullscreen()                     { w.fullscreened = true }
+func (w *mockWindow) UnFullscreen()                   { w.fullscreened = false }
+func (w *mockWindow) OpenDevTools()                   { w.devtoolsOpen = true }
+func (w *mockWindow) CloseDevTools()                  { w.devtoolsOpen = false }
+func (w *mockWindow) GetZoom() float64                { return w.zoom }
+func (w *mockWindow) SetZoom(factor float64)          { w.zoom = factor }
+func (w *mockWindow) ZoomIn()                         { w.zoom += 0.1 }
+func (w *mockWindow) ZoomOut()                        { w.zoom -= 0.1 }
+func (w *mockWindow) SetURL(url string)               { w.url = url }
+func (w *mockWindow) SetHTML(html string)             { w.html = html }
+func (w *mockWindow) ExecJS(js string)                { w.lastJS = js }
 func (w *mockWindow) GetBounds() Bounds {
 	return Bounds{X: w.x, Y: w.y, Width: w.width, Height: w.height}
 }

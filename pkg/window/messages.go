@@ -62,6 +62,11 @@ type TaskSetBackgroundColour struct {
 	Alpha uint8
 }
 
+type TaskSetOpacity struct {
+	Name    string
+	Opacity float32
+}
+
 type TaskSetVisibility struct {
 	Name    string
 	Visible bool

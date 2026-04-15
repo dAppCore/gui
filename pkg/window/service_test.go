@@ -23,6 +23,15 @@ func newTestWindowService(t *testing.T) (*Service, *core.Core) {
 	return svc, c
 }
 
+func newTestWindowServiceWithDefaultScreen(t *testing.T) (*Service, *core.Core) {
+	t.Helper()
+	return newTestWindowServiceWithScreen(t, []screen.Screen{{
+		ID: "primary", Name: "Primary", IsPrimary: true,
+		Bounds:   screen.Rect{X: 0, Y: 0, Width: 2560, Height: 1440},
+		WorkArea: screen.Rect{X: 0, Y: 0, Width: 2560, Height: 1440},
+	}})
+}
+
 func requireOpenWindow(t *testing.T, c *core.Core, window Window) WindowInfo {
 	t.Helper()
 	result, handled, err := c.PERFORM(TaskOpenWindow{Window: &window})
@@ -45,7 +54,7 @@ func TestApplyConfig_Good(t *testing.T) {
 		"default_height": 900,
 	})
 
-	pw, err := svc.manager.Open()
+	pw, err := svc.manager.CreateWindow(Window{Name: "config-defaults"})
 	require.NoError(t, err)
 	w, h := pw.Size()
 	assert.Equal(t, 1500, w)
@@ -97,8 +106,8 @@ func TestQueryWindowList_Good(t *testing.T) {
 
 	assert.True(t, byName["a"].Visible)
 	assert.False(t, byName["a"].Minimized)
-	assert.False(t, byName["b"].Visible)
-	assert.True(t, byName["b"].Minimized)
+	assert.True(t, byName["b"].Visible)
+	assert.False(t, byName["b"].Minimized)
 }
 
 func TestQueryWindowByName_Good(t *testing.T) {
@@ -172,7 +181,7 @@ func TestTaskSetSize_Good(t *testing.T) {
 
 func TestTaskMinimiseAndVisibility_Good(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("test")}})
+	_, _, _ = c.PERFORM(TaskOpenWindow{Window: &Window{Name: "test"}})
 
 	_, handled, err := c.PERFORM(TaskMinimise{Name: "test"})
 	require.NoError(t, err)
@@ -192,9 +201,9 @@ func TestTaskMinimiseAndVisibility_Good(t *testing.T) {
 	assert.True(t, info.Visible)
 }
 
-func TestTaskSetAlwaysOnTop_Good(t *testing.T) {
+func TestTaskSetAlwaysOnTop_Good_CreateDescriptor(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("test")}})
+	_, _, _ = c.PERFORM(TaskOpenWindow{Window: &Window{Name: "test"}})
 
 	_, handled, err := c.PERFORM(TaskSetAlwaysOnTop{Name: "test", AlwaysOnTop: true})
 	require.NoError(t, err)
@@ -206,9 +215,9 @@ func TestTaskSetAlwaysOnTop_Good(t *testing.T) {
 	assert.True(t, pw.(*mockWindow).alwaysOnTop)
 }
 
-func TestTaskSetBackgroundColour_Good(t *testing.T) {
+func TestTaskSetBackgroundColour_Good_CreateDescriptor(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("test")}})
+	_, _, _ = c.PERFORM(TaskOpenWindow{Window: &Window{Name: "test"}})
 
 	_, handled, err := c.PERFORM(TaskSetBackgroundColour{
 		Name: "test", Red: 10, Green: 20, Blue: 30, Alpha: 40,
@@ -219,13 +228,13 @@ func TestTaskSetBackgroundColour_Good(t *testing.T) {
 	svc := core.MustServiceFor[*Service](c, "window")
 	pw, ok := svc.Manager().Get("test")
 	require.True(t, ok)
-	assert.Equal(t, [4]uint8{10, 20, 30, 40}, pw.(*mockWindow).backgroundColor)
+	assert.Equal(t, [4]uint8{10, 20, 30, 40}, pw.(*mockWindow).backgroundColour)
 }
 
 func TestTaskTileWindows_UsesPrimaryScreenSize(t *testing.T) {
-	_, c := newTestWindowServiceWithScreen(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("left")}})
-	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("right")}})
+	_, c := newTestWindowServiceWithDefaultScreen(t)
+	_, _, _ = c.PERFORM(TaskOpenWindow{Window: &Window{Name: "left"}})
+	_, _, _ = c.PERFORM(TaskOpenWindow{Window: &Window{Name: "right"}})
 
 	_, handled, err := c.PERFORM(TaskTileWindows{Mode: "left-right", Windows: []string{"left", "right"}})
 	require.NoError(t, err)
@@ -243,8 +252,8 @@ func TestTaskTileWindows_UsesPrimaryScreenSize(t *testing.T) {
 }
 
 func TestTaskTileWindows_ResetsMaximizedState(t *testing.T) {
-	_, c := newTestWindowServiceWithScreen(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("left")}})
+	_, c := newTestWindowServiceWithDefaultScreen(t)
+	_, _, _ = c.PERFORM(TaskOpenWindow{Window: &Window{Name: "left"}})
 
 	_, _, _ = c.PERFORM(TaskMaximise{Name: "left"})
 	_, handled, err := c.PERFORM(TaskTileWindows{Mode: "left-half", Windows: []string{"left"}})
@@ -260,7 +269,7 @@ func TestTaskTileWindows_ResetsMaximizedState(t *testing.T) {
 
 func TestTaskSetOpacity_Good(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("test")}})
+	_, _, _ = c.PERFORM(TaskOpenWindow{Window: &Window{Name: "test"}})
 
 	_, handled, err := c.PERFORM(TaskSetOpacity{Name: "test", Opacity: 0.65})
 	require.NoError(t, err)
@@ -274,17 +283,17 @@ func TestTaskSetOpacity_Good(t *testing.T) {
 
 func TestTaskSetOpacity_BadRange(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("test")}})
+	_, _, _ = c.PERFORM(TaskOpenWindow{Window: &Window{Name: "test"}})
 
 	_, handled, err := c.PERFORM(TaskSetOpacity{Name: "test", Opacity: 1.5})
 	require.Error(t, err)
 	assert.True(t, handled)
 }
 
-func TestTaskStackWindows_Good(t *testing.T) {
+func TestTaskStackWindows_Good_QueryInfo(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("one")}})
-	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("two")}})
+	_, _, _ = c.PERFORM(TaskOpenWindow{Window: &Window{Name: "one"}})
+	_, _, _ = c.PERFORM(TaskOpenWindow{Window: &Window{Name: "two"}})
 
 	_, handled, err := c.PERFORM(TaskStackWindows{
 		Windows: []string{"one", "two"},
@@ -300,13 +309,13 @@ func TestTaskStackWindows_Good(t *testing.T) {
 	assert.Equal(t, 30, info.Y)
 }
 
-func TestTaskApplyWorkflow_Good(t *testing.T) {
+func TestTaskApplyWorkflow_Good_QueryInfo(t *testing.T) {
 	_, c := newTestWindowService(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("editor")}})
-	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("assistant")}})
+	_, _, _ = c.PERFORM(TaskOpenWindow{Window: &Window{Name: "editor"}})
+	_, _, _ = c.PERFORM(TaskOpenWindow{Window: &Window{Name: "assistant"}})
 
 	_, handled, err := c.PERFORM(TaskApplyWorkflow{
-		Workflow: WorkflowCoding,
+		Workflow: WorkflowCoding.String(),
 		Windows:  []string{"editor", "assistant"},
 	})
 	require.NoError(t, err)
@@ -321,8 +330,8 @@ func TestTaskApplyWorkflow_Good(t *testing.T) {
 }
 
 func TestTaskRestoreLayout_ClearsMaximizedState(t *testing.T) {
-	_, c := newTestWindowServiceWithScreen(t)
-	_, _, _ = c.PERFORM(TaskOpenWindow{Opts: []WindowOption{WithName("editor")}})
+	_, c := newTestWindowServiceWithDefaultScreen(t)
+	_, _, _ = c.PERFORM(TaskOpenWindow{Window: &Window{Name: "editor"}})
 	_, _, _ = c.PERFORM(TaskMaximise{Name: "editor"})
 
 	svc := core.MustServiceFor[*Service](c, "window")

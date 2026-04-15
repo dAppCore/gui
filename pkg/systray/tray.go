@@ -3,6 +3,7 @@ package systray
 
 import (
 	_ "embed"
+	"reflect"
 	"sync"
 
 	coreerr "forge.lthn.ai/core/go-log"
@@ -124,8 +125,7 @@ func (m *Manager) ShowPanel() error {
 	if panel == nil {
 		return coreerr.E("systray.ShowPanel", "panel window not attached", nil)
 	}
-	panel.Show()
-	return nil
+	return invokePanelMethod(panel, "Show")
 }
 
 // HidePanel hides the attached tray panel window.
@@ -136,8 +136,7 @@ func (m *Manager) HidePanel() error {
 	if panel == nil {
 		return coreerr.E("systray.HidePanel", "panel window not attached", nil)
 	}
-	panel.Hide()
-	return nil
+	return invokePanelMethod(panel, "Hide")
 }
 
 // Tray returns the underlying platform tray for direct access.
@@ -150,4 +149,19 @@ func (m *Manager) Tray() PlatformTray {
 // Use: active := manager.IsActive()
 func (m *Manager) IsActive() bool {
 	return m.tray != nil
+}
+
+func invokePanelMethod(panel WindowHandle, method string) error {
+	value := reflect.ValueOf(panel)
+	if !value.IsValid() {
+		return coreerr.E("systray.invokePanelMethod", "panel window is invalid", nil)
+	}
+
+	target := value.MethodByName(method)
+	if !target.IsValid() {
+		return coreerr.E("systray.invokePanelMethod", "panel window does not support "+method, nil)
+	}
+
+	target.Call(nil)
+	return nil
 }

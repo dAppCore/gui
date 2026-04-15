@@ -118,6 +118,9 @@ func (m *Manager) TileWindows(mode TileMode, names []string, screenW, screenH in
 	if len(windows) == 0 {
 		return coreerr.E("window.Manager.TileWindows", "no windows to tile", nil)
 	}
+	for _, pw := range windows {
+		normalizeWindowForLayout(pw)
+	}
 
 	halfW, halfH := screenW/2, screenH/2
 
@@ -136,7 +139,6 @@ func (m *Manager) TileWindows(mode TileMode, names []string, screenW, screenH in
 		}
 		cellW := screenW / cols
 		for i, pw := range windows {
-			normalizeWindowForLayout(pw)
 			row := i / cols
 			col := i % cols
 			rows := (len(windows) + cols - 1) / cols
