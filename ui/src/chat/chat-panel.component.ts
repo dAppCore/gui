@@ -43,6 +43,7 @@ import { ChatStateService } from './chat-state.service';
             <chat-model-selector
               [models]="state.models()"
               [value]="state.selectedModel()"
+              [loading]="state.modelSwitching()"
               (valueChange)="state.changeModel($event)"
             />
             <button type="button" class="settings" (click)="state.settingsOpen.set(!state.settingsOpen())">Settings</button>
@@ -59,7 +60,10 @@ import { ChatStateService } from './chat-state.service';
         />
 
         <section class="chat-shell__thread">
-          <chat-message-list [messages]="state.activeConversation()?.messages || []" />
+          <chat-message-list
+            [messages]="state.activeConversation()?.messages || []"
+            [streaming]="state.sending()"
+          />
         </section>
 
         <chat-input-area
@@ -82,10 +86,10 @@ import { ChatStateService } from './chat-state.service';
         linear-gradient(160deg, #020617 0%, #081121 46%, #111827 100%);
         font-family: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', serif; }
       .workspace { min-height: 100vh; display: grid; grid-template-columns: 20rem 1fr; }
-      .chat-shell { display: grid; grid-template-rows: auto auto 1fr auto; gap: 1rem; padding: 1.5rem; }
+      .chat-shell { min-height: 0; display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; gap: 1rem; padding: 1.5rem; }
       .chat-shell__header { display: flex; justify-content: space-between; gap: 1rem; align-items: end; }
       .chat-shell__controls { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
-      .chat-shell__thread { overflow: auto; padding: 1rem 0.2rem 1rem 0; }
+      .chat-shell__thread { min-height: 0; overflow: hidden; padding: 1rem 0.2rem 1rem 0; }
       .eyebrow { margin: 0; color: #f59e0b; text-transform: uppercase; letter-spacing: 0.18em; font-size: 0.72rem; }
       h1 { margin: 0.2rem 0 0; font-size: clamp(2rem, 3vw, 3rem); line-height: 1; }
       .settings { border: 1px solid rgba(251, 191, 36, 0.22); border-radius: 999px; background: rgba(124, 45, 18, 0.25); color: #fde68a; padding: 0.85rem 1.2rem; cursor: pointer; }

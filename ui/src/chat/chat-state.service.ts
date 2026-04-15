@@ -21,6 +21,7 @@ declare global {
 @Injectable({ providedIn: 'root' })
 export class ChatStateService {
   private readonly ws = inject(WebSocketService);
+  private mockConversations: Conversation[] = [];
 
   readonly conversations = signal<ConversationSummary[]>([]);
   readonly activeConversation = signal<Conversation | null>(null);
@@ -33,12 +34,13 @@ export class ChatStateService {
     max_tokens: 2048,
     context_window: 8192,
     system_prompt: 'You are a helpful assistant.',
-    default_model: 'local-default',
+    default_model: '',
   });
   readonly draft = signal('');
   readonly historyQuery = signal('');
   readonly settingsOpen = signal(false);
   readonly sending = signal(false);
+  readonly modelSwitching = signal(false);
   readonly selectedModel = signal('');
 
   constructor() {
@@ -142,16 +144,26 @@ export class ChatStateService {
     if (!model) {
       return;
     }
-    const settings = await this.invoke<ChatSettings>('gui.chat.selectModel', {
-      model,
-      conversation_id: this.activeConversation()?.id,
-    });
-    this.selectedModel.set(model);
-    if (settings) {
-      this.settings.set(settings);
+    this.modelSwitching.set(true);
+    try {
+      const settings = await this.invoke<ChatSettings>('gui.chat.selectModel', {
+        model,
+        conversation_id: this.activeConversation()?.id,
+      });
+      this.selectedModel.set(model);
+      if (settings) {
+        this.settings.set(settings);
+      }
+      const currentId = this.activeConversation()?.id;
+      this.activeConversation.update((conversation) => (conversation ? { ...conversation, model } : conversation));
+      if (currentId) {
+        this.conversations.update((items) =>
+          items.map((item) => (item.id === currentId ? { ...item, model } : item)),
+        );
+      }
+    } finally {
+      this.modelSwitching.set(false);
     }
-    this.activeConversation.update((conversation) => (conversation ? { ...conversation, model } : conversation));
-    this.conversations.update((items) => items.map((item) => (item.id === this.activeConversation()?.id ? { ...item, model } : item)));
   }
 
   async queueImageFiles(files: FileList | File[]): Promise<void> {
@@ -457,27 +469,127 @@ export class ChatStateService {
         { name: 'lemma', architecture: 'qwen3', quant_bits: 8, size_bytes: 3200000000, loaded: false, backend: 'ollama' },
       ] as T;
     }
-    if (route === 'gui.chat.settings.load' || route === 'gui.chat.settings.save' || route === 'gui.chat.settings.reset') {
-      return (payload ?? this.settings()) as T;
+    if (route === 'gui.chat.settings.load') {
+      return this.settings() as T;
+    }
+    if (route === 'gui.chat.settings.save') {
+      const settings = payload as ChatSettings;
+      this.settings.set(settings);
+      if (settings.default_model) {
+        this.selectedModel.set(settings.default_model);
+      }
+      return settings as T;
+    }
+    if (route === 'gui.chat.settings.reset') {
+      const defaults: ChatSettings = {
+        temperature: 1,
+        top_p: 0.95,
+        top_k: 64,
+        max_tokens: 2048,
+        context_window: 8192,
+        system_prompt: 'You are a helpful assistant.',
+        default_model: '',
+      };
+      this.settings.set(defaults);
+      return defaults as T;
     }
     if (route === 'gui.chat.selectModel') {
-      return {
+      const model = (payload as { model?: string })?.model ?? this.settings().default_model;
+      const updated = {
         ...this.settings(),
-        default_model: (payload as { model?: string })?.model ?? this.settings().default_model,
-      } as T;
+        default_model: model,
+      };
+      if (this.activeConversation()) {
+        const currentId = this.activeConversation()?.id;
+        this.activeConversation.update((conversation) => (conversation ? { ...conversation, model } : conversation));
+        if (currentId) {
+          this.conversations.update((items) =>
+            items.map((item) => (item.id === currentId ? { ...item, model } : item)),
+          );
+          this.mockConversations = this.mockConversations.map((item) => (item.id === currentId ? { ...item, model } : item));
+        }
+      }
+      return updated as T;
+    }
+    if (route === 'gui.chat.conversations.get') {
+      const id = (payload as { id?: string; conversation_id?: string })?.id ?? (payload as { id?: string; conversation_id?: string })?.conversation_id;
+      const found = this.mockConversations.find((item) => item.id === id);
+      if (found) {
+        return found as T;
+      }
+      if (this.activeConversation()?.id === id) {
+        return this.activeConversation() as T;
+      }
+      return null as T;
+    }
+    if (route === 'gui.chat.conversations.rename') {
+      const { id, title } = payload as { id?: string; title?: string };
+      const titleValue = title?.trim() || 'New Chat';
+      const currentId = this.activeConversation()?.id;
+      if (currentId === id) {
+        this.activeConversation.update((conversation) => (conversation ? { ...conversation, title: titleValue } : conversation));
+      }
+      this.conversations.update((items) =>
+        items.map((item) => (item.id === id ? { ...item, title: titleValue } : item)),
+      );
+      this.mockConversations = this.mockConversations.map((item) => (item.id === id ? { ...item, title: titleValue } : item));
+      const found = this.mockConversations.find((item) => item.id === id);
+      if (found) {
+        return found as T;
+      }
+      if (this.activeConversation()?.id === id) {
+        return this.activeConversation() as T;
+      }
+      return { id, title: titleValue } as T;
+    }
+    if (route === 'gui.chat.conversations.delete') {
+      const id = (payload as { id?: string; conversation_id?: string })?.id ?? (payload as { id?: string; conversation_id?: string })?.conversation_id;
+      this.conversations.update((items) => items.filter((item) => item.id !== id));
+      this.mockConversations = this.mockConversations.filter((item) => item.id !== id);
+      if (this.activeConversation()?.id === id) {
+        this.activeConversation.set(null);
+      }
+      return undefined as T;
     }
     if (route === 'gui.chat.conversations.list' || route === 'gui.chat.conversations.search') {
-      return this.conversations() as T;
+      const query = ((payload as { q?: string })?.q ?? '').trim().toLowerCase();
+      if (!query) {
+        return this.mockConversations.map((item) => this.toSummary(item)) as T;
+      }
+      return this.mockConversations
+        .filter((item) =>
+          item.title.toLowerCase().includes(query) ||
+          item.model.toLowerCase().includes(query) ||
+          item.messages.some((message) => message.content.toLowerCase().includes(query)),
+        )
+        .map((item) => this.toSummary(item)) as T;
     }
     if (route === 'gui.chat.conversations.export') {
-      return '# Exported Conversation\n' as T;
+      const id = (payload as { id?: string; conversation_id?: string })?.id ?? (payload as { id?: string; conversation_id?: string })?.conversation_id;
+      const found = this.mockConversations.find((item) => item.id === id);
+      const conversation = found ?? (this.activeConversation()?.id === id ? this.activeConversation() : null);
+      if (!conversation) {
+        return '# Exported Conversation\n' as T;
+      }
+      return [
+        `# ${conversation.title}`,
+        '',
+        ...conversation.messages.map((message) => {
+          const heading = `## ${message.role.charAt(0).toUpperCase() + message.role.slice(1)}`;
+          const body = message.content ? `${message.content}\n` : '';
+          return `${heading}\n\n${body}`.trimEnd();
+        }),
+        '',
+      ].join('\n') as T;
     }
     if (route === 'gui.chat.attachImage') {
+      const attachment = payload as ImageAttachment;
+      this.queuedAttachments.update((items) => [...items, attachment]);
       return payload as T;
     }
     if (route === 'gui.chat.conversations.new') {
       const now = new Date().toISOString();
-      return {
+      const conversation = {
         id: `conv-${Date.now().toString(36)}`,
         title: 'New Chat',
         model: this.selectedModel() || 'lemer',
@@ -485,19 +597,24 @@ export class ChatStateService {
         updated_at: now,
         message_count: 0,
         messages: [],
-      } as T;
+      };
+      this.activeConversation.set(conversation);
+      this.mockConversations = [conversation, ...this.mockConversations.filter((item) => item.id !== conversation.id)];
+      this.upsertSummary(conversation);
+      return conversation as T;
     }
     if (route === 'gui.chat.send') {
       const conversation = this.activeConversation() ?? ((await this.mockInvoke('gui.chat.conversations.new')) as Conversation);
       const content = (payload as { content?: string })?.content ?? '';
       const now = new Date().toISOString();
-      return {
+      const attachments = this.queuedAttachments();
+      const updated = {
         ...conversation,
         updated_at: now,
         title: conversation.title === 'New Chat' ? content.slice(0, 48) || 'New Chat' : conversation.title,
         messages: [
           ...conversation.messages,
-          { id: `user-${Date.now()}`, role: 'user', content, created_at: now, model: this.selectedModel(), attachments: this.queuedAttachments() },
+          { id: `user-${Date.now()}`, role: 'user', content, created_at: now, model: this.selectedModel(), attachments },
           {
             id: `assistant-${Date.now() + 1}`,
             role: 'assistant',
@@ -506,8 +623,15 @@ export class ChatStateService {
             model: this.selectedModel(),
           },
         ],
-      } as T;
+      };
+      this.draft.set('');
+      this.queuedAttachments.set([]);
+      this.activeConversation.set(updated);
+      this.mockConversations = [updated, ...this.mockConversations.filter((item) => item.id !== updated.id)];
+      this.upsertSummary(updated);
+      return updated as T;
     }
     return {} as T;
   }
+
 }
