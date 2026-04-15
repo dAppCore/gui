@@ -2,6 +2,7 @@ package display
 
 import (
 	"context"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -113,4 +114,59 @@ func TestPreload_TrustedPreloadOrigin_Good(t *testing.T) {
 func TestPreload_TrustedPreloadOrigin_Bad(t *testing.T) {
 	assert.False(t, trustedPreloadOrigin("https://example.com"))
 	assert.False(t, trustedPreloadOrigin("http://10.0.0.1:3000"))
+}
+
+type preloadCapture struct {
+	scripts []string
+}
+
+func (p *preloadCapture) ExecJS(script string) {
+	p.scripts = append(p.scripts, script)
+}
+
+func TestPreload_InjectPreload_Good(t *testing.T) {
+	root := t.TempDir()
+	require.NoError(t, os.MkdirAll(filepath.Join(root, ".core"), 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(root, "index.html"), []byte("<html></html>"), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(root, "preload.js"), []byte("globalThis.__manifestLoaded = true;"), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(root, ".core", "view.yaml"), []byte("preloads:\n  - path: preload.js\n"), 0o644))
+
+	svc, err := New()
+	require.NoError(t, err)
+	target := &preloadCapture{}
+
+	err = svc.InjectPreload(target, "file://"+filepath.ToSlash(filepath.Join(root, "index.html")))
+	require.NoError(t, err)
+	require.Len(t, target.scripts, 1)
+	assert.Contains(t, target.scripts[0], "globalThis.core.ml")
+	assert.Contains(t, target.scripts[0], "globalThis.electron")
+	assert.Contains(t, target.scripts[0], "__manifestLoaded")
+}
+
+func TestPreload_InjectPreload_Bad(t *testing.T) {
+	svc, err := New()
+	require.NoError(t, err)
+	target := &preloadCapture{}
+
+	err = svc.InjectPreload(target, "https://example.com/app")
+	require.NoError(t, err)
+	require.Len(t, target.scripts, 1)
+	assert.Contains(t, target.scripts[0], "globalThis.core.ml")
+	assert.NotContains(t, target.scripts[0], "globalThis.electron")
+	assert.NotContains(t, target.scripts[0], "core.background.serviceWorker.register")
+}
+
+func TestPreload_InjectPreload_Ugly(t *testing.T) {
+	root := t.TempDir()
+	require.NoError(t, os.MkdirAll(filepath.Join(root, ".core"), 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(root, "index.html"), []byte("<html></html>"), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(root, ".core", "view.yaml"), []byte("preloads: [\n"), 0o644))
+
+	svc, err := New()
+	require.NoError(t, err)
+	target := &preloadCapture{}
+
+	err = svc.InjectPreload(target, "file://"+filepath.ToSlash(filepath.Join(root, "index.html")))
+	require.Error(t, err)
+	assert.Empty(t, target.scripts)
 }

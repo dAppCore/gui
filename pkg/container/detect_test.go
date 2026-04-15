@@ -2,9 +2,12 @@ package container
 
 import (
 	"errors"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDetectWithEnvironment_PrefersAppleContainersOnMacOS26(t *testing.T) {
@@ -83,4 +86,38 @@ func TestMajorVersion(t *testing.T) {
 	assert.Equal(t, 26, majorVersion("26.0"))
 	assert.Equal(t, 0, majorVersion("bogus"))
 	assert.Equal(t, 0, majorVersion(""))
+}
+
+func TestDetect_Good(t *testing.T) {
+	binDir := t.TempDir()
+	writeExecutable(t, binDir, "sw_vers", "#!/bin/sh\nprintf '26.0\\n'\n")
+	writeExecutable(t, binDir, "container", "#!/bin/sh\nexit 0\n")
+	t.Setenv("PATH", binDir)
+
+	assert.Equal(t, RuntimeApple, Detect())
+}
+
+func TestDetect_Bad(t *testing.T) {
+	binDir := t.TempDir()
+	writeExecutable(t, binDir, "sw_vers", "#!/bin/sh\nprintf '25.0\\n'\n")
+	writeExecutable(t, binDir, "docker", "#!/bin/sh\nexit 0\n")
+	t.Setenv("PATH", binDir)
+
+	assert.Equal(t, RuntimeDocker, Detect())
+}
+
+func TestDetect_Ugly(t *testing.T) {
+	binDir := t.TempDir()
+	writeExecutable(t, binDir, "sw_vers", "#!/bin/sh\nprintf 'not-a-version\\n'\n")
+	t.Setenv("PATH", binDir)
+
+	assert.Equal(t, RuntimeNone, Detect())
+}
+
+func writeExecutable(t *testing.T, dir, name, script string) string {
+	t.Helper()
+
+	path := filepath.Join(dir, name)
+	require.NoError(t, os.WriteFile(path, []byte(script), 0o755))
+	return path
 }
