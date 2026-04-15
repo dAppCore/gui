@@ -62,3 +62,18 @@ func TestDisplay_Good_CoreSchemeRoutesThroughBackend(t *testing.T) {
 	require.Len(t, platform.Windows, 1)
 	assert.True(t, strings.Contains(platform.Windows[0].HTMLContent(), "core://settings"))
 }
+
+func TestPreload_ValidatedLocalMLAPIURL_Good(t *testing.T) {
+	assert.Equal(t, "http://localhost:8090", validatedLocalMLAPIURL("http://localhost:8090/"))
+	assert.Equal(t, "https://127.0.0.1:9443", validatedLocalMLAPIURL("https://127.0.0.1:9443/"))
+}
+
+func TestPreload_ValidatedLocalMLAPIURL_Bad(t *testing.T) {
+	assert.Equal(t, "http://localhost:8090", validatedLocalMLAPIURL("https://example.com"))
+	assert.Equal(t, "http://localhost:8090", validatedLocalMLAPIURL("ftp://localhost:8090"))
+}
+
+func TestPreload_ValidatedLocalMLAPIURL_Ugly(t *testing.T) {
+	assert.Equal(t, "http://localhost:8090", validatedLocalMLAPIURL(""))
+	assert.Equal(t, "http://localhost:8090", validatedLocalMLAPIURL("not a url"))
+}

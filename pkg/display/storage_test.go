@@ -107,3 +107,46 @@ func TestStorageRegistry_Snapshot_Good(t *testing.T) {
 	_, otherOriginPresent := snapshot["other"]
 	assert.False(t, otherOriginPresent)
 }
+
+func TestStorage_StorageOriginForPageURL_Good(t *testing.T) {
+	assert.Equal(t, "https://app.example.com", storageOriginForPageURL("https://app.example.com/path?q=1"))
+	assert.Equal(t, "core://settings", storageOriginForPageURL("core://settings/view"))
+}
+
+func TestStorage_StorageOriginForPageURL_Bad(t *testing.T) {
+	assert.Equal(t, "custom://host/path", storageOriginForPageURL("custom://host/path"))
+}
+
+func TestStorage_StorageOriginForPageURL_Ugly(t *testing.T) {
+	assert.Equal(t, "", storageOriginForPageURL(""))
+	assert.Equal(t, "", storageOriginForPageURL("   "))
+}
+
+func TestStorage_CompositeKey_Good(t *testing.T) {
+	key := storageCompositeKey("origin", "bucket", "item")
+
+	origin, bucket, item, ok := decodeStorageCompositeKey(key)
+	require.True(t, ok)
+	assert.Equal(t, "origin", origin)
+	assert.Equal(t, "bucket", bucket)
+	assert.Equal(t, "item", item)
+	assert.Equal(t, "origin\x00bucket\x00item", makeStorageEntryKey("origin", "bucket", "item"))
+}
+
+func TestStorage_CompositeKey_Bad(t *testing.T) {
+	origin, bucket, item, ok := decodeStorageCompositeKey("not-json")
+
+	assert.False(t, ok)
+	assert.Empty(t, origin)
+	assert.Empty(t, bucket)
+	assert.Empty(t, item)
+}
+
+func TestStorage_CompositeKey_Ugly(t *testing.T) {
+	origin, bucket, item, ok := decodeStorageCompositeKey(`["one","two"]`)
+
+	assert.False(t, ok)
+	assert.Empty(t, origin)
+	assert.Empty(t, bucket)
+	assert.Empty(t, item)
+}
