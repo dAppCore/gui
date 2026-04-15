@@ -561,7 +561,8 @@ func (s *ChatStore) SendMessage(conversationID, content string) (Conversation, C
 	if !ok {
 		return Conversation{}, ChatMessage{}, ChatMessage{}, coreerr.E("display.chat.SendMessage", "conversation not found: "+conversationID, nil)
 	}
-	if strings.TrimSpace(content) == "" {
+	queuedAttachments := append([]ImageAttachment(nil), s.queuedImages[conversationID]...)
+	if strings.TrimSpace(content) == "" && len(queuedAttachments) == 0 {
 		return Conversation{}, ChatMessage{}, ChatMessage{}, coreerr.E("display.chat.SendMessage", "message content is required", nil)
 	}
 
@@ -572,12 +573,12 @@ func (s *ChatStore) SendMessage(conversationID, content string) (Conversation, C
 		Role:        "user",
 		Content:     content,
 		CreatedAt:   now,
-		Attachments: append([]ImageAttachment(nil), s.queuedImages[conversationID]...),
+		Attachments: queuedAttachments,
 	}
 	assistantMessage := ChatMessage{
 		ID:        s.nextIdentifier("msg"),
 		Role:      "assistant",
-		Content:   buildAssistantPlaceholder(model, content),
+		Content:   buildAssistantPlaceholder(model, content, len(queuedAttachments)),
 		CreatedAt: now.Add(250 * time.Millisecond),
 		Streaming: false,
 	}
@@ -591,7 +592,7 @@ func (s *ChatStore) SendMessage(conversationID, content string) (Conversation, C
 
 	conv.Messages = append(conv.Messages, userMessage, assistantMessage)
 	if len(conv.Messages) == 2 {
-		conv.Title = deriveConversationTitle(content)
+		conv.Title = deriveConversationTitleForMessage(content, queuedAttachments)
 	}
 	conv.UpdatedAt = assistantMessage.CreatedAt
 	conv.Model = model
@@ -879,6 +880,8 @@ type QueryChatHistory struct {
 	ConversationID string `json:"conversation_id"`
 }
 
+type QueryChatSnapshot struct{}
+
 type TaskChatSend struct {
 	ConversationID string `json:"conversation_id"`
 	Content        string `json:"content"`
@@ -984,6 +987,8 @@ func (s *Service) handleChatQuery(_ *core.Core, q core.Query) (any, bool, error)
 	case QueryChatHistory:
 		history, err := s.chat.History(q.ConversationID)
 		return history, true, err
+	case QueryChatSnapshot:
+		return s.chat.Snapshot(), true, nil
 	case QueryChatModels:
 		return s.chat.Models(), true, nil
 	case QueryChatSettingsLoad:
@@ -1289,6 +1294,19 @@ func deriveConversationTitle(content string) string {
 	return strings.TrimSpace(string(runes[:50])) + "..."
 }
 
+func deriveConversationTitleForMessage(content string, attachments []ImageAttachment) string {
+	if title := deriveConversationTitle(strings.TrimSpace(content)); title != "New conversation" {
+		return title
+	}
+	if len(attachments) == 0 {
+		return "New conversation"
+	}
+	if name := strings.TrimSpace(attachments[0].Filename); name != "" {
+		return deriveConversationTitle("Image: " + name)
+	}
+	return "Image conversation"
+}
+
 func conversationMatchesSearchQuery(conv Conversation, query string) bool {
 	if query == "" {
 		return true
@@ -1323,13 +1341,17 @@ func messageSearchHaystack(message ChatMessage) string {
 	return strings.Join(parts, " ")
 }
 
-func buildAssistantPlaceholder(model, prompt string) string {
+func buildAssistantPlaceholder(model, prompt string, attachmentCount int) string {
 	prompt = strings.TrimSpace(prompt)
-	if prompt == "" {
-		return "Waiting for the local inference pipeline."
-	}
 	if model == "" {
 		model = "local model"
+	}
+	if prompt == "" {
+		if attachmentCount > 0 {
+			return "Local inference is not wired in this workspace yet. " +
+				"Captured " + strconvFormatUint(uint64(attachmentCount)) + " image attachment(s) for " + model + " and stored them in chat history."
+		}
+		return "Waiting for the local inference pipeline."
 	}
 	return "Local inference is not wired in this workspace yet. " +
 		"Captured your prompt for " + model + " and stored it in chat history."
@@ -1361,7 +1383,7 @@ func canReuseAssistantForStreaming(conv Conversation) bool {
 	if previous.Role != "user" {
 		return false
 	}
-	return last.Content == buildAssistantPlaceholder(conv.Model, previous.Content)
+	return last.Content == buildAssistantPlaceholder(conv.Model, previous.Content, len(previous.Attachments))
 }
 
 func parseCounter(value string) uint64 {
@@ -1584,8 +1606,14 @@ func (s *ChatStore) normalizeMessagesLocked(messages []ChatMessage, base time.Ti
 
 func firstUserMessage(messages []ChatMessage) string {
 	for _, message := range messages {
-		if message.Role == "user" && strings.TrimSpace(message.Content) != "" {
-			return message.Content
+		if message.Role != "user" {
+			continue
+		}
+		if content := strings.TrimSpace(message.Content); content != "" {
+			return content
+		}
+		if len(message.Attachments) > 0 {
+			return deriveConversationTitleForMessage("", message.Attachments)
 		}
 	}
 	return ""

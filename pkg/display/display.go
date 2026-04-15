@@ -288,6 +288,17 @@ func wsRequire(data map[string]any, key string) (string, error) {
 	return v, nil
 }
 
+func decodeWSData(data map[string]any, target any) error {
+	encodedR := corego.JSONMarshal(data)
+	if !encodedR.OK {
+		return corego.NewError("ws: invalid payload")
+	}
+	if r := corego.JSONUnmarshal(encodedR.Value.([]byte), target); !r.OK {
+		return corego.E("display.ws", "invalid payload", nil)
+	}
+	return nil
+}
+
 // handleWSMessage bridges WebSocket commands to IPC calls.
 func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 	var result any
@@ -336,6 +347,129 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 			return nil, false, createErr
 		}
 		result, handled, err = info, true, nil
+	case "chat:snapshot":
+		result, handled, err = s.Core().QUERY(QueryChatSnapshot{})
+	case "chat:models":
+		result, handled, err = s.Core().QUERY(QueryChatModels{})
+	case "chat:model-select":
+		model, e := wsRequire(msg.Data, "model")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = s.Core().PERFORM(TaskSelectModel{Model: model})
+	case "chat:settings-load":
+		result, handled, err = s.Core().QUERY(QueryChatSettingsLoad{})
+	case "chat:settings-save":
+		var settings ChatSettings
+		if err := decodeWSData(msg.Data, &settings); err != nil {
+			return nil, false, err
+		}
+		result, handled, err = s.Core().PERFORM(TaskChatSettingsSave{Settings: settings})
+	case "chat:settings-reset":
+		result, handled, err = s.Core().PERFORM(TaskChatSettingsReset{})
+	case "chat:conversations":
+		result, handled, err = s.Core().QUERY(QueryConversationsList{})
+	case "chat:conversation-get":
+		id, e := wsRequire(msg.Data, "id")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = s.Core().QUERY(QueryConversationGet{ID: id})
+	case "chat:conversation-search":
+		query, _ := msg.Data["q"].(string)
+		result, handled, err = s.Core().QUERY(QueryConversationsSearch{Query: query})
+	case "chat:conversation-new":
+		result, handled, err = s.Core().PERFORM(TaskConversationNew{})
+	case "chat:conversation-rename":
+		var input TaskConversationRename
+		if err := decodeWSData(msg.Data, &input); err != nil {
+			return nil, false, err
+		}
+		result, handled, err = s.Core().PERFORM(input)
+	case "chat:conversation-delete":
+		id, e := wsRequire(msg.Data, "id")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = s.Core().PERFORM(TaskConversationDelete{ID: id})
+	case "chat:conversation-export":
+		id, e := wsRequire(msg.Data, "id")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = s.Core().QUERY(QueryConversationExport{ID: id})
+	case "chat:queued-images":
+		conversationID, e := wsRequire(msg.Data, "conversation_id")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = s.Core().QUERY(QueryQueuedImages{ConversationID: conversationID})
+	case "chat:attach-image":
+		var input TaskAttachImage
+		if err := decodeWSData(msg.Data, &input); err != nil {
+			return nil, false, err
+		}
+		result, handled, err = s.Core().PERFORM(input)
+	case "chat:detach-image":
+		var input TaskDetachImage
+		if err := decodeWSData(msg.Data, &input); err != nil {
+			return nil, false, err
+		}
+		result, handled, err = s.Core().PERFORM(input)
+	case "chat:send":
+		var input TaskChatSend
+		if err := decodeWSData(msg.Data, &input); err != nil {
+			return nil, false, err
+		}
+		result, handled, err = s.Core().PERFORM(input)
+	case "chat:clear":
+		conversationID, e := wsRequire(msg.Data, "conversation_id")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = s.Core().PERFORM(TaskChatClear{ConversationID: conversationID})
+	case "chat:thinking-start":
+		conversationID, e := wsRequire(msg.Data, "conversation_id")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = s.Core().PERFORM(TaskThinkingStart{ConversationID: conversationID})
+	case "chat:thinking-append":
+		var input TaskThinkingAppend
+		if err := decodeWSData(msg.Data, &input); err != nil {
+			return nil, false, err
+		}
+		result, handled, err = s.Core().PERFORM(input)
+	case "chat:thinking-end":
+		conversationID, e := wsRequire(msg.Data, "conversation_id")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = s.Core().PERFORM(TaskThinkingEnd{ConversationID: conversationID})
+	case "chat:tool-call":
+		var input TaskRecordToolCall
+		if err := decodeWSData(msg.Data, &input); err != nil {
+			return nil, false, err
+		}
+		result, handled, err = s.Core().PERFORM(input)
+	case "chat:stream-start":
+		conversationID, e := wsRequire(msg.Data, "conversation_id")
+		if e != nil {
+			return nil, false, e
+		}
+		result, handled, err = s.Core().PERFORM(TaskChatStreamStart{ConversationID: conversationID})
+	case "chat:stream-append":
+		var input TaskChatStreamAppend
+		if err := decodeWSData(msg.Data, &input); err != nil {
+			return nil, false, err
+		}
+		result, handled, err = s.Core().PERFORM(input)
+	case "chat:stream-finish":
+		var input TaskChatStreamFinish
+		if err := decodeWSData(msg.Data, &input); err != nil {
+			return nil, false, err
+		}
+		result, handled, err = s.Core().PERFORM(input)
 	case "route:resolve":
 		rawURL, e := wsRequire(msg.Data, "url")
 		if e != nil {

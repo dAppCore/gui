@@ -221,6 +221,43 @@ func TestChatStreamingLifecycle_Good(t *testing.T) {
 	assert.False(t, history[1].Streaming)
 }
 
+func TestChatSendAllowsAttachmentOnlyMessages_Good(t *testing.T) {
+	_, c := newTestDisplayService(t)
+
+	convResult, handled, err := c.PERFORM(TaskConversationNew{})
+	require.NoError(t, err)
+	require.True(t, handled)
+	conv := convResult.(Conversation)
+
+	_, handled, err = c.PERFORM(TaskAttachImage{
+		ConversationID: conv.ID,
+		Attachment: ImageAttachment{
+			Filename: "reference.png",
+			MimeType: "image/png",
+			Data:     "ZmFrZQ==",
+			Width:    512,
+			Height:   512,
+		},
+	})
+	require.NoError(t, err)
+	require.True(t, handled)
+
+	sendResult, handled, err := c.PERFORM(TaskChatSend{
+		ConversationID: conv.ID,
+		Content:        "",
+	})
+	require.NoError(t, err)
+	require.True(t, handled)
+
+	updated := sendResult.(Conversation)
+	require.Len(t, updated.Messages, 2)
+	assert.Empty(t, updated.Messages[0].Content)
+	require.Len(t, updated.Messages[0].Attachments, 1)
+	assert.Equal(t, "reference.png", updated.Messages[0].Attachments[0].Filename)
+	assert.Contains(t, updated.Messages[1].Content, "image attachment")
+	assert.Equal(t, "Image: reference.png", updated.Title)
+}
+
 func TestChatPersistence_Good(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "gui.yaml")
 
@@ -579,4 +616,34 @@ func TestRouteQueriesAndStoreGroups_Good(t *testing.T) {
 		snippets = append(snippets, result.Snippet)
 	}
 	assert.Contains(t, snippets, "invoice status is paid")
+}
+
+func TestChatSnapshotQuery_Good(t *testing.T) {
+	_, c := newTestDisplayService(t)
+
+	convResult, handled, err := c.PERFORM(TaskConversationNew{})
+	require.NoError(t, err)
+	require.True(t, handled)
+	conv := convResult.(Conversation)
+
+	_, handled, err = c.PERFORM(TaskAttachImage{
+		ConversationID: conv.ID,
+		Attachment: ImageAttachment{
+			Filename: "state.png",
+			MimeType: "image/png",
+			Data:     "ZmFrZQ==",
+		},
+	})
+	require.NoError(t, err)
+	require.True(t, handled)
+
+	snapshotResult, handled, err := c.QUERY(QueryChatSnapshot{})
+	require.NoError(t, err)
+	require.True(t, handled)
+
+	snapshot := snapshotResult.(ChatSnapshot)
+	assert.Equal(t, "lemer", snapshot.SelectedModel)
+	require.Contains(t, snapshot.Conversations, conv.ID)
+	require.Contains(t, snapshot.QueuedImages, conv.ID)
+	require.Len(t, snapshot.QueuedImages[conv.ID], 1)
 }

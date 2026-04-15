@@ -203,7 +203,10 @@ interface ConversationGroup {
               <article class="message" [class.user]="message.role === 'user'">
                 <div class="message-meta">
                   <span>{{ message.role === 'user' ? 'You' : 'Assistant' }}</span>
-                  <time [attr.datetime]="message.createdAt" [title]="message.createdAt | date: 'medium'">
+                  <time
+                    [attr.datetime]="message.createdAt"
+                    [title]="message.createdAt | date: 'medium'"
+                  >
                     {{ message.createdAt | date: 'shortTime' }}
                   </time>
                 </div>
@@ -226,7 +229,11 @@ interface ConversationGroup {
 
                   @if (message.thinking?.content) {
                     <section class="thinking-panel">
-                      <button type="button" class="collapse-toggle" (click)="toggleThinking(message.id)">
+                      <button
+                        type="button"
+                        class="collapse-toggle"
+                        (click)="toggleThinking(message.id)"
+                      >
                         <span class="thinking-label" [class.active]="message.thinking?.active">
                           @if (message.thinking?.active) {
                             <span class="thinking-pulse" aria-hidden="true"></span>
@@ -258,11 +265,7 @@ interface ConversationGroup {
                   @if (message.toolCalls?.length) {
                     @for (tool of message.toolCalls || []; track tool.id) {
                       <section class="tool-panel">
-                        <button
-                          type="button"
-                          class="collapse-toggle"
-                          (click)="toggleTool(tool.id)"
-                        >
+                        <button type="button" class="collapse-toggle" (click)="toggleTool(tool.id)">
                           <span>{{ tool.name }}</span>
                           <small
                             class="tool-status"
@@ -302,7 +305,9 @@ interface ConversationGroup {
         </div>
 
         @if (!autoScroll()) {
-          <button type="button" class="scroll-pill" (click)="jumpToBottom()">Scroll to bottom</button>
+          <button type="button" class="scroll-pill" (click)="jumpToBottom()">
+            Scroll to bottom
+          </button>
         }
 
         <footer class="composer">
@@ -1046,7 +1051,7 @@ export class DashboardComponent implements AfterViewChecked {
   }
 
   protected createConversation(): void {
-    this.chat.createConversation();
+    void this.chat.createConversation();
     this.uiState.clearSearchQuery();
     this.cancelRename();
   }
@@ -1057,7 +1062,7 @@ export class DashboardComponent implements AfterViewChecked {
     this.jumpToBottom();
   }
 
-  protected deleteActiveConversation(): void {
+  protected async deleteActiveConversation(): Promise<void> {
     const active = this.chat.activeConversation();
     if (!active) {
       return;
@@ -1065,11 +1070,11 @@ export class DashboardComponent implements AfterViewChecked {
     if (!this.confirmDeleteConversation(active.title)) {
       return;
     }
-    this.chat.deleteConversation(active.id);
+    await this.chat.deleteConversation(active.id);
     this.cancelRename();
   }
 
-  protected clearActiveConversation(): void {
+  protected async clearActiveConversation(): Promise<void> {
     const active = this.chat.activeConversation();
     if (!active) {
       return;
@@ -1077,16 +1082,16 @@ export class DashboardComponent implements AfterViewChecked {
     if (!window.confirm(`Clear every message from "${active.title}"?`)) {
       return;
     }
-    this.chat.clearActiveConversation();
+    await this.chat.clearActiveConversation();
     this.cancelRename();
   }
 
-  protected exportActiveConversation(): void {
+  protected async exportActiveConversation(): Promise<void> {
     const active = this.chat.activeConversation();
     if (!active) {
       return;
     }
-    const blob = new Blob([this.chat.exportConversation(active)], { type: 'text/markdown' });
+    const blob = new Blob([await this.chat.exportConversation(active)], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
@@ -1095,12 +1100,12 @@ export class DashboardComponent implements AfterViewChecked {
     URL.revokeObjectURL(url);
   }
 
-  protected deleteConversation(conversation: Conversation, event: Event): void {
+  protected async deleteConversation(conversation: Conversation, event: Event): Promise<void> {
     event.stopPropagation();
     if (!this.confirmDeleteConversation(conversation.title)) {
       return;
     }
-    this.chat.deleteConversation(conversation.id);
+    await this.chat.deleteConversation(conversation.id);
     this.cancelRename();
   }
 
@@ -1227,7 +1232,7 @@ export class DashboardComponent implements AfterViewChecked {
     if (this.editingConversationId() !== id) {
       return;
     }
-    this.chat.renameConversation(id, this.renameDraft());
+    void this.chat.renameConversation(id, this.renameDraft());
     this.cancelRename();
   }
 
@@ -1368,7 +1373,10 @@ export class DashboardComponent implements AfterViewChecked {
         );
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : `Supported image formats: ${SUPPORTED_CHAT_IMAGE_LABEL}.`;
+      const message =
+        error instanceof Error
+          ? error.message
+          : `Supported image formats: ${SUPPORTED_CHAT_IMAGE_LABEL}.`;
       this.showComposerNotice(message);
     }
   }
@@ -1669,6 +1677,9 @@ function toolRuntime(tool: ToolInvocation): string {
     return '';
   }
 
-  const duration = Math.max(new Date(tool.endedAt).getTime() - new Date(tool.startedAt).getTime(), 0);
+  const duration = Math.max(
+    new Date(tool.endedAt).getTime() - new Date(tool.startedAt).getTime(),
+    0,
+  );
   return `${(duration / 1000).toFixed(1)}s`;
 }

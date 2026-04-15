@@ -1270,6 +1270,79 @@ func TestHandleWSMessage_Extended_Good(t *testing.T) {
 		assert.Equal(t, "OK", result)
 	})
 
+	t.Run("chat actions", func(t *testing.T) {
+		result, handled, err := svc.handleWSMessage(WSMessage{Action: "chat:snapshot"})
+		require.NoError(t, err)
+		assert.True(t, handled)
+		_, ok := result.(ChatSnapshot)
+		require.True(t, ok)
+
+		result, handled, err = svc.handleWSMessage(WSMessage{Action: "chat:conversation-new"})
+		require.NoError(t, err)
+		assert.True(t, handled)
+		conversation, ok := result.(Conversation)
+		require.True(t, ok)
+		require.NotEmpty(t, conversation.ID)
+
+		result, handled, err = svc.handleWSMessage(WSMessage{
+			Action: "chat:settings-save",
+			Data: map[string]any{
+				"temperature":    0.6,
+				"top_p":          0.9,
+				"top_k":          float64(32),
+				"max_tokens":     float64(1024),
+				"context_window": float64(4096),
+				"system_prompt":  "Stay concise.",
+				"default_model":  "lemma",
+			},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+		settings, ok := result.(ChatSettings)
+		require.True(t, ok)
+		assert.Equal(t, float32(0.6), settings.Temperature)
+
+		_, handled, err = svc.handleWSMessage(WSMessage{
+			Action: "chat:attach-image",
+			Data: map[string]any{
+				"conversation_id": conversation.ID,
+				"attachment": map[string]any{
+					"filename":  "ws-chat.png",
+					"mime_type": "image/png",
+					"data":      "ZmFrZQ==",
+					"width":     float64(320),
+					"height":    float64(180),
+				},
+			},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+
+		result, handled, err = svc.handleWSMessage(WSMessage{
+			Action: "chat:send",
+			Data: map[string]any{
+				"conversation_id": conversation.ID,
+				"content":         "",
+			},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+		updatedConversation, ok := result.(Conversation)
+		require.True(t, ok)
+		require.Len(t, updatedConversation.Messages, 2)
+		assert.Len(t, updatedConversation.Messages[0].Attachments, 1)
+
+		result, handled, err = svc.handleWSMessage(WSMessage{
+			Action: "chat:conversation-export",
+			Data:   map[string]any{"id": conversation.ID},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+		exported, ok := result.(string)
+		require.True(t, ok)
+		assert.Contains(t, exported, "ws-chat.png")
+	})
+
 	t.Run("event info", func(t *testing.T) {
 		result, handled, err := svc.handleWSMessage(WSMessage{Action: "event:info"})
 		require.NoError(t, err)
