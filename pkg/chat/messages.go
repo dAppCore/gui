@@ -39,12 +39,13 @@ type ChatMessage struct {
 }
 
 type ModelEntry struct {
-	Name         string `json:"name"`
-	Architecture string `json:"architecture"`
-	QuantBits    int    `json:"quant_bits"`
-	SizeBytes    int64  `json:"size_bytes"`
-	Loaded       bool   `json:"loaded"`
-	Backend      string `json:"backend"`
+	Name           string `json:"name"`
+	Architecture   string `json:"architecture"`
+	QuantBits      int    `json:"quant_bits"`
+	SizeBytes      int64  `json:"size_bytes"`
+	Loaded         bool   `json:"loaded"`
+	Backend        string `json:"backend"`
+	SupportsVision bool   `json:"supports_vision"`
 }
 
 type ChatSettings struct {

@@ -1,5 +1,7 @@
 dappco.re/go/core v0.8.0-alpha.1 h1:gj7+Scv+L63Z7wMxbJYHhaRFkHJo2u4MMPuUSv/Dhtk=
 dappco.re/go/core v0.8.0-alpha.1/go.mod h1:f2/tBZ3+3IqDrg2F5F598llv0nmb/4gJVCFzM5geE4A=
+dappco.re/go/core/inference v0.2.1 h1:/kgZuG4tXibgwTB3VIB1zg9UMCHRm9T3EWoDLjptBpY=
+dappco.re/go/core/inference v0.2.1/go.mod h1:wbRY0v6iwOoJCpTvcBFarAM08bMgpPcrF6yv3vccYoA=
 dappco.re/go/core/io v0.4.2 h1:SHNF/xMPyFnKWWYoFW5Y56eiuGVL/mFa1lfIw/530ls=
 dappco.re/go/core/io v0.4.2/go.mod h1:w71dukyunczLb8frT9JOd5B78PjwWQD3YAXiCt3AcPA=
 dappco.re/go/core/log v0.1.0 h1:pa71Vq2TD2aoEUQWFKwNcaJ3GBY8HbaNGqtE688Unyc=

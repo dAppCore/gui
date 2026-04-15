@@ -59,6 +59,7 @@ export interface ModelEntry {
   size_bytes: number;
   loaded: boolean;
   backend: string;
+  supports_vision: boolean;
 }
 
 export interface ChatSettings {

@@ -10,7 +10,7 @@ import { ImageAttachment } from './chat.types';
   imports: [CommonModule, FormsModule],
   template: `
     <div class="composer" (dragover)="onDragOver($event)" (drop)="onDrop($event)">
-      <input #filePicker type="file" accept="image/*" multiple hidden (change)="onFileSelection($event)" />
+      <input #filePicker type="file" accept=".png,.jpg,.jpeg,.webp,.gif" multiple hidden (change)="onFileSelection($event)" />
       <div class="composer__attachments" *ngIf="attachments.length">
         <figure *ngFor="let attachment of attachments; let index = index" class="attachment">
           <img [src]="attachmentSource(attachment)" [alt]="attachment.filename" />

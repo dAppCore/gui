@@ -15,6 +15,7 @@ import (
 	"time"
 
 	core "dappco.re/go/core"
+	"dappco.re/go/core/inference"
 	coreerr "dappco.re/go/core/log"
 	"dappco.re/go/store"
 	guimcp "forge.lthn.ai/core/gui/pkg/mcp"
@@ -136,11 +137,19 @@ type configuredModels struct {
 	Default      string `yaml:"default"`
 	DefaultModel string `yaml:"default_model"`
 	Models       []struct {
-		Name         string `yaml:"name"`
-		Path         string `yaml:"path"`
-		Architecture string `yaml:"architecture"`
-		Backend      string `yaml:"backend"`
+		Name           string `yaml:"name"`
+		Path           string `yaml:"path"`
+		Architecture   string `yaml:"architecture"`
+		Backend        string `yaml:"backend"`
+		SupportsVision *bool  `yaml:"supports_vision"`
 	} `yaml:"models"`
+}
+
+var supportedImageMimeTypes = map[string]struct{}{
+	"image/png":  {},
+	"image/jpeg": {},
+	"image/webp": {},
+	"image/gif":  {},
 }
 
 func Register(optionFns ...func(*Options)) func(*core.Core) core.Result {
@@ -340,6 +349,9 @@ func (s *Service) registerActions() {
 	c.Action("gui.chat.attachImage", func(_ context.Context, opts core.Options) core.Result {
 		input, err := decodeInput[attachImageInput](opts)
 		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		if err := validateImageAttachment(input.ImageAttachment); err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		s.queueAttachment(coalesce(input.ConversationID, "draft"), input.ImageAttachment)
@@ -1081,6 +1093,11 @@ func (s *Service) discoverModels() []ModelEntry {
 				entry.Name = name
 				entry.Architecture = coalesce(item.Architecture, entry.Architecture)
 				entry.Backend = coalesce(item.Backend, entry.Backend, "local")
+				if item.SupportsVision != nil {
+					entry.SupportsVision = *item.SupportsVision
+				} else if entry.Architecture != "" {
+					entry.SupportsVision = architectureSupportsVision(entry.Architecture)
+				}
 				if entry.SizeBytes == 0 && item.Path != "" {
 					entry.SizeBytes = directorySize(item.Path)
 				}
@@ -1106,49 +1123,48 @@ func discoverModelsOnDisk(root string) []ModelEntry {
 	if strings.TrimSpace(root) == "" {
 		return nil
 	}
-	entries, err := os.ReadDir(root)
-	if err != nil {
-		return nil
-	}
 	var results []ModelEntry
-	for _, entry := range entries {
-		if !entry.IsDir() {
-			continue
-		}
-		modelPath := filepath.Join(root, entry.Name())
-		configPath := filepath.Join(modelPath, "config.json")
-		if _, err := os.Stat(configPath); err != nil {
-			continue
-		}
+	for discovered := range inference.Discover(root) {
+		modelPath := discovered.Path
+		name := filepath.Base(modelPath)
 		results = append(results, ModelEntry{
-			Name:         entry.Name(),
-			Architecture: architectureFromConfig(configPath),
-			QuantBits:    quantBitsFromName(entry.Name()),
-			SizeBytes:    directorySize(modelPath),
-			Backend:      "local",
+			Name:           name,
+			Architecture:   strings.ToLower(discovered.ModelType),
+			QuantBits:      coalesceQuantBits(discovered.QuantBits, quantBitsFromName(name)),
+			SizeBytes:      directorySize(modelPath),
+			Backend:        "local",
+			SupportsVision: architectureSupportsVision(discovered.ModelType),
 		})
 	}
 	return results
 }
 
-func architectureFromConfig(configPath string) string {
-	payload, err := os.ReadFile(configPath)
-	if err != nil {
-		return ""
+func validateImageAttachment(attachment ImageAttachment) error {
+	if strings.TrimSpace(attachment.Filename) == "" {
+		return coreerr.E("chat.attachImage", "attachment filename is required", nil)
 	}
-	var parsed map[string]any
-	if result := core.JSONUnmarshalString(string(payload), &parsed); !result.OK {
-		return ""
+	mimeType := strings.ToLower(strings.TrimSpace(attachment.MimeType))
+	if _, ok := supportedImageMimeTypes[mimeType]; !ok {
+		return coreerr.E("chat.attachImage", "unsupported image format: expected PNG, JPEG, WebP, or GIF", nil)
 	}
-	if architectures, ok := parsed["architectures"].([]any); ok && len(architectures) > 0 {
-		if name, ok := architectures[0].(string); ok {
-			return strings.ToLower(name)
+	if strings.TrimSpace(attachment.Data) == "" {
+		return coreerr.E("chat.attachImage", "attachment data is required", nil)
+	}
+	return nil
+}
+
+func architectureSupportsVision(architecture string) bool {
+	lower := strings.ToLower(strings.TrimSpace(architecture))
+	return strings.HasPrefix(lower, "gemma3") || strings.HasPrefix(lower, "gemma4")
+}
+
+func coalesceQuantBits(values ...int) int {
+	for _, value := range values {
+		if value != 0 {
+			return value
 		}
 	}
-	if modelType, ok := parsed["model_type"].(string); ok {
-		return strings.ToLower(modelType)
-	}
-	return ""
+	return 0
 }
 
 func quantBitsFromName(name string) int {

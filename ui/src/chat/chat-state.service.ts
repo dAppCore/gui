@@ -15,6 +15,8 @@ import {
 
 @Injectable({ providedIn: 'root' })
 export class ChatStateService {
+  private readonly supportedImageMimeTypes = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
+  private readonly supportedImageExtensions = ['.png', '.jpg', '.jpeg', '.webp', '.gif'];
   private readonly ws = inject(WebSocketService);
   private readonly bindings = new CoreGuiChatBindings((route, payload) => this.mockInvoke(route, payload));
   private mockConversations: Conversation[] = [];
@@ -179,7 +181,7 @@ export class ChatStateService {
     }
     const items = Array.from(files);
     for (const file of items) {
-      if (!file.type.startsWith('image/')) {
+      if (!this.isSupportedImageFile(file)) {
         continue;
       }
       const attachment = await this.fileToAttachment(file);
@@ -443,15 +445,10 @@ export class ChatStateService {
     };
   }
 
-  // Vision is currently limited to Gemma-family multimodal models such as lemer/lemma.
-  // Example: this.supportsVision({ name: 'lemer', architecture: 'gemma3' }) == true
+  // The UI gates image input from the backend capability contract rather than inferring from names.
+  // Example: this.supportsVision({ name: 'lemer', supports_vision: true } as ModelEntry) == true
   private supportsVision(model: ModelEntry | null): boolean {
-    if (!model) {
-      return false;
-    }
-    const architecture = (model.architecture ?? '').toLowerCase();
-    const name = (model.name ?? '').toLowerCase();
-    return architecture.includes('gemma') || name === 'lemer' || name === 'lemma';
+    return model?.supports_vision ?? false;
   }
 
   private async fileToAttachment(file: File): Promise<ImageAttachment> {
@@ -475,6 +472,15 @@ export class ChatStateService {
     });
   }
 
+  private isSupportedImageFile(file: File): boolean {
+    const mimeType = (file.type ?? '').toLowerCase();
+    if (this.supportedImageMimeTypes.has(mimeType)) {
+      return true;
+    }
+    const lowerName = file.name.toLowerCase();
+    return this.supportedImageExtensions.some((suffix) => lowerName.endsWith(suffix));
+  }
+
   private readImageDimensions(source: string): Promise<{ width: number; height: number }> {
     return new Promise((resolve) => {
       const image = new Image();
@@ -494,8 +500,8 @@ export class ChatStateService {
   private async mockInvoke<T>(route: ChatRoute, payload?: unknown): Promise<T> {
     if (route === 'gui.chat.models') {
       return [
-        { name: 'lemer', architecture: 'gemma3', quant_bits: 4, size_bytes: 1500000000, loaded: true, backend: 'metal' },
-        { name: 'lemma', architecture: 'qwen3', quant_bits: 8, size_bytes: 3200000000, loaded: false, backend: 'ollama' },
+        { name: 'lemer', architecture: 'gemma3', quant_bits: 4, size_bytes: 1500000000, loaded: true, backend: 'metal', supports_vision: true },
+        { name: 'lemma', architecture: 'qwen3', quant_bits: 8, size_bytes: 3200000000, loaded: false, backend: 'ollama', supports_vision: false },
       ] as T;
     }
     if (route === 'gui.chat.settings.load') {
