@@ -62,14 +62,53 @@ func TestMarketplace_FetchManifest_Bad(t *testing.T) {
 }
 
 func TestMarketplace_FetchManifest_Ugly(t *testing.T) {
+	t.Run("invalid yaml", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			_, _ = w.Write([]byte(": not-yaml"))
+		}))
+		t.Cleanup(server.Close)
+
+		installer := Installer{HTTPClient: server.Client()}
+		_, err := installer.FetchManifest(context.Background(), server.URL)
+		require.Error(t, err)
+	})
+
+	t.Run("size limit", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			_, _ = w.Write([]byte("name: " + strings.Repeat("x", maxManifestBytes)))
+		}))
+		t.Cleanup(server.Close)
+
+		installer := Installer{HTTPClient: server.Client()}
+		_, err := installer.FetchManifest(context.Background(), server.URL)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "exceeds")
+	})
+}
+
+func TestMarketplace_List_Bad(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		_, _ = w.Write([]byte(": not-yaml"))
+		w.WriteHeader(http.StatusBadGateway)
+		_, _ = w.Write([]byte("boom"))
 	}))
 	t.Cleanup(server.Close)
 
 	installer := Installer{HTTPClient: server.Client()}
-	_, err := installer.FetchManifest(context.Background(), server.URL)
+	_, err := installer.List(context.Background(), server.URL)
 	require.Error(t, err)
+	assert.Contains(t, err.Error(), "marketplace list failed")
+}
+
+func TestMarketplace_List_Ugly(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(strings.Repeat("a", maxManifestBytes+1)))
+	}))
+	t.Cleanup(server.Close)
+
+	installer := Installer{HTTPClient: server.Client()}
+	_, err := installer.List(context.Background(), server.URL)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "exceeds")
 }
 
 func TestMarketplace_VerifyManifest_Good(t *testing.T) {

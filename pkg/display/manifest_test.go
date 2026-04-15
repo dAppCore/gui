@@ -107,3 +107,52 @@ func TestManifest_DiscoverManifestPath_Ugly(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, manifestPath, got)
 }
+
+func TestManifest_ManifestWindowConfig_Good(t *testing.T) {
+	root := t.TempDir()
+	require.NoError(t, os.MkdirAll(filepath.Join(root, ".core"), 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(root, "index.html"), []byte("<html></html>"), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(root, ".core", "view.yaml"), []byte(strings.Join([]string{
+		"windows:",
+		"  main:",
+		"    title: Core GUI",
+		"    width: 1280",
+		"    height: 720",
+		"    preload: true",
+	}, "\n")), 0o644))
+
+	svc, err := New()
+	require.NoError(t, err)
+
+	got := svc.manifestWindowConfig(filepath.Join(root, "index.html"))
+
+	require.NotNil(t, got)
+	require.Contains(t, got, "main")
+	assert.Equal(t, "Core GUI", got["main"].Title)
+	assert.Equal(t, 1280, got["main"].Width)
+	assert.Equal(t, 720, got["main"].Height)
+	assert.True(t, got["main"].Preload)
+}
+
+func TestManifest_ManifestWindowConfig_Bad(t *testing.T) {
+	svc, err := New()
+	require.NoError(t, err)
+
+	got := svc.manifestWindowConfig(filepath.Join(t.TempDir(), "missing.html"))
+
+	assert.Nil(t, got)
+}
+
+func TestManifest_ManifestWindowConfig_Ugly(t *testing.T) {
+	root := t.TempDir()
+	require.NoError(t, os.MkdirAll(filepath.Join(root, ".core"), 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(root, "index.html"), []byte("<html></html>"), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(root, ".core", "view.yaml"), []byte("windows: [\n"), 0o644))
+
+	svc, err := New()
+	require.NoError(t, err)
+
+	got := svc.manifestWindowConfig(filepath.Join(root, "index.html"))
+
+	assert.Nil(t, got)
+}
