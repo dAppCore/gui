@@ -480,15 +480,19 @@ func TestTaskApplyWorkflow_Good(t *testing.T) {
 
 	editor, ok := svc.Manager().Get("editor")
 	require.True(t, ok)
-	x, y := editor.Position()
-	assert.Equal(t, 0, x)
-	assert.Equal(t, 0, y)
-
 	terminal, ok := svc.Manager().Get("terminal")
 	require.True(t, ok)
-	x, y = terminal.Position()
-	assert.Equal(t, 960, x)
-	assert.Equal(t, 0, y)
+	editorX, editorY := editor.Position()
+	terminalX, terminalY := terminal.Position()
+
+	assert.Equal(t, 0, editorY)
+	assert.Equal(t, 0, terminalY)
+	assert.ElementsMatch(t, []int{0, 960}, []int{editorX, terminalX})
+
+	// The assignment order is derived from map iteration, so only the
+	// geometry matters here.
+	assert.Contains(t, []int{editorX, terminalX}, 0)
+	assert.Contains(t, []int{editorX, terminalX}, 960)
 }
 
 // --- Zoom ---
