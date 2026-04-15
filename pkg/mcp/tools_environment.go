@@ -18,14 +18,14 @@ type ThemeGetOutput struct {
 }
 
 func (s *Subsystem) themeGet(_ context.Context, _ *mcp.CallToolRequest, _ ThemeGetInput) (*mcp.CallToolResult, ThemeGetOutput, error) {
-	r := s.core.QUERY(environment.QueryTheme{})
-	if !r.OK {
-		if e, ok := r.Value.(error); ok {
-			return nil, ThemeGetOutput{}, e
+	result := s.core.QUERY(environment.QueryTheme{})
+	if !result.OK {
+		if err, ok := result.Value.(error); ok {
+			return nil, ThemeGetOutput{}, err
 		}
 		return nil, ThemeGetOutput{}, nil
 	}
-	theme, ok := r.Value.(environment.ThemeInfo)
+	theme, ok := result.Value.(environment.ThemeInfo)
 	if !ok {
 		return nil, ThemeGetOutput{}, coreerr.E("mcp.themeGet", "unexpected result type", nil)
 	}
@@ -40,14 +40,14 @@ type ThemeSystemOutput struct {
 }
 
 func (s *Subsystem) themeSystem(_ context.Context, _ *mcp.CallToolRequest, _ ThemeSystemInput) (*mcp.CallToolResult, ThemeSystemOutput, error) {
-	r := s.core.QUERY(environment.QueryInfo{})
-	if !r.OK {
-		if e, ok := r.Value.(error); ok {
-			return nil, ThemeSystemOutput{}, e
+	result := s.core.QUERY(environment.QueryInfo{})
+	if !result.OK {
+		if err, ok := result.Value.(error); ok {
+			return nil, ThemeSystemOutput{}, err
 		}
 		return nil, ThemeSystemOutput{}, nil
 	}
-	info, ok := r.Value.(environment.EnvironmentInfo)
+	info, ok := result.Value.(environment.EnvironmentInfo)
 	if !ok {
 		return nil, ThemeSystemOutput{}, coreerr.E("mcp.themeSystem", "unexpected result type", nil)
 	}
@@ -65,16 +65,16 @@ type ThemeSetOutput struct {
 }
 
 func (s *Subsystem) themeSet(_ context.Context, _ *mcp.CallToolRequest, input ThemeSetInput) (*mcp.CallToolResult, ThemeSetOutput, error) {
-	r := s.core.Action("environment.setTheme").Run(context.Background(), core.NewOptions(
+	result := s.core.Action("environment.setTheme").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: environment.TaskSetTheme{Theme: input.Theme}},
 	))
-	if !r.OK {
-		if e, ok := r.Value.(error); ok {
-			return nil, ThemeSetOutput{}, e
+	if !result.OK {
+		if err, ok := result.Value.(error); ok {
+			return nil, ThemeSetOutput{}, err
 		}
 		return nil, ThemeSetOutput{}, nil
 	}
-	theme, ok := r.Value.(environment.ThemeInfo)
+	theme, ok := result.Value.(environment.ThemeInfo)
 	if !ok {
 		return nil, ThemeSetOutput{}, coreerr.E("mcp.themeSet", "unexpected result type", nil)
 	}

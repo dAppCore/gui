@@ -83,13 +83,14 @@ func (m *Manager) SetDefaultHeight(height int) {
 	}
 }
 
-// Open creates a window using functional options, applies saved state, and tracks it.
+// Open creates a window from compatibility options.
+// Use: manager.Open(window.WithName("main"), window.WithURL("/"), window.WithSize(1280, 800))
 func (m *Manager) Open(options ...WindowOption) (PlatformWindow, error) {
-	w, err := ApplyOptions(options...)
+	windowSpec, err := ApplyOptions(options...)
 	if err != nil {
 		return nil, coreerr.E("window.Manager.Open", "failed to apply options", err)
 	}
-	return m.Create(w)
+	return m.Create(windowSpec)
 }
 
 // Create creates a window from a Window descriptor.
