@@ -11,7 +11,7 @@ import (
 )
 
 func storageEntryKey(origin, bucket, key string) string {
-	return strings.Join([]string{origin, bucket, key}, "\x00")
+	return makeStorageEntryKey(origin, bucket, key)
 }
 
 func setStorageEntryTime(r *StorageRegistry, origin, bucket, key string, ts time.Time) {
@@ -149,6 +149,15 @@ func TestStorage_StorageOriginForPageURL_Ugly(t *testing.T) {
 	assert.Equal(t, "", storageOriginForPageURL("   "))
 }
 
+func TestStorage_Snapshot_BlankOriginReturnsEmpty(t *testing.T) {
+	r := NewStorageRegistry()
+	r.Set("core://settings", "localStorage", "theme", "dark")
+
+	snapshot := r.Snapshot("")
+
+	assert.Empty(t, snapshot)
+}
+
 func TestStorage_CompositeKey_Good(t *testing.T) {
 	key := storageCompositeKey("origin", "bucket", "item")
 
@@ -157,7 +166,7 @@ func TestStorage_CompositeKey_Good(t *testing.T) {
 	assert.Equal(t, "origin", origin)
 	assert.Equal(t, "bucket", bucket)
 	assert.Equal(t, "item", item)
-	assert.Equal(t, "origin\x00bucket\x00item", makeStorageEntryKey("origin", "bucket", "item"))
+	assert.Equal(t, key, makeStorageEntryKey("origin", "bucket", "item"))
 }
 
 func TestStorage_CompositeKey_Bad(t *testing.T) {

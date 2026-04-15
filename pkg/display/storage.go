@@ -115,7 +115,7 @@ func storageOriginForPageURL(pageURL string) string {
 }
 
 func makeStorageEntryKey(origin, bucket, key string) string {
-	return strings.Join([]string{origin, bucket, key}, "\x00")
+	return storageCompositeKey(origin, bucket, key)
 }
 
 func storageCompositeKey(origin, bucket, key string) string {
@@ -278,6 +278,9 @@ func (r *StorageRegistry) Snapshot(pageURL string) map[string]map[string]string 
 	defer r.mu.RUnlock()
 
 	origin := storageOriginForPageURL(pageURL)
+	if strings.TrimSpace(origin) == "" {
+		return map[string]map[string]string{}
+	}
 	snapshot := make(map[string]map[string]string)
 	for _, entry := range r.entries {
 		if origin != "" && !strings.EqualFold(entry.Origin, origin) {

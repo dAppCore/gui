@@ -590,6 +590,9 @@ func (s *Service) renderStoreSearchPage(query string, results []StorageEntry) st
 }
 
 func (s *Service) searchAllStorage(query string) []StorageEntry {
+	if strings.TrimSpace(query) == "" {
+		return nil
+	}
 	results := s.storage.Search(query)
 	if conversations := s.Core().QUERY(chat.QueryConversationSearch{Query: query}); conversations.OK {
 		switch list := conversations.Value.(type) {

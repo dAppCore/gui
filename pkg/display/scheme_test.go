@@ -172,6 +172,17 @@ func TestScheme_ResolveScheme_Ugly(t *testing.T) {
 	assert.Contains(t, searchPayload["body"].(string), "No matches found in Core storage.")
 }
 
+func TestScheme_HandleStoreSearch_BlankQueryReturnsNoResults(t *testing.T) {
+	svc, _ := newTestDisplayService(t)
+	svc.storage.Set("origin-a", "local", "theme", "dark")
+
+	result := svc.handleStoreSearch(context.Background(), url.Values{})
+	require.True(t, result.OK)
+	payload := result.Value.(map[string]any)
+	assert.Empty(t, payload["results"])
+	assert.Contains(t, payload["body"].(string), "Enter a search term")
+}
+
 func TestScheme_ResolveScheme_ServiceBackedRoute_Good(t *testing.T) {
 	c := core.New(
 		core.WithService(Register(nil)),

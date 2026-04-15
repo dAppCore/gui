@@ -64,6 +64,9 @@ func validatedOpenURL(raw string) (string, error) {
 	if parsed.Host == "" {
 		return "", coreerr.E("browser.openURL", "url host is required", nil)
 	}
+	if parsed.User != nil {
+		return "", coreerr.E("browser.openURL", "url must not include credentials", nil)
+	}
 	return parsed.String(), nil
 }
 

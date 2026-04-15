@@ -67,6 +67,17 @@ func TestTaskOpenURL_Bad_Scheme(t *testing.T) {
 	assert.Empty(t, mp.lastURL)
 }
 
+func TestTaskOpenURL_Bad_Credentials(t *testing.T) {
+	mp := &mockPlatform{}
+	_, c := newTestBrowserService(t, mp)
+
+	r := c.Action("browser.openURL").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "url", Value: "https://user:pass@example.com"},
+	))
+	assert.False(t, r.OK)
+	assert.Empty(t, mp.lastURL)
+}
+
 func TestTaskOpenURL_Bad_PlatformError(t *testing.T) {
 	mp := &mockPlatform{urlErr: core.NewError("browser not found")}
 	_, c := newTestBrowserService(t, mp)
