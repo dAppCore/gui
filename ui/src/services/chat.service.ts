@@ -199,6 +199,8 @@ const REGISTERED_CHAT_TOOLS: ChatToolDefinition[] = [
   },
 ];
 
+const CORE_API_CHAT_COMPLETIONS_URL = 'http://127.0.0.1:8090/v1/chat/completions';
+
 function defaultSettings(): ChatSettings {
   return {
     temperature: 1.0,
@@ -663,14 +665,12 @@ export class ChatService {
         assistantMessage.id,
         content,
       );
-      const response = await generateAssistantResponse(
-        content,
-        this.selectedModelState(),
-        this.settingsState(),
-        toolOutputs,
-      );
       let previousFragment = '';
-      await streamIntoMessage(response, async (fragment, done) => {
+      const applyStreamFragment = async (
+        fragment: string,
+        done: boolean,
+        finishReason = 'stop',
+      ): Promise<void> => {
         this.updateMessage(updatedConversation.id, assistantMessage.id, (message) => ({
           ...message,
           content: fragment,
@@ -700,10 +700,30 @@ export class ChatService {
           });
           await this.safeBridgeCall('chat:stream-finish', {
             conversation_id: updatedConversation.id,
-            finish_reason: 'stop',
+            finish_reason: finishReason,
           });
         }
-      });
+      };
+
+      const streamed = await tryStreamAssistantResponse(
+        content,
+        this.selectedModelState(),
+        this.settingsState(),
+        toolOutputs,
+        attachments,
+        applyStreamFragment,
+      );
+      if (!streamed) {
+        const response = await generateAssistantResponse(
+          content,
+          this.selectedModelState(),
+          this.settingsState(),
+          toolOutputs,
+          attachments,
+        );
+        await streamIntoMessage(response, applyStreamFragment);
+      }
+
       if (this.bridgeMode) {
         await this.refreshConversationFromBridge(updatedConversation.id);
       }
@@ -1296,9 +1316,10 @@ async function generateAssistantResponse(
   model: string,
   settings: ChatSettings,
   toolOutputs: string[] = [],
+  attachments: ImageAttachment[] = [],
 ): Promise<string> {
   const prompt = content.trim() || 'your multimodal prompt';
-  const promptWithTools = buildToolAwarePrompt(prompt, toolOutputs);
+  const promptWithTools = buildToolAwarePrompt(prompt, toolOutputs, attachments);
   try {
     if (typeof window.core?.ml?.generate === 'function') {
       const generated = await window.core.ml.generate(promptWithTools);
@@ -1309,7 +1330,7 @@ async function generateAssistantResponse(
   } catch {
     // Fall back to the local RFC demo response below.
   }
-  return buildFallbackResponse(prompt, model, settings, toolOutputs);
+  return buildFallbackResponse(prompt, model, settings, toolOutputs, attachments);
 }
 
 function buildFallbackResponse(
@@ -1317,10 +1338,23 @@ function buildFallbackResponse(
   model: string,
   settings: ChatSettings,
   toolOutputs: string[],
+  attachments: ImageAttachment[],
 ): string {
   const toolSection =
     toolOutputs.length > 0
       ? ['', 'Tool results:', ...toolOutputs.map((output) => `- ${output}`), '']
+      : [];
+  const attachmentSection =
+    attachments.length > 0
+      ? [
+          '',
+          'Attachments:',
+          ...attachments.map(
+            (attachment) =>
+              `- ${attachment.filename} (${attachment.mimeType}, ${attachment.width}x${attachment.height})`,
+          ),
+          '',
+        ]
       : [];
   return [
     `Using ${model} with temperature ${settings.temperature.toFixed(1)}.`,
@@ -1329,6 +1363,7 @@ function buildFallbackResponse(
     '',
     `Prompt summary: ${prompt}`,
     ...toolSection,
+    ...attachmentSection,
     '',
     '```ts',
     `const response = await window.core.ml.generate(${JSON.stringify(prompt)});`,
@@ -1484,14 +1519,259 @@ function describeStoreMatches(conversations: Conversation[], query: string): str
   return `Store hits (${snippets.length}): ${snippets.slice(0, 3).join(' | ')}.`;
 }
 
-function buildToolAwarePrompt(prompt: string, toolOutputs: string[]): string {
+function buildToolAwarePrompt(
+  prompt: string,
+  toolOutputs: string[],
+  attachments: ImageAttachment[] = [],
+): string {
   const sections = ['System tool manifest:', buildToolManifest(), '', 'User prompt:', prompt];
 
   if (toolOutputs.length > 0) {
     sections.push('', 'Tool context:', ...toolOutputs.map((output) => `- ${output}`));
   }
 
+  if (attachments.length > 0) {
+    sections.push(
+      '',
+      'Image attachments:',
+      ...attachments.map(
+        (attachment) =>
+          `- ${attachment.filename} (${attachment.mimeType}, ${attachment.width}x${attachment.height})`,
+      ),
+    );
+  }
+
   return sections.join('\n');
+}
+
+async function tryStreamAssistantResponse(
+  content: string,
+  model: string,
+  settings: ChatSettings,
+  toolOutputs: string[],
+  attachments: ImageAttachment[],
+  onUpdate: (fragment: string, done: boolean, finishReason?: string) => void | Promise<void>,
+): Promise<boolean> {
+  try {
+    return await streamAssistantResponse(
+      content,
+      model,
+      settings,
+      toolOutputs,
+      attachments,
+      onUpdate,
+    );
+  } catch {
+    return false;
+  }
+}
+
+async function streamAssistantResponse(
+  content: string,
+  model: string,
+  settings: ChatSettings,
+  toolOutputs: string[],
+  attachments: ImageAttachment[],
+  onUpdate: (fragment: string, done: boolean, finishReason?: string) => void | Promise<void>,
+): Promise<boolean> {
+  const response = await fetch(CORE_API_CHAT_COMPLETIONS_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(
+      buildCoreAPIRequestBody(content, model, settings, toolOutputs, attachments, true),
+    ),
+  });
+  if (!response.ok || !response.body) {
+    throw new Error(`core/api streaming returned ${response.status}`);
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let assembled = '';
+  let finishReason = 'stop';
+  let streamed = false;
+
+  while (true) {
+    const { value, done } = await reader.read();
+    buffer += decoder.decode(value ?? new Uint8Array(), { stream: !done });
+
+    const frames = buffer.split(/\r?\n\r?\n/);
+    buffer = frames.pop() ?? '';
+    for (const frame of frames) {
+      const event = parseSSEFrame(frame);
+      if (event === null) {
+        continue;
+      }
+      if (event === '[DONE]') {
+        await onUpdate(assembled, true, finishReason);
+        return streamed || assembled.trim().length > 0;
+      }
+
+      const payload = parseChatCompletionPayload(event);
+      if (!payload) {
+        continue;
+      }
+
+      const delta = extractCompletionDelta(payload);
+      if (delta) {
+        assembled += delta;
+        streamed = true;
+        await onUpdate(assembled, false, finishReason);
+      }
+
+      const payloadFinishReason = extractFinishReason(payload);
+      if (payloadFinishReason) {
+        finishReason = payloadFinishReason;
+      }
+    }
+
+    if (done) {
+      if (buffer.trim()) {
+        const trailingEvent = parseSSEFrame(buffer);
+        if (trailingEvent && trailingEvent !== '[DONE]') {
+          const payload = parseChatCompletionPayload(trailingEvent);
+          if (payload) {
+            const delta = extractCompletionDelta(payload);
+            if (delta) {
+              assembled += delta;
+              streamed = true;
+            }
+            const payloadFinishReason = extractFinishReason(payload);
+            if (payloadFinishReason) {
+              finishReason = payloadFinishReason;
+            }
+          }
+        }
+      }
+      await onUpdate(assembled, true, finishReason);
+      return streamed || assembled.trim().length > 0;
+    }
+  }
+}
+
+function buildCoreAPIRequestBody(
+  content: string,
+  model: string,
+  settings: ChatSettings,
+  toolOutputs: string[],
+  attachments: ImageAttachment[],
+  stream: boolean,
+): Record<string, unknown> {
+  const prompt = content.trim() || 'your multimodal prompt';
+  const promptWithTools = buildToolAwarePrompt(prompt, toolOutputs, attachments);
+  const messages: Array<Record<string, unknown>> = [];
+
+  if (settings.systemPrompt.trim()) {
+    messages.push({
+      role: 'system',
+      content: settings.systemPrompt.trim(),
+    });
+  }
+
+  const userContent =
+    attachments.length > 0
+      ? [
+          { type: 'text', text: promptWithTools },
+          ...attachments.map((attachment) => ({
+            type: 'image_url',
+            image_url: { url: attachment.data },
+          })),
+        ]
+      : promptWithTools;
+
+  messages.push({
+    role: 'user',
+    content: userContent,
+  });
+
+  return {
+    model: model || 'local',
+    stream,
+    max_tokens: settings.maxTokens,
+    temperature: settings.temperature,
+    top_p: settings.topP,
+    messages,
+  };
+}
+
+function parseSSEFrame(frame: string): string | null {
+  const lines = frame
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const dataLines = lines
+    .filter((line) => line.startsWith('data:'))
+    .map((line) => line.slice(5).trim());
+  if (dataLines.length === 0) {
+    return null;
+  }
+  return dataLines.join('\n');
+}
+
+function parseChatCompletionPayload(event: string): Record<string, unknown> | null {
+  try {
+    return JSON.parse(event) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+function extractCompletionDelta(payload: Record<string, unknown>): string {
+  const choices = payload['choices'];
+  const choice = Array.isArray(choices) ? choices[0] : undefined;
+  if (!choice || typeof choice !== 'object') {
+    return '';
+  }
+
+  const delta = (choice as Record<string, unknown>)['delta'];
+  if (delta && typeof delta === 'object') {
+    const text = readContentValue((delta as Record<string, unknown>)['content']);
+    if (text) {
+      return text;
+    }
+  }
+
+  const message = (choice as Record<string, unknown>)['message'];
+  if (message && typeof message === 'object') {
+    return readContentValue((message as Record<string, unknown>)['content']);
+  }
+
+  return '';
+}
+
+function extractFinishReason(payload: Record<string, unknown>): string {
+  const choices = payload['choices'];
+  const choice = Array.isArray(choices) ? choices[0] : undefined;
+  if (!choice || typeof choice !== 'object') {
+    return '';
+  }
+  const finishReason = (choice as Record<string, unknown>)['finish_reason'];
+  return typeof finishReason === 'string' ? finishReason : '';
+}
+
+function readContentValue(value: unknown): string {
+  if (typeof value === 'string') {
+    return value;
+  }
+  if (!Array.isArray(value)) {
+    return '';
+  }
+
+  return value
+    .map((part) => {
+      if (!part || typeof part !== 'object') {
+        return '';
+      }
+      const record = part as Record<string, unknown>;
+      if (typeof record['text'] === 'string') {
+        return record['text'];
+      }
+      return '';
+    })
+    .join('');
 }
 
 function buildToolManifest(): string {

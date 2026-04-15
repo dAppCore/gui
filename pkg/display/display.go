@@ -1479,6 +1479,7 @@ func (s *Service) loadConfigFrom(path string) {
 	}
 
 	s.chat.Load(configFile)
+	_ = s.chat.LoadModelCatalog(modelCatalogPath(path))
 	s.browserStorage.Load(configFile)
 	s.loadViewManifest(viewManifestPath(path))
 }

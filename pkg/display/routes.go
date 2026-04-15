@@ -224,9 +224,54 @@ func (s *Service) settingsRouteData() map[string]any {
 }
 
 func (s *Service) modelsRouteData() map[string]any {
+	models := s.chat.Models()
+	loadedModels := make([]ModelEntry, 0, len(models))
+	backends := make(map[string]map[string]any)
+	var totalSizeBytes int64
+	visionCount := 0
+
+	for _, model := range models {
+		totalSizeBytes += model.SizeBytes
+		if model.SupportsVision {
+			visionCount++
+		}
+		if model.Loaded {
+			loadedModels = append(loadedModels, model)
+		}
+
+		backend := strings.TrimSpace(model.Backend)
+		if backend == "" {
+			backend = "unknown"
+		}
+		summary := backends[backend]
+		if summary == nil {
+			summary = map[string]any{
+				"loaded":           0,
+				"model_count":      0,
+				"supports_vision":  false,
+				"total_size_bytes": int64(0),
+			}
+		}
+		summary["model_count"] = summary["model_count"].(int) + 1
+		summary["total_size_bytes"] = summary["total_size_bytes"].(int64) + model.SizeBytes
+		if model.Loaded {
+			summary["loaded"] = summary["loaded"].(int) + 1
+		}
+		if model.SupportsVision {
+			summary["supports_vision"] = true
+		}
+		backends[backend] = summary
+	}
+
 	return map[string]any{
-		"selected_model": s.chat.SelectedModel(),
-		"models":         s.chat.Models(),
+		"selected_model":   s.chat.SelectedModel(),
+		"models":           models,
+		"loaded_models":    loadedModels,
+		"loaded_count":     len(loadedModels),
+		"model_count":      len(models),
+		"vision_models":    visionCount,
+		"total_size_bytes": totalSizeBytes,
+		"backends":         backends,
 	}
 }
 
