@@ -44,6 +44,7 @@ type MockWindow struct {
 	zoom                   float64
 	contentProtection      bool
 	flashed                bool
+	devToolsOpen           bool
 	execJSCalls            []string
 	eventHandlers          []func(WindowEvent)
 	fileDropHandlers       []func(paths []string, targetID string)
@@ -95,6 +96,8 @@ func (w *MockWindow) ToggleMaximise()                      { w.maximised = !w.ma
 func (w *MockWindow) ExecJS(js string)                     { w.execJSCalls = append(w.execJSCalls, js) }
 func (w *MockWindow) Flash(enabled bool)                   { w.flashed = enabled }
 func (w *MockWindow) Print() error                         { return nil }
+func (w *MockWindow) OpenDevTools()                        { w.devToolsOpen = true }
+func (w *MockWindow) CloseDevTools()                       { w.devToolsOpen = false }
 func (w *MockWindow) OnWindowEvent(handler func(WindowEvent)) {
 	w.eventHandlers = append(w.eventHandlers, handler)
 }
@@ -108,4 +111,8 @@ func (w *MockWindow) ExecJSCalls() []string {
 
 func (w *MockWindow) HTMLContent() string {
 	return w.html
+}
+
+func (w *MockWindow) DevToolsOpen() bool {
+	return w.devToolsOpen
 }

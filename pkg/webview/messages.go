@@ -6,10 +6,14 @@ import "time"
 // --- Queries (read-only) ---
 
 // QueryURL gets the current page URL. Result: string
-type QueryURL struct{ Window string `json:"window"` }
+type QueryURL struct {
+	Window string `json:"window"`
+}
 
 // QueryTitle gets the current page title. Result: string
-type QueryTitle struct{ Window string `json:"window"` }
+type QueryTitle struct {
+	Window string `json:"window"`
+}
 
 // QueryConsole gets captured console messages. Result: []ConsoleMessage
 type QueryConsole struct {
@@ -34,6 +38,12 @@ type QuerySelectorAll struct {
 type QueryDOMTree struct {
 	Window   string `json:"window"`
 	Selector string `json:"selector,omitempty"` // empty = full document
+}
+
+// QueryExceptions gets captured JavaScript exceptions. Result: []ExceptionInfo
+type QueryExceptions struct {
+	Window string `json:"window"`
+	Limit  int    `json:"limit,omitempty"`
 }
 
 // --- Tasks (side-effects) ---
@@ -64,7 +74,9 @@ type TaskNavigate struct {
 }
 
 // TaskScreenshot captures the page as PNG. Result: ScreenshotResult
-type TaskScreenshot struct{ Window string `json:"window"` }
+type TaskScreenshot struct {
+	Window string `json:"window"`
+}
 
 // TaskScroll scrolls to an absolute position (window.scrollTo). Result: nil
 type TaskScroll struct {
@@ -108,7 +120,9 @@ type TaskSetViewport struct {
 }
 
 // TaskClearConsole clears captured console messages. Result: nil
-type TaskClearConsole struct{ Window string `json:"window"` }
+type TaskClearConsole struct {
+	Window string `json:"window"`
+}
 
 // TaskSetURL navigates to a URL (alias for TaskNavigate, preferred for direct URL setting). Result: nil
 type TaskSetURL struct {
@@ -131,10 +145,22 @@ type TaskPrint struct {
 	ToPDF  bool   `json:"toPDF,omitempty"` // true = return PDF bytes; false = open print dialog
 }
 
+// TaskDevToolsOpen opens the native developer tools for the window when available.
+type TaskDevToolsOpen struct {
+	Window string `json:"window"`
+}
+
+// TaskDevToolsClose closes the native developer tools for the window when available.
+type TaskDevToolsClose struct {
+	Window string `json:"window"`
+}
+
 // QueryZoom gets the current page zoom level. Result: float64
 // result, _, _ := c.QUERY(QueryZoom{Window: "main"})
 // zoom := result.(float64)
-type QueryZoom struct{ Window string `json:"window"` }
+type QueryZoom struct {
+	Window string `json:"window"`
+}
 
 // --- Actions (broadcast) ---
 

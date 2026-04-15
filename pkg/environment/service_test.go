@@ -22,7 +22,7 @@ type mockPlatform struct {
 	mu                sync.Mutex
 }
 
-func (m *mockPlatform) IsDarkMode() bool          { return m.isDark }
+func (m *mockPlatform) IsDarkMode() bool           { return m.isDark }
 func (m *mockPlatform) Info() EnvironmentInfo      { return m.info }
 func (m *mockPlatform) AccentColour() string       { return m.accentColour }
 func (m *mockPlatform) HasFocusFollowsMouse() bool { return m.focusFollowsMouse }
@@ -130,6 +130,41 @@ func TestThemeChange_ActionBroadcast_Good(t *testing.T) {
 	mu.Unlock()
 	require.NotNil(t, r)
 	assert.False(t, r.IsDark)
+}
+
+func TestTaskSetTheme_Good_OverrideAndReset(t *testing.T) {
+	mock, c := newTestService(t)
+	mock.isDark = false
+
+	r := c.Action("environment.setTheme").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: TaskSetTheme{Theme: "dark"}},
+	))
+	require.True(t, r.OK)
+
+	theme := c.QUERY(QueryTheme{})
+	require.True(t, theme.OK)
+	info := theme.Value.(ThemeInfo)
+	assert.True(t, info.IsDark)
+	assert.Equal(t, "dark", info.Theme)
+
+	r = c.Action("environment.setTheme").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: TaskSetTheme{Theme: "system"}},
+	))
+	require.True(t, r.OK)
+
+	theme = c.QUERY(QueryTheme{})
+	require.True(t, theme.OK)
+	info = theme.Value.(ThemeInfo)
+	assert.False(t, info.IsDark)
+	assert.Equal(t, "light", info.Theme)
+}
+
+func TestTaskSetTheme_Bad_Invalid(t *testing.T) {
+	_, c := newTestService(t)
+	r := c.Action("environment.setTheme").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: TaskSetTheme{Theme: "sepia"}},
+	))
+	assert.False(t, r.OK)
 }
 
 // --- GetAccentColor ---

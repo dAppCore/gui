@@ -17,6 +17,9 @@ type mockPlatform struct {
 	permErr      error
 	revokeErr    error
 	revokeCalled bool
+	clearErr     error
+	clearCalled  bool
+	clearID      string
 	lastOpts     NotificationOptions
 	sendCalled   bool
 }
@@ -31,6 +34,11 @@ func (m *mockPlatform) CheckPermission() (bool, error)   { return m.permGranted,
 func (m *mockPlatform) RevokePermission() error {
 	m.revokeCalled = true
 	return m.revokeErr
+}
+func (m *mockPlatform) Clear(id string) error {
+	m.clearCalled = true
+	m.clearID = id
+	return m.clearErr
 }
 
 // mockDialogPlatform tracks whether MessageDialog was called (for fallback test).
@@ -206,6 +214,36 @@ func TestTaskSend_WithActions_Good(t *testing.T) {
 	require.True(t, r.OK)
 	assert.Equal(t, "message", mock.lastOpts.CategoryID)
 	assert.Equal(t, 2, len(mock.lastOpts.Actions))
+}
+
+func TestTaskClear_Good_Specific(t *testing.T) {
+	mock, c := newTestService(t)
+	require.True(t, taskRun(c, "notification.send", TaskSend{
+		Options: NotificationOptions{ID: "n1", Title: "One", Message: "Hello"},
+	}).OK)
+
+	r := taskRun(c, "notification.clear", TaskClear{ID: "n1"})
+	require.True(t, r.OK)
+	assert.True(t, mock.clearCalled)
+	assert.Equal(t, "n1", mock.clearID)
+}
+
+func TestTaskClear_Good_All(t *testing.T) {
+	mock, c := newTestService(t)
+	require.True(t, taskRun(c, "notification.send", TaskSend{
+		Options: NotificationOptions{ID: "n1", Title: "One", Message: "Hello"},
+	}).OK)
+	require.True(t, taskRun(c, "notification.send", TaskSend{
+		Options: NotificationOptions{ID: "n2", Title: "Two", Message: "World"},
+	}).OK)
+
+	r := taskRun(c, "notification.clear", TaskClear{})
+	require.True(t, r.OK)
+	assert.True(t, mock.clearCalled)
+	assert.Equal(t, "", mock.clearID)
+
+	svc := core.MustServiceFor[*Service](c, "notification")
+	assert.Empty(t, svc.active)
 }
 
 // --- ActionNotificationActionTriggered ---

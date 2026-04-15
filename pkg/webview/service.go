@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	gowebview "forge.lthn.ai/core/go-webview"
 	core "dappco.re/go/core"
+	gowebview "forge.lthn.ai/core/go-webview"
 	"forge.lthn.ai/core/gui/pkg/window"
 )
 
@@ -51,6 +51,8 @@ type Service struct {
 	options      Options
 	connections  map[string]connector
 	mu           sync.RWMutex
+	diagMu       sync.RWMutex
+	exceptions   map[string][]ExceptionInfo
 	newConn      func(debugURL, windowName string) (connector, error) // injectable for tests
 	watcherSetup func(conn connector, windowName string)              // called after connection creation
 }
@@ -72,6 +74,7 @@ func Register(optionFns ...func(*Options)) func(*core.Core) core.Result {
 			ServiceRuntime: core.NewServiceRuntime[Options](c, o),
 			options:        o,
 			connections:    make(map[string]connector),
+			exceptions:     make(map[string][]ExceptionInfo),
 			newConn:        defaultNewConn(o),
 		}
 		svc.watcherSetup = svc.defaultWatcherSetup
@@ -143,16 +146,18 @@ func (s *Service) defaultWatcherSetup(conn connector, windowName string) {
 
 	ew := gowebview.NewExceptionWatcher(rc.wv)
 	ew.AddHandler(func(exc gowebview.ExceptionInfo) {
+		info := ExceptionInfo{
+			Text:       exc.Text,
+			URL:        exc.URL,
+			Line:       exc.LineNumber,
+			Column:     exc.ColumnNumber,
+			StackTrace: exc.StackTrace,
+			Timestamp:  exc.Timestamp,
+		}
+		s.recordException(windowName, info)
 		_ = s.Core().ACTION(ActionException{
-			Window: windowName,
-			Exception: ExceptionInfo{
-				Text:       exc.Text,
-				URL:        exc.URL,
-				Line:       exc.LineNumber,
-				Column:     exc.ColumnNumber,
-				StackTrace: exc.StackTrace,
-				Timestamp:  exc.Timestamp,
-			},
+			Window:    windowName,
+			Exception: info,
 		})
 	})
 }
@@ -184,6 +189,9 @@ func (s *Service) HandleIPCEvents(_ *core.Core, msg core.Message) core.Result {
 			delete(s.connections, m.Name)
 		}
 		s.mu.Unlock()
+		s.diagMu.Lock()
+		delete(s.exceptions, m.Name)
+		s.diagMu.Unlock()
 	}
 	return core.Result{OK: true}
 }
@@ -276,6 +284,8 @@ func (s *Service) handleQuery(_ *core.Core, q core.Query) core.Result {
 		}
 		html, err := conn.GetHTML(selector)
 		return core.Result{}.New(html, err)
+	case QueryExceptions:
+		return core.Result{Value: s.exceptionLog(q.Window, q.Limit), OK: true}
 	case QueryZoom:
 		conn, err := s.getConn(q.Window)
 		if err != nil {
@@ -431,6 +441,68 @@ func (s *Service) registerTaskActions() {
 			MimeType: "application/pdf",
 		}, OK: true}
 	})
+	c.Action("webview.devtoolsOpen", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskDevToolsOpen)
+		return core.Result{Value: nil, OK: true}.New(s.devToolsOpen(t.Window))
+	})
+	c.Action("webview.devtoolsClose", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskDevToolsClose)
+		return core.Result{Value: nil, OK: true}.New(s.devToolsClose(t.Window))
+	})
+}
+
+func (s *Service) recordException(windowName string, info ExceptionInfo) {
+	s.diagMu.Lock()
+	defer s.diagMu.Unlock()
+
+	log := append(s.exceptions[windowName], info)
+	if limit := s.options.ConsoleLimit; limit > 0 && len(log) > limit {
+		log = log[len(log)-limit:]
+	}
+	s.exceptions[windowName] = log
+}
+
+func (s *Service) exceptionLog(windowName string, limit int) []ExceptionInfo {
+	s.diagMu.RLock()
+	defer s.diagMu.RUnlock()
+
+	log := append([]ExceptionInfo(nil), s.exceptions[windowName]...)
+	if limit > 0 && len(log) > limit {
+		log = log[len(log)-limit:]
+	}
+	return log
+}
+
+func (s *Service) devToolsOpen(windowName string) error {
+	return s.withWindowHandle(windowName, func(handle any) error {
+		if opener, ok := handle.(interface{ OpenDevTools() }); ok {
+			opener.OpenDevTools()
+			return nil
+		}
+		return core.E("webview.devToolsOpen", "window does not support developer tools", nil)
+	})
+}
+
+func (s *Service) devToolsClose(windowName string) error {
+	return s.withWindowHandle(windowName, func(handle any) error {
+		if closer, ok := handle.(interface{ CloseDevTools() }); ok {
+			closer.CloseDevTools()
+			return nil
+		}
+		return nil
+	})
+}
+
+func (s *Service) withWindowHandle(windowName string, fn func(handle any) error) error {
+	windowService, ok := core.ServiceFor[*window.Service](s.Core(), "window")
+	if !ok {
+		return core.E("webview.withWindowHandle", "window service unavailable", nil)
+	}
+	handle, ok := windowService.Manager().Get(windowName)
+	if !ok {
+		return core.E("webview.withWindowHandle", "window not found: "+windowName, nil)
+	}
+	return fn(handle)
 }
 
 // realConnector wraps *gowebview.Webview, converting types at the boundary.

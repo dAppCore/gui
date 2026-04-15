@@ -3,6 +3,8 @@ package systray
 
 type QueryConfig struct{}
 
+type QueryInfo struct{}
+
 type TaskSetTrayIcon struct{ Data []byte }
 
 type TaskSetTrayTooltip struct{ Tooltip string }

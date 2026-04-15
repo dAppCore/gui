@@ -4,6 +4,7 @@ package notification
 import (
 	"context"
 	"strconv"
+	"sync"
 	"time"
 
 	core "dappco.re/go/core"
@@ -16,6 +17,8 @@ type Service struct {
 	*core.ServiceRuntime[Options]
 	platform   Platform
 	categories map[string]NotificationCategory
+	mu         sync.Mutex
+	active     map[string]NotificationOptions
 }
 
 func Register(p Platform) func(*core.Core) core.Result {
@@ -24,6 +27,7 @@ func Register(p Platform) func(*core.Core) core.Result {
 			ServiceRuntime: core.NewServiceRuntime[Options](c, Options{}),
 			platform:       p,
 			categories:     make(map[string]NotificationCategory),
+			active:         make(map[string]NotificationOptions),
 		}, OK: true}
 	}
 }
@@ -45,6 +49,10 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		t, _ := opts.Get("task").Value.(TaskRegisterCategory)
 		s.categories[t.Category.ID] = t.Category
 		return core.Result{OK: true}
+	})
+	s.Core().Action("notification.clear", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskClear)
+		return core.Result{Value: nil, OK: true}.New(s.clear(t.ID))
 	})
 	return core.Result{OK: true}
 }
@@ -75,8 +83,13 @@ func (s *Service) send(options NotificationOptions) error {
 
 	if err := s.platform.Send(options); err != nil {
 		// Fallback: show as dialog via IPC
-		return s.fallbackDialog(options)
+		if err := s.fallbackDialog(options); err != nil {
+			return err
+		}
 	}
+	s.mu.Lock()
+	s.active[options.ID] = options
+	s.mu.Unlock()
 	return nil
 }
 
@@ -114,4 +127,38 @@ func (s *Service) fallbackDialog(options NotificationOptions) error {
 		}
 	}
 	return nil
+}
+
+func (s *Service) clear(id string) error {
+	if clearer, ok := s.platform.(ClearPlatform); ok {
+		if err := clearer.Clear(id); err != nil {
+			return err
+		}
+	}
+
+	ids := s.removeActive(id)
+	for _, notificationID := range ids {
+		_ = s.Core().ACTION(ActionNotificationDismissed{ID: notificationID})
+	}
+	return nil
+}
+
+func (s *Service) removeActive(id string) []string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if id != "" {
+		if _, ok := s.active[id]; !ok {
+			return nil
+		}
+		delete(s.active, id)
+		return []string{id}
+	}
+
+	ids := make([]string, 0, len(s.active))
+	for notificationID := range s.active {
+		ids = append(ids, notificationID)
+	}
+	clear(s.active)
+	return ids
 }

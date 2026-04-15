@@ -16,14 +16,20 @@ type TaskRevokePermission struct{}
 // c.PERFORM(notification.TaskRegisterCategory{Category: notification.NotificationCategory{ID: "message", Actions: actions}})
 type TaskRegisterCategory struct{ Category NotificationCategory }
 
+// TaskClear dismisses a notification by id or all notifications when ID is empty.
+type TaskClear struct {
+	ID string `json:"id,omitempty"`
+}
+
 // ActionNotificationClicked is broadcast when the user clicks a notification body.
 type ActionNotificationClicked struct{ ID string }
 
 // ActionNotificationActionTriggered is broadcast when the user activates a notification action button.
-// c.RegisterAction(func(_ *core.Core, msg core.Message) error {
-//   if a, ok := msg.(notification.ActionNotificationActionTriggered); ok { ... }
-//   return nil
-// })
+//
+//	c.RegisterAction(func(_ *core.Core, msg core.Message) error {
+//	  if a, ok := msg.(notification.ActionNotificationActionTriggered); ok { ... }
+//	  return nil
+//	})
 type ActionNotificationActionTriggered struct {
 	NotificationID string `json:"notificationId"`
 	ActionID       string `json:"actionId"`

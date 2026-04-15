@@ -111,6 +111,12 @@ func (ww *wailsWindow) ToggleMaximise()    { ww.w.ToggleMaximise() }
 func (ww *wailsWindow) ExecJS(js string)   { ww.w.ExecJS(js) }
 func (ww *wailsWindow) Flash(enabled bool) { ww.w.Flash(enabled) }
 func (ww *wailsWindow) Print() error       { return ww.w.Print() }
+func (ww *wailsWindow) OpenDevTools()      { ww.w.OpenDevTools() }
+func (ww *wailsWindow) CloseDevTools() {
+	if closer, ok := any(ww.w).(interface{ CloseDevTools() }); ok {
+		closer.CloseDevTools()
+	}
+}
 
 func (ww *wailsWindow) OnWindowEvent(handler func(event WindowEvent)) {
 	name := ww.w.Name()

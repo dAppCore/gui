@@ -24,6 +24,10 @@ func computedStyleScript(selector string) string {
 })()`, sel)
 }
 
+func ComputedStyleScript(selector string) string {
+	return computedStyleScript(selector)
+}
+
 func highlightScript(selector, colour string) string {
 	sel := jsQuote(selector)
 	if colour == "" {
@@ -41,6 +45,10 @@ func highlightScript(selector, colour string) string {
   try { el.scrollIntoView({block: "center", inline: "center", behavior: "smooth"}); } catch (e) {}
   return true;
 })()`, sel, col)
+}
+
+func HighlightScript(selector, colour string) string {
+	return highlightScript(selector, colour)
 }
 
 func performanceScript() string {
@@ -62,6 +70,10 @@ func performanceScript() string {
 })()`
 }
 
+func PerformanceScript() string {
+	return performanceScript()
+}
+
 func resourcesScript() string {
 	return `(function(){
   return performance.getEntriesByType("resource").map((entry) => ({
@@ -75,6 +87,10 @@ func resourcesScript() string {
     decodedBodySize: entry.decodedBodySize || 0
   }));
 })()`
+}
+
+func ResourcesScript() string {
+	return resourcesScript()
 }
 
 func networkInitScript() string {
@@ -136,6 +152,10 @@ func networkInitScript() string {
 })()`
 }
 
+func NetworkInitScript() string {
+	return networkInitScript()
+}
+
 func networkClearScript() string {
 	return `(function(){
   window.__coreNetworkLog = [];
@@ -143,11 +163,40 @@ func networkClearScript() string {
 })()`
 }
 
+func NetworkClearScript() string {
+	return networkClearScript()
+}
+
 func networkLogScript(limit int) string {
 	if limit <= 0 {
-		return `(window.__coreNetworkLog || [])`
+		return `((window.__coreNetworkLog && window.__coreNetworkLog.length)
+  ? window.__coreNetworkLog
+  : performance.getEntriesByType("resource").map((entry) => ({
+      url: entry.name,
+      method: "GET",
+      status: 0,
+      ok: true,
+      resource: entry.initiatorType || entry.entryType,
+      timestamp: entry.startTime
+    })))`
 	}
-	return corego.Sprintf(`(window.__coreNetworkLog || []).slice(-%d)`, limit)
+	return corego.Sprintf(`(function(){
+  const log = (window.__coreNetworkLog && window.__coreNetworkLog.length)
+    ? window.__coreNetworkLog
+    : performance.getEntriesByType("resource").map((entry) => ({
+        url: entry.name,
+        method: "GET",
+        status: 0,
+        ok: true,
+        resource: entry.initiatorType || entry.entryType,
+        timestamp: entry.startTime
+      }));
+  return log.slice(-%d);
+})()`, limit)
+}
+
+func NetworkLogScript(limit int) string {
+	return networkLogScript(limit)
 }
 
 func normalizeWhitespace(s string) string {

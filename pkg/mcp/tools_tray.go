@@ -42,8 +42,15 @@ type TraySetTooltipOutput struct {
 }
 
 func (s *Subsystem) traySetTooltip(_ context.Context, _ *mcp.CallToolRequest, input TraySetTooltipInput) (*mcp.CallToolResult, TraySetTooltipOutput, error) {
-	// Tooltip is set via the tray menu items; for now this is a no-op placeholder
-	_ = input.Tooltip
+	r := s.core.Action("systray.setTooltip").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: systray.TaskSetTrayTooltip{Tooltip: input.Tooltip}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, TraySetTooltipOutput{}, e
+		}
+		return nil, TraySetTooltipOutput{}, nil
+	}
 	return nil, TraySetTooltipOutput{Success: true}, nil
 }
 
@@ -57,9 +64,63 @@ type TraySetLabelOutput struct {
 }
 
 func (s *Subsystem) traySetLabel(_ context.Context, _ *mcp.CallToolRequest, input TraySetLabelInput) (*mcp.CallToolResult, TraySetLabelOutput, error) {
-	// Label is part of the tray configuration; placeholder for now
-	_ = input.Label
+	r := s.core.Action("systray.setLabel").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: systray.TaskSetTrayLabel{Label: input.Label}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, TraySetLabelOutput{}, e
+		}
+		return nil, TraySetLabelOutput{}, nil
+	}
 	return nil, TraySetLabelOutput{Success: true}, nil
+}
+
+// --- tray_set_menu ---
+
+type TraySetMenuInput struct {
+	Items []systray.TrayMenuItem `json:"items"`
+}
+
+type TraySetMenuOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) traySetMenu(_ context.Context, _ *mcp.CallToolRequest, input TraySetMenuInput) (*mcp.CallToolResult, TraySetMenuOutput, error) {
+	r := s.core.Action("systray.setMenu").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: systray.TaskSetTrayMenu{Items: input.Items}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, TraySetMenuOutput{}, e
+		}
+		return nil, TraySetMenuOutput{}, nil
+	}
+	return nil, TraySetMenuOutput{Success: true}, nil
+}
+
+// --- tray_show_message ---
+
+type TrayShowMessageInput struct {
+	Title   string `json:"title"`
+	Message string `json:"message"`
+}
+
+type TrayShowMessageOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) trayShowMessage(_ context.Context, _ *mcp.CallToolRequest, input TrayShowMessageInput) (*mcp.CallToolResult, TrayShowMessageOutput, error) {
+	r := s.core.Action("systray.showMessage").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: systray.TaskShowMessage{Title: input.Title, Message: input.Message}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, TrayShowMessageOutput{}, e
+		}
+		return nil, TrayShowMessageOutput{}, nil
+	}
+	return nil, TrayShowMessageOutput{Success: true}, nil
 }
 
 // --- tray_info ---
@@ -70,7 +131,7 @@ type TrayInfoOutput struct {
 }
 
 func (s *Subsystem) trayInfo(_ context.Context, _ *mcp.CallToolRequest, _ TrayInfoInput) (*mcp.CallToolResult, TrayInfoOutput, error) {
-	r := s.core.QUERY(systray.QueryConfig{})
+	r := s.core.QUERY(systray.QueryInfo{})
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {
 			return nil, TrayInfoOutput{}, e
@@ -90,5 +151,20 @@ func (s *Subsystem) registerTrayTools(server *mcp.Server) {
 	addTool(s, server, &mcp.Tool{Name: "tray_set_icon", Description: "Set the system tray icon"}, s.traySetIcon)
 	addTool(s, server, &mcp.Tool{Name: "tray_set_tooltip", Description: "Set the system tray tooltip"}, s.traySetTooltip)
 	addTool(s, server, &mcp.Tool{Name: "tray_set_label", Description: "Set the system tray label"}, s.traySetLabel)
+	addTool(s, server, &mcp.Tool{
+		Name:        "tray_set_menu",
+		Description: "Set the system tray menu items",
+		InputSchema: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"items": map[string]any{
+					"type":  "array",
+					"items": map[string]any{"type": "object"},
+				},
+			},
+			"required": []string{"items"},
+		},
+	}, s.traySetMenu)
+	addTool(s, server, &mcp.Tool{Name: "tray_show_message", Description: "Show a tray balloon notification"}, s.trayShowMessage)
 	addTool(s, server, &mcp.Tool{Name: "tray_info", Description: "Get system tray configuration"}, s.trayInfo)
 }

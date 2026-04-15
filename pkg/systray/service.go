@@ -22,13 +22,26 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 			s.applyConfig(trayConfig)
 		}
 	}
+	s.Core().RegisterQuery(s.handleQuery)
 	s.Core().Action("systray.setIcon", func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskSetTrayIcon)
 		return core.Result{Value: nil, OK: true}.New(s.manager.SetIcon(t.Data))
 	})
+	s.Core().Action("systray.setTooltip", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskSetTrayTooltip)
+		return core.Result{Value: nil, OK: true}.New(s.manager.SetTooltip(t.Tooltip))
+	})
+	s.Core().Action("systray.setLabel", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskSetTrayLabel)
+		return core.Result{Value: nil, OK: true}.New(s.manager.SetLabel(t.Label))
+	})
 	s.Core().Action("systray.setMenu", func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskSetTrayMenu)
 		return core.Result{Value: nil, OK: true}.New(s.taskSetTrayMenu(t))
+	})
+	s.Core().Action("systray.showMessage", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskShowMessage)
+		return core.Result{Value: nil, OK: true}.New(s.manager.ShowMessage(t.Title, t.Message))
 	})
 	s.Core().Action("systray.showPanel", func(_ context.Context, _ core.Options) core.Result {
 		// Panel show — deferred (requires WindowHandle integration)
@@ -57,6 +70,15 @@ func (s *Service) applyConfig(configData map[string]any) {
 
 func (s *Service) HandleIPCEvents(_ *core.Core, _ core.Message) core.Result {
 	return core.Result{OK: true}
+}
+
+func (s *Service) handleQuery(_ *core.Core, q core.Query) core.Result {
+	switch q.(type) {
+	case QueryInfo:
+		return core.Result{Value: s.manager.GetInfo(), OK: true}
+	default:
+		return core.Result{}
+	}
 }
 
 func (s *Service) taskSetTrayMenu(t TaskSetTrayMenu) error {

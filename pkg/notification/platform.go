@@ -9,6 +9,12 @@ type Platform interface {
 	RevokePermission() error
 }
 
+// ClearPlatform is an optional extension for backends that can dismiss
+// notifications after they have been shown. An empty id means "clear all".
+type ClearPlatform interface {
+	Clear(id string) error
+}
+
 // NotificationSeverity indicates the severity for dialog fallback.
 type NotificationSeverity int
 

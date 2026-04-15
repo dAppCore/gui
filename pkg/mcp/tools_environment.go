@@ -4,6 +4,7 @@ package mcp
 import (
 	"context"
 
+	core "dappco.re/go/core"
 	coreerr "dappco.re/go/core/log"
 	"forge.lthn.ai/core/gui/pkg/environment"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -53,9 +54,37 @@ func (s *Subsystem) themeSystem(_ context.Context, _ *mcp.CallToolRequest, _ The
 	return nil, ThemeSystemOutput{Info: info}, nil
 }
 
+// --- theme_set ---
+
+type ThemeSetInput struct {
+	Theme string `json:"theme"`
+}
+
+type ThemeSetOutput struct {
+	Theme environment.ThemeInfo `json:"theme"`
+}
+
+func (s *Subsystem) themeSet(_ context.Context, _ *mcp.CallToolRequest, input ThemeSetInput) (*mcp.CallToolResult, ThemeSetOutput, error) {
+	r := s.core.Action("environment.setTheme").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: environment.TaskSetTheme{Theme: input.Theme}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, ThemeSetOutput{}, e
+		}
+		return nil, ThemeSetOutput{}, nil
+	}
+	theme, ok := r.Value.(environment.ThemeInfo)
+	if !ok {
+		return nil, ThemeSetOutput{}, coreerr.E("mcp.themeSet", "unexpected result type", nil)
+	}
+	return nil, ThemeSetOutput{Theme: theme}, nil
+}
+
 // --- Registration ---
 
 func (s *Subsystem) registerEnvironmentTools(server *mcp.Server) {
 	addTool(s, server, &mcp.Tool{Name: "theme_get", Description: "Get the current application theme"}, s.themeGet)
+	addTool(s, server, &mcp.Tool{Name: "theme_set", Description: "Set the application theme to dark, light, or system"}, s.themeSet)
 	addTool(s, server, &mcp.Tool{Name: "theme_system", Description: "Get system environment and theme information"}, s.themeSystem)
 }

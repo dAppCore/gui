@@ -57,6 +57,47 @@ func TestTaskSetTrayMenu_Good(t *testing.T) {
 	require.True(t, r.OK)
 }
 
+func TestTaskSetTrayTooltip_Good(t *testing.T) {
+	svc, c := newTestSystrayService(t)
+	require.NoError(t, svc.manager.Setup("Test", "Test"))
+
+	r := taskRun(c, "systray.setTooltip", TaskSetTrayTooltip{Tooltip: "New Tooltip"})
+	require.True(t, r.OK)
+	assert.Equal(t, "New Tooltip", svc.manager.GetInfo()["tooltip"])
+}
+
+func TestTaskSetTrayLabel_Good(t *testing.T) {
+	svc, c := newTestSystrayService(t)
+	require.NoError(t, svc.manager.Setup("Test", "Test"))
+
+	r := taskRun(c, "systray.setLabel", TaskSetTrayLabel{Label: "Ready"})
+	require.True(t, r.OK)
+	assert.Equal(t, "Ready", svc.manager.GetInfo()["label"])
+}
+
+func TestTaskShowMessage_Good(t *testing.T) {
+	svc, c := newTestSystrayService(t)
+	require.NoError(t, svc.manager.Setup("Test", "Test"))
+
+	r := taskRun(c, "systray.showMessage", TaskShowMessage{Title: "Core", Message: "Up"})
+	require.True(t, r.OK)
+
+	mockTray := svc.manager.Tray().(*mockTray)
+	assert.Equal(t, "Core", mockTray.lastMessageTitle)
+	assert.Equal(t, "Up", mockTray.lastMessageBody)
+}
+
+func TestQueryInfo_Good(t *testing.T) {
+	svc, c := newTestSystrayService(t)
+	require.NoError(t, svc.manager.Setup("Core", "Core"))
+
+	r := c.QUERY(QueryInfo{})
+	require.True(t, r.OK)
+	info := r.Value.(map[string]any)
+	assert.Equal(t, "Core", info["tooltip"])
+	assert.Equal(t, "Core", info["label"])
+}
+
 func TestTaskSetTrayIcon_Bad(t *testing.T) {
 	// No systray service — action is not registered
 	c := core.New(core.WithServiceLock())

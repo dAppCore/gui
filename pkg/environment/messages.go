@@ -16,6 +16,12 @@ type TaskOpenFileManager struct {
 	Select bool   `json:"select"`
 }
 
+// TaskSetTheme overrides the application theme.
+// Theme may be "dark", "light", or "system" to follow the platform again.
+type TaskSetTheme struct {
+	Theme string `json:"theme"`
+}
+
 // QueryFocusFollowsMouse returns whether the platform uses focus-follows-mouse. Result: bool
 type QueryFocusFollowsMouse struct{}
 

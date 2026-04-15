@@ -44,21 +44,41 @@ type mockConnector struct {
 	printErr      error
 }
 
-func (m *mockConnector) Navigate(url string) error        { m.lastNavURL = url; return nil }
-func (m *mockConnector) Click(sel string) error           { m.lastClickSel = sel; return nil }
-func (m *mockConnector) Type(sel, text string) error      { m.lastTypeSel = sel; m.lastTypeText = text; return nil }
-func (m *mockConnector) Hover(sel string) error           { m.lastHoverSel = sel; return nil }
-func (m *mockConnector) Select(sel, val string) error     { m.lastSelectSel = sel; m.lastSelectVal = val; return nil }
-func (m *mockConnector) Check(sel string, c bool) error   { m.lastCheckSel = sel; m.lastCheckVal = c; return nil }
-func (m *mockConnector) Evaluate(s string) (any, error)   { return m.evalResult, nil }
-func (m *mockConnector) Screenshot() ([]byte, error)      { return m.screenshot, nil }
-func (m *mockConnector) GetURL() (string, error)          { return m.url, nil }
-func (m *mockConnector) GetTitle() (string, error)        { return m.title, nil }
+func (m *mockConnector) Navigate(url string) error { m.lastNavURL = url; return nil }
+func (m *mockConnector) Click(sel string) error    { m.lastClickSel = sel; return nil }
+func (m *mockConnector) Type(sel, text string) error {
+	m.lastTypeSel = sel
+	m.lastTypeText = text
+	return nil
+}
+func (m *mockConnector) Hover(sel string) error { m.lastHoverSel = sel; return nil }
+func (m *mockConnector) Select(sel, val string) error {
+	m.lastSelectSel = sel
+	m.lastSelectVal = val
+	return nil
+}
+func (m *mockConnector) Check(sel string, c bool) error {
+	m.lastCheckSel = sel
+	m.lastCheckVal = c
+	return nil
+}
+func (m *mockConnector) Evaluate(s string) (any, error)     { return m.evalResult, nil }
+func (m *mockConnector) Screenshot() ([]byte, error)        { return m.screenshot, nil }
+func (m *mockConnector) GetURL() (string, error)            { return m.url, nil }
+func (m *mockConnector) GetTitle() (string, error)          { return m.title, nil }
 func (m *mockConnector) GetHTML(sel string) (string, error) { return m.html, nil }
-func (m *mockConnector) ClearConsole()                    { m.consoleClearCalled = true }
-func (m *mockConnector) Close() error                     { m.closed = true; return nil }
-func (m *mockConnector) SetViewport(w, h int) error       { m.lastViewportW = w; m.lastViewportH = h; return nil }
-func (m *mockConnector) UploadFile(sel string, p []string) error { m.lastUploadSel = sel; m.lastUploadPaths = p; return nil }
+func (m *mockConnector) ClearConsole()                      { m.consoleClearCalled = true }
+func (m *mockConnector) Close() error                       { m.closed = true; return nil }
+func (m *mockConnector) SetViewport(w, h int) error {
+	m.lastViewportW = w
+	m.lastViewportH = h
+	return nil
+}
+func (m *mockConnector) UploadFile(sel string, p []string) error {
+	m.lastUploadSel = sel
+	m.lastUploadPaths = p
+	return nil
+}
 
 func (m *mockConnector) QuerySelector(sel string) (*ElementInfo, error) {
 	if len(m.elements) > 0 {
@@ -101,6 +121,26 @@ func newTestService(t *testing.T, mock *mockConnector) (*Service, *core.Core) {
 	// Inject mock connector
 	svc.newConn = func(_, _ string) (connector, error) { return mock, nil }
 	return svc, c
+}
+
+func newTestServiceWithWindow(t *testing.T, mock *mockConnector) (*Service, *window.MockPlatform, *core.Core) {
+	t.Helper()
+	windowPlatform := window.NewMockPlatform()
+	c := core.New(
+		core.WithService(window.Register(windowPlatform)),
+		core.WithService(Register()),
+		core.WithServiceLock(),
+	)
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+
+	result := taskRun(c, "window.open", window.TaskOpenWindow{
+		Window: &window.Window{Name: "main", Title: "Main", Width: 800, Height: 600},
+	})
+	require.True(t, result.OK)
+
+	svc := core.MustServiceFor[*Service](c, "webview")
+	svc.newConn = func(_, _ string) (connector, error) { return mock, nil }
+	return svc, windowPlatform, c
 }
 
 func taskRun(c *core.Core, name string, task any) core.Result {
@@ -346,4 +386,28 @@ func TestTaskPrint_Ugly_EmptyPDF(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, "application/pdf", pr.MimeType)
 	assert.Equal(t, "", pr.Base64) // empty PDF encodes to empty base64
+}
+
+func TestQueryExceptions_Good(t *testing.T) {
+	svc, c := newTestService(t, &mockConnector{})
+	svc.recordException("main", ExceptionInfo{Text: "boom", Line: 7})
+
+	r := c.QUERY(QueryExceptions{Window: "main"})
+	require.True(t, r.OK)
+	exceptions := r.Value.([]ExceptionInfo)
+	require.Len(t, exceptions, 1)
+	assert.Equal(t, "boom", exceptions[0].Text)
+	assert.Equal(t, 7, exceptions[0].Line)
+}
+
+func TestTaskDevTools_Good(t *testing.T) {
+	_, windowPlatform, c := newTestServiceWithWindow(t, &mockConnector{})
+
+	r := taskRun(c, "webview.devtoolsOpen", TaskDevToolsOpen{Window: "main"})
+	require.True(t, r.OK)
+	assert.True(t, windowPlatform.Windows[0].DevToolsOpen())
+
+	r = taskRun(c, "webview.devtoolsClose", TaskDevToolsClose{Window: "main"})
+	require.True(t, r.OK)
+	assert.False(t, windowPlatform.Windows[0].DevToolsOpen())
 }
