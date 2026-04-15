@@ -499,7 +499,10 @@ func (s *Subsystem) registerWindowTools(server *mcp.Server) {
 	addTool(s, server, &mcp.Tool{Name: "window_list", Description: "List all application windows"}, s.windowList)
 	addTool(s, server, &mcp.Tool{Name: "window_get", Description: "Get information about a specific window"}, s.windowGet)
 	addTool(s, server, &mcp.Tool{Name: "window_focused", Description: "Get the currently focused window"}, s.windowFocused)
-	addTool(s, server, &mcp.Tool{Name: "window_create", Description: "Create a new application window"}, s.windowCreate)
+	addTool(s, server, &mcp.Tool{
+		Name:        "window_create",
+		Description: `Create a new application window. Example: {"name":"preview","title":"Preview","url":"https://example.com","x":100,"y":100,"width":1200,"height":800}`,
+	}, s.windowCreate)
 	addTool(s, server, &mcp.Tool{Name: "window_close", Description: "Close an application window"}, s.windowClose)
 	addTool(s, server, &mcp.Tool{Name: "window_position", Description: "Set the position of a window"}, s.windowPosition)
 	addTool(s, server, &mcp.Tool{Name: "window_size", Description: "Set the size of a window"}, s.windowSize)
@@ -510,9 +513,15 @@ func (s *Subsystem) registerWindowTools(server *mcp.Server) {
 	addTool(s, server, &mcp.Tool{Name: "window_focus", Description: "Bring a window to the front"}, s.windowFocus)
 	addTool(s, server, &mcp.Tool{Name: "focus_set", Description: "Set focus to a specific window"}, s.focusSet)
 	addTool(s, server, &mcp.Tool{Name: "window_title", Description: "Set the title of a window"}, s.windowTitle)
-	addTool(s, server, &mcp.Tool{Name: "window_title_set", Description: "Set the title of a window"}, s.windowTitleSet)
+	addTool(s, server, &mcp.Tool{
+		Name:        "window_title_set",
+		Description: `Set the title of a window. Example: {"name":"main","title":"Core GUI"}`,
+	}, s.windowTitleSet)
 	addTool(s, server, &mcp.Tool{Name: "window_title_get", Description: "Get the title of a window"}, s.windowTitleGet)
-	addTool(s, server, &mcp.Tool{Name: "window_visibility", Description: "Show or hide a window"}, s.windowVisibility)
+	addTool(s, server, &mcp.Tool{
+		Name:        "window_visibility",
+		Description: `Show or hide a window. Example: {"name":"main","visible":false}`,
+	}, s.windowVisibility)
 	addTool(s, server, &mcp.Tool{Name: "window_always_on_top", Description: "Pin a window above others"}, s.windowAlwaysOnTop)
 	addTool(s, server, &mcp.Tool{Name: "window_background_colour", Description: "Set a window background colour"}, s.windowBackgroundColour)
 	addTool(s, server, &mcp.Tool{Name: "window_fullscreen", Description: "Set a window to fullscreen mode"}, s.windowFullscreen)

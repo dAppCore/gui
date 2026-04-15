@@ -55,6 +55,12 @@ func (s *Subsystem) browserOpenFile(_ context.Context, _ *mcp.CallToolRequest, i
 // --- Registration ---
 
 func (s *Subsystem) registerBrowserTools(server *mcp.Server) {
-	addTool(s, server, &mcp.Tool{Name: "browser_open_url", Description: "Open a URL in the default system browser"}, s.browserOpenURL)
-	addTool(s, server, &mcp.Tool{Name: "browser_open_file", Description: "Open a file in the system default application"}, s.browserOpenFile)
+	addTool(s, server, &mcp.Tool{
+		Name:        "browser_open_url",
+		Description: `Open a URL in the default system browser. Example: {"url":"https://docs.example.com"}`,
+	}, s.browserOpenURL)
+	addTool(s, server, &mcp.Tool{
+		Name:        "browser_open_file",
+		Description: `Open a file in the system default application. Example: {"path":"/tmp/readme.md"}`,
+	}, s.browserOpenFile)
 }

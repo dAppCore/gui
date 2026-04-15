@@ -165,6 +165,9 @@ func (s *Subsystem) registerTrayTools(server *mcp.Server) {
 			"required": []string{"items"},
 		},
 	}, s.traySetMenu)
-	addTool(s, server, &mcp.Tool{Name: "tray_show_message", Description: "Show a tray balloon notification"}, s.trayShowMessage)
+	addTool(s, server, &mcp.Tool{
+		Name:        "tray_show_message",
+		Description: `Show a tray balloon notification. Example: {"title":"Sync complete","message":"Files are up to date"}`,
+	}, s.trayShowMessage)
 	addTool(s, server, &mcp.Tool{Name: "tray_info", Description: "Get system tray configuration"}, s.trayInfo)
 }

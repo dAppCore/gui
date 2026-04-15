@@ -351,8 +351,20 @@ func (s *Subsystem) registerLayoutTools(server *mcp.Server) {
 	addTool(s, server, &mcp.Tool{Name: "layout_snap", Description: "Snap a window to a screen edge or corner"}, s.layoutSnap)
 	addTool(s, server, &mcp.Tool{Name: "layout_stack", Description: "Stack windows in a cascade pattern"}, s.layoutStack)
 	addTool(s, server, &mcp.Tool{Name: "layout_workflow", Description: "Apply a preset workflow layout"}, s.layoutWorkflow)
-	addTool(s, server, &mcp.Tool{Name: "layout_beside_editor", Description: "Position a window beside the detected editor window"}, s.layoutBesideEditor)
-	addTool(s, server, &mcp.Tool{Name: "layout_suggest", Description: "Suggest the best layout for the current screen and window count"}, s.layoutSuggest)
-	addTool(s, server, &mcp.Tool{Name: "screen_find_space", Description: "Find an empty rectangle on a screen for a new window"}, s.screenFindSpace)
-	addTool(s, server, &mcp.Tool{Name: "window_arrange_pair", Description: "Arrange two windows in an optimal split on one screen"}, s.windowArrangePair)
+	addTool(s, server, &mcp.Tool{
+		Name:        "layout_beside_editor",
+		Description: `Position a window beside the detected editor window. Example: {"name":"preview","editor":"code","side":"right"}`,
+	}, s.layoutBesideEditor)
+	addTool(s, server, &mcp.Tool{
+		Name:        "layout_suggest",
+		Description: `Suggest the best layout for the current screen and window count. Example: {"window_count":2}`,
+	}, s.layoutSuggest)
+	addTool(s, server, &mcp.Tool{
+		Name:        "screen_find_space",
+		Description: `Find an empty rectangle on a screen for a new window. Example: {"width":800,"height":600,"padding":24}`,
+	}, s.screenFindSpace)
+	addTool(s, server, &mcp.Tool{
+		Name:        "window_arrange_pair",
+		Description: `Arrange two windows in an optimal split on one screen. Example: {"primary":"editor","secondary":"preview","ratio":0.62}`,
+	}, s.windowArrangePair)
 }

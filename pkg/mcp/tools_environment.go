@@ -85,6 +85,9 @@ func (s *Subsystem) themeSet(_ context.Context, _ *mcp.CallToolRequest, input Th
 
 func (s *Subsystem) registerEnvironmentTools(server *mcp.Server) {
 	addTool(s, server, &mcp.Tool{Name: "theme_get", Description: "Get the current application theme"}, s.themeGet)
-	addTool(s, server, &mcp.Tool{Name: "theme_set", Description: "Set the application theme to dark, light, or system"}, s.themeSet)
+	addTool(s, server, &mcp.Tool{
+		Name:        "theme_set",
+		Description: `Set the application theme to dark, light, or system. Example: {"theme":"dark"}`,
+	}, s.themeSet)
 	addTool(s, server, &mcp.Tool{Name: "theme_system", Description: "Get system environment and theme information"}, s.themeSystem)
 }

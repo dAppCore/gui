@@ -144,6 +144,12 @@ func (s *Subsystem) registerNotificationTools(server *mcp.Server) {
 	addTool(s, server, &mcp.Tool{Name: "notification_show", Description: "Show a desktop notification"}, s.notificationShow)
 	addTool(s, server, &mcp.Tool{Name: "notification_permission_request", Description: "Request notification permission"}, s.notificationPermissionRequest)
 	addTool(s, server, &mcp.Tool{Name: "notification_permission_check", Description: "Check notification permission status"}, s.notificationPermissionCheck)
-	addTool(s, server, &mcp.Tool{Name: "notification_clear", Description: "Clear a notification by id or clear all notifications"}, s.notificationClear)
-	addTool(s, server, &mcp.Tool{Name: "notification_with_actions", Description: "Show an interactive desktop notification with action buttons"}, s.notificationWithActions)
+	addTool(s, server, &mcp.Tool{
+		Name:        "notification_clear",
+		Description: `Clear a notification by id or clear all notifications. Example: {"id":"core-123"}`,
+	}, s.notificationClear)
+	addTool(s, server, &mcp.Tool{
+		Name:        "notification_with_actions",
+		Description: `Show an interactive desktop notification with action buttons. Example: {"title":"Deploy","message":"Start deployment?","actions":[{"id":"confirm","label":"Deploy"}]}`,
+	}, s.notificationWithActions)
 }

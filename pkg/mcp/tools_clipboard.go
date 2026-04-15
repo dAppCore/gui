@@ -149,7 +149,13 @@ func (s *Subsystem) registerClipboardTools(server *mcp.Server) {
 	addTool(s, server, &mcp.Tool{Name: "clipboard_read", Description: "Read the current clipboard content"}, s.clipboardRead)
 	addTool(s, server, &mcp.Tool{Name: "clipboard_write", Description: "Write text to the clipboard"}, s.clipboardWrite)
 	addTool(s, server, &mcp.Tool{Name: "clipboard_has", Description: "Check if the clipboard has content"}, s.clipboardHas)
-	addTool(s, server, &mcp.Tool{Name: "clipboard_read_image", Description: "Read image data from the clipboard as base64"}, s.clipboardReadImage)
-	addTool(s, server, &mcp.Tool{Name: "clipboard_write_image", Description: "Write base64 image data to the clipboard"}, s.clipboardWriteImage)
+	addTool(s, server, &mcp.Tool{
+		Name:        "clipboard_read_image",
+		Description: `Read image data from the clipboard as base64 PNG bytes. Example: {}`,
+	}, s.clipboardReadImage)
+	addTool(s, server, &mcp.Tool{
+		Name:        "clipboard_write_image",
+		Description: `Write base64 image data to the clipboard. Example: {"base64":"iVBORw0KGgoAAA..."}`,
+	}, s.clipboardWriteImage)
 	addTool(s, server, &mcp.Tool{Name: "clipboard_clear", Description: "Clear the clipboard"}, s.clipboardClear)
 }

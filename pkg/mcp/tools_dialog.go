@@ -337,7 +337,10 @@ func (s *Subsystem) registerDialogTools(server *mcp.Server) {
 	addTool(s, server, &mcp.Tool{Name: "dialog_open_directory", Description: "Show a directory picker dialog"}, s.dialogOpenDirectory)
 	addTool(s, server, &mcp.Tool{Name: "dialog_confirm", Description: "Show a question/confirmation dialog"}, s.dialogConfirm)
 	addTool(s, server, &mcp.Tool{Name: "dialog_message", Description: "Show a message dialog"}, s.dialogMessage)
-	addTool(s, server, &mcp.Tool{Name: "dialog_prompt", Description: "Show an input prompt dialog in the active window"}, s.dialogPrompt)
+	addTool(s, server, &mcp.Tool{
+		Name:        "dialog_prompt",
+		Description: `Show an input prompt dialog in the active window. Example: {"title":"Rename","message":"New name","defaultValue":"project-a"}`,
+	}, s.dialogPrompt)
 	addTool(s, server, &mcp.Tool{Name: "dialog_info", Description: "Show an information message dialog"}, s.dialogInfo)
 	addTool(s, server, &mcp.Tool{Name: "dialog_warning", Description: "Show a warning message dialog"}, s.dialogWarning)
 	addTool(s, server, &mcp.Tool{Name: "dialog_error", Description: "Show an error message dialog"}, s.dialogError)
