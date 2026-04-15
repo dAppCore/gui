@@ -102,9 +102,12 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 			return core.Result{Value: err, OK: false}
 		}
 		script := promptScript(promptOpts.Title, promptOpts.Message, promptOpts.DefaultValue)
-		result := s.Core().Action("gui.webview.eval").Run(context.Background(), core.NewOptions(
-			core.Option{Key: "task", Value: webview.TaskEvaluate{Window: windowName, Script: script}},
-		))
+		task := core.NewOptions(core.Option{Key: "task", Value: webview.TaskEvaluate{Window: windowName, Script: script}})
+		result := s.Core().Action("webview.evaluate").Run(context.Background(), task)
+		if !result.OK {
+			// Keep the legacy GUI alias as a fallback for older startup wiring.
+			result = s.Core().Action("gui.webview.eval").Run(context.Background(), task)
+		}
 		if !result.OK {
 			if e, ok := result.Value.(error); ok {
 				return core.Result{Value: e, OK: false}
