@@ -74,11 +74,13 @@ func (s *Service) resolveCoreRoute(ctx context.Context, route string, query url.
 		return s.resolveSettingsRoute(subpath, query)
 	case "store":
 		return s.resolveStoreRoute(subpath, query)
+	case "network":
+		return s.resolveNetworkRoute(subpath, query)
 	case "models":
 		return s.resolveModelsRoute(subpath, query)
 	case "chat":
 		return s.resolveChatRoute(ctx, subpath, query)
-	case "network", "agent", "wallet", "identity":
+	case "agent", "wallet", "identity":
 		return s.resolveUnavailableCoreRoute(segment, subpath, query)
 	default:
 		return core.Result{
@@ -179,6 +181,37 @@ func (s *Service) resolveModelsRoute(subpath string, query url.Values) core.Resu
 			"state":        state,
 			"models":       s.chatModels(),
 			"route":        "models",
+		},
+		OK: true,
+	}
+}
+
+func (s *Service) resolveNetworkRoute(subpath string, query url.Values) core.Result {
+	state := s.networkState()
+	if interfaceName := coalesce(query.Get("name"), subpath); interfaceName != "" {
+		for _, iface := range state.Interfaces {
+			if strings.EqualFold(iface.Name, interfaceName) {
+				return core.Result{
+					Value: map[string]any{
+						"content_type": "text/html",
+						"body":         s.renderNetworkInterfacePage(state, iface),
+						"route":        "network",
+						"interface":    iface,
+						"state":        state,
+					},
+					OK: true,
+				}
+			}
+		}
+		return s.resolveUnavailableCoreRoute("network", subpath, query)
+	}
+
+	return core.Result{
+		Value: map[string]any{
+			"content_type": "text/html",
+			"body":         s.renderNetworkPage(state),
+			"route":        "network",
+			"state":        state,
 		},
 		OK: true,
 	}

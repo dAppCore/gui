@@ -129,6 +129,9 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 	s.Core().Action("display.models.state", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: s.modelState(), OK: true}
 	})
+	s.Core().Action("display.network.state", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: s.networkState(), OK: true}
+	})
 	s.registerBackgroundActions()
 	s.registerSidecarActions()
 	s.registerDefaultSchemes()
