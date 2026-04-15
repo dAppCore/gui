@@ -878,6 +878,18 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 				Primary: primary, Secondary: secondary, ScreenID: screenID, Ratio: ratio,
 			}},
 		))
+	case "window:set-opacity":
+		name, e := wsRequire(msg.Data, "name")
+		if e != nil {
+			return core.Result{Value: e, OK: false}
+		}
+		opacity, ok := msg.Data["opacity"].(float64)
+		if !ok {
+			return core.Result{Value: coreerr.E("display.handleWSMessage", "missing required field \"opacity\"", nil), OK: false}
+		}
+		return c.Action("window.setOpacity").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: window.TaskSetOpacity{Name: name, Opacity: opacity}},
+		))
 	default:
 		return core.Result{Value: coreerr.E("display.handleWSMessage", "unknown websocket action: "+msg.Action, nil), OK: false}
 	}

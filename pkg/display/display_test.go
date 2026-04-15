@@ -372,6 +372,26 @@ func TestSetWindowTitle_Good(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestHandleWSMessage_SetWindowOpacity_Good(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+	_ = svc.OpenWindow(window.WithName("opacity-win"))
+
+	r := svc.handleWSMessage(WSMessage{
+		Action: "window:set-opacity",
+		Data: map[string]any{
+			"name":    "opacity-win",
+			"opacity": 0.35,
+		},
+	})
+	require.True(t, r.OK)
+
+	info, err := svc.GetWindowInfo("opacity-win")
+	require.NoError(t, err)
+	require.NotNil(t, info)
+	assert.InDelta(t, 0.35, info.Opacity, 0.0001)
+}
+
 func TestGetFocusedWindow_Good(t *testing.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
