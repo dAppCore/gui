@@ -3,9 +3,10 @@ package keybinding
 
 import (
 	"context"
+	"sync"
 
-	coreerr "dappco.re/go/core/log"
 	core "dappco.re/go/core"
+	coreerr "dappco.re/go/core/log"
 )
 
 type Options struct{}
@@ -13,6 +14,7 @@ type Options struct{}
 type Service struct {
 	*core.ServiceRuntime[Options]
 	platform           Platform
+	mu                 sync.RWMutex
 	registeredBindings map[string]BindingInfo
 }
 
@@ -49,6 +51,8 @@ func (s *Service) handleQuery(_ *core.Core, q core.Query) core.Result {
 }
 
 func (s *Service) queryList() []BindingInfo {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	result := make([]BindingInfo, 0, len(s.registeredBindings))
 	for _, info := range s.registeredBindings {
 		result = append(result, info)
@@ -57,6 +61,8 @@ func (s *Service) queryList() []BindingInfo {
 }
 
 func (s *Service) taskAdd(t TaskAdd) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	if _, exists := s.registeredBindings[t.Accelerator]; exists {
 		return ErrorAlreadyRegistered
 	}
@@ -77,6 +83,8 @@ func (s *Service) taskAdd(t TaskAdd) error {
 }
 
 func (s *Service) taskRemove(t TaskRemove) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	if _, exists := s.registeredBindings[t.Accelerator]; !exists {
 		return coreerr.E("keybinding.taskRemove", "not registered: "+t.Accelerator, ErrorNotRegistered)
 	}
@@ -95,7 +103,10 @@ func (s *Service) taskRemove(t TaskRemove) error {
 //
 //	c.Action("keybinding.process").Run(ctx, core.NewOptions(core.Option{Key:"task", Value:keybinding.TaskProcess{Accelerator:"Ctrl+S"}}))
 func (s *Service) taskProcess(t TaskProcess) error {
-	if _, exists := s.registeredBindings[t.Accelerator]; !exists {
+	s.mu.RLock()
+	_, exists := s.registeredBindings[t.Accelerator]
+	s.mu.RUnlock()
+	if !exists {
 		return coreerr.E("keybinding.taskProcess", "not registered: "+t.Accelerator, ErrorNotRegistered)
 	}
 

@@ -2,6 +2,7 @@ package display
 
 import (
 	"context"
+	"net/url"
 	"runtime"
 	"sync"
 
@@ -1345,12 +1346,13 @@ func (s *Service) handleOpenFile() {
 	if !ok || len(paths) == 0 {
 		return
 	}
+	fileURL := "/#/developer/editor?file=" + url.QueryEscape(paths[0])
 	_ = s.Core().Action("window.open").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskOpenWindow{
 			Window: &window.Window{
 				Name:   "editor",
 				Title:  paths[0] + " - Editor",
-				URL:    "/#/developer/editor?file=" + paths[0],
+				URL:    fileURL,
 				Width:  1200,
 				Height: 800,
 			},

@@ -202,6 +202,12 @@ func TestTaskEvaluate_Good(t *testing.T) {
 	assert.Equal(t, 42, r.Value)
 }
 
+func TestTaskEvaluate_Bad_EmptyWindow(t *testing.T) {
+	_, c := newTestService(t, &mockConnector{evalResult: 42})
+	r := taskRun(c, "webview.evaluate", TaskEvaluate{Window: " ", Script: "21*2"})
+	assert.False(t, r.OK)
+}
+
 func TestTaskClick_Good(t *testing.T) {
 	mock := &mockConnector{}
 	_, c := newTestService(t, mock)

@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/base64"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -85,6 +86,10 @@ func Register(optionFns ...func(*Options)) func(*core.Core) core.Result {
 // defaultNewConn creates real go-webview connections.
 func defaultNewConn(options Options) func(string, string) (connector, error) {
 	return func(debugURL, windowName string) (connector, error) {
+		windowName = strings.TrimSpace(windowName)
+		if windowName == "" {
+			return nil, core.E("webview.connect", "window name is required", nil)
+		}
 		// Enumerate targets, match by title/URL containing window name
 		targets, err := gowebview.ListTargets(debugURL)
 		if err != nil {
@@ -97,17 +102,8 @@ func defaultNewConn(options Options) func(string, string) (connector, error) {
 				break
 			}
 		}
-		// Fallback: first page target
 		if wsURL == "" {
-			for _, t := range targets {
-				if t.Type == "page" {
-					wsURL = t.WebSocketDebuggerURL
-					break
-				}
-			}
-		}
-		if wsURL == "" {
-			return nil, core.E("webview.connect", "no page target found", nil)
+			return nil, core.E("webview.connect", "no page target matched window name", nil)
 		}
 		wv, err := gowebview.New(
 			gowebview.WithDebugURL(debugURL),
@@ -198,6 +194,10 @@ func (s *Service) HandleIPCEvents(_ *core.Core, msg core.Message) core.Result {
 
 // getConn returns the connector for a window, creating it if needed.
 func (s *Service) getConn(windowName string) (connector, error) {
+	windowName = strings.TrimSpace(windowName)
+	if windowName == "" {
+		return nil, core.E("webview.getConn", "window name is required", nil)
+	}
 	s.mu.RLock()
 	if conn, ok := s.connections[windowName]; ok {
 		s.mu.RUnlock()

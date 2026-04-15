@@ -3,9 +3,10 @@ package contextmenu
 
 import (
 	"context"
+	"sync"
 
-	coreerr "dappco.re/go/core/log"
 	core "dappco.re/go/core"
+	coreerr "dappco.re/go/core/log"
 )
 
 type Options struct{}
@@ -13,6 +14,7 @@ type Options struct{}
 type Service struct {
 	*core.ServiceRuntime[Options]
 	platform        Platform
+	mu              sync.RWMutex
 	registeredMenus map[string]ContextMenuDef
 }
 
@@ -39,6 +41,8 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 
 func (s *Service) OnShutdown(_ context.Context) core.Result {
 	// Destroy all registered menus on shutdown to release platform resources
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	for name := range s.registeredMenus {
 		_ = s.platform.Remove(name)
 	}
@@ -66,6 +70,8 @@ func (s *Service) handleQuery(_ *core.Core, q core.Query) core.Result {
 }
 
 func (s *Service) queryGet(q QueryGet) *ContextMenuDef {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	menu, ok := s.registeredMenus[q.Name]
 	if !ok {
 		return nil
@@ -74,6 +80,8 @@ func (s *Service) queryGet(q QueryGet) *ContextMenuDef {
 }
 
 func (s *Service) queryList() map[string]ContextMenuDef {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	result := make(map[string]ContextMenuDef, len(s.registeredMenus))
 	for k, v := range s.registeredMenus {
 		result[k] = v
@@ -82,6 +90,8 @@ func (s *Service) queryList() map[string]ContextMenuDef {
 }
 
 func (s *Service) taskAdd(t TaskAdd) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	// If menu already exists, remove it first (replace semantics)
 	if _, exists := s.registeredMenus[t.Name]; exists {
 		_ = s.platform.Remove(t.Name)
@@ -105,6 +115,8 @@ func (s *Service) taskAdd(t TaskAdd) error {
 }
 
 func (s *Service) taskRemove(t TaskRemove) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	if _, exists := s.registeredMenus[t.Name]; !exists {
 		return ErrorMenuNotFound
 	}
@@ -119,6 +131,8 @@ func (s *Service) taskRemove(t TaskRemove) error {
 }
 
 func (s *Service) taskUpdate(t TaskUpdate) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	if _, exists := s.registeredMenus[t.Name]; !exists {
 		return ErrorMenuNotFound
 	}
@@ -144,6 +158,8 @@ func (s *Service) taskUpdate(t TaskUpdate) error {
 }
 
 func (s *Service) taskDestroy(t TaskDestroy) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	if _, exists := s.registeredMenus[t.Name]; !exists {
 		return ErrorMenuNotFound
 	}
