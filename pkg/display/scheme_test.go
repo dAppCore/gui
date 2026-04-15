@@ -2,8 +2,6 @@ package display
 
 import (
 	"context"
-	"net/http"
-	"net/http/httptest"
 	"net/url"
 	"testing"
 
@@ -11,7 +9,42 @@ import (
 	"forge.lthn.ai/core/gui/pkg/chat"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/wailsapp/wails/v3/pkg/application"
 )
+
+type testApplicationResponseWriter struct {
+	header map[string][]string
+	body   []byte
+	status int
+}
+
+func newTestApplicationResponseWriter() *testApplicationResponseWriter {
+	return &testApplicationResponseWriter{header: map[string][]string{}}
+}
+
+func (w *testApplicationResponseWriter) Header() map[string][]string {
+	if w.header == nil {
+		w.header = map[string][]string{}
+	}
+	return w.header
+}
+
+func (w *testApplicationResponseWriter) Write(data []byte) (int, error) {
+	w.body = append(w.body, data...)
+	return len(data), nil
+}
+
+func (w *testApplicationResponseWriter) WriteHeader(statusCode int) {
+	w.status = statusCode
+}
+
+type testApplicationHandler struct {
+	called bool
+}
+
+func (h *testApplicationHandler) ServeHTTP(_ application.ResponseWriter, _ *application.Request) {
+	h.called = true
+}
 
 func TestScheme_ResolveScheme_Good(t *testing.T) {
 	svc, c := newTestDisplayService(t)
@@ -34,17 +67,17 @@ func TestScheme_ResolveScheme_Good(t *testing.T) {
 		case chat.QueryConversationList:
 			return core.Result{
 				Value: []chat.ConversationSummary{{ID: "conv-1", Title: "Chat Route", MessageCount: 3}},
-				OK: true,
+				OK:    true,
 			}
 		case chat.QueryHistory:
 			return core.Result{
 				Value: chat.Conversation{ID: "conv-1", Title: "Chat Route"},
-				OK: true,
+				OK:    true,
 			}
 		case chat.QueryConversationSearch:
 			return core.Result{
 				Value: []any{"chat-match"},
-				OK: true,
+				OK:    true,
 			}
 		default:
 			return core.Result{}
@@ -131,46 +164,39 @@ func TestScheme_AssetMiddleware_Good(t *testing.T) {
 	svc, _ := newTestDisplayService(t)
 	svc.registerDefaultSchemes()
 
-	recorder := httptest.NewRecorder()
-	request := httptest.NewRequest("GET", "core://store?q=theme", nil)
+	recorder := newTestApplicationResponseWriter()
+	request := &application.Request{Method: "GET", URL: "core://store?q=theme"}
 
-	svc.AssetMiddleware()(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
-		t.Fatal("next handler should not be called for core routes")
-	})).ServeHTTP(recorder, request)
+	svc.AssetMiddleware()(&testApplicationHandler{}).ServeHTTP(recorder, request)
 
-	require.Equal(t, http.StatusOK, recorder.Code)
-	assert.Equal(t, "text/html; charset=utf-8", recorder.Header().Get("Content-Type"))
-	assert.Contains(t, recorder.Body.String(), "core://store")
+	require.Equal(t, 200, recorder.status)
+	assert.Equal(t, "text/html; charset=utf-8", recorder.Header()["Content-Type"][0])
+	assert.Contains(t, string(recorder.body), "core://store")
 }
 
 func TestScheme_AssetMiddleware_Bad(t *testing.T) {
 	svc, _ := newTestDisplayService(t)
 	svc.registerDefaultSchemes()
 
-	recorder := httptest.NewRecorder()
-	request := httptest.NewRequest("GET", "https://example.com/app", nil)
-	nextCalled := false
+	recorder := newTestApplicationResponseWriter()
+	request := &application.Request{Method: "GET", URL: "https://example.com/app"}
+	next := &testApplicationHandler{}
 
-	svc.AssetMiddleware()(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		nextCalled = true
-		_, _ = w.Write([]byte("next"))
-	})).ServeHTTP(recorder, request)
+	svc.AssetMiddleware()(next).ServeHTTP(recorder, request)
 
-	require.True(t, nextCalled)
-	require.Equal(t, http.StatusOK, recorder.Code)
-	assert.Equal(t, "next", recorder.Body.String())
+	require.True(t, next.called)
+	require.Equal(t, 0, recorder.status)
+	assert.Empty(t, recorder.body)
 }
 
 func TestScheme_AssetMiddleware_Ugly(t *testing.T) {
 	svc, _ := New()
 
-	recorder := httptest.NewRecorder()
-	request := httptest.NewRequest("GET", "core://missing", nil)
+	recorder := newTestApplicationResponseWriter()
+	request := &application.Request{Method: "GET", URL: "core://missing"}
 
-	svc.AssetMiddleware()(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
-		t.Fatal("next handler should not be called for core routes")
-	})).ServeHTTP(recorder, request)
+	svc.AssetMiddleware()(&testApplicationHandler{}).ServeHTTP(recorder, request)
 
-	require.Equal(t, http.StatusNotFound, recorder.Code)
-	assert.Contains(t, recorder.Body.String(), "core route not found")
+	require.Equal(t, 404, recorder.status)
+	assert.Contains(t, string(recorder.body), "core route not found")
 }

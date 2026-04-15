@@ -473,12 +473,20 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 		return c.Action("gui.chat.conversations.search").Run(ctx, wsOptions(msg.Data))
 	case "chat:conversations:new":
 		return c.Action("gui.chat.conversations.new").Run(ctx, wsOptions(msg.Data))
+	case "chat:conversation:save":
+		return c.Action("gui.chat.conversation.save").Run(ctx, wsOptions(msg.Data))
 	case "chat:conversations:rename":
 		return c.Action("gui.chat.conversations.rename").Run(ctx, wsOptions(msg.Data))
 	case "chat:conversations:export":
 		return c.Action("gui.chat.conversations.export").Run(ctx, wsOptions(msg.Data))
 	case "chat:attach-image":
 		return c.Action("gui.chat.attachImage").Run(ctx, wsOptions(msg.Data))
+	case "chat:thinking:start":
+		return c.Action("gui.chat.thinking.start").Run(ctx, wsOptions(msg.Data))
+	case "chat:thinking:append":
+		return c.Action("gui.chat.thinking.append").Run(ctx, wsOptions(msg.Data))
+	case "chat:thinking:end":
+		return c.Action("gui.chat.thinking.end").Run(ctx, wsOptions(msg.Data))
 	case "keybinding:add":
 		accelerator, _ := msg.Data["accelerator"].(string)
 		description, _ := msg.Data["description"].(string)

@@ -40,7 +40,7 @@ type Options struct {
 type Service struct {
 	*core.ServiceRuntime[Options]
 	options            Options
-	store              *store.KeyValueStore
+	store              *store.Store
 	httpClient         *http.Client
 	toolExecutor       ToolExecutor
 	toolHandler        *ToolCallHandler
@@ -65,6 +65,14 @@ type searchInput struct {
 type renameInput struct {
 	ID    string `json:"id"`
 	Title string `json:"title"`
+}
+
+type thinkingInput struct {
+	ConversationID string    `json:"conversation_id,omitempty"`
+	MessageID      string    `json:"message_id,omitempty"`
+	Content        string    `json:"content,omitempty"`
+	StartedAt      time.Time `json:"started_at,omitempty"`
+	DurationMS     int64     `json:"duration_ms,omitempty"`
 }
 
 type selectModelInput struct {
@@ -157,7 +165,7 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		return core.Result{Value: err, OK: false}
 	}
 
-	keyValueStore, err := store.New(store.Options{Path: s.options.StorePath})
+	keyValueStore, err := store.New(s.options.StorePath)
 	if err != nil {
 		return core.Result{Value: err, OK: false}
 	}
@@ -288,6 +296,21 @@ func (s *Service) registerActions() {
 		conv, err := s.createConversation()
 		return core.Result{}.New(conv, err)
 	})
+	c.Action("gui.chat.conversation.save", func(_ context.Context, opts core.Options) core.Result {
+		conv, err := decodeInput[Conversation](opts)
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		if strings.TrimSpace(conv.ID) == "" {
+			return core.Result{Value: coreerr.E("chat.conversation.save", "conversation id is required", nil), OK: false}
+		}
+		saved, err := s.saveConversation(conv)
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		s.emit(ActionConversationUpdated{Conversation: saved})
+		return core.Result{Value: saved, OK: true}
+	})
 	c.Action("gui.chat.conversations.rename", func(_ context.Context, opts core.Options) core.Result {
 		input, err := decodeInput[renameInput](opts)
 		if err != nil {
@@ -311,6 +334,58 @@ func (s *Service) registerActions() {
 		}
 		s.queueAttachment(coalesce(input.ConversationID, "draft"), input.ImageAttachment)
 		return core.Result{Value: input.ImageAttachment, OK: true}
+	})
+	c.Action("gui.chat.thinking.start", func(_ context.Context, opts core.Options) core.Result {
+		input, err := decodeInput[thinkingInput](opts)
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		if strings.TrimSpace(input.ConversationID) == "" {
+			return core.Result{Value: coreerr.E("chat.thinking.start", "conversation id is required", nil), OK: false}
+		}
+		s.emit(ActionThinkingStarted{
+			ConversationID: input.ConversationID,
+			MessageID:      input.MessageID,
+			StartedAt:      input.StartedAt,
+		})
+		return core.Result{Value: input, OK: true}
+	})
+	c.Action("gui.chat.thinking.append", func(_ context.Context, opts core.Options) core.Result {
+		input, err := decodeInput[thinkingInput](opts)
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		if strings.TrimSpace(input.ConversationID) == "" {
+			return core.Result{Value: coreerr.E("chat.thinking.append", "conversation id is required", nil), OK: false}
+		}
+		s.emit(ActionThinkingAppended{
+			ConversationID: input.ConversationID,
+			MessageID:      input.MessageID,
+			Content:        input.Content,
+		})
+		return core.Result{Value: input.Content, OK: true}
+	})
+	c.Action("gui.chat.thinking.end", func(_ context.Context, opts core.Options) core.Result {
+		input, err := decodeInput[thinkingInput](opts)
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		if strings.TrimSpace(input.ConversationID) == "" {
+			return core.Result{Value: coreerr.E("chat.thinking.end", "conversation id is required", nil), OK: false}
+		}
+		duration := input.DurationMS
+		if duration == 0 && !input.StartedAt.IsZero() {
+			duration = time.Since(input.StartedAt).Milliseconds()
+			if duration < 0 {
+				duration = 0
+			}
+		}
+		s.emit(ActionThinkingEnded{
+			ConversationID: input.ConversationID,
+			MessageID:      input.MessageID,
+			DurationMS:     duration,
+		})
+		return core.Result{Value: duration, OK: true}
 	})
 }
 
@@ -399,6 +474,16 @@ func (s *Service) selectModel(input selectModelInput) (ChatSettings, error) {
 }
 
 func (s *Service) saveConversation(conv Conversation) (Conversation, error) {
+	if conv.CreatedAt.IsZero() {
+		conv.CreatedAt = s.now()
+	}
+	if strings.TrimSpace(conv.Title) == "" {
+		if len(conv.Messages) > 0 && strings.TrimSpace(conv.Messages[0].Content) != "" {
+			conv.Title = titleFrom(conv.Messages[0].Content)
+		} else {
+			conv.Title = "New Chat"
+		}
+	}
 	conv.UpdatedAt = s.now()
 	payload := core.JSONMarshalString(conv)
 	return conv, s.store.Set(conversationsGroup, conv.ID, payload)

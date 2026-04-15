@@ -3,7 +3,6 @@ package display
 import (
 	"context"
 	"html"
-	"net/http"
 	"net/url"
 	"sort"
 	"strings"
@@ -17,10 +16,35 @@ import (
 
 type SchemeHandler func(context.Context, string, url.Values) core.Result
 
-type assetHandlerFunc func(w http.ResponseWriter, r *http.Request)
+type assetMiddlewareHandler struct {
+	next    application.Handler
+	service *Service
+}
 
-func (f assetHandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	f(w, r)
+func (h assetMiddlewareHandler) ServeHTTP(w application.ResponseWriter, r *application.Request) {
+	rawURL := r.URL
+	if strings.HasPrefix(strings.ToLower(strings.TrimSpace(rawURL)), "core://") {
+		result := h.service.ResolveScheme(context.Background(), rawURL)
+		if !result.OK {
+			w.WriteHeader(404)
+			_, _ = w.Write([]byte("core route not found"))
+			return
+		}
+		payload, _ := result.Value.(map[string]any)
+		body, _ := payload["body"].(string)
+		headers := w.Header()
+		contentType, _ := payload["content_type"].(string)
+		if strings.TrimSpace(contentType) == "" {
+			contentType = "text/html"
+		}
+		headers["Content-Type"] = []string{contentType + "; charset=utf-8"}
+		w.WriteHeader(200)
+		_, _ = w.Write([]byte(body))
+		return
+	}
+	if h.next != nil {
+		h.next.ServeHTTP(w, r)
+	}
 }
 
 func (s *Service) HandleScheme(scheme string, handler SchemeHandler) {
@@ -451,31 +475,7 @@ func coalesce(values ...string) string {
 }
 
 func (s *Service) AssetMiddleware() application.Middleware {
-	return func(next http.Handler) http.Handler {
-		return assetHandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			rawURL := r.URL.String()
-			if strings.HasPrefix(strings.ToLower(strings.TrimSpace(rawURL)), "core://") {
-				result := s.ResolveScheme(context.Background(), rawURL)
-				if !result.OK {
-					w.WriteHeader(404)
-					_, _ = w.Write([]byte("core route not found"))
-					return
-				}
-				payload, _ := result.Value.(map[string]any)
-				body, _ := payload["body"].(string)
-				headers := w.Header()
-				contentType, _ := payload["content_type"].(string)
-				if strings.TrimSpace(contentType) == "" {
-					contentType = "text/html"
-				}
-				headers["Content-Type"] = []string{contentType + "; charset=utf-8"}
-				w.WriteHeader(200)
-				_, _ = w.Write([]byte(body))
-				return
-			}
-			if next != nil {
-				next.ServeHTTP(w, r)
-			}
-		})
+	return func(next application.Handler) application.Handler {
+		return assetMiddlewareHandler{service: s, next: next}
 	}
 }

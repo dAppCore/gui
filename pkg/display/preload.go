@@ -76,7 +76,7 @@ func (s *Service) injectStoragePolyfills(pageOrigin string) string {
   globalThis.core.storage = globalThis.core.storage || {};
   globalThis.core.storage.local = createStorage('localStorage', __scope.localStorage);
   globalThis.core.storage.session = createStorage('sessionStorage', __scope.sessionStorage);
-  globalThis.core.storage.cookies = createStorage(__scope.cookies);
+  globalThis.core.storage.cookies = createStorage('cookies', __scope.cookies);
   const cookieEntries = () => Object.entries(__scope.cookies).map(([name, value]) => name + "=" + value).join("; ");
   const setCookie = (value) => {
     const rawCookie = String(value ?? "");
@@ -90,7 +90,7 @@ func (s *Service) injectStoragePolyfills(pageOrigin string) string {
       return;
     }
     __scope.cookies[name] = pair.slice(separatorIndex + 1).trim();
-    persist('cookie', name, __scope.cookies[name]);
+    persist('cookies', name, __scope.cookies[name]);
   };
   const asyncResult = (value) => Promise.resolve(value);
   const createIDBRequest = (result) => {
@@ -185,7 +185,7 @@ func (s *Service) injectStoragePolyfills(pageOrigin string) string {
         persisted() { return asyncResult(true); },
         durability: 'strict',
         async getDirectory() { return bucket.files; },
-        storage: createStorage(bucket.kv)
+        storage: createStorage('storageBucket:' + name, bucket.kv)
       };
     }
   };
