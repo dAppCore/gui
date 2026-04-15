@@ -29,10 +29,19 @@ import { ImageAttachment } from './chat.types';
       <div class="composer__meta">
         <span>{{ value.length }} chars · {{ attachments.length }} image(s)</span>
         <div class="composer__actions">
-          <wa-button type="button" appearance="plain" (click)="filePicker.click()">Attach</wa-button>
+          <wa-button
+            type="button"
+            appearance="plain"
+            [disabled]="!visionEnabled"
+            [attr.title]="!visionEnabled ? visionDisabledReason : null"
+            (click)="openFilePicker(filePicker)"
+          >
+            Attach
+          </wa-button>
           <wa-button type="button" variant="brand" [disabled]="disabled" (click)="submit.emit()">Send</wa-button>
         </div>
       </div>
+      <p *ngIf="!visionEnabled" class="composer__hint">{{ visionDisabledReason }}</p>
     </div>
   `,
   styles: [
@@ -45,6 +54,7 @@ import { ImageAttachment } from './chat.types';
       textarea { width: 100%; min-height: 3.5rem; max-height: 10.5rem; resize: none; border: 0; background: transparent; color: #f8fafc; font: inherit; outline: 0; line-height: 1.6; }
       .composer__meta { display: flex; justify-content: space-between; align-items: center; gap: 1rem; color: #94a3b8; font-size: 0.82rem; }
       .composer__actions { display: flex; gap: 0.6rem; }
+      .composer__hint { margin: 0; color: #fbbf24; font-size: 0.8rem; }
       wa-button[disabled] { opacity: 0.4; }
     `,
   ],
@@ -55,6 +65,8 @@ export class InputAreaComponent implements AfterViewInit {
   @Input() value = '';
   @Input() disabled = false;
   @Input() attachments: ImageAttachment[] = [];
+  @Input() visionEnabled = true;
+  @Input() visionDisabledReason = '';
   @Output() valueChange = new EventEmitter<string>();
   @Output() attachFiles = new EventEmitter<FileList | File[]>();
   @Output() removeAttachment = new EventEmitter<number>();
@@ -83,12 +95,18 @@ export class InputAreaComponent implements AfterViewInit {
 
   onDrop(event: DragEvent): void {
     event.preventDefault();
+    if (!this.visionEnabled) {
+      return;
+    }
     if (event.dataTransfer?.files?.length) {
       this.attachFiles.emit(event.dataTransfer.files);
     }
   }
 
   onPaste(event: ClipboardEvent): void {
+    if (!this.visionEnabled) {
+      return;
+    }
     const files = Array.from(event.clipboardData?.files ?? []);
     if (files.length > 0) {
       this.attachFiles.emit(files);
@@ -96,11 +114,21 @@ export class InputAreaComponent implements AfterViewInit {
   }
 
   onFileSelection(event: Event): void {
+    if (!this.visionEnabled) {
+      return;
+    }
     const input = event.target as HTMLInputElement;
     if (input.files?.length) {
       this.attachFiles.emit(input.files);
       input.value = '';
     }
+  }
+
+  openFilePicker(input: HTMLInputElement): void {
+    if (!this.visionEnabled) {
+      return;
+    }
+    input.click();
   }
 
   attachmentSource(attachment: ImageAttachment): string {

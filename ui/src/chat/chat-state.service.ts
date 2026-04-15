@@ -38,6 +38,12 @@ export class ChatStateService {
   readonly sending = signal(false);
   readonly modelSwitching = signal(false);
   readonly selectedModel = signal('');
+  readonly selectedModelEntry = computed(
+    () => this.models().find((model) => model.name === this.selectedModel()) ?? null,
+  );
+  readonly selectedModelSupportsVision = computed(
+    () => this.supportsVision(this.selectedModelEntry()),
+  );
   readonly thinkingActive = computed(
     () => this.activeConversation()?.messages.some((message) => message.thinking?.active) ?? false,
   );
@@ -168,6 +174,9 @@ export class ChatStateService {
   }
 
   async queueImageFiles(files: FileList | File[]): Promise<void> {
+    if (!this.selectedModelSupportsVision()) {
+      return;
+    }
     const items = Array.from(files);
     for (const file of items) {
       if (!file.type.startsWith('image/')) {
@@ -432,6 +441,17 @@ export class ChatStateService {
       updated_at: conversation.updated_at,
       message_count: conversation.messages?.length ?? 0,
     };
+  }
+
+  // Vision is currently limited to Gemma-family multimodal models such as lemer/lemma.
+  // Example: this.supportsVision({ name: 'lemer', architecture: 'gemma3' }) == true
+  private supportsVision(model: ModelEntry | null): boolean {
+    if (!model) {
+      return false;
+    }
+    const architecture = (model.architecture ?? '').toLowerCase();
+    const name = (model.name ?? '').toLowerCase();
+    return architecture.includes('gemma') || name === 'lemer' || name === 'lemma';
   }
 
   private async fileToAttachment(file: File): Promise<ImageAttachment> {

@@ -485,6 +485,8 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 		return c.Action("gui.chat.selectModel").Run(ctx, wsOptions(msg.Data))
 	case "chat:settings:save":
 		return c.Action("gui.chat.settings.save").Run(ctx, wsOptions(msg.Data))
+	case "chat:settings:defaults":
+		return c.Action("gui.chat.settings.defaults").Run(ctx, wsOptions(msg.Data))
 	case "chat:settings:load":
 		return c.Action("gui.chat.settings.load").Run(ctx, wsOptions(msg.Data))
 	case "chat:settings:reset":
@@ -507,6 +509,8 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 		return c.Action("gui.chat.conversations.export").Run(ctx, wsOptions(msg.Data))
 	case "chat:attach-image":
 		return c.Action("gui.chat.attachImage").Run(ctx, wsOptions(msg.Data))
+	case "chat:remove-image":
+		return c.Action("gui.chat.removeImage").Run(ctx, wsOptions(msg.Data))
 	case "chat:thinking:start":
 		return c.Action("gui.chat.thinking.start").Run(ctx, wsOptions(msg.Data))
 	case "chat:thinking:append":

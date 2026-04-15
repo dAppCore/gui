@@ -73,6 +73,8 @@ import { ChatStateService } from './chat-state.service';
           [value]="state.draft()"
           [disabled]="state.sending()"
           [attachments]="state.queuedAttachments()"
+          [visionEnabled]="state.selectedModelSupportsVision()"
+          [visionDisabledReason]="'Image input is only available for vision-capable local models.'"
           (valueChange)="state.draft.set($event)"
           (attachFiles)="state.queueImageFiles($event)"
           (removeAttachment)="state.removeQueuedAttachment($event)"

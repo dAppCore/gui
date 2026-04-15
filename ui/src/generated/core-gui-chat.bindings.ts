@@ -13,6 +13,14 @@ declare global {
 }
 
 export interface ChatRouteMap {
+  'gui.chat.clear': {
+    request: { id?: string; conversation_id?: string };
+    response: Conversation;
+  };
+  'gui.chat.history': {
+    request: { id?: string; conversation_id?: string };
+    response: Conversation;
+  };
   'gui.chat.models': { request: void; response: ModelEntry[] };
   'gui.chat.settings.defaults': { request: void; response: ChatSettings };
   'gui.chat.settings.load': { request: void; response: ChatSettings };
@@ -29,6 +37,7 @@ export interface ChatRouteMap {
   'gui.chat.conversations.delete': { request: { id: string }; response: void };
   'gui.chat.conversations.rename': { request: { id: string; title: string }; response: Conversation };
   'gui.chat.conversations.export': { request: { id: string }; response: string };
+  'gui.chat.conversation.save': { request: Conversation; response: Conversation };
   'gui.chat.attachImage': {
     request: ({ conversation_id?: string } & ImageAttachment);
     response: ImageAttachment;
@@ -40,6 +49,18 @@ export interface ChatRouteMap {
   'gui.chat.send': {
     request: { conversation_id?: string; content: string };
     response: Conversation;
+  };
+  'gui.chat.thinking.start': {
+    request: { conversation_id: string; message_id?: string; started_at?: string };
+    response: { conversation_id: string; message_id?: string; started_at?: string };
+  };
+  'gui.chat.thinking.append': {
+    request: { conversation_id: string; message_id?: string; content?: string };
+    response: string;
+  };
+  'gui.chat.thinking.end': {
+    request: { conversation_id: string; message_id?: string; started_at?: string; duration_ms?: number };
+    response: number;
   };
 }
 
