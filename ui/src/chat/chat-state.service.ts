@@ -188,10 +188,13 @@ export class ChatStateService {
         continue;
       }
       const attachment = await this.fileToAttachment(file);
-      await this.invoke('gui.chat.attachImage', {
+      const queued = await this.invoke('gui.chat.attachImage', {
         conversation_id: this.activeConversation()?.id,
         ...attachment,
       });
+      if (queued) {
+        this.upsertQueuedAttachment(queued);
+      }
     }
   }
 
@@ -214,10 +217,13 @@ export class ChatStateService {
       return;
     }
     for (const path of paths) {
-      await this.invokeGUI<ImageAttachment>('gui.chat.attachImageFile', {
+      const attachment = await this.invoke('gui.chat.attachImageFile', {
         conversation_id: this.activeConversation()?.id,
         path,
       });
+      if (attachment) {
+        this.upsertQueuedAttachment(attachment);
+      }
     }
   }
 
@@ -398,7 +404,7 @@ export class ChatStateService {
       if (!data.attachment || conversationID !== activeID && !(conversationID === 'draft' && !this.activeConversation()?.messages.length)) {
         return;
       }
-      this.queuedAttachments.update((items) => [...items, data.attachment!]);
+      this.upsertQueuedAttachment(data.attachment);
     });
   }
 
@@ -478,6 +484,23 @@ export class ChatStateService {
   // Example: this.supportsVision({ name: 'lemer', supports_vision: true } as ModelEntry) == true
   private supportsVision(model: ModelEntry | null): boolean {
     return model?.supports_vision ?? false;
+  }
+
+  private upsertQueuedAttachment(attachment: ImageAttachment): void {
+    this.queuedAttachments.update((items) => {
+      if (items.some((item) => this.sameAttachment(item, attachment))) {
+        return items;
+      }
+      return [...items, attachment];
+    });
+  }
+
+  private sameAttachment(left: ImageAttachment, right: ImageAttachment): boolean {
+    return left.filename === right.filename &&
+      left.mime_type === right.mime_type &&
+      left.data === right.data &&
+      left.width === right.width &&
+      left.height === right.height;
   }
 
   private async fileToAttachment(file: File): Promise<ImageAttachment> {

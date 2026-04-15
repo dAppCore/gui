@@ -3,6 +3,7 @@ package clipboard
 
 import (
 	"context"
+	"encoding/base64"
 
 	core "dappco.re/go/core"
 )
@@ -36,7 +37,7 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		if !ok {
 			return core.Result{Value: false, OK: true}
 		}
-		data, _ := opts.Get("data").Value.([]byte)
+		data := clipboardImageData(opts)
 		if len(data) == 0 || len(data) > MaxImageBytes {
 			return core.Result{Value: false, OK: true}
 		}
@@ -91,4 +92,21 @@ func (s *Service) handleQuery(_ *core.Core, q core.Query) core.Result {
 	default:
 		return core.Result{}
 	}
+}
+
+// clipboardImageData normalizes clipboard image inputs from MCP, preload bridge, and WS callers.
+// Use: bytes := clipboardImageData(core.NewOptions(core.Option{Key: "data", Value: "iVBORw0KGgo..."}))
+func clipboardImageData(opts core.Options) []byte {
+	if raw, ok := opts.Get("data").Value.([]byte); ok && len(raw) > 0 {
+		return append([]byte(nil), raw...)
+	}
+	encoded := opts.String("data")
+	if encoded == "" {
+		return nil
+	}
+	data, err := base64.StdEncoding.DecodeString(encoded)
+	if err != nil {
+		return nil
+	}
+	return data
 }

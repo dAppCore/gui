@@ -545,6 +545,8 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 		return c.Action("gui.chat.conversations.export").Run(ctx, wsOptions(msg.Data))
 	case "chat:attach-image":
 		return c.Action("gui.chat.attachImage").Run(ctx, wsOptions(msg.Data))
+	case "chat:attach-image-file":
+		return c.Action("gui.chat.attachImageFile").Run(ctx, wsOptions(msg.Data))
 	case "chat:remove-image":
 		return c.Action("gui.chat.removeImage").Run(ctx, wsOptions(msg.Data))
 	case "chat:thinking:start":
