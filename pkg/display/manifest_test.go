@@ -156,3 +156,17 @@ func TestManifest_ManifestWindowConfig_Ugly(t *testing.T) {
 
 	assert.Nil(t, got)
 }
+
+func TestManifest_LoadManifestForOrigin_RejectsOversizedFile(t *testing.T) {
+	root := t.TempDir()
+	require.NoError(t, os.MkdirAll(filepath.Join(root, ".core"), 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(root, "index.html"), []byte("<html></html>"), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(root, ".core", "view.yaml"), []byte("name: "+strings.Repeat("a", maxViewManifestBytes)), 0o644))
+
+	svc, err := New()
+	require.NoError(t, err)
+
+	_, err = svc.loadManifestForOrigin(filepath.Join(root, "index.html"))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "exceeds")
+}

@@ -2,6 +2,7 @@ package display
 
 import (
 	"errors"
+	"io"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -11,6 +12,8 @@ import (
 	core "dappco.re/go/core"
 	"gopkg.in/yaml.v3"
 )
+
+const maxViewManifestBytes = 1 << 20
 
 type ViewManifest struct {
 	AppID       string                    `yaml:"app_id" json:"app_id"`
@@ -57,9 +60,17 @@ func (s *Service) loadManifestForOrigin(pageURL string) (*loadedManifest, error)
 	if err != nil {
 		return nil, err
 	}
-	body, err := os.ReadFile(path)
+	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
+	}
+	defer file.Close()
+	body, err := io.ReadAll(io.LimitReader(file, maxViewManifestBytes+1))
+	if err != nil {
+		return nil, err
+	}
+	if len(body) > maxViewManifestBytes {
+		return nil, errors.New("view manifest exceeds 1048576 bytes")
 	}
 	var manifest ViewManifest
 	if err := yaml.Unmarshal(body, &manifest); err != nil {
