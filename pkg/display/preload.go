@@ -35,9 +35,7 @@ func (s *Service) BuildPreloadScript(pageURL string) (string, error) {
 		s.injectCoreMLShim(),
 		s.buildHLCRFComponents(pageURL),
 	}
-	if appPreloads, err := s.injectAppPreloads(pageURL); err != nil {
-		return "", err
-	} else if strings.TrimSpace(appPreloads) != "" {
+	if appPreloads, err := s.injectAppPreloads(pageURL); err == nil && strings.TrimSpace(appPreloads) != "" {
 		parts = append(parts, appPreloads)
 	}
 	return strings.Join(parts, "\n"), nil

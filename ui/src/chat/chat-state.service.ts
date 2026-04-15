@@ -1,5 +1,6 @@
-import { Injectable, effect, inject, signal } from '@angular/core';
+import { computed, Injectable, effect, inject, signal } from '@angular/core';
 import { WebSocketService } from '../services/websocket.service';
+import { ChatRoute, ChatRouteMap, CoreGuiChatBindings } from '../generated/core-gui-chat.bindings';
 import {
   ChatMessage,
   ChatSettings,
@@ -12,15 +13,10 @@ import {
   ToolResult,
 } from './chat.types';
 
-declare global {
-  interface Window {
-    __CORE_GUI_INVOKE__?: (route: string, payload?: unknown) => Promise<unknown> | unknown;
-  }
-}
-
 @Injectable({ providedIn: 'root' })
 export class ChatStateService {
   private readonly ws = inject(WebSocketService);
+  private readonly bindings = new CoreGuiChatBindings((route, payload) => this.mockInvoke(route, payload));
   private mockConversations: Conversation[] = [];
 
   readonly conversations = signal<ConversationSummary[]>([]);
@@ -42,6 +38,9 @@ export class ChatStateService {
   readonly sending = signal(false);
   readonly modelSwitching = signal(false);
   readonly selectedModel = signal('');
+  readonly thinkingActive = computed(
+    () => this.activeConversation()?.messages.some((message) => message.thinking?.active) ?? false,
+  );
 
   constructor() {
     effect(() => {
@@ -61,7 +60,7 @@ export class ChatStateService {
   }
 
   async refreshConversation(id: string): Promise<void> {
-    const conversation = await this.invoke<Conversation>('gui.chat.conversations.get', { id });
+    const conversation = await this.invoke('gui.chat.conversations.get', { id });
     if (conversation) {
       this.activeConversation.set(conversation);
       this.queuedAttachments.set([]);
@@ -69,7 +68,7 @@ export class ChatStateService {
   }
 
   async startConversation(): Promise<void> {
-    const conversation = await this.invoke<Conversation>('gui.chat.conversations.new');
+    const conversation = await this.invoke('gui.chat.conversations.new');
     if (conversation) {
       this.activeConversation.set(conversation);
       this.upsertSummary(this.toSummary(conversation));
@@ -91,14 +90,14 @@ export class ChatStateService {
   }
 
   async renameConversation(id: string, title: string): Promise<void> {
-    const updated = await this.invoke<Conversation>('gui.chat.conversations.rename', { id, title });
+    const updated = await this.invoke('gui.chat.conversations.rename', { id, title });
     if (updated) {
       this.mergeConversation(updated);
     }
   }
 
   async exportConversation(id: string): Promise<void> {
-    const markdown = await this.invoke<string>('gui.chat.conversations.export', { id });
+    const markdown = await this.invoke('gui.chat.conversations.export', { id });
     if (!markdown) {
       return;
     }
@@ -116,12 +115,12 @@ export class ChatStateService {
     const trimmed = query.trim();
     const route = trimmed ? 'gui.chat.conversations.search' : 'gui.chat.conversations.list';
     const payload = trimmed ? { q: trimmed } : undefined;
-    const conversations = await this.invoke<ConversationSummary[]>(route, payload);
+    const conversations = await this.invoke(route, payload);
     this.conversations.set(conversations ?? []);
   }
 
   async saveSettings(settings: ChatSettings): Promise<void> {
-    const saved = await this.invoke<ChatSettings>('gui.chat.settings.save', settings);
+    const saved = await this.invoke('gui.chat.settings.save', settings);
     if (saved) {
       this.settings.set(saved);
       if (saved.default_model) {
@@ -131,7 +130,7 @@ export class ChatStateService {
   }
 
   async resetSettings(): Promise<void> {
-    const reset = await this.invoke<ChatSettings>('gui.chat.settings.reset');
+    const reset = await this.invoke('gui.chat.settings.reset');
     if (reset) {
       this.settings.set(reset);
       if (reset.default_model) {
@@ -146,7 +145,7 @@ export class ChatStateService {
     }
     this.modelSwitching.set(true);
     try {
-      const settings = await this.invoke<ChatSettings>('gui.chat.selectModel', {
+      const settings = await this.invoke('gui.chat.selectModel', {
         model,
         conversation_id: this.activeConversation()?.id,
       });
@@ -173,7 +172,7 @@ export class ChatStateService {
         continue;
       }
       const attachment = await this.fileToAttachment(file);
-      await this.invoke<ImageAttachment>('gui.chat.attachImage', {
+      await this.invoke('gui.chat.attachImage', {
         conversation_id: this.activeConversation()?.id,
         ...attachment,
       });
@@ -191,7 +190,7 @@ export class ChatStateService {
     }
     this.sending.set(true);
     try {
-      const response = await this.invoke<Conversation>('gui.chat.send', {
+      const response = await this.invoke('gui.chat.send', {
         conversation_id: this.activeConversation()?.id,
         content,
       });
@@ -208,9 +207,9 @@ export class ChatStateService {
 
   private async loadBootstrap(): Promise<void> {
     const [models, settings, conversations] = await Promise.all([
-      this.invoke<ModelEntry[]>('gui.chat.models'),
-      this.invoke<ChatSettings>('gui.chat.settings.load'),
-      this.invoke<ConversationSummary[]>('gui.chat.conversations.list'),
+      this.invoke('gui.chat.models'),
+      this.invoke('gui.chat.settings.load'),
+      this.invoke('gui.chat.conversations.list'),
     ]);
 
     if (models?.length) {
@@ -455,14 +454,14 @@ export class ChatStateService {
     });
   }
 
-  private async invoke<T>(route: string, payload?: unknown): Promise<T> {
-    if (typeof window.__CORE_GUI_INVOKE__ === 'function') {
-      return (await window.__CORE_GUI_INVOKE__(route, payload)) as T;
-    }
-    return this.mockInvoke<T>(route, payload);
+  private invoke<RouteName extends ChatRoute>(
+    route: RouteName,
+    payload?: ChatRouteMap[RouteName]['request'],
+  ): Promise<ChatRouteMap[RouteName]['response']> {
+    return this.bindings.invoke(route, payload);
   }
 
-  private async mockInvoke<T>(route: string, payload?: unknown): Promise<T> {
+  private async mockInvoke<T>(route: ChatRoute, payload?: unknown): Promise<T> {
     if (route === 'gui.chat.models') {
       return [
         { name: 'lemer', architecture: 'gemma3', quant_bits: 4, size_bytes: 1500000000, loaded: true, backend: 'metal' },

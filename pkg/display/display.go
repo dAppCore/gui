@@ -12,6 +12,7 @@ import (
 
 	"forge.lthn.ai/core/gui/pkg/chat"
 	"forge.lthn.ai/core/gui/pkg/contextmenu"
+	"forge.lthn.ai/core/gui/pkg/deno"
 	"forge.lthn.ai/core/gui/pkg/dialog"
 	"forge.lthn.ai/core/gui/pkg/dock"
 	"forge.lthn.ai/core/gui/pkg/environment"
@@ -45,6 +46,8 @@ type Service struct {
 	manifestCache  map[string]*loadedManifest
 	manifestMu     sync.Mutex
 	storage        *StorageRegistry
+	background     *BackgroundRegistry
+	sidecar        *deno.Manager
 }
 
 // New returns a display Service with empty config sections.
@@ -59,6 +62,7 @@ func New() (*Service, error) {
 		schemeHandlers: make(map[string]SchemeHandler),
 		manifestCache:  make(map[string]*loadedManifest),
 		storage:        NewStorageRegistry(),
+		background:     NewBackgroundRegistry(),
 	}, nil
 }
 
@@ -125,6 +129,8 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 	s.Core().Action("display.models.state", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: s.modelState(), OK: true}
 	})
+	s.registerBackgroundActions()
+	s.registerSidecarActions()
 	s.registerDefaultSchemes()
 
 	// Initialise Wails wrappers if app is available (nil in tests)
@@ -133,6 +139,14 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		s.events = NewWSEventManager()
 	}
 
+	return core.Result{OK: true}
+}
+
+func (s *Service) OnShutdown(ctx context.Context) core.Result {
+	if s.sidecar != nil {
+		_, err := s.sidecar.Stop(ctx)
+		return core.Result{}.New(nil, err)
+	}
 	return core.Result{OK: true}
 }
 

@@ -1,11 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, CUSTOM_ELEMENTS_SCHEMA, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ImageAttachment } from './chat.types';
 
 @Component({
   selector: 'chat-input-area',
   standalone: true,
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   imports: [CommonModule, FormsModule],
   template: `
     <div class="composer" (dragover)="onDragOver($event)" (drop)="onDrop($event)">
@@ -28,8 +29,8 @@ import { ImageAttachment } from './chat.types';
       <div class="composer__meta">
         <span>{{ value.length }} chars · {{ attachments.length }} image(s)</span>
         <div class="composer__actions">
-          <button type="button" class="ghost" (click)="filePicker.click()">Attach</button>
-          <button type="button" [disabled]="disabled" (click)="submit.emit()">Send</button>
+          <wa-button type="button" appearance="plain" (click)="filePicker.click()">Attach</wa-button>
+          <wa-button type="button" variant="brand" [disabled]="disabled" (click)="submit.emit()">Send</wa-button>
         </div>
       </div>
     </div>
@@ -44,9 +45,7 @@ import { ImageAttachment } from './chat.types';
       textarea { width: 100%; min-height: 3.5rem; max-height: 10.5rem; resize: none; border: 0; background: transparent; color: #f8fafc; font: inherit; outline: 0; line-height: 1.6; }
       .composer__meta { display: flex; justify-content: space-between; align-items: center; gap: 1rem; color: #94a3b8; font-size: 0.82rem; }
       .composer__actions { display: flex; gap: 0.6rem; }
-      button { border: 0; border-radius: 999px; padding: 0.8rem 1.2rem; background: linear-gradient(135deg, #f59e0b, #fb7185); color: #111827; font-weight: 800; cursor: pointer; }
-      .ghost { background: rgba(15, 23, 42, 0.8); color: #e2e8f0; border: 1px solid rgba(148, 163, 184, 0.22); }
-      button:disabled { opacity: 0.4; cursor: not-allowed; }
+      wa-button[disabled] { opacity: 0.4; }
     `,
   ],
 })

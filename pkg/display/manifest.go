@@ -67,11 +67,19 @@ func (s *Service) loadManifestForOrigin(pageURL string) (*loadedManifest, error)
 	}
 	loaded := &loadedManifest{
 		Path:     path,
-		BaseDir:  filepath.Dir(path),
+		BaseDir:  manifestBaseDir(path),
 		Manifest: manifest,
 	}
 	s.manifestCache[pageURL] = loaded
 	return loaded, nil
+}
+
+func manifestBaseDir(manifestPath string) string {
+	baseDir := filepath.Dir(manifestPath)
+	if filepath.Base(baseDir) == ".core" {
+		return filepath.Dir(baseDir)
+	}
+	return baseDir
 }
 
 func safeManifestPreloadPath(baseDir, preloadPath string) (string, error) {

@@ -46,7 +46,9 @@ import { ChatStateService } from './chat-state.service';
               [loading]="state.modelSwitching()"
               (valueChange)="state.changeModel($event)"
             />
-            <button type="button" class="settings" (click)="state.settingsOpen.set(!state.settingsOpen())">Settings</button>
+            <wa-button type="button" class="settings" appearance="filled" (click)="state.settingsOpen.set(!state.settingsOpen())">
+              Settings
+            </wa-button>
           </div>
         </header>
 
@@ -63,6 +65,7 @@ import { ChatStateService } from './chat-state.service';
           <chat-message-list
             [messages]="state.activeConversation()?.messages || []"
             [streaming]="state.sending()"
+            [thinkingActive]="state.thinkingActive()"
           />
         </section>
 
