@@ -393,21 +393,31 @@ type WSMessage struct {
 	Data   map[string]any `json:"data,omitempty"`
 }
 
-// wsRequire extracts a string field from WS data and returns an error if it is empty.
-func wsRequire(data map[string]any, key string) (string, error) {
+// requireStringField extracts a string field from WebSocket data and fails when it is missing.
+func requireStringField(data map[string]any, key string) (string, error) {
 	v, _ := data[key].(string)
 	if v == "" {
-		return "", coreerr.E("display.wsRequire", "missing required field \""+key+"\"", nil)
+		return "", coreerr.E("display.requireStringField", "missing required field \""+key+"\"", nil)
 	}
 	return v, nil
 }
 
-func wsOptions(data map[string]any) core.Options {
+// wsRequire is kept for backward compatibility inside the display package.
+func wsRequire(data map[string]any, key string) (string, error) {
+	return requireStringField(data, key)
+}
+
+func optionsFromMap(data map[string]any) core.Options {
 	items := make([]core.Option, 0, len(data))
 	for key, value := range data {
 		items = append(items, core.Option{Key: key, Value: value})
 	}
 	return core.NewOptions(items...)
+}
+
+// wsOptions is kept for backward compatibility inside the display package.
+func wsOptions(data map[string]any) core.Options {
+	return optionsFromMap(data)
 }
 
 // handleWSMessage bridges WebSocket commands to IPC calls.
@@ -998,13 +1008,13 @@ func (s *Service) SetWindowFullscreen(name string, fullscreen bool) error {
 
 // SetWindowBackgroundColour sets the background colour of a window.
 func (s *Service) SetWindowBackgroundColour(name string, r, g, b, a uint8) error {
-	res := s.Core().Action("window.setBackgroundColour").Run(context.Background(), core.NewOptions(
+	result := s.Core().Action("window.setBackgroundColour").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetBackgroundColour{
 			Name: name, Red: r, Green: g, Blue: b, Alpha: a,
 		}},
 	))
-	if !res.OK {
-		if e, ok := res.Value.(error); ok {
+	if !result.OK {
+		if e, ok := result.Value.(error); ok {
 			return e
 		}
 	}
@@ -1221,10 +1231,10 @@ func (s *Service) GetEventManager() *WSEventManager {
 
 func (s *Service) buildMenu() {
 	items := []menu.MenuItem{
-		{Role: ptr(menu.RoleAppMenu)},
-		{Role: ptr(menu.RoleFileMenu)},
-		{Role: ptr(menu.RoleViewMenu)},
-		{Role: ptr(menu.RoleEditMenu)},
+		{Role: pointerTo(menu.RoleAppMenu)},
+		{Role: pointerTo(menu.RoleFileMenu)},
+		{Role: pointerTo(menu.RoleViewMenu)},
+		{Role: pointerTo(menu.RoleEditMenu)},
 		{Label: "Workspace", Children: []menu.MenuItem{
 			{Label: "New...", OnClick: s.handleNewWorkspace},
 			{Label: "List", OnClick: s.handleListWorkspaces},
@@ -1240,8 +1250,8 @@ func (s *Service) buildMenu() {
 			{Label: "Run", Accelerator: "CmdOrCtrl+R", OnClick: s.handleRun},
 			{Label: "Build", Accelerator: "CmdOrCtrl+B", OnClick: s.handleBuild},
 		}},
-		{Role: ptr(menu.RoleWindowMenu)},
-		{Role: ptr(menu.RoleHelpMenu)},
+		{Role: pointerTo(menu.RoleWindowMenu)},
+		{Role: pointerTo(menu.RoleHelpMenu)},
 	}
 
 	// On non-macOS, remove the AppMenu role
@@ -1254,7 +1264,8 @@ func (s *Service) buildMenu() {
 	))
 }
 
-func ptr[T any](v T) *T { return &v }
+// pointerTo returns a pointer to value.
+func pointerTo[T any](value T) *T { return &value }
 
 // --- Menu handler methods ---
 

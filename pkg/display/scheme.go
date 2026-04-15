@@ -40,6 +40,17 @@ func (s *Service) registerDefaultSchemes() {
 				))
 			}
 			return s.Core().Action("gui.chat.conversations.list").Run(ctx, core.NewOptions())
+		case "store":
+			return core.Result{
+				Value: map[string]any{
+					"content_type": "text/html",
+					"body":         s.renderStoreSearchPage(query.Get("q")),
+					"route":        route,
+					"url":          "core://store",
+					"query":        query,
+				},
+				OK: true,
+			}
 		default:
 			return core.Result{
 				Value: map[string]any{
@@ -71,6 +82,14 @@ func (s *Service) ResolveScheme(ctx context.Context, rawURL string) core.Result 
 		return resolved
 	}
 
+	if payload, ok := resolved.Value.(map[string]any); ok {
+		if contentType, _ := payload["content_type"].(string); strings.EqualFold(contentType, "text/html") {
+			if body, ok := payload["body"].(string); ok && strings.TrimSpace(body) != "" {
+				return core.Result{Value: payload, OK: true}
+			}
+		}
+	}
+
 	body := s.renderSchemeBody(route, resolved.Value)
 	return core.Result{
 		Value: map[string]any{
@@ -93,6 +112,15 @@ func (s *Service) renderSchemeBody(route string, value any) string {
 		"</strong></header><main><pre>" +
 		html.EscapeString(pretty) +
 		"</pre></main></body></html>"
+}
+
+func (s *Service) renderStoreSearchPage(query string) string {
+	safeQuery := html.EscapeString(query)
+	return "<!doctype html><html><head><meta charset=\"utf-8\"><title>core://store</title><style>body{font:14px/1.5 ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;background:#0f172a;color:#e2e8f0;margin:0}header{padding:20px;border-bottom:1px solid #1e293b;background:linear-gradient(180deg,#111827,#0f172a)}main{padding:20px;display:grid;gap:16px}form{display:flex;gap:8px;flex-wrap:wrap;align-items:center}input{min-width:min(100%,420px);flex:1 1 320px;border-radius:12px;border:1px solid #334155;background:#020617;color:#e2e8f0;padding:12px 14px}button{border:0;border-radius:12px;background:#38bdf8;color:#082f49;padding:12px 16px;font-weight:700;cursor:pointer}section{background:#020617;border:1px solid #1e293b;border-radius:16px;padding:16px}ul{list-style:none;padding:0;margin:0;display:grid;gap:12px}.result{padding:12px;border:1px solid #1e293b;border-radius:12px;background:#0b1220}.meta{color:#94a3b8}.origin{font-weight:700;color:#7dd3fc}.bucket{color:#cbd5e1;font-size:12px;text-transform:uppercase;letter-spacing:.08em}.key{color:#f8fafc;font-weight:600}.value{white-space:pre-wrap;word-break:break-word;color:#e2e8f0}.empty{color:#94a3b8}code{background:#111827;border-radius:8px;padding:2px 6px}</style></head><body><header><strong>core://store</strong><div class=\"meta\">Search the in-memory storage scopes exposed by the preload shim. Query: <code>" +
+		safeQuery +
+		"</code></div></header><main><section><form method=\"get\" action=\"core://store\"><input name=\"q\" value=\"" +
+		safeQuery +
+		"\" placeholder=\"Search keys or values\"><button type=\"submit\">Search</button></form></section><section><div id=\"results\" class=\"meta\">Loading results...</div></section><script>(function(){const query=new URLSearchParams(location.search).get('q')||'';const needle=query.trim().toLowerCase();const scopes=globalThis.__coreStorageScopes||{};const results=[];for(const [origin,buckets] of Object.entries(scopes)){for(const [bucketName,bucket] of Object.entries(buckets||{})){for(const [key,rawValue] of Object.entries(bucket||{})){const value=String(rawValue);if(!needle||key.toLowerCase().includes(needle)||value.toLowerCase().includes(needle)){results.push({origin,bucket:bucketName,key,value});}}}}const root=document.getElementById('results');if(!root)return;if(!needle){root.innerHTML='<p class=\"meta\">Enter a search term to scan the captured storage scopes.</p>';return;}if(results.length===0){root.innerHTML='<p class=\"empty\">No matches found in the captured storage scopes.</p>';return;}root.innerHTML='<ul>'+results.map((item)=>'<li class=\"result\"><div class=\"origin\">'+item.origin+'</div><div class=\"bucket\">'+item.bucket+'</div><div class=\"key\">'+item.key+'</div><div class=\"value\">'+item.value+'</div></li>').join('')+'</ul>';})();</script></main></body></html>"
 }
 
 func coalesce(values ...string) string {

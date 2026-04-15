@@ -111,6 +111,23 @@ func TestConfigTask_Good(t *testing.T) {
 	assert.Equal(t, 800, cfg["default_width"])
 }
 
+func TestResolveScheme_StoreRoute_Good(t *testing.T) {
+	svc, _ := newTestDisplayService(t)
+
+	result := svc.ResolveScheme(context.Background(), "core://store?q=alpha")
+	require.True(t, result.OK)
+
+	payload, ok := result.Value.(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, "text/html", payload["content_type"])
+
+	body, ok := payload["body"].(string)
+	require.True(t, ok)
+	assert.Contains(t, body, "core://store")
+	assert.Contains(t, body, "storage scopes")
+	assert.Contains(t, body, "Search the in-memory storage scopes")
+}
+
 // --- Conclave integration tests ---
 
 func TestServiceConclave_Good(t *testing.T) {
