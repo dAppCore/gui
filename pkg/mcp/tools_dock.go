@@ -68,6 +68,25 @@ func (s *Subsystem) dockBadge(_ context.Context, _ *mcp.CallToolRequest, input D
 	return nil, DockBadgeOutput{Success: true}, nil
 }
 
+// --- dock_remove_badge ---
+
+type DockRemoveBadgeInput struct{}
+
+type DockRemoveBadgeOutput struct {
+	Success bool `json:"success"`
+}
+
+func (s *Subsystem) dockRemoveBadge(_ context.Context, _ *mcp.CallToolRequest, _ DockRemoveBadgeInput) (*mcp.CallToolResult, DockRemoveBadgeOutput, error) {
+	r := s.core.Action("dock.removeBadge").Run(context.Background(), core.NewOptions())
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, DockRemoveBadgeOutput{}, e
+		}
+		return nil, DockRemoveBadgeOutput{}, nil
+	}
+	return nil, DockRemoveBadgeOutput{Success: true}, nil
+}
+
 // --- dock_info ---
 
 type DockInfoInput struct{}
@@ -170,6 +189,7 @@ func (s *Subsystem) registerDockTools(server *mcp.Server) {
 	addTool(s, server, &mcp.Tool{Name: "dock_show", Description: "Show the dock/taskbar icon"}, s.dockShow)
 	addTool(s, server, &mcp.Tool{Name: "dock_hide", Description: "Hide the dock/taskbar icon"}, s.dockHide)
 	addTool(s, server, &mcp.Tool{Name: "dock_badge", Description: "Set the dock/taskbar badge label"}, s.dockBadge)
+	addTool(s, server, &mcp.Tool{Name: "dock_remove_badge", Description: "Remove the dock/taskbar badge label"}, s.dockRemoveBadge)
 	addTool(s, server, &mcp.Tool{Name: "dock_info", Description: "Get the current dock/taskbar visibility"}, s.dockInfo)
 	addTool(s, server, &mcp.Tool{Name: "dock_set_progress_bar", Description: "Set the dock/taskbar progress indicator"}, s.dockSetProgressBar)
 	addTool(s, server, &mcp.Tool{Name: "dock_bounce", Description: "Request dock/taskbar attention"}, s.dockBounce)
