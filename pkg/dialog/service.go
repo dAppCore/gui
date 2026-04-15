@@ -31,78 +31,78 @@ func Register(p Platform) func(*core.Core) core.Result {
 }
 
 func (s *Service) OnStartup(_ context.Context) core.Result {
-	s.Core().Action("dialog.openFile", func(_ context.Context, opts core.Options) core.Result {
-		var openOpts OpenFileOptions
-		switch v := opts.Get("task").Value.(type) {
-		case TaskOpenFile:
-			openOpts = v.Options
-		case TaskOpenFileWithOptions:
-			if v.Options != nil {
-				openOpts = *v.Options
-			}
+	openFile := func(_ context.Context, opts core.Options) core.Result {
+		openOpts, err := openFileOptionsFrom(opts)
+		if err != nil {
+			return core.Result{Value: err, OK: false}
 		}
 		paths, err := s.platform.OpenFile(openOpts)
 		return core.Result{}.New(paths, err)
-	})
-	s.Core().Action("dialog.saveFile", func(_ context.Context, opts core.Options) core.Result {
-		var saveOpts SaveFileOptions
-		switch v := opts.Get("task").Value.(type) {
-		case TaskSaveFile:
-			saveOpts = v.Options
-		case TaskSaveFileWithOptions:
-			if v.Options != nil {
-				saveOpts = *v.Options
-			}
+	}
+	saveFile := func(_ context.Context, opts core.Options) core.Result {
+		saveOpts, err := saveFileOptionsFrom(opts)
+		if err != nil {
+			return core.Result{Value: err, OK: false}
 		}
 		path, err := s.platform.SaveFile(saveOpts)
 		return core.Result{}.New(path, err)
-	})
-	s.Core().Action("dialog.openDirectory", func(_ context.Context, opts core.Options) core.Result {
-		t, _ := opts.Get("task").Value.(TaskOpenDirectory)
-		path, err := s.platform.OpenDirectory(t.Options)
+	}
+	openDirectory := func(_ context.Context, opts core.Options) core.Result {
+		openOpts, err := openDirectoryOptionsFrom(opts)
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		path, err := s.platform.OpenDirectory(openOpts)
 		return core.Result{}.New(path, err)
-	})
-	s.Core().Action("dialog.message", func(_ context.Context, opts core.Options) core.Result {
-		t, _ := opts.Get("task").Value.(TaskMessageDialog)
-		button, err := s.platform.MessageDialog(t.Options)
+	}
+	messageDialog := func(_ context.Context, opts core.Options) core.Result {
+		messageOpts, err := messageDialogOptionsFrom(opts)
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		button, err := s.platform.MessageDialog(messageOpts)
 		return core.Result{}.New(button, err)
-	})
-	s.Core().Action("dialog.info", func(_ context.Context, opts core.Options) core.Result {
+	}
+	info := func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskInfo)
 		button, err := s.platform.MessageDialog(MessageDialogOptions{
 			Type: DialogInfo, Title: t.Title, Message: t.Message, Buttons: t.Buttons,
 		})
 		return core.Result{}.New(button, err)
-	})
-	s.Core().Action("dialog.question", func(_ context.Context, opts core.Options) core.Result {
-		t, _ := opts.Get("task").Value.(TaskQuestion)
-		button, err := s.platform.MessageDialog(MessageDialogOptions{
-			Type: DialogQuestion, Title: t.Title, Message: t.Message, Buttons: t.Buttons,
-		})
+	}
+	question := func(_ context.Context, opts core.Options) core.Result {
+		questionOpts, err := questionDialogOptionsFrom(opts)
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		button, err := s.platform.MessageDialog(questionOpts)
 		return core.Result{}.New(button, err)
-	})
-	s.Core().Action("dialog.warning", func(_ context.Context, opts core.Options) core.Result {
+	}
+	warning := func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskWarning)
 		button, err := s.platform.MessageDialog(MessageDialogOptions{
 			Type: DialogWarning, Title: t.Title, Message: t.Message, Buttons: t.Buttons,
 		})
 		return core.Result{}.New(button, err)
-	})
-	s.Core().Action("dialog.error", func(_ context.Context, opts core.Options) core.Result {
+	}
+	errDialog := func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskError)
 		button, err := s.platform.MessageDialog(MessageDialogOptions{
 			Type: DialogError, Title: t.Title, Message: t.Message, Buttons: t.Buttons,
 		})
 		return core.Result{}.New(button, err)
-	})
-	s.Core().Action("dialog.prompt", func(_ context.Context, opts core.Options) core.Result {
-		t, _ := opts.Get("task").Value.(TaskPrompt)
+	}
+	prompt := func(_ context.Context, opts core.Options) core.Result {
+		promptOpts, err := promptOptionsFrom(opts)
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
 		windowName, err := s.promptWindowName()
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
-		script := promptScript(t.Title, t.Message, t.DefaultValue)
-		result := s.Core().Action("webview.evaluate").Run(context.Background(), core.NewOptions(
+		script := promptScript(promptOpts.Title, promptOpts.Message, promptOpts.DefaultValue)
+		result := s.Core().Action("gui.webview.eval").Run(context.Background(), core.NewOptions(
 			core.Option{Key: "task", Value: webview.TaskEvaluate{Window: windowName, Script: script}},
 		))
 		if !result.OK {
@@ -119,12 +119,135 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		default:
 			return core.Result{Value: PromptResult{Value: fmt.Sprint(value), Confirmed: true}, OK: true}
 		}
-	})
+	}
+	s.Core().Action("dialog.openFile", openFile)
+	s.Core().Action("gui.dialog.open", openFile)
+	s.Core().Action("dialog.saveFile", saveFile)
+	s.Core().Action("gui.dialog.save", saveFile)
+	s.Core().Action("dialog.openDirectory", openDirectory)
+	s.Core().Action("dialog.message", messageDialog)
+	s.Core().Action("gui.dialog.message", messageDialog)
+	s.Core().Action("dialog.info", info)
+	s.Core().Action("dialog.question", question)
+	s.Core().Action("gui.dialog.confirm", question)
+	s.Core().Action("dialog.warning", warning)
+	s.Core().Action("dialog.error", errDialog)
+	s.Core().Action("dialog.prompt", prompt)
+	s.Core().Action("gui.dialog.prompt", prompt)
 	return core.Result{OK: true}
 }
 
 func (s *Service) HandleIPCEvents(_ *core.Core, _ core.Message) core.Result {
 	return core.Result{OK: true}
+}
+
+func openFileOptionsFrom(opts core.Options) (OpenFileOptions, error) {
+	if task := opts.Get("task"); task.OK {
+		switch v := task.Value.(type) {
+		case TaskOpenFile:
+			return v.Options, nil
+		case TaskOpenFileWithOptions:
+			if v.Options != nil {
+				return *v.Options, nil
+			}
+		case OpenFileOptions:
+			return v, nil
+		}
+	}
+	return decodeOptions[OpenFileOptions](opts)
+}
+
+func saveFileOptionsFrom(opts core.Options) (SaveFileOptions, error) {
+	if task := opts.Get("task"); task.OK {
+		switch v := task.Value.(type) {
+		case TaskSaveFile:
+			return v.Options, nil
+		case TaskSaveFileWithOptions:
+			if v.Options != nil {
+				return *v.Options, nil
+			}
+		case SaveFileOptions:
+			return v, nil
+		}
+	}
+	return decodeOptions[SaveFileOptions](opts)
+}
+
+func openDirectoryOptionsFrom(opts core.Options) (OpenDirectoryOptions, error) {
+	if task := opts.Get("task"); task.OK {
+		switch v := task.Value.(type) {
+		case TaskOpenDirectory:
+			return v.Options, nil
+		case OpenDirectoryOptions:
+			return v, nil
+		}
+	}
+	return decodeOptions[OpenDirectoryOptions](opts)
+}
+
+func messageDialogOptionsFrom(opts core.Options) (MessageDialogOptions, error) {
+	if task := opts.Get("task"); task.OK {
+		switch v := task.Value.(type) {
+		case TaskMessageDialog:
+			return v.Options, nil
+		case MessageDialogOptions:
+			return v, nil
+		}
+	}
+	return decodeOptions[MessageDialogOptions](opts)
+}
+
+func questionDialogOptionsFrom(opts core.Options) (MessageDialogOptions, error) {
+	if task := opts.Get("task"); task.OK {
+		switch v := task.Value.(type) {
+		case TaskQuestion:
+			return MessageDialogOptions{
+				Type:    DialogQuestion,
+				Title:   v.Title,
+				Message: v.Message,
+				Buttons: v.Buttons,
+			}, nil
+		case MessageDialogOptions:
+			return v, nil
+		}
+	}
+	if direct, err := decodeOptions[TaskQuestion](opts); err == nil && (direct.Title != "" || direct.Message != "" || len(direct.Buttons) > 0) {
+		return MessageDialogOptions{
+			Type:    DialogQuestion,
+			Title:   direct.Title,
+			Message: direct.Message,
+			Buttons: direct.Buttons,
+		}, nil
+	}
+	return decodeOptions[MessageDialogOptions](opts)
+}
+
+func promptOptionsFrom(opts core.Options) (TaskPrompt, error) {
+	if task := opts.Get("task"); task.OK {
+		if v, ok := task.Value.(TaskPrompt); ok {
+			return v, nil
+		}
+	}
+	return decodeOptions[TaskPrompt](opts)
+}
+
+func decodeOptions[T any](opts core.Options) (T, error) {
+	var input T
+	items := make(map[string]any, opts.Len())
+	for _, item := range opts.Items() {
+		items[item.Key] = item.Value
+	}
+	if len(items) == 0 {
+		return input, nil
+	}
+	result := core.JSONUnmarshalString(core.JSONMarshalString(items), &input)
+	if !result.OK {
+		if err, ok := result.Value.(error); ok {
+			return input, err
+		}
+		return input, coreerr.E("dialog.decodeOptions", "failed to decode dialog options", nil)
+	}
+	return input, nil
 }
 
 func (s *Service) promptWindowName() (string, error) {

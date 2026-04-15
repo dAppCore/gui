@@ -27,11 +27,11 @@ func Register(p Platform) func(*core.Core) core.Result {
 
 func (s *Service) OnStartup(_ context.Context) core.Result {
 	s.Core().RegisterQuery(s.handleQuery)
-	s.Core().Action("clipboard.setText", func(_ context.Context, opts core.Options) core.Result {
+	setText := func(_ context.Context, opts core.Options) core.Result {
 		success := s.platform.SetText(opts.String("text"))
 		return core.Result{Value: success, OK: true}
-	})
-	s.Core().Action("clipboard.setImage", func(_ context.Context, opts core.Options) core.Result {
+	}
+	setImage := func(_ context.Context, opts core.Options) core.Result {
 		imgPlatform, ok := s.platform.(ImagePlatform)
 		if !ok {
 			return core.Result{Value: false, OK: true}
@@ -39,14 +39,24 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		data, _ := opts.Get("data").Value.([]byte)
 		success := imgPlatform.SetImage(data)
 		return core.Result{Value: success, OK: true}
-	})
-	s.Core().Action("clipboard.clear", func(_ context.Context, _ core.Options) core.Result {
+	}
+	clear := func(_ context.Context, _ core.Options) core.Result {
 		success := s.platform.SetText("")
 		if imgPlatform, ok := s.platform.(ImagePlatform); ok {
 			success = imgPlatform.SetImage(nil) && success
 		}
 		return core.Result{Value: success, OK: true}
-	})
+	}
+	read := func(_ context.Context, _ core.Options) core.Result {
+		text, ok := s.platform.Text()
+		return core.Result{Value: ClipboardContent{Text: text, HasContent: ok && text != ""}, OK: true}
+	}
+	s.Core().Action("clipboard.setText", setText)
+	s.Core().Action("gui.clipboard.write", setText)
+	s.Core().Action("clipboard.setImage", setImage)
+	s.Core().Action("clipboard.clear", clear)
+	s.Core().Action("gui.clipboard.clear", clear)
+	s.Core().Action("gui.clipboard.read", read)
 	return core.Result{OK: true}
 }
 

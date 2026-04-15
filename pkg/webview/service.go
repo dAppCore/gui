@@ -301,7 +301,12 @@ func (s *Service) handleQuery(_ *core.Core, q core.Query) core.Result {
 // registerTaskActions registers all webview task handlers as named Core actions.
 func (s *Service) registerTaskActions() {
 	c := s.Core()
-	c.Action("webview.evaluate", func(_ context.Context, opts core.Options) core.Result {
+	register := func(names []string, handler func(context.Context, core.Options) core.Result) {
+		for _, name := range names {
+			c.Action(name, handler)
+		}
+	}
+	register([]string{"webview.evaluate", "gui.webview.eval"}, func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskEvaluate)
 		conn, err := s.getConn(t.Window)
 		if err != nil {
@@ -310,7 +315,7 @@ func (s *Service) registerTaskActions() {
 		result, err := conn.Evaluate(t.Script)
 		return core.Result{}.New(result, err)
 	})
-	c.Action("webview.click", func(_ context.Context, opts core.Options) core.Result {
+	register([]string{"webview.click", "gui.webview.click"}, func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskClick)
 		conn, err := s.getConn(t.Window)
 		if err != nil {
@@ -318,7 +323,7 @@ func (s *Service) registerTaskActions() {
 		}
 		return core.Result{Value: nil, OK: true}.New(conn.Click(t.Selector))
 	})
-	c.Action("webview.type", func(_ context.Context, opts core.Options) core.Result {
+	register([]string{"webview.type", "gui.webview.type"}, func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskType)
 		conn, err := s.getConn(t.Window)
 		if err != nil {
@@ -326,7 +331,7 @@ func (s *Service) registerTaskActions() {
 		}
 		return core.Result{Value: nil, OK: true}.New(conn.Type(t.Selector, t.Text))
 	})
-	c.Action("webview.navigate", func(_ context.Context, opts core.Options) core.Result {
+	register([]string{"webview.navigate", "gui.webview.navigate"}, func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskNavigate)
 		conn, err := s.getConn(t.Window)
 		if err != nil {
@@ -334,7 +339,7 @@ func (s *Service) registerTaskActions() {
 		}
 		return core.Result{Value: nil, OK: true}.New(conn.Navigate(t.URL))
 	})
-	c.Action("webview.screenshot", func(_ context.Context, opts core.Options) core.Result {
+	register([]string{"webview.screenshot", "gui.webview.screenshot"}, func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskScreenshot)
 		conn, err := s.getConn(t.Window)
 		if err != nil {
@@ -349,7 +354,7 @@ func (s *Service) registerTaskActions() {
 			MimeType: "image/png",
 		}, OK: true}
 	})
-	c.Action("webview.scroll", func(_ context.Context, opts core.Options) core.Result {
+	register([]string{"webview.scroll", "gui.webview.scroll"}, func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskScroll)
 		conn, err := s.getConn(t.Window)
 		if err != nil {
@@ -358,7 +363,7 @@ func (s *Service) registerTaskActions() {
 		_, err = conn.Evaluate("window.scrollTo(" + strconv.Itoa(t.X) + "," + strconv.Itoa(t.Y) + ")")
 		return core.Result{Value: nil, OK: true}.New(err)
 	})
-	c.Action("webview.hover", func(_ context.Context, opts core.Options) core.Result {
+	register([]string{"webview.hover", "gui.webview.hover"}, func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskHover)
 		conn, err := s.getConn(t.Window)
 		if err != nil {
@@ -366,7 +371,7 @@ func (s *Service) registerTaskActions() {
 		}
 		return core.Result{Value: nil, OK: true}.New(conn.Hover(t.Selector))
 	})
-	c.Action("webview.select", func(_ context.Context, opts core.Options) core.Result {
+	register([]string{"webview.select", "gui.webview.select"}, func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskSelect)
 		conn, err := s.getConn(t.Window)
 		if err != nil {
@@ -374,7 +379,7 @@ func (s *Service) registerTaskActions() {
 		}
 		return core.Result{Value: nil, OK: true}.New(conn.Select(t.Selector, t.Value))
 	})
-	c.Action("webview.check", func(_ context.Context, opts core.Options) core.Result {
+	register([]string{"webview.check", "gui.webview.check"}, func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskCheck)
 		conn, err := s.getConn(t.Window)
 		if err != nil {
@@ -382,7 +387,7 @@ func (s *Service) registerTaskActions() {
 		}
 		return core.Result{Value: nil, OK: true}.New(conn.Check(t.Selector, t.Checked))
 	})
-	c.Action("webview.uploadFile", func(_ context.Context, opts core.Options) core.Result {
+	register([]string{"webview.uploadFile", "gui.webview.uploadFile"}, func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskUploadFile)
 		conn, err := s.getConn(t.Window)
 		if err != nil {
@@ -390,7 +395,7 @@ func (s *Service) registerTaskActions() {
 		}
 		return core.Result{Value: nil, OK: true}.New(conn.UploadFile(t.Selector, t.Paths))
 	})
-	c.Action("webview.setViewport", func(_ context.Context, opts core.Options) core.Result {
+	register([]string{"webview.setViewport", "gui.webview.setViewport"}, func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskSetViewport)
 		conn, err := s.getConn(t.Window)
 		if err != nil {
@@ -398,7 +403,7 @@ func (s *Service) registerTaskActions() {
 		}
 		return core.Result{Value: nil, OK: true}.New(conn.SetViewport(t.Width, t.Height))
 	})
-	c.Action("webview.clearConsole", func(_ context.Context, opts core.Options) core.Result {
+	register([]string{"webview.clearConsole", "gui.webview.clearConsole"}, func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskClearConsole)
 		conn, err := s.getConn(t.Window)
 		if err != nil {
@@ -407,7 +412,7 @@ func (s *Service) registerTaskActions() {
 		conn.ClearConsole()
 		return core.Result{OK: true}
 	})
-	c.Action("webview.setURL", func(_ context.Context, opts core.Options) core.Result {
+	register([]string{"webview.setURL", "gui.webview.setURL"}, func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskSetURL)
 		conn, err := s.getConn(t.Window)
 		if err != nil {
@@ -415,7 +420,7 @@ func (s *Service) registerTaskActions() {
 		}
 		return core.Result{Value: nil, OK: true}.New(conn.Navigate(t.URL))
 	})
-	c.Action("webview.setZoom", func(_ context.Context, opts core.Options) core.Result {
+	register([]string{"webview.setZoom", "gui.webview.setZoom"}, func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskSetZoom)
 		conn, err := s.getConn(t.Window)
 		if err != nil {
@@ -423,7 +428,7 @@ func (s *Service) registerTaskActions() {
 		}
 		return core.Result{Value: nil, OK: true}.New(conn.SetZoom(t.Zoom))
 	})
-	c.Action("webview.print", func(_ context.Context, opts core.Options) core.Result {
+	register([]string{"webview.print", "gui.webview.print"}, func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskPrint)
 		conn, err := s.getConn(t.Window)
 		if err != nil {
@@ -441,11 +446,11 @@ func (s *Service) registerTaskActions() {
 			MimeType: "application/pdf",
 		}, OK: true}
 	})
-	c.Action("webview.devtoolsOpen", func(_ context.Context, opts core.Options) core.Result {
+	register([]string{"webview.devtoolsOpen", "gui.webview.devtoolsOpen"}, func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskDevToolsOpen)
 		return core.Result{Value: nil, OK: true}.New(s.devToolsOpen(t.Window))
 	})
-	c.Action("webview.devtoolsClose", func(_ context.Context, opts core.Options) core.Result {
+	register([]string{"webview.devtoolsClose", "gui.webview.devtoolsClose"}, func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskDevToolsClose)
 		return core.Result{Value: nil, OK: true}.New(s.devToolsClose(t.Window))
 	})

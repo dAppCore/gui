@@ -309,18 +309,23 @@ func (s *Service) injectElectronShim() string {
   };
   const shell = {
     openExternal(url) {
-      return invokeBridge('browser.openURL', { url }).then(() => undefined);
+      return invokeBridge('gui.browser.open', { url }).then(() => undefined);
     },
     openPath(path) {
-      return invokeBridge('browser.openFile', { path }).then(() => "");
+      return invokeBridge('gui.browser.openFile', { path }).then(() => "");
     }
   };
   const clipboard = {
     readText() {
-      return globalThis.navigator?.clipboard?.readText?.() ?? Promise.resolve("");
+      return invokeBridge('gui.clipboard.read', {}).then((value) => {
+        if (typeof value === "string") {
+          return value;
+        }
+        return value?.text ?? value?.Text ?? "";
+      });
     },
     writeText(text) {
-      return invokeBridge('clipboard.setText', { text }).then(() => undefined);
+      return invokeBridge('gui.clipboard.write', { text }).then(() => undefined);
     }
   };
   const invokeBridge = (route, payload) => (globalThis.__coreBridge?.invoke?.(route, payload) ?? Promise.resolve({ route, payload }));

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	core "dappco.re/go/core"
+	coreerr "dappco.re/go/core/log"
 	"forge.lthn.ai/core/gui/pkg/dialog"
 )
 
@@ -34,10 +35,13 @@ func Register(p Platform) func(*core.Core) core.Result {
 
 func (s *Service) OnStartup(_ context.Context) core.Result {
 	s.Core().RegisterQuery(s.handleQuery)
-	s.Core().Action("notification.send", func(_ context.Context, opts core.Options) core.Result {
-		t, _ := opts.Get("task").Value.(TaskSend)
-		return core.Result{Value: nil, OK: true}.New(s.send(t.Options))
-	})
+	send := func(_ context.Context, opts core.Options) core.Result {
+		options, err := notificationOptionsFrom(opts)
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		return core.Result{Value: nil, OK: true}.New(s.send(options))
+	}
 	s.Core().Action("notification.requestPermission", func(_ context.Context, _ core.Options) core.Result {
 		granted, err := s.platform.RequestPermission()
 		return core.Result{}.New(granted, err)
@@ -54,6 +58,8 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		t, _ := opts.Get("task").Value.(TaskClear)
 		return core.Result{Value: nil, OK: true}.New(s.clear(t.ID))
 	})
+	s.Core().Action("notification.send", send)
+	s.Core().Action("gui.notification.send", send)
 	return core.Result{OK: true}
 }
 
@@ -161,4 +167,35 @@ func (s *Service) removeActive(id string) []string {
 	}
 	clear(s.active)
 	return ids
+}
+
+func notificationOptionsFrom(opts core.Options) (NotificationOptions, error) {
+	if task := opts.Get("task"); task.OK {
+		switch v := task.Value.(type) {
+		case TaskSend:
+			return v.Options, nil
+		case NotificationOptions:
+			return v, nil
+		}
+	}
+	return decodeOptions[NotificationOptions](opts)
+}
+
+func decodeOptions[T any](opts core.Options) (T, error) {
+	var input T
+	items := make(map[string]any, opts.Len())
+	for _, item := range opts.Items() {
+		items[item.Key] = item.Value
+	}
+	if len(items) == 0 {
+		return input, nil
+	}
+	result := core.JSONUnmarshalString(core.JSONMarshalString(items), &input)
+	if !result.OK {
+		if err, ok := result.Value.(error); ok {
+			return input, err
+		}
+		return input, coreerr.E("notification.decodeOptions", "failed to decode notification options", nil)
+	}
+	return input, nil
 }
