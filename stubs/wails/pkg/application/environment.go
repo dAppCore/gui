@@ -1,5 +1,11 @@
 package application
 
+import (
+	"runtime"
+
+	"github.com/wailsapp/wails/v3/internal/operatingsystem"
+)
+
 // EnvironmentInfo holds runtime information about the host OS and build.
 //
 //	info := manager.Info()
@@ -8,6 +14,7 @@ type EnvironmentInfo struct {
 	OS           string
 	Arch         string
 	Debug        bool
+	OSInfo       *operatingsystem.OS
 	PlatformInfo map[string]any
 }
 
@@ -42,6 +49,9 @@ func (em *EnvironmentManager) GetAccentColor() string {
 //	info := manager.Info()
 func (em *EnvironmentManager) Info() EnvironmentInfo {
 	return EnvironmentInfo{
+		OS:           runtime.GOOS,
+		Arch:         runtime.GOARCH,
+		OSInfo:       &operatingsystem.OS{Name: runtime.GOOS, Version: "stub"},
 		PlatformInfo: make(map[string]any),
 	}
 }

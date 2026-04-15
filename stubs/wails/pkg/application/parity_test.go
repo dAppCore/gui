@@ -1,15 +1,49 @@
 package application
 
-import "testing"
+import (
+	"context"
+	"log/slog"
+	"testing"
+)
+
+type noopTransport struct{}
+
+func (noopTransport) Start(context.Context, *MessageProcessor) error { return nil }
+func (noopTransport) Stop() error                                    { return nil }
 
 func TestNewAndGetExposeSingletonState(t *testing.T) {
 	globalApplication = nil
-	app := New(Options{Name: "Parity"})
+	logger := slog.Default()
+	transport := noopTransport{}
+	app := New(Options{
+		Name:      "Parity",
+		Logger:    logger,
+		LogLevel:  slog.LevelDebug,
+		Transport: transport,
+	})
 	if Get() != app {
 		t.Fatalf("Get() did not return singleton app")
 	}
 	if app.Config().Name != "Parity" {
 		t.Fatalf("unexpected app name: %q", app.Config().Name)
+	}
+	if app.Config().Logger != logger {
+		t.Fatalf("expected logger to round-trip through config")
+	}
+	if app.Config().LogLevel != slog.LevelDebug {
+		t.Fatalf("expected log level to round-trip through config")
+	}
+	if app.Config().Transport == nil {
+		t.Fatalf("expected transport to round-trip through config")
+	}
+	if app.Logger == nil {
+		t.Fatalf("expected app logger to be initialised")
+	}
+	if app.Env == nil {
+		t.Fatalf("expected Env manager to be initialised")
+	}
+	if app.Environment != app.Env {
+		t.Fatalf("expected Environment alias to point at Env manager")
 	}
 	if err := app.Run(); err != nil {
 		t.Fatalf("Run() failed: %v", err)
@@ -59,5 +93,37 @@ func TestMenuAndWindowParityHelpers(t *testing.T) {
 	window.CloseDevTools()
 	if window.DevToolsOpen() {
 		t.Fatalf("expected devtools to be marked closed")
+	}
+}
+
+func TestEnvironmentAndDropTargetParity(t *testing.T) {
+	info := (&EnvironmentManager{}).Info()
+	if info.OS == "" || info.Arch == "" {
+		t.Fatalf("expected runtime environment metadata, got %+v", info)
+	}
+	if info.OSInfo == nil {
+		t.Fatalf("expected OSInfo to be populated")
+	}
+
+	ctx := &WindowEventContext{
+		dropDetails: &DropTargetDetails{
+			X:         10,
+			Y:         20,
+			ElementID: "dropzone",
+			ClassList: []string{"primary", "drop-target"},
+			Attributes: map[string]string{
+				"data-file-drop-target": "true",
+			},
+		},
+	}
+	details := ctx.DropTargetDetails()
+	if details == nil {
+		t.Fatalf("expected drop target details")
+	}
+	if details.X != 10 || details.Y != 20 || details.ElementID != "dropzone" {
+		t.Fatalf("unexpected drop details: %+v", details)
+	}
+	if len(details.ClassList) != 2 || details.Attributes["data-file-drop-target"] != "true" {
+		t.Fatalf("drop target metadata was not preserved: %+v", details)
 	}
 }

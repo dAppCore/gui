@@ -1,6 +1,8 @@
 package application
 
 import (
+	"context"
+	"log/slog"
 	"net/http"
 	"time"
 )
@@ -43,6 +45,12 @@ type Options struct {
 	// Example: map[uint32]uint32{1: 1411160069}
 	BindAliases map[uint32]uint32
 
+	// Logger is the Wails system logger used by the runtime.
+	Logger *slog.Logger
+
+	// LogLevel defines the desired system log level when Logger is nil.
+	LogLevel slog.Level
+
 	// Assets configures the embedded asset server.
 	Assets AssetOptions
 
@@ -84,6 +92,9 @@ type Options struct {
 
 	// SingleInstance configures single-instance enforcement.
 	SingleInstance *SingleInstanceOptions
+
+	// Transport configures the IPC transport implementation.
+	Transport Transport
 
 	// Server configures the headless HTTP server (enabled via the "server" build tag).
 	Server ServerOptions
@@ -140,6 +151,27 @@ type AssetOptions struct {
 // Middleware is an HTTP middleware function for the asset server.
 // type Middleware func(next http.Handler) http.Handler
 type Middleware func(next http.Handler) http.Handler
+
+// MessageProcessor is the placeholder type passed to Transport.Start.
+// The stub does not perform runtime IPC processing, but the type exists so
+// callers can satisfy the same API surface as real Wails.
+type MessageProcessor struct{}
+
+// Transport is the custom IPC transport contract supported by Wails.
+//
+//	type MyTransport struct{}
+//	func (t *MyTransport) Start(ctx context.Context, processor *application.MessageProcessor) error { return nil }
+//	func (t *MyTransport) Stop() error { return nil }
+type Transport interface {
+	Start(ctx context.Context, processor *MessageProcessor) error
+	Stop() error
+}
+
+// AssetServerTransport optionally allows a custom transport to serve app assets.
+type AssetServerTransport interface {
+	Transport
+	ServeAssets(assetHandler http.Handler) error
+}
 
 // ChainMiddleware composes multiple Middleware values into a single Middleware.
 // chain := application.ChainMiddleware(authMiddleware, loggingMiddleware)

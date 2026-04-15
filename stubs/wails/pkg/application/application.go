@@ -1,6 +1,7 @@
 package application
 
 import (
+	"log/slog"
 	"sync"
 	"unsafe"
 
@@ -216,9 +217,13 @@ func (c *WindowEventContext) DropTargetDetails() *DropTargetDetails {
 	return &details
 }
 
-// DropTargetDetails mirrors the fields consumed by the GUI wrappers.
+// DropTargetDetails mirrors the Wails drop-target payload.
 type DropTargetDetails struct {
-	ElementID string
+	X          int               `json:"x"`
+	Y          int               `json:"y"`
+	ElementID  string            `json:"id"`
+	ClassList  []string          `json:"classList"`
+	Attributes map[string]string `json:"attributes,omitempty"`
 }
 
 // WindowEvent mirrors the event object passed to window callbacks.
@@ -873,18 +878,19 @@ func (wm *WindowManager) RemoveByName(name string) bool {
 //	app := &application.App{}
 //	win := app.Window.NewWithOptions(application.WebviewWindowOptions{Title: "Main"})
 type App struct {
-	Logger      Logger
-	Window      WindowManager
-	Menu        MenuManager
-	SystemTray  SystemTrayManager
-	Dialog      DialogManager
-	Event       EventManager
-	Browser     BrowserManager
-	Clipboard   ClipboardManager
-	ContextMenu ContextMenuManager
-	Environment EnvironmentManager
-	Screen      ScreenManager
-	KeyBinding  KeyBindingManager
+	Logger      *slog.Logger
+	Window      *WindowManager
+	Menu        *MenuManager
+	SystemTray  *SystemTrayManager
+	Dialog      *DialogManager
+	Event       *EventManager
+	Browser     *BrowserManager
+	Clipboard   *ClipboardManager
+	ContextMenu *ContextMenuManager
+	Env         *EnvironmentManager
+	Environment *EnvironmentManager
+	Screen      *ScreenManager
+	KeyBinding  *KeyBindingManager
 }
 
 // NewApp creates a zero-config in-memory application stub.

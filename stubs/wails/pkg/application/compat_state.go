@@ -2,6 +2,8 @@ package application
 
 import (
 	"context"
+	"io"
+	"log/slog"
 	"sync"
 	"time"
 )
@@ -53,19 +55,18 @@ func ensureAppCompatState(app *App) *appCompatState {
 	if app == nil {
 		return &appCompatState{ctx: context.Background()}
 	}
+	initialiseAppManagers(app, Options{})
 	if state, ok := appCompatStates.Load(app); ok {
 		return state.(*appCompatState)
 	}
 	state := &appCompatState{ctx: context.Background()}
 	actual, _ := appCompatStates.LoadOrStore(app, state)
-	if app.KeyBinding.bindings == nil {
-		app.KeyBinding = *NewKeyBindingManager()
-	}
 	return actual.(*appCompatState)
 }
 
 func newStubApp(options Options) *App {
 	app := &App{}
+	initialiseAppManagers(app, options)
 	state := ensureAppCompatState(app)
 	state.mu.Lock()
 	state.options = options
@@ -75,6 +76,59 @@ func newStubApp(options Options) *App {
 		app.KeyBinding.Add(accelerator, callback)
 	}
 	return app
+}
+
+func initialiseAppManagers(app *App, options Options) {
+	if app == nil {
+		return
+	}
+	if app.Logger == nil {
+		if options.Logger != nil {
+			app.Logger = options.Logger
+		} else {
+			handlerOptions := &slog.HandlerOptions{Level: options.LogLevel}
+			app.Logger = slog.New(slog.NewTextHandler(io.Discard, handlerOptions))
+		}
+	}
+	if app.Window == nil {
+		app.Window = &WindowManager{}
+	}
+	if app.Menu == nil {
+		app.Menu = &MenuManager{}
+	}
+	if app.SystemTray == nil {
+		app.SystemTray = &SystemTrayManager{}
+	}
+	if app.Dialog == nil {
+		app.Dialog = &DialogManager{}
+	}
+	if app.Event == nil {
+		app.Event = &EventManager{}
+	}
+	if app.Browser == nil {
+		app.Browser = &BrowserManager{}
+	}
+	if app.Clipboard == nil {
+		app.Clipboard = &ClipboardManager{}
+	}
+	if app.ContextMenu == nil {
+		app.ContextMenu = &ContextMenuManager{}
+	}
+	if app.Env == nil && app.Environment != nil {
+		app.Env = app.Environment
+	}
+	if app.Env == nil {
+		app.Env = &EnvironmentManager{}
+	}
+	if app.Environment == nil {
+		app.Environment = app.Env
+	}
+	if app.Screen == nil {
+		app.Screen = NewScreenManager()
+	}
+	if app.KeyBinding == nil {
+		app.KeyBinding = NewKeyBindingManager()
+	}
 }
 
 func ensureWebviewCompatState(window *WebviewWindow) *webviewCompatState {
@@ -107,7 +161,7 @@ func ensureTrayCompatState(tray *SystemTray) *trayCompatState {
 
 func appScreens() *ScreenManager {
 	if globalApplication != nil {
-		return &globalApplication.Screen
+		return globalApplication.Screen
 	}
 	return defaultScreenManager
 }
