@@ -132,7 +132,13 @@ func discoverManifestPath(pageURL string) (string, error) {
 		}
 	default:
 		if parsed.Host != "" {
-			candidates = append(candidates, filepath.Join(core.Env("DIR_HOME"), ".core", "apps", parsed.Host, ".core", "view.yaml"))
+			home := strings.TrimSpace(os.Getenv("DIR_HOME"))
+			if home == "" {
+				home = strings.TrimSpace(core.Env("DIR_HOME"))
+			}
+			if home != "" {
+				candidates = append(candidates, filepath.Join(home, ".core", "apps", parsed.Host, ".core", "view.yaml"))
+			}
 		}
 	}
 	for _, candidate := range candidates {

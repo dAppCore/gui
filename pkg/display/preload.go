@@ -31,6 +31,9 @@ func (s *Service) InjectPreload(webview PreloadTarget, origin string) error {
 // Use: script, _ := display.BuildPreloadScript("https://example.com")
 func (s *Service) BuildPreloadScript(pageURL string) (string, error) {
 	trustedOrigin := trustedPreloadOrigin(pageURL)
+	if !trustedOrigin && s.manifestBackedPreloadOrigin(pageURL) {
+		trustedOrigin = true
+	}
 	storageBootstrap := map[string]map[string]string{}
 	if s.storage != nil {
 		storageBootstrap = s.storage.Snapshot(pageURL)
@@ -54,6 +57,11 @@ func (s *Service) BuildPreloadScript(pageURL string) (string, error) {
 		parts = append(parts, appPreloads)
 	}
 	return strings.Join(parts, "\n"), nil
+}
+
+func (s *Service) manifestBackedPreloadOrigin(pageURL string) bool {
+	loaded, err := s.loadManifestForOrigin(pageURL)
+	return err == nil && loaded != nil
 }
 
 func trustedPreloadOrigin(pageURL string) bool {

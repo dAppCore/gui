@@ -66,6 +66,36 @@ func TestDisplay_Good_WindowOpenTrustedOriginIncludesPrivilegedBridge(t *testing
 	assert.Contains(t, script, "globalThis.core.ml")
 }
 
+func TestDisplay_Good_WindowOpenManifestBackedOriginIncludesPrivilegedBridge(t *testing.T) {
+	home := t.TempDir()
+	require.NoError(t, os.MkdirAll(filepath.Join(home, ".core", "apps", "example.com", ".core"), 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(home, ".core", "apps", "example.com", ".core", "view.yaml"), []byte("name: example\n"), 0o644))
+	t.Setenv("DIR_HOME", home)
+
+	platform := window.NewMockPlatform()
+	c := core.New(
+		core.WithService(Register(nil)),
+		core.WithService(window.Register(platform)),
+		core.WithServiceLock(),
+	)
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+
+	result := c.Action("window.open").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskOpenWindow{
+			Options: []window.WindowOption{
+				window.WithName("manifest-backed"),
+				window.WithURL("https://example.com/app"),
+			},
+		}},
+	))
+	require.True(t, result.OK)
+	require.Len(t, platform.Windows, 1)
+	script := platform.Windows[0].ExecJSCalls()[0]
+	assert.Contains(t, script, "globalThis.electron")
+	assert.Contains(t, script, "core.background.serviceWorker.register")
+	assert.Contains(t, script, "globalThis.core.ml")
+}
+
 func TestDisplay_Good_CoreSchemeRoutesThroughBackend(t *testing.T) {
 	platform := window.NewMockPlatform()
 	c := core.New(
