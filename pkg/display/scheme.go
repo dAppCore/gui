@@ -24,7 +24,7 @@ type assetMiddlewareHandler struct {
 func (h assetMiddlewareHandler) ServeHTTP(w application.ResponseWriter, r *application.Request) {
 	rawURL := r.URL
 	if strings.HasPrefix(strings.ToLower(strings.TrimSpace(rawURL)), "core://") {
-		result := h.service.ResolveScheme(context.Background(), rawURL)
+		result := h.service.ResolveSchemeRequest(context.Background(), rawURL, r.Method, r.Header, r.Body)
 		if !result.OK {
 			w.WriteHeader(404)
 			_, _ = w.Write([]byte("core route not found"))
@@ -107,7 +107,7 @@ func splitCoreRoute(route string) (string, string) {
 }
 
 func (s *Service) resolveSettingsRoute(subpath string, query url.Values) core.Result {
-		key := firstNonEmpty(query.Get("key"), subpath)
+	key := firstNonEmpty(query.Get("key"), subpath)
 	snapshot := s.currentSettingsSnapshot()
 	if key != "" {
 		value, ok := s.currentSettingValue(key)
@@ -346,6 +346,14 @@ func (s *Service) findChatModel(name string) (chat.ModelEntry, bool) {
 }
 
 func (s *Service) ResolveScheme(ctx context.Context, rawURL string) core.Result {
+	return s.ResolveSchemeRequest(ctx, rawURL, "GET", nil, nil)
+}
+
+// ResolveSchemeRequest resolves a `core://` URL with the HTTP method and body that reached the asset middleware.
+//
+//	result := svc.ResolveSchemeRequest(ctx, "core://store?q=theme", "POST", nil, []byte("q=theme"))
+//	// Routes that accept query semantics can use the request body when the caller submits a form or POST payload.
+func (s *Service) ResolveSchemeRequest(ctx context.Context, rawURL, method string, headers map[string][]string, body []byte) core.Result {
 	if strings.TrimSpace(rawURL) == "" {
 		return core.Result{Value: coreerr.E("display.ResolveScheme", "scheme URL is required", nil), OK: false}
 	}
@@ -358,8 +366,17 @@ func (s *Service) ResolveScheme(ctx context.Context, rawURL string) core.Result 
 		return core.Result{Value: coreerr.E("display.ResolveScheme", "no handler registered for scheme "+parsed.Scheme, nil), OK: false}
 	}
 
+	query := cloneURLValues(parsed.Query())
+	if requestQuery := requestBodyQuery(method, headers, body); len(requestQuery) > 0 {
+		for key, values := range requestQuery {
+			for _, value := range values {
+				query.Add(key, value)
+			}
+		}
+	}
+
 	route := strings.Trim(strings.TrimPrefix(parsed.Host+parsed.Path, "/"), "/")
-	resolved := handler(ctx, route, parsed.Query())
+	resolved := handler(ctx, route, query)
 	if !resolved.OK {
 		return resolved
 	}
@@ -376,16 +393,75 @@ func (s *Service) ResolveScheme(ctx context.Context, rawURL string) core.Result 
 		}
 	}
 
-	body := s.renderSchemeBody(route, resolved.Value)
+	renderedBody := s.renderSchemeBody(route, resolved.Value)
 	return core.Result{
 		Value: map[string]any{
 			"content_type": "text/html",
-			"body":         body,
+			"body":         renderedBody,
 			"route":        route,
 			"url":          rawURL,
+			"method":       strings.ToUpper(strings.TrimSpace(method)),
 		},
 		OK: true,
 	}
+}
+
+func cloneURLValues(values url.Values) url.Values {
+	if len(values) == 0 {
+		return url.Values{}
+	}
+	cloned := make(url.Values, len(values))
+	for key, list := range values {
+		cloned[key] = append([]string(nil), list...)
+	}
+	return cloned
+}
+
+func requestBodyQuery(method string, headers map[string][]string, body []byte) url.Values {
+	if len(body) == 0 {
+		return nil
+	}
+	normalizedMethod := strings.ToUpper(strings.TrimSpace(method))
+	if normalizedMethod == "" || normalizedMethod == "GET" || normalizedMethod == "HEAD" {
+		return nil
+	}
+
+	contentType := ""
+	for key, values := range headers {
+		if strings.EqualFold(strings.TrimSpace(key), "Content-Type") && len(values) > 0 {
+			contentType = values[0]
+			break
+		}
+	}
+
+	trimmedBody := strings.TrimSpace(string(body))
+	if trimmedBody == "" {
+		return nil
+	}
+
+	if strings.Contains(strings.ToLower(contentType), "application/json") || strings.HasPrefix(trimmedBody, "{") {
+		var decoded map[string]any
+		if result := core.JSONUnmarshal(body, &decoded); result.OK {
+			values := make(url.Values, len(decoded))
+			for key, value := range decoded {
+				switch typed := value.(type) {
+				case nil:
+					continue
+				case string:
+					values.Add(key, typed)
+				default:
+					values.Add(key, core.JSONMarshalString(typed))
+				}
+			}
+			return values
+		}
+	}
+
+	if values, err := url.ParseQuery(trimmedBody); err == nil && len(values) > 0 {
+		return values
+	}
+
+	return url.Values{"body": []string{trimmedBody}}
 }
 
 func (s *Service) renderSchemeBody(route string, value any) string {
