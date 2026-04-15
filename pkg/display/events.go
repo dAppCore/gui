@@ -1,6 +1,7 @@
 package display
 
 import (
+	"errors"
 	"net"
 	"net/http"
 	"net/url"
@@ -94,7 +95,7 @@ func NewWSEventManager() *WSEventManager {
 	em := &WSEventManager{
 		upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
-				return true // Allow all origins for local dev
+				return trustedWebSocketOrigin(r)
 			},
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,
@@ -114,13 +115,20 @@ func trustedWebSocketOrigin(r *http.Request) bool {
 		return false
 	}
 
+	if r.URL == nil {
+		return false
+	}
+	if path := strings.TrimSpace(r.URL.Path); path != "" && path != "/" && path != "/events" {
+		return false
+	}
+
 	if !trustedWebSocketHost(r.Host) {
 		return false
 	}
 
 	origin := strings.TrimSpace(r.Header.Get("Origin"))
 	if origin == "" || strings.EqualFold(origin, "null") {
-		return true
+		return trustedWSRequestOrigin(r.RemoteAddr)
 	}
 
 	parsed, err := url.Parse(origin)
@@ -138,6 +146,30 @@ func trustedWebSocketOrigin(r *http.Request) bool {
 	}
 }
 
+func trustedWSRequestOrigin(raw string) bool {
+	if raw == "" {
+		return false
+	}
+	host := raw
+	if parsed, _, err := net.SplitHostPort(raw); err == nil {
+		host = parsed
+	}
+	host = strings.Trim(host, "[]")
+	return isLoopbackHost(host)
+}
+
+func isLoopbackHost(host string) bool {
+	host = strings.TrimSpace(strings.ToLower(host))
+	if host == "" {
+		return false
+	}
+	if host == "localhost" || host == "127.0.0.1" || host == "::1" {
+		return true
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
+}
+
 func trustedWebSocketHost(host string) bool {
 	host = strings.TrimSpace(host)
 	if host == "" {
@@ -151,6 +183,8 @@ func trustedWebSocketHost(host string) bool {
 	name = strings.Trim(name, "[]")
 	switch strings.ToLower(name) {
 	case "localhost", "127.0.0.1", "::1":
+		return true
+	case "localhost:80", "localhost:443", "127.0.0.1:80", "127.0.0.1:443", "[::1]:80", "[::1]:443":
 		return true
 	default:
 		return false
