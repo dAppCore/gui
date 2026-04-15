@@ -64,6 +64,10 @@ func TestDisplay_Good_WindowOpenTrustedOriginIncludesPrivilegedBridge(t *testing
 	assert.Contains(t, script, "globalThis.electron")
 	assert.Contains(t, script, "core.background.serviceWorker.register")
 	assert.Contains(t, script, "globalThis.core.ml")
+	assert.Contains(t, script, "gui.notification.requestPermission")
+	assert.Contains(t, script, "gui.notification.clear")
+	assert.Contains(t, script, "systray.showMessage")
+	assert.Contains(t, script, "webview.devtoolsOpen")
 }
 
 func TestDisplay_Good_WindowOpenManifestBackedOriginIncludesPrivilegedBridge(t *testing.T) {

@@ -729,11 +729,22 @@ func (s *Service) injectElectronShim() string {
       this.options = options;
     }
     show() {
-      invokeBridge('gui.notification.send', { title: this.title, ...this.options });
+      return invokeBridge('gui.notification.send', { title: this.title, ...this.options });
     }
-    close() {}
+    close() {
+      const id = this.options?.id;
+      if (!id) {
+        return Promise.resolve(undefined);
+      }
+      return invokeBridge('gui.notification.clear', { id: String(id) });
+    }
     static requestPermission() {
-      return Promise.resolve('granted');
+      return invokeBridge('gui.notification.requestPermission', {}).then((result) => {
+        if (result === true || result === 'granted' || result?.granted === true) {
+          return 'granted';
+        }
+        return 'denied';
+      });
     }
   }
   class Menu {
@@ -790,6 +801,9 @@ func (s *Service) injectElectronShim() string {
       this.menu = normalized;
       return invokeBridge('systray.setMenu', { task: { items: normalized } });
     }
+    showMessage(title, message) {
+      return invokeBridge('systray.showMessage', { task: { title, message } });
+    }
     destroy() {}
   }
   class BrowserWindow {
@@ -843,6 +857,8 @@ func (s *Service) injectElectronShim() string {
     show() { return invokeBridge('window.setVisibility', { name: this.id, visible: true }); }
     hide() { return invokeBridge('window.setVisibility', { name: this.id, visible: false }); }
     close() { return invokeBridge('window.close', { name: this.id }); }
+    openDevTools() { return invokeBridge('webview.devtoolsOpen', { task: { window: this.id } }); }
+    closeDevTools() { return invokeBridge('webview.devtoolsClose', { task: { window: this.id } }); }
   }
   globalThis.Notification = globalThis.Notification || CoreNotification;
   globalThis.electron = { ipcRenderer, shell, clipboard, dialog, Menu, Tray, BrowserWindow, Notification: CoreNotification };
