@@ -144,6 +144,14 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 	s.Core().Action("display.storage.search", func(_ context.Context, opts core.Options) core.Result {
 		return core.Result{Value: s.searchAllStorage(opts.String("q")), OK: true}
 	})
+	s.Core().RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
+		switch typed := q.(type) {
+		case QueryStoreRoute:
+			return s.handleStoreSearch(context.Background(), url.Values{"q": []string{typed.Query}})
+		default:
+			return core.Result{}
+		}
+	})
 	s.Core().Action("display.models.state", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: s.modelState(), OK: true}
 	})

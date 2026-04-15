@@ -8,5 +8,13 @@ type ActionIDECommand struct {
 	Command string `json:"command"` // "save", "run", "build"
 }
 
+// QueryStoreRoute resolves the `core://store` route through the Core query bus.
+//
+//	result := c.QUERY(display.QueryStoreRoute{Query: "invoice"})
+//	// Returns the same storage search payload that backs `core://store?q=invoice`
+type QueryStoreRoute struct {
+	Query string `json:"q,omitempty"`
+}
+
 // EventIDECommand is the WS event type for IDE commands.
 const EventIDECommand EventType = "ide.command"
