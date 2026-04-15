@@ -39,7 +39,7 @@ func (wp *WailsPlatform) CreateWindow(options PlatformWindowOptions) PlatformWin
 		BackgroundColour: application.NewRGBA(options.BackgroundColour[0], options.BackgroundColour[1], options.BackgroundColour[2], options.BackgroundColour[3]),
 	}
 	w := wp.app.Window.NewWithOptions(wOpts)
-	return &wailsWindow{w: w, title: options.Title}
+	return &wailsWindow{w: w, title: options.Title, opacity: 1.0}
 }
 
 func (wp *WailsPlatform) GetWindows() []PlatformWindow {
@@ -54,10 +54,11 @@ func (wp *WailsPlatform) GetWindows() []PlatformWindow {
 }
 
 // wailsWindow wraps *application.WebviewWindow to implement PlatformWindow.
-// It stores the title locally because Wails v3 does not expose a title getter.
+// It stores the title and opacity locally because Wails v3 does not expose getters for both.
 type wailsWindow struct {
-	w     *application.WebviewWindow
-	title string
+	w       *application.WebviewWindow
+	title   string
+	opacity float64
 }
 
 func (ww *wailsWindow) Name() string         { return ww.w.Name() }
@@ -74,6 +75,7 @@ func (ww *wailsWindow) GetBounds() (int, int, int, int) {
 	return r.X, r.Y, r.Width, r.Height
 }
 func (ww *wailsWindow) GetZoom() float64          { return ww.w.GetZoom() }
+func (ww *wailsWindow) GetOpacity() float64       { return ww.opacity }
 func (ww *wailsWindow) SetTitle(title string)     { ww.title = title; ww.w.SetTitle(title) }
 func (ww *wailsWindow) SetPosition(x, y int)      { ww.w.SetPosition(x, y) }
 func (ww *wailsWindow) SetSize(width, height int) { ww.w.SetSize(width, height) }
@@ -88,6 +90,10 @@ func (ww *wailsWindow) SetVisibility(visible bool) {
 	}
 }
 func (ww *wailsWindow) SetAlwaysOnTop(alwaysOnTop bool) { ww.w.SetAlwaysOnTop(alwaysOnTop) }
+func (ww *wailsWindow) SetOpacity(opacity float64) {
+	ww.opacity = opacity
+	ww.w.SetOpacity(opacity)
+}
 func (ww *wailsWindow) SetBounds(x, y, width, height int) {
 	ww.w.SetBounds(application.Rect{X: x, Y: y, Width: width, Height: height})
 }

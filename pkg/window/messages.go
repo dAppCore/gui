@@ -1,14 +1,15 @@
 package window
 
 type WindowInfo struct {
-	Name      string `json:"name"`
-	Title     string `json:"title"`
-	X         int    `json:"x"`
-	Y         int    `json:"y"`
-	Width     int    `json:"width"`
-	Height    int    `json:"height"`
-	Maximized bool   `json:"maximized"`
-	Focused   bool   `json:"focused"`
+	Name      string  `json:"name"`
+	Title     string  `json:"title"`
+	X         int     `json:"x"`
+	Y         int     `json:"y"`
+	Width     int     `json:"width"`
+	Height    int     `json:"height"`
+	Opacity   float64 `json:"opacity"`
+	Maximized bool    `json:"maximized"`
+	Focused   bool    `json:"focused"`
 }
 
 type QueryWindowList struct{}
@@ -50,6 +51,11 @@ type TaskSetTitle struct {
 type TaskSetAlwaysOnTop struct {
 	Name        string
 	AlwaysOnTop bool
+}
+
+type TaskSetOpacity struct {
+	Name    string
+	Opacity float64
 }
 
 type TaskSetBackgroundColour struct {

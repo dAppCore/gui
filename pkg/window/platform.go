@@ -42,6 +42,7 @@ type PlatformWindow interface {
 	IsMinimised() bool
 	GetBounds() (x, y, width, height int)
 	GetZoom() float64
+	GetOpacity() float64
 
 	// Mutations
 	SetTitle(title string)
@@ -54,6 +55,7 @@ type PlatformWindow interface {
 	SetURL(url string)
 	SetHTML(html string)
 	SetZoom(magnification float64)
+	SetOpacity(opacity float64)
 	SetContentProtection(protection bool)
 
 	// Window state

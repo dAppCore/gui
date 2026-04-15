@@ -197,6 +197,7 @@ type WebviewWindow struct {
 	focused       bool
 	visible       bool
 	alwaysOnTop   bool
+	opacity       float64
 	fullscreen    bool
 	closed        bool
 	execJSCalls   []string
@@ -215,6 +216,7 @@ func newWebviewWindow(options WebviewWindowOptions) *WebviewWindow {
 		height:        options.Height,
 		visible:       !options.Hidden,
 		alwaysOnTop:   options.AlwaysOnTop,
+		opacity:       1.0,
 		eventHandlers: make(map[events.WindowEventType][]func(*WindowEvent)),
 	}
 	if options.JS != "" {
@@ -277,6 +279,16 @@ func (w *WebviewWindow) SetBackgroundColour(colour RGBA) Window { return w }
 func (w *WebviewWindow) SetAlwaysOnTop(alwaysOnTop bool) Window {
 	w.mu.Lock()
 	w.alwaysOnTop = alwaysOnTop
+	w.mu.Unlock()
+	return w
+}
+
+// SetOpacity sets the whole-window opacity.
+//
+//	w.SetOpacity(0.85)
+func (w *WebviewWindow) SetOpacity(opacity float64) Window {
+	w.mu.Lock()
+	w.opacity = opacity
 	w.mu.Unlock()
 	return w
 }
@@ -595,6 +607,15 @@ func (w *WebviewWindow) ZoomReset() Window { return w }
 //
 //	z := w.GetZoom()
 func (w *WebviewWindow) GetZoom() float64 { return 1.0 }
+
+// GetOpacity returns the current window opacity.
+//
+//	alpha := w.GetOpacity()
+func (w *WebviewWindow) GetOpacity() float64 {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	return w.opacity
+}
 
 // SetZoom sets the zoom magnification factor.
 //

@@ -86,6 +86,7 @@ func (s *Service) queryWindowList() []WindowInfo {
 			w, h := pw.Size()
 			result = append(result, WindowInfo{
 				Name: name, Title: pw.Title(), X: x, Y: y, Width: w, Height: h,
+				Opacity:   pw.GetOpacity(),
 				Maximized: pw.IsMaximised(),
 				Focused:   pw.IsFocused(),
 			})
@@ -103,6 +104,7 @@ func (s *Service) queryWindowByName(name string) *WindowInfo {
 	w, h := pw.Size()
 	return &WindowInfo{
 		Name: name, Title: pw.Title(), X: x, Y: y, Width: w, Height: h,
+		Opacity:   pw.GetOpacity(),
 		Maximized: pw.IsMaximised(),
 		Focused:   pw.IsFocused(),
 	}
@@ -152,6 +154,10 @@ func (s *Service) registerTaskActions() {
 	c.Action("window.setAlwaysOnTop", func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskSetAlwaysOnTop)
 		return core.Result{Value: nil, OK: true}.New(s.taskSetAlwaysOnTop(t.Name, t.AlwaysOnTop))
+	})
+	c.Action("window.setOpacity", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskSetOpacity)
+		return core.Result{Value: nil, OK: true}.New(s.taskSetOpacity(t.Name, t.Opacity))
 	})
 	c.Action("window.setBackgroundColour", func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskSetBackgroundColour)
@@ -314,7 +320,7 @@ func (s *Service) taskOpenWindow(t TaskOpenWindow) core.Result {
 	}
 	x, y := pw.Position()
 	w, h := pw.Size()
-	info := WindowInfo{Name: pw.Name(), Title: pw.Title(), X: x, Y: y, Width: w, Height: h}
+	info := WindowInfo{Name: pw.Name(), Title: pw.Title(), X: x, Y: y, Width: w, Height: h, Opacity: pw.GetOpacity()}
 
 	// Attach platform event listeners that convert to IPC actions
 	s.trackWindow(pw)
@@ -443,6 +449,21 @@ func (s *Service) taskSetAlwaysOnTop(name string, alwaysOnTop bool) error {
 		return coreerr.E("window.taskSetAlwaysOnTop", "window not found: "+name, nil)
 	}
 	pw.SetAlwaysOnTop(alwaysOnTop)
+	return nil
+}
+
+func (s *Service) taskSetOpacity(name string, opacity float64) error {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return coreerr.E("window.taskSetOpacity", "window not found: "+name, nil)
+	}
+	if opacity < 0 {
+		opacity = 0
+	}
+	if opacity > 1 {
+		opacity = 1
+	}
+	pw.SetOpacity(opacity)
 	return nil
 }
 

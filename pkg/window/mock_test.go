@@ -13,6 +13,7 @@ func (m *mockPlatform) CreateWindow(options PlatformWindowOptions) PlatformWindo
 		name: options.Name, title: options.Title, url: options.URL, html: options.HTML,
 		width: options.Width, height: options.Height,
 		x: options.X, y: options.Y,
+		opacity: 1.0,
 	}
 	if options.JS != "" {
 		w.execJSCalls = append(w.execJSCalls, options.JS)
@@ -39,6 +40,7 @@ type mockWindow struct {
 	minimised              bool
 	fullscreened           bool
 	zoom                   float64
+	opacity                float64
 	contentProtection      bool
 	flashed                bool
 	devToolsOpen           bool
@@ -63,12 +65,14 @@ func (w *mockWindow) GetZoom() float64 {
 	}
 	return w.zoom
 }
+func (w *mockWindow) GetOpacity() float64                  { return w.opacity }
 func (w *mockWindow) SetTitle(title string)                { w.title = title }
 func (w *mockWindow) SetPosition(x, y int)                 { w.x = x; w.y = y }
 func (w *mockWindow) SetSize(width, height int)            { w.width = width; w.height = height }
 func (w *mockWindow) SetBackgroundColour(r, g, b, a uint8) { w.backgroundColour = [4]uint8{r, g, b, a} }
 func (w *mockWindow) SetVisibility(visible bool)           { w.visible = visible }
 func (w *mockWindow) SetAlwaysOnTop(alwaysOnTop bool)      { w.alwaysOnTop = alwaysOnTop }
+func (w *mockWindow) SetOpacity(opacity float64)           { w.opacity = opacity }
 func (w *mockWindow) SetBounds(x, y, width, height int) {
 	w.x = x
 	w.y = y
