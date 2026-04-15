@@ -34,7 +34,7 @@ import { ImageAttachment } from './chat.types';
             appearance="plain"
             [disabled]="!visionEnabled"
             [attr.title]="!visionEnabled ? visionDisabledReason : null"
-            (click)="openFilePicker(filePicker)"
+            (click)="requestAttachment(filePicker)"
           >
             Attach
           </wa-button>
@@ -67,9 +67,11 @@ export class InputAreaComponent implements AfterViewInit {
   @Input() attachments: ImageAttachment[] = [];
   @Input() visionEnabled = true;
   @Input() visionDisabledReason = '';
+  @Input() nativePickerEnabled = false;
   @Output() valueChange = new EventEmitter<string>();
   @Output() attachFiles = new EventEmitter<FileList | File[]>();
   @Output() removeAttachment = new EventEmitter<number>();
+  @Output() openNativePicker = new EventEmitter<void>();
   @Output() submit = new EventEmitter<void>();
 
   ngAfterViewInit(): void {
@@ -129,6 +131,17 @@ export class InputAreaComponent implements AfterViewInit {
       return;
     }
     input.click();
+  }
+
+  requestAttachment(input: HTMLInputElement): void {
+    if (!this.visionEnabled) {
+      return;
+    }
+    if (this.nativePickerEnabled) {
+      this.openNativePicker.emit();
+      return;
+    }
+    this.openFilePicker(input);
   }
 
   attachmentSource(attachment: ImageAttachment): string {

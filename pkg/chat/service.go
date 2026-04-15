@@ -3,6 +3,8 @@ package chat
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
+	"image"
 	"io"
 	"net/http"
 	"os"
@@ -21,6 +23,10 @@ import (
 	guimcp "forge.lthn.ai/core/gui/pkg/mcp"
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 	"gopkg.in/yaml.v3"
+
+	_ "image/gif"
+	_ "image/jpeg"
+	_ "image/png"
 )
 
 const (
@@ -90,6 +96,11 @@ type attachImageInput struct {
 type removeImageInput struct {
 	ConversationID string `json:"conversation_id,omitempty"`
 	Index          int    `json:"index"`
+}
+
+type attachImageFileInput struct {
+	ConversationID string `json:"conversation_id,omitempty"`
+	Path           string `json:"path"`
 }
 
 type openAIRequest struct {
@@ -356,6 +367,18 @@ func (s *Service) registerActions() {
 		}
 		s.queueAttachment(coalesce(input.ConversationID, "draft"), input.ImageAttachment)
 		return core.Result{Value: input.ImageAttachment, OK: true}
+	})
+	c.Action("gui.chat.attachImageFile", func(_ context.Context, opts core.Options) core.Result {
+		input, err := decodeInput[attachImageFileInput](opts)
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		attachment, err := imageAttachmentFromFile(input.Path)
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		s.queueAttachment(coalesce(input.ConversationID, "draft"), attachment)
+		return core.Result{Value: attachment, OK: true}
 	})
 	c.Action("gui.chat.removeImage", func(_ context.Context, opts core.Options) core.Result {
 		input, err := decodeInput[removeImageInput](opts)
@@ -1326,6 +1349,76 @@ func validateImageAttachment(attachment ImageAttachment) error {
 		return coreerr.E("chat.attachImage", "attachment data is required", nil)
 	}
 	return nil
+}
+
+func imageAttachmentFromFile(rawPath string) (ImageAttachment, error) {
+	path, err := validatedImageFilePath(rawPath)
+	if err != nil {
+		return ImageAttachment{}, err
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return ImageAttachment{}, coreerr.E("chat.attachImageFile", "failed to read image file", err)
+	}
+	mimeType, err := detectImageMimeType(path, data)
+	if err != nil {
+		return ImageAttachment{}, err
+	}
+	width, height := imageDimensionsFromBytes(data)
+	attachment := ImageAttachment{
+		Filename: filepath.Base(path),
+		MimeType: mimeType,
+		Data:     base64.StdEncoding.EncodeToString(data),
+		Width:    width,
+		Height:   height,
+	}
+	if err := validateImageAttachment(attachment); err != nil {
+		return ImageAttachment{}, err
+	}
+	return attachment, nil
+}
+
+func validatedImageFilePath(rawPath string) (string, error) {
+	trimmed := strings.TrimSpace(rawPath)
+	if trimmed == "" {
+		return "", coreerr.E("chat.attachImageFile", "path is required", nil)
+	}
+	if strings.ContainsRune(trimmed, '\x00') {
+		return "", coreerr.E("chat.attachImageFile", "path contains a null byte", nil)
+	}
+	cleaned := filepath.Clean(trimmed)
+	if !filepath.IsAbs(cleaned) {
+		return "", coreerr.E("chat.attachImageFile", "path must be absolute", nil)
+	}
+	return cleaned, nil
+}
+
+func detectImageMimeType(path string, data []byte) (string, error) {
+	mimeType := strings.ToLower(strings.TrimSpace(http.DetectContentType(data)))
+	if _, ok := supportedImageMimeTypes[mimeType]; ok {
+		return mimeType, nil
+	}
+
+	switch strings.ToLower(filepath.Ext(path)) {
+	case ".png":
+		return "image/png", nil
+	case ".jpg", ".jpeg":
+		return "image/jpeg", nil
+	case ".webp":
+		return "image/webp", nil
+	case ".gif":
+		return "image/gif", nil
+	default:
+		return "", coreerr.E("chat.attachImageFile", "unsupported image format: expected PNG, JPEG, WebP, or GIF", nil)
+	}
+}
+
+func imageDimensionsFromBytes(data []byte) (int, int) {
+	config, _, err := image.DecodeConfig(bytes.NewReader(data))
+	if err != nil {
+		return 0, 0
+	}
+	return config.Width, config.Height
 }
 
 func architectureSupportsVision(architecture string) bool {

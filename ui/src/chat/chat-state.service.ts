@@ -40,6 +40,9 @@ export class ChatStateService {
   readonly sending = signal(false);
   readonly modelSwitching = signal(false);
   readonly selectedModel = signal('');
+  readonly nativeDialogAvailable = computed(
+    () => typeof window !== 'undefined' && typeof window.__CORE_GUI_INVOKE__ === 'function',
+  );
   readonly selectedModelEntry = computed(
     () => this.models().find((model) => model.name === this.selectedModel()) ?? null,
   );
@@ -188,6 +191,32 @@ export class ChatStateService {
       await this.invoke('gui.chat.attachImage', {
         conversation_id: this.activeConversation()?.id,
         ...attachment,
+      });
+    }
+  }
+
+  async openImagePicker(): Promise<void> {
+    if (!this.selectedModelSupportsVision() || !this.nativeDialogAvailable()) {
+      return;
+    }
+    const paths = await this.invokeGUI<string[]>('gui.dialog.open', {
+      title: 'Attach images',
+      allowMultiple: true,
+      filters: [
+        {
+          displayName: 'Images',
+          pattern: '*.png;*.jpg;*.jpeg;*.webp;*.gif',
+          extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif'],
+        },
+      ],
+    });
+    if (!paths?.length) {
+      return;
+    }
+    for (const path of paths) {
+      await this.invokeGUI<ImageAttachment>('gui.chat.attachImageFile', {
+        conversation_id: this.activeConversation()?.id,
+        path,
       });
     }
   }
@@ -495,6 +524,13 @@ export class ChatStateService {
     payload?: ChatRouteMap[RouteName]['request'],
   ): Promise<ChatRouteMap[RouteName]['response']> {
     return this.bindings.invoke(route, payload);
+  }
+
+  private async invokeGUI<T>(route: string, payload?: unknown): Promise<T | null> {
+    if (typeof window === 'undefined' || typeof window.__CORE_GUI_INVOKE__ !== 'function') {
+      return null;
+    }
+    return (await window.__CORE_GUI_INVOKE__(route, payload)) as T;
   }
 
   private async mockInvoke<T>(route: ChatRoute, payload?: unknown): Promise<T> {

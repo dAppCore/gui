@@ -80,9 +80,11 @@ import { ChatStateService } from './chat-state.service';
           [disabled]="state.sending()"
           [attachments]="state.queuedAttachments()"
           [visionEnabled]="state.selectedModelSupportsVision()"
+          [nativePickerEnabled]="state.nativeDialogAvailable()"
           [visionDisabledReason]="'Image input is only available for vision-capable local models.'"
           (valueChange)="state.draft.set($event)"
           (attachFiles)="state.queueImageFiles($event)"
+          (openNativePicker)="state.openImagePicker()"
           (removeAttachment)="state.removeQueuedAttachment($event)"
           (submit)="state.sendMessage()"
         />
