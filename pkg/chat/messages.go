@@ -11,6 +11,8 @@ type QueryModels struct{}
 
 type QuerySettings struct{}
 
+type QuerySettingsDefaults struct{}
+
 type QueryConversationList struct{}
 
 type QueryConversationGet struct {

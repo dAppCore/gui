@@ -14,6 +14,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 func signedManifest(t *testing.T, manifest Manifest) Manifest {
@@ -152,6 +153,10 @@ func TestMarketplace_Install_Good(t *testing.T) {
 	assert.Contains(t, string(contents), "clone")
 	assert.Contains(t, string(contents), "--branch")
 	assert.Contains(t, string(contents), "main")
+
+	installedManifest, err := os.ReadFile(filepath.Join(targetDir, ".core", "marketplace.yaml"))
+	require.NoError(t, err)
+	assert.Contains(t, string(installedManifest), "name: Core UI")
 }
 
 func TestMarketplace_Install_Bad(t *testing.T) {
@@ -189,6 +194,43 @@ func TestMarketplace_Install_Ugly(t *testing.T) {
 	}))
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "git clone failed")
+}
+
+func TestMarketplace_Verify_Good(t *testing.T) {
+	manifest := signedManifest(t, Manifest{
+		Name:       "core-ui",
+		Version:    "1.2.3",
+		Repository: "https://example.com/core-ui.git",
+		Ref:        "main",
+	})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		data, err := yaml.Marshal(manifest)
+		require.NoError(t, err)
+		_, _ = w.Write(data)
+	}))
+	t.Cleanup(server.Close)
+
+	installer := Installer{HTTPClient: server.Client()}
+	verified, err := installer.Verify(context.Background(), server.URL)
+	require.NoError(t, err)
+	assert.Equal(t, manifest.Name, verified.Name)
+	assert.Equal(t, manifest.Ref, verified.Ref)
+}
+
+func TestMarketplace_List_Good(t *testing.T) {
+	manifests := []Manifest{
+		{Name: "core-ui", Version: "1.2.3"},
+		{Name: "core-chat", Version: "0.9.0"},
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("manifests:\n  - name: core-ui\n    version: 1.2.3\n  - name: core-chat\n    version: 0.9.0\n"))
+	}))
+	t.Cleanup(server.Close)
+
+	installer := Installer{HTTPClient: server.Client()}
+	listed, err := installer.List(context.Background(), server.URL)
+	require.NoError(t, err)
+	assert.Equal(t, manifests, listed)
 }
 
 func shellQuote(value string) string {

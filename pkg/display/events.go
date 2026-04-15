@@ -292,7 +292,6 @@ func (em *WSEventManager) handleMessages(conn *websocket.Conn) {
 			return
 		}
 
-		handled := true
 		switch msg.Action {
 		case "subscribe":
 			em.subscribe(conn, msg.ID, msg.EventTypes)
@@ -301,9 +300,6 @@ func (em *WSEventManager) handleMessages(conn *websocket.Conn) {
 		case "list":
 			em.listSubscriptions(conn)
 		default:
-			handled = false
-		}
-		if !handled {
 			em.closeWithPolicyViolation(conn, "unknown websocket action")
 			return
 		}
@@ -319,7 +315,12 @@ func (em *WSEventManager) closeWithPolicyViolation(conn *websocket.Conn, reason 
 	}
 	state.writeMu.Lock()
 	defer state.writeMu.Unlock()
+	_ = conn.WriteJSON(map[string]any{
+		"error":  reason,
+		"status": websocket.ClosePolicyViolation,
+	})
 	_ = conn.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.ClosePolicyViolation, reason), time.Now().Add(2*time.Second))
+	_ = conn.Close()
 }
 
 // subscribe adds a subscription for a client.

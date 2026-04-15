@@ -14,6 +14,7 @@ declare global {
 
 export interface ChatRouteMap {
   'gui.chat.models': { request: void; response: ModelEntry[] };
+  'gui.chat.settings.defaults': { request: void; response: ChatSettings };
   'gui.chat.settings.load': { request: void; response: ChatSettings };
   'gui.chat.settings.save': { request: ChatSettings; response: ChatSettings };
   'gui.chat.settings.reset': { request: void; response: ChatSettings };

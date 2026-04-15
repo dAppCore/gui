@@ -80,8 +80,12 @@ func (s *Service) resolveCoreRoute(ctx context.Context, route string, query url.
 		return s.resolveModelsRoute(subpath, query)
 	case "chat":
 		return s.resolveChatRoute(ctx, subpath, query)
-	case "agent", "wallet", "identity":
-		return s.resolveUnavailableCoreRoute(segment, subpath, query)
+	case "agent":
+		return s.resolveServiceBackedCoreRoute("agent", subpath, query, "agent", "core-agent")
+	case "wallet":
+		return s.resolveServiceBackedCoreRoute("wallet", subpath, query, "wallet", "blockchain", "go-blockchain")
+	case "identity":
+		return s.resolveServiceBackedCoreRoute("identity", subpath, query, "identity", "tim", "TIM")
 	default:
 		return core.Result{
 			Value: coreerr.E("display.resolveCoreRoute", "unknown core route: "+segment, nil),
@@ -236,6 +240,61 @@ func (s *Service) resolveUnavailableCoreRoute(route, subpath string, query url.V
 		},
 		OK: true,
 	}
+}
+
+func (s *Service) resolveServiceBackedCoreRoute(route, subpath string, query url.Values, serviceNames ...string) core.Result {
+	for _, serviceName := range serviceNames {
+		serviceName = strings.TrimSpace(serviceName)
+		if serviceName == "" {
+			continue
+		}
+		serviceResult := s.Core().Service(serviceName)
+		if !serviceResult.OK {
+			continue
+		}
+		payload := map[string]any{
+			"route":    route,
+			"service":  serviceName,
+			"subpath":  subpath,
+			"query":    query,
+			"value":    serviceResult.Value,
+			"actions":  s.actionsForService(serviceName),
+			"services": s.Core().Services(),
+		}
+		return core.Result{
+			Value: map[string]any{
+				"content_type": "text/html",
+				"body":         s.renderSchemeBody(route, payload),
+				"route":        route,
+				"service":      serviceName,
+				"value":        serviceResult.Value,
+			},
+			OK: true,
+		}
+	}
+	return s.resolveUnavailableCoreRoute(route, subpath, query)
+}
+
+func (s *Service) actionsForService(serviceName string) []string {
+	if strings.TrimSpace(serviceName) == "" {
+		return nil
+	}
+	prefixes := []string{
+		serviceName + ".",
+		"core." + serviceName + ".",
+		"gui." + serviceName + ".",
+	}
+	actions := make([]string, 0)
+	for _, actionName := range s.Core().Actions() {
+		for _, prefix := range prefixes {
+			if strings.HasPrefix(actionName, prefix) {
+				actions = append(actions, actionName)
+				break
+			}
+		}
+	}
+	sort.Strings(actions)
+	return actions
 }
 
 func (s *Service) currentSettingsSnapshot() map[string]any {

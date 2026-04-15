@@ -46,6 +46,13 @@ func TestHLCRF_BuildHLCRFComponents_Good(t *testing.T) {
 	assert.Contains(t, script, "core-inline")
 }
 
+func TestHLCRF_CompileHLCRFTemplate_Good(t *testing.T) {
+	compiled := compileHLCRFTemplate(`<section data-slot="H">{{slot "H"}}</section><main>{{ slot "L-C" }}</main>`)
+
+	assert.Contains(t, compiled, `<slot name="H"></slot>`)
+	assert.Contains(t, compiled, `<slot name="L-C"></slot>`)
+}
+
 func TestHLCRF_BuildHLCRFComponents_Bad(t *testing.T) {
 	svc := &Service{}
 

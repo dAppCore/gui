@@ -172,6 +172,34 @@ func TestScheme_ResolveScheme_Ugly(t *testing.T) {
 	assert.Contains(t, searchPayload["body"].(string), "No matches found in Core storage.")
 }
 
+func TestScheme_ResolveScheme_ServiceBackedRoute_Good(t *testing.T) {
+	c := core.New(
+		core.WithService(Register(nil)),
+		core.WithName("wallet", func(_ *core.Core) core.Result {
+			return core.Result{
+				Value: map[string]any{
+					"balance": "42.0",
+					"address": "lthn1example",
+				},
+				OK: true,
+			}
+		}),
+		core.WithServiceLock(),
+	)
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+
+	svc := core.MustServiceFor[*Service](c, "display")
+	svc.registerDefaultSchemes()
+
+	result := svc.ResolveScheme(context.Background(), "core://wallet/treasury?amount=1")
+	require.True(t, result.OK)
+	payload := result.Value.(map[string]any)
+	assert.Equal(t, "wallet", payload["route"])
+	assert.Equal(t, "wallet", payload["service"])
+	assert.Contains(t, payload["body"].(string), "lthn1example")
+	assert.Contains(t, payload["body"].(string), "42.0")
+}
+
 func TestScheme_ResolveScheme_NetworkPeers_Good(t *testing.T) {
 	c := core.New(
 		core.WithService(Register(nil)),

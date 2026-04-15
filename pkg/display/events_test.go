@@ -173,6 +173,10 @@ func TestWSEventManager_HandleWebSocket_ClosesOnMalformedMessage(t *testing.T) {
 
 	require.NoError(t, conn.WriteMessage(websocket.TextMessage, []byte(`{"action":`)))
 
+	payload := readJSONMessage(t, conn)
+	assert.Equal(t, "invalid websocket message", payload["error"])
+	assert.Equal(t, float64(websocket.ClosePolicyViolation), payload["status"])
+
 	_, _, err := conn.ReadMessage()
 	require.Error(t, err)
 }
@@ -183,6 +187,10 @@ func TestWSEventManager_HandleWebSocket_ClosesOnUnknownAction(t *testing.T) {
 	defer cleanup()
 
 	require.NoError(t, conn.WriteMessage(websocket.TextMessage, []byte(`{"action":"bogus"}`)))
+
+	payload := readJSONMessage(t, conn)
+	assert.Equal(t, "unknown websocket action", payload["error"])
+	assert.Equal(t, float64(websocket.ClosePolicyViolation), payload["status"])
 
 	_, _, err := conn.ReadMessage()
 	require.Error(t, err)

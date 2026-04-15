@@ -3,8 +3,11 @@ package display
 import (
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
+
+var hlcrfSlotPattern = regexp.MustCompile(`\{\{\s*slot\s+"([^"]+)"\s*\}\}`)
 
 func (s *Service) buildHLCRFComponents(pageURL string) string {
 	loaded, err := s.loadManifestForOrigin(pageURL)
@@ -33,11 +36,26 @@ func (s *Service) buildHLCRFComponents(pageURL string) string {
 }
 
 func renderHLCRFComponent(tag, templateBody string) string {
+	templateBody = compileHLCRFTemplate(templateBody)
 	return `(function(){if(customElements.get(` + quoteJS(tag) + `)){return;}const tpl=document.createElement('template');tpl.innerHTML=` +
 		quoteJS(templateBody) +
 		`;class CoreHLCRFElement extends HTMLElement{connectedCallback(){if(this.shadowRoot){return;}const root=this.attachShadow({mode:'open'});root.appendChild(tpl.content.cloneNode(true));}}customElements.define(` +
 		quoteJS(tag) +
 		`,CoreHLCRFElement);})();`
+}
+
+func compileHLCRFTemplate(templateBody string) string {
+	return hlcrfSlotPattern.ReplaceAllStringFunc(templateBody, func(source string) string {
+		match := hlcrfSlotPattern.FindStringSubmatch(source)
+		if len(match) < 2 {
+			return source
+		}
+		slotName := strings.TrimSpace(match[1])
+		if slotName == "" || strings.EqualFold(slotName, "default") {
+			return "<slot></slot>"
+		}
+		return `<slot name="` + slotName + `"></slot>`
+	})
 }
 
 func defaultHLCRFTag(name string) string {

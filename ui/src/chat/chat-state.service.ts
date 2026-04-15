@@ -130,12 +130,14 @@ export class ChatStateService {
   }
 
   async resetSettings(): Promise<void> {
-    const reset = await this.invoke('gui.chat.settings.reset');
-    if (reset) {
-      this.settings.set(reset);
-      if (reset.default_model) {
-        this.selectedModel.set(reset.default_model);
-      }
+    const defaults = await this.invoke('gui.chat.settings.defaults');
+    if (!defaults) {
+      return;
+    }
+    const saved = await this.invoke('gui.chat.settings.save', defaults);
+    if (saved) {
+      this.settings.set(saved);
+      this.selectedModel.set(saved.default_model || '');
     }
   }
 
@@ -479,6 +481,17 @@ export class ChatStateService {
     if (route === 'gui.chat.settings.load') {
       return this.settings() as T;
     }
+    if (route === 'gui.chat.settings.defaults') {
+      return {
+        temperature: 1,
+        top_p: 0.95,
+        top_k: 64,
+        max_tokens: 2048,
+        context_window: 8192,
+        system_prompt: 'You are a helpful assistant.',
+        default_model: '',
+      } as T;
+    }
     if (route === 'gui.chat.settings.save') {
       const settings = payload as ChatSettings;
       this.settings.set(settings);
@@ -488,15 +501,7 @@ export class ChatStateService {
       return settings as T;
     }
     if (route === 'gui.chat.settings.reset') {
-      const defaults: ChatSettings = {
-        temperature: 1,
-        top_p: 0.95,
-        top_k: 64,
-        max_tokens: 2048,
-        context_window: 8192,
-        system_prompt: 'You are a helpful assistant.',
-        default_model: '',
-      };
+      const defaults = (await this.mockInvoke('gui.chat.settings.defaults')) as ChatSettings;
       this.settings.set(defaults);
       return defaults as T;
     }

@@ -12,7 +12,7 @@ import { ChatSettings, ModelEntry } from './chat.types';
       <header>
         <strong>Inference settings</strong>
         <div class="actions">
-          <button type="button" (click)="reset.emit()">Reset</button>
+          <button type="button" (click)="reset.emit()">Reset to defaults</button>
           <button type="button" (click)="closed.emit()">Close</button>
         </div>
       </header>

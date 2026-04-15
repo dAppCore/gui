@@ -10,12 +10,7 @@ import (
 
 func (s *Service) registerSidecarActions() {
 	if strings.TrimSpace(core.Env("CORE_DENO_ENABLE")) != "" && s.sidecar == nil {
-		manager := deno.New(deno.Options{
-			Binary: strings.TrimSpace(core.Env("CORE_DENO_BINARY")),
-			Dir:    strings.TrimSpace(core.Env("CORE_DENO_DIR")),
-			Args:   splitCommandArgs(core.Env("CORE_DENO_ARGS")),
-		})
-		s.sidecar = manager
+		s.sidecar = s.ensureSidecar()
 		_, _ = s.sidecar.Start(context.Background())
 	}
 
@@ -30,6 +25,17 @@ func (s *Service) registerSidecarActions() {
 		return core.Result{}.New(status, err)
 	})
 	s.Core().Action("display.sidecar.status", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: s.ensureSidecar().Status(), OK: true}
+	})
+	s.Core().Action("core.deno.sidecar.start", func(ctx context.Context, _ core.Options) core.Result {
+		status, err := s.ensureSidecar().Start(ctx)
+		return core.Result{}.New(status, err)
+	})
+	s.Core().Action("core.deno.sidecar.stop", func(ctx context.Context, _ core.Options) core.Result {
+		status, err := s.ensureSidecar().Stop(ctx)
+		return core.Result{}.New(status, err)
+	})
+	s.Core().Action("core.deno.sidecar.status", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: s.ensureSidecar().Status(), OK: true}
 	})
 }

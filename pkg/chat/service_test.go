@@ -140,3 +140,18 @@ func TestService_Good_SelectModelUpdatesConversation(t *testing.T) {
 	require.True(t, updated.OK)
 	assert.Equal(t, "lemma", updated.Value.(Conversation).Model)
 }
+
+func TestService_Good_SettingsDefaults(t *testing.T) {
+	c := newChatCore(t, func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		_, _ = io.WriteString(w, "data: [DONE]\n\n")
+	}, &mockToolExecutor{})
+
+	result := c.QUERY(QuerySettingsDefaults{})
+	require.True(t, result.OK)
+	assert.Equal(t, DefaultSettings(), result.Value.(ChatSettings))
+
+	actionResult := c.Action("gui.chat.settings.defaults").Run(context.Background(), core.Options{})
+	require.True(t, actionResult.OK)
+	assert.Equal(t, DefaultSettings(), actionResult.Value.(ChatSettings))
+}

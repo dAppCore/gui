@@ -202,6 +202,8 @@ func (s *Service) handleQuery(_ *core.Core, q core.Query) core.Result {
 		return core.Result{Value: s.discoverModels(), OK: true}
 	case QuerySettings:
 		return core.Result{Value: s.loadSettings(), OK: true}
+	case QuerySettingsDefaults:
+		return core.Result{Value: DefaultSettings(), OK: true}
 	case QueryConversationList:
 		conversations, err := s.listConversationSummaries()
 		return core.Result{}.New(conversations, err)
@@ -263,6 +265,9 @@ func (s *Service) registerActions() {
 	})
 	c.Action("gui.chat.settings.load", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: s.loadSettings(), OK: true}
+	})
+	c.Action("gui.chat.settings.defaults", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: DefaultSettings(), OK: true}
 	})
 	c.Action("gui.chat.settings.reset", func(_ context.Context, _ core.Options) core.Result {
 		settings := DefaultSettings()

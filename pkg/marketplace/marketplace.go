@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -105,6 +106,17 @@ func VerifyManifest(manifest Manifest) error {
 	return nil
 }
 
+func (i Installer) Verify(ctx context.Context, manifestURL string) (Manifest, error) {
+	manifest, err := i.FetchManifest(ctx, manifestURL)
+	if err != nil {
+		return Manifest{}, err
+	}
+	if err := VerifyManifest(manifest); err != nil {
+		return Manifest{}, err
+	}
+	return manifest, nil
+}
+
 func (i Installer) Install(ctx context.Context, manifest Manifest) (string, error) {
 	if strings.TrimSpace(i.InstallDir) == "" {
 		return "", errors.New("install dir is required")
@@ -148,7 +160,37 @@ func (i Installer) Install(ctx context.Context, manifest Manifest) (string, erro
 	if output, err := cmd.CombinedOutput(); err != nil {
 		return "", fmt.Errorf("git clone failed: %w: %s", err, strings.TrimSpace(string(output)))
 	}
+	if err := writeInstalledManifest(targetDir, manifest); err != nil {
+		return "", err
+	}
 	return targetDir, nil
+}
+
+func (i Installer) List(ctx context.Context, registryURL string) ([]Manifest, error) {
+	client := i.HTTPClient
+	if client == nil {
+		client = http.DefaultClient
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, registryURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= http.StatusBadRequest {
+		return nil, fmt.Errorf("marketplace list failed: %s", resp.Status)
+	}
+	body, err := io.ReadAll(io.LimitReader(resp.Body, maxManifestBytes+1))
+	if err != nil {
+		return nil, err
+	}
+	if len(body) > maxManifestBytes {
+		return nil, fmt.Errorf("marketplace list failed: payload exceeds %d bytes", maxManifestBytes)
+	}
+	return decodeManifestList(body)
 }
 
 func validateManifestName(value string) error {
@@ -197,4 +239,40 @@ func safeName(value string) string {
 		return "module"
 	}
 	return cleaned
+}
+
+func decodeManifestList(body []byte) ([]Manifest, error) {
+	trimmed := strings.TrimSpace(string(body))
+	if trimmed == "" {
+		return nil, nil
+	}
+	var manifests []Manifest
+	if strings.HasPrefix(trimmed, "[") {
+		if err := json.Unmarshal(body, &manifests); err != nil {
+			return nil, err
+		}
+		return manifests, nil
+	}
+	var wrapped struct {
+		Manifests []Manifest `json:"manifests" yaml:"manifests"`
+	}
+	if err := yaml.Unmarshal(body, &wrapped); err == nil && wrapped.Manifests != nil {
+		return wrapped.Manifests, nil
+	}
+	if err := yaml.Unmarshal(body, &manifests); err != nil {
+		return nil, err
+	}
+	return manifests, nil
+}
+
+func writeInstalledManifest(targetDir string, manifest Manifest) error {
+	manifestDir := filepath.Join(targetDir, ".core")
+	if err := os.MkdirAll(manifestDir, 0o755); err != nil {
+		return err
+	}
+	data, err := yaml.Marshal(manifest)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(manifestDir, "marketplace.yaml"), data, 0o644)
 }
