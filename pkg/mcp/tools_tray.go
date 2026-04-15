@@ -3,6 +3,7 @@ package mcp
 
 import (
 	"context"
+	"encoding/base64"
 
 	core "dappco.re/go/core"
 	coreerr "dappco.re/go/core/log"
@@ -13,15 +14,22 @@ import (
 // --- tray_set_icon ---
 
 type TraySetIconInput struct {
-	Data []byte `json:"data"`
+	Base64 string `json:"base64"`
 }
 type TraySetIconOutput struct {
 	Success bool `json:"success"`
 }
 
 func (s *Subsystem) traySetIcon(_ context.Context, _ *mcp.CallToolRequest, input TraySetIconInput) (*mcp.CallToolResult, TraySetIconOutput, error) {
+	if input.Base64 == "" {
+		return nil, TraySetIconOutput{}, coreerr.E("mcp.traySetIcon", "base64 icon data is required", nil)
+	}
+	data, err := base64.StdEncoding.DecodeString(input.Base64)
+	if err != nil {
+		return nil, TraySetIconOutput{}, coreerr.E("mcp.traySetIcon", "invalid base64 icon data", err)
+	}
 	r := s.core.Action("systray.setIcon").Run(context.Background(), core.NewOptions(
-		core.Option{Key: "task", Value: systray.TaskSetTrayIcon{Data: input.Data}},
+		core.Option{Key: "task", Value: systray.TaskSetTrayIcon{Data: data}},
 	))
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {
@@ -148,7 +156,10 @@ func (s *Subsystem) trayInfo(_ context.Context, _ *mcp.CallToolRequest, _ TrayIn
 // --- Registration ---
 
 func (s *Subsystem) registerTrayTools(server *mcp.Server) {
-	addTool(s, server, &mcp.Tool{Name: "tray_set_icon", Description: "Set the system tray icon"}, s.traySetIcon)
+	addTool(s, server, &mcp.Tool{
+		Name:        "tray_set_icon",
+		Description: `Set the system tray icon from base64 PNG data. Example: {"base64":"iVBORw0KGgoAAA..."}`,
+	}, s.traySetIcon)
 	addTool(s, server, &mcp.Tool{Name: "tray_set_tooltip", Description: "Set the system tray tooltip"}, s.traySetTooltip)
 	addTool(s, server, &mcp.Tool{Name: "tray_set_label", Description: "Set the system tray label"}, s.traySetLabel)
 	addTool(s, server, &mcp.Tool{
