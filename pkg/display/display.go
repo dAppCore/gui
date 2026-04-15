@@ -143,6 +143,9 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 }
 
 func (s *Service) OnShutdown(ctx context.Context) core.Result {
+	if s.storage != nil {
+		_ = s.storage.Close()
+	}
 	if s.sidecar != nil {
 		_, err := s.sidecar.Stop(ctx)
 		return core.Result{}.New(nil, err)

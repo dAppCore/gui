@@ -458,8 +458,7 @@ func (s *Service) injectCoreMLShim() string {
       });
     },
     async state() {
-      const response = await fetch("core://models");
-      return response.json ? response.json() : response;
+      return invokeBridge('display.models.state', {}).then((value) => value);
     },
     async models() {
       const state = await this.state();
