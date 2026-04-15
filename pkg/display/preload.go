@@ -125,6 +125,8 @@ func (s *Service) injectStoragePolyfills(pageOrigin string, bootstrap map[string
   const __corePageURL = ` + core.JSONMarshalString(pageOrigin) + `;
   const __coreOrigin = ` + core.JSONMarshalString(storageOriginForPageURL(pageOrigin)) + ` || __corePageURL;
   const __coreCanInvoke = ` + core.JSONMarshalString(trustedOrigin) + `;
+  const __coreMaxPersistKeyBytes = 1024;
+  const __coreMaxPersistValueBytes = 1048576;
   const __coreBootstrapStorage = ` + core.JSONMarshalString(bootstrap) + `;
   const __coreScopes = globalThis.__coreStorageScopes || (globalThis.__coreStorageScopes = {});
   const __scope = __coreScopes[__coreOrigin] || (__coreScopes[__coreOrigin] = { localStorage: {}, sessionStorage: {}, cookies: {}, indexedDB: {}, caches: {}, buckets: {}, opfs: {} });
@@ -213,11 +215,30 @@ func (s *Service) injectStoragePolyfills(pageOrigin string, bootstrap map[string
     }
     hydrateBucket(bucketName, __scope[bucketName], bucket);
   });
+  const byteLength = (value) => {
+    const text = String(value ?? "");
+    if (typeof TextEncoder !== "undefined") {
+      return new TextEncoder().encode(text).length;
+    }
+    return text.length;
+  };
+  const withinPersistBounds = (bucket, key, value) => {
+    if (bucket === "sessionStorage") {
+      return true;
+    }
+    if (byteLength(key) > __coreMaxPersistKeyBytes) {
+      return false;
+    }
+    if (byteLength(value) > __coreMaxPersistValueBytes) {
+      return false;
+    }
+    return true;
+  };
   const persist = (bucket, key, value) => {
     if (!__coreCanInvoke) {
       return;
     }
-    if (bucket === "sessionStorage") {
+    if (!withinPersistBounds(bucket, key, value)) {
       return;
     }
     __coreBridge.invoke('display.storage.set', { origin: __coreOrigin, bucket, key, value }).catch(() => undefined);
