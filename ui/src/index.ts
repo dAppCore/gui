@@ -14,3 +14,4 @@ export { TranslationService } from './services/translation.service';
 export { ProviderHostComponent } from './components/provider-host.component';
 export { ProviderNavComponent, type NavItem } from './components/provider-nav.component';
 export { StatusBarComponent } from './components/status-bar.component';
+export { ChatPanelComponent } from './chat/chat-panel.component';

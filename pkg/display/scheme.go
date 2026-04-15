@@ -5,6 +5,7 @@ import (
 	"html"
 	"net/url"
 	"strings"
+	"time"
 
 	core "dappco.re/go/core"
 	coreerr "dappco.re/go/core/log"
@@ -32,7 +33,16 @@ func (s *Service) registerDefaultSchemes() {
 		case "settings":
 			return s.Core().Action("gui.chat.settings.load").Run(ctx, core.NewOptions())
 		case "models":
-			return s.Core().Action("gui.chat.models").Run(ctx, core.NewOptions())
+			state := s.modelState()
+			return core.Result{
+				Value: map[string]any{
+					"content_type": "application/json",
+					"body":         core.JSONMarshalString(state),
+					"state":        state,
+					"models":       s.chatModels(),
+				},
+				OK: true,
+			}
 		case "chat":
 			if id := coalesce(query.Get("conversation_id"), query.Get("id")); id != "" {
 				return s.Core().Action("gui.chat.history").Run(ctx, core.NewOptions(
@@ -41,13 +51,15 @@ func (s *Service) registerDefaultSchemes() {
 			}
 			return s.Core().Action("gui.chat.conversations.list").Run(ctx, core.NewOptions())
 		case "store":
+			results := s.searchAllStorage(query.Get("q"))
 			return core.Result{
 				Value: map[string]any{
 					"content_type": "text/html",
-					"body":         s.renderStoreSearchPage(query.Get("q")),
+					"body":         s.renderStoreSearchPage(query.Get("q"), results),
 					"route":        route,
 					"url":          "core://store",
 					"query":        query,
+					"results":      results,
 				},
 				OK: true,
 			}
@@ -83,8 +95,12 @@ func (s *Service) ResolveScheme(ctx context.Context, rawURL string) core.Result 
 	}
 
 	if payload, ok := resolved.Value.(map[string]any); ok {
-		if contentType, _ := payload["content_type"].(string); strings.EqualFold(contentType, "text/html") {
+		if contentType, _ := payload["content_type"].(string); strings.TrimSpace(contentType) != "" {
 			if body, ok := payload["body"].(string); ok && strings.TrimSpace(body) != "" {
+				return core.Result{Value: payload, OK: true}
+			}
+			if !strings.EqualFold(contentType, "text/html") {
+				payload["body"] = core.JSONMarshalString(payload["state"])
 				return core.Result{Value: payload, OK: true}
 			}
 		}
@@ -114,13 +130,64 @@ func (s *Service) renderSchemeBody(route string, value any) string {
 		"</pre></main></body></html>"
 }
 
-func (s *Service) renderStoreSearchPage(query string) string {
+func (s *Service) renderStoreSearchPage(query string, results []StorageEntry) string {
 	safeQuery := html.EscapeString(query)
+	var items strings.Builder
+	if len(results) == 0 && strings.TrimSpace(query) != "" {
+		items.WriteString("<p class=\"empty\">No matches found in Core storage.</p>")
+	} else if strings.TrimSpace(query) == "" {
+		items.WriteString("<p class=\"meta\">Enter a search term to scan Core storage namespaces.</p>")
+	} else {
+		items.WriteString("<ul>")
+		for _, item := range results {
+			items.WriteString("<li class=\"result\"><div class=\"origin\">")
+			items.WriteString(html.EscapeString(item.Origin))
+			items.WriteString("</div><div class=\"bucket\">")
+			items.WriteString(html.EscapeString(item.Bucket))
+			items.WriteString("</div><div class=\"key\">")
+			items.WriteString(html.EscapeString(item.Key))
+			items.WriteString("</div><div class=\"value\">")
+			items.WriteString(html.EscapeString(item.Value))
+			items.WriteString("</div><div class=\"meta\">Updated ")
+			items.WriteString(html.EscapeString(item.UpdatedAt.Format(time.RFC3339)))
+			items.WriteString("</div></li>")
+		}
+		items.WriteString("</ul>")
+	}
 	return "<!doctype html><html><head><meta charset=\"utf-8\"><title>core://store</title><style>body{font:14px/1.5 ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;background:#0f172a;color:#e2e8f0;margin:0}header{padding:20px;border-bottom:1px solid #1e293b;background:linear-gradient(180deg,#111827,#0f172a)}main{padding:20px;display:grid;gap:16px}form{display:flex;gap:8px;flex-wrap:wrap;align-items:center}input{min-width:min(100%,420px);flex:1 1 320px;border-radius:12px;border:1px solid #334155;background:#020617;color:#e2e8f0;padding:12px 14px}button{border:0;border-radius:12px;background:#38bdf8;color:#082f49;padding:12px 16px;font-weight:700;cursor:pointer}section{background:#020617;border:1px solid #1e293b;border-radius:16px;padding:16px}ul{list-style:none;padding:0;margin:0;display:grid;gap:12px}.result{padding:12px;border:1px solid #1e293b;border-radius:12px;background:#0b1220}.meta{color:#94a3b8}.origin{font-weight:700;color:#7dd3fc}.bucket{color:#cbd5e1;font-size:12px;text-transform:uppercase;letter-spacing:.08em}.key{color:#f8fafc;font-weight:600}.value{white-space:pre-wrap;word-break:break-word;color:#e2e8f0}.empty{color:#94a3b8}code{background:#111827;border-radius:8px;padding:2px 6px}</style></head><body><header><strong>core://store</strong><div class=\"meta\">Search the in-memory storage scopes exposed by the preload shim. Query: <code>" +
 		safeQuery +
 		"</code></div></header><main><section><form method=\"get\" action=\"core://store\"><input name=\"q\" value=\"" +
 		safeQuery +
-		"\" placeholder=\"Search keys or values\"><button type=\"submit\">Search</button></form></section><section><div id=\"results\" class=\"meta\">Loading results...</div></section><script>(function(){const query=new URLSearchParams(location.search).get('q')||'';const needle=query.trim().toLowerCase();const scopes=globalThis.__coreStorageScopes||{};const results=[];for(const [origin,buckets] of Object.entries(scopes)){for(const [bucketName,bucket] of Object.entries(buckets||{})){for(const [key,rawValue] of Object.entries(bucket||{})){const value=String(rawValue);if(!needle||key.toLowerCase().includes(needle)||value.toLowerCase().includes(needle)){results.push({origin,bucket:bucketName,key,value});}}}}const root=document.getElementById('results');if(!root)return;if(!needle){root.innerHTML='<p class=\"meta\">Enter a search term to scan the captured storage scopes.</p>';return;}if(results.length===0){root.innerHTML='<p class=\"empty\">No matches found in the captured storage scopes.</p>';return;}root.innerHTML='<ul>'+results.map((item)=>'<li class=\"result\"><div class=\"origin\">'+item.origin+'</div><div class=\"bucket\">'+item.bucket+'</div><div class=\"key\">'+item.key+'</div><div class=\"value\">'+item.value+'</div></li>').join('')+'</ul>';})();</script></main></body></html>"
+		"\" placeholder=\"Search keys or values\"><button type=\"submit\">Search</button></form></section><section><div id=\"results\">" + items.String() + "</div></section></main></body></html>"
+}
+
+func (s *Service) searchAllStorage(query string) []StorageEntry {
+	results := s.storage.Search(query)
+	if conversations := s.Core().Action("gui.chat.conversations.search").Run(context.Background(), core.NewOptions(core.Option{Key: "q", Value: query})); conversations.OK {
+		switch list := conversations.Value.(type) {
+		case []any:
+			for _, item := range list {
+				results = append(results, StorageEntry{
+					Origin:    "core://chat",
+					Bucket:    "conversation",
+					Key:       "summary",
+					Value:     core.JSONMarshalString(item),
+					UpdatedAt: time.Now(),
+				})
+			}
+		default:
+			if payload := core.JSONMarshalString(list); payload != "null" && payload != "" && payload != "[]" {
+				results = append(results, StorageEntry{
+					Origin:    "core://chat",
+					Bucket:    "conversation",
+					Key:       "summary",
+					Value:     payload,
+					UpdatedAt: time.Now(),
+				})
+			}
+		}
+	}
+	return results
 }
 
 func coalesce(values ...string) string {
@@ -145,7 +212,11 @@ func (s *Service) AssetMiddleware() application.Middleware {
 				payload, _ := result.Value.(map[string]any)
 				body, _ := payload["body"].(string)
 				headers := w.Header()
-				headers["Content-Type"] = []string{"text/html; charset=utf-8"}
+				contentType, _ := payload["content_type"].(string)
+				if strings.TrimSpace(contentType) == "" {
+					contentType = "text/html"
+				}
+				headers["Content-Type"] = []string{contentType + "; charset=utf-8"}
 				w.WriteHeader(200)
 				_, _ = w.Write([]byte(body))
 				return

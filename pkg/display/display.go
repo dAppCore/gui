@@ -3,6 +3,7 @@ package display
 import (
 	"context"
 	"runtime"
+	"sync"
 
 	core "dappco.re/go/core"
 	coreerr "dappco.re/go/core/log"
@@ -40,6 +41,9 @@ type Service struct {
 	configFile     *config.Config // config instance for file persistence
 	events         *WSEventManager
 	schemeHandlers map[string]SchemeHandler
+	manifestCache  map[string]*loadedManifest
+	manifestMu     sync.Mutex
+	storage        *StorageRegistry
 }
 
 // New returns a display Service with empty config sections.
@@ -52,6 +56,8 @@ func New() (*Service, error) {
 			"menu":    {},
 		},
 		schemeHandlers: make(map[string]SchemeHandler),
+		manifestCache:  make(map[string]*loadedManifest),
+		storage:        NewStorageRegistry(),
 	}, nil
 }
 
@@ -103,6 +109,20 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 	})
 	s.Core().Action("display.resolveScheme", func(ctx context.Context, opts core.Options) core.Result {
 		return s.ResolveScheme(ctx, opts.String("url"))
+	})
+	s.Core().Action("display.storage.set", func(_ context.Context, opts core.Options) core.Result {
+		origin := opts.String("origin")
+		bucket := opts.String("bucket")
+		key := opts.String("key")
+		value := opts.String("value")
+		s.storage.Set(origin, bucket, key, value)
+		return core.Result{Value: map[string]string{"origin": origin, "bucket": bucket, "key": key}, OK: true}
+	})
+	s.Core().Action("display.storage.search", func(_ context.Context, opts core.Options) core.Result {
+		return core.Result{Value: s.searchAllStorage(opts.String("q")), OK: true}
+	})
+	s.Core().Action("display.models.state", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: s.modelState(), OK: true}
 	})
 	s.registerDefaultSchemes()
 
