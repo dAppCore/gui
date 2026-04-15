@@ -12,9 +12,13 @@ func NewMockPlatform() *MockPlatform {
 
 func (m *MockPlatform) CreateWindow(options PlatformWindowOptions) PlatformWindow {
 	w := &MockWindow{
-		name: options.Name, title: options.Title, url: options.URL,
+		name: options.Name, title: options.Title, url: options.URL, html: options.HTML,
 		width: options.Width, height: options.Height,
 		x: options.X, y: options.Y,
+		execJSCalls: nil,
+	}
+	if options.JS != "" {
+		w.execJSCalls = append(w.execJSCalls, options.JS)
 	}
 	m.Windows = append(m.Windows, w)
 	return w
@@ -29,33 +33,32 @@ func (m *MockPlatform) GetWindows() []PlatformWindow {
 }
 
 type MockWindow struct {
-	name, title, url          string
-	width, height, x, y       int
-	maximised, focused        bool
-	visible, alwaysOnTop      bool
-	backgroundColour          [4]uint8
-	closed                    bool
-	minimised                 bool
-	fullscreened              bool
-	zoom                      float64
-	html                      string
-	contentProtection         bool
-	flashed                   bool
-	execJSCalls               []string
-	eventHandlers             []func(WindowEvent)
-	fileDropHandlers          []func(paths []string, targetID string)
+	name, title, url, html string
+	width, height, x, y    int
+	maximised, focused     bool
+	visible, alwaysOnTop   bool
+	backgroundColour       [4]uint8
+	closed                 bool
+	minimised              bool
+	fullscreened           bool
+	zoom                   float64
+	contentProtection      bool
+	flashed                bool
+	execJSCalls            []string
+	eventHandlers          []func(WindowEvent)
+	fileDropHandlers       []func(paths []string, targetID string)
 }
 
-func (w *MockWindow) Name() string                         { return w.name }
-func (w *MockWindow) Title() string                        { return w.title }
-func (w *MockWindow) Position() (int, int)                 { return w.x, w.y }
-func (w *MockWindow) Size() (int, int)                     { return w.width, w.height }
-func (w *MockWindow) IsMaximised() bool                    { return w.maximised }
-func (w *MockWindow) IsFocused() bool                      { return w.focused }
-func (w *MockWindow) IsVisible() bool                      { return w.visible }
-func (w *MockWindow) IsFullscreen() bool                   { return w.fullscreened }
-func (w *MockWindow) IsMinimised() bool                    { return w.minimised }
-func (w *MockWindow) GetBounds() (int, int, int, int)      { return w.x, w.y, w.width, w.height }
+func (w *MockWindow) Name() string                    { return w.name }
+func (w *MockWindow) Title() string                   { return w.title }
+func (w *MockWindow) Position() (int, int)            { return w.x, w.y }
+func (w *MockWindow) Size() (int, int)                { return w.width, w.height }
+func (w *MockWindow) IsMaximised() bool               { return w.maximised }
+func (w *MockWindow) IsFocused() bool                 { return w.focused }
+func (w *MockWindow) IsVisible() bool                 { return w.visible }
+func (w *MockWindow) IsFullscreen() bool              { return w.fullscreened }
+func (w *MockWindow) IsMinimised() bool               { return w.minimised }
+func (w *MockWindow) GetBounds() (int, int, int, int) { return w.x, w.y, w.width, w.height }
 func (w *MockWindow) GetZoom() float64 {
 	if w.zoom == 0 {
 		return 1.0
@@ -97,4 +100,12 @@ func (w *MockWindow) OnWindowEvent(handler func(WindowEvent)) {
 }
 func (w *MockWindow) OnFileDrop(handler func(paths []string, targetID string)) {
 	w.fileDropHandlers = append(w.fileDropHandlers, handler)
+}
+
+func (w *MockWindow) ExecJSCalls() []string {
+	return append([]string(nil), w.execJSCalls...)
+}
+
+func (w *MockWindow) HTMLContent() string {
+	return w.html
 }

@@ -2,9 +2,10 @@ package window
 
 import (
 	"context"
+	"strings"
 
-	coreerr "dappco.re/go/core/log"
 	core "dappco.re/go/core"
+	coreerr "dappco.re/go/core/log"
 	"forge.lthn.ai/core/gui/pkg/screen"
 )
 
@@ -193,6 +194,24 @@ func (s *Service) registerTaskActions() {
 		t, _ := opts.Get("task").Value.(TaskApplyWorkflow)
 		return core.Result{Value: nil, OK: true}.New(s.taskApplyWorkflow(t.Workflow, t.Windows))
 	})
+	c.Action("window.layoutBesideEditor", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskLayoutBesideEditor)
+		result, err := s.taskLayoutBesideEditor(t)
+		return core.Result{}.New(result, err)
+	})
+	c.Action("window.layoutSuggest", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskLayoutSuggest)
+		return core.Result{Value: s.taskLayoutSuggest(t), OK: true}
+	})
+	c.Action("window.findSpace", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskScreenFindSpace)
+		return core.Result{Value: s.taskScreenFindSpace(t), OK: true}
+	})
+	c.Action("window.arrangePair", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskWindowArrangePair)
+		result, err := s.taskWindowArrangePair(t)
+		return core.Result{}.New(result, err)
+	})
 	c.Action("window.setZoom", func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskSetZoom)
 		return core.Result{Value: nil, OK: true}.New(s.taskSetZoom(t.Name, t.Magnification))
@@ -281,15 +300,15 @@ func (s *Service) primaryScreenArea() (int, int, int, int) {
 }
 
 func (s *Service) taskOpenWindow(t TaskOpenWindow) core.Result {
-	var (
-		pw  PlatformWindow
-		err error
-	)
-	if t.Window != nil {
-		pw, err = s.manager.Create(t.Window)
-	} else {
-		pw, err = s.manager.Open(t.Options...)
+	spec, err := s.buildWindowSpec(t)
+	if err != nil {
+		return core.Result{Value: err, OK: false}
 	}
+	if err := s.prepareWindowSpec(spec); err != nil {
+		return core.Result{Value: err, OK: false}
+	}
+
+	pw, err := s.manager.Create(spec)
 	if err != nil {
 		return core.Result{Value: err, OK: false}
 	}
@@ -615,7 +634,26 @@ func (s *Service) taskSetURL(name, url string) error {
 	if !ok {
 		return coreerr.E("window.taskSetURL", "window not found: "+name, nil)
 	}
+	if strings.HasPrefix(url, "core://") {
+		resolved, ok, err := s.resolveCoreScheme(url)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return coreerr.E("window.taskSetURL", "core scheme handler unavailable for "+url, nil)
+		}
+		pw.SetHTML(resolved.Body)
+		preload := s.buildPreload(url)
+		if preload != "" {
+			pw.ExecJS(preload)
+		}
+		return nil
+	}
 	pw.SetURL(url)
+	preload := s.buildPreload(url)
+	if preload != "" {
+		pw.ExecJS(preload)
+	}
 	return nil
 }
 

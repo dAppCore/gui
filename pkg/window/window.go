@@ -12,6 +12,8 @@ type Window struct {
 	Name                string
 	Title               string
 	URL                 string
+	HTML                string
+	JS                  string
 	Width, Height       int
 	X, Y                int
 	MinWidth, MinHeight int
@@ -27,7 +29,7 @@ type Window struct {
 // ToPlatformOptions converts a Window to PlatformWindowOptions for the backend.
 func (w *Window) ToPlatformOptions() PlatformWindowOptions {
 	return PlatformWindowOptions{
-		Name: w.Name, Title: w.Title, URL: w.URL,
+		Name: w.Name, Title: w.Title, URL: w.URL, HTML: w.HTML, JS: w.JS,
 		Width: w.Width, Height: w.Height, X: w.X, Y: w.Y,
 		MinWidth: w.MinWidth, MinHeight: w.MinHeight,
 		MaxWidth: w.MaxWidth, MaxHeight: w.MaxHeight,

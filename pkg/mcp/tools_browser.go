@@ -33,5 +33,5 @@ func (s *Subsystem) browserOpenURL(_ context.Context, _ *mcp.CallToolRequest, in
 // --- Registration ---
 
 func (s *Subsystem) registerBrowserTools(server *mcp.Server) {
-	mcp.AddTool(server, &mcp.Tool{Name: "browser_open_url", Description: "Open a URL in the default system browser"}, s.browserOpenURL)
+	addTool(s, server, &mcp.Tool{Name: "browser_open_url", Description: "Open a URL in the default system browser"}, s.browserOpenURL)
 }

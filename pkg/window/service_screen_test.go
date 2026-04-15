@@ -43,7 +43,6 @@ func newTestWindowServiceWithScreen(t *testing.T, screens []screen.Screen) (*Ser
 	return svc, c
 }
 
-
 func TestTaskTileWindows_Good_UsesPrimaryScreenSize(t *testing.T) {
 	_, c := newTestWindowServiceWithScreen(t, []screen.Screen{
 		{

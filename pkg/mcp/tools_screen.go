@@ -156,10 +156,10 @@ func (s *Subsystem) screenForWindow(_ context.Context, _ *mcp.CallToolRequest, i
 // --- Registration ---
 
 func (s *Subsystem) registerScreenTools(server *mcp.Server) {
-	mcp.AddTool(server, &mcp.Tool{Name: "screen_list", Description: "List all connected displays/screens"}, s.screenList)
-	mcp.AddTool(server, &mcp.Tool{Name: "screen_get", Description: "Get information about a specific screen"}, s.screenGet)
-	mcp.AddTool(server, &mcp.Tool{Name: "screen_primary", Description: "Get the primary screen"}, s.screenPrimary)
-	mcp.AddTool(server, &mcp.Tool{Name: "screen_at_point", Description: "Get the screen at a specific point"}, s.screenAtPoint)
-	mcp.AddTool(server, &mcp.Tool{Name: "screen_work_areas", Description: "Get work areas for all screens"}, s.screenWorkAreas)
-	mcp.AddTool(server, &mcp.Tool{Name: "screen_for_window", Description: "Get the screen containing a window"}, s.screenForWindow)
+	addTool(s, server, &mcp.Tool{Name: "screen_list", Description: "List all connected displays/screens"}, s.screenList)
+	addTool(s, server, &mcp.Tool{Name: "screen_get", Description: "Get information about a specific screen"}, s.screenGet)
+	addTool(s, server, &mcp.Tool{Name: "screen_primary", Description: "Get the primary screen"}, s.screenPrimary)
+	addTool(s, server, &mcp.Tool{Name: "screen_at_point", Description: "Get the screen at a specific point"}, s.screenAtPoint)
+	addTool(s, server, &mcp.Tool{Name: "screen_work_areas", Description: "Get work areas for all screens"}, s.screenWorkAreas)
+	addTool(s, server, &mcp.Tool{Name: "screen_for_window", Description: "Get the screen containing a window"}, s.screenForWindow)
 }

@@ -24,5 +24,5 @@ func (s *Subsystem) appQuit(_ context.Context, _ *mcp.CallToolRequest, _ AppQuit
 // --- Registration ---
 
 func (s *Subsystem) registerLifecycleTools(server *mcp.Server) {
-	mcp.AddTool(server, &mcp.Tool{Name: "app_quit", Description: "Quit the application"}, s.appQuit)
+	addTool(s, server, &mcp.Tool{Name: "app_quit", Description: "Quit the application"}, s.appQuit)
 }

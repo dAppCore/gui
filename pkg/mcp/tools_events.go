@@ -106,8 +106,8 @@ func (s *Subsystem) eventList(_ context.Context, _ *mcp.CallToolRequest, _ Event
 // --- Registration ---
 
 func (s *Subsystem) registerEventsTools(server *mcp.Server) {
-	mcp.AddTool(server, &mcp.Tool{Name: "event_emit", Description: "Fire a named custom event with optional data"}, s.eventEmit)
-	mcp.AddTool(server, &mcp.Tool{Name: "event_on", Description: "Register a listener for a named custom event"}, s.eventOn)
-	mcp.AddTool(server, &mcp.Tool{Name: "event_off", Description: "Remove all listeners for a named custom event"}, s.eventOff)
-	mcp.AddTool(server, &mcp.Tool{Name: "event_list", Description: "Query all registered event listeners"}, s.eventList)
+	addTool(s, server, &mcp.Tool{Name: "event_emit", Description: "Fire a named custom event with optional data"}, s.eventEmit)
+	addTool(s, server, &mcp.Tool{Name: "event_on", Description: "Register a listener for a named custom event"}, s.eventOn)
+	addTool(s, server, &mcp.Tool{Name: "event_off", Description: "Remove all listeners for a named custom event"}, s.eventOff)
+	addTool(s, server, &mcp.Tool{Name: "event_list", Description: "Query all registered event listeners"}, s.eventList)
 }

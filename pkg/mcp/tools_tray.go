@@ -87,8 +87,8 @@ func (s *Subsystem) trayInfo(_ context.Context, _ *mcp.CallToolRequest, _ TrayIn
 // --- Registration ---
 
 func (s *Subsystem) registerTrayTools(server *mcp.Server) {
-	mcp.AddTool(server, &mcp.Tool{Name: "tray_set_icon", Description: "Set the system tray icon"}, s.traySetIcon)
-	mcp.AddTool(server, &mcp.Tool{Name: "tray_set_tooltip", Description: "Set the system tray tooltip"}, s.traySetTooltip)
-	mcp.AddTool(server, &mcp.Tool{Name: "tray_set_label", Description: "Set the system tray label"}, s.traySetLabel)
-	mcp.AddTool(server, &mcp.Tool{Name: "tray_info", Description: "Get system tray configuration"}, s.trayInfo)
+	addTool(s, server, &mcp.Tool{Name: "tray_set_icon", Description: "Set the system tray icon"}, s.traySetIcon)
+	addTool(s, server, &mcp.Tool{Name: "tray_set_tooltip", Description: "Set the system tray tooltip"}, s.traySetTooltip)
+	addTool(s, server, &mcp.Tool{Name: "tray_set_label", Description: "Set the system tray label"}, s.traySetLabel)
+	addTool(s, server, &mcp.Tool{Name: "tray_info", Description: "Get system tray configuration"}, s.trayInfo)
 }

@@ -172,7 +172,7 @@ type WindowBounds struct {
 }
 
 type TaskSetBounds struct {
-	Name             string
+	Name                string
 	X, Y, Width, Height int
 }
 
@@ -193,3 +193,62 @@ type TaskFlash struct {
 // --- Print ---
 
 type TaskPrint struct{ Name string }
+
+// --- Smart layout ---
+
+type TaskLayoutBesideEditor struct {
+	Name   string  `json:"name"`
+	Editor string  `json:"editor,omitempty"`
+	Side   string  `json:"side,omitempty"`
+	Ratio  float64 `json:"ratio,omitempty"`
+}
+
+type LayoutBesideEditorResult struct {
+	Editor       string       `json:"editor"`
+	EditorBounds WindowBounds `json:"editor_bounds"`
+	WindowBounds WindowBounds `json:"window_bounds"`
+	Side         string       `json:"side"`
+	ScreenID     string       `json:"screen_id,omitempty"`
+}
+
+type TaskLayoutSuggest struct {
+	ScreenID    string `json:"screen_id,omitempty"`
+	WindowCount int    `json:"window_count,omitempty"`
+}
+
+type LayoutSuggestion struct {
+	Mode     string `json:"mode"`
+	Reason   string `json:"reason"`
+	ScreenID string `json:"screen_id,omitempty"`
+	Width    int    `json:"width"`
+	Height   int    `json:"height"`
+}
+
+type TaskScreenFindSpace struct {
+	ScreenID string `json:"screen_id,omitempty"`
+	Width    int    `json:"width"`
+	Height   int    `json:"height"`
+	Padding  int    `json:"padding,omitempty"`
+}
+
+type ScreenSpace struct {
+	ScreenID string `json:"screen_id,omitempty"`
+	X        int    `json:"x"`
+	Y        int    `json:"y"`
+	Width    int    `json:"width"`
+	Height   int    `json:"height"`
+}
+
+type TaskWindowArrangePair struct {
+	Primary   string  `json:"primary"`
+	Secondary string  `json:"secondary"`
+	ScreenID  string  `json:"screen_id,omitempty"`
+	Ratio     float64 `json:"ratio,omitempty"`
+}
+
+type PairArrangement struct {
+	Primary     WindowBounds `json:"primary"`
+	Secondary   WindowBounds `json:"secondary"`
+	Orientation string       `json:"orientation"`
+	ScreenID    string       `json:"screen_id,omitempty"`
+}

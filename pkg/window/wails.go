@@ -21,6 +21,8 @@ func (wp *WailsPlatform) CreateWindow(options PlatformWindowOptions) PlatformWin
 		Name:             options.Name,
 		Title:            options.Title,
 		URL:              options.URL,
+		HTML:             options.HTML,
+		JS:               options.JS,
 		Width:            options.Width,
 		Height:           options.Height,
 		X:                options.X,
@@ -58,15 +60,15 @@ type wailsWindow struct {
 	title string
 }
 
-func (ww *wailsWindow) Name() string              { return ww.w.Name() }
-func (ww *wailsWindow) Title() string             { return ww.title }
-func (ww *wailsWindow) Position() (int, int)      { return ww.w.Position() }
-func (ww *wailsWindow) Size() (int, int)          { return ww.w.Size() }
-func (ww *wailsWindow) IsMaximised() bool         { return ww.w.IsMaximised() }
-func (ww *wailsWindow) IsFocused() bool           { return ww.w.IsFocused() }
-func (ww *wailsWindow) IsVisible() bool           { return ww.w.IsVisible() }
-func (ww *wailsWindow) IsFullscreen() bool        { return ww.w.IsFullscreen() }
-func (ww *wailsWindow) IsMinimised() bool         { return ww.w.IsMinimised() }
+func (ww *wailsWindow) Name() string         { return ww.w.Name() }
+func (ww *wailsWindow) Title() string        { return ww.title }
+func (ww *wailsWindow) Position() (int, int) { return ww.w.Position() }
+func (ww *wailsWindow) Size() (int, int)     { return ww.w.Size() }
+func (ww *wailsWindow) IsMaximised() bool    { return ww.w.IsMaximised() }
+func (ww *wailsWindow) IsFocused() bool      { return ww.w.IsFocused() }
+func (ww *wailsWindow) IsVisible() bool      { return ww.w.IsVisible() }
+func (ww *wailsWindow) IsFullscreen() bool   { return ww.w.IsFullscreen() }
+func (ww *wailsWindow) IsMinimised() bool    { return ww.w.IsMinimised() }
 func (ww *wailsWindow) GetBounds() (int, int, int, int) {
 	r := ww.w.Bounds()
 	return r.X, r.Y, r.Width, r.Height
@@ -89,24 +91,24 @@ func (ww *wailsWindow) SetAlwaysOnTop(alwaysOnTop bool) { ww.w.SetAlwaysOnTop(al
 func (ww *wailsWindow) SetBounds(x, y, width, height int) {
 	ww.w.SetBounds(application.Rect{X: x, Y: y, Width: width, Height: height})
 }
-func (ww *wailsWindow) SetURL(url string)              { ww.w.SetURL(url) }
-func (ww *wailsWindow) SetHTML(html string)            { ww.w.SetHTML(html) }
-func (ww *wailsWindow) SetZoom(magnification float64)  { ww.w.SetZoom(magnification) }
+func (ww *wailsWindow) SetURL(url string)             { ww.w.SetURL(url) }
+func (ww *wailsWindow) SetHTML(html string)           { ww.w.SetHTML(html) }
+func (ww *wailsWindow) SetZoom(magnification float64) { ww.w.SetZoom(magnification) }
 func (ww *wailsWindow) SetContentProtection(protection bool) {
 	ww.w.SetContentProtection(protection)
 }
-func (ww *wailsWindow) Maximise()        { ww.w.Maximise() }
-func (ww *wailsWindow) Restore()         { ww.w.Restore() }
-func (ww *wailsWindow) Minimise()        { ww.w.Minimise() }
-func (ww *wailsWindow) Focus()           { ww.w.Focus() }
-func (ww *wailsWindow) Close()           { ww.w.Close() }
-func (ww *wailsWindow) Show()            { ww.w.Show() }
-func (ww *wailsWindow) Hide()            { ww.w.Hide() }
-func (ww *wailsWindow) Fullscreen()      { ww.w.Fullscreen() }
-func (ww *wailsWindow) UnFullscreen()    { ww.w.UnFullscreen() }
-func (ww *wailsWindow) ToggleFullscreen() { ww.w.ToggleFullscreen() }
-func (ww *wailsWindow) ToggleMaximise()   { ww.w.ToggleMaximise() }
-func (ww *wailsWindow) ExecJS(js string)  { ww.w.ExecJS(js) }
+func (ww *wailsWindow) Maximise()          { ww.w.Maximise() }
+func (ww *wailsWindow) Restore()           { ww.w.Restore() }
+func (ww *wailsWindow) Minimise()          { ww.w.Minimise() }
+func (ww *wailsWindow) Focus()             { ww.w.Focus() }
+func (ww *wailsWindow) Close()             { ww.w.Close() }
+func (ww *wailsWindow) Show()              { ww.w.Show() }
+func (ww *wailsWindow) Hide()              { ww.w.Hide() }
+func (ww *wailsWindow) Fullscreen()        { ww.w.Fullscreen() }
+func (ww *wailsWindow) UnFullscreen()      { ww.w.UnFullscreen() }
+func (ww *wailsWindow) ToggleFullscreen()  { ww.w.ToggleFullscreen() }
+func (ww *wailsWindow) ToggleMaximise()    { ww.w.ToggleMaximise() }
+func (ww *wailsWindow) ExecJS(js string)   { ww.w.ExecJS(js) }
 func (ww *wailsWindow) Flash(enabled bool) { ww.w.Flash(enabled) }
 func (ww *wailsWindow) Print() error       { return ww.w.Print() }
 

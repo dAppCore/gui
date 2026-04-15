@@ -85,7 +85,7 @@ func (s *Subsystem) notificationPermissionCheck(_ context.Context, _ *mcp.CallTo
 // --- Registration ---
 
 func (s *Subsystem) registerNotificationTools(server *mcp.Server) {
-	mcp.AddTool(server, &mcp.Tool{Name: "notification_show", Description: "Show a desktop notification"}, s.notificationShow)
-	mcp.AddTool(server, &mcp.Tool{Name: "notification_permission_request", Description: "Request notification permission"}, s.notificationPermissionRequest)
-	mcp.AddTool(server, &mcp.Tool{Name: "notification_permission_check", Description: "Check notification permission status"}, s.notificationPermissionCheck)
+	addTool(s, server, &mcp.Tool{Name: "notification_show", Description: "Show a desktop notification"}, s.notificationShow)
+	addTool(s, server, &mcp.Tool{Name: "notification_permission_request", Description: "Request notification permission"}, s.notificationPermissionRequest)
+	addTool(s, server, &mcp.Tool{Name: "notification_permission_check", Description: "Check notification permission status"}, s.notificationPermissionCheck)
 }

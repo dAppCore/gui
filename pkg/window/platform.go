@@ -12,6 +12,8 @@ type PlatformWindowOptions struct {
 	Name                string
 	Title               string
 	URL                 string
+	HTML                string
+	JS                  string
 	Width, Height       int
 	X, Y                int
 	MinWidth, MinHeight int

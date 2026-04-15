@@ -170,6 +170,8 @@ type WebviewWindowOptions struct {
 	Name                string
 	Title               string
 	URL                 string
+	HTML                string
+	JS                  string
 	Width, Height       int
 	X, Y                int
 	MinWidth, MinHeight int
@@ -187,6 +189,8 @@ type WebviewWindow struct {
 	mu            sync.RWMutex
 	opts          WebviewWindowOptions
 	title         string
+	url           string
+	html          string
 	x, y          int
 	width, height int
 	maximised     bool
@@ -195,13 +199,16 @@ type WebviewWindow struct {
 	alwaysOnTop   bool
 	fullscreen    bool
 	closed        bool
+	execJSCalls   []string
 	eventHandlers map[events.WindowEventType][]func(*WindowEvent)
 }
 
 func newWebviewWindow(options WebviewWindowOptions) *WebviewWindow {
-	return &WebviewWindow{
+	window := &WebviewWindow{
 		opts:          options,
 		title:         options.Title,
+		url:           options.URL,
+		html:          options.HTML,
 		x:             options.X,
 		y:             options.Y,
 		width:         options.Width,
@@ -210,6 +217,10 @@ func newWebviewWindow(options WebviewWindowOptions) *WebviewWindow {
 		alwaysOnTop:   options.AlwaysOnTop,
 		eventHandlers: make(map[events.WindowEventType][]func(*WindowEvent)),
 	}
+	if options.JS != "" {
+		window.execJSCalls = append(window.execJSCalls, options.JS)
+	}
+	return window
 }
 
 func (w *WebviewWindow) Name() string { return w.opts.Name }
@@ -449,12 +460,22 @@ func (w *WebviewWindow) Center() {}
 // SetURL navigates the webview to the given URL.
 //
 //	w.SetURL("https://example.com")
-func (w *WebviewWindow) SetURL(url string) Window { return w }
+func (w *WebviewWindow) SetURL(url string) Window {
+	w.mu.Lock()
+	w.url = url
+	w.mu.Unlock()
+	return w
+}
 
 // SetHTML replaces the webview content with the given HTML string.
 //
 //	w.SetHTML("<h1>Hello</h1>")
-func (w *WebviewWindow) SetHTML(html string) Window { return w }
+func (w *WebviewWindow) SetHTML(html string) Window {
+	w.mu.Lock()
+	w.html = html
+	w.mu.Unlock()
+	return w
+}
 
 // SetFrameless toggles the window frame.
 //
@@ -524,7 +545,11 @@ func (w *WebviewWindow) ToggleFrameless() {}
 // ExecJS executes a JavaScript string in the webview.
 //
 //	w.ExecJS("document.title = 'Ready'")
-func (w *WebviewWindow) ExecJS(js string) {}
+func (w *WebviewWindow) ExecJS(js string) {
+	w.mu.Lock()
+	w.execJSCalls = append(w.execJSCalls, js)
+	w.mu.Unlock()
+}
 
 // Reload reloads the current page.
 //

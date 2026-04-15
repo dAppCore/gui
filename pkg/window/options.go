@@ -36,6 +36,16 @@ func WithURL(url string) WindowOption {
 	return func(w *Window) error { w.URL = url; return nil }
 }
 
+// WithHTML sets the initial HTML content.
+func WithHTML(html string) WindowOption {
+	return func(w *Window) error { w.HTML = html; return nil }
+}
+
+// WithJS sets the initial preload JavaScript.
+func WithJS(js string) WindowOption {
+	return func(w *Window) error { w.JS = js; return nil }
+}
+
 // WithSize sets the initial window size.
 // Use: window.WithSize(1280, 800)
 func WithSize(width, height int) WindowOption {

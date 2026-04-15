@@ -45,6 +45,15 @@ const (
 	EventDockBounce          EventType = "dock.bounce"
 	EventNotificationAction  EventType = "notification.action"
 	EventNotificationDismiss EventType = "notification.dismissed"
+	EventChatConversation    EventType = "chat.conversation"
+	EventChatMessage         EventType = "chat.message"
+	EventChatToken           EventType = "chat.token"
+	EventChatThinkingStart   EventType = "chat.thinking.start"
+	EventChatThinkingAppend  EventType = "chat.thinking.append"
+	EventChatThinkingEnd     EventType = "chat.thinking.end"
+	EventChatToolCall        EventType = "chat.tool.call"
+	EventChatToolResult      EventType = "chat.tool.result"
+	EventChatImageQueued     EventType = "chat.image.queued"
 )
 
 // Event represents a display event sent to subscribers.

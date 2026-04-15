@@ -1,0 +1,178 @@
+package chat
+
+import "time"
+
+type ChatMessage struct {
+	ID           string            `json:"id"`
+	Role         string            `json:"role"`
+	Content      string            `json:"content"`
+	CreatedAt    time.Time         `json:"created_at"`
+	Model        string            `json:"model,omitempty"`
+	Attachments  []ImageAttachment `json:"attachments,omitempty"`
+	Thinking     *ThinkingState    `json:"thinking,omitempty"`
+	ToolCalls    []ToolCall        `json:"tool_calls,omitempty"`
+	ToolResults  []ToolResult      `json:"tool_results,omitempty"`
+	ToolCallID   string            `json:"tool_call_id,omitempty"`
+	FinishReason string            `json:"finish_reason,omitempty"`
+}
+
+type ModelEntry struct {
+	Name         string `json:"name"`
+	Architecture string `json:"architecture"`
+	QuantBits    int    `json:"quant_bits"`
+	SizeBytes    int64  `json:"size_bytes"`
+	Loaded       bool   `json:"loaded"`
+	Backend      string `json:"backend"`
+}
+
+type ChatSettings struct {
+	Temperature   float32 `json:"temperature"`
+	TopP          float32 `json:"top_p"`
+	TopK          int     `json:"top_k"`
+	MaxTokens     int     `json:"max_tokens"`
+	ContextWindow int     `json:"context_window"`
+	SystemPrompt  string  `json:"system_prompt"`
+	DefaultModel  string  `json:"default_model"`
+}
+
+type Conversation struct {
+	ID        string        `json:"id"`
+	Title     string        `json:"title"`
+	Model     string        `json:"model"`
+	CreatedAt time.Time     `json:"created_at"`
+	UpdatedAt time.Time     `json:"updated_at"`
+	Messages  []ChatMessage `json:"messages"`
+	Settings  *ChatSettings `json:"settings,omitempty"`
+}
+
+type ConversationSummary struct {
+	ID           string    `json:"id"`
+	Title        string    `json:"title"`
+	Model        string    `json:"model"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+	MessageCount int       `json:"message_count"`
+}
+
+type ThinkingState struct {
+	Active     bool      `json:"active"`
+	Content    string    `json:"content"`
+	StartedAt  time.Time `json:"started_at,omitempty"`
+	EndedAt    time.Time `json:"ended_at,omitempty"`
+	DurationMS int64     `json:"duration_ms,omitempty"`
+}
+
+type ToolCall struct {
+	ID        string         `json:"id"`
+	Name      string         `json:"name"`
+	Arguments map[string]any `json:"arguments"`
+}
+
+type ToolResult struct {
+	ToolCallID string `json:"tool_call_id"`
+	Content    string `json:"content"`
+}
+
+type ImageAttachment struct {
+	Filename string `json:"filename"`
+	MimeType string `json:"mime_type"`
+	Data     string `json:"data"`
+	Width    int    `json:"width"`
+	Height   int    `json:"height"`
+}
+
+func DefaultSettings() ChatSettings {
+	return ChatSettings{
+		Temperature:   1.0,
+		TopP:          0.95,
+		TopK:          64,
+		MaxTokens:     2048,
+		ContextWindow: 8192,
+		SystemPrompt:  "You are a helpful assistant.",
+	}
+}
+
+func (c Conversation) Summary() ConversationSummary {
+	return ConversationSummary{
+		ID:           c.ID,
+		Title:        c.Title,
+		Model:        c.Model,
+		CreatedAt:    c.CreatedAt,
+		UpdatedAt:    c.UpdatedAt,
+		MessageCount: len(c.Messages),
+	}
+}
+
+type ActionConversationCreated struct {
+	Conversation Conversation `json:"conversation"`
+}
+
+type ActionConversationUpdated struct {
+	Conversation Conversation `json:"conversation"`
+}
+
+type ActionConversationDeleted struct {
+	ConversationID string `json:"conversation_id"`
+}
+
+type ActionMessageAdded struct {
+	ConversationID string      `json:"conversation_id"`
+	Message        ChatMessage `json:"message"`
+}
+
+type ActionConversationCleared struct {
+	ConversationID string `json:"conversation_id"`
+}
+
+type ActionStreamStarted struct {
+	ConversationID string `json:"conversation_id"`
+	MessageID      string `json:"message_id"`
+	StreamID       string `json:"stream_id"`
+}
+
+type ActionTokenAppended struct {
+	ConversationID string `json:"conversation_id"`
+	MessageID      string `json:"message_id"`
+	Content        string `json:"content"`
+}
+
+type ActionStreamFinished struct {
+	ConversationID string `json:"conversation_id"`
+	MessageID      string `json:"message_id"`
+	FinishReason   string `json:"finish_reason,omitempty"`
+}
+
+type ActionThinkingStarted struct {
+	ConversationID string    `json:"conversation_id"`
+	MessageID      string    `json:"message_id"`
+	StartedAt      time.Time `json:"started_at"`
+}
+
+type ActionThinkingAppended struct {
+	ConversationID string `json:"conversation_id"`
+	MessageID      string `json:"message_id"`
+	Content        string `json:"content"`
+}
+
+type ActionThinkingEnded struct {
+	ConversationID string `json:"conversation_id"`
+	MessageID      string `json:"message_id"`
+	DurationMS     int64  `json:"duration_ms"`
+}
+
+type ActionToolCallStarted struct {
+	ConversationID string   `json:"conversation_id"`
+	MessageID      string   `json:"message_id"`
+	Call           ToolCall `json:"call"`
+}
+
+type ActionToolResultReady struct {
+	ConversationID string     `json:"conversation_id"`
+	MessageID      string     `json:"message_id"`
+	Result         ToolResult `json:"result"`
+}
+
+type ActionImageQueued struct {
+	ConversationID string          `json:"conversation_id"`
+	Attachment     ImageAttachment `json:"attachment"`
+}

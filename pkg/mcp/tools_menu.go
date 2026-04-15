@@ -211,6 +211,6 @@ func decodeMenuRole(role string) (*menu.MenuRole, error) {
 }
 
 func (s *Subsystem) registerMenuTools(server *mcp.Server) {
-	mcp.AddTool(server, &mcp.Tool{Name: "menu_get", Description: "Get the current application menu structure"}, s.menuGet)
-	mcp.AddTool(server, &mcp.Tool{Name: "menu_set", Description: "Set the application menu structure"}, s.menuSet)
+	addTool(s, server, &mcp.Tool{Name: "menu_get", Description: "Get the current application menu structure"}, s.menuGet)
+	addTool(s, server, &mcp.Tool{Name: "menu_set", Description: "Set the application menu structure"}, s.menuSet)
 }

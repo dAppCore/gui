@@ -280,12 +280,12 @@ func (s *Subsystem) dialogError(_ context.Context, _ *mcp.CallToolRequest, input
 // --- Registration ---
 
 func (s *Subsystem) registerDialogTools(server *mcp.Server) {
-	mcp.AddTool(server, &mcp.Tool{Name: "dialog_open_file", Description: "Show an open file dialog"}, s.dialogOpenFile)
-	mcp.AddTool(server, &mcp.Tool{Name: "dialog_save_file", Description: "Show a save file dialog"}, s.dialogSaveFile)
-	mcp.AddTool(server, &mcp.Tool{Name: "dialog_open_directory", Description: "Show a directory picker dialog"}, s.dialogOpenDirectory)
-	mcp.AddTool(server, &mcp.Tool{Name: "dialog_confirm", Description: "Show a question/confirmation dialog"}, s.dialogConfirm)
-	mcp.AddTool(server, &mcp.Tool{Name: "dialog_prompt", Description: "Show an info prompt dialog with OK/Cancel"}, s.dialogPrompt)
-	mcp.AddTool(server, &mcp.Tool{Name: "dialog_info", Description: "Show an information message dialog"}, s.dialogInfo)
-	mcp.AddTool(server, &mcp.Tool{Name: "dialog_warning", Description: "Show a warning message dialog"}, s.dialogWarning)
-	mcp.AddTool(server, &mcp.Tool{Name: "dialog_error", Description: "Show an error message dialog"}, s.dialogError)
+	addTool(s, server, &mcp.Tool{Name: "dialog_open_file", Description: "Show an open file dialog"}, s.dialogOpenFile)
+	addTool(s, server, &mcp.Tool{Name: "dialog_save_file", Description: "Show a save file dialog"}, s.dialogSaveFile)
+	addTool(s, server, &mcp.Tool{Name: "dialog_open_directory", Description: "Show a directory picker dialog"}, s.dialogOpenDirectory)
+	addTool(s, server, &mcp.Tool{Name: "dialog_confirm", Description: "Show a question/confirmation dialog"}, s.dialogConfirm)
+	addTool(s, server, &mcp.Tool{Name: "dialog_prompt", Description: "Show an info prompt dialog with OK/Cancel"}, s.dialogPrompt)
+	addTool(s, server, &mcp.Tool{Name: "dialog_info", Description: "Show an information message dialog"}, s.dialogInfo)
+	addTool(s, server, &mcp.Tool{Name: "dialog_warning", Description: "Show a warning message dialog"}, s.dialogWarning)
+	addTool(s, server, &mcp.Tool{Name: "dialog_error", Description: "Show an error message dialog"}, s.dialogError)
 }

@@ -70,7 +70,7 @@ func (s *Subsystem) dockBadge(_ context.Context, _ *mcp.CallToolRequest, input D
 // --- Registration ---
 
 func (s *Subsystem) registerDockTools(server *mcp.Server) {
-	mcp.AddTool(server, &mcp.Tool{Name: "dock_show", Description: "Show the dock/taskbar icon"}, s.dockShow)
-	mcp.AddTool(server, &mcp.Tool{Name: "dock_hide", Description: "Hide the dock/taskbar icon"}, s.dockHide)
-	mcp.AddTool(server, &mcp.Tool{Name: "dock_badge", Description: "Set the dock/taskbar badge label"}, s.dockBadge)
+	addTool(s, server, &mcp.Tool{Name: "dock_show", Description: "Show the dock/taskbar icon"}, s.dockShow)
+	addTool(s, server, &mcp.Tool{Name: "dock_hide", Description: "Hide the dock/taskbar icon"}, s.dockHide)
+	addTool(s, server, &mcp.Tool{Name: "dock_badge", Description: "Set the dock/taskbar badge label"}, s.dockBadge)
 }

@@ -4,10 +4,11 @@ import (
 	"context"
 	"runtime"
 
-	"forge.lthn.ai/core/config"
 	core "dappco.re/go/core"
 	coreerr "dappco.re/go/core/log"
+	"forge.lthn.ai/core/config"
 
+	"forge.lthn.ai/core/gui/pkg/chat"
 	"forge.lthn.ai/core/gui/pkg/contextmenu"
 	"forge.lthn.ai/core/gui/pkg/dialog"
 	"forge.lthn.ai/core/gui/pkg/dock"
@@ -33,11 +34,12 @@ type WindowInfo = window.WindowInfo
 // Bridges IPC actions to WebSocket events for TypeScript apps.
 type Service struct {
 	*core.ServiceRuntime[Options]
-	wailsApp   *application.App
-	app        App
-	configData map[string]map[string]any
-	configFile *config.Config // config instance for file persistence
-	events     *WSEventManager
+	wailsApp       *application.App
+	app            App
+	configData     map[string]map[string]any
+	configFile     *config.Config // config instance for file persistence
+	events         *WSEventManager
+	schemeHandlers map[string]SchemeHandler
 }
 
 // New returns a display Service with empty config sections.
@@ -49,6 +51,7 @@ func New() (*Service, error) {
 			"systray": {},
 			"menu":    {},
 		},
+		schemeHandlers: make(map[string]SchemeHandler),
 	}, nil
 }
 
@@ -94,6 +97,14 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		s.persistSection("menu", t.Config)
 		return core.Result{OK: true}
 	})
+	s.Core().Action("display.buildPreload", func(_ context.Context, opts core.Options) core.Result {
+		script, err := s.BuildPreloadScript(opts.String("url"))
+		return core.Result{}.New(script, err)
+	})
+	s.Core().Action("display.resolveScheme", func(ctx context.Context, opts core.Options) core.Result {
+		return s.ResolveScheme(ctx, opts.String("url"))
+	})
+	s.registerDefaultSchemes()
 
 	// Initialise Wails wrappers if app is available (nil in tests)
 	if s.wailsApp != nil {
@@ -265,6 +276,113 @@ func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) core.Result {
 			s.events.Emit(Event{Type: EventNotificationDismiss,
 				Data: map[string]any{"id": m.ID}})
 		}
+	case chat.ActionConversationCreated:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventChatConversation,
+				Data: map[string]any{"action": "created", "conversation": m.Conversation}})
+		}
+	case chat.ActionConversationUpdated:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventChatConversation,
+				Data: map[string]any{"action": "updated", "conversation": m.Conversation}})
+		}
+	case chat.ActionConversationDeleted:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventChatConversation,
+				Data: map[string]any{"action": "deleted", "conversationId": m.ConversationID}})
+		}
+	case chat.ActionConversationCleared:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventChatConversation,
+				Data: map[string]any{"action": "cleared", "conversationId": m.ConversationID}})
+		}
+	case chat.ActionMessageAdded:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventChatMessage,
+				Data: map[string]any{"conversationId": m.ConversationID, "message": m.Message}})
+		}
+	case chat.ActionStreamStarted:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventChatMessage,
+				Data: map[string]any{
+					"conversationId": m.ConversationID,
+					"messageId":      m.MessageID,
+					"streamId":       m.StreamID,
+					"state":          "started",
+				}})
+		}
+	case chat.ActionTokenAppended:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventChatToken,
+				Data: map[string]any{
+					"conversationId": m.ConversationID,
+					"messageId":      m.MessageID,
+					"content":        m.Content,
+				}})
+		}
+	case chat.ActionStreamFinished:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventChatMessage,
+				Data: map[string]any{
+					"conversationId": m.ConversationID,
+					"messageId":      m.MessageID,
+					"state":          "finished",
+					"finishReason":   m.FinishReason,
+				}})
+		}
+	case chat.ActionThinkingStarted:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventChatThinkingStart,
+				Data: map[string]any{
+					"conversationId": m.ConversationID,
+					"messageId":      m.MessageID,
+					"startedAt":      m.StartedAt,
+				}})
+		}
+	case chat.ActionThinkingAppended:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventChatThinkingAppend,
+				Data: map[string]any{
+					"conversationId": m.ConversationID,
+					"messageId":      m.MessageID,
+					"content":        m.Content,
+				}})
+		}
+	case chat.ActionThinkingEnded:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventChatThinkingEnd,
+				Data: map[string]any{
+					"conversationId": m.ConversationID,
+					"messageId":      m.MessageID,
+					"durationMs":     m.DurationMS,
+				}})
+		}
+	case chat.ActionToolCallStarted:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventChatToolCall,
+				Data: map[string]any{
+					"conversationId": m.ConversationID,
+					"messageId":      m.MessageID,
+					"call":           m.Call,
+				}})
+		}
+	case chat.ActionToolResultReady:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventChatToolResult,
+				Data: map[string]any{
+					"conversationId": m.ConversationID,
+					"messageId":      m.MessageID,
+					"result":         m.Result,
+				}})
+		}
+	case chat.ActionImageQueued:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventChatImageQueued,
+				Data: map[string]any{
+					"conversationId": m.ConversationID,
+					"attachment":     m.Attachment,
+				}})
+		}
 	}
 	return core.Result{OK: true}
 }
@@ -284,12 +402,52 @@ func wsRequire(data map[string]any, key string) (string, error) {
 	return v, nil
 }
 
+func wsOptions(data map[string]any) core.Options {
+	items := make([]core.Option, 0, len(data))
+	for key, value := range data {
+		items = append(items, core.Option{Key: key, Value: value})
+	}
+	return core.NewOptions(items...)
+}
+
 // handleWSMessage bridges WebSocket commands to IPC calls.
 func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 	ctx := context.Background()
 	c := s.Core()
 
 	switch msg.Action {
+	case "chat:send":
+		return c.Action("gui.chat.send").Run(ctx, wsOptions(msg.Data))
+	case "chat:clear":
+		return c.Action("gui.chat.clear").Run(ctx, wsOptions(msg.Data))
+	case "chat:history":
+		return c.Action("gui.chat.history").Run(ctx, wsOptions(msg.Data))
+	case "chat:models":
+		return c.Action("gui.chat.models").Run(ctx, wsOptions(msg.Data))
+	case "chat:select-model":
+		return c.Action("gui.chat.selectModel").Run(ctx, wsOptions(msg.Data))
+	case "chat:settings:save":
+		return c.Action("gui.chat.settings.save").Run(ctx, wsOptions(msg.Data))
+	case "chat:settings:load":
+		return c.Action("gui.chat.settings.load").Run(ctx, wsOptions(msg.Data))
+	case "chat:settings:reset":
+		return c.Action("gui.chat.settings.reset").Run(ctx, wsOptions(msg.Data))
+	case "chat:conversations:list":
+		return c.Action("gui.chat.conversations.list").Run(ctx, wsOptions(msg.Data))
+	case "chat:conversations:get":
+		return c.Action("gui.chat.conversations.get").Run(ctx, wsOptions(msg.Data))
+	case "chat:conversations:delete":
+		return c.Action("gui.chat.conversations.delete").Run(ctx, wsOptions(msg.Data))
+	case "chat:conversations:search":
+		return c.Action("gui.chat.conversations.search").Run(ctx, wsOptions(msg.Data))
+	case "chat:conversations:new":
+		return c.Action("gui.chat.conversations.new").Run(ctx, wsOptions(msg.Data))
+	case "chat:conversations:rename":
+		return c.Action("gui.chat.conversations.rename").Run(ctx, wsOptions(msg.Data))
+	case "chat:conversations:export":
+		return c.Action("gui.chat.conversations.export").Run(ctx, wsOptions(msg.Data))
+	case "chat:attach-image":
+		return c.Action("gui.chat.attachImage").Run(ctx, wsOptions(msg.Data))
 	case "keybinding:add":
 		accelerator, _ := msg.Data["accelerator"].(string)
 		description, _ := msg.Data["description"].(string)

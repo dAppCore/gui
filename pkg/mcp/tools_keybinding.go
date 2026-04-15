@@ -57,6 +57,6 @@ func (s *Subsystem) keybindingRemove(_ context.Context, _ *mcp.CallToolRequest, 
 // --- Registration ---
 
 func (s *Subsystem) registerKeybindingTools(server *mcp.Server) {
-	mcp.AddTool(server, &mcp.Tool{Name: "keybinding_add", Description: "Register a keyboard shortcut"}, s.keybindingAdd)
-	mcp.AddTool(server, &mcp.Tool{Name: "keybinding_remove", Description: "Unregister a keyboard shortcut"}, s.keybindingRemove)
+	addTool(s, server, &mcp.Tool{Name: "keybinding_add", Description: "Register a keyboard shortcut"}, s.keybindingAdd)
+	addTool(s, server, &mcp.Tool{Name: "keybinding_remove", Description: "Unregister a keyboard shortcut"}, s.keybindingRemove)
 }
