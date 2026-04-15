@@ -38,6 +38,8 @@ func TestSubsystem_Good_RegisterTools(t *testing.T) {
 	assert.Contains(t, sub.ManifestText(), "dialog_message")
 	assert.Contains(t, sub.ManifestText(), "event_info")
 	assert.Contains(t, sub.ManifestText(), "screen_work_area")
+	assert.Contains(t, sub.ManifestText(), "dock_info")
+	assert.Contains(t, sub.ManifestText(), "dock_bounce")
 }
 
 // Integration test: verify the IPC round-trip that MCP tool handlers use.
