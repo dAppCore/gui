@@ -68,7 +68,9 @@ type renameInput struct {
 }
 
 type selectModelInput struct {
-	Model string `json:"model"`
+	Model          string `json:"model"`
+	ConversationID string `json:"conversation_id,omitempty"`
+	ID             string `json:"id,omitempty"`
 }
 
 type attachImageInput struct {
@@ -169,12 +171,36 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		s.toolExecutor = subsystem
 	}
 	s.toolHandler = NewToolCallHandler(s.toolExecutor)
+	s.Core().RegisterQuery(s.handleQuery)
 	s.registerActions()
 	return core.Result{OK: true}
 }
 
 func (s *Service) HandleIPCEvents(_ *core.Core, _ core.Message) core.Result {
 	return core.Result{OK: true}
+}
+
+func (s *Service) handleQuery(_ *core.Core, q core.Query) core.Result {
+	switch typed := q.(type) {
+	case QueryHistory:
+		conv, err := s.getConversation(typed.ID, typed.ConversationID)
+		return core.Result{}.New(conv, err)
+	case QueryModels:
+		return core.Result{Value: s.discoverModels(), OK: true}
+	case QuerySettings:
+		return core.Result{Value: s.loadSettings(), OK: true}
+	case QueryConversationList:
+		conversations, err := s.listConversationSummaries()
+		return core.Result{}.New(conversations, err)
+	case QueryConversationGet:
+		conv, err := s.getConversation(typed.ID, typed.ConversationID)
+		return core.Result{}.New(conv, err)
+	case QueryConversationSearch:
+		results, err := s.searchConversationSummaries(typed.Query)
+		return core.Result{}.New(results, err)
+	default:
+		return core.Result{}
+	}
 }
 
 func (s *Service) registerActions() {
@@ -211,9 +237,7 @@ func (s *Service) registerActions() {
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
-		settings := s.loadSettings()
-		settings.DefaultModel = input.Model
-		err = s.saveSettings(settings)
+		settings, err := s.selectModel(input)
 		return core.Result{}.New(settings, err)
 	})
 	c.Action("gui.chat.settings.save", func(_ context.Context, opts core.Options) core.Result {
@@ -347,6 +371,31 @@ func (s *Service) loadSettings() ChatSettings {
 	}
 	_ = core.JSONUnmarshalString(payload, &settings)
 	return settings
+}
+
+func (s *Service) selectModel(input selectModelInput) (ChatSettings, error) {
+	settings := s.loadSettings()
+	settings.DefaultModel = input.Model
+	if err := s.saveSettings(settings); err != nil {
+		return ChatSettings{}, err
+	}
+
+	targetConversation := coalesce(input.ConversationID, input.ID)
+	if targetConversation == "" {
+		return settings, nil
+	}
+
+	conv, err := s.loadConversation(targetConversation)
+	if err != nil {
+		return ChatSettings{}, err
+	}
+	conv.Model = input.Model
+	conv, err = s.saveConversation(conv)
+	if err != nil {
+		return ChatSettings{}, err
+	}
+	s.emit(ActionConversationUpdated{Conversation: conv})
+	return settings, nil
 }
 
 func (s *Service) saveConversation(conv Conversation) (Conversation, error) {

@@ -22,12 +22,15 @@ import { ChatStateService } from './chat-state.service';
   template: `
     <div class="workspace">
       <chat-conversation-sidebar
-        [conversations]="state.filteredConversations()"
+        [conversations]="state.conversations()"
         [activeId]="state.activeConversation()?.id || ''"
         [query]="state.historyQuery()"
-        (queryChange)="state.historyQuery.set($event)"
+        (queryChange)="state.setHistoryQuery($event)"
         (create)="state.startConversation()"
         (select)="state.refreshConversation($event)"
+        (rename)="state.renameConversation($event.id, $event.title)"
+        (delete)="state.deleteConversation($event)"
+        (export)="state.exportConversation($event)"
       />
 
       <main class="chat-shell">
@@ -40,7 +43,7 @@ import { ChatStateService } from './chat-state.service';
             <chat-model-selector
               [models]="state.models()"
               [value]="state.selectedModel()"
-              (valueChange)="state.selectedModel.set($event)"
+              (valueChange)="state.changeModel($event)"
             />
             <button type="button" class="settings" (click)="state.settingsOpen.set(!state.settingsOpen())">Settings</button>
           </div>
@@ -51,6 +54,7 @@ import { ChatStateService } from './chat-state.service';
           [models]="state.models()"
           [settings]="state.settings()"
           (saved)="state.saveSettings($event)"
+          (reset)="state.resetSettings()"
           (closed)="state.settingsOpen.set(false)"
         />
 
@@ -61,7 +65,10 @@ import { ChatStateService } from './chat-state.service';
         <chat-input-area
           [value]="state.draft()"
           [disabled]="state.sending()"
+          [attachments]="state.queuedAttachments()"
           (valueChange)="state.draft.set($event)"
+          (attachFiles)="state.queueImageFiles($event)"
+          (removeAttachment)="state.removeQueuedAttachment($event)"
           (submit)="state.sendMessage()"
         />
       </main>

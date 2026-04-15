@@ -2,6 +2,26 @@ package chat
 
 import "time"
 
+type QueryHistory struct {
+	ConversationID string `json:"conversation_id,omitempty"`
+	ID             string `json:"id,omitempty"`
+}
+
+type QueryModels struct{}
+
+type QuerySettings struct{}
+
+type QueryConversationList struct{}
+
+type QueryConversationGet struct {
+	ConversationID string `json:"conversation_id,omitempty"`
+	ID             string `json:"id,omitempty"`
+}
+
+type QueryConversationSearch struct {
+	Query string `json:"q"`
+}
+
 type ChatMessage struct {
 	ID           string            `json:"id"`
 	Role         string            `json:"role"`

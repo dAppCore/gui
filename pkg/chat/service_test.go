@@ -81,6 +81,10 @@ func TestService_Good_SendAndHistory(t *testing.T) {
 	))
 	require.True(t, history.OK)
 	assert.Equal(t, conv.ID, history.Value.(Conversation).ID)
+
+	queryHistory := c.QUERY(QueryHistory{ConversationID: conv.ID})
+	require.True(t, queryHistory.OK)
+	assert.Equal(t, conv.ID, queryHistory.Value.(Conversation).ID)
 }
 
 func TestService_Good_ToolCallRoundTrip(t *testing.T) {
@@ -112,4 +116,27 @@ func TestService_Good_ToolCallRoundTrip(t *testing.T) {
 	assert.Equal(t, 2.0, toolExecutor.calls[0].Arguments["window_count"])
 	assert.Equal(t, "tool", conv.Messages[2].Role)
 	assert.True(t, strings.Contains(conv.Messages[len(conv.Messages)-1].Content, "left-right"))
+}
+
+func TestService_Good_SelectModelUpdatesConversation(t *testing.T) {
+	c := newChatCore(t, func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		_, _ = io.WriteString(w, "data: {\"id\":\"chatcmpl-1\",\"choices\":[{\"delta\":{\"content\":\"Hello\"}}]}\n\n")
+		_, _ = io.WriteString(w, "data: {\"id\":\"chatcmpl-1\",\"choices\":[{\"finish_reason\":\"stop\"}]}\n\n")
+		_, _ = io.WriteString(w, "data: [DONE]\n\n")
+	}, &mockToolExecutor{})
+
+	created := c.Action("gui.chat.conversations.new").Run(context.Background(), core.NewOptions())
+	require.True(t, created.OK)
+	conv := created.Value.(Conversation)
+
+	selected := c.Action("gui.chat.selectModel").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "model", Value: "lemma"},
+		core.Option{Key: "conversation_id", Value: conv.ID},
+	))
+	require.True(t, selected.OK)
+
+	updated := c.QUERY(QueryConversationGet{ConversationID: conv.ID})
+	require.True(t, updated.OK)
+	assert.Equal(t, "lemma", updated.Value.(Conversation).Model)
 }

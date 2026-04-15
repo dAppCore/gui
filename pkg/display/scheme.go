@@ -163,13 +163,11 @@ func (s *Service) resolveModelsRoute(subpath string, query url.Values) core.Resu
 	}
 }
 
-func (s *Service) resolveChatRoute(ctx context.Context, subpath string, query url.Values) core.Result {
+func (s *Service) resolveChatRoute(_ context.Context, subpath string, query url.Values) core.Result {
 	if id := coalesce(query.Get("conversation_id"), query.Get("id"), subpath); id != "" {
-		return s.Core().Action("gui.chat.history").Run(ctx, core.NewOptions(
-			core.Option{Key: "conversation_id", Value: id},
-		))
+		return s.Core().QUERY(chat.QueryHistory{ConversationID: id})
 	}
-	return s.Core().Action("gui.chat.conversations.list").Run(ctx, core.NewOptions())
+	return s.Core().QUERY(chat.QueryConversationList{})
 }
 
 func (s *Service) resolveUnavailableCoreRoute(route, subpath string, query url.Values) core.Result {
@@ -400,7 +398,7 @@ func (s *Service) renderStoreSearchPage(query string, results []StorageEntry) st
 
 func (s *Service) searchAllStorage(query string) []StorageEntry {
 	results := s.storage.Search(query)
-	if conversations := s.Core().Action("gui.chat.conversations.search").Run(context.Background(), core.NewOptions(core.Option{Key: "q", Value: query})); conversations.OK {
+	if conversations := s.Core().QUERY(chat.QueryConversationSearch{Query: query}); conversations.OK {
 		switch list := conversations.Value.(type) {
 		case []any:
 			for _, item := range list {

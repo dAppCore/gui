@@ -1,3 +1,30 @@
+export interface ThinkingState {
+  active: boolean;
+  content: string;
+  started_at?: string;
+  ended_at?: string;
+  duration_ms?: number;
+}
+
+export interface ToolCall {
+  id: string;
+  name: string;
+  arguments: Record<string, unknown>;
+}
+
+export interface ToolResult {
+  tool_call_id: string;
+  content: string;
+}
+
+export interface ImageAttachment {
+  filename: string;
+  mime_type: string;
+  data: string;
+  width: number;
+  height: number;
+}
+
 export interface ChatMessage {
   id: string;
   role: string;
@@ -5,14 +32,10 @@ export interface ChatMessage {
   created_at: string;
   model?: string;
   finish_reason?: string;
-  thinking?: {
-    active: boolean;
-    content: string;
-    duration_ms?: number;
-  };
-  tool_calls?: Array<{ id: string; name: string; arguments: Record<string, unknown> }>;
-  tool_results?: Array<{ tool_call_id: string; content: string }>;
-  attachments?: Array<{ filename: string; mime_type: string; data: string; width: number; height: number }>;
+  thinking?: ThinkingState;
+  tool_calls?: ToolCall[];
+  tool_results?: ToolResult[];
+  attachments?: ImageAttachment[];
 }
 
 export interface ConversationSummary {
@@ -26,6 +49,7 @@ export interface ConversationSummary {
 
 export interface Conversation extends ConversationSummary {
   messages: ChatMessage[];
+  settings?: ChatSettings | null;
 }
 
 export interface ModelEntry {
