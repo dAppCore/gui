@@ -57,6 +57,7 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 	s.Core().Action("clipboard.setText", setText)
 	s.Core().Action("gui.clipboard.write", setText)
 	s.Core().Action("clipboard.setImage", setImage)
+	s.Core().Action("gui.clipboard.writeImage", setImage)
 	s.Core().Action("clipboard.clear", clear)
 	s.Core().Action("gui.clipboard.clear", clear)
 	s.Core().Action("gui.clipboard.read", read)

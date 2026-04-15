@@ -48,6 +48,14 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		}
 		return core.Result{Value: ThemeInfo{IsDark: isDark, Theme: themeName(isDark)}, OK: true}
 	})
+	s.Core().Action("gui.theme.set", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskSetTheme)
+		isDark, err := s.setThemeOverride(t.Theme)
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		return core.Result{Value: ThemeInfo{IsDark: isDark, Theme: themeName(isDark)}, OK: true}
+	})
 
 	// Register theme change callback — broadcasts ActionThemeChanged via IPC
 	s.cancelTheme = s.platform.OnThemeChange(func(isDark bool) {

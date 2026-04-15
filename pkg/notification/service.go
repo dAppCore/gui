@@ -46,7 +46,14 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		granted, err := s.platform.RequestPermission()
 		return core.Result{}.New(granted, err)
 	})
+	s.Core().Action("gui.notification.requestPermission", func(_ context.Context, _ core.Options) core.Result {
+		granted, err := s.platform.RequestPermission()
+		return core.Result{}.New(granted, err)
+	})
 	s.Core().Action("notification.revokePermission", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: nil, OK: true}.New(s.platform.RevokePermission())
+	})
+	s.Core().Action("gui.notification.revokePermission", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: nil, OK: true}.New(s.platform.RevokePermission())
 	})
 	s.Core().Action("notification.registerCategory", func(_ context.Context, opts core.Options) core.Result {
@@ -54,7 +61,16 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		s.categories[t.Category.ID] = t.Category
 		return core.Result{OK: true}
 	})
+	s.Core().Action("gui.notification.registerCategory", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskRegisterCategory)
+		s.categories[t.Category.ID] = t.Category
+		return core.Result{OK: true}
+	})
 	s.Core().Action("notification.clear", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskClear)
+		return core.Result{Value: nil, OK: true}.New(s.clear(t.ID))
+	})
+	s.Core().Action("gui.notification.clear", func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskClear)
 		return core.Result{Value: nil, OK: true}.New(s.clear(t.ID))
 	})
