@@ -129,6 +129,18 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		}
 		return core.Result{Value: map[string]string{"origin": origin, "bucket": bucket, "key": key}, OK: true}
 	})
+	s.Core().Action("display.storage.delete", func(_ context.Context, opts core.Options) core.Result {
+		origin := opts.String("origin")
+		bucket := opts.String("bucket")
+		key := opts.String("key")
+		if s.storage == nil {
+			return core.Result{Value: coreerr.E("display.storage.delete", "storage registry unavailable", nil), OK: false}
+		}
+		if !s.storage.Delete(origin, bucket, key) {
+			return core.Result{Value: coreerr.E("display.storage.delete", "invalid storage entry", nil), OK: false}
+		}
+		return core.Result{Value: map[string]string{"origin": origin, "bucket": bucket, "key": key}, OK: true}
+	})
 	s.Core().Action("display.storage.search", func(_ context.Context, opts core.Options) core.Result {
 		return core.Result{Value: s.searchAllStorage(opts.String("q")), OK: true}
 	})

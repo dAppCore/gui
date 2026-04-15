@@ -83,15 +83,23 @@ func manifestBaseDir(manifestPath string) string {
 }
 
 func safeManifestPreloadPath(baseDir, preloadPath string) (string, error) {
-	trimmed := strings.TrimSpace(preloadPath)
+	return safeManifestRelativePath(baseDir, preloadPath, "preload path")
+}
+
+func safeManifestRelativePath(baseDir, relativePath, label string) (string, error) {
+	trimmed := strings.TrimSpace(relativePath)
 	if trimmed == "" {
-		return "", errors.New("preload path is empty")
+		return "", errors.New(label + " is empty")
 	}
 	if filepath.IsAbs(trimmed) {
-		return "", errors.New("preload path must be relative")
+		return "", errors.New(label + " must be relative")
 	}
 
 	baseAbs, err := filepath.Abs(baseDir)
+	if err != nil {
+		return "", err
+	}
+	baseResolved, err := filepath.EvalSymlinks(baseAbs)
 	if err != nil {
 		return "", err
 	}
@@ -104,9 +112,23 @@ func safeManifestPreloadPath(baseDir, preloadPath string) (string, error) {
 		return "", err
 	}
 	if rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
-		return "", errors.New("preload path escapes manifest directory")
+		return "", errors.New(label + " escapes manifest directory")
 	}
-	return candidateAbs, nil
+	if _, statErr := os.Stat(candidateAbs); statErr != nil {
+		return candidateAbs, nil
+	}
+	candidateResolved, err := filepath.EvalSymlinks(candidateAbs)
+	if err != nil {
+		return "", err
+	}
+	rel, err = filepath.Rel(baseResolved, candidateResolved)
+	if err != nil {
+		return "", err
+	}
+	if rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return "", errors.New(label + " escapes manifest directory")
+	}
+	return candidateResolved, nil
 }
 
 func discoverManifestPath(pageURL string) (string, error) {

@@ -9,16 +9,23 @@ import (
 
 var hlcrfSlotPattern = regexp.MustCompile(`\{\{\s*slot\s+"([^"]+)"\s*\}\}`)
 
-func (s *Service) buildHLCRFComponents(pageURL string) string {
+func (s *Service) buildHLCRFComponents(pageURL string) (string, error) {
 	loaded, err := s.loadManifestForOrigin(pageURL)
 	if err != nil || loaded == nil {
-		return ""
+		if err != nil && strings.Contains(err.Error(), "view manifest not found") {
+			return "", nil
+		}
+		return "", err
 	}
 	var scripts []string
 	for _, component := range loaded.Manifest.HLCRF {
 		templateBody := strings.TrimSpace(component.Template)
 		if templateBody == "" && strings.TrimSpace(component.Name) != "" {
-			body, readErr := os.ReadFile(filepath.Join(loaded.BaseDir, component.Name))
+			resolvedPath, pathErr := safeManifestRelativePath(loaded.BaseDir, component.Name, "hlcrf component path")
+			if pathErr != nil {
+				return "", pathErr
+			}
+			body, readErr := os.ReadFile(resolvedPath)
 			if readErr == nil {
 				templateBody = string(body)
 			}
@@ -32,7 +39,7 @@ func (s *Service) buildHLCRFComponents(pageURL string) string {
 		}
 		scripts = append(scripts, renderHLCRFComponent(tag, templateBody))
 	}
-	return strings.Join(scripts, "\n")
+	return strings.Join(scripts, "\n"), nil
 }
 
 func renderHLCRFComponent(tag, templateBody string) string {

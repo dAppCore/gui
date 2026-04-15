@@ -63,6 +63,19 @@ func TestManifest_SafeManifestPreloadPath_Ugly(t *testing.T) {
 	assert.Contains(t, err.Error(), "escapes")
 }
 
+func TestManifest_SafeManifestPreloadPath_RejectsSymlinkEscape(t *testing.T) {
+	root := t.TempDir()
+	outside := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(outside, "preload.js"), []byte("globalThis.__outside = true;"), 0o644))
+	require.NoError(t, os.MkdirAll(filepath.Join(root, "assets"), 0o755))
+	require.NoError(t, os.Symlink(outside, filepath.Join(root, "assets", "linked")))
+
+	_, err := safeManifestPreloadPath(filepath.Join(root, "assets"), filepath.Join("linked", "preload.js"))
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "escapes")
+}
+
 func TestManifest_DiscoverManifestPath_Good(t *testing.T) {
 	root := t.TempDir()
 	require.NoError(t, os.MkdirAll(filepath.Join(root, ".core"), 0o755))

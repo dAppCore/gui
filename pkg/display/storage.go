@@ -15,11 +15,13 @@ import (
 )
 
 const (
-	maxStorageOriginBytes   = 512
-	maxStorageBucketBytes   = 128
-	maxStorageKeyBytes      = 1024
-	maxStorageValueBytes    = 1 << 20
-	maxStorageSearchResults = 200
+	maxStorageOriginBytes      = 512
+	maxStorageBucketBytes      = 128
+	maxStorageKeyBytes         = 1024
+	maxStorageValueBytes       = 1 << 20
+	maxStorageEntriesPerOrigin = 1024
+	maxStorageBytesPerOrigin   = 16 << 20
+	maxStorageSearchResults    = 200
 )
 
 type StorageEntry struct {
@@ -169,6 +171,15 @@ func (r *StorageRegistry) Set(origin, bucket, key, value string) bool {
 	key = strings.TrimSpace(key)
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	composite := makeStorageEntryKey(origin, bucket, key)
+	if !r.withinOriginQuotaLocked(origin, composite, StorageEntry{
+		Origin: origin,
+		Bucket: bucket,
+		Key:    key,
+		Value:  value,
+	}) {
+		return false
+	}
 	entry := StorageEntry{
 		Origin:    origin,
 		Bucket:    bucket,
@@ -176,10 +187,30 @@ func (r *StorageRegistry) Set(origin, bucket, key, value string) bool {
 		Value:     value,
 		UpdatedAt: time.Now(),
 	}
-	composite := makeStorageEntryKey(origin, bucket, key)
 	r.entries[composite] = entry
 	if r.store != nil {
 		if err := r.store.Set("storage", storageCompositeKey(origin, bucket, key), core.JSONMarshalString(entry)); err != nil {
+			return false
+		}
+	}
+	return true
+}
+
+func (r *StorageRegistry) Delete(origin, bucket, key string) bool {
+	if !validStorageField(origin, maxStorageOriginBytes) ||
+		!validStorageField(bucket, maxStorageBucketBytes) ||
+		!validStorageField(key, maxStorageKeyBytes) {
+		return false
+	}
+	origin = strings.TrimSpace(origin)
+	bucket = strings.TrimSpace(bucket)
+	key = strings.TrimSpace(key)
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	composite := makeStorageEntryKey(origin, bucket, key)
+	delete(r.entries, composite)
+	if r.store != nil {
+		if err := r.store.Delete("storage", storageCompositeKey(origin, bucket, key)); err != nil {
 			return false
 		}
 	}
@@ -260,6 +291,34 @@ func (r *StorageRegistry) Snapshot(pageURL string) map[string]map[string]string 
 		bucket[entry.Key] = entry.Value
 	}
 	return snapshot
+}
+
+func (r *StorageRegistry) withinOriginQuotaLocked(origin, ignoreComposite string, candidate StorageEntry) bool {
+	entries := 0
+	bytes := 0
+	for composite, entry := range r.entries {
+		if !strings.EqualFold(entry.Origin, origin) {
+			continue
+		}
+		if composite == ignoreComposite {
+			continue
+		}
+		entries++
+		bytes += storageEntrySizeBytes(entry)
+	}
+	entries++
+	bytes += storageEntrySizeBytes(candidate)
+	if entries > maxStorageEntriesPerOrigin {
+		return false
+	}
+	if bytes > maxStorageBytesPerOrigin {
+		return false
+	}
+	return true
+}
+
+func storageEntrySizeBytes(entry StorageEntry) int {
+	return len(entry.Origin) + len(entry.Bucket) + len(entry.Key) + len(entry.Value)
 }
 
 func (r *StorageRegistry) Close() error {

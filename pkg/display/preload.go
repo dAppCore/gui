@@ -41,7 +41,11 @@ func (s *Service) BuildPreloadScript(pageURL string) (string, error) {
 	parts := []string{
 		s.injectStoragePolyfills(pageURL, storageBootstrap, trustedOrigin),
 		s.injectCoreMLShim(trustedOrigin),
-		s.buildHLCRFComponents(pageURL),
+	}
+	if hlcrfComponents, err := s.buildHLCRFComponents(pageURL); err != nil {
+		return "", err
+	} else if strings.TrimSpace(hlcrfComponents) != "" {
+		parts = append(parts, hlcrfComponents)
 	}
 	if trustedOrigin {
 		parts = append(parts,
@@ -251,11 +255,17 @@ func (s *Service) injectStoragePolyfills(pageOrigin string, bootstrap map[string
     }
     __coreBridge.invoke('display.storage.set', { origin: __coreOrigin, bucket, key, value }).catch(() => undefined);
   };
+  const persistDelete = (bucket, key) => {
+    if (!__coreCanInvoke) {
+      return;
+    }
+    __coreBridge.invoke('display.storage.delete', { origin: __coreOrigin, bucket, key }).catch(() => undefined);
+  };
   const createStorage = (bucketName, bucket) => ({
     getItem(key) { return Object.prototype.hasOwnProperty.call(bucket, key) ? String(bucket[key]) : null; },
     setItem(key, value) { bucket[key] = String(value); persist(bucketName, key, bucket[key]); },
-    removeItem(key) { delete bucket[key]; persist(bucketName, key, ''); },
-    clear() { Object.keys(bucket).forEach((key) => { delete bucket[key]; persist(bucketName, key, ''); }); },
+    removeItem(key) { delete bucket[key]; persistDelete(bucketName, key); },
+    clear() { Object.keys(bucket).forEach((key) => { delete bucket[key]; persistDelete(bucketName, key); }); },
     key(index) { return Object.keys(bucket)[index] ?? null; },
     get length() { return Object.keys(bucket).length; }
   });
@@ -360,7 +370,7 @@ func (s *Service) injectStoragePolyfills(pageOrigin string, bootstrap map[string
     });
     if (cookieIsExpired(record)) {
       delete __scope.cookies[name];
-      persist('cookies', name, '');
+      persistDelete('cookies', name);
       return;
     }
     __scope.cookies[name] = record;
@@ -393,7 +403,7 @@ func (s *Service) injectStoragePolyfills(pageOrigin string, bootstrap map[string
       if (database.stores?.[storeName]) {
         delete database.stores[storeName][key];
       }
-      persist('indexeddb:' + databaseName, storeName + ':' + key, '');
+      persistDelete('indexeddb:' + databaseName, storeName + ':' + key);
       return createIDBRequest(undefined);
     },
     clear() {
@@ -439,7 +449,7 @@ func (s *Service) injectStoragePolyfills(pageOrigin string, bootstrap map[string
         async delete(request) {
           const key = typeof request === 'string' ? request : request?.url;
           delete bucket[key];
-          persist('cache:' + name, key, '');
+          persistDelete('cache:' + name, key);
           return true;
         },
         async keys() {

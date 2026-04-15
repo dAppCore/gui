@@ -1,6 +1,7 @@
 package display
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -115,6 +116,23 @@ func TestStorageRegistry_Set_Bad(t *testing.T) {
 	assert.False(t, r.Set("core://settings", "", "theme", "dark"))
 	assert.False(t, r.Set("core://settings", "localStorage", "", "dark"))
 	assert.False(t, r.Set("core://settings", "localStorage", "theme", strings.Repeat("x", maxStorageValueBytes+1)))
+}
+
+func TestStorageRegistry_Delete_Good(t *testing.T) {
+	r := NewStorageRegistry()
+	r.Set("core://settings", "localStorage", "theme", "dark")
+
+	assert.True(t, r.Delete("core://settings", "localStorage", "theme"))
+	_, ok := r.Get("core://settings", "localStorage", "theme")
+	assert.False(t, ok)
+}
+
+func TestStorageRegistry_Set_RejectsQuotaOverflow(t *testing.T) {
+	r := NewStorageRegistry()
+	for i := 0; i < maxStorageEntriesPerOrigin; i++ {
+		require.True(t, r.Set("core://settings", "localStorage", fmt.Sprintf("key-%d", i), "v"))
+	}
+	assert.False(t, r.Set("core://settings", "localStorage", "overflow", "v"))
 }
 
 func TestStorage_StorageOriginForPageURL_Good(t *testing.T) {
