@@ -11,8 +11,8 @@ import (
 	"forge.lthn.ai/core/config"
 
 	"forge.lthn.ai/core/gui/pkg/chat"
-	"forge.lthn.ai/core/gui/pkg/container"
 	"forge.lthn.ai/core/gui/pkg/clipboard"
+	"forge.lthn.ai/core/gui/pkg/container"
 	"forge.lthn.ai/core/gui/pkg/contextmenu"
 	"forge.lthn.ai/core/gui/pkg/deno"
 	"forge.lthn.ai/core/gui/pkg/dialog"
@@ -81,7 +81,16 @@ func Register(wailsApp *application.App) func(*core.Core) core.Result {
 		}
 		s.ServiceRuntime = core.NewServiceRuntime[Options](c, Options{})
 		s.wailsApp = wailsApp
-		return core.Result{Value: s, OK: true}
+		if result := c.RegisterService("display", s); !result.OK {
+			return result
+		}
+		if !c.Service("deno").OK {
+			_ = c.RegisterService("deno", s.ensureSidecar())
+		}
+		if !c.Service("tim").OK {
+			_ = c.RegisterService("tim", container.NewService(c, container.OptionsFromEnv()))
+		}
+		return core.Result{OK: true}
 	}
 }
 
@@ -166,6 +175,7 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 	s.registerMarketplaceActions()
 	s.registerSidecarActions()
 	s.registerDefaultSchemes()
+	s.attachP2PBridge()
 
 	// Initialise Wails wrappers if app is available (nil in tests)
 	if s.wailsApp != nil {
@@ -189,6 +199,7 @@ func (s *Service) OnShutdown(ctx context.Context) core.Result {
 
 // HandleIPCEvents bridges IPC actions from sub-services to WebSocket events for TS apps.
 func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) core.Result {
+	s.forwardIPCToSidecar(msg)
 	switch m := msg.(type) {
 	case core.ActionServiceStartup:
 		// All services have completed OnStartup — safe to call sub-services

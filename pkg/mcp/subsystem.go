@@ -63,6 +63,9 @@ func (s *Subsystem) RegisterTools(server *mcp.Server) {
 	s.registerMarketplaceTools(server)
 	s.registerEventsTools(server)
 	s.registerMenuTools(server)
+	s.registerP2PTools(server)
+	s.registerDenoTools(server)
+	s.registerContainerTools(server)
 }
 
 // Manifest returns the recorded MCP tool metadata in stable name order.

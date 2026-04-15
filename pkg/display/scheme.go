@@ -389,7 +389,7 @@ func (s *Service) ResolveScheme(ctx context.Context, rawURL string) core.Result 
 }
 
 func (s *Service) renderSchemeBody(route string, value any) string {
-	title := "core://" + route
+	title := buildCoreURL(route, nil)
 	pretty := core.JSONMarshalString(value)
 	return "<!doctype html><html><head><meta charset=\"utf-8\"><title>" +
 		html.EscapeString(title) +
@@ -550,7 +550,7 @@ func (s *Service) handleStoreSearch(_ context.Context, params url.Values) core.R
 			"content_type": "text/html",
 			"body":         s.renderStoreSearchPage(query, results),
 			"route":        "store",
-			"url":          "core://store",
+			"url":          buildCoreURL("store", nil),
 			"query":        params,
 			"results":      results,
 		},
@@ -568,14 +568,47 @@ func coalesce(values ...string) string {
 }
 
 func coreRouteURL(segment string, parts ...string) string {
-	route := "core://" + strings.Trim(strings.TrimSpace(segment), "/")
+	return buildCoreURL(pathForCoreRoute(segment, parts...), nil)
+}
+
+func buildCoreURL(route string, query url.Values) string {
+	route = strings.Trim(strings.TrimSpace(route), "/")
+	if route == "" {
+		return "core://"
+	}
+	built := "core://" + route
+	if encoded := sanitizeCoreQuery(query).Encode(); encoded != "" {
+		built += "?" + encoded
+	}
+	return built
+}
+
+func pathForCoreRoute(segment string, parts ...string) string {
+	route := strings.Trim(strings.TrimSpace(segment), "/")
 	for _, part := range parts {
 		if strings.TrimSpace(part) == "" {
 			continue
 		}
-		route += "/" + url.PathEscape(part)
+		route += "/" + url.PathEscape(strings.TrimSpace(part))
 	}
 	return route
+}
+
+func sanitizeCoreQuery(query url.Values) url.Values {
+	if len(query) == 0 {
+		return nil
+	}
+	sanitized := make(url.Values, len(query))
+	for key, values := range query {
+		key = strings.TrimSpace(key)
+		if key == "" {
+			continue
+		}
+		for _, value := range values {
+			sanitized.Add(key, value)
+		}
+	}
+	return sanitized
 }
 
 func safeOriginHref(origin string) string {
