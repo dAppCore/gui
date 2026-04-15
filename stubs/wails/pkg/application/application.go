@@ -87,8 +87,9 @@ func (m *Menu) AddSubmenu(label string) *Menu {
 }
 
 // AddRole appends a platform-role item.
-func (m *Menu) AddRole(role Role) {
+func (m *Menu) AddRole(role Role) *Menu {
 	m.Items = append(m.Items, NewRole(role))
+	return m
 }
 
 // AppendItem appends an already-constructed MenuItem.
@@ -142,18 +143,30 @@ type SystemTray struct {
 	onClick        func()
 }
 
-func (t *SystemTray) SetIcon(data []byte)         { t.icon = append([]byte(nil), data...) }
-func (t *SystemTray) SetTemplateIcon(data []byte) { t.templateIcon = append([]byte(nil), data...) }
-func (t *SystemTray) SetTooltip(text string)      { t.tooltip = text }
-func (t *SystemTray) SetLabel(text string)        { t.label = text }
-func (t *SystemTray) SetMenu(menu *Menu)          { t.menu = menu }
+func (t *SystemTray) SetIcon(data []byte) *SystemTray {
+	t.icon = append([]byte(nil), data...)
+	return t
+}
+
+func (t *SystemTray) SetTemplateIcon(data []byte) *SystemTray {
+	t.templateIcon = append([]byte(nil), data...)
+	return t
+}
+
+func (t *SystemTray) SetTooltip(text string) { t.tooltip = text }
+func (t *SystemTray) SetLabel(text string)   { t.label = text }
+func (t *SystemTray) SetMenu(menu *Menu) *SystemTray {
+	t.menu = menu
+	return t
+}
+
 func (t *SystemTray) OnClick(callback func()) *SystemTray {
 	t.onClick = callback
 	return t
 }
 
 // AttachWindow associates a window with the tray icon (shown on click).
-func (t *SystemTray) AttachWindow(w Window) {
+func (t *SystemTray) AttachWindow(w Window) *SystemTray {
 	t.attachedWindow = w
 	t.OnClick(func() {
 		if t.attachedWindow == nil {
@@ -166,6 +179,7 @@ func (t *SystemTray) AttachWindow(w Window) {
 		t.attachedWindow.Show()
 		t.attachedWindow.Focus()
 	})
+	return t
 }
 
 // Click triggers the registered tray click handler.
@@ -178,7 +192,11 @@ func (t *SystemTray) Click() {
 // SystemTrayManager creates tray instances.
 type SystemTrayManager struct{}
 
-func (m *SystemTrayManager) New() *SystemTray { return &SystemTray{} }
+func (m *SystemTrayManager) New() *SystemTray {
+	tray := &SystemTray{}
+	ensureTrayCompatState(tray)
+	return tray
+}
 
 // WindowEventContext carries drag-and-drop details for a window event.
 type WindowEventContext struct {
@@ -642,7 +660,15 @@ func (w *WebviewWindow) HandleMessage(message string) {}
 func (w *WebviewWindow) HandleWindowEvent(id uint) {}
 
 // HandleKeyEvent is a no-op in the stub.
-func (w *WebviewWindow) HandleKeyEvent(acceleratorString string) {}
+func (w *WebviewWindow) HandleKeyEvent(acceleratorString string) {
+	state := ensureWebviewCompatState(w)
+	state.mu.RLock()
+	callback := state.keyBindings[acceleratorString]
+	state.mu.RUnlock()
+	if callback != nil {
+		callback(w)
+	}
+}
 
 // OpenContextMenu is a no-op in the stub.
 func (w *WebviewWindow) OpenContextMenu(data *ContextMenuData) {}
@@ -650,8 +676,13 @@ func (w *WebviewWindow) OpenContextMenu(data *ContextMenuData) {}
 // AttachModal is a no-op in the stub.
 func (w *WebviewWindow) AttachModal(modalWindow Window) {}
 
-// OpenDevTools is a no-op in the stub.
-func (w *WebviewWindow) OpenDevTools() {}
+// OpenDevTools marks devtools as open in the stub.
+func (w *WebviewWindow) OpenDevTools() {
+	state := ensureWebviewCompatState(w)
+	state.mu.Lock()
+	state.devtoolsOpen = true
+	state.mu.Unlock()
+}
 
 // Print always returns nil in the stub.
 func (w *WebviewWindow) Print() error { return nil }
@@ -711,13 +742,15 @@ func (w *WebviewWindow) Title() string {
 //
 //	win := app.Window.NewWithOptions(application.WebviewWindowOptions{Title: "Main"})
 type WindowManager struct {
-	mu      sync.RWMutex
-	windows map[uint]*WebviewWindow
+	mu        sync.RWMutex
+	windows   map[uint]Window
+	callbacks []func(Window)
+	current   uint
 }
 
 func (wm *WindowManager) init() {
 	if wm.windows == nil {
-		wm.windows = make(map[uint]*WebviewWindow)
+		wm.windows = make(map[uint]Window)
 	}
 }
 
@@ -727,7 +760,14 @@ func (wm *WindowManager) NewWithOptions(options WebviewWindowOptions) *WebviewWi
 	wm.mu.Lock()
 	wm.init()
 	wm.windows[window.windowID] = window
+	wm.current = window.windowID
+	callbacks := append([]func(Window){}, wm.callbacks...)
 	wm.mu.Unlock()
+	for _, callback := range callbacks {
+		if callback != nil {
+			callback(window)
+		}
+	}
 	return window
 }
 
@@ -752,7 +792,7 @@ func (wm *WindowManager) GetByName(name string) (Window, bool) {
 	wm.mu.RLock()
 	defer wm.mu.RUnlock()
 	for _, window := range wm.windows {
-		if window.opts.Name == name {
+		if window != nil && window.Name() == name {
 			return window, true
 		}
 	}
@@ -772,7 +812,60 @@ func (wm *WindowManager) Remove(windowID uint) {
 	wm.mu.Lock()
 	wm.init()
 	delete(wm.windows, windowID)
+	if wm.current == windowID {
+		wm.current = 0
+	}
 	wm.mu.Unlock()
+}
+
+// Get aliases GetByName.
+func (wm *WindowManager) Get(name string) (Window, bool) {
+	return wm.GetByName(name)
+}
+
+// OnCreate registers a callback for future window creation.
+func (wm *WindowManager) OnCreate(callback func(Window)) {
+	if callback == nil {
+		return
+	}
+	wm.mu.Lock()
+	wm.callbacks = append(wm.callbacks, callback)
+	wm.mu.Unlock()
+}
+
+// Current returns the last-added window.
+func (wm *WindowManager) Current() Window {
+	wm.mu.RLock()
+	defer wm.mu.RUnlock()
+	return wm.windows[wm.current]
+}
+
+// Add registers an externally created window.
+func (wm *WindowManager) Add(window Window) {
+	if window == nil {
+		return
+	}
+	wm.mu.Lock()
+	wm.init()
+	wm.windows[window.ID()] = window
+	wm.current = window.ID()
+	callbacks := append([]func(Window){}, wm.callbacks...)
+	wm.mu.Unlock()
+	for _, callback := range callbacks {
+		if callback != nil {
+			callback(window)
+		}
+	}
+}
+
+// RemoveByName removes a window by name.
+func (wm *WindowManager) RemoveByName(name string) bool {
+	window, ok := wm.GetByName(name)
+	if !ok {
+		return false
+	}
+	wm.Remove(window.ID())
+	return true
 }
 
 // App is the top-level application object used by the GUI packages.
@@ -795,10 +888,21 @@ type App struct {
 }
 
 // NewApp creates a zero-config in-memory application stub.
-func NewApp() *App { return &App{} }
+func NewApp() *App { return newStubApp(Options{}) }
 
-// Quit is a no-op in the stub.
-func (a *App) Quit() {}
+// Quit executes registered shutdown callbacks.
+func (a *App) Quit() {
+	state := ensureAppCompatState(a)
+	state.mu.Lock()
+	callbacks := append([]func(){}, state.shutdown...)
+	state.running = false
+	state.mu.Unlock()
+	for _, callback := range callbacks {
+		if callback != nil {
+			callback()
+		}
+	}
+}
 
 // NewMenu creates a new empty Menu.
 func (a *App) NewMenu() *Menu {
