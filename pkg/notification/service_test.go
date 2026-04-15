@@ -216,6 +216,30 @@ func TestTaskSend_WithActions_Good(t *testing.T) {
 	assert.Equal(t, 2, len(mock.lastOpts.Actions))
 }
 
+func TestTaskSend_RegisteredCategoryActions_Good(t *testing.T) {
+	mock, c := newTestService(t)
+	require.True(t, taskRun(c, "notification.registerCategory", TaskRegisterCategory{
+		Category: NotificationCategory{
+			ID: "message",
+			Actions: []NotificationAction{
+				{ID: "reply", Title: "Reply"},
+				{ID: "dismiss", Title: "Dismiss"},
+			},
+		},
+	}).OK)
+
+	r := taskRun(c, "notification.send", TaskSend{
+		Options: NotificationOptions{
+			Title:      "Team Chat",
+			Message:    "New message from Alice",
+			CategoryID: "message",
+		},
+	})
+	require.True(t, r.OK)
+	assert.Equal(t, 2, len(mock.lastOpts.Actions))
+	assert.Equal(t, "reply", mock.lastOpts.Actions[0].ID)
+}
+
 func TestTaskClear_Good_Specific(t *testing.T) {
 	mock, c := newTestService(t)
 	require.True(t, taskRun(c, "notification.send", TaskSend{

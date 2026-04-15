@@ -102,6 +102,7 @@ func (s *Service) send(options NotificationOptions) error {
 	if options.ID == "" {
 		options.ID = "core-" + strconv.FormatInt(time.Now().UnixNano(), 10)
 	}
+	options = s.applyCategoryActions(options)
 
 	if err := s.platform.Send(options); err != nil {
 		// Fallback: show as dialog via IPC
@@ -113,6 +114,22 @@ func (s *Service) send(options NotificationOptions) error {
 	s.active[options.ID] = options
 	s.mu.Unlock()
 	return nil
+}
+
+func (s *Service) applyCategoryActions(options NotificationOptions) NotificationOptions {
+	if options.CategoryID == "" || len(options.Actions) > 0 {
+		return options
+	}
+
+	s.mu.Lock()
+	category, ok := s.categories[options.CategoryID]
+	s.mu.Unlock()
+	if !ok || len(category.Actions) == 0 {
+		return options
+	}
+
+	options.Actions = append([]NotificationAction(nil), category.Actions...)
+	return options
 }
 
 // fallbackDialog shows a dialog via IPC when native notifications fail.

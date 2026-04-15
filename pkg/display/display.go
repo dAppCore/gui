@@ -1464,6 +1464,82 @@ func (s *Service) ApplyWorkflowLayout(workflow window.WorkflowLayout) error {
 	return nil
 }
 
+// LayoutBesideEditor places a window beside a detected editor window.
+//
+//	result, err := svc.LayoutBesideEditor("preview", "code", "right", 0.62)
+func (s *Service) LayoutBesideEditor(name, editor, side string, ratio float64) (window.LayoutBesideEditorResult, error) {
+	r := s.Core().Action("window.layoutBesideEditor").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskLayoutBesideEditor{
+			Name: name, Editor: editor, Side: side, Ratio: ratio,
+		}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return window.LayoutBesideEditorResult{}, e
+		}
+		return window.LayoutBesideEditorResult{}, nil
+	}
+	result, _ := r.Value.(window.LayoutBesideEditorResult)
+	return result, nil
+}
+
+// LayoutSuggest returns a layout recommendation for the current screen.
+//
+//	suggestion, err := svc.LayoutSuggest("", 2)
+func (s *Service) LayoutSuggest(screenID string, windowCount int) (window.LayoutSuggestion, error) {
+	r := s.Core().Action("window.layoutSuggest").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskLayoutSuggest{
+			ScreenID: screenID, WindowCount: windowCount,
+		}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return window.LayoutSuggestion{}, e
+		}
+		return window.LayoutSuggestion{}, nil
+	}
+	result, _ := r.Value.(window.LayoutSuggestion)
+	return result, nil
+}
+
+// FindScreenSpace finds an unused rectangle for a new window.
+//
+//	space, err := svc.FindScreenSpace("", 800, 600, 24)
+func (s *Service) FindScreenSpace(screenID string, width, height, padding int) (window.ScreenSpace, error) {
+	r := s.Core().Action("window.findSpace").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskScreenFindSpace{
+			ScreenID: screenID, Width: width, Height: height, Padding: padding,
+		}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return window.ScreenSpace{}, e
+		}
+		return window.ScreenSpace{}, nil
+	}
+	result, _ := r.Value.(window.ScreenSpace)
+	return result, nil
+}
+
+// ArrangeWindowPair positions two windows in an optimal split.
+//
+//	arrangement, err := svc.ArrangeWindowPair("editor", "preview", "", 0.55)
+func (s *Service) ArrangeWindowPair(primary, secondary, screenID string, ratio float64) (window.PairArrangement, error) {
+	r := s.Core().Action("window.arrangePair").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskWindowArrangePair{
+			Primary: primary, Secondary: secondary, ScreenID: screenID, Ratio: ratio,
+		}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return window.PairArrangement{}, e
+		}
+		return window.PairArrangement{}, nil
+	}
+	result, _ := r.Value.(window.PairArrangement)
+	return result, nil
+}
+
 // GetEventManager returns the event manager for WebSocket event subscriptions.
 func (s *Service) GetEventManager() *WSEventManager {
 	return s.events
