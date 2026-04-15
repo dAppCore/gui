@@ -31,7 +31,6 @@ This document tracks the implementation of display server features that enable A
 - [x] `window_title_get` - Get current window title (returns window name)
 - [x] `window_always_on_top` - Pin window above others
 - [x] `window_background_colour` - Set window background color with alpha (transparency)
-- [x] `window_opacity` - Set window opacity
 - [x] `window_fullscreen` - Enter/exit fullscreen mode
 
 ---
@@ -60,13 +59,13 @@ This document tracks the implementation of display server features that enable A
 ### Smart Layout
 - [x] `layout_tile` - Auto-tile windows (left/right/top/bottom/quadrants/grid)
 - [x] `layout_stack` - Stack windows in cascade pattern
-- [x] `layout_beside_editor` - Position window beside detected IDE window
-- [x] `layout_suggest` - Given screen dimensions, suggest optimal arrangement
+- [ ] `layout_beside_editor` - Position window beside detected IDE window
+- [ ] `layout_suggest` - Given screen dimensions, suggest optimal arrangement
 - [x] `layout_snap` - Snap window to screen edge/corner/center
 
 ### AI-Optimized Layout
-- [x] `screen_find_space` - Find empty screen space for new window
-- [x] `window_arrange_pair` - Put two windows side-by-side optimally
+- [ ] `screen_find_space` - Find empty screen space for new window
+- [ ] `window_arrange_pair` - Put two windows side-by-side optimally
 - [x] `layout_workflow` - Preset layouts: "coding", "debugging", "presenting", "side-by-side"
 
 ---
@@ -115,8 +114,8 @@ This document tracks the implementation of display server features that enable A
 - [x] `webview_resources` - List loaded resources (scripts, styles, images)
 
 ### DevTools
-- [x] `webview_devtools_open` - Open DevTools for window
-- [x] `webview_devtools_close` - Close DevTools
+- [ ] `webview_devtools_open` - Open DevTools for window
+- [ ] `webview_devtools_close` - Close DevTools
 
 ---
 
@@ -125,8 +124,8 @@ This document tracks the implementation of display server features that enable A
 ### Clipboard
 - [x] `clipboard_read` - Read clipboard text content
 - [x] `clipboard_write` - Write text to clipboard
-- [x] `clipboard_read_image` - Read image from clipboard
-- [x] `clipboard_write_image` - Write image to clipboard
+- [ ] `clipboard_read_image` - Read image from clipboard
+- [ ] `clipboard_write_image` - Write image to clipboard
 - [x] `clipboard_has` - Check clipboard content type
 - [x] `clipboard_clear` - Clear clipboard contents
 
@@ -134,8 +133,8 @@ This document tracks the implementation of display server features that enable A
 - [x] `notification_show` - Show native system notification (macOS/Windows/Linux)
 - [x] `notification_permission_request` - Request notification permission
 - [x] `notification_permission_check` - Check notification authorization status
-- [x] `notification_clear` - Clear notifications
-- [x] `notification_with_actions` - Interactive notifications with buttons
+- [ ] `notification_clear` - Clear notifications
+- [ ] `notification_with_actions` - Interactive notifications with buttons
 
 ### Dialogs
 - [x] `dialog_open_file` - Show file open dialog
@@ -143,11 +142,11 @@ This document tracks the implementation of display server features that enable A
 - [x] `dialog_open_directory` - Show directory picker
 - [x] `dialog_message` - Show message dialog (info/warning/error) (via notification_show)
 - [x] `dialog_confirm` - Show confirmation dialog
-- [x] `dialog_prompt` - Show input prompt dialog with a webview fallback when native support is unavailable
+- [~] `dialog_prompt` - Show input prompt dialog (not supported natively in Wails v3)
 
 ### Theme & Appearance
 - [x] `theme_get` - Get current theme (dark/light)
-- [x] `theme_set` - Set application theme
+- [ ] `theme_set` - Set application theme
 - [x] `theme_system` - Get system theme preference
 - [x] `theme_on_change` - Subscribe to theme changes (via WebSocket events)
 
@@ -174,7 +173,7 @@ This document tracks the implementation of display server features that enable A
 - [x] `tray_set_label` - Set tray label text
 - [x] `tray_set_menu` - Set tray menu items (with nested submenus)
 - [x] `tray_info` - Get tray status info
-- [x] `tray_show_message` - Show tray balloon notification
+- [ ] `tray_show_message` - Show tray balloon notification
 
 ---
 
@@ -194,7 +193,7 @@ This document tracks the implementation of display server features that enable A
 ### Phase 3 - Layouts (DONE)
 - [x] layout_save, layout_restore, layout_list
 - [x] layout_delete, layout_get
-- [x] layout_tile, layout_beside_editor
+- [ ] layout_tile, layout_beside_editor (future)
 
 ### Phase 4 - WebView Debug (DONE)
 - [x] webview_screenshot, webview_screenshot_element
@@ -203,7 +202,7 @@ This document tracks the implementation of display server features that enable A
 - [x] webview_scroll, webview_hover, webview_select, webview_check
 - [x] webview_highlight, webview_errors
 - [x] webview_performance, webview_resources
-- [x] webview_network, webview_devtools
+- [ ] webview_network, webview_devtools (future)
 
 ### Phase 5 - System Integration (DONE)
 - [x] clipboard_read, clipboard_write, clipboard_has, clipboard_clear
@@ -237,8 +236,8 @@ This document tracks the implementation of display server features that enable A
 
 ### Phase 8 - Remaining Features (Future)
 - [ ] window_opacity (true opacity if Wails adds support)
-- [x] layout_beside_editor, layout_suggest
-- [x] webview_devtools_open, webview_devtools_close
-- [x] clipboard_read_image, clipboard_write_image
-- [x] notification_with_actions, notification_clear
-- [x] tray_show_message - Balloon notifications
+- [ ] layout_beside_editor, layout_suggest
+- [ ] webview_devtools_open, webview_devtools_close
+- [ ] clipboard_read_image, clipboard_write_image
+- [ ] notification_with_actions, notification_clear
+- [ ] tray_show_message - Balloon notifications

@@ -6,29 +6,29 @@ import (
 	"sync"
 	"testing"
 
-	"forge.lthn.ai/core/go/pkg/core"
+	core "dappco.re/go/core"
+	coreerr "dappco.re/go/core/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type mockPlatform struct {
-	isDark       bool
-	info         EnvironmentInfo
-	accentColour string
-	openFMErr    error
-	themeHandler func(isDark bool)
-	setThemeSeen bool
-	setThemeDark bool
-	mu           sync.Mutex
+	isDark            bool
+	info              EnvironmentInfo
+	accentColour      string
+	openFMErr         error
+	focusFollowsMouse bool
+	themeHandler      func(isDark bool)
+	mu                sync.Mutex
 }
 
-func (m *mockPlatform) IsDarkMode() bool      { return m.isDark }
-func (m *mockPlatform) Info() EnvironmentInfo { return m.info }
-func (m *mockPlatform) AccentColour() string  { return m.accentColour }
+func (m *mockPlatform) IsDarkMode() bool          { return m.isDark }
+func (m *mockPlatform) Info() EnvironmentInfo      { return m.info }
+func (m *mockPlatform) AccentColour() string       { return m.accentColour }
+func (m *mockPlatform) HasFocusFollowsMouse() bool { return m.focusFollowsMouse }
 func (m *mockPlatform) OpenFileManager(path string, selectFile bool) error {
 	return m.openFMErr
 }
-func (m *mockPlatform) HasFocusFollowsMouse() bool { return false }
 func (m *mockPlatform) OnThemeChange(handler func(isDark bool)) func() {
 	m.mu.Lock()
 	m.themeHandler = handler
@@ -38,12 +38,6 @@ func (m *mockPlatform) OnThemeChange(handler func(isDark bool)) func() {
 		m.themeHandler = nil
 		m.mu.Unlock()
 	}
-}
-func (m *mockPlatform) SetTheme(isDark bool) error {
-	m.setThemeSeen = true
-	m.setThemeDark = isDark
-	m.isDark = isDark
-	return nil
 }
 
 // simulateThemeChange triggers the stored handler (test helper).
@@ -66,12 +60,11 @@ func newTestService(t *testing.T) (*mockPlatform, *core.Core) {
 			Platform: PlatformInfo{Name: "macOS", Version: "14.0"},
 		},
 	}
-	c, err := core.New(
+	c := core.New(
 		core.WithService(Register(mock)),
 		core.WithServiceLock(),
 	)
-	require.NoError(t, err)
-	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
 	return mock, c
 }
 
@@ -83,37 +76,35 @@ func TestRegister_Good(t *testing.T) {
 
 func TestQueryTheme_Good(t *testing.T) {
 	_, c := newTestService(t)
-	result, handled, err := c.QUERY(QueryTheme{})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	theme := result.(ThemeInfo)
+	r := c.QUERY(QueryTheme{})
+	require.True(t, r.OK)
+	theme := r.Value.(ThemeInfo)
 	assert.True(t, theme.IsDark)
 	assert.Equal(t, "dark", theme.Theme)
 }
 
 func TestQueryInfo_Good(t *testing.T) {
 	_, c := newTestService(t)
-	result, handled, err := c.QUERY(QueryInfo{})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	info := result.(EnvironmentInfo)
+	r := c.QUERY(QueryInfo{})
+	require.True(t, r.OK)
+	info := r.Value.(EnvironmentInfo)
 	assert.Equal(t, "darwin", info.OS)
 	assert.Equal(t, "arm64", info.Arch)
 }
 
 func TestQueryAccentColour_Good(t *testing.T) {
 	_, c := newTestService(t)
-	result, handled, err := c.QUERY(QueryAccentColour{})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.Equal(t, "rgb(0,122,255)", result)
+	r := c.QUERY(QueryAccentColour{})
+	require.True(t, r.OK)
+	assert.Equal(t, "rgb(0,122,255)", r.Value)
 }
 
 func TestTaskOpenFileManager_Good(t *testing.T) {
 	_, c := newTestService(t)
-	_, handled, err := c.PERFORM(TaskOpenFileManager{Path: "/tmp", Select: true})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := c.Action("environment.openFileManager").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: TaskOpenFileManager{Path: "/tmp", Select: true}},
+	))
+	require.True(t, r.OK)
 }
 
 func TestThemeChange_ActionBroadcast_Good(t *testing.T) {
@@ -122,13 +113,13 @@ func TestThemeChange_ActionBroadcast_Good(t *testing.T) {
 	// Register a listener that captures the action
 	var received *ActionThemeChanged
 	var mu sync.Mutex
-	c.RegisterAction(func(_ *core.Core, msg core.Message) error {
+	c.RegisterAction(func(_ *core.Core, msg core.Message) core.Result {
 		if a, ok := msg.(ActionThemeChanged); ok {
 			mu.Lock()
 			received = &a
 			mu.Unlock()
 		}
-		return nil
+		return core.Result{OK: true}
 	})
 
 	// Simulate theme change
@@ -141,36 +132,81 @@ func TestThemeChange_ActionBroadcast_Good(t *testing.T) {
 	assert.False(t, r.IsDark)
 }
 
-func TestTaskSetTheme_Good(t *testing.T) {
-	_, c := newTestService(t)
+// --- GetAccentColor ---
 
-	_, handled, err := c.PERFORM(TaskSetTheme{Theme: "light"})
-	require.NoError(t, err)
-	assert.True(t, handled)
+func TestQueryAccentColour_Bad_Empty(t *testing.T) {
+	// accent colour := "" — still returns handled with empty string
+	mock := &mockPlatform{
+		isDark:       false,
+		accentColour: "",
+		info:         EnvironmentInfo{OS: "linux", Arch: "amd64"},
+	}
+	c := core.New(core.WithService(Register(mock)), core.WithServiceLock())
+	require.True(t, c.ServiceStartup(t.Context(), nil).OK)
 
-	result, handled, err := c.QUERY(QueryTheme{})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	theme := result.(ThemeInfo)
-	assert.False(t, theme.IsDark)
-	assert.Equal(t, "light", theme.Theme)
+	r := c.QUERY(QueryAccentColour{})
+	require.True(t, r.OK)
+	assert.Equal(t, "", r.Value)
 }
 
-func TestTaskSetTheme_Good_SystemClearsOverride(t *testing.T) {
-	mock, c := newTestService(t)
+func TestQueryAccentColour_Ugly_NoService(t *testing.T) {
+	// No environment service — query is unhandled
+	c := core.New(core.WithServiceLock())
+	r := c.QUERY(QueryAccentColour{})
+	assert.False(t, r.OK)
+}
 
-	_, _, err := c.PERFORM(TaskSetTheme{Theme: "light"})
-	require.NoError(t, err)
+// --- OpenFileManager ---
 
-	mock.isDark = true
-	_, handled, err := c.PERFORM(TaskSetTheme{Theme: "system"})
-	require.NoError(t, err)
-	assert.True(t, handled)
+func TestTaskOpenFileManager_Bad_Error(t *testing.T) {
+	// platform returns an error on open
+	openErr := coreerr.E("test", "file manager unavailable", nil)
+	mock := &mockPlatform{openFMErr: openErr}
+	c := core.New(core.WithService(Register(mock)), core.WithServiceLock())
+	require.True(t, c.ServiceStartup(t.Context(), nil).OK)
 
-	result, handled, err := c.QUERY(QueryTheme{})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	theme := result.(ThemeInfo)
-	assert.True(t, theme.IsDark)
-	assert.Equal(t, "dark", theme.Theme)
+	r := c.Action("environment.openFileManager").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: TaskOpenFileManager{Path: "/missing", Select: false}},
+	))
+	assert.False(t, r.OK)
+	err, _ := r.Value.(error)
+	assert.ErrorIs(t, err, openErr)
+}
+
+func TestTaskOpenFileManager_Ugly_NoService(t *testing.T) {
+	// No environment service — action is not registered
+	c := core.New(core.WithServiceLock())
+	r := c.Action("environment.openFileManager").Run(context.Background(), core.NewOptions())
+	assert.False(t, r.OK)
+}
+
+// --- HasFocusFollowsMouse ---
+
+func TestQueryFocusFollowsMouse_Good_True(t *testing.T) {
+	// platform reports focus-follows-mouse enabled (Linux/X11 sloppy focus)
+	mock := &mockPlatform{focusFollowsMouse: true}
+	c := core.New(core.WithService(Register(mock)), core.WithServiceLock())
+	require.True(t, c.ServiceStartup(t.Context(), nil).OK)
+
+	r := c.QUERY(QueryFocusFollowsMouse{})
+	require.True(t, r.OK)
+	assert.Equal(t, true, r.Value)
+}
+
+func TestQueryFocusFollowsMouse_Bad_False(t *testing.T) {
+	// platform reports focus-follows-mouse disabled (Windows/macOS default)
+	mock := &mockPlatform{focusFollowsMouse: false}
+	c := core.New(core.WithService(Register(mock)), core.WithServiceLock())
+	require.True(t, c.ServiceStartup(t.Context(), nil).OK)
+
+	r := c.QUERY(QueryFocusFollowsMouse{})
+	require.True(t, r.OK)
+	assert.Equal(t, false, r.Value)
+}
+
+func TestQueryFocusFollowsMouse_Ugly_NoService(t *testing.T) {
+	// No environment service — query is unhandled
+	c := core.New(core.WithServiceLock())
+	r := c.QUERY(QueryFocusFollowsMouse{})
+	assert.False(t, r.OK)
 }

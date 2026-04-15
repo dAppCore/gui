@@ -1,65 +1,73 @@
 package dialog
 
-// TaskOpenFile opens a file picker dialog. Result: []string (selected paths)
+// TaskOpenFile presents an open-file dialog with the given options.
+//
+//	result, _, err := c.PERFORM(dialog.TaskOpenFile{Options: dialog.OpenFileOptions{Title: "Pick file"}})
+//	paths := result.([]string)
 type TaskOpenFile struct{ Options OpenFileOptions }
 
-// TaskOpenFileWithOptions opens a file picker, applying caller-supplied options. Result: []string
-// paths, _, err := c.PERFORM(TaskOpenFileWithOptions{Title: "Import", AllowMultiple: true})
-type TaskOpenFileWithOptions struct {
-	Title                string
-	Directory            string
-	Filename             string
-	Filters              []FileFilter
-	AllowMultiple        bool
-	CanChooseDirectories bool
-	CanChooseFiles       bool
-	ShowHiddenFiles      bool
-}
+// TaskOpenFileWithOptions presents an open-file dialog pre-configured from an options struct.
+// Equivalent to TaskOpenFile but mirrors the stub DialogManager.OpenFileWithOptions API.
+//
+//	result, _, err := c.PERFORM(dialog.TaskOpenFileWithOptions{Options: &dialog.OpenFileOptions{Title: "Select log", AllowMultiple: true}})
+type TaskOpenFileWithOptions struct{ Options *OpenFileOptions }
 
-// TaskSaveFile opens a save file dialog. Result: string (chosen path)
+// TaskSaveFile presents a save-file dialog with the given options.
+//
+//	result, _, err := c.PERFORM(dialog.TaskSaveFile{Options: dialog.SaveFileOptions{Filename: "report.csv"}})
+//	path := result.(string)
 type TaskSaveFile struct{ Options SaveFileOptions }
 
-// TaskSaveFileWithOptions opens a save dialog with caller-supplied options. Result: string
-// path, _, err := c.PERFORM(TaskSaveFileWithOptions{Title: "Export", Filename: "out.csv"})
-type TaskSaveFileWithOptions struct {
-	Title     string
-	Directory string
-	Filename  string
-	Filters   []FileFilter
-}
+// TaskSaveFileWithOptions presents a save-file dialog pre-configured from an options struct.
+// Equivalent to TaskSaveFile but mirrors the stub DialogManager.SaveFileWithOptions API.
+//
+//	result, _, err := c.PERFORM(dialog.TaskSaveFileWithOptions{Options: &dialog.SaveFileOptions{Title: "Export data"}})
+type TaskSaveFileWithOptions struct{ Options *SaveFileOptions }
 
-// TaskOpenDirectory opens a directory picker. Result: string
+// TaskOpenDirectory presents a directory picker dialog.
+//
+//	result, _, err := c.PERFORM(dialog.TaskOpenDirectory{Options: dialog.OpenDirectoryOptions{Title: "Choose folder"}})
+//	path := result.(string)
 type TaskOpenDirectory struct{ Options OpenDirectoryOptions }
 
-// TaskMessageDialog opens an arbitrary message dialog. Result: string (button clicked)
+// TaskMessageDialog presents a message dialog of the given type.
+//
+//	result, _, err := c.PERFORM(dialog.TaskMessageDialog{Options: dialog.MessageDialogOptions{Type: dialog.DialogQuestion, Title: "Confirm", Message: "Delete?", Buttons: []string{"Yes", "No"}}})
+//	clicked := result.(string)
 type TaskMessageDialog struct{ Options MessageDialogOptions }
 
-// TaskInfo shows an informational dialog. Result: string (button clicked)
-// result, _, err := c.PERFORM(TaskInfo{Title: "Done", Message: "File saved."})
+// TaskInfo presents an information message dialog.
+//
+//	result, _, err := c.PERFORM(dialog.TaskInfo{Title: "Done", Message: "File saved successfully."})
+//	clicked := result.(string)
 type TaskInfo struct {
 	Title   string
 	Message string
 	Buttons []string
 }
 
-// TaskQuestion shows a question dialog. Result: string (button clicked)
-// result, _, err := c.PERFORM(TaskQuestion{Title: "Confirm", Message: "Delete?", Buttons: []string{"Yes","No"}})
+// TaskQuestion presents a question message dialog.
+//
+//	result, _, err := c.PERFORM(dialog.TaskQuestion{Title: "Confirm", Message: "Delete file?", Buttons: []string{"Yes", "No"}})
+//	if result.(string) == "Yes" { deleteFile() }
 type TaskQuestion struct {
 	Title   string
 	Message string
 	Buttons []string
 }
 
-// TaskWarning shows a warning dialog. Result: string (button clicked)
-// result, _, err := c.PERFORM(TaskWarning{Title: "Warning", Message: "File exists."})
+// TaskWarning presents a warning message dialog.
+//
+//	result, _, err := c.PERFORM(dialog.TaskWarning{Title: "Low disk", Message: "Disk space is critically low."})
 type TaskWarning struct {
 	Title   string
 	Message string
 	Buttons []string
 }
 
-// TaskError shows an error dialog. Result: string (button clicked)
-// result, _, err := c.PERFORM(TaskError{Title: "Error", Message: "Write failed."})
+// TaskError presents an error message dialog.
+//
+//	result, _, err := c.PERFORM(dialog.TaskError{Title: "Operation failed", Message: err.Error()})
 type TaskError struct {
 	Title   string
 	Message string

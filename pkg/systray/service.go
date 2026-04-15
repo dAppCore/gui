@@ -1,10 +1,9 @@
-// pkg/systray/service.go
 package systray
 
 import (
 	"context"
 
-	"forge.lthn.ai/core/go/pkg/core"
+	core "dappco.re/go/core"
 )
 
 type Options struct{}
@@ -16,15 +15,30 @@ type Service struct {
 	iconPath string
 }
 
-func (s *Service) OnStartup(ctx context.Context) error {
-	configValue, handled, _ := s.Core().QUERY(QueryConfig{})
-	if handled {
-		if trayConfig, ok := configValue.(map[string]any); ok {
+func (s *Service) OnStartup(_ context.Context) core.Result {
+	r := s.Core().QUERY(QueryConfig{})
+	if r.OK {
+		if trayConfig, ok := r.Value.(map[string]any); ok {
 			s.applyConfig(trayConfig)
 		}
 	}
-	s.Core().RegisterTask(s.handleTask)
-	return nil
+	s.Core().Action("systray.setIcon", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskSetTrayIcon)
+		return core.Result{Value: nil, OK: true}.New(s.manager.SetIcon(t.Data))
+	})
+	s.Core().Action("systray.setMenu", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskSetTrayMenu)
+		return core.Result{Value: nil, OK: true}.New(s.taskSetTrayMenu(t))
+	})
+	s.Core().Action("systray.showPanel", func(_ context.Context, _ core.Options) core.Result {
+		// Panel show — deferred (requires WindowHandle integration)
+		return core.Result{OK: true}
+	})
+	s.Core().Action("systray.hidePanel", func(_ context.Context, _ core.Options) core.Result {
+		// Panel hide — deferred (requires WindowHandle integration)
+		return core.Result{OK: true}
+	})
+	return core.Result{OK: true}
 }
 
 func (s *Service) applyConfig(configData map[string]any) {
@@ -41,29 +55,8 @@ func (s *Service) applyConfig(configData map[string]any) {
 	}
 }
 
-func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
-	return nil
-}
-
-func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
-	switch t := t.(type) {
-	case TaskSetTrayIcon:
-		return nil, true, s.manager.SetIcon(t.Data)
-	case TaskSetTrayTooltip:
-		return nil, true, s.manager.SetTooltip(t.Tooltip)
-	case TaskSetTrayLabel:
-		return nil, true, s.manager.SetLabel(t.Label)
-	case TaskSetTrayMenu:
-		return nil, true, s.taskSetTrayMenu(t)
-	case TaskShowMessage:
-		return nil, true, s.manager.ShowMessage(t.Title, t.Message)
-	case TaskShowPanel:
-		return nil, true, s.manager.ShowPanel()
-	case TaskHidePanel:
-		return nil, true, s.manager.HidePanel()
-	default:
-		return nil, false, nil
-	}
+func (s *Service) HandleIPCEvents(_ *core.Core, _ core.Message) core.Result {
+	return core.Result{OK: true}
 }
 
 func (s *Service) taskSetTrayMenu(t TaskSetTrayMenu) error {

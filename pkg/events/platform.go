@@ -1,26 +1,34 @@
 // pkg/events/platform.go
 package events
 
-// Platform abstracts the custom event backend (Wails v3 EventManager).
-// Emit fires an event by name with optional data arguments.
-// On registers a persistent listener; returns a cancel function.
-// Off removes all listeners for the named event.
-// OnMultiple registers a listener that auto-deregisters after counter firings.
-// Reset removes all custom event listeners.
+// Platform abstracts the Wails EventManager for custom events.
 //
-//	cancel := platform.On("build:done", func(e *CustomEvent) { ... })
+//	platform.Emit("user:login", userPayload)
+//	cancel := platform.On("theme:changed", func(e *CustomEvent) { applyTheme(e) })
 //	defer cancel()
-//	platform.Emit("build:done", result)
 type Platform interface {
 	Emit(name string, data ...any) bool
-	On(name string, callback func(event *CustomEvent)) func()
+	On(name string, callback func(*CustomEvent)) func()
 	Off(name string)
-	OnMultiple(name string, callback func(event *CustomEvent), counter int)
+	OnMultiple(name string, callback func(*CustomEvent), counter int)
 	Reset()
 }
 
-// CustomEvent is the event object delivered to On/OnMultiple listeners.
+// CustomEvent is a named event carrying arbitrary data, mirroring the Wails type.
+//
+//	platform.On("file:saved", func(e *CustomEvent) {
+//	    path := e.Data.(string)
+//	})
 type CustomEvent struct {
-	Name string
-	Data any
+	Name   string `json:"name"`
+	Data   any    `json:"data"`
+	Sender string `json:"sender,omitempty"`
+}
+
+// ListenerInfo describes a registered listener for QueryListeners results.
+//
+//	info := ListenerInfo{EventName: "user:login", Count: 3}
+type ListenerInfo struct {
+	EventName string `json:"eventName"`
+	Count     int    `json:"count"`
 }

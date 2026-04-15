@@ -3,7 +3,7 @@ package browser
 import (
 	"context"
 
-	"forge.lthn.ai/core/go/pkg/core"
+	core "dappco.re/go/core"
 )
 
 type Options struct{}
@@ -13,22 +13,22 @@ type Service struct {
 	platform Platform
 }
 
-func (s *Service) OnStartup(ctx context.Context) error {
-	s.Core().RegisterTask(s.handleTask)
-	return nil
+func (s *Service) OnStartup(_ context.Context) core.Result {
+	s.Core().Action("browser.openURL", func(_ context.Context, opts core.Options) core.Result {
+		if err := s.platform.OpenURL(opts.String("url")); err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		return core.Result{OK: true}
+	})
+	s.Core().Action("browser.openFile", func(_ context.Context, opts core.Options) core.Result {
+		if err := s.platform.OpenFile(opts.String("path")); err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		return core.Result{OK: true}
+	})
+	return core.Result{OK: true}
 }
 
-func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
-	return nil
-}
-
-func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
-	switch t := t.(type) {
-	case TaskOpenURL:
-		return nil, true, s.platform.OpenURL(t.URL)
-	case TaskOpenFile:
-		return nil, true, s.platform.OpenFile(t.Path)
-	default:
-		return nil, false, nil
-	}
+func (s *Service) HandleIPCEvents(_ *core.Core, _ core.Message) core.Result {
+	return core.Result{OK: true}
 }

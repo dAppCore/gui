@@ -4,7 +4,7 @@ package screen
 import (
 	"context"
 
-	"forge.lthn.ai/core/go/pkg/core"
+	core "dappco.re/go/core"
 )
 
 type Options struct{}
@@ -16,40 +16,40 @@ type Service struct {
 
 // Register(p) binds the screen service to a Core instance.
 // core.WithService(screen.Register(wailsScreen))
-func Register(p Platform) func(*core.Core) (any, error) {
-	return func(c *core.Core) (any, error) {
-		return &Service{
+func Register(p Platform) func(*core.Core) core.Result {
+	return func(c *core.Core) core.Result {
+		return core.Result{Value: &Service{
 			ServiceRuntime: core.NewServiceRuntime[Options](c, Options{}),
 			platform:       p,
-		}, nil
+		}, OK: true}
 	}
 }
 
-func (s *Service) OnStartup(ctx context.Context) error {
+func (s *Service) OnStartup(_ context.Context) core.Result {
 	s.Core().RegisterQuery(s.handleQuery)
-	return nil
+	return core.Result{OK: true}
 }
 
-func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
-	return nil
+func (s *Service) HandleIPCEvents(_ *core.Core, _ core.Message) core.Result {
+	return core.Result{OK: true}
 }
 
-func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
+func (s *Service) handleQuery(_ *core.Core, q core.Query) core.Result {
 	switch q := q.(type) {
 	case QueryAll:
-		return s.platform.GetAll(), true, nil
+		return core.Result{Value: s.platform.GetAll(), OK: true}
 	case QueryPrimary:
-		return s.platform.GetPrimary(), true, nil
-	case QueryCurrent:
-		return s.platform.GetCurrent(), true, nil
+		return core.Result{Value: s.platform.GetPrimary(), OK: true}
 	case QueryByID:
-		return s.queryByID(q.ID), true, nil
+		return core.Result{Value: s.queryByID(q.ID), OK: true}
 	case QueryAtPoint:
-		return s.queryAtPoint(q.X, q.Y), true, nil
+		return core.Result{Value: s.queryAtPoint(q.X, q.Y), OK: true}
 	case QueryWorkAreas:
-		return s.queryWorkAreas(), true, nil
+		return core.Result{Value: s.queryWorkAreas(), OK: true}
+	case QueryCurrent:
+		return core.Result{Value: s.platform.GetCurrent(), OK: true}
 	default:
-		return nil, false, nil
+		return core.Result{}
 	}
 }
 

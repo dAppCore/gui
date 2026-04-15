@@ -3,11 +3,10 @@ package mcp
 
 import (
 	"context"
-	"strings"
 
-	"dappco.re/go/core/gui/pkg/screen"
-	"dappco.re/go/core/gui/pkg/window"
-	coreerr "forge.lthn.ai/core/go-log"
+	core "dappco.re/go/core"
+	coreerr "dappco.re/go/core/log"
+	"forge.lthn.ai/core/gui/pkg/window"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -21,9 +20,14 @@ type LayoutSaveOutput struct {
 }
 
 func (s *Subsystem) layoutSave(_ context.Context, _ *mcp.CallToolRequest, input LayoutSaveInput) (*mcp.CallToolResult, LayoutSaveOutput, error) {
-	_, _, err := s.core.PERFORM(window.TaskSaveLayout{Name: input.Name})
-	if err != nil {
-		return nil, LayoutSaveOutput{}, err
+	r := s.core.Action("window.saveLayout").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskSaveLayout{Name: input.Name}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, LayoutSaveOutput{}, e
+		}
+		return nil, LayoutSaveOutput{}, nil
 	}
 	return nil, LayoutSaveOutput{Success: true}, nil
 }
@@ -38,9 +42,14 @@ type LayoutRestoreOutput struct {
 }
 
 func (s *Subsystem) layoutRestore(_ context.Context, _ *mcp.CallToolRequest, input LayoutRestoreInput) (*mcp.CallToolResult, LayoutRestoreOutput, error) {
-	_, _, err := s.core.PERFORM(window.TaskRestoreLayout{Name: input.Name})
-	if err != nil {
-		return nil, LayoutRestoreOutput{}, err
+	r := s.core.Action("window.restoreLayout").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskRestoreLayout{Name: input.Name}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, LayoutRestoreOutput{}, e
+		}
+		return nil, LayoutRestoreOutput{}, nil
 	}
 	return nil, LayoutRestoreOutput{Success: true}, nil
 }
@@ -53,11 +62,14 @@ type LayoutListOutput struct {
 }
 
 func (s *Subsystem) layoutList(_ context.Context, _ *mcp.CallToolRequest, _ LayoutListInput) (*mcp.CallToolResult, LayoutListOutput, error) {
-	result, _, err := s.core.QUERY(window.QueryLayoutList{})
-	if err != nil {
-		return nil, LayoutListOutput{}, err
+	r := s.core.QUERY(window.QueryLayoutList{})
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, LayoutListOutput{}, e
+		}
+		return nil, LayoutListOutput{}, nil
 	}
-	layouts, ok := result.([]window.LayoutInfo)
+	layouts, ok := r.Value.([]window.LayoutInfo)
 	if !ok {
 		return nil, LayoutListOutput{}, coreerr.E("mcp.layoutList", "unexpected result type", nil)
 	}
@@ -74,9 +86,14 @@ type LayoutDeleteOutput struct {
 }
 
 func (s *Subsystem) layoutDelete(_ context.Context, _ *mcp.CallToolRequest, input LayoutDeleteInput) (*mcp.CallToolResult, LayoutDeleteOutput, error) {
-	_, _, err := s.core.PERFORM(window.TaskDeleteLayout{Name: input.Name})
-	if err != nil {
-		return nil, LayoutDeleteOutput{}, err
+	r := s.core.Action("window.deleteLayout").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskDeleteLayout{Name: input.Name}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, LayoutDeleteOutput{}, e
+		}
+		return nil, LayoutDeleteOutput{}, nil
 	}
 	return nil, LayoutDeleteOutput{Success: true}, nil
 }
@@ -91,11 +108,14 @@ type LayoutGetOutput struct {
 }
 
 func (s *Subsystem) layoutGet(_ context.Context, _ *mcp.CallToolRequest, input LayoutGetInput) (*mcp.CallToolResult, LayoutGetOutput, error) {
-	result, _, err := s.core.QUERY(window.QueryLayoutGet{Name: input.Name})
-	if err != nil {
-		return nil, LayoutGetOutput{}, err
+	r := s.core.QUERY(window.QueryLayoutGet{Name: input.Name})
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, LayoutGetOutput{}, e
+		}
+		return nil, LayoutGetOutput{}, nil
 	}
-	layout, ok := result.(*window.Layout)
+	layout, ok := r.Value.(*window.Layout)
 	if !ok {
 		return nil, LayoutGetOutput{}, coreerr.E("mcp.layoutGet", "unexpected result type", nil)
 	}
@@ -113,9 +133,14 @@ type LayoutTileOutput struct {
 }
 
 func (s *Subsystem) layoutTile(_ context.Context, _ *mcp.CallToolRequest, input LayoutTileInput) (*mcp.CallToolResult, LayoutTileOutput, error) {
-	_, _, err := s.core.PERFORM(window.TaskTileWindows{Mode: input.Mode, Windows: input.Windows})
-	if err != nil {
-		return nil, LayoutTileOutput{}, err
+	r := s.core.Action("window.tileWindows").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskTileWindows{Mode: input.Mode, Windows: input.Windows}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, LayoutTileOutput{}, e
+		}
+		return nil, LayoutTileOutput{}, nil
 	}
 	return nil, LayoutTileOutput{Success: true}, nil
 }
@@ -131,9 +156,14 @@ type LayoutSnapOutput struct {
 }
 
 func (s *Subsystem) layoutSnap(_ context.Context, _ *mcp.CallToolRequest, input LayoutSnapInput) (*mcp.CallToolResult, LayoutSnapOutput, error) {
-	_, _, err := s.core.PERFORM(window.TaskSnapWindow{Name: input.Name, Position: input.Position})
-	if err != nil {
-		return nil, LayoutSnapOutput{}, err
+	r := s.core.Action("window.snapWindow").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskSnapWindow{Name: input.Name, Position: input.Position}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, LayoutSnapOutput{}, e
+		}
+		return nil, LayoutSnapOutput{}, nil
 	}
 	return nil, LayoutSnapOutput{Success: true}, nil
 }
@@ -150,9 +180,14 @@ type LayoutStackOutput struct {
 }
 
 func (s *Subsystem) layoutStack(_ context.Context, _ *mcp.CallToolRequest, input LayoutStackInput) (*mcp.CallToolResult, LayoutStackOutput, error) {
-	_, _, err := s.core.PERFORM(window.TaskStackWindows{Windows: input.Windows, OffsetX: input.OffsetX, OffsetY: input.OffsetY})
-	if err != nil {
-		return nil, LayoutStackOutput{}, err
+	r := s.core.Action("window.stackWindows").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskStackWindows{Windows: input.Windows, OffsetX: input.OffsetX, OffsetY: input.OffsetY}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, LayoutStackOutput{}, e
+		}
+		return nil, LayoutStackOutput{}, nil
 	}
 	return nil, LayoutStackOutput{Success: true}, nil
 }
@@ -168,184 +203,16 @@ type LayoutWorkflowOutput struct {
 }
 
 func (s *Subsystem) layoutWorkflow(_ context.Context, _ *mcp.CallToolRequest, input LayoutWorkflowInput) (*mcp.CallToolResult, LayoutWorkflowOutput, error) {
-	_, _, err := s.core.PERFORM(window.TaskApplyWorkflow{Workflow: input.Workflow, Windows: input.Windows})
-	if err != nil {
-		return nil, LayoutWorkflowOutput{}, err
+	r := s.core.Action("window.applyWorkflow").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskApplyWorkflow{Workflow: input.Workflow, Windows: input.Windows}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, LayoutWorkflowOutput{}, e
+		}
+		return nil, LayoutWorkflowOutput{}, nil
 	}
 	return nil, LayoutWorkflowOutput{Success: true}, nil
-}
-
-// --- layout_suggest ---
-
-type LayoutSuggestInput struct {
-	Width       int `json:"width"`
-	Height      int `json:"height"`
-	WindowCount int `json:"windowCount"`
-}
-type LayoutSuggestOutput struct {
-	Mode       string        `json:"mode"`
-	Placements []screen.Rect `json:"placements"`
-}
-
-func (s *Subsystem) layoutSuggest(_ context.Context, _ *mcp.CallToolRequest, input LayoutSuggestInput) (*mcp.CallToolResult, LayoutSuggestOutput, error) {
-	width := input.Width
-	height := input.Height
-	if width <= 0 {
-		width = 1920
-	}
-	if height <= 0 {
-		height = 1080
-	}
-	count := input.WindowCount
-	if count <= 0 {
-		count = 1
-	}
-
-	workArea := screen.Rect{X: 0, Y: 0, Width: width, Height: height}
-	switch {
-	case count == 1:
-		return nil, LayoutSuggestOutput{Mode: "full", Placements: []screen.Rect{workArea}}, nil
-	case count == 2:
-		if width >= height {
-			half := width / 2
-			return nil, LayoutSuggestOutput{
-				Mode: "side-by-side",
-				Placements: []screen.Rect{
-					{X: 0, Y: 0, Width: half, Height: height},
-					{X: half, Y: 0, Width: width - half, Height: height},
-				},
-			}, nil
-		}
-		half := height / 2
-		return nil, LayoutSuggestOutput{
-			Mode: "stacked",
-			Placements: []screen.Rect{
-				{X: 0, Y: 0, Width: width, Height: half},
-				{X: 0, Y: half, Width: width, Height: height - half},
-			},
-		}, nil
-	case count == 3 && width >= height:
-		mainWidth := width * 2 / 3
-		sideHeight := height / 2
-		return nil, LayoutSuggestOutput{
-			Mode: "editor-plus-stack",
-			Placements: []screen.Rect{
-				{X: 0, Y: 0, Width: mainWidth, Height: height},
-				{X: mainWidth, Y: 0, Width: width - mainWidth, Height: sideHeight},
-				{X: mainWidth, Y: sideHeight, Width: width - mainWidth, Height: height - sideHeight},
-			},
-		}, nil
-	default:
-		cols := 2
-		if count > 4 {
-			cols = 3
-		}
-		rows := (count + cols - 1) / cols
-		cellWidth := width / cols
-		cellHeight := height / rows
-		placements := make([]screen.Rect, 0, count)
-		for i := 0; i < count; i++ {
-			row := i / cols
-			col := i % cols
-			placements = append(placements, screen.Rect{
-				X: col * cellWidth, Y: row * cellHeight,
-				Width: cellWidth, Height: cellHeight,
-			})
-		}
-		return nil, LayoutSuggestOutput{Mode: "grid", Placements: placements}, nil
-	}
-}
-
-// --- layout_beside_editor ---
-
-type LayoutBesideEditorInput struct {
-	Name        string   `json:"name"`
-	EditorNames []string `json:"editorNames,omitempty"`
-}
-type LayoutBesideEditorOutput struct {
-	Editor string      `json:"editor"`
-	Bounds screen.Rect `json:"bounds"`
-}
-
-func (s *Subsystem) layoutBesideEditor(_ context.Context, _ *mcp.CallToolRequest, input LayoutBesideEditorInput) (*mcp.CallToolResult, LayoutBesideEditorOutput, error) {
-	windows, err := s.allWindows()
-	if err != nil {
-		return nil, LayoutBesideEditorOutput{}, err
-	}
-	screens, err := s.allScreens()
-	if err != nil {
-		return nil, LayoutBesideEditorOutput{}, err
-	}
-
-	editorHints := map[string]struct{}{}
-	for _, name := range input.EditorNames {
-		editorHints[strings.ToLower(name)] = struct{}{}
-	}
-	defaultHints := []string{"code", "cursor", "vscode", "studio", "goland", "intellij", "webstorm", "xcode", "vim", "nvim", "emacs", "editor"}
-
-	var editor *window.WindowInfo
-	for i := range windows {
-		if windows[i].Name == input.Name {
-			continue
-		}
-		name := strings.ToLower(windows[i].Name)
-		title := strings.ToLower(windows[i].Title)
-		if _, ok := editorHints[name]; ok {
-			editor = &windows[i]
-			break
-		}
-		for _, hint := range defaultHints {
-			if strings.Contains(name, hint) || strings.Contains(title, hint) {
-				editor = &windows[i]
-				break
-			}
-		}
-		if editor != nil {
-			break
-		}
-	}
-	if editor == nil {
-		return nil, LayoutBesideEditorOutput{}, coreerr.E("mcp.layoutBesideEditor", "no editor window detected", nil)
-	}
-
-	editorScreen := screenForWindowInfo(screens, *editor)
-	if editorScreen == nil {
-		editorScreen = chooseScreenByIDOrPrimary(screens, "")
-	}
-	workArea := workAreaRect(editorScreen)
-
-	editorRect := screen.Rect{X: editor.X, Y: editor.Y, Width: editor.Width, Height: editor.Height}
-	candidates := []screen.Rect{
-		{X: workArea.X, Y: workArea.Y, Width: max(0, editorRect.X-workArea.X), Height: workArea.Height},
-		{X: editorRect.X + editorRect.Width, Y: workArea.Y, Width: max(0, workArea.X+workArea.Width-(editorRect.X+editorRect.Width)), Height: workArea.Height},
-		{X: workArea.X, Y: workArea.Y, Width: workArea.Width, Height: max(0, editorRect.Y-workArea.Y)},
-		{X: workArea.X, Y: editorRect.Y + editorRect.Height, Width: workArea.Width, Height: max(0, workArea.Y+workArea.Height-(editorRect.Y+editorRect.Height))},
-	}
-
-	best := screen.Rect{}
-	bestArea := -1
-	for _, candidate := range candidates {
-		area := candidate.Width * candidate.Height
-		if candidate.Width <= 0 || candidate.Height <= 0 {
-			continue
-		}
-		if area > bestArea {
-			bestArea = area
-			best = candidate
-		}
-	}
-	if bestArea <= 0 {
-		arranged, err := s.arrangePairOnScreen(editor.Name, input.Name, editorScreen, "")
-		if err != nil {
-			return nil, LayoutBesideEditorOutput{}, err
-		}
-		return nil, LayoutBesideEditorOutput{Editor: editor.Name, Bounds: arranged.Second}, nil
-	}
-
-	if err := applyRect(s.core, input.Name, best); err != nil {
-		return nil, LayoutBesideEditorOutput{}, err
-	}
-	return nil, LayoutBesideEditorOutput{Editor: editor.Name, Bounds: best}, nil
 }
 
 // --- Registration ---
@@ -357,8 +224,6 @@ func (s *Subsystem) registerLayoutTools(server *mcp.Server) {
 	mcp.AddTool(server, &mcp.Tool{Name: "layout_delete", Description: "Delete a saved layout"}, s.layoutDelete)
 	mcp.AddTool(server, &mcp.Tool{Name: "layout_get", Description: "Get a specific layout by name"}, s.layoutGet)
 	mcp.AddTool(server, &mcp.Tool{Name: "layout_tile", Description: "Tile windows in a grid arrangement"}, s.layoutTile)
-	mcp.AddTool(server, &mcp.Tool{Name: "layout_suggest", Description: "Suggest an optimal arrangement for the given screen size and window count"}, s.layoutSuggest)
-	mcp.AddTool(server, &mcp.Tool{Name: "layout_beside_editor", Description: "Place a window beside a detected editor or IDE window"}, s.layoutBesideEditor)
 	mcp.AddTool(server, &mcp.Tool{Name: "layout_snap", Description: "Snap a window to a screen edge or corner"}, s.layoutSnap)
 	mcp.AddTool(server, &mcp.Tool{Name: "layout_stack", Description: "Stack windows in a cascade pattern"}, s.layoutStack)
 	mcp.AddTool(server, &mcp.Tool{Name: "layout_workflow", Description: "Apply a preset workflow layout"}, s.layoutWorkflow)

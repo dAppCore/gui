@@ -4,10 +4,9 @@ package mcp
 import (
 	"context"
 
-	"dappco.re/go/core/gui/pkg/display"
-	"dappco.re/go/core/gui/pkg/events"
-	coreerr "forge.lthn.ai/core/go-log"
-	"forge.lthn.ai/core/go/pkg/core"
+	core "dappco.re/go/core"
+	coreerr "dappco.re/go/core/log"
+	"forge.lthn.ai/core/gui/pkg/events"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -18,17 +17,24 @@ type EventEmitInput struct {
 	Data any    `json:"data,omitempty"`
 }
 type EventEmitOutput struct {
-	Success bool `json:"success"`
+	Cancelled bool `json:"cancelled"`
 }
 
-// eventEmit fires a custom event by name with optional data.
-// c.PERFORM(events.TaskEmit{Name: "build:done", Data: result})
 func (s *Subsystem) eventEmit(_ context.Context, _ *mcp.CallToolRequest, input EventEmitInput) (*mcp.CallToolResult, EventEmitOutput, error) {
-	_, _, err := s.core.PERFORM(events.TaskEmit{Name: input.Name, Data: input.Data})
-	if err != nil {
-		return nil, EventEmitOutput{}, err
+	r := s.core.Action("events.emit").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: events.TaskEmit{Name: input.Name, Data: input.Data}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, EventEmitOutput{}, e
+		}
+		return nil, EventEmitOutput{}, nil
 	}
-	return nil, EventEmitOutput{Success: true}, nil
+	cancelled, ok := r.Value.(bool)
+	if !ok {
+		return nil, EventEmitOutput{}, coreerr.E("mcp.eventEmit", "unexpected result type", nil)
+	}
+	return nil, EventEmitOutput{Cancelled: cancelled}, nil
 }
 
 // --- event_on ---
@@ -40,12 +46,15 @@ type EventOnOutput struct {
 	Success bool `json:"success"`
 }
 
-// eventOn registers a persistent listener for a named event.
-// c.PERFORM(events.TaskOn{Name: "build:done"})
 func (s *Subsystem) eventOn(_ context.Context, _ *mcp.CallToolRequest, input EventOnInput) (*mcp.CallToolResult, EventOnOutput, error) {
-	_, _, err := s.core.PERFORM(events.TaskOn{Name: input.Name})
-	if err != nil {
-		return nil, EventOnOutput{}, err
+	r := s.core.Action("events.on").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: events.TaskOn{Name: input.Name}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, EventOnOutput{}, e
+		}
+		return nil, EventOnOutput{}, nil
 	}
 	return nil, EventOnOutput{Success: true}, nil
 }
@@ -59,80 +68,46 @@ type EventOffOutput struct {
 	Success bool `json:"success"`
 }
 
-// eventOff removes all listeners for a named event.
-// c.PERFORM(events.TaskOff{Name: "build:done"})
 func (s *Subsystem) eventOff(_ context.Context, _ *mcp.CallToolRequest, input EventOffInput) (*mcp.CallToolResult, EventOffOutput, error) {
-	_, _, err := s.core.PERFORM(events.TaskOff{Name: input.Name})
-	if err != nil {
-		return nil, EventOffOutput{}, err
+	r := s.core.Action("events.off").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: events.TaskOff{Name: input.Name}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, EventOffOutput{}, e
+		}
+		return nil, EventOffOutput{}, nil
 	}
 	return nil, EventOffOutput{Success: true}, nil
 }
 
 // --- event_list ---
 
-type EventListInput struct {
-	Name string `json:"name"`
-}
+type EventListInput struct{}
 type EventListOutput struct {
-	Count int `json:"count"`
+	Listeners []events.ListenerInfo `json:"listeners"`
 }
 
-// eventList returns the number of listeners registered for a named event.
-// count := c.QUERY(events.QueryListeners{Name: "build:done"})
-func (s *Subsystem) eventList(_ context.Context, _ *mcp.CallToolRequest, input EventListInput) (*mcp.CallToolResult, EventListOutput, error) {
-	result, _, err := s.core.QUERY(events.QueryListeners{Name: input.Name})
-	if err != nil {
-		return nil, EventListOutput{}, err
+func (s *Subsystem) eventList(_ context.Context, _ *mcp.CallToolRequest, _ EventListInput) (*mcp.CallToolResult, EventListOutput, error) {
+	r := s.core.QUERY(events.QueryListeners{})
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, EventListOutput{}, e
+		}
+		return nil, EventListOutput{}, nil
 	}
-	count, ok := result.(int)
+	listenerInfos, ok := r.Value.([]events.ListenerInfo)
 	if !ok {
 		return nil, EventListOutput{}, coreerr.E("mcp.eventList", "unexpected result type", nil)
 	}
-	return nil, EventListOutput{Count: count}, nil
-}
-
-// --- event_info ---
-
-type EventInfoInput struct {
-	Name string `json:"name,omitempty"`
-}
-type EventInfoOutput struct {
-	Server        display.EventServerInfo `json:"server"`
-	ListenerCount int                     `json:"listenerCount,omitempty"`
-}
-
-func (s *Subsystem) eventInfo(_ context.Context, _ *mcp.CallToolRequest, input EventInfoInput) (*mcp.CallToolResult, EventInfoOutput, error) {
-	output := EventInfoOutput{}
-
-	if input.Name != "" {
-		result, _, err := s.core.QUERY(events.QueryListeners{Name: input.Name})
-		if err != nil {
-			return nil, EventInfoOutput{}, err
-		}
-		count, ok := result.(int)
-		if !ok {
-			return nil, EventInfoOutput{}, coreerr.E("mcp.eventInfo", "unexpected result type", nil)
-		}
-		output.ListenerCount = count
-	}
-
-	displaySvc, err := core.ServiceFor[*display.Service](s.core, "display")
-	if err == nil && displaySvc != nil {
-		output.Server = displaySvc.GetEventInfo()
-	}
-
-	return nil, output, nil
+	return nil, EventListOutput{Listeners: listenerInfos}, nil
 }
 
 // --- Registration ---
 
-func (s *Subsystem) registerEventTools(server *mcp.Server) {
-	mcp.AddTool(server, &mcp.Tool{Name: "event_emit", Description: "Fire a custom event by name with optional data"}, s.eventEmit)
-	mcp.AddTool(server, &mcp.Tool{Name: "event_on", Description: "Register a persistent listener for a named event"}, s.eventOn)
-	mcp.AddTool(server, &mcp.Tool{Name: "event_subscribe", Description: "Alias for event_on"}, s.eventOn)
-	mcp.AddTool(server, &mcp.Tool{Name: "event_off", Description: "Remove all listeners for a named event"}, s.eventOff)
-	mcp.AddTool(server, &mcp.Tool{Name: "event_unsubscribe", Description: "Alias for event_off"}, s.eventOff)
-	mcp.AddTool(server, &mcp.Tool{Name: "event_list", Description: "Return the number of listeners registered for a named event"}, s.eventList)
-	mcp.AddTool(server, &mcp.Tool{Name: "event_info", Description: "Get display event server info and optional listener counts"}, s.eventInfo)
+func (s *Subsystem) registerEventsTools(server *mcp.Server) {
+	mcp.AddTool(server, &mcp.Tool{Name: "event_emit", Description: "Fire a named custom event with optional data"}, s.eventEmit)
+	mcp.AddTool(server, &mcp.Tool{Name: "event_on", Description: "Register a listener for a named custom event"}, s.eventOn)
+	mcp.AddTool(server, &mcp.Tool{Name: "event_off", Description: "Remove all listeners for a named custom event"}, s.eventOff)
+	mcp.AddTool(server, &mcp.Tool{Name: "event_list", Description: "Query all registered event listeners"}, s.eventList)
 }

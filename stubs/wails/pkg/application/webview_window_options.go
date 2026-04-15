@@ -2,167 +2,294 @@ package application
 
 import "github.com/wailsapp/wails/v3/pkg/events"
 
-// WindowState represents the starting visual state of a window.
+// WindowState represents the visible state of a window.
+//
+//	opts := application.WebviewWindowOptions{StartState: application.WindowStateMaximised}
 type WindowState int
 
 const (
-	WindowStateNormal     WindowState = iota
-	WindowStateMinimised  WindowState = iota
-	WindowStateMaximised  WindowState = iota
-	WindowStateFullscreen WindowState = iota
+	// WindowStateNormal is the default windowed state.
+	WindowStateNormal WindowState = iota
+	// WindowStateMinimised is the minimised (iconified) state.
+	WindowStateMinimised
+	// WindowStateMaximised fills the available work area.
+	WindowStateMaximised
+	// WindowStateFullscreen occupies the full screen.
+	WindowStateFullscreen
 )
 
-// WindowStartPosition determines how the initial X/Y coordinates are interpreted.
+// WindowStartPosition controls where a window first appears.
+//
+//	opts := application.WebviewWindowOptions{InitialPosition: application.WindowCentered}
 type WindowStartPosition int
 
 const (
-	// WindowCentered places the window in the centre of the screen on first show.
+	// WindowCentered places the window at the centre of the screen.
 	WindowCentered WindowStartPosition = 0
-	// WindowXY places the window at the explicit X/Y coordinates.
+	// WindowXY places the window at the coordinates given by X and Y.
 	WindowXY WindowStartPosition = 1
 )
 
-// BackgroundType controls window transparency.
+// BackgroundType determines how the window background is rendered.
+//
+//	opts := application.WebviewWindowOptions{BackgroundType: application.BackgroundTypeTranslucent}
 type BackgroundType int
 
 const (
-	BackgroundTypeSolid       BackgroundType = iota
-	BackgroundTypeTransparent BackgroundType = iota
-	BackgroundTypeTranslucent BackgroundType = iota
+	// BackgroundTypeSolid renders a solid opaque background.
+	BackgroundTypeSolid BackgroundType = iota
+	// BackgroundTypeTransparent renders a fully transparent background.
+	BackgroundTypeTransparent
+	// BackgroundTypeTranslucent renders a frosted/blur translucent background.
+	BackgroundTypeTranslucent
 )
 
-// WebviewWindowOptions holds all configuration for a webview window.
+// NewRGB constructs an opaque RGBA value from red, green, blue components.
 //
-//	opts := WebviewWindowOptions{
-//	    Name:   "main",
-//	    Title:  "My App",
-//	    Width:  1280,
-//	    Height: 800,
-//	    Mac:    MacWindow{TitleBar: MacTitleBarHiddenInset},
-//	}
-type WebviewWindowOptions struct {
-	// Name is a unique identifier for the window.
-	Name string
-	// Title is shown in the title bar.
-	Title string
-	// Width is the initial width in logical pixels.
-	Width int
-	// Height is the initial height in logical pixels.
-	Height int
-	// AlwaysOnTop makes the window float above others.
-	AlwaysOnTop bool
-	// URL is the URL to load on creation.
-	URL string
-	// HTML is inline HTML to load (alternative to URL).
-	HTML string
-	// JS is inline JavaScript to inject.
-	JS string
-	// CSS is inline CSS to inject.
-	CSS string
-	// DisableResize prevents the user from resizing the window.
-	DisableResize bool
-	// Frameless removes the OS window frame.
-	Frameless bool
-	// MinWidth is the minimum allowed width.
-	MinWidth int
-	// MinHeight is the minimum allowed height.
-	MinHeight int
-	// MaxWidth is the maximum allowed width (0 = unlimited).
-	MaxWidth int
-	// MaxHeight is the maximum allowed height (0 = unlimited).
-	MaxHeight int
-	// StartState sets the visual state when first shown.
-	StartState WindowState
-	// BackgroundType controls transparency.
-	BackgroundType BackgroundType
-	// BackgroundColour is the solid background fill colour.
-	BackgroundColour RGBA
-	// InitialPosition controls how X/Y are interpreted.
-	InitialPosition WindowStartPosition
-	// X is the initial horizontal position.
-	X int
-	// Y is the initial vertical position.
-	Y int
-	// Hidden creates the window without showing it.
-	Hidden bool
-	// Zoom sets the initial zoom magnification (0 = default = 1.0).
-	Zoom float64
-	// ZoomControlEnabled allows the user to change zoom.
-	ZoomControlEnabled bool
-	// EnableFileDrop enables drag-and-drop of files onto the window.
-	EnableFileDrop bool
-	// OpenInspectorOnStartup opens the web inspector when first shown.
-	OpenInspectorOnStartup bool
-	// DevToolsEnabled exposes the developer tools (default true in debug builds).
-	DevToolsEnabled bool
-	// DefaultContextMenuDisabled disables the built-in right-click menu.
-	DefaultContextMenuDisabled bool
-	// KeyBindings is a map of accelerator strings to window callbacks.
-	KeyBindings map[string]func(window Window)
-	// IgnoreMouseEvents passes all mouse events through (Windows + macOS only).
-	IgnoreMouseEvents bool
-	// ContentProtectionEnabled prevents screen capture (Windows + macOS only).
-	ContentProtectionEnabled bool
-	// HideOnFocusLost hides the window when it loses focus.
-	HideOnFocusLost bool
-	// HideOnEscape hides the window when Escape is pressed.
-	HideOnEscape bool
-	// UseApplicationMenu uses the application-level menu for this window.
-	UseApplicationMenu bool
-	// MinimiseButtonState controls the minimise button state.
-	MinimiseButtonState ButtonState
-	// MaximiseButtonState controls the maximise/zoom button state.
-	MaximiseButtonState ButtonState
-	// CloseButtonState controls the close button state.
-	CloseButtonState ButtonState
-	// Mac contains macOS-specific window options.
-	Mac MacWindow
-	// Windows contains Windows-specific window options.
-	Windows WindowsWindow
-	// Linux contains Linux-specific window options.
-	Linux LinuxWindow
+//	colour := application.NewRGB(0xff, 0x00, 0x00) // red
+func NewRGB(red, green, blue uint8) RGBA {
+	return RGBA{Red: red, Green: green, Blue: blue, Alpha: 255}
 }
 
-// -------------------------
-// macOS-specific types
-// -------------------------
+// NewRGBPtr encodes red, green, blue as a packed *uint32 in 0x00BBGGRR order.
+//
+//	ptr := application.NewRGBPtr(0xff, 0x80, 0x00)
+func NewRGBPtr(red, green, blue uint8) *uint32 {
+	value := uint32(red) | uint32(green)<<8 | uint32(blue)<<16
+	return &value
+}
 
-// MacBackdrop is the backdrop material for a macOS window.
+/******* Windows Options *******/
+
+// BackdropType selects the translucent backdrop style on Windows 11.
+//
+//	opts.Windows = application.WindowsWindow{BackdropType: application.Mica}
+type BackdropType int32
+
+const (
+	// Auto lets the system choose the best backdrop.
+	Auto BackdropType = 0
+	// None disables the translucent backdrop.
+	None BackdropType = 1
+	// Mica applies the Mica material (Windows 11 22H2+).
+	Mica BackdropType = 2
+	// Acrylic applies the Acrylic blur-behind material.
+	Acrylic BackdropType = 3
+	// Tabbed applies the Tabbed/MICA-Alt material.
+	Tabbed BackdropType = 4
+)
+
+// CoreWebView2PermissionKind enumerates the types of WebView2 permissions.
+type CoreWebView2PermissionKind uint32
+
+const (
+	CoreWebView2PermissionKindUnknownPermission CoreWebView2PermissionKind = iota
+	CoreWebView2PermissionKindMicrophone
+	CoreWebView2PermissionKindCamera
+	CoreWebView2PermissionKindGeolocation
+	CoreWebView2PermissionKindNotifications
+	CoreWebView2PermissionKindOtherSensors
+	CoreWebView2PermissionKindClipboardRead
+)
+
+// CoreWebView2PermissionState enumerates the allowed states for a WebView2 permission.
+type CoreWebView2PermissionState uint32
+
+const (
+	CoreWebView2PermissionStateDefault CoreWebView2PermissionState = iota
+	CoreWebView2PermissionStateAllow
+	CoreWebView2PermissionStateDeny
+)
+
+// Theme selects between the system default, dark, and light UI themes on Windows.
+//
+//	opts.Windows = application.WindowsWindow{Theme: application.Dark}
+type Theme int
+
+const (
+	// SystemDefault follows the OS theme and reacts to changes.
+	SystemDefault Theme = 0
+	// Dark forces the dark theme.
+	Dark Theme = 1
+	// Light forces the light theme.
+	Light Theme = 2
+)
+
+// WindowTheme defines colour overrides for a single window activity state.
+//
+//	wt := &application.WindowTheme{TitleBarColour: application.NewRGBPtr(0x1e, 0x1e, 0x1e)}
+type WindowTheme struct {
+	// BorderColour is the colour of the window border (0x00BBGGRR).
+	BorderColour *uint32
+	// TitleBarColour is the colour of the title bar (0x00BBGGRR).
+	TitleBarColour *uint32
+	// TitleTextColour is the colour of the title text (0x00BBGGRR).
+	TitleTextColour *uint32
+}
+
+// TextTheme defines foreground and background colours for a text element.
+type TextTheme struct {
+	// Text is the foreground colour.
+	Text *uint32
+	// Background is the background colour.
+	Background *uint32
+}
+
+// MenuBarTheme defines colours for a menu bar in default, hovered, and selected states.
+type MenuBarTheme struct {
+	// Default is the theme used when the item is neither hovered nor selected.
+	Default *TextTheme
+	// Hover is the theme used when the pointer is over the item.
+	Hover *TextTheme
+	// Selected is the theme used when the item is selected.
+	Selected *TextTheme
+}
+
+// ThemeSettings defines custom colours used in dark or light mode.
+// Colour values use packed 0x00BBGGRR encoding — use NewRGBPtr to construct them.
+//
+//	ts := application.ThemeSettings{
+//	    DarkModeActive: &application.WindowTheme{TitleBarColour: application.NewRGBPtr(0x1e, 0x1e, 0x2e)},
+//	}
+type ThemeSettings struct {
+	// DarkModeActive applies when the window is active in dark mode.
+	DarkModeActive *WindowTheme
+	// DarkModeInactive applies when the window is inactive in dark mode.
+	DarkModeInactive *WindowTheme
+	// LightModeActive applies when the window is active in light mode.
+	LightModeActive *WindowTheme
+	// LightModeInactive applies when the window is inactive in light mode.
+	LightModeInactive *WindowTheme
+	// DarkModeMenuBar applies to the menu bar in dark mode.
+	DarkModeMenuBar *MenuBarTheme
+	// LightModeMenuBar applies to the menu bar in light mode.
+	LightModeMenuBar *MenuBarTheme
+}
+
+// WindowsWindow contains Windows-specific window configuration.
+//
+//	opts.Windows = application.WindowsWindow{BackdropType: application.Mica, Theme: application.Dark}
+type WindowsWindow struct {
+	// BackdropType selects the translucent material. Requires Windows 11 22621+.
+	// Only used when BackgroundType is BackgroundTypeTranslucent.
+	// Default: Auto
+	BackdropType BackdropType
+
+	// DisableIcon removes the application icon from the title bar.
+	// Default: false
+	DisableIcon bool
+
+	// Theme selects between dark, light, or system-default title bar styling.
+	// Default: SystemDefault
+	Theme Theme
+
+	// CustomTheme overrides colours for dark/light active/inactive states.
+	// Default: zero value (no override)
+	CustomTheme ThemeSettings
+
+	// DisableFramelessWindowDecorations suppresses Aero shadow and rounded corners
+	// when the window is frameless. Rounded corners require Windows 11.
+	// Default: false
+	DisableFramelessWindowDecorations bool
+
+	// WindowMask sets the window shape via a PNG with an alpha channel.
+	// Default: nil
+	WindowMask []byte
+
+	// WindowMaskDraggable allows the window to be dragged via the mask area.
+	// Default: false
+	WindowMaskDraggable bool
+
+	// ResizeDebounceMS debounces WebView2 redraws during resize.
+	// Default: 0
+	ResizeDebounceMS uint16
+
+	// WindowDidMoveDebounceMS debounces the WindowDidMove event.
+	// Default: 0
+	WindowDidMoveDebounceMS uint16
+
+	// EventMapping translates platform window events to common event types.
+	// Default: nil
+	EventMapping map[events.WindowEventType]events.WindowEventType
+
+	// HiddenOnTaskbar excludes the window from the taskbar.
+	// Default: false
+	HiddenOnTaskbar bool
+
+	// EnableSwipeGestures enables horizontal swipe gestures.
+	// Default: false
+	EnableSwipeGestures bool
+
+	// Menu is the window-level menu.
+	Menu *Menu
+
+	// Permissions configures WebView2 permission grants.
+	// Default: nil (system defaults apply)
+	Permissions map[CoreWebView2PermissionKind]CoreWebView2PermissionState
+
+	// ExStyle is the extended window style flags (WS_EX_*).
+	ExStyle int
+
+	// GeneralAutofillEnabled enables general autofill in WebView2.
+	GeneralAutofillEnabled bool
+
+	// PasswordAutosaveEnabled enables password autosave in WebView2.
+	PasswordAutosaveEnabled bool
+}
+
+/****** Mac Options *******/
+
+// MacBackdrop controls the translucency of the macOS window background.
+//
+//	opts.Mac = application.MacWindow{Backdrop: application.MacBackdropTranslucent}
 type MacBackdrop int
 
 const (
-	// MacBackdropNormal uses an opaque background.
+	// MacBackdropNormal renders a standard opaque background.
 	MacBackdropNormal MacBackdrop = iota
-	// MacBackdropTransparent shows the desktop behind the window.
-	MacBackdropTransparent MacBackdrop = iota
-	// MacBackdropTranslucent applies a frosted-glass vibrancy effect.
-	MacBackdropTranslucent MacBackdrop = iota
-	// MacBackdropLiquidGlass uses the Apple Liquid Glass effect (macOS 15+).
-	MacBackdropLiquidGlass MacBackdrop = iota
+	// MacBackdropTransparent renders a fully transparent background.
+	MacBackdropTransparent
+	// MacBackdropTranslucent renders a frosted vibrancy background.
+	MacBackdropTranslucent
+	// MacBackdropLiquidGlass applies Apple's Liquid Glass effect (macOS 15+,
+	// falls back to translucent on earlier releases).
+	MacBackdropLiquidGlass
 )
 
-// MacToolbarStyle controls toolbar layout relative to the title bar.
+// MacToolbarStyle controls the toolbar layout relative to the title bar.
+//
+//	opts.Mac.TitleBar.ToolbarStyle = application.MacToolbarStyleUnified
 type MacToolbarStyle int
 
 const (
-	MacToolbarStyleAutomatic      MacToolbarStyle = iota
-	MacToolbarStyleExpanded       MacToolbarStyle = iota
-	MacToolbarStylePreference     MacToolbarStyle = iota
-	MacToolbarStyleUnified        MacToolbarStyle = iota
-	MacToolbarStyleUnifiedCompact MacToolbarStyle = iota
+	// MacToolbarStyleAutomatic lets the system decide based on configuration.
+	MacToolbarStyleAutomatic MacToolbarStyle = iota
+	// MacToolbarStyleExpanded shows the toolbar below the title bar.
+	MacToolbarStyleExpanded
+	// MacToolbarStylePreference shows the toolbar below the title bar with
+	// equal-width items where possible.
+	MacToolbarStylePreference
+	// MacToolbarStyleUnified merges the title bar and toolbar into one row.
+	MacToolbarStyleUnified
+	// MacToolbarStyleUnifiedCompact is like Unified but with reduced margins.
+	MacToolbarStyleUnifiedCompact
 )
 
-// MacLiquidGlassStyle defines the tint of the Liquid Glass effect.
+// MacLiquidGlassStyle defines the appearance of the Liquid Glass effect.
 type MacLiquidGlassStyle int
 
 const (
+	// LiquidGlassStyleAutomatic lets the system choose the best style.
 	LiquidGlassStyleAutomatic MacLiquidGlassStyle = iota
-	LiquidGlassStyleLight     MacLiquidGlassStyle = iota
-	LiquidGlassStyleDark      MacLiquidGlassStyle = iota
-	LiquidGlassStyleVibrant   MacLiquidGlassStyle = iota
+	// LiquidGlassStyleLight uses a light glass appearance.
+	LiquidGlassStyleLight
+	// LiquidGlassStyleDark uses a dark glass appearance.
+	LiquidGlassStyleDark
+	// LiquidGlassStyleVibrant uses an enhanced vibrant glass appearance.
+	LiquidGlassStyleVibrant
 )
 
-// NSVisualEffectMaterial maps to the NSVisualEffectMaterial macOS enum.
+// NSVisualEffectMaterial mirrors NSVisualEffectMaterial from the macOS SDK.
 type NSVisualEffectMaterial int
 
 const (
@@ -183,34 +310,61 @@ const (
 	NSVisualEffectMaterialContentBackground     NSVisualEffectMaterial = 18
 	NSVisualEffectMaterialUnderWindowBackground NSVisualEffectMaterial = 21
 	NSVisualEffectMaterialUnderPageBackground   NSVisualEffectMaterial = 22
-	NSVisualEffectMaterialAuto                  NSVisualEffectMaterial = -1
+	// NSVisualEffectMaterialAuto selects the material automatically based on Style.
+	NSVisualEffectMaterialAuto NSVisualEffectMaterial = -1
 )
 
-// MacLiquidGlass configures the Liquid Glass compositor effect.
+// MacLiquidGlass configures the Liquid Glass visual effect (macOS 15+).
+//
+//	opts.Mac.LiquidGlass = application.MacLiquidGlass{Style: application.LiquidGlassStyleDark}
 type MacLiquidGlass struct {
-	Style        MacLiquidGlassStyle
-	Material     NSVisualEffectMaterial
+	// Style of the glass effect.
+	Style MacLiquidGlassStyle
+
+	// Material for the NSVisualEffectView fallback.
+	// Use NSVisualEffectMaterialAuto for automatic selection based on Style.
+	Material NSVisualEffectMaterial
+
+	// CornerRadius specifies the corner radius in points (0 for square corners).
 	CornerRadius float64
-	TintColor    *RGBA
-	GroupID      string
+
+	// TintColor adds an optional colour tint to the glass (nil for no tint).
+	TintColor *RGBA
+
+	// GroupID merges multiple glass windows into a single visual group.
+	GroupID string
+
+	// GroupSpacing is the spacing between grouped glass elements in points.
 	GroupSpacing float64
 }
 
-// MacAppearanceType is the NSAppearance name string for a macOS window.
+// MacAppearanceType selects a Cocoa NSAppearance for the window.
+//
+//	opts.Mac = application.MacWindow{Appearance: application.NSAppearanceNameDarkAqua}
 type MacAppearanceType string
 
 const (
-	DefaultAppearance                                    MacAppearanceType = ""
-	NSAppearanceNameAqua                                 MacAppearanceType = "NSAppearanceNameAqua"
-	NSAppearanceNameDarkAqua                             MacAppearanceType = "NSAppearanceNameDarkAqua"
-	NSAppearanceNameVibrantLight                         MacAppearanceType = "NSAppearanceNameVibrantLight"
-	NSAppearanceNameAccessibilityHighContrastAqua        MacAppearanceType = "NSAppearanceNameAccessibilityHighContrastAqua"
-	NSAppearanceNameAccessibilityHighContrastDarkAqua    MacAppearanceType = "NSAppearanceNameAccessibilityHighContrastDarkAqua"
+	// DefaultAppearance follows the system setting.
+	DefaultAppearance MacAppearanceType = ""
+	// NSAppearanceNameAqua is the standard light system appearance.
+	NSAppearanceNameAqua MacAppearanceType = "NSAppearanceNameAqua"
+	// NSAppearanceNameDarkAqua is the standard dark system appearance.
+	NSAppearanceNameDarkAqua MacAppearanceType = "NSAppearanceNameDarkAqua"
+	// NSAppearanceNameVibrantLight is the light vibrant appearance.
+	NSAppearanceNameVibrantLight MacAppearanceType = "NSAppearanceNameVibrantLight"
+	// NSAppearanceNameAccessibilityHighContrastAqua is high-contrast light.
+	NSAppearanceNameAccessibilityHighContrastAqua MacAppearanceType = "NSAppearanceNameAccessibilityHighContrastAqua"
+	// NSAppearanceNameAccessibilityHighContrastDarkAqua is high-contrast dark.
+	NSAppearanceNameAccessibilityHighContrastDarkAqua MacAppearanceType = "NSAppearanceNameAccessibilityHighContrastDarkAqua"
+	// NSAppearanceNameAccessibilityHighContrastVibrantLight is high-contrast light vibrant.
 	NSAppearanceNameAccessibilityHighContrastVibrantLight MacAppearanceType = "NSAppearanceNameAccessibilityHighContrastVibrantLight"
-	NSAppearanceNameAccessibilityHighContrastVibrantDark  MacAppearanceType = "NSAppearanceNameAccessibilityHighContrastVibrantDark"
+	// NSAppearanceNameAccessibilityHighContrastVibrantDark is high-contrast dark vibrant.
+	NSAppearanceNameAccessibilityHighContrastVibrantDark MacAppearanceType = "NSAppearanceNameAccessibilityHighContrastVibrantDark"
 )
 
-// MacWindowLevel controls Z-ordering relative to other windows.
+// MacWindowLevel controls the z-order stacking group of the window.
+//
+//	opts.Mac = application.MacWindow{WindowLevel: application.MacWindowLevelFloating}
 type MacWindowLevel string
 
 const (
@@ -224,88 +378,90 @@ const (
 	MacWindowLevelScreenSaver MacWindowLevel = "screenSaver"
 )
 
-// MacWindowCollectionBehavior is a bitmask controlling Spaces and fullscreen behaviour.
+// MacWindowCollectionBehavior controls how the window participates in macOS
+// Spaces and fullscreen. Values correspond to NSWindowCollectionBehavior bits
+// and may be combined with bitwise OR.
+//
+//	opts.Mac.CollectionBehavior = application.MacWindowCollectionBehaviorCanJoinAllSpaces |
+//	    application.MacWindowCollectionBehaviorFullScreenAuxiliary
 type MacWindowCollectionBehavior int
 
 const (
-	MacWindowCollectionBehaviorDefault                   MacWindowCollectionBehavior = 0
-	MacWindowCollectionBehaviorCanJoinAllSpaces          MacWindowCollectionBehavior = 1 << 0
-	MacWindowCollectionBehaviorMoveToActiveSpace         MacWindowCollectionBehavior = 1 << 1
-	MacWindowCollectionBehaviorManaged                   MacWindowCollectionBehavior = 1 << 2
-	MacWindowCollectionBehaviorTransient                 MacWindowCollectionBehavior = 1 << 3
-	MacWindowCollectionBehaviorStationary                MacWindowCollectionBehavior = 1 << 4
-	MacWindowCollectionBehaviorParticipatesInCycle       MacWindowCollectionBehavior = 1 << 5
-	MacWindowCollectionBehaviorIgnoresCycle              MacWindowCollectionBehavior = 1 << 6
-	MacWindowCollectionBehaviorFullScreenPrimary         MacWindowCollectionBehavior = 1 << 7
-	MacWindowCollectionBehaviorFullScreenAuxiliary       MacWindowCollectionBehavior = 1 << 8
-	MacWindowCollectionBehaviorFullScreenNone            MacWindowCollectionBehavior = 1 << 9
-	MacWindowCollectionBehaviorFullScreenAllowsTiling    MacWindowCollectionBehavior = 1 << 11
+	// MacWindowCollectionBehaviorDefault uses FullScreenPrimary for backwards compatibility.
+	MacWindowCollectionBehaviorDefault MacWindowCollectionBehavior = 0
+	// MacWindowCollectionBehaviorCanJoinAllSpaces shows the window on all Spaces.
+	MacWindowCollectionBehaviorCanJoinAllSpaces MacWindowCollectionBehavior = 1 << 0
+	// MacWindowCollectionBehaviorMoveToActiveSpace moves the window to the active Space when shown.
+	MacWindowCollectionBehaviorMoveToActiveSpace MacWindowCollectionBehavior = 1 << 1
+	// MacWindowCollectionBehaviorManaged is the default managed window behaviour.
+	MacWindowCollectionBehaviorManaged MacWindowCollectionBehavior = 1 << 2
+	// MacWindowCollectionBehaviorTransient marks the window as temporary.
+	MacWindowCollectionBehaviorTransient MacWindowCollectionBehavior = 1 << 3
+	// MacWindowCollectionBehaviorStationary keeps the window stationary during Space switches.
+	MacWindowCollectionBehaviorStationary MacWindowCollectionBehavior = 1 << 4
+	// MacWindowCollectionBehaviorParticipatesInCycle includes the window in Cmd+` cycling.
+	MacWindowCollectionBehaviorParticipatesInCycle MacWindowCollectionBehavior = 1 << 5
+	// MacWindowCollectionBehaviorIgnoresCycle excludes the window from Cmd+` cycling.
+	MacWindowCollectionBehaviorIgnoresCycle MacWindowCollectionBehavior = 1 << 6
+	// MacWindowCollectionBehaviorFullScreenPrimary allows the window to enter fullscreen.
+	MacWindowCollectionBehaviorFullScreenPrimary MacWindowCollectionBehavior = 1 << 7
+	// MacWindowCollectionBehaviorFullScreenAuxiliary allows the window to overlay fullscreen apps.
+	MacWindowCollectionBehaviorFullScreenAuxiliary MacWindowCollectionBehavior = 1 << 8
+	// MacWindowCollectionBehaviorFullScreenNone prevents the window from entering fullscreen (10.7+).
+	MacWindowCollectionBehaviorFullScreenNone MacWindowCollectionBehavior = 1 << 9
+	// MacWindowCollectionBehaviorFullScreenAllowsTiling allows side-by-side tiling (10.11+).
+	MacWindowCollectionBehaviorFullScreenAllowsTiling MacWindowCollectionBehavior = 1 << 11
+	// MacWindowCollectionBehaviorFullScreenDisallowsTiling prevents tiling in fullscreen (10.11+).
 	MacWindowCollectionBehaviorFullScreenDisallowsTiling MacWindowCollectionBehavior = 1 << 12
 )
 
-// MacWebviewPreferences holds WKWebView preference flags for macOS.
-// Use integer tristate: 0 = unset, 1 = true, 2 = false.
+// MacWebviewPreferences configures Safari-level webview behaviour on macOS.
 type MacWebviewPreferences struct {
-	TabFocusesLinks                     int
-	TextInteractionEnabled              int
-	FullscreenEnabled                   int
-	AllowsBackForwardNavigationGestures int
+	// TabFocusesLinks enables keyboard navigation to links via Tab.
+	TabFocusesLinks bool
+	// TextInteractionEnabled allows the user to select and interact with text.
+	TextInteractionEnabled bool
+	// FullscreenEnabled allows the webview to enter fullscreen.
+	FullscreenEnabled bool
+	// AllowsBackForwardNavigationGestures enables horizontal swipe for navigation.
+	AllowsBackForwardNavigationGestures bool
 }
 
 // MacTitleBar configures the macOS title bar appearance.
+//
+//	opts.Mac = application.MacWindow{TitleBar: application.MacTitleBarHiddenInset}
 type MacTitleBar struct {
-	// AppearsTransparent removes the title bar background.
+	// AppearsTransparent makes the title bar background transparent.
 	AppearsTransparent bool
 	// Hide removes the title bar entirely.
 	Hide bool
-	// HideTitle hides only the text title.
+	// HideTitle omits the window title text.
 	HideTitle bool
-	// FullSizeContent extends window content into the title bar area.
+	// FullSizeContent extends the content area behind the title bar.
 	FullSizeContent bool
-	// UseToolbar replaces the title bar with an NSToolbar.
+	// UseToolbar renders a toolbar in place of the standard title bar.
 	UseToolbar bool
-	// HideToolbarSeparator removes the line between toolbar and content.
+	// HideToolbarSeparator removes the separator line below the toolbar.
 	HideToolbarSeparator bool
-	// ShowToolbarWhenFullscreen keeps the toolbar visible in fullscreen.
+	// ShowToolbarWhenFullscreen keeps the toolbar visible in fullscreen mode.
 	ShowToolbarWhenFullscreen bool
-	// ToolbarStyle selects the toolbar layout style.
+	// ToolbarStyle controls how the toolbar relates to the title bar.
 	ToolbarStyle MacToolbarStyle
 }
 
-// MacWindow contains macOS-specific window options.
-type MacWindow struct {
-	Backdrop                        MacBackdrop
-	DisableShadow                   bool
-	TitleBar                        MacTitleBar
-	Appearance                      MacAppearanceType
-	InvisibleTitleBarHeight         int
-	EventMapping                    map[events.WindowEventType]events.WindowEventType
-	EnableFraudulentWebsiteWarnings bool
-	WebviewPreferences              MacWebviewPreferences
-	WindowLevel                     MacWindowLevel
-	CollectionBehavior              MacWindowCollectionBehavior
-	LiquidGlass                     MacLiquidGlass
-}
-
-// Pre-built MacTitleBar configurations — use directly in MacWindow.TitleBar.
-
-// MacTitleBarDefault produces the standard macOS title bar.
-//
-//	Mac: MacWindow{TitleBar: MacTitleBarDefault}
+// MacTitleBarDefault is the stock macOS title bar with all decorations visible.
 var MacTitleBarDefault = MacTitleBar{}
 
-// MacTitleBarHidden hides the title text while keeping the traffic-light buttons.
-//
-//	Mac: MacWindow{TitleBar: MacTitleBarHidden}
+// MacTitleBarHidden hides the title text and extends content behind the title bar,
+// while keeping the traffic-light window controls visible.
 var MacTitleBarHidden = MacTitleBar{
 	AppearsTransparent: true,
 	HideTitle:          true,
 	FullSizeContent:    true,
 }
 
-// MacTitleBarHiddenInset keeps traffic lights slightly inset from the window edge.
-//
-//	Mac: MacWindow{TitleBar: MacTitleBarHiddenInset}
+// MacTitleBarHiddenInset is like MacTitleBarHidden but uses an inset toolbar so the
+// traffic lights sit slightly further from the window edge.
 var MacTitleBarHiddenInset = MacTitleBar{
 	AppearsTransparent:   true,
 	HideTitle:            true,
@@ -314,9 +470,8 @@ var MacTitleBarHiddenInset = MacTitleBar{
 	HideToolbarSeparator: true,
 }
 
-// MacTitleBarHiddenInsetUnified uses the unified toolbar style for a more compact look.
-//
-//	Mac: MacWindow{TitleBar: MacTitleBarHiddenInsetUnified}
+// MacTitleBarHiddenInsetUnified is like MacTitleBarHiddenInset but merges the toolbar
+// and title bar into a single unified row.
 var MacTitleBarHiddenInsetUnified = MacTitleBar{
 	AppearsTransparent:   true,
 	HideTitle:            true,
@@ -326,146 +481,94 @@ var MacTitleBarHiddenInsetUnified = MacTitleBar{
 	ToolbarStyle:         MacToolbarStyleUnified,
 }
 
-// -------------------------
-// Windows-specific types
-// -------------------------
-
-// BackdropType selects the Windows 11 compositor effect.
-type BackdropType int32
-
-const (
-	Auto    BackdropType = 0
-	None    BackdropType = 1
-	Mica    BackdropType = 2
-	Acrylic BackdropType = 3
-	Tabbed  BackdropType = 4
-)
-
-// Theme selects dark or light mode on Windows.
-type Theme int
-
-const (
-	SystemDefault Theme = 0
-	Dark          Theme = 1
-	Light         Theme = 2
-)
-
-// WindowTheme holds custom title-bar colours for a Windows window.
-type WindowTheme struct {
-	BorderColour    *uint32
-	TitleBarColour  *uint32
-	TitleTextColour *uint32
+// MacWindow contains macOS-specific window configuration.
+//
+//	opts.Mac = application.MacWindow{
+//	    Backdrop:  application.MacBackdropTranslucent,
+//	    TitleBar:  application.MacTitleBarHiddenInset,
+//	    Appearance: application.NSAppearanceNameDarkAqua,
+//	}
+type MacWindow struct {
+	// Backdrop controls the translucency of the window background.
+	Backdrop MacBackdrop
+	// DisableShadow removes the drop shadow cast by the window.
+	DisableShadow bool
+	// TitleBar configures the title bar appearance.
+	TitleBar MacTitleBar
+	// Appearance sets a specific NSAppearance for the window.
+	Appearance MacAppearanceType
+	// InvisibleTitleBarHeight sets the height (in points) of a draggable but
+	// invisible title bar region at the top of the content area.
+	InvisibleTitleBarHeight int
+	// EventMapping translates platform window events to common event types.
+	EventMapping map[events.WindowEventType]events.WindowEventType
+	// EnableFraudulentWebsiteWarnings shows browser-level phishing warnings.
+	// Default: false
+	EnableFraudulentWebsiteWarnings bool
+	// WebviewPreferences configures Safari webview-level preferences.
+	WebviewPreferences MacWebviewPreferences
+	// WindowLevel controls the z-order stacking group of the window.
+	WindowLevel MacWindowLevel
+	// CollectionBehavior controls how the window interacts with Spaces and fullscreen.
+	CollectionBehavior MacWindowCollectionBehavior
+	// LiquidGlass configures the Liquid Glass visual effect (macOS 15+).
+	LiquidGlass MacLiquidGlass
 }
 
-// TextTheme holds foreground/background colour pair for menu text.
-type TextTheme struct {
-	Text       *uint32
-	Background *uint32
-}
+/******** Linux Options ********/
 
-// MenuBarTheme holds per-state text themes for the Windows menu bar.
-type MenuBarTheme struct {
-	Default  *TextTheme
-	Hover    *TextTheme
-	Selected *TextTheme
-}
-
-// ThemeSettings holds custom colours for dark/light mode on Windows.
-// Colours use 0x00BBGGRR encoding.
-type ThemeSettings struct {
-	DarkModeActive    *WindowTheme
-	DarkModeInactive  *WindowTheme
-	LightModeActive   *WindowTheme
-	LightModeInactive *WindowTheme
-	DarkModeMenuBar   *MenuBarTheme
-	LightModeMenuBar  *MenuBarTheme
-}
-
-// CoreWebView2PermissionKind identifies a WebView2 permission category.
-type CoreWebView2PermissionKind uint32
-
-const (
-	CoreWebView2PermissionKindUnknownPermission CoreWebView2PermissionKind = iota
-	CoreWebView2PermissionKindMicrophone
-	CoreWebView2PermissionKindCamera
-	CoreWebView2PermissionKindGeolocation
-	CoreWebView2PermissionKindNotifications
-	CoreWebView2PermissionKindOtherSensors
-	CoreWebView2PermissionKindClipboardRead
-)
-
-// CoreWebView2PermissionState sets whether a permission is granted.
-type CoreWebView2PermissionState uint32
-
-const (
-	CoreWebView2PermissionStateDefault CoreWebView2PermissionState = iota
-	CoreWebView2PermissionStateAllow
-	CoreWebView2PermissionStateDeny
-)
-
-// WindowsWindow contains Windows-specific window options.
-type WindowsWindow struct {
-	BackdropType                      BackdropType
-	DisableIcon                       bool
-	Theme                             Theme
-	CustomTheme                       ThemeSettings
-	DisableFramelessWindowDecorations bool
-	WindowMask                        []byte
-	WindowMaskDraggable               bool
-	ResizeDebounceMS                  uint16
-	WindowDidMoveDebounceMS           uint16
-	EventMapping                      map[events.WindowEventType]events.WindowEventType
-	HiddenOnTaskbar                   bool
-	EnableSwipeGestures               bool
-	Menu                              *Menu
-	Permissions                       map[CoreWebView2PermissionKind]CoreWebView2PermissionState
-	ExStyle                           int
-	GeneralAutofillEnabled            bool
-	PasswordAutosaveEnabled           bool
-}
-
-// -------------------------
-// Linux-specific types
-// -------------------------
-
-// WebviewGpuPolicy controls GPU acceleration for the Linux webview.
+// WebviewGpuPolicy controls hardware acceleration for the Linux webview.
+//
+//	opts.Linux = application.LinuxWindow{WebviewGpuPolicy: application.WebviewGpuPolicyAlways}
 type WebviewGpuPolicy int
 
 const (
-	WebviewGpuPolicyAlways   WebviewGpuPolicy = iota
-	WebviewGpuPolicyOnDemand WebviewGpuPolicy = iota
-	WebviewGpuPolicyNever    WebviewGpuPolicy = iota
+	// WebviewGpuPolicyAlways always enables hardware acceleration.
+	WebviewGpuPolicyAlways WebviewGpuPolicy = iota
+	// WebviewGpuPolicyOnDemand enables acceleration as requested by web content.
+	WebviewGpuPolicyOnDemand
+	// WebviewGpuPolicyNever always disables hardware acceleration.
+	WebviewGpuPolicyNever
 )
 
-// LinuxMenuStyle selects how the application menu is rendered on Linux.
+// LinuxMenuStyle controls how the application menu is displayed on Linux (GTK4 only).
+// On GTK3 builds this option is ignored and MenuBar style is always used.
+//
+//	opts.Linux = application.LinuxWindow{MenuStyle: application.LinuxMenuStylePrimaryMenu}
 type LinuxMenuStyle int
 
 const (
-	LinuxMenuStyleMenuBar     LinuxMenuStyle = iota
-	LinuxMenuStylePrimaryMenu LinuxMenuStyle = iota
+	// LinuxMenuStyleMenuBar shows a traditional menu bar below the title bar.
+	LinuxMenuStyleMenuBar LinuxMenuStyle = iota
+	// LinuxMenuStylePrimaryMenu shows a primary menu button in the header bar (GNOME style).
+	LinuxMenuStylePrimaryMenu
 )
 
-// LinuxWindow contains Linux-specific window options.
+// LinuxWindow contains Linux-specific window configuration.
+//
+//	opts.Linux = application.LinuxWindow{
+//	    WindowIsTranslucent: true,
+//	    WebviewGpuPolicy:    application.WebviewGpuPolicyAlways,
+//	}
 type LinuxWindow struct {
-	Icon                    []byte
-	WindowIsTranslucent     bool
-	WebviewGpuPolicy        WebviewGpuPolicy
+	// Icon is the window icon shown when the window is minimised.
+	// Provide PNG-encoded image data.
+	Icon []byte
+
+	// WindowIsTranslucent makes the window background transparent.
+	WindowIsTranslucent bool
+
+	// WebviewGpuPolicy sets the hardware acceleration policy for the webview.
+	// Defaults to WebviewGpuPolicyNever when LinuxWindow is nil in options.
+	WebviewGpuPolicy WebviewGpuPolicy
+
+	// WindowDidMoveDebounceMS is the debounce time in milliseconds for the
+	// WindowDidMove event.
 	WindowDidMoveDebounceMS uint16
-	Menu                    *Menu
-	MenuStyle               LinuxMenuStyle
-}
 
-// NewRGB constructs an RGBA value with full opacity from RGB components.
-//
-//	colour := NewRGB(255, 128, 0)
-func NewRGB(red, green, blue uint8) RGBA {
-	return RGBA{Red: red, Green: green, Blue: blue, Alpha: 255}
-}
+	// Menu is the window-level menu.
+	Menu *Menu
 
-// NewRGBPtr encodes RGB as a packed uint32 pointer (0x00BBGGRR) for ThemeSettings.
-//
-//	theme.BorderColour = NewRGBPtr(255, 0, 0)
-func NewRGBPtr(red, green, blue uint8) *uint32 {
-	result := uint32(red) | uint32(green)<<8 | uint32(blue)<<16
-	return &result
+	// MenuStyle controls how the menu is displayed (GTK4 only; ignored on GTK3).
+	MenuStyle LinuxMenuStyle
 }

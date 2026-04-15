@@ -6,7 +6,7 @@ import (
 	"sync"
 	"testing"
 
-	"forge.lthn.ai/core/go/pkg/core"
+	core "dappco.re/go/core"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -91,12 +91,11 @@ func (m *mockPlatform) handlerCount() int {
 func newTestLifecycleService(t *testing.T) (*Service, *core.Core, *mockPlatform) {
 	t.Helper()
 	mock := newMockPlatform()
-	c, err := core.New(
+	c := core.New(
 		core.WithService(Register(mock)),
 		core.WithServiceLock(),
 	)
-	require.NoError(t, err)
-	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
 	svc := core.MustServiceFor[*Service](c, "lifecycle")
 	return svc, c, mock
 }
@@ -112,11 +111,11 @@ func TestApplicationStarted_Good(t *testing.T) {
 	_, c, mock := newTestLifecycleService(t)
 
 	var received bool
-	c.RegisterAction(func(_ *core.Core, msg core.Message) error {
+	c.RegisterAction(func(_ *core.Core, msg core.Message) core.Result {
 		if _, ok := msg.(ActionApplicationStarted); ok {
 			received = true
 		}
-		return nil
+		return core.Result{OK: true}
 	})
 
 	mock.simulateEvent(EventApplicationStarted)
@@ -127,11 +126,11 @@ func TestDidBecomeActive_Good(t *testing.T) {
 	_, c, mock := newTestLifecycleService(t)
 
 	var received bool
-	c.RegisterAction(func(_ *core.Core, msg core.Message) error {
+	c.RegisterAction(func(_ *core.Core, msg core.Message) core.Result {
 		if _, ok := msg.(ActionDidBecomeActive); ok {
 			received = true
 		}
-		return nil
+		return core.Result{OK: true}
 	})
 
 	mock.simulateEvent(EventDidBecomeActive)
@@ -142,11 +141,11 @@ func TestDidResignActive_Good(t *testing.T) {
 	_, c, mock := newTestLifecycleService(t)
 
 	var received bool
-	c.RegisterAction(func(_ *core.Core, msg core.Message) error {
+	c.RegisterAction(func(_ *core.Core, msg core.Message) core.Result {
 		if _, ok := msg.(ActionDidResignActive); ok {
 			received = true
 		}
-		return nil
+		return core.Result{OK: true}
 	})
 
 	mock.simulateEvent(EventDidResignActive)
@@ -157,11 +156,11 @@ func TestWillTerminate_Good(t *testing.T) {
 	_, c, mock := newTestLifecycleService(t)
 
 	var received bool
-	c.RegisterAction(func(_ *core.Core, msg core.Message) error {
+	c.RegisterAction(func(_ *core.Core, msg core.Message) core.Result {
 		if _, ok := msg.(ActionWillTerminate); ok {
 			received = true
 		}
-		return nil
+		return core.Result{OK: true}
 	})
 
 	mock.simulateEvent(EventWillTerminate)
@@ -172,11 +171,11 @@ func TestPowerStatusChanged_Good(t *testing.T) {
 	_, c, mock := newTestLifecycleService(t)
 
 	var received bool
-	c.RegisterAction(func(_ *core.Core, msg core.Message) error {
+	c.RegisterAction(func(_ *core.Core, msg core.Message) core.Result {
 		if _, ok := msg.(ActionPowerStatusChanged); ok {
 			received = true
 		}
-		return nil
+		return core.Result{OK: true}
 	})
 
 	mock.simulateEvent(EventPowerStatusChanged)
@@ -187,11 +186,11 @@ func TestSystemSuspend_Good(t *testing.T) {
 	_, c, mock := newTestLifecycleService(t)
 
 	var received bool
-	c.RegisterAction(func(_ *core.Core, msg core.Message) error {
+	c.RegisterAction(func(_ *core.Core, msg core.Message) core.Result {
 		if _, ok := msg.(ActionSystemSuspend); ok {
 			received = true
 		}
-		return nil
+		return core.Result{OK: true}
 	})
 
 	mock.simulateEvent(EventSystemSuspend)
@@ -202,11 +201,11 @@ func TestSystemResume_Good(t *testing.T) {
 	_, c, mock := newTestLifecycleService(t)
 
 	var received bool
-	c.RegisterAction(func(_ *core.Core, msg core.Message) error {
+	c.RegisterAction(func(_ *core.Core, msg core.Message) core.Result {
 		if _, ok := msg.(ActionSystemResume); ok {
 			received = true
 		}
-		return nil
+		return core.Result{OK: true}
 	})
 
 	mock.simulateEvent(EventSystemResume)
@@ -217,11 +216,11 @@ func TestOpenedWithFile_Good(t *testing.T) {
 	_, c, mock := newTestLifecycleService(t)
 
 	var receivedPath string
-	c.RegisterAction(func(_ *core.Core, msg core.Message) error {
+	c.RegisterAction(func(_ *core.Core, msg core.Message) core.Result {
 		if a, ok := msg.(ActionOpenedWithFile); ok {
 			receivedPath = a.Path
 		}
-		return nil
+		return core.Result{OK: true}
 	})
 
 	mock.simulateFileOpen("/Users/snider/Documents/test.txt")
@@ -235,23 +234,21 @@ func TestOnShutdown_CancelsAll_Good(t *testing.T) {
 	assert.Greater(t, mock.handlerCount(), 0, "handlers should be registered after OnStartup")
 
 	// Shutdown should cancel all registrations
-	err := svc.OnShutdown(context.Background())
-	require.NoError(t, err)
+	require.True(t, svc.OnShutdown(context.Background()).OK)
 
 	assert.Equal(t, 0, mock.handlerCount(), "all handlers should be cancelled after OnShutdown")
 }
 
 func TestRegister_Bad(t *testing.T) {
 	// No lifecycle service registered — actions are not received
-	c, err := core.New(core.WithServiceLock())
-	require.NoError(t, err)
+	c := core.New(core.WithServiceLock())
 
 	var received bool
-	c.RegisterAction(func(_ *core.Core, msg core.Message) error {
+	c.RegisterAction(func(_ *core.Core, msg core.Message) core.Result {
 		if _, ok := msg.(ActionApplicationStarted); ok {
 			received = true
 		}
-		return nil
+		return core.Result{OK: true}
 	})
 
 	// No way to trigger events without the service

@@ -3,37 +3,25 @@ package notification
 
 import (
 	"context"
-	"errors"
+	core "dappco.re/go/core"
 	"testing"
 
-	"dappco.re/go/core/gui/pkg/dialog"
-	"forge.lthn.ai/core/go/pkg/core"
+	"forge.lthn.ai/core/gui/pkg/dialog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type mockPlatform struct {
-	sendErr                error
-	permGranted            bool
-	permErr                error
-	revokeErr              error
-	registerCategoryErr    error
-	clearErr               error
-	lastOpts               NotificationOptions
-	lastCategory           NotificationCategory
-	sendCalled             bool
-	revokeCalled           bool
-	registerCategoryCalled bool
-	clearCalled            bool
-	lastClearedID          string
+	sendErr      error
+	permGranted  bool
+	permErr      error
+	revokeErr    error
+	revokeCalled bool
+	lastOpts     NotificationOptions
+	sendCalled   bool
 }
 
 func (m *mockPlatform) Send(opts NotificationOptions) error {
-	m.sendCalled = true
-	m.lastOpts = opts
-	return m.sendErr
-}
-func (m *mockPlatform) SendWithActions(opts NotificationOptions) error {
 	m.sendCalled = true
 	m.lastOpts = opts
 	return m.sendErr
@@ -43,16 +31,6 @@ func (m *mockPlatform) CheckPermission() (bool, error)   { return m.permGranted,
 func (m *mockPlatform) RevokePermission() error {
 	m.revokeCalled = true
 	return m.revokeErr
-}
-func (m *mockPlatform) RegisterCategory(category NotificationCategory) error {
-	m.registerCategoryCalled = true
-	m.lastCategory = category
-	return m.registerCategoryErr
-}
-func (m *mockPlatform) Clear(id string) error {
-	m.clearCalled = true
-	m.lastClearedID = id
-	return m.clearErr
 }
 
 // mockDialogPlatform tracks whether MessageDialog was called (for fallback test).
@@ -75,13 +53,18 @@ func (m *mockDialogPlatform) MessageDialog(opts dialog.MessageDialogOptions) (st
 func newTestService(t *testing.T) (*mockPlatform, *core.Core) {
 	t.Helper()
 	mock := &mockPlatform{permGranted: true}
-	c, err := core.New(
+	c := core.New(
 		core.WithService(Register(mock)),
 		core.WithServiceLock(),
 	)
-	require.NoError(t, err)
-	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
 	return mock, c
+}
+
+func taskRun(c *core.Core, name string, task any) core.Result {
+	return c.Action(name).Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: task},
+	))
 }
 
 func TestRegister_Good(t *testing.T) {
@@ -92,170 +75,186 @@ func TestRegister_Good(t *testing.T) {
 
 func TestTaskSend_Good(t *testing.T) {
 	mock, c := newTestService(t)
-	_, handled, err := c.PERFORM(TaskSend{
+	r := taskRun(c, "notification.send", TaskSend{
 		Options: NotificationOptions{Title: "Test", Message: "Hello"},
 	})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	require.True(t, r.OK)
 	assert.True(t, mock.sendCalled)
 	assert.Equal(t, "Test", mock.lastOpts.Title)
 }
 
 func TestTaskSend_Fallback_Good(t *testing.T) {
 	// Platform fails -> falls back to dialog via IPC
-	mockNotify := &mockPlatform{sendErr: errors.New("no permission")}
+	mockNotify := &mockPlatform{sendErr: core.NewError("no permission")}
 	mockDlg := &mockDialogPlatform{}
-	c, err := core.New(
+	c := core.New(
 		core.WithService(dialog.Register(mockDlg)),
 		core.WithService(Register(mockNotify)),
 		core.WithServiceLock(),
 	)
-	require.NoError(t, err)
-	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
 
-	_, handled, err := c.PERFORM(TaskSend{
+	r := taskRun(c, "notification.send", TaskSend{
 		Options: NotificationOptions{Title: "Warn", Message: "Oops", Severity: SeverityWarning},
 	})
-	assert.True(t, handled)
-	assert.NoError(t, err) // fallback succeeds even though platform failed
+	assert.True(t, r.OK) // fallback succeeds even though platform failed
 	assert.True(t, mockDlg.messageCalled)
 	assert.Equal(t, dialog.DialogWarning, mockDlg.lastMsgOpts.Type)
 }
 
 func TestQueryPermission_Good(t *testing.T) {
 	_, c := newTestService(t)
-	result, handled, err := c.QUERY(QueryPermission{})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	status := result.(PermissionStatus)
+	r := c.QUERY(QueryPermission{})
+	require.True(t, r.OK)
+	status := r.Value.(PermissionStatus)
 	assert.True(t, status.Granted)
 }
 
 func TestTaskRequestPermission_Good(t *testing.T) {
 	_, c := newTestService(t)
-	result, handled, err := c.PERFORM(TaskRequestPermission{})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.Equal(t, true, result)
+	r := c.Action("notification.requestPermission").Run(context.Background(), core.NewOptions())
+	require.True(t, r.OK)
+	assert.Equal(t, true, r.Value)
 }
 
 func TestTaskSend_Bad(t *testing.T) {
-	c, _ := core.New(core.WithServiceLock())
-	_, handled, _ := c.PERFORM(TaskSend{})
-	assert.False(t, handled)
+	c := core.New(core.WithServiceLock())
+	r := c.Action("notification.send").Run(context.Background(), core.NewOptions())
+	assert.False(t, r.OK)
 }
+
+// --- TaskRevokePermission ---
 
 func TestTaskRevokePermission_Good(t *testing.T) {
 	mock, c := newTestService(t)
-	_, handled, err := c.PERFORM(TaskRevokePermission{})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := c.Action("notification.revokePermission").Run(context.Background(), core.NewOptions())
+	require.True(t, r.OK)
 	assert.True(t, mock.revokeCalled)
 }
 
-func TestTaskRevokePermission_Bad_NoService(t *testing.T) {
-	c, _ := core.New(core.WithServiceLock())
-	_, handled, _ := c.PERFORM(TaskRevokePermission{})
-	assert.False(t, handled)
+func TestTaskRevokePermission_Bad(t *testing.T) {
+	mock, c := newTestService(t)
+	mock.revokeErr = core.NewError("cannot revoke")
+	r := c.Action("notification.revokePermission").Run(context.Background(), core.NewOptions())
+	assert.False(t, r.OK)
 }
 
+func TestTaskRevokePermission_Ugly(t *testing.T) {
+	// No service registered — action is not registered
+	c := core.New(core.WithServiceLock())
+	r := c.Action("notification.revokePermission").Run(context.Background(), core.NewOptions())
+	assert.False(t, r.OK)
+}
+
+// --- TaskRegisterCategory ---
+
 func TestTaskRegisterCategory_Good(t *testing.T) {
-	mock, c := newTestService(t)
+	_, c := newTestService(t)
 	category := NotificationCategory{
 		ID: "message",
+		Actions: []NotificationAction{
+			{ID: "reply", Title: "Reply"},
+			{ID: "delete", Title: "Delete", Destructive: true},
+		},
+	}
+	r := taskRun(c, "notification.registerCategory", TaskRegisterCategory{Category: category})
+	require.True(t, r.OK)
+
+	svc := core.MustServiceFor[*Service](c, "notification")
+	stored, ok := svc.categories["message"]
+	require.True(t, ok)
+	assert.Equal(t, 2, len(stored.Actions))
+	assert.Equal(t, "reply", stored.Actions[0].ID)
+	assert.True(t, stored.Actions[1].Destructive)
+}
+
+func TestTaskRegisterCategory_Bad(t *testing.T) {
+	// No service registered — action is not registered
+	c := core.New(core.WithServiceLock())
+	r := taskRun(c, "notification.registerCategory", TaskRegisterCategory{Category: NotificationCategory{ID: "x"}})
+	assert.False(t, r.OK)
+}
+
+func TestTaskRegisterCategory_Ugly(t *testing.T) {
+	// Re-registering a category replaces the previous one
+	_, c := newTestService(t)
+	first := NotificationCategory{ID: "chat", Actions: []NotificationAction{{ID: "a", Title: "A"}}}
+	second := NotificationCategory{ID: "chat", Actions: []NotificationAction{{ID: "b", Title: "B"}, {ID: "c", Title: "C"}}}
+
+	require.True(t, taskRun(c, "notification.registerCategory", TaskRegisterCategory{Category: first}).OK)
+	require.True(t, taskRun(c, "notification.registerCategory", TaskRegisterCategory{Category: second}).OK)
+
+	svc := core.MustServiceFor[*Service](c, "notification")
+	assert.Equal(t, 2, len(svc.categories["chat"].Actions))
+	assert.Equal(t, "b", svc.categories["chat"].Actions[0].ID)
+}
+
+// --- NotificationOptions with Actions ---
+
+func TestTaskSend_WithActions_Good(t *testing.T) {
+	mock, c := newTestService(t)
+	options := NotificationOptions{
+		Title:      "Team Chat",
+		Message:    "New message from Alice",
+		CategoryID: "message",
 		Actions: []NotificationAction{
 			{ID: "reply", Title: "Reply"},
 			{ID: "dismiss", Title: "Dismiss"},
 		},
 	}
-
-	_, handled, err := c.PERFORM(TaskRegisterCategory{Category: category})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.True(t, mock.registerCategoryCalled)
-	assert.Equal(t, "message", mock.lastCategory.ID)
-	assert.Len(t, mock.lastCategory.Actions, 2)
-	assert.Equal(t, "reply", mock.lastCategory.Actions[0].ID)
+	r := taskRun(c, "notification.send", TaskSend{Options: options})
+	require.True(t, r.OK)
+	assert.Equal(t, "message", mock.lastOpts.CategoryID)
+	assert.Equal(t, 2, len(mock.lastOpts.Actions))
 }
 
-func TestTaskRegisterCategory_Bad_NoService(t *testing.T) {
-	c, _ := core.New(core.WithServiceLock())
-	_, handled, _ := c.PERFORM(TaskRegisterCategory{})
-	assert.False(t, handled)
-}
+// --- ActionNotificationActionTriggered ---
 
-func TestTaskSendWithActions_Good(t *testing.T) {
-	mock, c := newTestService(t)
-
-	_, handled, err := c.PERFORM(TaskSend{
-		Options: NotificationOptions{
-			Title:   "Message",
-			Message: "Reply?",
-			Actions: []NotificationAction{
-				{ID: "reply", Title: "Reply"},
-				{ID: "dismiss", Title: "Dismiss"},
-			},
-		},
+func TestActionNotificationActionTriggered_Good(t *testing.T) {
+	// ActionNotificationActionTriggered is broadcast by external code; confirm it can be received
+	_, c := newTestService(t)
+	var received *ActionNotificationActionTriggered
+	c.RegisterAction(func(_ *core.Core, msg core.Message) core.Result {
+		if a, ok := msg.(ActionNotificationActionTriggered); ok {
+			received = &a
+		}
+		return core.Result{OK: true}
 	})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.True(t, mock.registerCategoryCalled)
-	assert.Len(t, mock.lastCategory.Actions, 2)
-	assert.NotEmpty(t, mock.lastOpts.CategoryID)
-}
-
-func TestTaskClear_Good(t *testing.T) {
-	mock, c := newTestService(t)
-
-	_, handled, err := c.PERFORM(TaskClear{ID: "notif-1"})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.True(t, mock.clearCalled)
-	assert.Equal(t, "notif-1", mock.lastClearedID)
-}
-
-func TestActionNotificationActionTriggered_Ugly(t *testing.T) {
-	// Verify the action structs are distinct types.
-	var triggered ActionNotificationActionTriggered
-	var dismissed ActionNotificationDismissed
-	triggered.NotificationID = "n1"
-	triggered.ActionID = "reply"
-	dismissed.NotificationID = "n1"
-	assert.Equal(t, "n1", triggered.NotificationID)
-	assert.Equal(t, "reply", triggered.ActionID)
-	assert.Equal(t, "n1", dismissed.NotificationID)
+	_ = c.ACTION(ActionNotificationActionTriggered{NotificationID: "n1", ActionID: "reply"})
+	require.NotNil(t, received)
+	assert.Equal(t, "n1", received.NotificationID)
+	assert.Equal(t, "reply", received.ActionID)
 }
 
 func TestActionNotificationDismissed_Good(t *testing.T) {
 	_, c := newTestService(t)
-
 	var received *ActionNotificationDismissed
-	c.RegisterAction(func(_ *core.Core, msg core.Message) error {
+	c.RegisterAction(func(_ *core.Core, msg core.Message) core.Result {
 		if a, ok := msg.(ActionNotificationDismissed); ok {
 			received = &a
 		}
-		return nil
+		return core.Result{OK: true}
 	})
-
-	// Broadcast dismissed action directly (as the platform adapter would).
-	_ = c.ACTION(ActionNotificationDismissed{NotificationID: "notif-42"})
+	_ = c.ACTION(ActionNotificationDismissed{ID: "n2"})
 	require.NotNil(t, received)
-	assert.Equal(t, "notif-42", received.NotificationID)
+	assert.Equal(t, "n2", received.ID)
 }
 
-func TestActionNotificationActionTriggered_Good(t *testing.T) {
-	_, c := newTestService(t)
+func TestQueryPermission_Bad(t *testing.T) {
+	// No service — QUERY returns handled=false
+	c := core.New(core.WithServiceLock())
+	r := c.QUERY(QueryPermission{})
+	assert.False(t, r.OK)
+}
 
-	var received *ActionNotificationActionTriggered
-	c.RegisterAction(func(_ *core.Core, msg core.Message) error {
-		if a, ok := msg.(ActionNotificationActionTriggered); ok {
-			received = &a
-		}
-		return nil
-	})
-
-	_ = c.ACTION(ActionNotificationActionTriggered{NotificationID: "notif-7", ActionID: "archive"})
-	require.NotNil(t, received)
-	assert.Equal(t, "notif-7", received.NotificationID)
-	assert.Equal(t, "archive", received.ActionID)
+func TestQueryPermission_Ugly(t *testing.T) {
+	// Platform returns error — QUERY returns OK=false (framework does not propagate Value for failed queries)
+	mock := &mockPlatform{permErr: core.NewError("platform error")}
+	c := core.New(
+		core.WithService(Register(mock)),
+		core.WithServiceLock(),
+	)
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	r := c.QUERY(QueryPermission{})
+	assert.False(t, r.OK)
 }

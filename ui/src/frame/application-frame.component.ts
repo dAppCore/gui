@@ -1,15 +1,11 @@
-import {
-  Component,
-  HostListener,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
+// SPDX-Licence-Identifier: EUPL-1.2
+
+import { Component, CUSTOM_ELEMENTS_SCHEMA, Input, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { StatusBarComponent } from '../components/status-bar.component';
 import { TranslationService } from '../services/translation.service';
-import { UiStateService } from '../services/ui-state.service';
+import { ProviderDiscoveryService } from '../services/provider-discovery.service';
+import { WebSocketService } from '../services/websocket.service';
 
 interface NavItem {
   name: string;
@@ -17,118 +13,125 @@ interface NavItem {
   icon: string;
 }
 
+/**
+ * ApplicationFrameComponent is the HLCRF (Header, Left nav, Content, Right, Footer)
+ * shell for all Core Wails applications. It provides:
+ *
+ * - Dynamic sidebar navigation populated from ProviderDiscoveryService
+ * - Content area rendered via router-outlet for child routes
+ * - Footer with time, version, and provider status
+ * - Mobile-responsive sidebar with expand/collapse
+ * - Dark mode support
+ *
+ * Ported from core-gui/cmd/lthn-desktop/frontend/src/frame/application.frame.ts
+ * with navigation made dynamic via provider discovery.
+ */
 @Component({
   selector: 'application-frame',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, StatusBarComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
   templateUrl: './application-frame.component.html',
   styles: [
     `
       .application-frame {
         min-height: 100vh;
-        position: relative;
       }
 
       .frame-main {
         min-height: calc(100vh - 6.5rem);
       }
 
-      .application-frame .frame-header {
-        backdrop-filter: blur(18px);
-        background: linear-gradient(180deg, rgba(8, 12, 22, 0.94), rgba(8, 12, 22, 0.82));
-        border-bottom-color: rgba(255, 255, 255, 0.06);
+      .connection-dot {
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: rgb(107 114 128);
+        margin-right: 0.375rem;
+        vertical-align: middle;
       }
 
-      .application-frame .frame-nav .lg\\:fixed {
-        background: linear-gradient(180deg, rgba(7, 12, 22, 0.98), rgba(9, 15, 28, 0.92));
-        border-right: 1px solid rgba(255, 255, 255, 0.08);
-      }
-
-      .search-shell {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        min-height: 2.75rem;
-        padding: 0 0.875rem;
-        border-radius: 999px;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        background: rgba(255, 255, 255, 0.04);
-      }
-
-      .search-shell input {
-        min-width: 0;
-        flex: 1;
-        border: 0;
-        background: transparent;
-        outline: none;
-        color: #f8fafc;
-      }
-
-      .search-clear,
-      .search-count {
-        color: rgba(226, 232, 240, 0.72);
-      }
-
-      .search-clear {
-        border: 0;
-        background: transparent;
-        cursor: pointer;
-      }
-
-      .search-count {
-        white-space: nowrap;
+      .connection-dot.connected {
+        background: rgb(34 197 94);
+        box-shadow: 0 0 4px rgb(34 197 94);
       }
     `,
   ],
 })
-export class ApplicationFrameComponent {
-  readonly sidebarOpen = signal(false);
-  readonly userMenuOpen = signal(false);
-  protected readonly version = 'v0.1.0';
+export class ApplicationFrameComponent implements OnInit, OnDestroy {
+  @Input() version = 'v0.1.0';
 
-  private readonly uiState = inject(UiStateService);
-  protected readonly t = inject(TranslationService);
+  sidebarOpen = false;
+  userMenuOpen = false;
+  time = '';
+  private intervalId: ReturnType<typeof setInterval> | undefined;
 
-  private readonly navigationItems: NavItem[] = [
-    { name: 'Chat', href: '/', icon: 'fa-regular fa-comments fa-2xl shrink-0' },
-    { name: 'Settings', href: '/settings', icon: 'fa-regular fa-sliders fa-2xl shrink-0' },
-  ];
+  /** Static navigation items set by the host application. */
+  @Input() staticNavigation: NavItem[] = [];
 
-  readonly visibleNavigation = computed(() => {
-    const query = this.uiState.searchQuery().toLowerCase();
-    if (!query) {
-      return this.navigationItems;
-    }
-    return this.navigationItems.filter((item) =>
-      `${item.name} ${item.href}`.toLowerCase().includes(query),
-    );
-  });
+  /** Combined navigation: static + dynamic from providers. */
+  navigation: NavItem[] = [];
 
-  readonly searchQuery = this.uiState.searchQuery;
+  userNavigation: NavItem[] = [];
 
-  readonly userNavigation: NavItem[] = [
-    { name: 'Chat', href: '/', icon: 'fa-regular fa-comments' },
-    { name: 'Settings', href: '/settings', icon: 'fa-regular fa-sliders' },
-  ];
+  constructor(
+    public t: TranslationService,
+    private providerService: ProviderDiscoveryService,
+    private wsService: WebSocketService,
+  ) {}
 
-  @HostListener('document:keydown.escape')
-  onEscape(): void {
-    if (this.sidebarOpen()) {
-      this.sidebarOpen.set(false);
-      return;
-    }
-    if (this.userMenuOpen()) {
-      this.userMenuOpen.set(false);
-      return;
-    }
-    this.uiState.clearSearchQuery();
+  /** Provider count from discovery service. */
+  readonly providerCount = () => this.providerService.providers().length;
+
+  /** WebSocket connection status. */
+  readonly wsConnected = () => this.wsService.connected();
+
+  async ngOnInit(): Promise<void> {
+    this.updateTime();
+    this.intervalId = setInterval(() => this.updateTime(), 1000);
+
+    await this.t.onReady();
+    this.initUserNavigation();
+
+    // Discover providers and build navigation
+    await this.providerService.discover();
+    this.buildNavigation();
+
+    // Connect WebSocket for real-time updates
+    this.wsService.connect();
   }
 
-  protected onSearchInput(value: string): void {
-    this.uiState.setSearchQuery(value);
+  ngOnDestroy(): void {
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+    }
   }
 
-  protected clearSearch(): void {
-    this.uiState.clearSearchQuery();
+  private initUserNavigation(): void {
+    this.userNavigation = [
+      {
+        name: this.t._('menu.settings'),
+        href: 'settings',
+        icon: 'fa-regular fa-gear',
+      },
+    ];
+  }
+
+  private buildNavigation(): void {
+    const dynamicItems = this.providerService
+      .providers()
+      .filter((p) => p.element)
+      .map((p) => ({
+        name: p.name,
+        href: p.name.toLowerCase(),
+        icon: 'fa-regular fa-puzzle-piece fa-2xl shrink-0',
+      }));
+
+    this.navigation = [...this.staticNavigation, ...dynamicItems];
+  }
+
+  private updateTime(): void {
+    this.time = new Date().toLocaleTimeString();
   }
 }

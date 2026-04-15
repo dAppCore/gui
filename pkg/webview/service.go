@@ -5,20 +5,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
-	"image"
-	"image/draw"
-	"image/png"
-	"math"
-	"reflect"
 	"strconv"
 	"sync"
 	"time"
-	"unsafe"
 
-	corego "dappco.re/go/core"
-	"dappco.re/go/core/gui/pkg/window"
 	gowebview "forge.lthn.ai/core/go-webview"
-	"forge.lthn.ai/core/go/pkg/core"
+	core "dappco.re/go/core"
+	"forge.lthn.ai/core/gui/pkg/window"
 )
 
 // connector abstracts go-webview for testing. The real implementation wraps
@@ -41,8 +34,9 @@ type connector interface {
 	ClearConsole()
 	SetViewport(width, height int) error
 	UploadFile(selector string, paths []string) error
-	Print() error
-	PrintToPDF() ([]byte, error)
+	GetZoom() (float64, error)
+	SetZoom(zoom float64) error
+	Print(toPDF bool) ([]byte, error)
 	Close() error
 }
 
@@ -52,64 +46,37 @@ type Options struct {
 	ConsoleLimit int           // Max console messages per window (default: 1000)
 }
 
-func defaultOptions() Options {
-	return Options{
-		DebugURL:     "http://localhost:9222",
-		Timeout:      30 * time.Second,
-		ConsoleLimit: 1000,
-	}
-}
-
-func normalizeOptions(options Options) Options {
-	defaults := defaultOptions()
-	if options.DebugURL == "" {
-		options.DebugURL = defaults.DebugURL
-	}
-	if options.Timeout == 0 {
-		options.Timeout = defaults.Timeout
-	}
-	if options.ConsoleLimit == 0 {
-		options.ConsoleLimit = defaults.ConsoleLimit
-	}
-	return options
-}
-
 type Service struct {
 	*core.ServiceRuntime[Options]
 	options      Options
 	connections  map[string]connector
-	exceptions   map[string][]ExceptionInfo
 	mu           sync.RWMutex
 	newConn      func(debugURL, windowName string) (connector, error) // injectable for tests
 	watcherSetup func(conn connector, windowName string)              // called after connection creation
 }
 
-// RegisterWithOptions binds the webview service to a Core instance using a declarative Options literal.
-// core.WithService(webview.RegisterWithOptions(webview.Options{DebugURL: "http://localhost:9223", Timeout: 30 * time.Second, ConsoleLimit: 1000}))
-func RegisterWithOptions(options Options) func(*core.Core) (any, error) {
-	o := normalizeOptions(options)
-	return func(c *core.Core) (any, error) {
+// Register binds the webview service to a Core instance.
+// core.WithService(webview.Register())
+// core.WithService(webview.Register(func(o *Options) { o.DebugURL = "http://localhost:9223" }))
+func Register(optionFns ...func(*Options)) func(*core.Core) core.Result {
+	o := Options{
+		DebugURL:     "http://localhost:9222",
+		Timeout:      30 * time.Second,
+		ConsoleLimit: 1000,
+	}
+	for _, fn := range optionFns {
+		fn(&o)
+	}
+	return func(c *core.Core) core.Result {
 		svc := &Service{
 			ServiceRuntime: core.NewServiceRuntime[Options](c, o),
 			options:        o,
 			connections:    make(map[string]connector),
-			exceptions:     make(map[string][]ExceptionInfo),
 			newConn:        defaultNewConn(o),
 		}
 		svc.watcherSetup = svc.defaultWatcherSetup
-		return svc, nil
+		return core.Result{Value: svc, OK: true}
 	}
-}
-
-// Deprecated: use RegisterWithOptions(webview.Options{DebugURL: "http://localhost:9223", Timeout: 30 * time.Second, ConsoleLimit: 1000}).
-func Register(optionFns ...func(*Options)) func(*core.Core) (any, error) {
-	options := defaultOptions()
-	for _, fn := range optionFns {
-		if fn != nil {
-			fn(&options)
-		}
-	}
-	return RegisterWithOptions(options)
 }
 
 // defaultNewConn creates real go-webview connections.
@@ -147,7 +114,7 @@ func defaultNewConn(options Options) func(string, string) (connector, error) {
 		if err != nil {
 			return nil, err
 		}
-		return &realConnector{wv: wv}, nil
+		return &realConnector{wv: wv, debugURL: debugURL}, nil
 	}
 }
 
@@ -190,25 +157,25 @@ func (s *Service) defaultWatcherSetup(conn connector, windowName string) {
 	})
 }
 
-func (s *Service) OnStartup(_ context.Context) error {
+func (s *Service) OnStartup(_ context.Context) core.Result {
 	s.Core().RegisterQuery(s.handleQuery)
-	s.Core().RegisterTask(s.handleTask)
-	return nil
+	s.registerTaskActions()
+	return core.Result{OK: true}
 }
 
 // OnShutdown closes all CDP connections.
-func (s *Service) OnShutdown(_ context.Context) error {
+func (s *Service) OnShutdown(_ context.Context) core.Result {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	for name, conn := range s.connections {
 		conn.Close()
 		delete(s.connections, name)
 	}
-	return nil
+	return core.Result{OK: true}
 }
 
 // HandleIPCEvents listens for window close events to clean up connections.
-func (s *Service) HandleIPCEvents(_ *core.Core, msg core.Message) error {
+func (s *Service) HandleIPCEvents(_ *core.Core, msg core.Message) core.Result {
 	switch m := msg.(type) {
 	case window.ActionWindowClosed:
 		s.mu.Lock()
@@ -216,12 +183,9 @@ func (s *Service) HandleIPCEvents(_ *core.Core, msg core.Message) error {
 			conn.Close()
 			delete(s.connections, m.Name)
 		}
-		delete(s.exceptions, m.Name)
 		s.mu.Unlock()
-	case ActionException:
-		s.recordException(m.Window, m.Exception)
 	}
-	return nil
+	return core.Result{OK: true}
 }
 
 // getConn returns the connector for a window, creating it if needed.
@@ -250,26 +214,26 @@ func (s *Service) getConn(windowName string) (connector, error) {
 	return conn, nil
 }
 
-func (s *Service) handleQuery(_ *core.Core, q core.Query) (any, bool, error) {
+func (s *Service) handleQuery(_ *core.Core, q core.Query) core.Result {
 	switch q := q.(type) {
 	case QueryURL:
 		conn, err := s.getConn(q.Window)
 		if err != nil {
-			return nil, true, err
+			return core.Result{Value: err, OK: false}
 		}
 		url, err := conn.GetURL()
-		return url, true, err
+		return core.Result{}.New(url, err)
 	case QueryTitle:
 		conn, err := s.getConn(q.Window)
 		if err != nil {
-			return nil, true, err
+			return core.Result{Value: err, OK: false}
 		}
 		title, err := conn.GetTitle()
-		return title, true, err
+		return core.Result{}.New(title, err)
 	case QueryConsole:
 		conn, err := s.getConn(q.Window)
 		if err != nil {
-			return nil, true, err
+			return core.Result{Value: err, OK: false}
 		}
 		msgs := conn.GetConsole()
 		// Filter by level if specified
@@ -286,398 +250,195 @@ func (s *Service) handleQuery(_ *core.Core, q core.Query) (any, bool, error) {
 		if q.Limit > 0 && len(msgs) > q.Limit {
 			msgs = msgs[len(msgs)-q.Limit:]
 		}
-		return msgs, true, nil
+		return core.Result{Value: msgs, OK: true}
 	case QuerySelector:
 		conn, err := s.getConn(q.Window)
 		if err != nil {
-			return nil, true, err
+			return core.Result{Value: err, OK: false}
 		}
 		el, err := conn.QuerySelector(q.Selector)
-		return el, true, err
+		return core.Result{}.New(el, err)
 	case QuerySelectorAll:
 		conn, err := s.getConn(q.Window)
 		if err != nil {
-			return nil, true, err
+			return core.Result{Value: err, OK: false}
 		}
 		els, err := conn.QuerySelectorAll(q.Selector)
-		return els, true, err
+		return core.Result{}.New(els, err)
 	case QueryDOMTree:
 		conn, err := s.getConn(q.Window)
 		if err != nil {
-			return nil, true, err
+			return core.Result{Value: err, OK: false}
 		}
 		selector := q.Selector
 		if selector == "" {
 			selector = "html"
 		}
 		html, err := conn.GetHTML(selector)
-		return html, true, err
-	case QueryComputedStyle:
+		return core.Result{}.New(html, err)
+	case QueryZoom:
 		conn, err := s.getConn(q.Window)
 		if err != nil {
-			return nil, true, err
+			return core.Result{Value: err, OK: false}
 		}
-		result, err := conn.Evaluate(computedStyleScript(q.Selector))
-		if err != nil {
-			return nil, true, err
-		}
-		style, err := coerceToMapStringString(result)
-		if err != nil {
-			return nil, true, err
-		}
-		return style, true, nil
-	case QueryPerformance:
-		conn, err := s.getConn(q.Window)
-		if err != nil {
-			return nil, true, err
-		}
-		result, err := conn.Evaluate(performanceScript())
-		if err != nil {
-			return nil, true, err
-		}
-		metrics, err := coerceToPerformanceMetrics(result)
-		if err != nil {
-			return nil, true, err
-		}
-		return metrics, true, nil
-	case QueryResources:
-		conn, err := s.getConn(q.Window)
-		if err != nil {
-			return nil, true, err
-		}
-		result, err := conn.Evaluate(resourcesScript())
-		if err != nil {
-			return nil, true, err
-		}
-		resources, err := coerceToResourceEntries(result)
-		if err != nil {
-			return nil, true, err
-		}
-		return resources, true, nil
-	case QueryNetwork:
-		conn, err := s.getConn(q.Window)
-		if err != nil {
-			return nil, true, err
-		}
-		result, err := conn.Evaluate(networkLogScript(q.Limit))
-		if err != nil {
-			return nil, true, err
-		}
-		entries, err := coerceToNetworkEntries(result)
-		if err != nil {
-			return nil, true, err
-		}
-		return entries, true, nil
-	case QueryExceptions:
-		return s.queryExceptions(q.Window, q.Limit), true, nil
+		zoom, err := conn.GetZoom()
+		return core.Result{}.New(zoom, err)
 	default:
-		return nil, false, nil
+		return core.Result{}
 	}
 }
 
-func (s *Service) handleTask(_ *core.Core, t core.Task) (any, bool, error) {
-	switch t := t.(type) {
-	case TaskEvaluate:
+// registerTaskActions registers all webview task handlers as named Core actions.
+func (s *Service) registerTaskActions() {
+	c := s.Core()
+	c.Action("webview.evaluate", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskEvaluate)
 		conn, err := s.getConn(t.Window)
 		if err != nil {
-			return nil, true, err
+			return core.Result{Value: err, OK: false}
 		}
 		result, err := conn.Evaluate(t.Script)
-		return result, true, err
-	case TaskClick:
+		return core.Result{}.New(result, err)
+	})
+	c.Action("webview.click", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskClick)
 		conn, err := s.getConn(t.Window)
 		if err != nil {
-			return nil, true, err
+			return core.Result{Value: err, OK: false}
 		}
-		return nil, true, conn.Click(t.Selector)
-	case TaskType:
+		return core.Result{Value: nil, OK: true}.New(conn.Click(t.Selector))
+	})
+	c.Action("webview.type", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskType)
 		conn, err := s.getConn(t.Window)
 		if err != nil {
-			return nil, true, err
+			return core.Result{Value: err, OK: false}
 		}
-		return nil, true, conn.Type(t.Selector, t.Text)
-	case TaskNavigate:
+		return core.Result{Value: nil, OK: true}.New(conn.Type(t.Selector, t.Text))
+	})
+	c.Action("webview.navigate", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskNavigate)
 		conn, err := s.getConn(t.Window)
 		if err != nil {
-			return nil, true, err
+			return core.Result{Value: err, OK: false}
 		}
-		return nil, true, conn.Navigate(t.URL)
-	case TaskScreenshot:
+		return core.Result{Value: nil, OK: true}.New(conn.Navigate(t.URL))
+	})
+	c.Action("webview.screenshot", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskScreenshot)
 		conn, err := s.getConn(t.Window)
 		if err != nil {
-			return nil, true, err
+			return core.Result{Value: err, OK: false}
 		}
 		png, err := conn.Screenshot()
 		if err != nil {
-			return nil, true, err
+			return core.Result{Value: err, OK: false}
 		}
-		return ScreenshotResult{
+		return core.Result{Value: ScreenshotResult{
 			Base64:   base64.StdEncoding.EncodeToString(png),
 			MimeType: "image/png",
-		}, true, nil
-	case TaskScreenshotElement:
+		}, OK: true}
+	})
+	c.Action("webview.scroll", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskScroll)
 		conn, err := s.getConn(t.Window)
 		if err != nil {
-			return nil, true, err
-		}
-		png, err := captureElementScreenshot(conn, t.Selector)
-		if err != nil {
-			return nil, true, err
-		}
-		return ScreenshotResult{
-			Base64:   base64.StdEncoding.EncodeToString(png),
-			MimeType: "image/png",
-		}, true, nil
-	case TaskScroll:
-		conn, err := s.getConn(t.Window)
-		if err != nil {
-			return nil, true, err
+			return core.Result{Value: err, OK: false}
 		}
 		_, err = conn.Evaluate("window.scrollTo(" + strconv.Itoa(t.X) + "," + strconv.Itoa(t.Y) + ")")
-		return nil, true, err
-	case TaskHover:
+		return core.Result{Value: nil, OK: true}.New(err)
+	})
+	c.Action("webview.hover", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskHover)
 		conn, err := s.getConn(t.Window)
 		if err != nil {
-			return nil, true, err
+			return core.Result{Value: err, OK: false}
 		}
-		return nil, true, conn.Hover(t.Selector)
-	case TaskSelect:
+		return core.Result{Value: nil, OK: true}.New(conn.Hover(t.Selector))
+	})
+	c.Action("webview.select", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskSelect)
 		conn, err := s.getConn(t.Window)
 		if err != nil {
-			return nil, true, err
+			return core.Result{Value: err, OK: false}
 		}
-		return nil, true, conn.Select(t.Selector, t.Value)
-	case TaskCheck:
+		return core.Result{Value: nil, OK: true}.New(conn.Select(t.Selector, t.Value))
+	})
+	c.Action("webview.check", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskCheck)
 		conn, err := s.getConn(t.Window)
 		if err != nil {
-			return nil, true, err
+			return core.Result{Value: err, OK: false}
 		}
-		return nil, true, conn.Check(t.Selector, t.Checked)
-	case TaskUploadFile:
+		return core.Result{Value: nil, OK: true}.New(conn.Check(t.Selector, t.Checked))
+	})
+	c.Action("webview.uploadFile", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskUploadFile)
 		conn, err := s.getConn(t.Window)
 		if err != nil {
-			return nil, true, err
+			return core.Result{Value: err, OK: false}
 		}
-		return nil, true, conn.UploadFile(t.Selector, t.Paths)
-	case TaskSetViewport:
+		return core.Result{Value: nil, OK: true}.New(conn.UploadFile(t.Selector, t.Paths))
+	})
+	c.Action("webview.setViewport", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskSetViewport)
 		conn, err := s.getConn(t.Window)
 		if err != nil {
-			return nil, true, err
+			return core.Result{Value: err, OK: false}
 		}
-		return nil, true, conn.SetViewport(t.Width, t.Height)
-	case TaskClearConsole:
+		return core.Result{Value: nil, OK: true}.New(conn.SetViewport(t.Width, t.Height))
+	})
+	c.Action("webview.clearConsole", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskClearConsole)
 		conn, err := s.getConn(t.Window)
 		if err != nil {
-			return nil, true, err
+			return core.Result{Value: err, OK: false}
 		}
 		conn.ClearConsole()
-		return nil, true, nil
-	case TaskHighlight:
+		return core.Result{OK: true}
+	})
+	c.Action("webview.setURL", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskSetURL)
 		conn, err := s.getConn(t.Window)
 		if err != nil {
-			return nil, true, err
+			return core.Result{Value: err, OK: false}
 		}
-		_, err = conn.Evaluate(highlightScript(t.Selector, t.Colour))
-		return nil, true, err
-	case TaskOpenDevTools:
-		ws, err := core.ServiceFor[*window.Service](s.Core(), "window")
-		if err != nil {
-			return nil, true, err
-		}
-		pw, ok := ws.Manager().Get(t.Window)
-		if !ok {
-			return nil, true, corego.E("webview", corego.Sprintf("window not found: %s", t.Window), nil)
-		}
-		pw.OpenDevTools()
-		return nil, true, nil
-	case TaskCloseDevTools:
-		ws, err := core.ServiceFor[*window.Service](s.Core(), "window")
-		if err != nil {
-			return nil, true, err
-		}
-		pw, ok := ws.Manager().Get(t.Window)
-		if !ok {
-			return nil, true, corego.E("webview", corego.Sprintf("window not found: %s", t.Window), nil)
-		}
-		pw.CloseDevTools()
-		return nil, true, nil
-	case TaskInjectNetworkLogging:
+		return core.Result{Value: nil, OK: true}.New(conn.Navigate(t.URL))
+	})
+	c.Action("webview.setZoom", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskSetZoom)
 		conn, err := s.getConn(t.Window)
 		if err != nil {
-			return nil, true, err
+			return core.Result{Value: err, OK: false}
 		}
-		_, err = conn.Evaluate(networkInitScript())
-		return nil, true, err
-	case TaskClearNetworkLog:
+		return core.Result{Value: nil, OK: true}.New(conn.SetZoom(t.Zoom))
+	})
+	c.Action("webview.print", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskPrint)
 		conn, err := s.getConn(t.Window)
 		if err != nil {
-			return nil, true, err
+			return core.Result{Value: err, OK: false}
 		}
-		_, err = conn.Evaluate(networkClearScript())
-		return nil, true, err
-	case TaskPrint:
-		conn, err := s.getConn(t.Window)
+		pdfBytes, err := conn.Print(t.ToPDF)
 		if err != nil {
-			return nil, true, err
+			return core.Result{Value: err, OK: false}
 		}
-		return nil, true, conn.Print()
-	case TaskExportPDF:
-		conn, err := s.getConn(t.Window)
-		if err != nil {
-			return nil, true, err
+		if !t.ToPDF {
+			return core.Result{OK: true}
 		}
-		pdf, err := conn.PrintToPDF()
-		if err != nil {
-			return nil, true, err
-		}
-		return PDFResult{
-			Base64:   base64.StdEncoding.EncodeToString(pdf),
+		return core.Result{Value: PrintResult{
+			Base64:   base64.StdEncoding.EncodeToString(pdfBytes),
 			MimeType: "application/pdf",
-		}, true, nil
-	default:
-		return nil, false, nil
-	}
-}
-
-func (s *Service) recordException(windowName string, exc ExceptionInfo) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	exceptions := append(s.exceptions[windowName], exc)
-	if limit := s.options.ConsoleLimit; limit > 0 && len(exceptions) > limit {
-		exceptions = exceptions[len(exceptions)-limit:]
-	}
-	s.exceptions[windowName] = exceptions
-}
-
-func (s *Service) queryExceptions(windowName string, limit int) []ExceptionInfo {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	exceptions := append([]ExceptionInfo(nil), s.exceptions[windowName]...)
-	if limit > 0 && len(exceptions) > limit {
-		exceptions = exceptions[len(exceptions)-limit:]
-	}
-	return exceptions
-}
-
-func coerceJSON[T any](v any) (T, error) {
-	var out T
-	r := corego.JSONMarshal(v)
-	if !r.OK {
-		return out, r.Value.(error)
-	}
-	r2 := corego.JSONUnmarshal(r.Value.([]byte), &out)
-	if !r2.OK {
-		return out, r2.Value.(error)
-	}
-	return out, nil
-}
-
-func coerceToMapStringString(v any) (map[string]string, error) {
-	return coerceJSON[map[string]string](v)
-}
-
-func coerceToPerformanceMetrics(v any) (PerformanceMetrics, error) {
-	return coerceJSON[PerformanceMetrics](v)
-}
-
-func coerceToResourceEntries(v any) ([]ResourceEntry, error) {
-	return coerceJSON[[]ResourceEntry](v)
-}
-
-func coerceToNetworkEntries(v any) ([]NetworkEntry, error) {
-	return coerceJSON[[]NetworkEntry](v)
-}
-
-type elementScreenshotBounds struct {
-	Left             float64 `json:"left"`
-	Top              float64 `json:"top"`
-	Width            float64 `json:"width"`
-	Height           float64 `json:"height"`
-	DevicePixelRatio float64 `json:"devicePixelRatio"`
-}
-
-func elementScreenshotScript(selector string) string {
-	sel := jsQuote(selector)
-	return corego.Sprintf(`(function(){
-  const el = document.querySelector(%s);
-  if (!el) return null;
-  try { el.scrollIntoView({block: "center", inline: "center"}); } catch (e) {}
-  const rect = el.getBoundingClientRect();
-  return {
-    left: rect.left,
-    top: rect.top,
-    width: rect.width,
-    height: rect.height,
-    devicePixelRatio: window.devicePixelRatio || 1
-  };
-})()`, sel)
-}
-
-func captureElementScreenshot(conn connector, selector string) ([]byte, error) {
-	result, err := conn.Evaluate(elementScreenshotScript(selector))
-	if err != nil {
-		return nil, err
-	}
-	if result == nil {
-		return nil, corego.E("webview", corego.Sprintf("element not found: %s", selector), nil)
-	}
-	bounds, err := coerceJSON[elementScreenshotBounds](result)
-	if err != nil {
-		return nil, err
-	}
-	if bounds.Width <= 0 || bounds.Height <= 0 {
-		return nil, corego.E("webview", corego.Sprintf("element has no measurable bounds: %s", selector), nil)
-	}
-	raw, err := conn.Screenshot()
-	if err != nil {
-		return nil, err
-	}
-	img, _, err := image.Decode(bytes.NewReader(raw))
-	if err != nil {
-		return nil, err
-	}
-
-	scale := bounds.DevicePixelRatio
-	if scale <= 0 {
-		scale = 1
-	}
-	left := int(math.Floor(bounds.Left * scale))
-	top := int(math.Floor(bounds.Top * scale))
-	right := int(math.Ceil((bounds.Left + bounds.Width) * scale))
-	bottom := int(math.Ceil((bounds.Top + bounds.Height) * scale))
-
-	srcBounds := img.Bounds()
-	if left < srcBounds.Min.X {
-		left = srcBounds.Min.X
-	}
-	if top < srcBounds.Min.Y {
-		top = srcBounds.Min.Y
-	}
-	if right > srcBounds.Max.X {
-		right = srcBounds.Max.X
-	}
-	if bottom > srcBounds.Max.Y {
-		bottom = srcBounds.Max.Y
-	}
-	if right <= left || bottom <= top {
-		return nil, corego.E("webview", corego.Sprintf("element is outside the captured screenshot: %s", selector), nil)
-	}
-
-	crop := image.NewRGBA(image.Rect(0, 0, right-left, bottom-top))
-	draw.Draw(crop, crop.Bounds(), img, image.Point{X: left, Y: top}, draw.Src)
-
-	var buf bytes.Buffer
-	if err := png.Encode(&buf, crop); err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
+		}, OK: true}
+	})
 }
 
 // realConnector wraps *gowebview.Webview, converting types at the boundary.
+// debugURL is retained so that PDF printing can issue a Page.printToPDF CDP call
+// via a fresh CDPClient, since go-webview v0.1.7 does not expose a PrintToPDF helper.
 type realConnector struct {
-	wv *gowebview.Webview
+	wv       *gowebview.Webview
+	debugURL string // Chrome debug HTTP endpoint (e.g., http://localhost:9222) for direct CDP calls
 }
 
 func (r *realConnector) Navigate(url string) error               { return r.wv.Navigate(url) }
@@ -692,47 +453,82 @@ func (r *realConnector) ClearConsole()                           { r.wv.ClearCon
 func (r *realConnector) Close() error                            { return r.wv.Close() }
 func (r *realConnector) SetViewport(w, h int) error              { return r.wv.SetViewport(w, h) }
 func (r *realConnector) UploadFile(sel string, p []string) error { return r.wv.UploadFile(sel, p) }
-func (r *realConnector) Print() error {
-	_, err := r.wv.Evaluate("window.print()")
-	return err
-}
-func (r *realConnector) PrintToPDF() ([]byte, error) {
-	client, err := r.cdpClient()
+
+// GetZoom returns the current CSS zoom level as a float64.
+// zoom, _ := conn.GetZoom()  // 1.0 = 100%, 1.5 = 150%
+func (r *realConnector) GetZoom() (float64, error) {
+	raw, err := r.wv.Evaluate("parseFloat(document.documentElement.style.zoom) || 1.0")
 	if err != nil {
-		return nil, err
+		return 0, core.E("realConnector.GetZoom", "failed to get zoom", err)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-	result, err := client.Call(ctx, "Page.printToPDF", map[string]any{
-		"printBackground":   true,
-		"preferCSSPageSize": true,
-	})
-	if err != nil {
-		return nil, err
+	switch v := raw.(type) {
+	case float64:
+		return v, nil
+	case int:
+		return float64(v), nil
+	default:
+		return 1.0, nil
 	}
-	data, ok := result["data"].(string)
-	if !ok || data == "" {
-		return nil, corego.E("webview", "missing PDF data", nil)
-	}
-	return base64.StdEncoding.DecodeString(data)
 }
 
-func (r *realConnector) cdpClient() (*gowebview.CDPClient, error) {
-	rv := reflect.ValueOf(r.wv)
-	if rv.Kind() != reflect.Ptr || rv.IsNil() {
-		return nil, corego.E("webview", "invalid connector", nil)
+// SetZoom sets the CSS zoom level on the document root element.
+// conn.SetZoom(1.5)  // 150%
+// conn.SetZoom(1.0)  // reset to normal
+func (r *realConnector) SetZoom(zoom float64) error {
+	script := "document.documentElement.style.zoom = '" + strconv.FormatFloat(zoom, 'g', -1, 64) + "'; undefined"
+	_, err := r.wv.Evaluate(script)
+	if err != nil {
+		return core.E("realConnector.SetZoom", "failed to set zoom", err)
 	}
-	elem := rv.Elem()
-	field := elem.FieldByName("client")
-	if !field.IsValid() || field.IsNil() {
-		return nil, corego.E("webview", "CDP client not available", nil)
+	return nil
+}
+
+// Print triggers window.print() or exports to PDF via Page.printToPDF.
+// When toPDF is false the browser print dialog is opened (via window.print()) and nil bytes are returned.
+// When toPDF is true a fresh CDPClient is opened against the stored WebSocket URL to issue
+// Page.printToPDF, which returns raw PDF bytes.
+func (r *realConnector) Print(toPDF bool) ([]byte, error) {
+	if !toPDF {
+		_, err := r.wv.Evaluate("window.print(); undefined")
+		if err != nil {
+			return nil, core.E("realConnector.Print", "failed to open print dialog", err)
+		}
+		return nil, nil
 	}
-	ptr := reflect.NewAt(field.Type(), unsafe.Pointer(field.UnsafeAddr())).Elem().Interface()
-	client, ok := ptr.(*gowebview.CDPClient)
-	if !ok || client == nil {
-		return nil, corego.E("webview", "unexpected CDP client type", nil)
+
+	if r.debugURL == "" {
+		return nil, core.E("realConnector.Print", "no debug URL stored; cannot issue Page.printToPDF", nil)
 	}
-	return client, nil
+
+	// Open a dedicated CDPClient for the single Page.printToPDF call.
+	// NewCDPClient connects to the first page target at the debug endpoint.
+	client, err := gowebview.NewCDPClient(r.debugURL)
+	if err != nil {
+		return nil, core.E("realConnector.Print", "failed to connect for PDF export", err)
+	}
+	defer client.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	result, err := client.Call(ctx, "Page.printToPDF", map[string]any{
+		"printBackground": true,
+	})
+	if err != nil {
+		return nil, core.E("realConnector.Print", "Page.printToPDF failed", err)
+	}
+
+	dataStr, ok := result["data"].(string)
+	if !ok {
+		return nil, core.E("realConnector.Print", "Page.printToPDF returned no data", nil)
+	}
+
+	pdfBytes, err := base64.StdEncoding.DecodeString(dataStr)
+	if err != nil {
+		return nil, core.E("realConnector.Print", "failed to decode PDF data", err)
+	}
+
+	return pdfBytes, nil
 }
 
 func (r *realConnector) Hover(sel string) error {

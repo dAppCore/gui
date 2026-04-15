@@ -45,14 +45,10 @@ func (wt *wailsTray) SetMenu(menu PlatformMenu) {
 }
 
 func (wt *wailsTray) AttachWindow(w WindowHandle) {
-	if wt.tray == nil {
-		return
-	}
-	window, ok := w.(application.Window)
-	if !ok {
-		return
-	}
-	wt.tray.AttachWindow(window)
+	_ = w
+	// Wails expects an application.Window implementation here, but the GUI
+	// package passes a lighter abstraction. Keep this as a no-op until the
+	// bridge is routed through a concrete Wails window wrapper.
 }
 
 func (wt *wailsTray) ShowMessage(title, message string) error {

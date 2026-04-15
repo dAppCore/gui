@@ -23,20 +23,22 @@ type TaskSetBadge struct{ Label string }
 // TaskRemoveBadge removes the dock/taskbar badge. Result: nil
 type TaskRemoveBadge struct{}
 
-// TaskSetProgressBar sets the progress indicator on the dock/taskbar icon.
-// Value must be in the range [0.0, 1.0]. Use -1.0 to remove the bar.
+// TaskSetProgressBar updates the progress indicator on the dock/taskbar icon.
+// Progress is clamped to [0.0, 1.0]. Pass -1.0 to hide the indicator.
+// c.PERFORM(dock.TaskSetProgressBar{Progress: 0.75})  // 75% complete
+// c.PERFORM(dock.TaskSetProgressBar{Progress: -1.0})  // hide indicator
 // Result: nil
-// _, _, err := c.PERFORM(TaskSetProgressBar{Value: 0.75})
-type TaskSetProgressBar struct{ Value float64 }
+type TaskSetProgressBar struct{ Progress float64 }
 
-// TaskBounce animates the dock icon to attract the user's attention. Result: int (bounce ID)
-// _, result, err := c.PERFORM(TaskBounce{Type: BounceCritical})
-// bounceID := result.(int)
-type TaskBounce struct{ Type BounceType }
+// TaskBounce requests user attention by animating the dock icon.
+// Result: int (requestID for use with TaskStopBounce)
+// c.PERFORM(dock.TaskBounce{BounceType: dock.BounceInformational})
+type TaskBounce struct{ BounceType BounceType }
 
-// TaskStopBounce cancels a running dock bounce animation. Result: nil
-// _, _, err := c.PERFORM(TaskStopBounce{BounceID: bounceID})
-type TaskStopBounce struct{ BounceID int }
+// TaskStopBounce cancels a pending attention request.
+// c.PERFORM(dock.TaskStopBounce{RequestID: id})
+// Result: nil
+type TaskStopBounce struct{ RequestID int }
 
 // --- Actions (broadcasts) ---
 
@@ -44,10 +46,10 @@ type TaskStopBounce struct{ BounceID int }
 type ActionVisibilityChanged struct{ Visible bool }
 
 // ActionProgressChanged is broadcast after a successful TaskSetProgressBar.
-type ActionProgressChanged struct{ Value float64 }
+type ActionProgressChanged struct{ Progress float64 }
 
 // ActionBounceStarted is broadcast after a successful TaskBounce.
 type ActionBounceStarted struct {
-	BounceID int        `json:"bounceId"`
-	Type     BounceType `json:"type"`
+	RequestID  int        `json:"requestId"`
+	BounceType BounceType `json:"bounceType"`
 }

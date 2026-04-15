@@ -5,99 +5,99 @@ import (
 	"context"
 	"sync"
 
-	coreerr "forge.lthn.ai/core/go-log"
-	"forge.lthn.ai/core/go/pkg/core"
+	coreerr "dappco.re/go/core/log"
+	core "dappco.re/go/core"
 )
 
-// Options holds configuration for the events service (currently none).
+// Options holds configuration for the events service (currently empty).
 type Options struct{}
 
-// Service bridges the platform custom event system to the Core IPC bus.
+// Service bridges Wails custom events into Core IPC.
+// Emit/On/Off/OnMultiple/Reset are available as Tasks; QueryListeners reads state.
 type Service struct {
 	*core.ServiceRuntime[Options]
 	platform Platform
-	mu       sync.RWMutex
-	counts   map[string]int // listener count per event name
-	cancels  []func()
+
+	mu        sync.Mutex
+	listeners map[string][]func()      // IPC-registered cancels per event name
+	counts    map[string]int           // listener counts per event name
 }
 
-func (s *Service) OnStartup(ctx context.Context) error {
+// OnStartup registers query and action handlers.
+func (s *Service) OnStartup(_ context.Context) core.Result {
 	s.Core().RegisterQuery(s.handleQuery)
-	s.Core().RegisterTask(s.handleTask)
-	return nil
+	s.Core().Action("events.emit", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskEmit)
+		cancelled := s.platform.Emit(t.Name, t.Data)
+		return core.Result{Value: cancelled, OK: true}
+	})
+	s.Core().Action("events.on", func(ctx context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskOn)
+		if t.Name == "" {
+			return core.Result{Value: coreerr.E("events.on", "event name must not be empty", nil), OK: false}
+		}
+		cancel := s.platform.On(t.Name, func(event *CustomEvent) {
+			_ = s.Core().ACTION(ActionEventFired{Event: *event})
+		})
+		s.mu.Lock()
+		s.listeners[t.Name] = append(s.listeners[t.Name], cancel)
+		s.counts[t.Name]++
+		s.mu.Unlock()
+		return core.Result{OK: true}
+	})
+	s.Core().Action("events.off", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskOff)
+		s.platform.Off(t.Name)
+		s.mu.Lock()
+		for _, cancel := range s.listeners[t.Name] {
+			cancel()
+		}
+		delete(s.listeners, t.Name)
+		delete(s.counts, t.Name)
+		s.mu.Unlock()
+		return core.Result{OK: true}
+	})
+	return core.Result{OK: true}
 }
 
-func (s *Service) OnShutdown(ctx context.Context) error {
+// OnShutdown cancels all IPC-registered platform listeners.
+func (s *Service) OnShutdown(_ context.Context) core.Result {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	for _, cancel := range s.cancels {
-		cancel()
+	for _, cancels := range s.listeners {
+		for _, cancel := range cancels {
+			cancel()
+		}
 	}
-	s.cancels = nil
+	s.listeners = make(map[string][]func())
 	s.counts = make(map[string]int)
-	s.platform.Reset()
-	return nil
+	return core.Result{OK: true}
 }
 
-func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
-	return nil
+// HandleIPCEvents satisfies the core.Service interface (no-op for now).
+func (s *Service) HandleIPCEvents(_ *core.Core, _ core.Message) core.Result {
+	return core.Result{OK: true}
 }
 
-func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
-	switch q := q.(type) {
+func (s *Service) handleQuery(_ *core.Core, q core.Query) core.Result {
+	switch q.(type) {
 	case QueryListeners:
-		s.mu.RLock()
-		count := s.counts[q.Name]
-		s.mu.RUnlock()
-		return count, true, nil
+		return core.Result{Value: s.listenerSnapshot(), OK: true}
 	default:
-		return nil, false, nil
+		return core.Result{}
 	}
 }
 
-func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
-	switch t := t.(type) {
-	case TaskEmit:
-		return s.taskEmit(t)
-	case TaskOn:
-		return s.taskOn(t)
-	case TaskOff:
-		return nil, true, s.taskOff(t)
-	default:
-		return nil, false, nil
-	}
-}
-
-func (s *Service) taskEmit(t TaskEmit) (any, bool, error) {
-	if t.Name == "" {
-		return nil, true, coreerr.E("events.taskEmit", "event name is required", nil)
-	}
-	cancelled := s.platform.Emit(t.Name, t.Data)
-	_ = s.Core().ACTION(ActionEventFired{Name: t.Name, Data: t.Data})
-	return cancelled, true, nil
-}
-
-func (s *Service) taskOn(t TaskOn) (any, bool, error) {
-	if t.Name == "" {
-		return nil, true, coreerr.E("events.taskOn", "event name is required", nil)
-	}
-	cancel := s.platform.On(t.Name, func(event *CustomEvent) {
-		_ = s.Core().ACTION(ActionEventFired{Name: event.Name, Data: event.Data})
-	})
+// listenerSnapshot returns a sorted slice of ListenerInfo for all known event names.
+//
+//	snapshot := s.listenerSnapshot()
+//	for _, info := range snapshot { log(info.EventName, info.Count) }
+func (s *Service) listenerSnapshot() []ListenerInfo {
 	s.mu.Lock()
-	s.cancels = append(s.cancels, cancel)
-	s.counts[t.Name]++
-	s.mu.Unlock()
-	return nil, true, nil
-}
-
-func (s *Service) taskOff(t TaskOff) error {
-	if t.Name == "" {
-		return coreerr.E("events.taskOff", "event name is required", nil)
+	defer s.mu.Unlock()
+	snapshot := make([]ListenerInfo, 0, len(s.counts))
+	for name, count := range s.counts {
+		snapshot = append(snapshot, ListenerInfo{EventName: name, Count: count})
 	}
-	s.platform.Off(t.Name)
-	s.mu.Lock()
-	delete(s.counts, t.Name)
-	s.mu.Unlock()
-	return nil
+	return snapshot
 }

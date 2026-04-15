@@ -2,7 +2,7 @@
 package mcp
 
 import (
-	"forge.lthn.ai/core/go/pkg/core"
+	core "dappco.re/go/core"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -11,28 +11,21 @@ type Subsystem struct {
 	core *core.Core
 }
 
-// NewSubsystem creates the display MCP bridge for a Core instance.
-// sub := mcp.NewSubsystem(c); sub.RegisterTools(server)
-func NewSubsystem(c *core.Core) *Subsystem {
-	return &Subsystem{core: c}
-}
-
-// Deprecated: use NewSubsystem(c).
+// New(c) creates a display MCP subsystem backed by a Core instance.
+// sub := mcp.New(c); sub.RegisterTools(server)
 func New(c *core.Core) *Subsystem {
-	return NewSubsystem(c)
+	return &Subsystem{core: c}
 }
 
 func (s *Subsystem) Name() string { return "display" }
 
 func (s *Subsystem) RegisterTools(server *mcp.Server) {
-	s.registerChatTools(server)
 	s.registerWebviewTools(server)
 	s.registerWindowTools(server)
 	s.registerLayoutTools(server)
 	s.registerScreenTools(server)
 	s.registerClipboardTools(server)
 	s.registerDialogTools(server)
-	s.registerMenuTools(server)
 	s.registerNotificationTools(server)
 	s.registerTrayTools(server)
 	s.registerEnvironmentTools(server)
@@ -41,5 +34,6 @@ func (s *Subsystem) RegisterTools(server *mcp.Server) {
 	s.registerKeybindingTools(server)
 	s.registerDockTools(server)
 	s.registerLifecycleTools(server)
-	s.registerEventTools(server)
+	s.registerEventsTools(server)
+	s.registerMenuTools(server)
 }

@@ -5,7 +5,7 @@ import (
 	"context"
 	"testing"
 
-	"forge.lthn.ai/core/go/pkg/core"
+	core "dappco.re/go/core"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -24,7 +24,12 @@ func (m *mockPlatform) GetPrimary() *Screen {
 	}
 	return nil
 }
-func (m *mockPlatform) GetCurrent() *Screen { return m.current }
+func (m *mockPlatform) GetCurrent() *Screen {
+	if m.current != nil {
+		return m.current
+	}
+	return m.GetPrimary()
+}
 
 func newTestService(t *testing.T) (*mockPlatform, *core.Core) {
 	t.Helper()
@@ -44,12 +49,11 @@ func newTestService(t *testing.T) (*mockPlatform, *core.Core) {
 			},
 		},
 	}
-	c, err := core.New(
+	c := core.New(
 		core.WithService(Register(mock)),
 		core.WithServiceLock(),
 	)
-	require.NoError(t, err)
-	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
 	return mock, c
 }
 
@@ -61,19 +65,17 @@ func TestRegister_Good(t *testing.T) {
 
 func TestQueryAll_Good(t *testing.T) {
 	_, c := newTestService(t)
-	result, handled, err := c.QUERY(QueryAll{})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	screens := result.([]Screen)
+	r := c.QUERY(QueryAll{})
+	require.True(t, r.OK)
+	screens := r.Value.([]Screen)
 	assert.Len(t, screens, 2)
 }
 
 func TestQueryPrimary_Good(t *testing.T) {
 	_, c := newTestService(t)
-	result, handled, err := c.QUERY(QueryPrimary{})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	scr := result.(*Screen)
+	r := c.QUERY(QueryPrimary{})
+	require.True(t, r.OK)
+	scr := r.Value.(*Screen)
 	require.NotNil(t, scr)
 	assert.Equal(t, "Built-in", scr.Name)
 	assert.True(t, scr.IsPrimary)
@@ -81,54 +83,49 @@ func TestQueryPrimary_Good(t *testing.T) {
 
 func TestQueryByID_Good(t *testing.T) {
 	_, c := newTestService(t)
-	result, handled, err := c.QUERY(QueryByID{ID: "2"})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	scr := result.(*Screen)
+	r := c.QUERY(QueryByID{ID: "2"})
+	require.True(t, r.OK)
+	scr := r.Value.(*Screen)
 	require.NotNil(t, scr)
 	assert.Equal(t, "External", scr.Name)
 }
 
 func TestQueryByID_Bad(t *testing.T) {
 	_, c := newTestService(t)
-	result, handled, err := c.QUERY(QueryByID{ID: "99"})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.Nil(t, result)
+	r := c.QUERY(QueryByID{ID: "99"})
+	require.True(t, r.OK)
+	assert.Nil(t, r.Value)
 }
 
 func TestQueryAtPoint_Good(t *testing.T) {
 	_, c := newTestService(t)
 
 	// Point on primary screen
-	result, handled, err := c.QUERY(QueryAtPoint{X: 100, Y: 100})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	scr := result.(*Screen)
+	r := c.QUERY(QueryAtPoint{X: 100, Y: 100})
+	require.True(t, r.OK)
+	scr := r.Value.(*Screen)
 	require.NotNil(t, scr)
 	assert.Equal(t, "Built-in", scr.Name)
 
 	// Point on external screen
-	result, _, _ = c.QUERY(QueryAtPoint{X: 3000, Y: 500})
-	scr = result.(*Screen)
+	r2 := c.QUERY(QueryAtPoint{X: 3000, Y: 500})
+	scr = r2.Value.(*Screen)
 	require.NotNil(t, scr)
 	assert.Equal(t, "External", scr.Name)
 }
 
 func TestQueryAtPoint_Bad(t *testing.T) {
 	_, c := newTestService(t)
-	result, handled, err := c.QUERY(QueryAtPoint{X: -1000, Y: -1000})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.Nil(t, result)
+	r := c.QUERY(QueryAtPoint{X: -1000, Y: -1000})
+	require.True(t, r.OK)
+	assert.Nil(t, r.Value)
 }
 
 func TestQueryWorkAreas_Good(t *testing.T) {
 	_, c := newTestService(t)
-	result, handled, err := c.QUERY(QueryWorkAreas{})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	areas := result.([]Rect)
+	r := c.QUERY(QueryWorkAreas{})
+	require.True(t, r.OK)
+	areas := r.Value.([]Rect)
 	assert.Len(t, areas, 2)
 	assert.Equal(t, 38, areas[0].Y) // primary has menu bar offset
 }
@@ -136,123 +133,178 @@ func TestQueryWorkAreas_Good(t *testing.T) {
 // --- QueryCurrent ---
 
 func TestQueryCurrent_Good(t *testing.T) {
-	mock, c := newTestService(t)
-	mock.current = &mock.screens[1] // set "External" as current
+	// current falls back to primary when not explicitly set
+	_, c := newTestService(t)
+	r := c.QUERY(QueryCurrent{})
+	require.True(t, r.OK)
+	scr := r.Value.(*Screen)
+	require.NotNil(t, scr)
+	assert.True(t, scr.IsPrimary)
+	assert.Equal(t, "Built-in", scr.Name)
+}
 
-	result, handled, err := c.QUERY(QueryCurrent{})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	scr := result.(*Screen)
+func TestQueryCurrent_Bad(t *testing.T) {
+	// no screens at all → GetCurrent returns nil
+	mock := &mockPlatform{screens: []Screen{}}
+	c := core.New(
+		core.WithService(Register(mock)),
+		core.WithServiceLock(),
+	)
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+
+	r := c.QUERY(QueryCurrent{})
+	require.True(t, r.OK)
+	assert.Nil(t, r.Value)
+}
+
+func TestQueryCurrent_Ugly(t *testing.T) {
+	// current is explicitly set to the external screen
+	mock := &mockPlatform{
+		screens: []Screen{
+			{ID: "1", Name: "Built-in", IsPrimary: true,
+				Bounds: Rect{X: 0, Y: 0, Width: 2560, Height: 1600}},
+			{ID: "2", Name: "External",
+				Bounds: Rect{X: 2560, Y: 0, Width: 1920, Height: 1080}},
+		},
+	}
+	mock.current = &mock.screens[1]
+	c := core.New(
+		core.WithService(Register(mock)),
+		core.WithServiceLock(),
+	)
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+
+	r := c.QUERY(QueryCurrent{})
+	scr := r.Value.(*Screen)
 	require.NotNil(t, scr)
 	assert.Equal(t, "External", scr.Name)
 }
 
-func TestQueryCurrent_Bad_NilWhenNoCurrentScreen(t *testing.T) {
-	// current is nil by default
-	_, c := newTestService(t)
-	result, handled, err := c.QUERY(QueryCurrent{})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	assert.Nil(t, result)
-}
-
-func TestQueryCurrent_Ugly_NoServiceRegistered(t *testing.T) {
-	c, err := core.New(core.WithServiceLock())
-	require.NoError(t, err)
-	_, handled, _ := c.QUERY(QueryCurrent{})
-	assert.False(t, handled)
-}
-
 // --- Rect geometry helpers ---
 
+func TestRect_Origin_Good(t *testing.T) {
+	r := Rect{X: 10, Y: 20, Width: 100, Height: 50}
+	pt := r.Origin()
+	assert.Equal(t, Point{X: 10, Y: 20}, pt)
+}
+
+func TestRect_Corner_Good(t *testing.T) {
+	r := Rect{X: 10, Y: 20, Width: 100, Height: 50}
+	pt := r.Corner()
+	assert.Equal(t, Point{X: 110, Y: 70}, pt)
+}
+
+func TestRect_InsideCorner_Good(t *testing.T) {
+	r := Rect{X: 10, Y: 20, Width: 100, Height: 50}
+	pt := r.InsideCorner()
+	assert.Equal(t, Point{X: 109, Y: 69}, pt)
+}
+
+func TestRect_IsEmpty_Good(t *testing.T) {
+	assert.False(t, Rect{X: 0, Y: 0, Width: 1, Height: 1}.IsEmpty())
+}
+
+func TestRect_IsEmpty_Bad(t *testing.T) {
+	assert.True(t, Rect{}.IsEmpty())
+	assert.True(t, Rect{Width: 0, Height: 10}.IsEmpty())
+	assert.True(t, Rect{Width: 10, Height: -1}.IsEmpty())
+}
+
 func TestRect_Contains_Good(t *testing.T) {
-	r := Rect{X: 100, Y: 100, Width: 200, Height: 150}
-	assert.True(t, r.Contains(100, 100))  // top-left corner (inclusive)
-	assert.True(t, r.Contains(200, 175))  // centre
-	assert.True(t, r.Contains(299, 249))  // bottom-right corner (exclusive boundary - 1)
+	r := Rect{X: 0, Y: 0, Width: 100, Height: 100}
+	assert.True(t, r.Contains(Point{X: 0, Y: 0}))
+	assert.True(t, r.Contains(Point{X: 50, Y: 50}))
+	assert.True(t, r.Contains(Point{X: 99, Y: 99}))
 }
 
 func TestRect_Contains_Bad(t *testing.T) {
-	r := Rect{X: 100, Y: 100, Width: 200, Height: 150}
-	assert.False(t, r.Contains(99, 100))  // just left
-	assert.False(t, r.Contains(100, 99))  // just above
-	assert.False(t, r.Contains(300, 200)) // right boundary (exclusive)
-	assert.False(t, r.Contains(200, 250)) // bottom boundary (exclusive)
+	r := Rect{X: 0, Y: 0, Width: 100, Height: 100}
+	// exclusive right/bottom edge
+	assert.False(t, r.Contains(Point{X: 100, Y: 50}))
+	assert.False(t, r.Contains(Point{X: 50, Y: 100}))
+	assert.False(t, r.Contains(Point{X: -1, Y: 50}))
 }
 
-func TestRect_Center_Good(t *testing.T) {
-	r := Rect{X: 0, Y: 0, Width: 200, Height: 100}
-	cx, cy := r.Center()
-	assert.Equal(t, 100, cx)
-	assert.Equal(t, 50, cy)
+func TestRect_Contains_Ugly(t *testing.T) {
+	// zero-size rect never contains anything
+	r := Rect{X: 5, Y: 5, Width: 0, Height: 0}
+	assert.False(t, r.Contains(Point{X: 5, Y: 5}))
 }
 
-func TestRect_Center_Ugly_OddDimensions(t *testing.T) {
-	r := Rect{X: 1, Y: 1, Width: 101, Height: 51}
-	cx, cy := r.Center()
-	assert.Equal(t, 51, cx) // integer division: 1 + 101/2 = 1 + 50 = 51
-	assert.Equal(t, 26, cy) // 1 + 51/2 = 1 + 25 = 26
+func TestRect_RectSize_Good(t *testing.T) {
+	r := Rect{X: 100, Y: 200, Width: 1920, Height: 1080}
+	sz := r.RectSize()
+	assert.Equal(t, Size{Width: 1920, Height: 1080}, sz)
 }
 
-func TestRect_Overlaps_Good(t *testing.T) {
-	a := Rect{X: 0, Y: 0, Width: 200, Height: 200}
-	b := Rect{X: 100, Y: 100, Width: 200, Height: 200}
-	assert.True(t, a.Overlaps(b))
-	assert.True(t, b.Overlaps(a))
-}
-
-func TestRect_Overlaps_Bad(t *testing.T) {
+func TestRect_Intersect_Good(t *testing.T) {
 	a := Rect{X: 0, Y: 0, Width: 100, Height: 100}
-	b := Rect{X: 200, Y: 200, Width: 100, Height: 100}
-	assert.False(t, a.Overlaps(b))
+	b := Rect{X: 50, Y: 50, Width: 100, Height: 100}
+	overlap := a.Intersect(b)
+	assert.Equal(t, Rect{X: 50, Y: 50, Width: 50, Height: 50}, overlap)
 }
 
-func TestRect_Overlaps_Ugly_AdjacentEdge(t *testing.T) {
-	// touching at edge — not overlapping (exclusive right/bottom boundary)
-	a := Rect{X: 0, Y: 0, Width: 100, Height: 100}
-	b := Rect{X: 100, Y: 0, Width: 100, Height: 100}
-	assert.False(t, a.Overlaps(b))
+func TestRect_Intersect_Bad(t *testing.T) {
+	// no overlap
+	a := Rect{X: 0, Y: 0, Width: 50, Height: 50}
+	b := Rect{X: 100, Y: 100, Width: 50, Height: 50}
+	overlap := a.Intersect(b)
+	assert.True(t, overlap.IsEmpty())
+}
+
+func TestRect_Intersect_Ugly(t *testing.T) {
+	// empty rect intersects nothing
+	a := Rect{X: 0, Y: 0, Width: 0, Height: 0}
+	b := Rect{X: 0, Y: 0, Width: 100, Height: 100}
+	overlap := a.Intersect(b)
+	assert.True(t, overlap.IsEmpty())
 }
 
 // --- ScreenPlacement ---
 
-type mockPlacer struct {
-	x, y          int
-	width, height int
-}
-
-func (m *mockPlacer) SetPosition(x, y int)        { m.x = x; m.y = y }
-func (m *mockPlacer) SetSize(width, height int)    { m.width = width; m.height = height }
-
 func TestScreenPlacement_Apply_Good(t *testing.T) {
-	p := ScreenPlacement{ScreenID: "1", X: 50, Y: 75, Width: 800, Height: 600}
-	placer := &mockPlacer{}
-	p.Apply(placer)
-	assert.Equal(t, 50, placer.x)
-	assert.Equal(t, 75, placer.y)
-	assert.Equal(t, 800, placer.width)
-	assert.Equal(t, 600, placer.height)
+	// secondary placed to the RIGHT of primary, no offset
+	primary := &Screen{
+		Bounds:   Rect{X: 0, Y: 0, Width: 2560, Height: 1600},
+		WorkArea: Rect{X: 0, Y: 38, Width: 2560, Height: 1562},
+	}
+	secondary := &Screen{
+		Bounds:   Rect{X: 3000, Y: 0, Width: 1920, Height: 1080},
+		WorkArea: Rect{X: 3000, Y: 0, Width: 1920, Height: 1080},
+	}
+	NewPlacement(secondary, primary, AlignRight, 0, OffsetBegin).Apply()
+	assert.Equal(t, 2560, secondary.Bounds.X)
+	assert.Equal(t, 0, secondary.Bounds.Y)
+	assert.Equal(t, 2560, secondary.WorkArea.X)
 }
 
-func TestScreenPlacement_Apply_Bad_ZeroDimensions(t *testing.T) {
-	// Zero dimensions should skip SetSize but still call SetPosition
-	p := ScreenPlacement{ScreenID: "1", X: 100, Y: 200, Width: 0, Height: 0}
-	placer := &mockPlacer{width: 1280, height: 800}
-	p.Apply(placer)
-	assert.Equal(t, 100, placer.x)
-	assert.Equal(t, 200, placer.y)
-	// Size should remain unchanged when both dimensions are zero
-	assert.Equal(t, 1280, placer.width)
-	assert.Equal(t, 800, placer.height)
+func TestScreenPlacement_Apply_Bad(t *testing.T) {
+	// screen placed ABOVE primary: newY = primary.Y - secondary.Height
+	primary := &Screen{
+		Bounds:   Rect{X: 0, Y: 0, Width: 1920, Height: 1080},
+		WorkArea: Rect{X: 0, Y: 0, Width: 1920, Height: 1080},
+	}
+	secondary := &Screen{
+		Bounds:   Rect{X: 0, Y: -600, Width: 1920, Height: 600},
+		WorkArea: Rect{X: 0, Y: -600, Width: 1920, Height: 600},
+	}
+	NewPlacement(secondary, primary, AlignTop, 0, OffsetBegin).Apply()
+	assert.Equal(t, 0, secondary.Bounds.X)
+	assert.Equal(t, -600, secondary.Bounds.Y)
 }
 
-func TestScreenPlacement_Apply_Ugly_NegativeCoords(t *testing.T) {
-	// Negative coordinates are valid (multi-monitor setups with negative origin)
-	p := ScreenPlacement{ScreenID: "2", X: -1920, Y: 0, Width: 1920, Height: 1080}
-	placer := &mockPlacer{}
-	p.Apply(placer)
-	assert.Equal(t, -1920, placer.x)
-	assert.Equal(t, 0, placer.y)
-	assert.Equal(t, 1920, placer.width)
-	assert.Equal(t, 1080, placer.height)
+func TestScreenPlacement_Apply_Ugly(t *testing.T) {
+	// END offset reference — places secondary flush to the bottom-right of parent
+	primary := &Screen{
+		Bounds:   Rect{X: 0, Y: 0, Width: 1920, Height: 1080},
+		WorkArea: Rect{X: 0, Y: 0, Width: 1920, Height: 1080},
+	}
+	secondary := &Screen{
+		Bounds:   Rect{X: 0, Y: 0, Width: 800, Height: 600},
+		WorkArea: Rect{X: 0, Y: 0, Width: 800, Height: 600},
+	}
+	// AlignBottom + OffsetEnd + offset=0 → secondary starts at right edge of parent
+	NewPlacement(secondary, primary, AlignBottom, 0, OffsetEnd).Apply()
+	assert.Equal(t, 1920-800, secondary.Bounds.X) // flush right
+	assert.Equal(t, 1080, secondary.Bounds.Y)      // just below parent
 }

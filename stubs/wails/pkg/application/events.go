@@ -7,101 +7,20 @@ import (
 	"github.com/wailsapp/wails/v3/pkg/events"
 )
 
-// ApplicationEventContext carries structured data for an ApplicationEvent.
+// ApplicationEventContext carries optional context for an application event.
 //
-//	files := event.Context().OpenedFiles()
-//	dark := event.Context().IsDarkMode()
-type ApplicationEventContext struct {
-	data map[string]any
+//	ctx := event.Context()
+//	_ = ctx // reserved for future platform-specific fields
+type ApplicationEventContext struct{}
+
+func newApplicationEventContext() *ApplicationEventContext {
+	return &ApplicationEventContext{}
 }
 
-// OpenedFiles returns the list of files provided via the event context, or nil.
+// ApplicationEvent is emitted by the application layer for system-level events.
 //
-//	for _, path := range event.Context().OpenedFiles() { open(path) }
-func (c *ApplicationEventContext) OpenedFiles() []string {
-	if c.data == nil {
-		return nil
-	}
-	files, ok := c.data["openedFiles"]
-	if !ok {
-		return nil
-	}
-	result, ok := files.([]string)
-	if !ok {
-		return nil
-	}
-	return result
-}
-
-// IsDarkMode returns true when the event context reports dark mode active.
-//
-//	if event.Context().IsDarkMode() { applyDark() }
-func (c *ApplicationEventContext) IsDarkMode() bool {
-	return c.getBool("isDarkMode")
-}
-
-// HasVisibleWindows returns true when the event context reports at least one visible window.
-//
-//	if event.Context().HasVisibleWindows() { ... }
-func (c *ApplicationEventContext) HasVisibleWindows() bool {
-	return c.getBool("hasVisibleWindows")
-}
-
-// Filename returns the filename value from the event context, or "".
-//
-//	path := event.Context().Filename()
-func (c *ApplicationEventContext) Filename() string {
-	if c.data == nil {
-		return ""
-	}
-	v, ok := c.data["filename"]
-	if !ok {
-		return ""
-	}
-	result, ok := v.(string)
-	if !ok {
-		return ""
-	}
-	return result
-}
-
-// URL returns the URL value from the event context, or "".
-//
-//	url := event.Context().URL()
-func (c *ApplicationEventContext) URL() string {
-	if c.data == nil {
-		return ""
-	}
-	v, ok := c.data["url"]
-	if !ok {
-		return ""
-	}
-	result, ok := v.(string)
-	if !ok {
-		return ""
-	}
-	return result
-}
-
-func (c *ApplicationEventContext) getBool(key string) bool {
-	if c.data == nil {
-		return false
-	}
-	v, ok := c.data[key]
-	if !ok {
-		return false
-	}
-	result, ok := v.(bool)
-	if !ok {
-		return false
-	}
-	return result
-}
-
-// ApplicationEvent is the event object delivered to OnApplicationEvent listeners.
-//
-//	em.OnApplicationEvent(events.Common.ThemeChanged, func(e *application.ApplicationEvent) {
-//	    dark := e.Context().IsDarkMode()
+//	manager.OnApplicationEvent(events.Mac.ApplicationShouldTerminate, func(e *ApplicationEvent) {
+//	    e.Cancel()
 //	})
 type ApplicationEvent struct {
 	Id        uint
@@ -109,189 +28,185 @@ type ApplicationEvent struct {
 	cancelled atomic.Bool
 }
 
-// Context returns the ApplicationEventContext attached to the event.
+// Context returns the context attached to this application event.
+//
+//	ctx := event.Context()
 func (e *ApplicationEvent) Context() *ApplicationEventContext {
-	if e.ctx == nil {
-		e.ctx = &ApplicationEventContext{data: make(map[string]any)}
-	}
 	return e.ctx
 }
 
-// Cancel marks the event as cancelled, preventing further listener dispatch.
+// Cancel prevents further processing of this application event.
+//
+//	event.Cancel()
 func (e *ApplicationEvent) Cancel() {
 	e.cancelled.Store(true)
 }
 
-// IsCancelled reports whether the event has been cancelled.
+// IsCancelled reports whether Cancel has been called on this event.
+//
+//	if event.IsCancelled() { return }
 func (e *ApplicationEvent) IsCancelled() bool {
 	return e.cancelled.Load()
 }
 
-// customEventListener is an internal listener registration.
-type customEventListener struct {
-	callback func(*CustomEvent)
-	counter  int // -1 = unlimited
+// CustomEvent is a named application-level event carrying arbitrary data.
+//
+//	manager.Emit("user:login", userPayload)
+type CustomEvent struct {
+	Name      string `json:"name"`
+	Data      any    `json:"data"`
+	Sender    string `json:"sender,omitempty"`
+	cancelled atomic.Bool
 }
 
-// applicationEventListener is an internal listener registration.
+// Cancel prevents further processing of this custom event.
+//
+//	event.Cancel()
+func (e *CustomEvent) Cancel() {
+	e.cancelled.Store(true)
+}
+
+// IsCancelled reports whether Cancel has been called on this event.
+//
+//	if event.IsCancelled() { return }
+func (e *CustomEvent) IsCancelled() bool {
+	return e.cancelled.Load()
+}
+
+// customEventListener holds a callback and its remaining invocation count.
+type customEventListener struct {
+	callback func(*CustomEvent)
+	counter  int
+}
+
+// applicationEventListener holds a callback for an application event.
 type applicationEventListener struct {
 	callback func(*ApplicationEvent)
 }
 
-// EventManager manages custom and application-level event subscriptions.
+// EventManager manages custom and application events in-memory.
 //
-//	em.Emit("build:done", result)
-//	cancel := em.On("build:done", func(e *application.CustomEvent) { ... })
-//	em.OnApplicationEvent(events.Common.ThemeChanged, func(e *application.ApplicationEvent) { ... })
+//	manager := &EventManager{}
+//	cancel := manager.On("data:ready", func(e *CustomEvent) { process(e.Data) })
+//	defer cancel()
 type EventManager struct {
-	mu sync.RWMutex
-
-	customListeners      map[string][]*customEventListener
-	applicationListeners map[uint][]*applicationEventListener
+	mu                sync.RWMutex
+	customListeners   map[string][]*customEventListener
+	appListeners      map[uint][]*applicationEventListener
 }
 
-func (em *EventManager) ensureCustomListeners() {
-	if em.customListeners == nil {
-		em.customListeners = make(map[string][]*customEventListener)
+func newEventManager() *EventManager {
+	return &EventManager{
+		customListeners: make(map[string][]*customEventListener),
+		appListeners:    make(map[uint][]*applicationEventListener),
 	}
 }
 
-func (em *EventManager) ensureApplicationListeners() {
-	if em.applicationListeners == nil {
-		em.applicationListeners = make(map[uint][]*applicationEventListener)
-	}
-}
-
-// Emit emits a custom event by name with optional data arguments.
+// Emit fires a named custom event with optional data to all registered listeners.
 // Returns true if the event was cancelled by a listener.
 //
-//	cancelled := em.Emit("build:done", buildResult)
+//	cancelled := manager.Emit("file:saved", "/home/user/doc.txt")
+//	if cancelled { log("event cancelled") }
 func (em *EventManager) Emit(name string, data ...any) bool {
 	event := &CustomEvent{Name: name}
-	if len(data) == 1 {
+	switch len(data) {
+	case 0:
+		// no data
+	case 1:
 		event.Data = data[0]
-	} else if len(data) > 1 {
+	default:
 		event.Data = data
 	}
-	return em.EmitEvent(event)
-}
 
-// EmitEvent emits a pre-constructed CustomEvent.
-// Returns true if the event was cancelled by a listener.
-//
-//	cancelled := em.EmitEvent(&application.CustomEvent{Name: "ping"})
-func (em *EventManager) EmitEvent(event *CustomEvent) bool {
-	em.mu.RLock()
-	listeners := append([]*customEventListener(nil), em.customListeners[event.Name]...)
-	em.mu.RUnlock()
+	em.mu.Lock()
+	listeners := append([]*customEventListener(nil), em.customListeners[name]...)
+	remaining := em.customListeners[name][:0]
+	for _, listener := range em.customListeners[name] {
+		if listener.counter < 0 {
+			remaining = append(remaining, listener)
+		} else {
+			listener.counter--
+			if listener.counter > 0 {
+				remaining = append(remaining, listener)
+			}
+		}
+	}
+	em.customListeners[name] = remaining
+	em.mu.Unlock()
 
-	toRemove := []int{}
-	for index, listener := range listeners {
+	for _, listener := range listeners {
 		if event.IsCancelled() {
 			break
 		}
 		listener.callback(event)
-		if listener.counter > 0 {
-			listener.counter--
-			if listener.counter == 0 {
-				toRemove = append(toRemove, index)
-			}
-		}
 	}
-
-	if len(toRemove) > 0 {
-		em.mu.Lock()
-		remaining := em.customListeners[event.Name]
-		for _, index := range toRemove {
-			if index < len(remaining) {
-				remaining = append(remaining[:index], remaining[index+1:]...)
-			}
-		}
-		em.customListeners[event.Name] = remaining
-		em.mu.Unlock()
-	}
-
 	return event.IsCancelled()
 }
 
 // On registers a persistent listener for the named custom event.
-// Returns a cancel function that deregisters the listener.
+// Returns a cancellation function that removes the listener.
 //
-//	cancel := em.On("build:done", func(e *application.CustomEvent) { ... })
+//	cancel := manager.On("theme:changed", func(e *CustomEvent) { applyTheme(e.Data) })
 //	defer cancel()
-func (em *EventManager) On(name string, callback func(event *CustomEvent)) func() {
-	em.mu.Lock()
-	em.ensureCustomListeners()
+func (em *EventManager) On(name string, callback func(*CustomEvent)) func() {
 	listener := &customEventListener{callback: callback, counter: -1}
+	em.mu.Lock()
 	em.customListeners[name] = append(em.customListeners[name], listener)
 	em.mu.Unlock()
-
 	return func() {
 		em.mu.Lock()
 		defer em.mu.Unlock()
-		slice := em.customListeners[name]
-		for i, l := range slice {
-			if l == listener {
-				em.customListeners[name] = append(slice[:i], slice[i+1:]...)
-				return
+		updated := em.customListeners[name][:0]
+		for _, existing := range em.customListeners[name] {
+			if existing != listener {
+				updated = append(updated, existing)
 			}
 		}
+		em.customListeners[name] = updated
 	}
 }
 
 // Off removes all listeners for the named custom event.
 //
-//	em.Off("build:done")
+//	manager.Off("theme:changed")
 func (em *EventManager) Off(name string) {
 	em.mu.Lock()
 	delete(em.customListeners, name)
 	em.mu.Unlock()
 }
 
-// OnMultiple registers a listener that fires at most counter times, then auto-deregisters.
+// OnMultiple registers a listener for the named custom event that fires at most counter times.
 //
-//	em.OnMultiple("ping", func(e *application.CustomEvent) { ... }, 3)
-func (em *EventManager) OnMultiple(name string, callback func(event *CustomEvent), counter int) {
+//	manager.OnMultiple("startup:phase", onPhase, 3)
+func (em *EventManager) OnMultiple(name string, callback func(*CustomEvent), counter int) {
+	listener := &customEventListener{callback: callback, counter: counter}
 	em.mu.Lock()
-	em.ensureCustomListeners()
-	em.customListeners[name] = append(em.customListeners[name], &customEventListener{
-		callback: callback,
-		counter:  counter,
-	})
+	em.customListeners[name] = append(em.customListeners[name], listener)
 	em.mu.Unlock()
 }
 
-// Reset removes all custom event listeners.
+// OnApplicationEvent registers a listener for application-level events.
+// Returns a cancellation function that removes the listener.
 //
-//	em.Reset()
-func (em *EventManager) Reset() {
-	em.mu.Lock()
-	em.customListeners = make(map[string][]*customEventListener)
-	em.mu.Unlock()
-}
-
-// OnApplicationEvent registers a listener for a platform application event.
-// Returns a cancel function that deregisters the listener.
-//
-//	cancel := em.OnApplicationEvent(events.Common.ThemeChanged, func(e *application.ApplicationEvent) { ... })
+//	cancel := manager.OnApplicationEvent(events.Mac.ApplicationShouldTerminate, func(e *ApplicationEvent) {
+//	    saveState()
+//	})
 //	defer cancel()
-func (em *EventManager) OnApplicationEvent(eventType events.ApplicationEventType, callback func(event *ApplicationEvent)) func() {
+func (em *EventManager) OnApplicationEvent(eventType events.ApplicationEventType, callback func(*ApplicationEvent)) func() {
 	eventID := uint(eventType)
-	em.mu.Lock()
-	em.ensureApplicationListeners()
 	listener := &applicationEventListener{callback: callback}
-	em.applicationListeners[eventID] = append(em.applicationListeners[eventID], listener)
+	em.mu.Lock()
+	em.appListeners[eventID] = append(em.appListeners[eventID], listener)
 	em.mu.Unlock()
-
 	return func() {
 		em.mu.Lock()
 		defer em.mu.Unlock()
-		slice := em.applicationListeners[eventID]
-		for i, l := range slice {
-			if l == listener {
-				em.applicationListeners[eventID] = append(slice[:i], slice[i+1:]...)
-				return
+		updated := em.appListeners[eventID][:0]
+		for _, existing := range em.appListeners[eventID] {
+			if existing != listener {
+				updated = append(updated, existing)
 			}
 		}
+		em.appListeners[eventID] = updated
 	}
 }

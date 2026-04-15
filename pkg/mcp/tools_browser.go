@@ -4,7 +4,7 @@ package mcp
 import (
 	"context"
 
-	"dappco.re/go/core/gui/pkg/browser"
+	core "dappco.re/go/core"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -18,9 +18,14 @@ type BrowserOpenURLOutput struct {
 }
 
 func (s *Subsystem) browserOpenURL(_ context.Context, _ *mcp.CallToolRequest, input BrowserOpenURLInput) (*mcp.CallToolResult, BrowserOpenURLOutput, error) {
-	_, _, err := s.core.PERFORM(browser.TaskOpenURL{URL: input.URL})
-	if err != nil {
-		return nil, BrowserOpenURLOutput{}, err
+	r := s.core.Action("browser.openURL").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "url", Value: input.URL},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, BrowserOpenURLOutput{}, e
+		}
+		return nil, BrowserOpenURLOutput{}, nil
 	}
 	return nil, BrowserOpenURLOutput{Success: true}, nil
 }

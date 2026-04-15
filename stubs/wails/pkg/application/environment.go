@@ -1,73 +1,85 @@
 package application
 
-import (
-	"runtime"
+import "sync"
 
-	"github.com/wailsapp/wails/v3/internal/operatingsystem"
-)
-
-// EnvironmentInfo holds runtime information about the host OS and build.
+// EnvironmentInfo holds information about the host environment.
 //
 //	info := manager.Info()
-//	fmt.Println(info.OS, info.Arch)
+//	if info.IsDarkMode { applyDarkTheme() }
 type EnvironmentInfo struct {
 	OS           string
 	Arch         string
 	Debug        bool
-	OSInfo       *operatingsystem.OS
+	IsDarkMode   bool
+	AccentColour string
 	PlatformInfo map[string]any
 }
 
-// EnvironmentManager provides queries about the host OS environment.
+// EnvironmentManager tracks environment state in-memory.
 //
-//	if manager.IsDarkMode() { applyDarkTheme() }
-//	accent := manager.GetAccentColor()
+//	manager := &EnvironmentManager{}
+//	manager.SetDarkMode(true)
+//	dark := manager.IsDarkMode() // true
 type EnvironmentManager struct {
-	darkMode    bool
-	accentColor string
+	mu           sync.RWMutex
+	darkMode     bool
+	accentColour string
+	operatingSystem   string
+	architecture string
+	debugMode    bool
 }
 
-// IsDarkMode returns true when the OS is using a dark colour scheme.
+// SetDarkMode sets the dark mode state used by IsDarkMode.
+//
+//	manager.SetDarkMode(true)
+func (em *EnvironmentManager) SetDarkMode(darkMode bool) {
+	em.mu.Lock()
+	em.darkMode = darkMode
+	em.mu.Unlock()
+}
+
+// IsDarkMode returns true when the environment is in dark mode.
 //
 //	if manager.IsDarkMode() { applyDarkTheme() }
 func (em *EnvironmentManager) IsDarkMode() bool {
+	em.mu.RLock()
+	defer em.mu.RUnlock()
 	return em.darkMode
 }
 
-// GetAccentColor returns the OS accent colour as an rgb() string.
+// SetAccentColour sets the accent colour returned by GetAccentColor.
 //
-//	colour := manager.GetAccentColor() // e.g. "rgb(0,122,255)"
+//	manager.SetAccentColour("rgb(0,122,255)")
+func (em *EnvironmentManager) SetAccentColour(colour string) {
+	em.mu.Lock()
+	em.accentColour = colour
+	em.mu.Unlock()
+}
+
+// GetAccentColor returns the stored accent colour, or the default blue if unset.
+//
+//	colour := manager.GetAccentColor() // "rgb(0,122,255)"
 func (em *EnvironmentManager) GetAccentColor() string {
-	if em.accentColor == "" {
+	em.mu.RLock()
+	defer em.mu.RUnlock()
+	if em.accentColour == "" {
 		return "rgb(0,122,255)"
 	}
-	return em.accentColor
+	return em.accentColour
 }
 
-// Info returns a snapshot of OS and build environment information.
+// Info returns a snapshot of the current environment state.
 //
 //	info := manager.Info()
+//	_ = info.OS // e.g. "linux"
 func (em *EnvironmentManager) Info() EnvironmentInfo {
+	em.mu.RLock()
+	defer em.mu.RUnlock()
 	return EnvironmentInfo{
-		OS:           runtime.GOOS,
-		Arch:         runtime.GOARCH,
-		OSInfo:       &operatingsystem.OS{Name: runtime.GOOS, Version: "stub"},
-		PlatformInfo: make(map[string]any),
+		OS:           em.operatingSystem,
+		Arch:         em.architecture,
+		Debug:        em.debugMode,
+		IsDarkMode:   em.darkMode,
+		AccentColour: em.accentColour,
 	}
-}
-
-// OpenFileManager opens the file manager at the given path, optionally selecting the file.
-// No-op in the stub.
-//
-//	err := manager.OpenFileManager("/home/user/docs", false)
-func (em *EnvironmentManager) OpenFileManager(path string, selectFile bool) error {
-	return nil
-}
-
-// HasFocusFollowsMouse reports whether the Linux desktop is configured for
-// focus-follows-mouse. Always returns false in the stub.
-//
-//	if manager.HasFocusFollowsMouse() { adjustMouseBehaviour() }
-func (em *EnvironmentManager) HasFocusFollowsMouse() bool {
-	return false
 }

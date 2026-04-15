@@ -1,34 +1,51 @@
 // pkg/events/messages.go
 package events
 
-// TaskEmit fires a custom event by name with optional data.
-// c.PERFORM(events.TaskEmit{Name: "build:done", Data: result})
+// All IPC message types for the events service.
+// Tasks mutate event state; Queries read it; Actions broadcast fired events.
+
+// TaskEmit fires a named custom event with optional data to all registered listeners.
+// Result: bool (true if the event was cancelled by a listener)
+//
+//	c.PERFORM(events.TaskEmit{Name: "user:login", Data: userPayload})
 type TaskEmit struct {
-	Name string
-	Data any
+	Name string `json:"name"`
+	Data any    `json:"data,omitempty"`
 }
 
-// TaskOn registers a persistent listener for a named event.
-// The listener ID returned in the result can be used with TaskOff.
-// c.PERFORM(events.TaskOn{Name: "build:done"})
+// TaskOn registers a persistent listener for the named custom event via IPC.
+// The listener fires an ActionEventFired action for each matching event.
+// Result: nil (side-effect only; use Off/Reset to remove)
+//
+//	c.PERFORM(events.TaskOn{Name: "theme:changed"})
 type TaskOn struct {
-	Name string
+	Name string `json:"name"`
 }
 
-// TaskOff removes all listeners for a named event.
-// c.PERFORM(events.TaskOff{Name: "build:done"})
+// TaskOff removes all listeners for the named custom event.
+// Result: nil
+//
+//	c.PERFORM(events.TaskOff{Name: "theme:changed"})
 type TaskOff struct {
-	Name string
+	Name string `json:"name"`
 }
 
-// QueryListeners returns the count of listeners registered for a named event.
-// count := c.QUERY(events.QueryListeners{Name: "build:done"})
-type QueryListeners struct {
-	Name string
-}
+// QueryListeners returns a snapshot of all registered listener counts per event name.
+// Result: []ListenerInfo
+//
+//	result, _, _ := c.QUERY(events.QueryListeners{})
+//	for _, info := range result.([]events.ListenerInfo) { ... }
+type QueryListeners struct{}
 
-// ActionEventFired is broadcast when a custom event is emitted via TaskEmit.
+// ActionEventFired is broadcast when a registered IPC listener receives an event.
+// Consumers subscribe via c.RegisterAction to react to platform events.
+//
+//	c.RegisterAction(func(_ *core.Core, msg core.Message) error {
+//	    if fired, ok := msg.(events.ActionEventFired); ok {
+//	        handleEvent(fired.Event)
+//	    }
+//	    return nil
+//	})
 type ActionEventFired struct {
-	Name string
-	Data any
+	Event CustomEvent `json:"event"`
 }

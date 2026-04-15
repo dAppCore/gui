@@ -7,13 +7,11 @@ import (
 )
 
 // WailsPlatform implements Platform using Wails v3.
-// Use: platform := window.NewWailsPlatform(app)
 type WailsPlatform struct {
 	app *application.App
 }
 
 // NewWailsPlatform creates a Wails-backed Platform.
-// Use: platform := window.NewWailsPlatform(app)
 func NewWailsPlatform(app *application.App) *WailsPlatform {
 	return &WailsPlatform{app: app}
 }
@@ -42,14 +40,12 @@ func (wp *WailsPlatform) CreateWindow(options PlatformWindowOptions) PlatformWin
 	return &wailsWindow{w: w, title: options.Title}
 }
 
-// GetWindows returns the live Wails windows.
-// Use: windows := wp.GetWindows()
 func (wp *WailsPlatform) GetWindows() []PlatformWindow {
 	all := wp.app.Window.GetAll()
 	out := make([]PlatformWindow, 0, len(all))
 	for _, w := range all {
 		if wv, ok := w.(*application.WebviewWindow); ok {
-			out = append(out, &wailsWindow{w: wv, title: wv.Name()})
+			out = append(out, &wailsWindow{w: wv})
 		}
 	}
 	return out
@@ -66,20 +62,21 @@ func (ww *wailsWindow) Name() string              { return ww.w.Name() }
 func (ww *wailsWindow) Title() string             { return ww.title }
 func (ww *wailsWindow) Position() (int, int)      { return ww.w.Position() }
 func (ww *wailsWindow) Size() (int, int)          { return ww.w.Size() }
-func (ww *wailsWindow) IsVisible() bool           { return ww.w.IsVisible() }
-func (ww *wailsWindow) IsMinimised() bool         { return ww.w.IsMinimised() }
 func (ww *wailsWindow) IsMaximised() bool         { return ww.w.IsMaximised() }
 func (ww *wailsWindow) IsFocused() bool           { return ww.w.IsFocused() }
+func (ww *wailsWindow) IsVisible() bool           { return ww.w.IsVisible() }
+func (ww *wailsWindow) IsFullscreen() bool        { return ww.w.IsFullscreen() }
+func (ww *wailsWindow) IsMinimised() bool         { return ww.w.IsMinimised() }
+func (ww *wailsWindow) GetBounds() (int, int, int, int) {
+	r := ww.w.Bounds()
+	return r.X, r.Y, r.Width, r.Height
+}
+func (ww *wailsWindow) GetZoom() float64          { return ww.w.GetZoom() }
 func (ww *wailsWindow) SetTitle(title string)     { ww.title = title; ww.w.SetTitle(title) }
 func (ww *wailsWindow) SetPosition(x, y int)      { ww.w.SetPosition(x, y) }
 func (ww *wailsWindow) SetSize(width, height int) { ww.w.SetSize(width, height) }
 func (ww *wailsWindow) SetBackgroundColour(r, g, b, a uint8) {
 	ww.w.SetBackgroundColour(application.NewRGBA(r, g, b, a))
-}
-func (ww *wailsWindow) SetOpacity(opacity float32) {
-	if setter, ok := any(ww.w).(interface{ SetOpacity(float32) }); ok {
-		setter.SetOpacity(opacity)
-	}
 }
 func (ww *wailsWindow) SetVisibility(visible bool) {
 	if visible {
@@ -89,38 +86,29 @@ func (ww *wailsWindow) SetVisibility(visible bool) {
 	}
 }
 func (ww *wailsWindow) SetAlwaysOnTop(alwaysOnTop bool) { ww.w.SetAlwaysOnTop(alwaysOnTop) }
-func (ww *wailsWindow) Maximise()                       { ww.w.Maximise() }
-func (ww *wailsWindow) Restore()                        { ww.w.Restore() }
-func (ww *wailsWindow) Minimise()                       { ww.w.Minimise() }
-func (ww *wailsWindow) Focus()                          { ww.w.Focus() }
-func (ww *wailsWindow) Close()                          { ww.w.Close() }
-func (ww *wailsWindow) Show()                           { ww.w.Show() }
-func (ww *wailsWindow) Hide()                           { ww.w.Hide() }
-func (ww *wailsWindow) Fullscreen()                     { ww.w.Fullscreen() }
-func (ww *wailsWindow) UnFullscreen()                   { ww.w.UnFullscreen() }
-func (ww *wailsWindow) OpenDevTools()                   { ww.w.OpenDevTools() }
-func (ww *wailsWindow) CloseDevTools() {
-	if closer, ok := any(ww.w).(interface{ CloseDevTools() }); ok {
-		closer.CloseDevTools()
-	}
+func (ww *wailsWindow) SetBounds(x, y, width, height int) {
+	ww.w.SetBounds(application.Rect{X: x, Y: y, Width: width, Height: height})
 }
-func (ww *wailsWindow) GetZoom() float64       { return ww.w.GetZoom() }
-func (ww *wailsWindow) SetZoom(factor float64) { ww.w.SetZoom(factor) }
-func (ww *wailsWindow) ZoomIn()                { ww.w.ZoomIn() }
-func (ww *wailsWindow) ZoomOut()               { ww.w.ZoomOut() }
-func (ww *wailsWindow) SetURL(url string)      { ww.w.SetURL(url) }
-func (ww *wailsWindow) SetHTML(html string)    { ww.w.SetHTML(html) }
-func (ww *wailsWindow) ExecJS(js string)       { ww.w.ExecJS(js) }
-func (ww *wailsWindow) GetBounds() Bounds {
-	r := ww.w.Bounds()
-	return Bounds{X: r.X, Y: r.Y, Width: r.Width, Height: r.Height}
+func (ww *wailsWindow) SetURL(url string)              { ww.w.SetURL(url) }
+func (ww *wailsWindow) SetHTML(html string)            { ww.w.SetHTML(html) }
+func (ww *wailsWindow) SetZoom(magnification float64)  { ww.w.SetZoom(magnification) }
+func (ww *wailsWindow) SetContentProtection(protection bool) {
+	ww.w.SetContentProtection(protection)
 }
-func (ww *wailsWindow) SetBounds(b Bounds) {
-	ww.w.SetBounds(application.Rect{X: b.X, Y: b.Y, Width: b.Width, Height: b.Height})
-}
-func (ww *wailsWindow) ToggleFullscreen()  { ww.w.ToggleFullscreen() }
-func (ww *wailsWindow) Print() error       { return ww.w.Print() }
+func (ww *wailsWindow) Maximise()        { ww.w.Maximise() }
+func (ww *wailsWindow) Restore()         { ww.w.Restore() }
+func (ww *wailsWindow) Minimise()        { ww.w.Minimise() }
+func (ww *wailsWindow) Focus()           { ww.w.Focus() }
+func (ww *wailsWindow) Close()           { ww.w.Close() }
+func (ww *wailsWindow) Show()            { ww.w.Show() }
+func (ww *wailsWindow) Hide()            { ww.w.Hide() }
+func (ww *wailsWindow) Fullscreen()      { ww.w.Fullscreen() }
+func (ww *wailsWindow) UnFullscreen()    { ww.w.UnFullscreen() }
+func (ww *wailsWindow) ToggleFullscreen() { ww.w.ToggleFullscreen() }
+func (ww *wailsWindow) ToggleMaximise()   { ww.w.ToggleMaximise() }
+func (ww *wailsWindow) ExecJS(js string)  { ww.w.ExecJS(js) }
 func (ww *wailsWindow) Flash(enabled bool) { ww.w.Flash(enabled) }
+func (ww *wailsWindow) Print() error       { return ww.w.Print() }
 
 func (ww *wailsWindow) OnWindowEvent(handler func(event WindowEvent)) {
 	name := ww.w.Name()
@@ -145,8 +133,8 @@ func (ww *wailsWindow) OnWindowEvent(handler func(event WindowEvent)) {
 				data["y"] = y
 			case "resize":
 				w, h := ww.w.Size()
-				data["w"] = w
-				data["h"] = h
+				data["width"] = w
+				data["height"] = h
 			}
 			handler(WindowEvent{
 				Type: typeName,

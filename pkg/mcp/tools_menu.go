@@ -4,8 +4,9 @@ import (
 	"context"
 	"strings"
 
-	"dappco.re/go/core/gui/pkg/menu"
-	coreerr "forge.lthn.ai/core/go-log"
+	core "dappco.re/go/core"
+	coreerr "dappco.re/go/core/log"
+	"forge.lthn.ai/core/gui/pkg/menu"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -32,8 +33,14 @@ func (s *Subsystem) menuSet(_ context.Context, _ *mcp.CallToolRequest, input Men
 	if err != nil {
 		return nil, MenuOutput{}, err
 	}
-	if _, _, err := s.core.PERFORM(menu.TaskSetAppMenu{Items: items}); err != nil {
-		return nil, MenuOutput{}, err
+	r := s.core.Action("menu.setAppMenu").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: menu.TaskSetAppMenu{Items: items}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, MenuOutput{}, e
+		}
+		return nil, MenuOutput{}, nil
 	}
 	snapshot, err := s.queryMenuItems()
 	if err != nil {
@@ -43,11 +50,14 @@ func (s *Subsystem) menuSet(_ context.Context, _ *mcp.CallToolRequest, input Men
 }
 
 func (s *Subsystem) queryMenuItems() ([]map[string]any, error) {
-	result, _, err := s.core.QUERY(menu.QueryGetAppMenu{})
-	if err != nil {
-		return nil, err
+	r := s.core.QUERY(menu.QueryGetAppMenu{})
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, e
+		}
+		return nil, nil
 	}
-	items, ok := result.([]menu.MenuItem)
+	items, ok := r.Value.([]menu.MenuItem)
 	if !ok {
 		return nil, coreerr.E("mcp.menuGet", "unexpected result type", nil)
 	}

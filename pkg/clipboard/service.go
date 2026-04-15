@@ -4,8 +4,7 @@ package clipboard
 import (
 	"context"
 
-	coreerr "forge.lthn.ai/core/go-log"
-	"forge.lthn.ai/core/go/pkg/core"
+	core "dappco.re/go/core"
 )
 
 type Options struct{}
@@ -17,59 +16,57 @@ type Service struct {
 
 // Register(p) binds the clipboard service to a Core instance.
 // c.WithService(clipboard.Register(wailsClipboard))
-func Register(p Platform) func(*core.Core) (any, error) {
-	return func(c *core.Core) (any, error) {
-		return &Service{
+func Register(p Platform) func(*core.Core) core.Result {
+	return func(c *core.Core) core.Result {
+		return core.Result{Value: &Service{
 			ServiceRuntime: core.NewServiceRuntime[Options](c, Options{}),
 			platform:       p,
-		}, nil
+		}, OK: true}
 	}
 }
 
-func (s *Service) OnStartup(ctx context.Context) error {
+func (s *Service) OnStartup(_ context.Context) core.Result {
 	s.Core().RegisterQuery(s.handleQuery)
-	s.Core().RegisterTask(s.handleTask)
-	return nil
-}
-
-func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
-	return nil
-}
-
-func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
-	switch q.(type) {
-	case QueryText:
-		text, ok := s.platform.Text()
-		return ClipboardContent{Text: text, HasContent: ok && text != ""}, true, nil
-	case QueryImage:
+	s.Core().Action("clipboard.setText", func(_ context.Context, opts core.Options) core.Result {
+		success := s.platform.SetText(opts.String("text"))
+		return core.Result{Value: success, OK: true}
+	})
+	s.Core().Action("clipboard.setImage", func(_ context.Context, opts core.Options) core.Result {
 		imgPlatform, ok := s.platform.(ImagePlatform)
 		if !ok {
-			return ImageContent{}, true, nil
+			return core.Result{Value: false, OK: true}
 		}
-		data, hasImage := imgPlatform.Image()
-		return ImageContent{Data: data, HasImage: hasImage && len(data) > 0}, true, nil
-	default:
-		return nil, false, nil
-	}
-}
-
-func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
-	switch t := t.(type) {
-	case TaskSetText:
-		return s.platform.SetText(t.Text), true, nil
-	case TaskSetImage:
-		imgPlatform, ok := s.platform.(ImagePlatform)
-		if !ok {
-			return nil, true, coreerr.E("clipboard.handleTask", "clipboard image operations are not supported by this platform", nil)
-		}
-		return imgPlatform.SetImage(t.Data), true, nil
-	case TaskClear:
+		data, _ := opts.Get("data").Value.([]byte)
+		success := imgPlatform.SetImage(data)
+		return core.Result{Value: success, OK: true}
+	})
+	s.Core().Action("clipboard.clear", func(_ context.Context, _ core.Options) core.Result {
 		success := s.platform.SetText("")
 		if imgPlatform, ok := s.platform.(ImagePlatform); ok {
 			success = imgPlatform.SetImage(nil) && success
 		}
-		return success, true, nil
+		return core.Result{Value: success, OK: true}
+	})
+	return core.Result{OK: true}
+}
+
+func (s *Service) HandleIPCEvents(_ *core.Core, _ core.Message) core.Result {
+	return core.Result{OK: true}
+}
+
+func (s *Service) handleQuery(_ *core.Core, q core.Query) core.Result {
+	switch q.(type) {
+	case QueryText:
+		text, ok := s.platform.Text()
+		return core.Result{Value: ClipboardContent{Text: text, HasContent: ok && text != ""}, OK: true}
+	case QueryImage:
+		imgPlatform, ok := s.platform.(ImagePlatform)
+		if !ok {
+			return core.Result{Value: ImageContent{}, OK: true}
+		}
+		data, hasImage := imgPlatform.Image()
+		return core.Result{Value: ImageContent{Data: append([]byte(nil), data...), HasImage: hasImage && len(data) > 0}, OK: true}
 	default:
-		return nil, false, nil
+		return core.Result{}
 	}
 }

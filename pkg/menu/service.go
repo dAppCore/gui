@@ -4,7 +4,7 @@ package menu
 import (
 	"context"
 
-	"forge.lthn.ai/core/go/pkg/core"
+	core "dappco.re/go/core"
 )
 
 type Options struct{}
@@ -17,16 +17,21 @@ type Service struct {
 	showDevTools bool
 }
 
-func (s *Service) OnStartup(ctx context.Context) error {
-	configValue, handled, _ := s.Core().QUERY(QueryConfig{})
-	if handled {
-		if menuConfig, ok := configValue.(map[string]any); ok {
+func (s *Service) OnStartup(_ context.Context) core.Result {
+	r := s.Core().QUERY(QueryConfig{})
+	if r.OK {
+		if menuConfig, ok := r.Value.(map[string]any); ok {
 			s.applyConfig(menuConfig)
 		}
 	}
 	s.Core().RegisterQuery(s.handleQuery)
-	s.Core().RegisterTask(s.handleTask)
-	return nil
+	s.Core().Action("menu.setAppMenu", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskSetAppMenu)
+		s.menuItems = t.Items
+		s.manager.SetApplicationMenu(t.Items)
+		return core.Result{OK: true}
+	})
+	return core.Result{OK: true}
 }
 
 func (s *Service) applyConfig(configData map[string]any) {
@@ -41,27 +46,16 @@ func (s *Service) ShowDevTools() bool {
 	return s.showDevTools
 }
 
-func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
-	return nil
+func (s *Service) HandleIPCEvents(_ *core.Core, _ core.Message) core.Result {
+	return core.Result{OK: true}
 }
 
-func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
+func (s *Service) handleQuery(_ *core.Core, q core.Query) core.Result {
 	switch q.(type) {
 	case QueryGetAppMenu:
-		return s.menuItems, true, nil
+		return core.Result{Value: s.menuItems, OK: true}
 	default:
-		return nil, false, nil
-	}
-}
-
-func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
-	switch t := t.(type) {
-	case TaskSetAppMenu:
-		s.menuItems = t.Items
-		s.manager.SetApplicationMenu(t.Items)
-		return nil, true, nil
-	default:
-		return nil, false, nil
+		return core.Result{}
 	}
 }
 

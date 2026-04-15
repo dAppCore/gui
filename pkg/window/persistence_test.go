@@ -3,7 +3,7 @@ package window
 
 import (
 	"os"
-	"path/filepath"
+	core "dappco.re/go/core"
 	"testing"
 	"time"
 
@@ -181,7 +181,7 @@ func TestStateManager_Persistence_Good(t *testing.T) {
 
 func TestStateManager_SetPath_Good(t *testing.T) {
 	dir := t.TempDir()
-	path := filepath.Join(dir, "custom", "window-state.json")
+	path := core.JoinPath(dir, "custom", "window-state.json")
 
 	sm := NewStateManagerWithDir(dir)
 	sm.SetPath(path)

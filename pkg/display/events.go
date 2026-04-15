@@ -1,4 +1,3 @@
-// pkg/display/events.go
 package display
 
 import (
@@ -8,12 +7,11 @@ import (
 	"time"
 
 	core "dappco.re/go/core"
-	"dappco.re/go/core/gui/pkg/window"
+	"forge.lthn.ai/core/gui/pkg/window"
 	"github.com/gorilla/websocket"
 )
 
 // EventType represents the type of event.
-// Use: eventType := display.EventWindowFocus
 type EventType string
 
 const (
@@ -42,15 +40,14 @@ const (
 	EventContextMenuClick    EventType = "contextmenu.item-clicked"
 	EventWebviewConsole      EventType = "webview.console"
 	EventWebviewException    EventType = "webview.exception"
-	EventCustomEvent         EventType = "event.custom"
+	EventCustomEvent         EventType = "custom.event"
 	EventDockProgress        EventType = "dock.progress"
 	EventDockBounce          EventType = "dock.bounce"
 	EventNotificationAction  EventType = "notification.action"
-	EventNotificationDismiss EventType = "notification.dismiss"
+	EventNotificationDismiss EventType = "notification.dismissed"
 )
 
 // Event represents a display event sent to subscribers.
-// Use: evt := display.Event{Type: display.EventWindowFocus, Window: "editor"}
 type Event struct {
 	Type      EventType      `json:"type"`
 	Timestamp int64          `json:"timestamp"`
@@ -59,22 +56,12 @@ type Event struct {
 }
 
 // Subscription represents a client subscription to events.
-// Use: sub := display.Subscription{ID: "sub-1", EventTypes: []display.EventType{display.EventWindowFocus}}
 type Subscription struct {
 	ID         string      `json:"id"`
 	EventTypes []EventType `json:"eventTypes"`
 }
 
-// EventServerInfo summarises the live WebSocket event server state.
-// Use: info := display.EventServerInfo{ConnectedClients: 1, Subscriptions: 3}
-type EventServerInfo struct {
-	ConnectedClients int `json:"connectedClients"`
-	Subscriptions    int `json:"subscriptions"`
-	BufferedEvents   int `json:"bufferedEvents"`
-}
-
 // WSEventManager manages WebSocket connections and event subscriptions.
-// Use: events := display.NewWSEventManager()
 type WSEventManager struct {
 	upgrader    websocket.Upgrader
 	clients     map[*websocket.Conn]*clientState
@@ -84,14 +71,12 @@ type WSEventManager struct {
 }
 
 // clientState tracks a client's subscriptions.
-// Use: state := &clientState{subscriptions: map[string]*Subscription{}}
 type clientState struct {
 	subscriptions map[string]*Subscription
 	mu            sync.RWMutex
 }
 
 // NewWSEventManager creates a new event manager.
-// Use: events := display.NewWSEventManager()
 func NewWSEventManager() *WSEventManager {
 	em := &WSEventManager{
 		upgrader: websocket.Upgrader{
@@ -149,13 +134,14 @@ func (em *WSEventManager) sendEvent(conn *websocket.Conn, event Event) {
 		return
 	}
 
-	result := core.JSONMarshal(event)
-	if !result.OK {
+	marshalResult := core.JSONMarshal(event)
+	if !marshalResult.OK {
 		return
 	}
+	data, _ := marshalResult.Value.([]byte)
 
 	conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-	if err := conn.WriteMessage(websocket.TextMessage, result.Value.([]byte)); err != nil {
+	if err := conn.WriteMessage(websocket.TextMessage, data); err != nil {
 		em.removeClient(conn)
 	}
 }
@@ -193,7 +179,7 @@ func (em *WSEventManager) handleMessages(conn *websocket.Conn) {
 			EventTypes []EventType `json:"eventTypes,omitempty"`
 		}
 
-		if !core.JSONUnmarshal(message, &msg).OK {
+		if unmarshalResult := core.JSONUnmarshal(message, &msg); !unmarshalResult.OK {
 			continue
 		}
 
@@ -239,8 +225,9 @@ func (em *WSEventManager) subscribe(conn *websocket.Conn, id string, eventTypes 
 		"id":         id,
 		"eventTypes": eventTypes,
 	}
-	if r := core.JSONMarshal(response); r.OK {
-		conn.WriteMessage(websocket.TextMessage, r.Value.([]byte))
+	if marshalResult := core.JSONMarshal(response); marshalResult.OK {
+		responseData, _ := marshalResult.Value.([]byte)
+		conn.WriteMessage(websocket.TextMessage, responseData)
 	}
 }
 
@@ -263,8 +250,9 @@ func (em *WSEventManager) unsubscribe(conn *websocket.Conn, id string) {
 		"type": "unsubscribed",
 		"id":   id,
 	}
-	if r := core.JSONMarshal(response); r.OK {
-		conn.WriteMessage(websocket.TextMessage, r.Value.([]byte))
+	if marshalResult := core.JSONMarshal(response); marshalResult.OK {
+		responseData, _ := marshalResult.Value.([]byte)
+		conn.WriteMessage(websocket.TextMessage, responseData)
 	}
 }
 
@@ -289,8 +277,9 @@ func (em *WSEventManager) listSubscriptions(conn *websocket.Conn) {
 		"type":          "subscriptions",
 		"subscriptions": subs,
 	}
-	if r := core.JSONMarshal(response); r.OK {
-		conn.WriteMessage(websocket.TextMessage, r.Value.([]byte))
+	if marshalResult := core.JSONMarshal(response); marshalResult.OK {
+		responseData, _ := marshalResult.Value.([]byte)
+		conn.WriteMessage(websocket.TextMessage, responseData)
 	}
 }
 
@@ -326,23 +315,6 @@ func (em *WSEventManager) ConnectedClients() int {
 	em.mu.RLock()
 	defer em.mu.RUnlock()
 	return len(em.clients)
-}
-
-// Info returns a snapshot of the WebSocket event server state.
-func (em *WSEventManager) Info() EventServerInfo {
-	em.mu.RLock()
-	defer em.mu.RUnlock()
-
-	info := EventServerInfo{
-		ConnectedClients: len(em.clients),
-		BufferedEvents:   len(em.eventBuffer),
-	}
-	for _, state := range em.clients {
-		state.mu.RLock()
-		info.Subscriptions += len(state.subscriptions)
-		state.mu.RUnlock()
-	}
-	return info
 }
 
 // Close shuts down the event manager.

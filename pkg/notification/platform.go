@@ -7,12 +7,6 @@ type Platform interface {
 	RequestPermission() (bool, error)
 	CheckPermission() (bool, error)
 	RevokePermission() error
-	RegisterCategory(category NotificationCategory) error
-}
-
-// ClearPlatform is an optional extension for removing notifications.
-type ClearPlatform interface {
-	Clear(id string) error
 }
 
 // NotificationSeverity indicates the severity for dialog fallback.
@@ -23,6 +17,21 @@ const (
 	SeverityWarning
 	SeverityError
 )
+
+// NotificationAction is a button that can be attached to a notification.
+// id := "reply"; action := NotificationAction{ID: id, Title: "Reply", Destructive: false}
+type NotificationAction struct {
+	ID          string `json:"id"`
+	Title       string `json:"title"`
+	Destructive bool   `json:"destructive,omitempty"`
+}
+
+// NotificationCategory groups actions under a named category/channel.
+// category := NotificationCategory{ID: "message", Actions: []NotificationAction{{ID: "reply", Title: "Reply"}}}
+type NotificationCategory struct {
+	ID      string               `json:"id"`
+	Actions []NotificationAction `json:"actions,omitempty"`
+}
 
 // NotificationOptions contains options for sending a notification.
 type NotificationOptions struct {
@@ -38,17 +47,4 @@ type NotificationOptions struct {
 // PermissionStatus indicates whether notifications are authorised.
 type PermissionStatus struct {
 	Granted bool `json:"granted"`
-}
-
-// NotificationAction describes a tappable action button on a notification.
-type NotificationAction struct {
-	ID    string `json:"id"`
-	Title string `json:"title"`
-}
-
-// NotificationCategory groups a set of actions that can appear on notifications.
-// Register categories on startup so the OS knows the available action buttons.
-type NotificationCategory struct {
-	ID      string               `json:"id"`
-	Actions []NotificationAction `json:"actions"`
 }

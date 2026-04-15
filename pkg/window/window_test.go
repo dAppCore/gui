@@ -91,48 +91,39 @@ func newTestManager() (*Manager, *mockPlatform) {
 	return m, p
 }
 
-func requireCreateWindow(t *testing.T, m *Manager, w Window) PlatformWindow {
-	t.Helper()
-	pw, err := m.CreateWindow(w)
-	require.NoError(t, err)
-	return pw
-}
-
-func TestManager_CreateWindow_Good(t *testing.T) {
+func TestManager_Open_Good(t *testing.T) {
 	m, p := newTestManager()
-	pw := requireCreateWindow(t, m, Window{
-		Name:   "test",
-		Title:  "Test",
-		URL:    "/test",
-		Width:  800,
-		Height: 600,
-	})
+	pw, err := m.Open(WithName("test"), WithTitle("Test"), WithURL("/test"), WithSize(800, 600))
+	require.NoError(t, err)
 	assert.NotNil(t, pw)
 	assert.Equal(t, "test", pw.Name())
 	assert.Len(t, p.windows, 1)
 }
 
-func TestManager_CreateWindow_Defaults_Good(t *testing.T) {
+func TestManager_Open_Defaults_Good(t *testing.T) {
 	m, _ := newTestManager()
-	pw := requireCreateWindow(t, m, Window{})
+	pw, err := m.Open()
+	require.NoError(t, err)
 	assert.Equal(t, "main", pw.Name())
 	w, h := pw.Size()
 	assert.Equal(t, 1280, w)
 	assert.Equal(t, 800, h)
 }
 
-func TestManager_CreateWindow_CustomDefaults_Good(t *testing.T) {
+func TestManager_Open_CustomDefaults_Good(t *testing.T) {
 	m, _ := newTestManager()
 	m.SetDefaultWidth(1440)
 	m.SetDefaultHeight(900)
 
-	pw := requireCreateWindow(t, m, Window{})
+	pw, err := m.Open()
+	require.NoError(t, err)
+
 	w, h := pw.Size()
 	assert.Equal(t, 1440, w)
 	assert.Equal(t, 900, h)
 }
 
-func TestManager_Open_Compatibility_Bad(t *testing.T) {
+func TestManager_Open_Bad(t *testing.T) {
 	m, _ := newTestManager()
 	_, err := m.Open(func(w *Window) error { return assert.AnError })
 	assert.Error(t, err)
@@ -140,7 +131,7 @@ func TestManager_Open_Compatibility_Bad(t *testing.T) {
 
 func TestManager_Get_Good(t *testing.T) {
 	m, _ := newTestManager()
-	_ = requireCreateWindow(t, m, Window{Name: "findme"})
+	_, _ = m.Open(WithName("findme"))
 	pw, ok := m.Get("findme")
 	assert.True(t, ok)
 	assert.Equal(t, "findme", pw.Name())
@@ -154,8 +145,8 @@ func TestManager_Get_Bad(t *testing.T) {
 
 func TestManager_List_Good(t *testing.T) {
 	m, _ := newTestManager()
-	_ = requireCreateWindow(t, m, Window{Name: "a"})
-	_ = requireCreateWindow(t, m, Window{Name: "b"})
+	_, _ = m.Open(WithName("a"))
+	_, _ = m.Open(WithName("b"))
 	names := m.List()
 	assert.Len(t, names, 2)
 	assert.Contains(t, names, "a")
@@ -164,7 +155,7 @@ func TestManager_List_Good(t *testing.T) {
 
 func TestManager_Remove_Good(t *testing.T) {
 	m, _ := newTestManager()
-	_ = requireCreateWindow(t, m, Window{Name: "temp"})
+	_, _ = m.Open(WithName("temp"))
 	m.Remove("temp")
 	_, ok := m.Get("temp")
 	assert.False(t, ok)
@@ -179,8 +170,8 @@ func TestTileMode_String_Good(t *testing.T) {
 
 func TestManager_TileWindows_Good(t *testing.T) {
 	m, _ := newTestManager()
-	_ = requireCreateWindow(t, m, Window{Name: "a", Width: 800, Height: 600})
-	_ = requireCreateWindow(t, m, Window{Name: "b", Width: 800, Height: 600})
+	_, _ = m.Open(WithName("a"), WithSize(800, 600))
+	_, _ = m.Open(WithName("b"), WithSize(800, 600))
 	err := m.TileWindows(TileModeLeftRight, []string{"a", "b"}, 1920, 1080)
 	require.NoError(t, err)
 	a, _ := m.Get("a")
@@ -199,7 +190,7 @@ func TestManager_TileWindows_Bad(t *testing.T) {
 
 func TestManager_SnapWindow_Good(t *testing.T) {
 	m, _ := newTestManager()
-	_ = requireCreateWindow(t, m, Window{Name: "snap", Width: 800, Height: 600})
+	_, _ = m.Open(WithName("snap"), WithSize(800, 600))
 	err := m.SnapWindow("snap", SnapLeft, 1920, 1080)
 	require.NoError(t, err)
 	w, _ := m.Get("snap")
@@ -211,8 +202,8 @@ func TestManager_SnapWindow_Good(t *testing.T) {
 
 func TestManager_StackWindows_Good(t *testing.T) {
 	m, _ := newTestManager()
-	_ = requireCreateWindow(t, m, Window{Name: "s1", Width: 800, Height: 600})
-	_ = requireCreateWindow(t, m, Window{Name: "s2", Width: 800, Height: 600})
+	_, _ = m.Open(WithName("s1"), WithSize(800, 600))
+	_, _ = m.Open(WithName("s2"), WithSize(800, 600))
 	err := m.StackWindows([]string{"s1", "s2"}, 30, 30)
 	require.NoError(t, err)
 	s2, _ := m.Get("s2")
@@ -253,9 +244,10 @@ func TestTileWindows_AllModes_Good(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			m, _ := newTestManager()
-			_ = requireCreateWindow(t, m, Window{Name: "win", Width: 800, Height: 600})
+			_, err := m.Open(WithName("win"), WithSize(800, 600))
+			require.NoError(t, err)
 
-			err := m.TileWindows(tc.mode, []string{"win"}, screenW, screenH)
+			err = m.TileWindows(tc.mode, []string{"win"}, screenW, screenH)
 			require.NoError(t, err)
 
 			pw, ok := m.Get("win")
@@ -298,9 +290,10 @@ func TestSnapWindow_AllPositions_Good(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			m, _ := newTestManager()
-			_ = requireCreateWindow(t, m, Window{Name: "snap", Width: tc.initW, Height: tc.initH})
+			_, err := m.Open(WithName("snap"), WithSize(tc.initW, tc.initH))
+			require.NoError(t, err)
 
-			err := m.SnapWindow("snap", tc.pos, screenW, screenH)
+			err = m.SnapWindow("snap", tc.pos, screenW, screenH)
 			require.NoError(t, err)
 
 			pw, ok := m.Get("snap")
@@ -320,7 +313,8 @@ func TestStackWindows_ThreeWindows_Good(t *testing.T) {
 	m, _ := newTestManager()
 	names := []string{"s1", "s2", "s3"}
 	for _, name := range names {
-		_ = requireCreateWindow(t, m, Window{Name: name, Width: 800, Height: 600})
+		_, err := m.Open(WithName(name), WithSize(800, 600))
+		require.NoError(t, err)
 	}
 
 	err := m.StackWindows(names, 30, 30)
@@ -375,10 +369,12 @@ func TestApplyWorkflow_AllLayouts_Good(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			m, _ := newTestManager()
-			_ = requireCreateWindow(t, m, Window{Name: "editor", Width: 800, Height: 600})
-			_ = requireCreateWindow(t, m, Window{Name: "terminal", Width: 800, Height: 600})
+			_, err := m.Open(WithName("editor"), WithSize(800, 600))
+			require.NoError(t, err)
+			_, err = m.Open(WithName("terminal"), WithSize(800, 600))
+			require.NoError(t, err)
 
-			err := m.ApplyWorkflow(tc.workflow, []string{"editor", "terminal"}, screenW, screenH)
+			err = m.ApplyWorkflow(tc.workflow, []string{"editor", "terminal"}, screenW, screenH)
 			require.NoError(t, err)
 
 			pw0, ok := m.Get("editor")
