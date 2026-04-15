@@ -1,8 +1,6 @@
 package display
 
 import (
-	"os"
-	"path/filepath"
 	"strings"
 
 	core "dappco.re/go/core"
@@ -36,7 +34,11 @@ func (s *Service) BuildPreloadScript(pageURL string) (string, error) {
 		s.injectElectronShim(),
 		s.injectCoreMLShim(),
 		s.buildHLCRFComponents(pageURL),
-		s.injectAppPreloads(pageURL),
+	}
+	if appPreloads, err := s.injectAppPreloads(pageURL); err != nil {
+		return "", err
+	} else if strings.TrimSpace(appPreloads) != "" {
+		parts = append(parts, appPreloads)
 	}
 	return strings.Join(parts, "\n"), nil
 }
@@ -469,10 +471,10 @@ func (s *Service) injectCoreMLShim() string {
 })();`
 }
 
-func (s *Service) injectAppPreloads(pageURL string) string {
+func (s *Service) injectAppPreloads(pageURL string) (string, error) {
 	loaded, err := s.loadManifestForOrigin(pageURL)
 	if err != nil || loaded == nil {
-		return ""
+		return "", err
 	}
 	scripts := make([]string, 0, len(loaded.Manifest.Preloads))
 	for _, preload := range loaded.Manifest.Preloads {
@@ -484,11 +486,12 @@ func (s *Service) injectAppPreloads(pageURL string) string {
 			continue
 		}
 		if path := strings.TrimSpace(preload.Path); path != "" {
-			body, readErr := os.ReadFile(filepath.Join(loaded.BaseDir, path))
-			if readErr == nil {
-				scripts = append(scripts, string(body))
+			body, readErr := s.readManifestPreload(loaded.BaseDir, path)
+			if readErr != nil {
+				return "", readErr
 			}
+			scripts = append(scripts, string(body))
 		}
 	}
-	return strings.Join(scripts, "\n")
+	return strings.Join(scripts, "\n"), nil
 }

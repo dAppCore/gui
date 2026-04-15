@@ -1,8 +1,11 @@
 package display
 
 import (
+	"net"
 	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -106,6 +109,54 @@ func NewWSEventManager() *WSEventManager {
 	return em
 }
 
+func trustedWebSocketOrigin(r *http.Request) bool {
+	if r == nil {
+		return false
+	}
+
+	if !trustedWebSocketHost(r.Host) {
+		return false
+	}
+
+	origin := strings.TrimSpace(r.Header.Get("Origin"))
+	if origin == "" || strings.EqualFold(origin, "null") {
+		return true
+	}
+
+	parsed, err := url.Parse(origin)
+	if err != nil {
+		return false
+	}
+
+	switch strings.ToLower(parsed.Scheme) {
+	case "http", "https":
+		return trustedWebSocketHost(parsed.Host)
+	case "file", "wails", "core", "app":
+		return true
+	default:
+		return false
+	}
+}
+
+func trustedWebSocketHost(host string) bool {
+	host = strings.TrimSpace(host)
+	if host == "" {
+		return false
+	}
+
+	name := host
+	if parsedHost, _, err := net.SplitHostPort(host); err == nil {
+		name = parsedHost
+	}
+	name = strings.Trim(name, "[]")
+	switch strings.ToLower(name) {
+	case "localhost", "127.0.0.1", "::1":
+		return true
+	default:
+		return false
+	}
+}
+
 // broadcaster sends events to all subscribed clients.
 func (em *WSEventManager) broadcaster() {
 	for event := range em.eventBuffer {
@@ -158,6 +209,11 @@ func (em *WSEventManager) sendEvent(conn *websocket.Conn, event Event) {
 
 // HandleWebSocket handles WebSocket upgrade and connection.
 func (em *WSEventManager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
+	if !trustedWebSocketOrigin(r) {
+		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+		return
+	}
+
 	conn, err := em.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return

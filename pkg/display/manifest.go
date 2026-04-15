@@ -74,6 +74,33 @@ func (s *Service) loadManifestForOrigin(pageURL string) (*loadedManifest, error)
 	return loaded, nil
 }
 
+func safeManifestPreloadPath(baseDir, preloadPath string) (string, error) {
+	trimmed := strings.TrimSpace(preloadPath)
+	if trimmed == "" {
+		return "", errors.New("preload path is empty")
+	}
+	if filepath.IsAbs(trimmed) {
+		return "", errors.New("preload path must be relative")
+	}
+
+	baseAbs, err := filepath.Abs(baseDir)
+	if err != nil {
+		return "", err
+	}
+	candidateAbs, err := filepath.Abs(filepath.Join(baseAbs, trimmed))
+	if err != nil {
+		return "", err
+	}
+	rel, err := filepath.Rel(baseAbs, candidateAbs)
+	if err != nil {
+		return "", err
+	}
+	if rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return "", errors.New("preload path escapes manifest directory")
+	}
+	return candidateAbs, nil
+}
+
 func discoverManifestPath(pageURL string) (string, error) {
 	parsed, err := url.Parse(strings.TrimSpace(pageURL))
 	if err != nil {
@@ -116,6 +143,14 @@ func (s *Service) manifestWindowConfig(pageURL string) map[string]ManifestWindow
 		return nil
 	}
 	return loaded.Manifest.Windows
+}
+
+func (s *Service) readManifestPreload(baseDir, preloadPath string) ([]byte, error) {
+	resolvedPath, err := safeManifestPreloadPath(baseDir, preloadPath)
+	if err != nil {
+		return nil, err
+	}
+	return os.ReadFile(resolvedPath)
 }
 
 type manifestCacheState struct {

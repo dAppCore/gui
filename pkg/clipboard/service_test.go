@@ -2,6 +2,7 @@
 package clipboard
 
 import (
+	"bytes"
 	"context"
 	"testing"
 
@@ -99,4 +100,13 @@ func TestQueryImage_Good(t *testing.T) {
 	content := result.Value.(ImageContent)
 	assert.True(t, content.HasImage)
 	assert.Equal(t, []byte{0x89, 0x50, 0x4e, 0x47}, content.Data)
+}
+
+func TestTaskSetImage_RejectsOversize(t *testing.T) {
+	_, c := newTestService(t)
+	r := c.Action("clipboard.setImage").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "data", Value: bytes.Repeat([]byte("x"), MaxImageBytes+1)},
+	))
+	require.True(t, r.OK)
+	assert.Equal(t, false, r.Value)
 }

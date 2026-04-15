@@ -208,6 +208,11 @@ func TestTaskEvaluate_Bad_EmptyWindow(t *testing.T) {
 	assert.False(t, r.OK)
 }
 
+func TestExactWindowTargetMatch_Good(t *testing.T) {
+	assert.True(t, exactWindowTargetMatch("main", "main"))
+	assert.False(t, exactWindowTargetMatch("main - docs", "main"))
+}
+
 func TestTaskClick_Good(t *testing.T) {
 	mock := &mockConnector{}
 	_, c := newTestService(t, mock)

@@ -37,6 +37,9 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 			return core.Result{Value: false, OK: true}
 		}
 		data, _ := opts.Get("data").Value.([]byte)
+		if len(data) == 0 || len(data) > MaxImageBytes {
+			return core.Result{Value: false, OK: true}
+		}
 		success := imgPlatform.SetImage(data)
 		return core.Result{Value: success, OK: true}
 	}

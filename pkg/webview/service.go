@@ -2,7 +2,6 @@
 package webview
 
 import (
-	"bytes"
 	"context"
 	"encoding/base64"
 	"strconv"
@@ -90,20 +89,32 @@ func defaultNewConn(options Options) func(string, string) (connector, error) {
 		if windowName == "" {
 			return nil, core.E("webview.connect", "window name is required", nil)
 		}
-		// Enumerate targets, match by title/URL containing window name
+		// Enumerate targets, match by exact title/URL to avoid attaching to the wrong page.
 		targets, err := gowebview.ListTargets(debugURL)
 		if err != nil {
 			return nil, err
 		}
-		var wsURL string
+		var (
+			firstPageWSURL string
+			selectedWSURL  string
+		)
 		for _, t := range targets {
-			if t.Type == "page" && (bytes.Contains([]byte(t.Title), []byte(windowName)) || bytes.Contains([]byte(t.URL), []byte(windowName))) {
-				wsURL = t.WebSocketDebuggerURL
+			if t.Type != "page" || t.WebSocketDebuggerURL == "" {
+				continue
+			}
+			if firstPageWSURL == "" {
+				firstPageWSURL = t.WebSocketDebuggerURL
+			}
+			if exactWindowTargetMatch(t.Title, windowName) || exactWindowTargetMatch(t.URL, windowName) {
+				selectedWSURL = t.WebSocketDebuggerURL
 				break
 			}
 		}
-		if wsURL == "" {
+		if selectedWSURL == "" {
 			return nil, core.E("webview.connect", "no page target matched window name", nil)
+		}
+		if selectedWSURL != firstPageWSURL {
+			return nil, core.E("webview.connect", "matched page target is not the active target", nil)
 		}
 		wv, err := gowebview.New(
 			gowebview.WithDebugURL(debugURL),
@@ -115,6 +126,10 @@ func defaultNewConn(options Options) func(string, string) (connector, error) {
 		}
 		return &realConnector{wv: wv, debugURL: debugURL}, nil
 	}
+}
+
+func exactWindowTargetMatch(candidate, windowName string) bool {
+	return strings.TrimSpace(candidate) == windowName
 }
 
 // defaultWatcherSetup wires up console/exception watchers on real connectors.

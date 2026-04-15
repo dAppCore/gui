@@ -1,6 +1,8 @@
 // pkg/clipboard/messages.go
 package clipboard
 
+const MaxImageBytes = 16 << 20
+
 // QueryText reads the clipboard. Result: ClipboardContent
 type QueryText struct{}
 

@@ -34,27 +34,27 @@ func (w *testWindowListener) SetPosition(int, int)            {}
 func (w *testWindowListener) SetSize(int, int)                {}
 func (w *testWindowListener) SetBackgroundColour(uint8, uint8, uint8, uint8) {
 }
-func (w *testWindowListener) SetVisibility(bool)         {}
-func (w *testWindowListener) SetAlwaysOnTop(bool)        {}
+func (w *testWindowListener) SetVisibility(bool)           {}
+func (w *testWindowListener) SetAlwaysOnTop(bool)          {}
 func (w *testWindowListener) SetBounds(int, int, int, int) {}
-func (w *testWindowListener) SetURL(string)              {}
-func (w *testWindowListener) SetHTML(string)             {}
-func (w *testWindowListener) SetZoom(float64)            {}
-func (w *testWindowListener) SetContentProtection(bool)  {}
-func (w *testWindowListener) Maximise()                  {}
-func (w *testWindowListener) Restore()                   {}
-func (w *testWindowListener) Minimise()                  {}
-func (w *testWindowListener) Focus()                     {}
-func (w *testWindowListener) Close()                     {}
-func (w *testWindowListener) Show()                      {}
-func (w *testWindowListener) Hide()                      {}
-func (w *testWindowListener) Fullscreen()                {}
-func (w *testWindowListener) UnFullscreen()              {}
-func (w *testWindowListener) ToggleFullscreen()          {}
-func (w *testWindowListener) ToggleMaximise()            {}
-func (w *testWindowListener) ExecJS(string)              {}
-func (w *testWindowListener) Flash(bool)                 {}
-func (w *testWindowListener) Print() error               { return nil }
+func (w *testWindowListener) SetURL(string)                {}
+func (w *testWindowListener) SetHTML(string)               {}
+func (w *testWindowListener) SetZoom(float64)              {}
+func (w *testWindowListener) SetContentProtection(bool)    {}
+func (w *testWindowListener) Maximise()                    {}
+func (w *testWindowListener) Restore()                     {}
+func (w *testWindowListener) Minimise()                    {}
+func (w *testWindowListener) Focus()                       {}
+func (w *testWindowListener) Close()                       {}
+func (w *testWindowListener) Show()                        {}
+func (w *testWindowListener) Hide()                        {}
+func (w *testWindowListener) Fullscreen()                  {}
+func (w *testWindowListener) UnFullscreen()                {}
+func (w *testWindowListener) ToggleFullscreen()            {}
+func (w *testWindowListener) ToggleMaximise()              {}
+func (w *testWindowListener) ExecJS(string)                {}
+func (w *testWindowListener) Flash(bool)                   {}
+func (w *testWindowListener) Print() error                 { return nil }
 func (w *testWindowListener) OnWindowEvent(handler func(window.WindowEvent)) {
 	w.handler = handler
 }
@@ -139,6 +139,18 @@ func TestWSEventManager_HandleWebSocket_Good(t *testing.T) {
 	require.Eventually(t, func() bool {
 		return em.ConnectedClients() == 0
 	}, 2*time.Second, 20*time.Millisecond)
+}
+
+func TestWSEventManager_HandleWebSocket_RejectsRemoteOrigin(t *testing.T) {
+	em := NewWSEventManager()
+
+	req := httptest.NewRequest(http.MethodGet, "http://127.0.0.1/events", nil)
+	req.Header.Set("Origin", "https://evil.example")
+	recorder := httptest.NewRecorder()
+
+	em.HandleWebSocket(recorder, req)
+
+	assert.Equal(t, http.StatusForbidden, recorder.Code)
 }
 
 func TestWSEventManager_Emit_Ugly(t *testing.T) {
