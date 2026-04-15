@@ -582,21 +582,59 @@ func (s *Service) searchConversationSummaries(query string) ([]ConversationSumma
 		if result := core.JSONUnmarshalString(payload, &conv); !result.OK {
 			continue
 		}
-		if strings.Contains(strings.ToLower(conv.Title), query) {
+		if strings.Contains(conversationSearchText(conv), query) {
 			matches = append(matches, conv.Summary())
 			continue
-		}
-		for _, message := range conv.Messages {
-			if strings.Contains(strings.ToLower(message.Content), query) {
-				matches = append(matches, conv.Summary())
-				break
-			}
 		}
 	}
 	sort.Slice(matches, func(i, j int) bool {
 		return matches[i].UpdatedAt.After(matches[j].UpdatedAt)
 	})
 	return matches, nil
+}
+
+func conversationSearchText(conv Conversation) string {
+	var builder strings.Builder
+	appendText := func(value string) {
+		trimmed := strings.TrimSpace(value)
+		if trimmed == "" {
+			return
+		}
+		if builder.Len() > 0 {
+			builder.WriteString("\n")
+		}
+		builder.WriteString(strings.ToLower(trimmed))
+	}
+
+	appendText(conv.Title)
+	appendText(conv.Model)
+	if conv.Settings != nil {
+		appendText(conv.Settings.SystemPrompt)
+		appendText(conv.Settings.DefaultModel)
+	}
+	for _, message := range conv.Messages {
+		appendText(message.Content)
+		appendText(message.Role)
+		appendText(message.Model)
+		appendText(message.FinishReason)
+		if message.Thinking != nil {
+			appendText(message.Thinking.Content)
+		}
+		for _, attachment := range message.Attachments {
+			appendText(attachment.Filename)
+			appendText(attachment.MimeType)
+		}
+		for _, call := range message.ToolCalls {
+			appendText(call.ID)
+			appendText(call.Name)
+			appendText(core.JSONMarshalString(call.Arguments))
+		}
+		for _, result := range message.ToolResults {
+			appendText(result.ToolCallID)
+			appendText(result.Content)
+		}
+	}
+	return builder.String()
 }
 
 func (s *Service) createConversation() (Conversation, error) {

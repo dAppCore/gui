@@ -33,12 +33,27 @@ func Register(p Platform) func(*core.Core) core.Result {
 
 func (s *Service) OnStartup(_ context.Context) core.Result {
 	s.Core().RegisterQuery(s.handleQuery)
+	s.Core().Action("theme.get", func(_ context.Context, _ core.Options) core.Result {
+		isDark := s.currentTheme()
+		return core.Result{Value: ThemeInfo{IsDark: isDark, Theme: themeName(isDark)}, OK: true}
+	})
+	s.Core().Action("theme.system", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: s.platform.Info(), OK: true}
+	})
 	s.Core().Action("environment.openFileManager", func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskOpenFileManager)
 		if err := s.platform.OpenFileManager(t.Path, t.Select); err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{OK: true}
+	})
+	s.Core().Action("theme.set", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskSetTheme)
+		isDark, err := s.setThemeOverride(t.Theme)
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		return core.Result{Value: ThemeInfo{IsDark: isDark, Theme: themeName(isDark)}, OK: true}
 	})
 	s.Core().Action("environment.setTheme", func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskSetTheme)
