@@ -12,6 +12,7 @@ import (
 	"forge.lthn.ai/core/gui/pkg/dialog"
 	"forge.lthn.ai/core/gui/pkg/events"
 	"forge.lthn.ai/core/gui/pkg/screen"
+	"forge.lthn.ai/core/gui/pkg/webview"
 	"forge.lthn.ai/core/gui/pkg/window"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/stretchr/testify/assert"
@@ -214,6 +215,14 @@ func TestSubsystem_Good_CallTool_RFCAliases(t *testing.T) {
 			return core.Result{}
 		}
 	})
+	var promptWindow string
+	var promptScript string
+	c.Action("webview.evaluate", func(_ context.Context, opts core.Options) core.Result {
+		task, _ := opts.Get("task").Value.(webview.TaskEvaluate)
+		promptWindow = task.Window
+		promptScript = task.Script
+		return core.Result{Value: "typed-value", OK: true}
+	})
 	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
 
 	sub := New(c)
@@ -261,6 +270,16 @@ func TestSubsystem_Good_CallTool_RFCAliases(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, dialog.DialogWarning, dialogPlatform.last.Type)
 	assert.Contains(t, dialogResult, "OK")
+
+	promptResult, err := sub.CallTool(context.Background(), "dialog_prompt", map[string]any{
+		"title":        "Rename",
+		"message":      "Enter a new label",
+		"defaultValue": "draft",
+	})
+	require.NoError(t, err)
+	assert.Contains(t, promptResult, "typed-value")
+	assert.Equal(t, "main", promptWindow)
+	assert.Contains(t, promptScript, "window.prompt")
 
 	subscribeResult, err := sub.CallTool(context.Background(), "event_subscribe", map[string]any{"name": "theme:changed"})
 	require.NoError(t, err)

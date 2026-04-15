@@ -73,3 +73,22 @@ type TaskError struct {
 	Message string
 	Buttons []string
 }
+
+// TaskPrompt presents a text input prompt in the active application window.
+//
+//	result, _, err := c.PERFORM(dialog.TaskPrompt{Title: "Rename", Message: "Enter a new name", DefaultValue: "draft"})
+//	value := result.(dialog.PromptResult)
+type TaskPrompt struct {
+	Title        string
+	Message      string
+	DefaultValue string
+}
+
+// PromptResult is the value returned by TaskPrompt.
+//
+//	result, _, err := c.PERFORM(dialog.TaskPrompt{Title: "Search", DefaultValue: "core"})
+//	if result.(PromptResult).Confirmed { use(result.(PromptResult).Value) }
+type PromptResult struct {
+	Value     string
+	Confirmed bool
+}

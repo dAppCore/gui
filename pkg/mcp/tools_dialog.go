@@ -203,19 +203,21 @@ func (s *Subsystem) dialogMessage(_ context.Context, _ *mcp.CallToolRequest, inp
 // --- dialog_prompt ---
 
 type DialogPromptInput struct {
-	Title   string `json:"title"`
-	Message string `json:"message"`
+	Title        string `json:"title"`
+	Message      string `json:"message"`
+	DefaultValue string `json:"defaultValue,omitempty"`
 }
 type DialogPromptOutput struct {
-	Button string `json:"button"`
+	Value     string `json:"value"`
+	Confirmed bool   `json:"confirmed"`
 }
 
 func (s *Subsystem) dialogPrompt(_ context.Context, _ *mcp.CallToolRequest, input DialogPromptInput) (*mcp.CallToolResult, DialogPromptOutput, error) {
-	r := s.core.Action("dialog.info").Run(context.Background(), core.NewOptions(
-		core.Option{Key: "task", Value: dialog.TaskInfo{
-			Title:   input.Title,
-			Message: input.Message,
-			Buttons: []string{"OK", "Cancel"},
+	r := s.core.Action("dialog.prompt").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: dialog.TaskPrompt{
+			Title:        input.Title,
+			Message:      input.Message,
+			DefaultValue: input.DefaultValue,
 		}},
 	))
 	if !r.OK {
@@ -224,11 +226,11 @@ func (s *Subsystem) dialogPrompt(_ context.Context, _ *mcp.CallToolRequest, inpu
 		}
 		return nil, DialogPromptOutput{}, nil
 	}
-	button, ok := r.Value.(string)
+	result, ok := r.Value.(dialog.PromptResult)
 	if !ok {
 		return nil, DialogPromptOutput{}, coreerr.E("mcp.dialogPrompt", "unexpected result type", nil)
 	}
-	return nil, DialogPromptOutput{Button: button}, nil
+	return nil, DialogPromptOutput{Value: result.Value, Confirmed: result.Confirmed}, nil
 }
 
 // --- dialog_info ---
@@ -335,7 +337,7 @@ func (s *Subsystem) registerDialogTools(server *mcp.Server) {
 	addTool(s, server, &mcp.Tool{Name: "dialog_open_directory", Description: "Show a directory picker dialog"}, s.dialogOpenDirectory)
 	addTool(s, server, &mcp.Tool{Name: "dialog_confirm", Description: "Show a question/confirmation dialog"}, s.dialogConfirm)
 	addTool(s, server, &mcp.Tool{Name: "dialog_message", Description: "Show a message dialog"}, s.dialogMessage)
-	addTool(s, server, &mcp.Tool{Name: "dialog_prompt", Description: "Show an info prompt dialog with OK/Cancel"}, s.dialogPrompt)
+	addTool(s, server, &mcp.Tool{Name: "dialog_prompt", Description: "Show an input prompt dialog in the active window"}, s.dialogPrompt)
 	addTool(s, server, &mcp.Tool{Name: "dialog_info", Description: "Show an information message dialog"}, s.dialogInfo)
 	addTool(s, server, &mcp.Tool{Name: "dialog_warning", Description: "Show a warning message dialog"}, s.dialogWarning)
 	addTool(s, server, &mcp.Tool{Name: "dialog_error", Description: "Show an error message dialog"}, s.dialogError)
