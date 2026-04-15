@@ -590,6 +590,10 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 		return c.QUERY(notification.QueryPermission{})
 	case "notification:with-actions":
 		return c.Action("notification.send").Run(ctx, wsOptions(msg.Data))
+	case "theme:get":
+		return c.QUERY(environment.QueryTheme{})
+	case "theme:system":
+		return c.QUERY(environment.QueryInfo{})
 	case "theme:set":
 		theme, _ := msg.Data["theme"].(string)
 		return c.Action("environment.setTheme").Run(ctx, core.NewOptions(
