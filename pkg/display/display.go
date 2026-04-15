@@ -299,6 +299,88 @@ func decodeWSData(data map[string]any, target any) error {
 	return nil
 }
 
+func decodeWSValue(value any, target any) error {
+	encodedR := corego.JSONMarshal(value)
+	if !encodedR.OK {
+		return corego.NewError("ws: invalid payload")
+	}
+	if r := corego.JSONUnmarshal(encodedR.Value.([]byte), target); !r.OK {
+		return corego.E("display.ws", "invalid payload", nil)
+	}
+	return nil
+}
+
+func coerceWSPayload(payload any) map[string]any {
+	if payload == nil {
+		return map[string]any{}
+	}
+	if data, ok := payload.(map[string]any); ok {
+		return data
+	}
+
+	var data map[string]any
+	if err := decodeWSValue(payload, &data); err == nil && data != nil {
+		return data
+	}
+
+	return map[string]any{"value": payload}
+}
+
+func (s *Service) bridgeWSAction(channel string, payload any) (any, bool, error) {
+	switch channel {
+	case "", "core.ipc.action", "core.ipc.query":
+		return nil, false, nil
+	default:
+		return s.handleWSMessage(WSMessage{Action: channel, Data: coerceWSPayload(payload)})
+	}
+}
+
+func (s *Service) handleIPCBridgeAction(data map[string]any) (any, bool, error) {
+	channel, err := wsRequire(data, "channel")
+	if err != nil {
+		return nil, true, err
+	}
+
+	payload, _ := data["payload"]
+	result, handled, bridgeErr := s.bridgeWSAction(channel, payload)
+	if handled || bridgeErr != nil {
+		return result, true, bridgeErr
+	}
+
+	actionErr := s.Core().ACTION(events.ActionEventFired{Name: channel, Data: payload})
+	if actionErr != nil {
+		return nil, true, actionErr
+	}
+
+	return map[string]any{
+		"channel":   channel,
+		"delivered": true,
+		"payload":   payload,
+	}, true, nil
+}
+
+func (s *Service) handleIPCBridgeQuery(data map[string]any) (any, bool, error) {
+	channel, err := wsRequire(data, "channel")
+	if err != nil {
+		return nil, true, err
+	}
+
+	payload, _ := data["payload"]
+	result, handled, bridgeErr := s.bridgeWSAction(channel, payload)
+	if handled || bridgeErr != nil {
+		return result, true, bridgeErr
+	}
+
+	if payload == nil {
+		result, handled, bridgeErr = s.Core().QUERY(channel)
+		if handled || bridgeErr != nil {
+			return result, true, bridgeErr
+		}
+	}
+
+	return nil, true, coreerr.E("display.handleIPCBridgeQuery", "ipc query channel not handled: "+channel, nil)
+}
+
 // handleWSMessage bridges WebSocket commands to IPC calls.
 func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 	var result any
@@ -1019,6 +1101,24 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 			return nil, false, screenErr
 		}
 		result, handled, err = screenInfo, true, nil
+	case "storage:sync":
+		origin, e := wsRequire(msg.Data, "origin")
+		if e != nil {
+			return nil, false, e
+		}
+		rawState, ok := msg.Data["state"]
+		if !ok {
+			return nil, false, corego.NewError(corego.Sprintf("ws: missing required field %q", "state"))
+		}
+		var state BrowserStoragePolyfillState
+		if err := decodeWSValue(rawState, &state); err != nil {
+			return nil, false, err
+		}
+		if state.Origin == "" {
+			state.Origin = origin
+		}
+		err = s.SaveBrowserStorageState(origin, originStorageStateFromPolyfill(state))
+		result, handled = s.BrowserStorageState(origin)
 	case "clipboard:read":
 		result, handled, err = s.Core().QUERY(clipboard.QueryText{})
 	case "clipboard:write":
@@ -1291,6 +1391,10 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 		}
 		_ = accepted
 		result, handled, err = button, true, nil
+	case "core.ipc.action":
+		return s.handleIPCBridgeAction(msg.Data)
+	case "core.ipc.query":
+		return s.handleIPCBridgeQuery(msg.Data)
 	default:
 		return nil, false, nil
 	}

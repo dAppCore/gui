@@ -1163,6 +1163,76 @@ func TestHandleWSMessage_Extended_Good(t *testing.T) {
 		assert.True(t, handled)
 	})
 
+	t.Run("storage sync", func(t *testing.T) {
+		result, handled, err := svc.handleWSMessage(WSMessage{
+			Action: "storage:sync",
+			Data: map[string]any{
+				"origin": "https://app.example.com",
+				"state": map[string]any{
+					"origin":         "https://app.example.com",
+					"localStorage":   map[string]any{"theme": "dark"},
+					"sessionStorage": map[string]any{"session_id": "abc123"},
+					"cookies": []map[string]any{{
+						"name":  "session",
+						"value": "ok",
+					}},
+					"indexedDB": map[string]any{
+						"app-db": map[string]any{"draft": "saved"},
+					},
+					"cacheStorage": map[string]any{
+						"core::GET /status": `{"ok":true}`,
+					},
+					"storageBuckets": map[string]any{
+						"drafts": map[string]any{"doc-1": "latest"},
+					},
+					"opfs": map[string]any{"notes/today.txt": "persisted"},
+				},
+			},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+
+		state, ok := result.(OriginStorageState)
+		require.True(t, ok)
+		assert.Equal(t, "dark", state.LocalStorage["theme"])
+		assert.Equal(t, "abc123", state.SessionStorage["session_id"])
+		assert.Equal(t, "saved", state.IndexedDB["app-db"]["draft"])
+		assert.Equal(t, "latest", state.StorageBuckets["drafts"]["doc-1"])
+		assert.Equal(t, "persisted", state.OPFS["notes/today.txt"])
+
+		reloaded, ok := svc.BrowserStorageState("https://app.example.com")
+		require.True(t, ok)
+		assert.Equal(t, "dark", reloaded.LocalStorage["theme"])
+		assert.Equal(t, `{"ok":true}`, reloaded.CacheStorage["core::GET /status"])
+		require.Len(t, reloaded.Cookies, 1)
+		assert.Equal(t, "session", reloaded.Cookies[0].Name)
+	})
+
+	t.Run("core ipc bridge aliases", func(t *testing.T) {
+		result, handled, err := svc.handleWSMessage(WSMessage{
+			Action: "core.ipc.query",
+			Data:   map[string]any{"channel": "clipboard:read"},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+		content, ok := result.(clipboard.ClipboardContent)
+		require.True(t, ok)
+		assert.Equal(t, "hello", content.Text)
+
+		_, handled, err = svc.handleWSMessage(WSMessage{
+			Action: "core.ipc.action",
+			Data: map[string]any{
+				"channel": "clipboard:write",
+				"payload": map[string]any{"text": "via-ipc"},
+			},
+		})
+		require.NoError(t, err)
+		assert.True(t, handled)
+		updatedText, readErr := svc.ReadClipboard()
+		require.NoError(t, readErr)
+		assert.Equal(t, "via-ipc", updatedText)
+	})
+
 	t.Run("notification actions", func(t *testing.T) {
 		_, handled, err := svc.handleWSMessage(WSMessage{
 			Action: "notification:with-actions",

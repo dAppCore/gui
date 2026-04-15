@@ -75,6 +75,18 @@ type BrowserStoragePolyfillState struct {
 	OPFS           map[string]string            `json:"opfs"`
 }
 
+func originStorageStateFromPolyfill(state BrowserStoragePolyfillState) OriginStorageState {
+	return OriginStorageState{
+		LocalStorage:   cloneStorageStringMap(state.LocalStorage),
+		SessionStorage: cloneStorageStringMap(state.SessionStorage),
+		Cookies:        append([]BrowserCookie(nil), state.Cookies...),
+		IndexedDB:      cloneStorageNestedStringMap(state.IndexedDB),
+		CacheStorage:   cloneStorageStringMap(state.CacheStorage),
+		StorageBuckets: cloneStorageNestedStringMap(state.StorageBuckets),
+		OPFS:           cloneStorageStringMap(state.OPFS),
+	}
+}
+
 // BrowserStorageStore keeps origin-scoped browser data searchable from Go.
 type BrowserStorageStore struct {
 	mu      sync.RWMutex
@@ -438,8 +450,20 @@ func buildStoragePolyfillScript(state BrowserStoragePolyfillState) (string, erro
 
   const sync = () => {
     const currentBridge = bridge();
-    if (currentBridge && typeof currentBridge.syncStorage === 'function') {
+    if (!currentBridge) {
+      return;
+    }
+    if (typeof currentBridge.syncStorage === 'function') {
       Promise.resolve(currentBridge.syncStorage(state.origin, exportState())).catch(() => {});
+      return;
+    }
+    const invoke = typeof currentBridge.invoke === 'function'
+      ? currentBridge.invoke.bind(currentBridge)
+      : typeof currentBridge.call === 'function'
+        ? currentBridge.call.bind(currentBridge)
+        : null;
+    if (invoke) {
+      Promise.resolve(invoke('storage:sync', { origin: state.origin, state: exportState() })).catch(() => {});
     }
   };
 
@@ -1203,6 +1227,7 @@ func buildBackgroundServiceScript() string {
 func buildElectronShimScript() string {
 	return `(function () {
   const root = globalThis;
+  const ipcListeners = new Map();
   const invoke = (action, payload = {}) => {
     const bridge = root.__coreGUIBridge;
     if (!bridge) {
@@ -1223,6 +1248,53 @@ func buildElectronShimScript() string {
       return bridge.on(channel, handler);
     }
     return () => {};
+  };
+
+  const trackListener = (channel, original, wrapped, unsubscribe) => {
+    const byChannel = ipcListeners.get(channel) || new Map();
+    const records = byChannel.get(original) || [];
+    records.push({
+      wrapped,
+      unsubscribe: typeof unsubscribe === 'function' ? unsubscribe : () => {},
+    });
+    byChannel.set(original, records);
+    ipcListeners.set(channel, byChannel);
+    return wrapped;
+  };
+
+  const removeTrackedListener = (channel, handler) => {
+    const byChannel = ipcListeners.get(channel);
+    if (!byChannel) {
+      return;
+    }
+    const records = byChannel.get(handler);
+    if (!records) {
+      return;
+    }
+    for (const record of records) {
+      try {
+        record.unsubscribe();
+      } catch (_) {}
+    }
+    byChannel.delete(handler);
+    if (byChannel.size === 0) {
+      ipcListeners.delete(channel);
+    }
+  };
+
+  const removeAllTrackedListeners = (channel) => {
+    const channels = typeof channel === 'string' && channel
+      ? [channel]
+      : Array.from(ipcListeners.keys());
+    for (const entry of channels) {
+      const byChannel = ipcListeners.get(entry);
+      if (!byChannel) {
+        continue;
+      }
+      for (const handler of Array.from(byChannel.keys())) {
+        removeTrackedListener(entry, handler);
+      }
+    }
   };
 
   class CoreElectronNotification {
@@ -1346,7 +1418,26 @@ func buildElectronShimScript() string {
       return invoke('core.ipc.query', { channel, payload });
     },
     on(channel, handler) {
-      return subscribe(channel, handler);
+      const unsubscribe = subscribe(channel, handler);
+      trackListener(channel, handler, handler, unsubscribe);
+      return typeof unsubscribe === 'function' ? unsubscribe : () => {};
+    },
+    once(channel, handler) {
+      let wrapped = null;
+      const unsubscribe = subscribe(channel, (...args) => {
+        if (wrapped) {
+          removeTrackedListener(channel, handler);
+        }
+        handler(...args);
+      });
+      wrapped = trackListener(channel, handler, handler, unsubscribe);
+      return typeof unsubscribe === 'function' ? unsubscribe : () => {};
+    },
+    removeListener(channel, handler) {
+      removeTrackedListener(channel, handler);
+    },
+    removeAllListeners(channel) {
+      removeAllTrackedListeners(channel);
     },
     send(channel, payload) {
       return invoke('core.ipc.action', { channel, payload });
