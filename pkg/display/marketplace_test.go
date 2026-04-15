@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -107,6 +108,29 @@ func TestMarketplace_registerMarketplaceActions_Good(t *testing.T) {
 	verified, ok := verifyResult.Value.(map[string]any)
 	require.True(t, ok)
 	assert.Equal(t, marketplace.DigestManifest(manifest), verified["digest"])
+
+	installDir := t.TempDir()
+	gitLogDir := t.TempDir()
+	gitLog := filepath.Join(gitLogDir, "git.log")
+	gitBinary := filepath.Join(gitLogDir, "git")
+	require.NoError(t, os.WriteFile(gitBinary, []byte("#!/bin/sh\nprintf '%s\\n' \"$@\" > "+shellQuote(gitLog)+"\nlast=''\nfor arg in \"$@\"; do last=\"$arg\"; done\nmkdir -p \"$last\"\nexit 0\n"), 0o755))
+
+	installResult := c.Action("display.marketplace.install").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "url", Value: manifestServer.URL},
+		core.Option{Key: "install_dir", Value: installDir},
+		core.Option{Key: "git_binary", Value: gitBinary},
+	))
+	require.True(t, installResult.OK)
+	installed, ok := installResult.Value.(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, installDir, installed["install_dir"])
+	assert.Equal(t, filepath.Join(installDir, "core-ui"), installed["target_dir"])
+
+	contents, err := os.ReadFile(gitLog)
+	require.NoError(t, err)
+	assert.Contains(t, string(contents), "clone")
+	assert.Contains(t, string(contents), "--branch")
+	assert.Contains(t, string(contents), "--")
 }
 
 func TestMarketplace_registerMarketplaceActions_Bad(t *testing.T) {
@@ -141,4 +165,8 @@ func signedMarketplaceManifest(t *testing.T, manifest marketplace.Manifest) mark
 		Value:     base64.StdEncoding.EncodeToString(signature),
 	}
 	return manifest
+}
+
+func shellQuote(value string) string {
+	return "'" + strings.ReplaceAll(value, "'", "'\\''") + "'"
 }

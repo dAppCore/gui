@@ -4,7 +4,9 @@ import (
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -297,6 +299,113 @@ func TestMarketplace_List_Good(t *testing.T) {
 	listed, err := installer.List(context.Background(), server.URL)
 	require.NoError(t, err)
 	assert.Equal(t, manifests, listed)
+}
+
+func TestMarketplace_DigestManifest_Good(t *testing.T) {
+	manifest := Manifest{
+		Name:       "core-ui",
+		Version:    "1.2.3",
+		Repository: "https://example.com/core-ui.git",
+		Ref:        "main",
+	}
+
+	got := DigestManifest(manifest)
+	expected := sha256.Sum256([]byte(manifest.Name + ":" + manifest.Version + ":" + manifest.Repository + ":" + manifest.Ref))
+
+	assert.Equal(t, hex.EncodeToString(expected[:]), got)
+}
+
+func TestMarketplace_DigestManifest_Bad(t *testing.T) {
+	base := Manifest{Name: "core-ui", Version: "1.2.3", Repository: "https://example.com/core-ui.git", Ref: "main"}
+	changed := base
+	changed.Ref = "dev"
+
+	assert.NotEqual(t, DigestManifest(base), DigestManifest(changed))
+}
+
+func TestMarketplace_DigestManifest_Ugly(t *testing.T) {
+	got := DigestManifest(Manifest{})
+
+	assert.Len(t, got, 64)
+	assert.NotEmpty(t, got)
+}
+
+func TestMarketplace_validateManifestName_Good(t *testing.T) {
+	require.NoError(t, validateManifestName("core-ui"))
+}
+
+func TestMarketplace_validateManifestName_Bad(t *testing.T) {
+	err := validateManifestName("")
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "required")
+}
+
+func TestMarketplace_validateManifestName_Ugly(t *testing.T) {
+	err := validateManifestName("..")
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "path traversal")
+}
+
+func TestMarketplace_validateCloneArg_Good(t *testing.T) {
+	require.NoError(t, validateCloneArg("repository", "https://example.com/core-ui.git"))
+}
+
+func TestMarketplace_validateCloneArg_Bad(t *testing.T) {
+	err := validateCloneArg("repository", "--upload-pack=sh")
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "dash")
+}
+
+func TestMarketplace_validateCloneArg_Ugly(t *testing.T) {
+	err := validateCloneArg("repository", "https://example.com/core-ui.git\n--depth 1")
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid control characters")
+}
+
+func TestMarketplace_decodeManifestList_Good(t *testing.T) {
+	manifests, err := decodeManifestList([]byte(`[{"name":"core-ui","version":"1.2.3"},{"name":"core-chat","version":"0.9.0"}]`))
+
+	require.NoError(t, err)
+	require.Len(t, manifests, 2)
+	assert.Equal(t, "core-ui", manifests[0].Name)
+	assert.Equal(t, "core-chat", manifests[1].Name)
+}
+
+func TestMarketplace_decodeManifestList_Bad(t *testing.T) {
+	manifests, err := decodeManifestList([]byte("   "))
+
+	require.NoError(t, err)
+	assert.Nil(t, manifests)
+}
+
+func TestMarketplace_decodeManifestList_Ugly(t *testing.T) {
+	_, err := decodeManifestList([]byte(": not-yaml"))
+
+	require.Error(t, err)
+}
+
+func TestMarketplace_sanitizeCommandOutput_Good(t *testing.T) {
+	got := sanitizeCommandOutput([]byte("fatal: https://token:secret@example.com/repo.git"))
+
+	assert.Contains(t, got, "[redacted]@")
+	assert.NotContains(t, got, "secret")
+	assert.NotContains(t, got, "token:")
+}
+
+func TestMarketplace_sanitizeCommandOutput_Bad(t *testing.T) {
+	assert.Equal(t, "command produced no output", sanitizeCommandOutput(nil))
+	assert.Equal(t, "command produced no output", sanitizeCommandOutput([]byte("   \n")))
+}
+
+func TestMarketplace_sanitizeCommandOutput_Ugly(t *testing.T) {
+	got := sanitizeCommandOutput([]byte(strings.Repeat("a", 1024)))
+
+	assert.Len(t, got, 515)
+	assert.True(t, strings.HasSuffix(got, "..."))
 }
 
 func shellQuote(value string) string {

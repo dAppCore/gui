@@ -293,6 +293,45 @@ func TestSetWindowSize_Good(t *testing.T) {
 	assert.Equal(t, 768, info.Height)
 }
 
+func TestSetWindowBounds_Good(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+	_ = svc.OpenWindow(window.WithName("bounds-win"))
+
+	err := svc.SetWindowBounds("bounds-win", 10, 20, 640, 480)
+	assert.NoError(t, err)
+
+	info, _ := svc.GetWindowInfo("bounds-win")
+	assert.Equal(t, 10, info.X)
+	assert.Equal(t, 20, info.Y)
+	assert.Equal(t, 640, info.Width)
+	assert.Equal(t, 480, info.Height)
+}
+
+func TestSetWindowBounds_Bad(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+
+	err := svc.SetWindowBounds("missing", 1, 2, 3, 4)
+
+	assert.Error(t, err)
+}
+
+func TestSetWindowBounds_Ugly(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+	_ = svc.OpenWindow(window.WithName("bounds-win"))
+
+	err := svc.SetWindowBounds("bounds-win", -10, -20, 0, 1)
+	assert.NoError(t, err)
+
+	info, _ := svc.GetWindowInfo("bounds-win")
+	assert.Equal(t, -10, info.X)
+	assert.Equal(t, -20, info.Y)
+	assert.Equal(t, 0, info.Width)
+	assert.Equal(t, 1, info.Height)
+}
+
 func TestMaximizeWindow_Good(t *testing.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
@@ -371,6 +410,113 @@ func TestSetWindowTitle_Good(t *testing.T) {
 
 	err := svc.SetWindowTitle("title-win", "New Title")
 	assert.NoError(t, err)
+}
+
+func TestSetWindowFullscreen_Good(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+	windowSvc := core.MustServiceFor[*window.Service](c, "window")
+	_ = svc.OpenWindow(window.WithName("full-win"))
+
+	err := svc.SetWindowFullscreen("full-win", true)
+
+	require.NoError(t, err)
+	pw, ok := windowSvc.Manager().Get("full-win")
+	require.True(t, ok)
+	assert.True(t, pw.IsFullscreen())
+}
+
+func TestSetWindowFullscreen_Bad(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+
+	err := svc.SetWindowFullscreen("missing", true)
+
+	require.Error(t, err)
+}
+
+func TestSetWindowFullscreen_Ugly(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+	windowSvc := core.MustServiceFor[*window.Service](c, "window")
+	_ = svc.OpenWindow(window.WithName("full-win"))
+
+	require.NoError(t, svc.SetWindowFullscreen("full-win", true))
+	err := svc.SetWindowFullscreen("full-win", false)
+
+	require.NoError(t, err)
+	pw, ok := windowSvc.Manager().Get("full-win")
+	require.True(t, ok)
+	assert.False(t, pw.IsFullscreen())
+}
+
+func TestGetWindowTitle_Good(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+	_ = svc.OpenWindow(window.WithName("title-win"), window.WithTitle("Inspector"))
+
+	title, err := svc.GetWindowTitle("title-win")
+
+	require.NoError(t, err)
+	assert.Equal(t, "Inspector", title)
+}
+
+func TestGetWindowTitle_Bad(t *testing.T) {
+	svc, _ := newTestDisplayService(t)
+
+	title, err := svc.GetWindowTitle("missing")
+
+	require.Error(t, err)
+	assert.Empty(t, title)
+}
+
+func TestGetWindowTitle_Ugly(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+	_ = svc.OpenWindow(window.WithName("title-win"), window.WithTitle("Line 1 <Line 2>\nTabbed"))
+
+	title, err := svc.GetWindowTitle("title-win")
+
+	require.NoError(t, err)
+	assert.Equal(t, "Line 1 <Line 2>\nTabbed", title)
+}
+
+func TestMinimizeWindow_Good(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+	windowSvc := core.MustServiceFor[*window.Service](c, "window")
+	_ = svc.OpenWindow(window.WithName("min-win"))
+
+	err := svc.MinimizeWindow("min-win")
+
+	require.NoError(t, err)
+	pw, ok := windowSvc.Manager().Get("min-win")
+	require.True(t, ok)
+	assert.True(t, pw.IsMinimised())
+}
+
+func TestMinimizeWindow_Bad(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+
+	err := svc.MinimizeWindow("missing")
+
+	require.Error(t, err)
+}
+
+func TestMinimizeWindow_Ugly(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+	windowSvc := core.MustServiceFor[*window.Service](c, "window")
+	_ = svc.OpenWindow(window.WithName("min-win"))
+
+	require.NoError(t, svc.MinimizeWindow("min-win"))
+	err := svc.MinimizeWindow("min-win")
+
+	require.NoError(t, err)
+	pw, ok := windowSvc.Manager().Get("min-win")
+	require.True(t, ok)
+	assert.True(t, pw.IsMinimised())
 }
 
 func TestHandleWSMessage_SetWindowOpacity_Good(t *testing.T) {
