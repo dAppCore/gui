@@ -151,6 +151,7 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		return core.Result{Value: s.networkState(), OK: true}
 	})
 	s.registerBackgroundActions()
+	s.registerMarketplaceActions()
 	s.registerSidecarActions()
 	s.registerDefaultSchemes()
 
@@ -529,6 +530,14 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 		return c.Action("gui.chat.thinking.append").Run(ctx, wsOptions(msg.Data))
 	case "chat:thinking:end":
 		return c.Action("gui.chat.thinking.end").Run(ctx, wsOptions(msg.Data))
+	case "marketplace:list":
+		return c.Action("display.marketplace.list").Run(ctx, wsOptions(msg.Data))
+	case "marketplace:fetch":
+		return c.Action("display.marketplace.fetch").Run(ctx, wsOptions(msg.Data))
+	case "marketplace:verify":
+		return c.Action("display.marketplace.verify").Run(ctx, wsOptions(msg.Data))
+	case "marketplace:install":
+		return c.Action("display.marketplace.install").Run(ctx, wsOptions(msg.Data))
 	case "keybinding:add":
 		accelerator, _ := msg.Data["accelerator"].(string)
 		description, _ := msg.Data["description"].(string)
