@@ -24,7 +24,7 @@ func (s *Subsystem) screenList(_ context.Context, _ *mcp.CallToolRequest, _ Scre
 		if e, ok := r.Value.(error); ok {
 			return nil, ScreenListOutput{}, e
 		}
-		return nil, ScreenListOutput{}, nil
+		return nil, ScreenListOutput{}, coreerr.E("mcp.screenList", "screen query failed", nil)
 	}
 	screens, ok := r.Value.([]screen.Screen)
 	if !ok {

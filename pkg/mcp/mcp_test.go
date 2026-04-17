@@ -74,6 +74,24 @@ func TestMCP_Bad_NoServices(t *testing.T) {
 	assert.False(t, r.OK)
 }
 
+func TestSubsystem_Bad_CallTool_ScreenListMalformedQuery(t *testing.T) {
+	c := core.New(core.WithServiceLock())
+	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
+		if _, ok := q.(screen.QueryAll); ok {
+			return core.Result{Value: "malformed screen query payload", OK: false}
+		}
+		return core.Result{}
+	})
+
+	sub := New(c)
+	server := mcp.NewServer(&mcp.Implementation{Name: "test", Version: "0.1.0"}, nil)
+	sub.RegisterTools(server)
+
+	_, err := sub.CallTool(context.Background(), "screen_list", nil)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "screen query failed")
+}
+
 type manifestScreenPlatform struct{}
 
 type manifestBrowserPlatform struct {
