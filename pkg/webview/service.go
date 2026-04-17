@@ -94,27 +94,8 @@ func defaultNewConn(options Options) func(string, string) (connector, error) {
 		if err != nil {
 			return nil, err
 		}
-		var (
-			firstPageWSURL string
-			selectedWSURL  string
-		)
-		for _, t := range targets {
-			if t.Type != "page" || t.WebSocketDebuggerURL == "" {
-				continue
-			}
-			if firstPageWSURL == "" {
-				firstPageWSURL = t.WebSocketDebuggerURL
-			}
-			if exactWindowTargetMatch(t.Title, windowName) || exactWindowTargetMatch(t.URL, windowName) {
-				selectedWSURL = t.WebSocketDebuggerURL
-				break
-			}
-		}
-		if selectedWSURL == "" {
+		if exactWindowTargetWSURL(targets, windowName) == "" {
 			return nil, core.E("webview.connect", "no page target matched window name", nil)
-		}
-		if selectedWSURL != firstPageWSURL {
-			return nil, core.E("webview.connect", "matched page target is not the active target", nil)
 		}
 		wv, err := gowebview.New(
 			gowebview.WithDebugURL(debugURL),
@@ -130,6 +111,18 @@ func defaultNewConn(options Options) func(string, string) (connector, error) {
 
 func exactWindowTargetMatch(candidate, windowName string) bool {
 	return strings.TrimSpace(candidate) == windowName
+}
+
+func exactWindowTargetWSURL(targets []gowebview.TargetInfo, windowName string) string {
+	for _, t := range targets {
+		if t.Type != "page" || t.WebSocketDebuggerURL == "" {
+			continue
+		}
+		if exactWindowTargetMatch(t.Title, windowName) || exactWindowTargetMatch(t.URL, windowName) {
+			return t.WebSocketDebuggerURL
+		}
+	}
+	return ""
 }
 
 // defaultWatcherSetup wires up console/exception watchers on real connectors.

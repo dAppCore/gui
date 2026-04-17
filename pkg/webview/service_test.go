@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	core "dappco.re/go/core"
+	gowebview "forge.lthn.ai/core/go-webview"
 	"forge.lthn.ai/core/gui/pkg/window"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -211,6 +212,15 @@ func TestTaskEvaluate_Bad_EmptyWindow(t *testing.T) {
 func TestExactWindowTargetMatch_Good(t *testing.T) {
 	assert.True(t, exactWindowTargetMatch("main", "main"))
 	assert.False(t, exactWindowTargetMatch("main - docs", "main"))
+}
+
+func TestExactWindowTargetWSURL_PicksMatchingPage(t *testing.T) {
+	wsURL := exactWindowTargetWSURL([]gowebview.TargetInfo{
+		{Type: "page", Title: "dashboard", WebSocketDebuggerURL: "ws://first"},
+		{Type: "page", Title: "main", WebSocketDebuggerURL: "ws://second"},
+	}, "main")
+
+	assert.Equal(t, "ws://second", wsURL)
 }
 
 func TestTaskClick_Good(t *testing.T) {
