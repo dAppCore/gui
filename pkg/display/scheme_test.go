@@ -3,6 +3,7 @@ package display
 import (
 	"context"
 	"net/url"
+	"strings"
 	"testing"
 
 	core "dappco.re/go/core"
@@ -153,6 +154,38 @@ func TestScheme_ResolveScheme_Bad(t *testing.T) {
 
 	noHandlerResult := svc.ResolveScheme(context.Background(), "core://store")
 	require.False(t, noHandlerResult.OK)
+}
+
+func TestScheme_ResolveSchemeRequest_BodyQuery_Good(t *testing.T) {
+	svc, _ := newTestDisplayService(t)
+	svc.registerDefaultSchemes()
+
+	result := svc.ResolveSchemeRequest(
+		context.Background(),
+		"core://store",
+		"POST",
+		map[string][]string{"Content-Type": {"application/x-www-form-urlencoded"}},
+		[]byte("q=theme"),
+	)
+	require.True(t, result.OK)
+	payload := result.Value.(map[string]any)
+	assert.Equal(t, "store", payload["route"])
+	assert.Contains(t, payload["body"].(string), "Search the in-memory storage scopes")
+}
+
+func TestScheme_ResolveSchemeRequest_BodyQuery_Bad(t *testing.T) {
+	svc, _ := newTestDisplayService(t)
+	svc.registerDefaultSchemes()
+
+	result := svc.ResolveSchemeRequest(
+		context.Background(),
+		"core://store",
+		"POST",
+		nil,
+		[]byte(strings.Repeat("a", maxSchemeRequestBodyBytes+1)),
+	)
+	require.False(t, result.OK)
+	assert.Contains(t, result.Value.(error).Error(), "request body exceeds")
 }
 
 func TestScheme_ResolveScheme_Ugly(t *testing.T) {

@@ -2,6 +2,7 @@ package display
 
 import (
 	"context"
+	"fmt"
 	"html"
 	"net/url"
 	"sort"
@@ -15,6 +16,8 @@ import (
 )
 
 type SchemeHandler func(context.Context, string, url.Values) core.Result
+
+const maxSchemeRequestBodyBytes = 1 << 20
 
 type assetMiddlewareHandler struct {
 	next    application.Handler
@@ -364,6 +367,16 @@ func (s *Service) ResolveScheme(ctx context.Context, rawURL string) core.Result 
 func (s *Service) ResolveSchemeRequest(ctx context.Context, rawURL, method string, headers map[string][]string, body []byte) core.Result {
 	if strings.TrimSpace(rawURL) == "" {
 		return core.Result{Value: coreerr.E("display.ResolveScheme", "scheme URL is required", nil), OK: false}
+	}
+	if len(body) > maxSchemeRequestBodyBytes {
+		return core.Result{
+			Value: coreerr.E(
+				"display.ResolveScheme",
+				fmt.Sprintf("request body exceeds %d bytes", maxSchemeRequestBodyBytes),
+				nil,
+			),
+			OK: false,
+		}
 	}
 	parsed, err := url.Parse(rawURL)
 	if err != nil {
