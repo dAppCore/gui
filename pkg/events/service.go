@@ -34,12 +34,18 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		if err := validateEventName("events.emit", t.Name); err != nil {
 			return core.Result{Value: err, OK: false}
 		}
+		if err := s.requirePlatform("events.emit"); err != nil {
+			return core.Result{Value: err, OK: false}
+		}
 		cancelled := s.platform.Emit(t.Name, t.Data)
 		return core.Result{Value: cancelled, OK: true}
 	})
 	s.Core().Action("events.on", func(ctx context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskOn)
 		if err := validateEventName("events.on", t.Name); err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		if err := s.requirePlatform("events.on"); err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		cancel := s.platform.On(t.Name, func(event *CustomEvent) {
@@ -58,6 +64,9 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		if err := validateEventName("events.off", t.Name); err != nil {
 			return core.Result{Value: err, OK: false}
 		}
+		if err := s.requirePlatform("events.off"); err != nil {
+			return core.Result{Value: err, OK: false}
+		}
 		s.platform.Off(t.Name)
 		s.mu.Lock()
 		for _, cancel := range s.listeners[t.Name] {
@@ -69,6 +78,13 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		return core.Result{OK: true}
 	})
 	return core.Result{OK: true}
+}
+
+func (s *Service) requirePlatform(method string) error {
+	if s == nil || s.platform == nil {
+		return coreerr.E(method, "event platform unavailable", nil)
+	}
+	return nil
 }
 
 func validateEventName(method, name string) error {

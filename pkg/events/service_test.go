@@ -315,6 +315,40 @@ func TestTaskEmit_NoService_Bad(t *testing.T) {
 	assert.False(t, r.OK)
 }
 
+func TestTaskEmit_PlatformUnavailable_Bad(t *testing.T) {
+	c := core.New(
+		core.WithService(Register(nil)),
+		core.WithServiceLock(),
+	)
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	svc := core.MustServiceFor[*Service](c, "events")
+
+	r := taskRun(c, "events.emit", TaskEmit{Name: "user:login"})
+	require.False(t, r.OK)
+	err, ok := r.Value.(error)
+	require.True(t, ok)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "event platform unavailable")
+
+	r = taskRun(c, "events.on", TaskOn{Name: "user:login"})
+	require.False(t, r.OK)
+	err, ok = r.Value.(error)
+	require.True(t, ok)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "event platform unavailable")
+
+	r = taskRun(c, "events.off", TaskOff{Name: "user:login"})
+	require.False(t, r.OK)
+	err, ok = r.Value.(error)
+	require.True(t, ok)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "event platform unavailable")
+
+	require.NotPanics(t, func() {
+		assert.True(t, svc.OnShutdown(context.Background()).OK)
+	})
+}
+
 // --- Ugly path tests ---
 
 func TestTaskOff_NeverRegistered_Ugly(t *testing.T) {
