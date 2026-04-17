@@ -291,8 +291,7 @@ func TestDisplayAPI_GetTheme_Bad(t *testing.T) {
 	})
 
 	theme := svc.GetTheme()
-	require.NotNil(t, theme)
-	assert.False(t, theme.IsDark)
+	assert.Nil(t, theme)
 	assert.Empty(t, svc.GetSystemTheme())
 }
 

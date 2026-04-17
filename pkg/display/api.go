@@ -2,6 +2,7 @@ package display
 
 import (
 	"context"
+	"fmt"
 
 	core "dappco.re/go/core"
 	coreerr "dappco.re/go/core/log"
@@ -507,20 +508,34 @@ func (s *Service) SetTheme(theme string) error {
 
 func (s *Service) GetTheme() *Theme {
 	r := s.Core().QUERY(environment.QueryTheme{})
-	if !r.OK {
+	info, ok := themeInfoFromQueryResult(s, "display.GetTheme", r)
+	if !ok {
 		return nil
 	}
-	info, _ := r.Value.(environment.ThemeInfo)
 	return &Theme{IsDark: info.IsDark}
 }
 
 func (s *Service) GetSystemTheme() string {
 	r := s.Core().QUERY(environment.QueryTheme{})
-	if !r.OK {
+	info, ok := themeInfoFromQueryResult(s, "display.GetSystemTheme", r)
+	if !ok {
 		return ""
 	}
-	info, _ := r.Value.(environment.ThemeInfo)
 	return info.Theme
+}
+
+func themeInfoFromQueryResult(s *Service, method string, r core.Result) (environment.ThemeInfo, bool) {
+	if !r.OK {
+		return environment.ThemeInfo{}, false
+	}
+	info, ok := r.Value.(environment.ThemeInfo)
+	if ok {
+		return info, true
+	}
+	if s != nil && s.Core() != nil {
+		s.Core().LogWarn(fmt.Errorf("query=environment.QueryTheme value_type=%T", r.Value), method, "malformed theme query payload")
+	}
+	return environment.ThemeInfo{}, false
 }
 
 func (s *Service) sendNotification(opts notification.NotificationOptions) error {
