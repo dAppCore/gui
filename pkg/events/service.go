@@ -49,6 +49,9 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 			return core.Result{Value: err, OK: false}
 		}
 		cancel := s.platform.On(t.Name, func(event *CustomEvent) {
+			if event == nil {
+				return
+			}
 			_ = s.Core().ACTION(ActionEventFired{Event: *event})
 		})
 		s.mu.Lock()

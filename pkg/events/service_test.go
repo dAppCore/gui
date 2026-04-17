@@ -184,6 +184,28 @@ func TestTaskOn_Good(t *testing.T) {
 	assert.Equal(t, "dark", received[0].Event.Data)
 }
 
+func TestTaskOn_NilEvent_Ignores(t *testing.T) {
+	_, c, mock := newTestService(t)
+
+	var received []ActionEventFired
+	c.RegisterAction(func(_ *core.Core, msg core.Message) core.Result {
+		if fired, ok := msg.(ActionEventFired); ok {
+			received = append(received, fired)
+		}
+		return core.Result{OK: true}
+	})
+
+	r := taskRun(c, "events.on", TaskOn{Name: "theme:changed"})
+	require.True(t, r.OK)
+
+	require.NotEmpty(t, mock.listeners["theme:changed"])
+	require.NotPanics(t, func() {
+		mock.listeners["theme:changed"][0].callback(nil)
+	})
+
+	assert.Empty(t, received)
+}
+
 func TestTaskOff_Good(t *testing.T) {
 	_, c, mock := newTestService(t)
 
