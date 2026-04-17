@@ -155,6 +155,14 @@ func TestApplication_MenuManager_SetApplicationMenu_Ugly(t *testing.T) {
 	assert.Same(t, second, manager.applicationMenu)
 }
 
+func TestApplication_MenuManager_SetApplicationMenu_NilReceiver(t *testing.T) {
+	var manager *MenuManager
+
+	assert.NotPanics(t, func() {
+		manager.SetApplicationMenu(NewMenu())
+	})
+}
+
 func TestApplication_SystemTray_Good(t *testing.T) {
 	tray := (&SystemTrayManager{}).New()
 	menu := NewMenu()

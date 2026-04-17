@@ -6,6 +6,9 @@ package application
 //	w := app.Window.Get("main")
 //	if w == nil { panic("main window not registered") }
 func (wm *WindowManager) Get(name string) Window {
+	if wm == nil {
+		return nil
+	}
 	wm.mu.RLock()
 	defer wm.mu.RUnlock()
 	for _, window := range wm.windows {
@@ -21,6 +24,9 @@ func (wm *WindowManager) Get(name string) Window {
 //	w := app.Window.GetByID(1)
 //	if w != nil { w.Focus() }
 func (wm *WindowManager) GetByID(id uint) Window {
+	if wm == nil {
+		return nil
+	}
 	wm.mu.RLock()
 	defer wm.mu.RUnlock()
 	for _, window := range wm.windows {

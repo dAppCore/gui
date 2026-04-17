@@ -105,7 +105,12 @@ type MenuManager struct {
 	applicationMenu *Menu
 }
 
-func (m *MenuManager) SetApplicationMenu(menu *Menu) { m.applicationMenu = menu }
+func (m *MenuManager) SetApplicationMenu(menu *Menu) {
+	if m == nil {
+		return
+	}
+	m.applicationMenu = menu
+}
 
 // SystemTray represents a tray instance.
 type SystemTray struct {
@@ -759,6 +764,9 @@ type WindowManager struct {
 }
 
 func (wm *WindowManager) NewWithOptions(options WebviewWindowOptions) *WebviewWindow {
+	if wm == nil {
+		return nil
+	}
 	wm.mu.Lock()
 	wm.nextID++
 	window := newWebviewWindow(wm.nextID, options)
@@ -771,6 +779,9 @@ func (wm *WindowManager) NewWithOptions(options WebviewWindowOptions) *WebviewWi
 //
 //	for _, w := range wm.GetAll() { w.Show() }
 func (wm *WindowManager) GetAll() []Window {
+	if wm == nil {
+		return nil
+	}
 	wm.mu.RLock()
 	defer wm.mu.RUnlock()
 	out := make([]Window, 0, len(wm.windows))

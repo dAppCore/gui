@@ -55,3 +55,14 @@ func TestWindowManagerExpanded_GetByID_Ugly(t *testing.T) {
 	assert.Nil(t, manager.GetByID(0))
 	assert.Nil(t, manager.GetByID(3))
 }
+
+func TestWindowManagerExpanded_NilReceiver_IsSafe(t *testing.T) {
+	var manager *WindowManager
+
+	assert.NotPanics(t, func() {
+		assert.Nil(t, manager.NewWithOptions(WebviewWindowOptions{Name: "ignored"}))
+		assert.Nil(t, manager.Get("missing"))
+		assert.Nil(t, manager.GetByID(1))
+		assert.Nil(t, manager.GetAll())
+	})
+}
