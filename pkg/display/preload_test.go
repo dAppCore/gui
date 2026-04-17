@@ -148,6 +148,7 @@ func TestPreload_TrustedPreloadOrigin_Good(t *testing.T) {
 func TestPreload_TrustedPreloadOrigin_Bad(t *testing.T) {
 	assert.False(t, trustedPreloadOrigin("https://example.com"))
 	assert.False(t, trustedPreloadOrigin("http://10.0.0.1:3000"))
+	assert.False(t, trustedPreloadOrigin("file:///tmp/app/index.html"))
 }
 
 type preloadCapture struct {

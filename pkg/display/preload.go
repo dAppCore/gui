@@ -78,7 +78,7 @@ func trustedPreloadOrigin(pageURL string) bool {
 		return false
 	}
 	switch strings.ToLower(parsed.Scheme) {
-	case "core", "file", "wails", "app":
+	case "core", "wails", "app":
 		return true
 	case "http", "https":
 		host := strings.TrimSpace(parsed.Host)
