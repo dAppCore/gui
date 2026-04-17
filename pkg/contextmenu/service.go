@@ -18,6 +18,10 @@ type Service struct {
 	registeredMenus map[string]ContextMenuDef
 }
 
+func platformUnavailableError(op string) error {
+	return coreerr.E("contextmenu."+op, "platform backend unavailable", nil)
+}
+
 func (s *Service) OnStartup(_ context.Context) core.Result {
 	s.Core().RegisterQuery(s.handleQuery)
 	s.Core().Action("contextmenu.add", func(_ context.Context, opts core.Options) core.Result {
@@ -43,6 +47,10 @@ func (s *Service) OnShutdown(_ context.Context) core.Result {
 	// Destroy all registered menus on shutdown to release platform resources
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if s.platform == nil {
+		s.registeredMenus = make(map[string]ContextMenuDef)
+		return core.Result{OK: true}
+	}
 	for name := range s.registeredMenus {
 		_ = s.platform.Remove(name)
 	}
@@ -90,6 +98,9 @@ func (s *Service) queryList() map[string]ContextMenuDef {
 }
 
 func (s *Service) taskAdd(t TaskAdd) error {
+	if s.platform == nil {
+		return platformUnavailableError("taskAdd")
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	// If menu already exists, remove it first (replace semantics).
@@ -129,6 +140,9 @@ func (s *Service) taskAdd(t TaskAdd) error {
 }
 
 func (s *Service) taskRemove(t TaskRemove) error {
+	if s.platform == nil {
+		return platformUnavailableError("taskRemove")
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if _, exists := s.registeredMenus[t.Name]; !exists {
@@ -145,6 +159,9 @@ func (s *Service) taskRemove(t TaskRemove) error {
 }
 
 func (s *Service) taskUpdate(t TaskUpdate) error {
+	if s.platform == nil {
+		return platformUnavailableError("taskUpdate")
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	oldMenu, exists := s.registeredMenus[t.Name]
@@ -182,6 +199,9 @@ func (s *Service) taskUpdate(t TaskUpdate) error {
 }
 
 func (s *Service) taskDestroy(t TaskDestroy) error {
+	if s.platform == nil {
+		return platformUnavailableError("taskDestroy")
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if _, exists := s.registeredMenus[t.Name]; !exists {

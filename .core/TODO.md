@@ -1,1 +1,0 @@
-- @bug pkg/contextmenu/service.go:42 — shutdown and menu mutation paths still assume a non-nil platform backend and can panic if the service is wired without one.

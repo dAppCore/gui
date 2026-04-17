@@ -126,6 +126,31 @@ func TestRegister_Good(t *testing.T) {
 	assert.NotNil(t, svc.platform)
 }
 
+func TestNilPlatform_Good_MutationAndShutdownAreSafe(t *testing.T) {
+	_, c := newTestContextMenuService(t, nil)
+
+	cases := []struct {
+		name   string
+		action string
+		task   any
+	}{
+		{name: "add", action: "contextmenu.add", task: TaskAdd{Name: "file-menu", Menu: ContextMenuDef{Name: "file-menu"}}},
+		{name: "remove", action: "contextmenu.remove", task: TaskRemove{Name: "file-menu"}},
+		{name: "update", action: "contextmenu.update", task: TaskUpdate{Name: "file-menu", Menu: ContextMenuDef{Name: "file-menu"}}},
+		{name: "destroy", action: "contextmenu.destroy", task: TaskDestroy{Name: "file-menu"}},
+	}
+
+	for _, tc := range cases {
+		r := taskRun(c, tc.action, tc.task)
+		assert.False(t, r.OK, tc.name)
+		err, _ := r.Value.(error)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "platform backend unavailable")
+	}
+
+	assert.True(t, c.ServiceShutdown(t.Context()).OK)
+}
+
 func TestTaskAdd_Good(t *testing.T) {
 	mp := newMockPlatform()
 	_, c := newTestContextMenuService(t, mp)
