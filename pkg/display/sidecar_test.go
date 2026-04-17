@@ -58,6 +58,18 @@ func TestSidecar_EnsureSidecar_Ugly(t *testing.T) {
 	assert.Equal(t, "deno", manager.Status().Binary)
 }
 
+func TestSidecar_RegisterActions_StartFailureClearsSidecar(t *testing.T) {
+	t.Setenv("CORE_DENO_ENABLE", "1")
+	t.Setenv("CORE_DENO_BINARY", "/definitely/not/a/real/deno")
+
+	c := core.New(core.WithServiceLock())
+	svc := &Service{ServiceRuntime: core.NewServiceRuntime(c, Options{})}
+
+	svc.registerSidecarActions()
+
+	assert.Nil(t, svc.sidecar)
+}
+
 func TestSidecar_StatusAction_Good(t *testing.T) {
 	t.Setenv("CORE_DENO_BINARY", "/opt/core/deno")
 

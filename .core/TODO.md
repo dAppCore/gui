@@ -1,1 +1,0 @@
-- @hardening pkg/display/sidecar.go:15 — `registerSidecarActions` ignores the error from `Start`, so a failed sidecar launch can still be treated as ready.

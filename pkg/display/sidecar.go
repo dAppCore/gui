@@ -12,7 +12,12 @@ import (
 func (s *Service) registerSidecarActions() {
 	if strings.TrimSpace(core.Env("CORE_DENO_ENABLE")) != "" && s.sidecar == nil {
 		s.sidecar = s.ensureSidecar()
-		_, _ = s.sidecar.Start(context.Background())
+		if _, err := s.sidecar.Start(context.Background()); err != nil {
+			if s != nil && s.ServiceRuntime != nil && s.Core() != nil {
+				s.Core().LogError(err, "display.registerSidecarActions", "failed to start enabled sidecar")
+			}
+			s.sidecar = nil
+		}
 	}
 
 	s.Core().Action("display.sidecar.start", func(ctx context.Context, _ core.Options) core.Result {
