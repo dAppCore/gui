@@ -35,6 +35,16 @@ func (s *Service) HandleIPCEvents(_ *core.Core, _ core.Message) core.Result {
 }
 
 func (s *Service) handleQuery(_ *core.Core, q core.Query) core.Result {
+	if s == nil || s.platform == nil {
+		switch q.(type) {
+		case QueryAll:
+			return core.Result{Value: []Screen{}, OK: true}
+		case QueryWorkAreas:
+			return core.Result{Value: []Rect{}, OK: true}
+		default:
+			return core.Result{Value: nil, OK: true}
+		}
+	}
 	switch q := q.(type) {
 	case QueryAll:
 		return core.Result{Value: s.platform.GetAll(), OK: true}
@@ -54,25 +64,36 @@ func (s *Service) handleQuery(_ *core.Core, q core.Query) core.Result {
 }
 
 func (s *Service) queryByID(id string) *Screen {
-	for _, scr := range s.platform.GetAll() {
-		if scr.ID == id {
-			return &scr
+	if s == nil || s.platform == nil {
+		return nil
+	}
+	screens := s.platform.GetAll()
+	for i := range screens {
+		if screens[i].ID == id {
+			return &screens[i]
 		}
 	}
 	return nil
 }
 
 func (s *Service) queryAtPoint(x, y int) *Screen {
-	for _, scr := range s.platform.GetAll() {
-		b := scr.Bounds
+	if s == nil || s.platform == nil {
+		return nil
+	}
+	screens := s.platform.GetAll()
+	for i := range screens {
+		b := screens[i].Bounds
 		if x >= b.X && x < b.X+b.Width && y >= b.Y && y < b.Y+b.Height {
-			return &scr
+			return &screens[i]
 		}
 	}
 	return nil
 }
 
 func (s *Service) queryWorkAreas() []Rect {
+	if s == nil || s.platform == nil {
+		return nil
+	}
 	screens := s.platform.GetAll()
 	areas := make([]Rect, len(screens))
 	for i, scr := range screens {

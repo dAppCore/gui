@@ -89,11 +89,14 @@ type ScreenManager struct {
 //
 //	manager.SetScreens(platformDetectedScreens)
 func (m *ScreenManager) SetScreens(screens []*Screen) {
+	if m == nil {
+		return
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.screens = screens
+	m.screens = append([]*Screen(nil), screens...)
 	m.primary = nil
-	for _, screen := range screens {
+	for _, screen := range m.screens {
 		if screen.IsPrimary {
 			m.primary = screen
 			break
@@ -108,6 +111,9 @@ func (m *ScreenManager) SetScreens(screens []*Screen) {
 //
 //	manager.SetCurrent(screenUnderPointer)
 func (m *ScreenManager) SetCurrent(screen *Screen) {
+	if m == nil {
+		return
+	}
 	m.mu.Lock()
 	m.current = screen
 	m.mu.Unlock()
@@ -117,6 +123,9 @@ func (m *ScreenManager) SetCurrent(screen *Screen) {
 //
 //	for _, s := range manager.GetAll() { renderMonitorPreview(s) }
 func (m *ScreenManager) GetAll() []*Screen {
+	if m == nil {
+		return nil
+	}
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	out := make([]*Screen, len(m.screens))
@@ -128,6 +137,9 @@ func (m *ScreenManager) GetAll() []*Screen {
 //
 //	primary := manager.GetPrimary()
 func (m *ScreenManager) GetPrimary() *Screen {
+	if m == nil {
+		return nil
+	}
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.primary
@@ -137,6 +149,9 @@ func (m *ScreenManager) GetPrimary() *Screen {
 //
 //	current := manager.GetCurrent()
 func (m *ScreenManager) GetCurrent() *Screen {
+	if m == nil {
+		return nil
+	}
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	if m.current != nil {

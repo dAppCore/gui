@@ -65,3 +65,18 @@ func TestScreenManager_SetScreens_Ugly(t *testing.T) {
 	require.Same(t, primary, manager.GetPrimary())
 	require.Same(t, current, manager.GetCurrent())
 }
+
+func TestScreenManager_SetScreens_CopiesInput(t *testing.T) {
+	manager := &ScreenManager{}
+	screens := []*Screen{
+		{ID: "1", IsPrimary: true},
+		{ID: "2"},
+	}
+
+	manager.SetScreens(screens)
+	screens[0] = &Screen{ID: "mutated"}
+
+	require.Len(t, manager.GetAll(), 2)
+	require.Equal(t, "1", manager.GetPrimary().ID)
+	require.Equal(t, "1", manager.GetAll()[0].ID)
+}
