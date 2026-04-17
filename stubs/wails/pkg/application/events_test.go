@@ -47,7 +47,7 @@ func TestEvents_ApplicationEvent_Good(t *testing.T) {
 func TestEvents_ApplicationEvent_Bad(t *testing.T) {
 	event := &ApplicationEvent{}
 
-	assert.Nil(t, event.Context())
+	require.NotNil(t, event.Context())
 	assert.False(t, event.IsCancelled())
 }
 

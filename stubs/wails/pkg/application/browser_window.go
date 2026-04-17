@@ -39,6 +39,7 @@ type BrowserWindow struct {
 	id       uint
 	name     string
 	clientID string
+	visible  bool
 }
 
 // NewBrowserWindow creates a browser window with the given ID and client ID.
@@ -49,6 +50,7 @@ func NewBrowserWindow(id uint, clientID string) *BrowserWindow {
 		id:       id,
 		name:     fmt.Sprintf("browser-%d", id),
 		clientID: clientID,
+		visible:  true,
 	}
 }
 
@@ -83,7 +85,15 @@ func (browserWindow *BrowserWindow) handleDragAndDropMessage(filenames []string,
 func (browserWindow *BrowserWindow) HandleMessage(message string)      {}
 func (browserWindow *BrowserWindow) HandleWindowEvent(identifier uint) {}
 func (browserWindow *BrowserWindow) Height() int                       { return 0 }
-func (browserWindow *BrowserWindow) Hide() Window                      { return browserWindow }
+func (browserWindow *BrowserWindow) Hide() Window {
+	if browserWindow == nil {
+		return nil
+	}
+	browserWindow.mu.Lock()
+	browserWindow.visible = false
+	browserWindow.mu.Unlock()
+	return browserWindow
+}
 func (browserWindow *BrowserWindow) HideMenuBar()                      {}
 func (browserWindow *BrowserWindow) IsFocused() bool                   { return false }
 func (browserWindow *BrowserWindow) IsFullscreen() bool                { return false }
@@ -138,7 +148,15 @@ func (browserWindow *BrowserWindow) SetURL(url string) Window         { return b
 func (browserWindow *BrowserWindow) SetZoom(magnification float64) Window {
 	return browserWindow
 }
-func (browserWindow *BrowserWindow) Show() Window          { return browserWindow }
+func (browserWindow *BrowserWindow) Show() Window {
+	if browserWindow == nil {
+		return nil
+	}
+	browserWindow.mu.Lock()
+	browserWindow.visible = true
+	browserWindow.mu.Unlock()
+	return browserWindow
+}
 func (browserWindow *BrowserWindow) ShowMenuBar()          {}
 func (browserWindow *BrowserWindow) Size() (int, int)      { return 0, 0 }
 func (browserWindow *BrowserWindow) OpenDevTools()         {}
@@ -150,7 +168,14 @@ func (browserWindow *BrowserWindow) UnFullscreen()         {}
 func (browserWindow *BrowserWindow) UnMaximise()           {}
 func (browserWindow *BrowserWindow) UnMinimise()           {}
 func (browserWindow *BrowserWindow) Width() int            { return 0 }
-func (browserWindow *BrowserWindow) IsVisible() bool       { return true }
+func (browserWindow *BrowserWindow) IsVisible() bool {
+	if browserWindow == nil {
+		return false
+	}
+	browserWindow.mu.RLock()
+	defer browserWindow.mu.RUnlock()
+	return browserWindow.visible
+}
 func (browserWindow *BrowserWindow) Bounds() Rect          { return Rect{} }
 func (browserWindow *BrowserWindow) SetBounds(bounds Rect) {}
 func (browserWindow *BrowserWindow) Zoom()                 {}

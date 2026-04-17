@@ -39,7 +39,9 @@ func TestBrowserWindow_NewBrowserWindow_Ugly(t *testing.T) {
 	window := NewBrowserWindow(99, "client")
 
 	assert.Same(t, window, window.Show())
+	assert.True(t, window.IsVisible())
 	assert.Same(t, window, window.Hide())
+	assert.False(t, window.IsVisible())
 	assert.Same(t, window, window.Fullscreen())
 	assert.Same(t, window, window.Maximise())
 	assert.Same(t, window, window.Minimise())

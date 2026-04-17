@@ -32,6 +32,12 @@ type ApplicationEvent struct {
 //
 //	ctx := event.Context()
 func (e *ApplicationEvent) Context() *ApplicationEventContext {
+	if e == nil {
+		return nil
+	}
+	if e.ctx == nil {
+		e.ctx = newApplicationEventContext()
+	}
 	return e.ctx
 }
 
