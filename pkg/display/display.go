@@ -32,6 +32,10 @@ import (
 
 type Options struct{}
 
+func failedAction(method, action string) error {
+	return coreerr.E(method, action+" action failed", nil)
+}
+
 // WindowInfo is an alias for window.WindowInfo (backward compatibility).
 type WindowInfo = window.WindowInfo
 
@@ -1083,9 +1087,18 @@ func (s *Service) OpenWindow(options ...window.WindowOption) error {
 func (s *Service) GetWindowInfo(name string) (*window.WindowInfo, error) {
 	r := s.Core().QUERY(window.QueryWindowByName{Name: name})
 	if !r.OK {
-		return nil, coreerr.E("display.GetWindowInfo", "window service not available", nil)
+		if err, ok := r.Value.(error); ok {
+			return nil, err
+		}
+		return nil, failedAction("display.GetWindowInfo", "window.queryWindowByName")
 	}
-	info, _ := r.Value.(*window.WindowInfo)
+	if r.Value == nil {
+		return nil, nil
+	}
+	info, ok := r.Value.(*window.WindowInfo)
+	if !ok {
+		return nil, coreerr.E("display.GetWindowInfo", "unexpected result type", nil)
+	}
 	return info, nil
 }
 
@@ -1108,6 +1121,7 @@ func (s *Service) SetWindowPosition(name string, x, y int) error {
 		if e, ok := r.Value.(error); ok {
 			return e
 		}
+		return failedAction("display.SetWindowPosition", "window.setPosition")
 	}
 	return nil
 }
@@ -1121,6 +1135,7 @@ func (s *Service) SetWindowSize(name string, width, height int) error {
 		if e, ok := r.Value.(error); ok {
 			return e
 		}
+		return failedAction("display.SetWindowSize", "window.setSize")
 	}
 	return nil
 }
@@ -1142,6 +1157,7 @@ func (s *Service) MaximizeWindow(name string) error {
 		if e, ok := r.Value.(error); ok {
 			return e
 		}
+		return failedAction("display.MaximizeWindow", "window.maximise")
 	}
 	return nil
 }
@@ -1155,6 +1171,7 @@ func (s *Service) MinimizeWindow(name string) error {
 		if e, ok := r.Value.(error); ok {
 			return e
 		}
+		return failedAction("display.MinimizeWindow", "window.minimise")
 	}
 	return nil
 }
@@ -1168,6 +1185,7 @@ func (s *Service) FocusWindow(name string) error {
 		if e, ok := r.Value.(error); ok {
 			return e
 		}
+		return failedAction("display.FocusWindow", "window.focus")
 	}
 	return nil
 }
@@ -1181,6 +1199,7 @@ func (s *Service) CloseWindow(name string) error {
 		if e, ok := r.Value.(error); ok {
 			return e
 		}
+		return failedAction("display.CloseWindow", "window.close")
 	}
 	return nil
 }
@@ -1194,6 +1213,7 @@ func (s *Service) RestoreWindow(name string) error {
 		if e, ok := r.Value.(error); ok {
 			return e
 		}
+		return failedAction("display.RestoreWindow", "window.restore")
 	}
 	return nil
 }
@@ -1207,6 +1227,7 @@ func (s *Service) SetWindowVisibility(name string, visible bool) error {
 		if e, ok := r.Value.(error); ok {
 			return e
 		}
+		return failedAction("display.SetWindowVisibility", "window.setVisibility")
 	}
 	return nil
 }
@@ -1220,6 +1241,7 @@ func (s *Service) SetWindowAlwaysOnTop(name string, alwaysOnTop bool) error {
 		if e, ok := r.Value.(error); ok {
 			return e
 		}
+		return failedAction("display.SetWindowAlwaysOnTop", "window.setAlwaysOnTop")
 	}
 	return nil
 }
@@ -1233,6 +1255,7 @@ func (s *Service) SetWindowTitle(name string, title string) error {
 		if e, ok := r.Value.(error); ok {
 			return e
 		}
+		return failedAction("display.SetWindowTitle", "window.setTitle")
 	}
 	return nil
 }
@@ -1246,6 +1269,7 @@ func (s *Service) SetWindowFullscreen(name string, fullscreen bool) error {
 		if e, ok := r.Value.(error); ok {
 			return e
 		}
+		return failedAction("display.SetWindowFullscreen", "window.fullscreen")
 	}
 	return nil
 }
@@ -1261,6 +1285,7 @@ func (s *Service) SetWindowBackgroundColour(name string, r, g, b, a uint8) error
 		if e, ok := result.Value.(error); ok {
 			return e
 		}
+		return failedAction("display.SetWindowBackgroundColour", "window.setBackgroundColour")
 	}
 	return nil
 }
@@ -1362,6 +1387,7 @@ func (s *Service) SaveLayout(name string) error {
 		if e, ok := r.Value.(error); ok {
 			return e
 		}
+		return failedAction("display.SaveLayout", "window.saveLayout")
 	}
 	return nil
 }
@@ -1375,6 +1401,7 @@ func (s *Service) RestoreLayout(name string) error {
 		if e, ok := r.Value.(error); ok {
 			return e
 		}
+		return failedAction("display.RestoreLayout", "window.restoreLayout")
 	}
 	return nil
 }
@@ -1398,6 +1425,7 @@ func (s *Service) DeleteLayout(name string) error {
 		if e, ok := r.Value.(error); ok {
 			return e
 		}
+		return failedAction("display.DeleteLayout", "window.deleteLayout")
 	}
 	return nil
 }
@@ -1408,7 +1436,13 @@ func (s *Service) GetLayout(name string) *window.Layout {
 	if !r.OK {
 		return nil
 	}
-	layout, _ := r.Value.(*window.Layout)
+	if r.Value == nil {
+		return nil
+	}
+	layout, ok := r.Value.(*window.Layout)
+	if !ok {
+		return nil
+	}
 	return layout
 }
 
@@ -1423,6 +1457,7 @@ func (s *Service) TileWindows(mode window.TileMode, windowNames []string) error 
 		if e, ok := r.Value.(error); ok {
 			return e
 		}
+		return failedAction("display.TileWindows", "window.tileWindows")
 	}
 	return nil
 }
@@ -1436,6 +1471,7 @@ func (s *Service) SnapWindow(name string, position window.SnapPosition) error {
 		if e, ok := r.Value.(error); ok {
 			return e
 		}
+		return failedAction("display.SnapWindow", "window.snapWindow")
 	}
 	return nil
 }
@@ -1449,6 +1485,7 @@ func (s *Service) StackWindows(windowNames []string, offsetX, offsetY int) error
 		if e, ok := r.Value.(error); ok {
 			return e
 		}
+		return failedAction("display.StackWindows", "window.stackWindows")
 	}
 	return nil
 }
@@ -1462,6 +1499,7 @@ func (s *Service) ApplyWorkflowLayout(workflow window.WorkflowLayout) error {
 		if e, ok := r.Value.(error); ok {
 			return e
 		}
+		return failedAction("display.ApplyWorkflowLayout", "window.applyWorkflow")
 	}
 	return nil
 }
@@ -1479,9 +1517,12 @@ func (s *Service) LayoutBesideEditor(name, editor, side string, ratio float64) (
 		if e, ok := r.Value.(error); ok {
 			return window.LayoutBesideEditorResult{}, e
 		}
-		return window.LayoutBesideEditorResult{}, nil
+		return window.LayoutBesideEditorResult{}, failedAction("display.LayoutBesideEditor", "window.layoutBesideEditor")
 	}
-	result, _ := r.Value.(window.LayoutBesideEditorResult)
+	result, ok := r.Value.(window.LayoutBesideEditorResult)
+	if !ok {
+		return window.LayoutBesideEditorResult{}, coreerr.E("display.LayoutBesideEditor", "unexpected result type", nil)
+	}
 	return result, nil
 }
 
@@ -1498,9 +1539,12 @@ func (s *Service) LayoutSuggest(screenID string, windowCount int) (window.Layout
 		if e, ok := r.Value.(error); ok {
 			return window.LayoutSuggestion{}, e
 		}
-		return window.LayoutSuggestion{}, nil
+		return window.LayoutSuggestion{}, failedAction("display.LayoutSuggest", "window.layoutSuggest")
 	}
-	result, _ := r.Value.(window.LayoutSuggestion)
+	result, ok := r.Value.(window.LayoutSuggestion)
+	if !ok {
+		return window.LayoutSuggestion{}, coreerr.E("display.LayoutSuggest", "unexpected result type", nil)
+	}
 	return result, nil
 }
 
@@ -1517,9 +1561,12 @@ func (s *Service) FindScreenSpace(screenID string, width, height, padding int) (
 		if e, ok := r.Value.(error); ok {
 			return window.ScreenSpace{}, e
 		}
-		return window.ScreenSpace{}, nil
+		return window.ScreenSpace{}, failedAction("display.FindScreenSpace", "window.findSpace")
 	}
-	result, _ := r.Value.(window.ScreenSpace)
+	result, ok := r.Value.(window.ScreenSpace)
+	if !ok {
+		return window.ScreenSpace{}, coreerr.E("display.FindScreenSpace", "unexpected result type", nil)
+	}
 	return result, nil
 }
 
@@ -1536,9 +1583,12 @@ func (s *Service) ArrangeWindowPair(primary, secondary, screenID string, ratio f
 		if e, ok := r.Value.(error); ok {
 			return window.PairArrangement{}, e
 		}
-		return window.PairArrangement{}, nil
+		return window.PairArrangement{}, failedAction("display.ArrangeWindowPair", "window.arrangePair")
 	}
-	result, _ := r.Value.(window.PairArrangement)
+	result, ok := r.Value.(window.PairArrangement)
+	if !ok {
+		return window.PairArrangement{}, coreerr.E("display.ArrangeWindowPair", "unexpected result type", nil)
+	}
 	return result, nil
 }
 

@@ -248,6 +248,23 @@ func TestGetWindowInfo_Bad(t *testing.T) {
 	assert.Nil(t, info)
 }
 
+func TestGetWindowInfo_BadType(t *testing.T) {
+	svc, c := newTestDisplayService(t)
+	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
+		switch q.(type) {
+		case window.QueryWindowByName:
+			return core.Result{Value: "unexpected", OK: true}
+		default:
+			return core.Result{}
+		}
+	})
+
+	info, err := svc.GetWindowInfo("broken")
+
+	require.Error(t, err)
+	assert.Nil(t, info)
+}
+
 func TestListWindowInfos_Good(t *testing.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
@@ -278,6 +295,19 @@ func TestSetWindowPosition_Bad(t *testing.T) {
 
 	err := svc.SetWindowPosition("nonexistent", 0, 0)
 	assert.Error(t, err)
+}
+
+func TestSetWindowPosition_ActionFailure(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+	c.Action("window.setPosition", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{OK: false}
+	})
+
+	err := svc.SetWindowPosition("pos-win", 300, 400)
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "window.setPosition")
 }
 
 func TestSetWindowSize_Good(t *testing.T) {
@@ -433,6 +463,20 @@ func TestSetWindowFullscreen_Bad(t *testing.T) {
 	err := svc.SetWindowFullscreen("missing", true)
 
 	require.Error(t, err)
+}
+
+func TestLayoutBesideEditor_ActionFailure(t *testing.T) {
+	c := newTestConclave(t)
+	svc := core.MustServiceFor[*Service](c, "display")
+	c.Action("window.layoutBesideEditor", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{OK: false}
+	})
+
+	result, err := svc.LayoutBesideEditor("preview", "code", "right", 0.62)
+
+	require.Error(t, err)
+	assert.Zero(t, result)
+	assert.Contains(t, err.Error(), "window.layoutBesideEditor")
 }
 
 func TestSetWindowFullscreen_Ugly(t *testing.T) {
