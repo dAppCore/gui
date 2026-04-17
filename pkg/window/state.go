@@ -74,10 +74,7 @@ func (sm *StateManager) SetPath(path string) {
 		return
 	}
 	sm.mu.Lock()
-	if sm.saveTimer != nil {
-		sm.saveTimer.Stop()
-		sm.saveTimer = nil
-	}
+	sm.stopSaveTimerLocked()
 	sm.statePath = path
 	sm.states = make(map[string]WindowState)
 	sm.mu.Unlock()
@@ -122,32 +119,37 @@ func (sm *StateManager) save() error {
 		return nil
 	}
 	sm.mu.RLock()
-	result := core.JSONMarshal(sm.states)
+	filePath := sm.filePath()
+	states := make(map[string]WindowState, len(sm.states))
+	for name, state := range sm.states {
+		states[name] = state
+	}
 	sm.mu.RUnlock()
+	result := core.JSONMarshal(states)
 	if !result.OK {
 		marshalErr, _ := result.Value.(error)
 		core.Error(
 			"window state save failed",
-			"path", sm.filePath(),
+			"path", filePath,
 			"err", core.E("window.StateManager.save", "failed to encode window state", marshalErr),
 		)
 		return core.E("window.StateManager.save", "failed to encode window state", marshalErr)
 	}
 	data := result.Value.([]byte)
-	if dir := sm.dataDir(); dir != "" {
+	if dir := core.PathDir(filePath); dir != "" {
 		if err := coreio.Local.EnsureDir(dir); err != nil {
 			core.Error(
 				"window state save failed",
-				"path", sm.filePath(),
+				"path", filePath,
 				"err", core.E("window.StateManager.save", "failed to create window state directory", err),
 			)
 			return core.E("window.StateManager.save", "failed to create window state directory", err)
 		}
 	}
-	if err := coreio.Local.Write(sm.filePath(), string(data)); err != nil {
+	if err := coreio.Local.Write(filePath, string(data)); err != nil {
 		core.Error(
 			"window state save failed",
-			"path", sm.filePath(),
+			"path", filePath,
 			"err", core.E("window.StateManager.save", "failed to write window state", err),
 		)
 		return core.E("window.StateManager.save", "failed to write window state", err)
@@ -156,12 +158,12 @@ func (sm *StateManager) save() error {
 }
 
 func (sm *StateManager) scheduleSave() {
-	if sm.saveTimer != nil {
-		sm.saveTimer.Stop()
-	}
+	sm.mu.Lock()
+	sm.stopSaveTimerLocked()
 	sm.saveTimer = time.AfterFunc(500*time.Millisecond, func() {
 		_ = sm.save()
 	})
+	sm.mu.Unlock()
 }
 
 // GetState returns the saved state for a window name.
@@ -261,10 +263,18 @@ func (sm *StateManager) Clear() {
 	sm.scheduleSave()
 }
 
+func (sm *StateManager) stopSaveTimerLocked() {
+	if sm.saveTimer == nil {
+		return
+	}
+	sm.saveTimer.Stop()
+	sm.saveTimer = nil
+}
+
 // ForceSync writes state to disk immediately.
 func (sm *StateManager) ForceSync() error {
-	if sm.saveTimer != nil {
-		sm.saveTimer.Stop()
-	}
+	sm.mu.Lock()
+	sm.stopSaveTimerLocked()
+	sm.mu.Unlock()
 	return sm.save()
 }
