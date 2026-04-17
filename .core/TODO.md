@@ -1,1 +1,1 @@
-- @security pkg/display/events.go:118 — WebSocket origin checks still trust any `file://` origin, so a local malicious file can reach the event bridge.
+- @security pkg/display/preload.go:71 — Preload origin checks still trust any `file://` origin, so a local malicious file can reach the privileged bridge.

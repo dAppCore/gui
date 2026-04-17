@@ -158,7 +158,7 @@ func TestWSEventManager_HandleWebSocket_RejectsLoopbackSpoofedOrigin(t *testing.
 	em := NewWSEventManager()
 
 	req := httptest.NewRequest(http.MethodGet, "http://127.0.0.1/events", nil)
-	req.RemoteAddr = "203.0.113.10:12345"
+	req.RemoteAddr = "127.0.0.1:12345"
 	req.Header.Set("Origin", "file://malicious")
 	recorder := httptest.NewRecorder()
 
@@ -218,16 +218,6 @@ func TestEvents_trustedWebSocketOrigin_Good(t *testing.T) {
 			}(),
 			want: true,
 		},
-		{
-			name: "file origin",
-			req: func() *http.Request {
-				r := httptest.NewRequest(http.MethodGet, "http://127.0.0.1/events", nil)
-				r.RemoteAddr = "[::1]:12345"
-				r.Header.Set("Origin", "file://local")
-				return r
-			}(),
-			want: true,
-		},
 	}
 
 	for _, tc := range tests {
@@ -267,6 +257,15 @@ func TestEvents_trustedWebSocketOrigin_Bad(t *testing.T) {
 				r := httptest.NewRequest(http.MethodGet, "http://127.0.0.1/events", nil)
 				r.RemoteAddr = "127.0.0.1:12345"
 				r.Header.Set("Origin", "https://evil.example")
+				return r
+			}(),
+		},
+		{
+			name: "file origin",
+			req: func() *http.Request {
+				r := httptest.NewRequest(http.MethodGet, "http://127.0.0.1/events", nil)
+				r.RemoteAddr = "127.0.0.1:12345"
+				r.Header.Set("Origin", "file://local")
 				return r
 			}(),
 		},

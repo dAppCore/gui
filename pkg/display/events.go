@@ -147,7 +147,7 @@ func trustedWebSocketOrigin(r *http.Request) bool {
 	switch strings.ToLower(parsed.Scheme) {
 	case "http", "https":
 		return trustedWebSocketHost(parsed.Host)
-	case "file", "wails", "core", "app":
+	case "wails", "core", "app":
 		return true
 	default:
 		return false
