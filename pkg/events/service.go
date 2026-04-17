@@ -3,10 +3,11 @@ package events
 
 import (
 	"context"
+	"sort"
 	"sync"
 
-	coreerr "dappco.re/go/core/log"
 	core "dappco.re/go/core"
+	coreerr "dappco.re/go/core/log"
 )
 
 // Options holds configuration for the events service (currently empty).
@@ -19,12 +20,13 @@ type Service struct {
 	platform Platform
 
 	mu        sync.Mutex
-	listeners map[string][]func()      // IPC-registered cancels per event name
-	counts    map[string]int           // listener counts per event name
+	listeners map[string][]func() // IPC-registered cancels per event name
+	counts    map[string]int      // listener counts per event name
 }
 
 // OnStartup registers query and action handlers.
 func (s *Service) OnStartup(_ context.Context) core.Result {
+	s.ensureState()
 	s.Core().RegisterQuery(s.handleQuery)
 	s.Core().Action("events.emit", func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskEmit)
@@ -58,6 +60,17 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		return core.Result{OK: true}
 	})
 	return core.Result{OK: true}
+}
+
+func (s *Service) ensureState() {
+	s.mu.Lock()
+	if s.listeners == nil {
+		s.listeners = make(map[string][]func())
+	}
+	if s.counts == nil {
+		s.counts = make(map[string]int)
+	}
+	s.mu.Unlock()
 }
 
 // OnShutdown cancels all IPC-registered platform listeners.
@@ -94,10 +107,15 @@ func (s *Service) handleQuery(_ *core.Core, q core.Query) core.Result {
 //	for _, info := range snapshot { log(info.EventName, info.Count) }
 func (s *Service) listenerSnapshot() []ListenerInfo {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	snapshot := make([]ListenerInfo, 0, len(s.counts))
 	for name, count := range s.counts {
 		snapshot = append(snapshot, ListenerInfo{EventName: name, Count: count})
 	}
+	s.mu.Unlock()
+
+	sort.Slice(snapshot, func(i, j int) bool {
+		return snapshot[i].EventName < snapshot[j].EventName
+	})
+
 	return snapshot
 }
