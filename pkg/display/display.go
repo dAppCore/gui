@@ -669,11 +669,25 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 		))
 	case "contextmenu:add":
 		name, _ := msg.Data["name"].(string)
-		marshalResult := core.JSONMarshal(msg.Data["menu"])
+		menuValue, ok := msg.Data["menu"]
+		if !ok || menuValue == nil {
+			return core.Result{Value: coreerr.E("display.handleWSMessage", "missing required field \"menu\"", nil), OK: false}
+		}
+		marshalResult := core.JSONMarshal(menuValue)
+		if !marshalResult.OK {
+			if err, ok := marshalResult.Value.(error); ok {
+				return core.Result{Value: coreerr.E("display.handleWSMessage", "failed to marshal menu definition", err), OK: false}
+			}
+			return core.Result{Value: coreerr.E("display.handleWSMessage", "failed to marshal menu definition", nil), OK: false}
+		}
 		var menuDef contextmenu.ContextMenuDef
-		if marshalResult.OK {
-			menuJSON, _ := marshalResult.Value.([]byte)
-			core.JSONUnmarshal(menuJSON, &menuDef)
+		menuJSON, _ := marshalResult.Value.([]byte)
+		unmarshalResult := core.JSONUnmarshal(menuJSON, &menuDef)
+		if !unmarshalResult.OK {
+			if err, ok := unmarshalResult.Value.(error); ok {
+				return core.Result{Value: coreerr.E("display.handleWSMessage", "failed to unmarshal menu definition", err), OK: false}
+			}
+			return core.Result{Value: coreerr.E("display.handleWSMessage", "failed to unmarshal menu definition", nil), OK: false}
 		}
 		return c.Action("contextmenu.add").Run(ctx, core.NewOptions(
 			core.Option{Key: "task", Value: contextmenu.TaskAdd{Name: name, Menu: menuDef}},
