@@ -24,7 +24,7 @@ func (s *Subsystem) clipboardRead(_ context.Context, _ *mcp.CallToolRequest, _ C
 		if e, ok := r.Value.(error); ok {
 			return nil, ClipboardReadOutput{}, e
 		}
-		return nil, ClipboardReadOutput{}, nil
+		return nil, ClipboardReadOutput{}, coreerr.E("mcp.clipboardRead", "clipboard query failed", nil)
 	}
 	content, ok := r.Value.(clipboard.ClipboardContent)
 	if !ok {

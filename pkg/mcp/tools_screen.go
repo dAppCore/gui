@@ -48,7 +48,7 @@ func (s *Subsystem) screenGet(_ context.Context, _ *mcp.CallToolRequest, input S
 		if e, ok := r.Value.(error); ok {
 			return nil, ScreenGetOutput{}, e
 		}
-		return nil, ScreenGetOutput{}, nil
+		return nil, ScreenGetOutput{}, coreerr.E("mcp.screenGet", "screen query failed", nil)
 	}
 	scr, ok := r.Value.(*screen.Screen)
 	if !ok {

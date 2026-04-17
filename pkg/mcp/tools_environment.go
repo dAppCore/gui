@@ -23,7 +23,7 @@ func (s *Subsystem) themeGet(_ context.Context, _ *mcp.CallToolRequest, _ ThemeG
 		if err, ok := result.Value.(error); ok {
 			return nil, ThemeGetOutput{}, err
 		}
-		return nil, ThemeGetOutput{}, nil
+		return nil, ThemeGetOutput{}, coreerr.E("mcp.themeGet", "theme query failed", nil)
 	}
 	theme, ok := result.Value.(environment.ThemeInfo)
 	if !ok {
