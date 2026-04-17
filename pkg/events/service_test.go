@@ -293,6 +293,13 @@ func TestTaskEmit_UnknownEvent_Bad(t *testing.T) {
 	assert.Len(t, mock.emitted, 1) // still recorded as emitted
 }
 
+func TestTaskEmit_EmptyName_Bad(t *testing.T) {
+	_, c, _ := newTestService(t)
+
+	r := taskRun(c, "events.emit", TaskEmit{Name: ""})
+	assert.False(t, r.OK)
+}
+
 func TestQueryListeners_NoService_Bad(t *testing.T) {
 	// No events service registered — query is not handled.
 	c := core.New(core.WithServiceLock())
@@ -316,6 +323,13 @@ func TestTaskOff_NeverRegistered_Ugly(t *testing.T) {
 
 	r := taskRun(c, "events.off", TaskOff{Name: "nonexistent:event"})
 	assert.True(t, r.OK)
+}
+
+func TestTaskOff_EmptyName_Bad(t *testing.T) {
+	_, c, _ := newTestService(t)
+
+	r := taskRun(c, "events.off", TaskOff{Name: ""})
+	assert.False(t, r.OK)
 }
 
 func TestTaskOn_MultipleListeners_Ugly(t *testing.T) {

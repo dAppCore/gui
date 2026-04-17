@@ -60,6 +60,8 @@ const (
 	EventChatImageQueued     EventType = "chat.image.queued"
 )
 
+const websocketReadTimeout = 30 * time.Second
+
 // Event represents a display event sent to subscribers.
 type Event struct {
 	Type      EventType      `json:"type"`
@@ -82,6 +84,7 @@ type WSEventManager struct {
 	nextSubID   int
 	eventBuffer chan Event
 	closed      bool
+	readTimeout time.Duration
 }
 
 // clientState tracks a client's subscriptions.
@@ -103,6 +106,7 @@ func NewWSEventManager() *WSEventManager {
 		},
 		clients:     make(map[*websocket.Conn]*clientState),
 		eventBuffer: make(chan Event, 100),
+		readTimeout: websocketReadTimeout,
 	}
 
 	// Start event broadcaster
@@ -272,10 +276,23 @@ func (em *WSEventManager) HandleWebSocket(w http.ResponseWriter, r *http.Request
 	}
 	em.mu.Unlock()
 
-	conn.SetReadLimit(64 * 1024)
+	em.prepareConnection(conn)
 
 	// Handle incoming messages
 	go em.handleMessages(conn)
+}
+
+func (em *WSEventManager) prepareConnection(conn *websocket.Conn) {
+	if conn == nil {
+		return
+	}
+	conn.SetReadLimit(64 * 1024)
+	if em.readTimeout > 0 {
+		_ = conn.SetReadDeadline(time.Now().Add(em.readTimeout))
+		conn.SetPongHandler(func(string) error {
+			return conn.SetReadDeadline(time.Now().Add(em.readTimeout))
+		})
+	}
 }
 
 // handleMessages processes incoming WebSocket messages.
@@ -283,6 +300,9 @@ func (em *WSEventManager) handleMessages(conn *websocket.Conn) {
 	defer em.removeClient(conn)
 
 	for {
+		if em.readTimeout > 0 {
+			_ = conn.SetReadDeadline(time.Now().Add(em.readTimeout))
+		}
 		_, message, err := conn.ReadMessage()
 		if err != nil {
 			return

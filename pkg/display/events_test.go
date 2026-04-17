@@ -322,6 +322,18 @@ func TestWSEventManager_HandleWebSocket_ClosesOnUnknownAction(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestWSEventManager_HandleWebSocket_ClosesOnReadTimeout(t *testing.T) {
+	em := NewWSEventManager()
+	em.readTimeout = 10 * time.Millisecond
+
+	_, cleanup := dialWSEventManager(t, em)
+	defer cleanup()
+
+	require.Eventually(t, func() bool {
+		return em.ConnectedClients() == 0
+	}, 500*time.Millisecond, 10*time.Millisecond)
+}
+
 func TestWSEventManager_Emit_Ugly(t *testing.T) {
 	em := &WSEventManager{
 		clients:     map[*websocket.Conn]*clientState{},

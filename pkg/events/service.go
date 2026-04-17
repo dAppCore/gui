@@ -4,6 +4,7 @@ package events
 import (
 	"context"
 	"sort"
+	"strings"
 	"sync"
 
 	core "dappco.re/go/core"
@@ -30,13 +31,16 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 	s.Core().RegisterQuery(s.handleQuery)
 	s.Core().Action("events.emit", func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskEmit)
+		if err := validateEventName("events.emit", t.Name); err != nil {
+			return core.Result{Value: err, OK: false}
+		}
 		cancelled := s.platform.Emit(t.Name, t.Data)
 		return core.Result{Value: cancelled, OK: true}
 	})
 	s.Core().Action("events.on", func(ctx context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskOn)
-		if t.Name == "" {
-			return core.Result{Value: coreerr.E("events.on", "event name must not be empty", nil), OK: false}
+		if err := validateEventName("events.on", t.Name); err != nil {
+			return core.Result{Value: err, OK: false}
 		}
 		cancel := s.platform.On(t.Name, func(event *CustomEvent) {
 			_ = s.Core().ACTION(ActionEventFired{Event: *event})
@@ -51,6 +55,9 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 	})
 	s.Core().Action("events.off", func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskOff)
+		if err := validateEventName("events.off", t.Name); err != nil {
+			return core.Result{Value: err, OK: false}
+		}
 		s.platform.Off(t.Name)
 		s.mu.Lock()
 		for _, cancel := range s.listeners[t.Name] {
@@ -62,6 +69,13 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		return core.Result{OK: true}
 	})
 	return core.Result{OK: true}
+}
+
+func validateEventName(method, name string) error {
+	if strings.TrimSpace(name) == "" {
+		return coreerr.E(method, "event name must not be empty", nil)
+	}
+	return nil
 }
 
 func (s *Service) ensureState() {
