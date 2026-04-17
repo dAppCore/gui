@@ -760,6 +760,21 @@ func TestGetSavedWindowStates_Good(t *testing.T) {
 	assert.NotNil(t, states)
 }
 
+func TestDisplay_PublicCollections_AreNilSafe(t *testing.T) {
+	svc, _ := newTestDisplayService(t)
+
+	infos := svc.ListWindowInfos()
+	layouts := svc.ListLayouts()
+	states := svc.GetSavedWindowStates()
+
+	require.NotNil(t, infos)
+	require.NotNil(t, layouts)
+	require.NotNil(t, states)
+	assert.Empty(t, infos)
+	assert.Empty(t, layouts)
+	assert.Empty(t, states)
+}
+
 func TestHandleIPCEvents_WindowOpened_Good(t *testing.T) {
 	c := newTestConclave(t)
 

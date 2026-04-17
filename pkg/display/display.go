@@ -1120,9 +1120,12 @@ func (s *Service) GetWindowInfo(name string) (*window.WindowInfo, error) {
 func (s *Service) ListWindowInfos() []window.WindowInfo {
 	r := s.Core().QUERY(window.QueryWindowList{})
 	if !r.OK {
-		return nil
+		return []window.WindowInfo{}
 	}
 	list, _ := r.Value.([]window.WindowInfo)
+	if list == nil {
+		return []window.WindowInfo{}
+	}
 	return list
 }
 
@@ -1340,7 +1343,7 @@ func (s *Service) ResetWindowState() error {
 func (s *Service) GetSavedWindowStates() map[string]window.WindowState {
 	ws := s.windowService()
 	if ws == nil {
-		return nil
+		return map[string]window.WindowState{}
 	}
 	result := make(map[string]window.WindowState)
 	for _, name := range ws.Manager().State().ListStates() {
@@ -1424,9 +1427,12 @@ func (s *Service) RestoreLayout(name string) error {
 func (s *Service) ListLayouts() []window.LayoutInfo {
 	r := s.Core().QUERY(window.QueryLayoutList{})
 	if !r.OK {
-		return nil
+		return []window.LayoutInfo{}
 	}
 	layouts, _ := r.Value.([]window.LayoutInfo)
+	if layouts == nil {
+		return []window.LayoutInfo{}
+	}
 	return layouts
 }
 
