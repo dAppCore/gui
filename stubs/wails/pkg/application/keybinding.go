@@ -43,13 +43,19 @@ func (m *KeyBindingManager) Remove(accelerator string) {
 // Process fires the callback for the given accelerator and returns true if handled.
 //
 //	if manager.Process("CmdOrCtrl+K", window) { return }
-func (m *KeyBindingManager) Process(accelerator string, window Window) bool {
+func (m *KeyBindingManager) Process(accelerator string, window Window) (handled bool) {
 	m.mu.RLock()
 	callback, exists := m.bindings[accelerator]
 	m.mu.RUnlock()
 	if exists && callback != nil {
+		handled = true
+		defer func() {
+			if recover() != nil {
+				handled = false
+			}
+		}()
 		callback(window)
-		return true
+		return
 	}
 	return false
 }

@@ -154,9 +154,20 @@ func (em *EventManager) Emit(name string, data ...any) bool {
 		if event.IsCancelled() {
 			break
 		}
-		listener.callback(event)
+		invokeCustomEventListener(listener, event)
 	}
 	return event.IsCancelled()
+}
+
+func invokeCustomEventListener(listener *customEventListener, event *CustomEvent) {
+	if listener == nil || listener.callback == nil || event == nil {
+		return
+	}
+
+	defer func() {
+		_ = recover()
+	}()
+	listener.callback(event)
 }
 
 // On registers a persistent listener for the named custom event.

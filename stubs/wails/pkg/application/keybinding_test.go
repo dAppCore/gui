@@ -44,6 +44,16 @@ func TestKeyBindingManager_Add_Ugly(t *testing.T) {
 	assert.Equal(t, 10, calls)
 }
 
+func TestKeyBindingManager_Process_RecoversFromPanic(t *testing.T) {
+	manager := &KeyBindingManager{}
+
+	manager.Add("CmdOrCtrl+K", func(Window) {
+		panic("boom")
+	})
+
+	assert.False(t, manager.Process("CmdOrCtrl+K", nil))
+}
+
 func TestKeyBindingManager_Remove_Good(t *testing.T) {
 	manager := &KeyBindingManager{}
 	manager.Add("CmdOrCtrl+K", func(Window) {})

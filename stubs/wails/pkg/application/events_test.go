@@ -98,6 +98,21 @@ func TestEvents_EventManager_Emit_Ugly(t *testing.T) {
 	assert.Equal(t, 1, calls)
 }
 
+func TestEvents_EventManager_Emit_RecoversFromPanic(t *testing.T) {
+	manager := newEventManager()
+	calls := 0
+
+	manager.On("ready", func(*CustomEvent) {
+		panic("boom")
+	})
+	manager.On("ready", func(*CustomEvent) {
+		calls++
+	})
+
+	assert.False(t, manager.Emit("ready"))
+	assert.Equal(t, 1, calls)
+}
+
 func TestEvents_EventManager_OnApplicationEvent_Good(t *testing.T) {
 	manager := newEventManager()
 	eventType := events.ApplicationEventType(42)
