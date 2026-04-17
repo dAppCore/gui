@@ -11,6 +11,7 @@ import (
 	"forge.lthn.ai/core/gui/pkg/clipboard"
 	"forge.lthn.ai/core/gui/pkg/dialog"
 	"forge.lthn.ai/core/gui/pkg/events"
+	"forge.lthn.ai/core/gui/pkg/menu"
 	"forge.lthn.ai/core/gui/pkg/screen"
 	"forge.lthn.ai/core/gui/pkg/webview"
 	"forge.lthn.ai/core/gui/pkg/window"
@@ -72,6 +73,39 @@ func TestMCP_Bad_NoServices(t *testing.T) {
 	// Without any services, QUERY should return OK=false
 	r := c.QUERY(clipboard.QueryText{})
 	assert.False(t, r.OK)
+}
+
+func TestSubsystem_Bad_CallTool_MenuGetQueryFailure(t *testing.T) {
+	c := core.New(core.WithServiceLock())
+	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
+		if _, ok := q.(menu.QueryGetAppMenu); ok {
+			return core.Result{Value: "menu unavailable", OK: false}
+		}
+		return core.Result{}
+	})
+
+	sub := New(c)
+	server := mcp.NewServer(&mcp.Implementation{Name: "test", Version: "0.1.0"}, nil)
+	sub.RegisterTools(server)
+
+	_, err := sub.CallTool(context.Background(), "menu_get", nil)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "menu query failed")
+}
+
+func TestSubsystem_Bad_CallTool_MenuSetActionFailure(t *testing.T) {
+	c := core.New(core.WithServiceLock())
+	c.Action("menu.setAppMenu", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: "menu update failed", OK: false}
+	})
+
+	sub := New(c)
+	server := mcp.NewServer(&mcp.Implementation{Name: "test", Version: "0.1.0"}, nil)
+	sub.RegisterTools(server)
+
+	_, err := sub.CallTool(context.Background(), "menu_set", map[string]any{"items": []any{}})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "menu.setAppMenu failed")
 }
 
 func TestSubsystem_Bad_CallTool_ScreenListMalformedQuery(t *testing.T) {

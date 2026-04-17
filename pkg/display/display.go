@@ -91,10 +91,14 @@ func Register(wailsApp *application.App) func(*core.Core) core.Result {
 			return result
 		}
 		if !c.Service("deno").OK {
-			_ = c.RegisterService("deno", s.ensureSidecar())
+			if result := c.RegisterService("deno", s.ensureSidecar()); !result.OK {
+				return result
+			}
 		}
 		if !c.Service("tim").OK {
-			_ = c.RegisterService("tim", container.NewService(c, container.OptionsFromEnv()))
+			if result := c.RegisterService("tim", container.NewService(c, container.OptionsFromEnv())); !result.OK {
+				return result
+			}
 		}
 		return core.Result{OK: true}
 	}

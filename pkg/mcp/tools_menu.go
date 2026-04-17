@@ -40,7 +40,7 @@ func (s *Subsystem) menuSet(_ context.Context, _ *mcp.CallToolRequest, input Men
 		if e, ok := r.Value.(error); ok {
 			return nil, MenuOutput{}, e
 		}
-		return nil, MenuOutput{}, nil
+		return nil, MenuOutput{}, coreerr.E("mcp.menuSet", "menu.setAppMenu failed", nil)
 	}
 	snapshot, err := s.queryMenuItems()
 	if err != nil {
@@ -55,7 +55,7 @@ func (s *Subsystem) queryMenuItems() ([]map[string]any, error) {
 		if e, ok := r.Value.(error); ok {
 			return nil, e
 		}
-		return nil, nil
+		return nil, coreerr.E("mcp.menuGet", "menu query failed", nil)
 	}
 	items, ok := r.Value.([]menu.MenuItem)
 	if !ok {
