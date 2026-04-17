@@ -112,19 +112,25 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 	s.Core().Action("display.saveWindowConfig", func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(window.TaskSaveConfig)
 		s.configData["window"] = t.Config
-		s.persistSection("window", t.Config)
+		if err := s.persistSection("window", t.Config); err != nil {
+			return core.Result{Value: err, OK: false}
+		}
 		return core.Result{OK: true}
 	})
 	s.Core().Action("display.saveSystrayConfig", func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(systray.TaskSaveConfig)
 		s.configData["systray"] = t.Config
-		s.persistSection("systray", t.Config)
+		if err := s.persistSection("systray", t.Config); err != nil {
+			return core.Result{Value: err, OK: false}
+		}
 		return core.Result{OK: true}
 	})
 	s.Core().Action("display.saveMenuConfig", func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(menu.TaskSaveConfig)
 		s.configData["menu"] = t.Config
-		s.persistSection("menu", t.Config)
+		if err := s.persistSection("menu", t.Config); err != nil {
+			return core.Result{Value: err, OK: false}
+		}
 		return core.Result{OK: true}
 	})
 	s.Core().Action("display.buildPreload", func(_ context.Context, opts core.Options) core.Result {
@@ -1072,12 +1078,15 @@ func (s *Service) handleConfigQuery(_ *core.Core, q core.Query) core.Result {
 	}
 }
 
-func (s *Service) persistSection(key string, value map[string]any) {
+func (s *Service) persistSection(key string, value map[string]any) error {
 	if s.configFile == nil {
-		return
+		return nil
 	}
 	_ = s.configFile.Set(key, value)
-	_ = s.configFile.Commit()
+	if err := s.configFile.Commit(); err != nil {
+		return err
+	}
+	return nil
 }
 
 // --- Service accessors ---
