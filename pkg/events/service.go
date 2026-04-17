@@ -42,7 +42,9 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 			_ = s.Core().ACTION(ActionEventFired{Event: *event})
 		})
 		s.mu.Lock()
-		s.listeners[t.Name] = append(s.listeners[t.Name], cancel)
+		if cancel != nil {
+			s.listeners[t.Name] = append(s.listeners[t.Name], cancel)
+		}
 		s.counts[t.Name]++
 		s.mu.Unlock()
 		return core.Result{OK: true}
@@ -79,7 +81,9 @@ func (s *Service) OnShutdown(_ context.Context) core.Result {
 	defer s.mu.Unlock()
 	for _, cancels := range s.listeners {
 		for _, cancel := range cancels {
-			cancel()
+			if cancel != nil {
+				cancel()
+			}
 		}
 	}
 	s.listeners = make(map[string][]func())

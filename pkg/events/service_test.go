@@ -18,6 +18,7 @@ type mockPlatform struct {
 	listeners   map[string][]*mockListener
 	emitted     []CustomEvent
 	resetCalled bool
+	nilCancel   bool
 }
 
 type mockListener struct {
@@ -56,6 +57,9 @@ func (m *mockPlatform) On(name string, callback func(*CustomEvent)) func() {
 	m.mu.Lock()
 	m.listeners[name] = append(m.listeners[name], listener)
 	m.mu.Unlock()
+	if m.nilCancel {
+		return nil
+	}
 	return func() {
 		m.mu.Lock()
 		defer m.mu.Unlock()
@@ -231,6 +235,24 @@ func TestOnShutdown_CancelsAll_Good(t *testing.T) {
 
 	require.True(t, svc.OnShutdown(context.Background()).OK)
 	assert.Equal(t, 0, mock.listenerCount())
+}
+
+func TestOnShutdown_IgnoresNilCancels_Good(t *testing.T) {
+	mock := newMockPlatform()
+	mock.nilCancel = true
+	c := core.New(
+		core.WithService(Register(mock)),
+		core.WithServiceLock(),
+	)
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	svc := core.MustServiceFor[*Service](c, "events")
+
+	require.True(t, taskRun(c, "events.on", TaskOn{Name: "a:b"}).OK)
+	assert.Equal(t, 1, mock.listenerCount())
+
+	require.NotPanics(t, func() {
+		assert.True(t, svc.OnShutdown(context.Background()).OK)
+	})
 }
 
 func TestActionEventFired_BroadcastOnSimulate_Good(t *testing.T) {
