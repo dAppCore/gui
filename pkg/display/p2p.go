@@ -12,7 +12,12 @@ func (s *Service) attachP2PBridge() {
 	if !ok || router == nil {
 		return
 	}
-	_ = router.Subscribe(context.Background(), "display", func(envelope p2p.Envelope) {
+	if s.p2pBridgeCancel != nil {
+		s.p2pBridgeCancel()
+		s.p2pBridgeCancel = nil
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	if err := router.Subscribe(ctx, "display", func(envelope p2p.Envelope) {
 		if s.events == nil {
 			return
 		}
@@ -26,5 +31,12 @@ func (s *Service) attachP2PBridge() {
 				"payload":   envelope.Payload,
 			},
 		})
-	})
+	}); err != nil {
+		cancel()
+		if s.app != nil {
+			s.app.Logger().Info("p2p bridge subscribe failed", "err", err)
+		}
+		return
+	}
+	s.p2pBridgeCancel = cancel
 }

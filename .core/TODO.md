@@ -1,1 +1,1 @@
-- @hardening pkg/display/p2p.go:15 — `attachP2PBridge` ignores `router.Subscribe` failure and never unregisters the bridge, so display events can silently stop without cleanup.
+- @hardening pkg/display/display.go:195 — The P2P bridge is attached before `WSEventManager` is initialized, so early bridged events can be dropped during startup.

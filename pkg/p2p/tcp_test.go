@@ -12,6 +12,22 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestTCPDriver_Subscribe_CancelRemovesHandler(t *testing.T) {
+	driver := NewTCPDriver(TCPOptions{})
+	ctx, cancel := context.WithCancel(context.Background())
+
+	calls := 0
+	err := driver.Subscribe(ctx, "updates", func(Envelope) {
+		calls++
+	})
+	require.NoError(t, err)
+
+	cancel()
+	err = driver.Publish(context.Background(), Envelope{Topic: "updates"})
+	require.NoError(t, err)
+	assert.Zero(t, calls)
+}
+
 func TestTCPDriver_Publish_ContinuesAfterPeerFailure(t *testing.T) {
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)

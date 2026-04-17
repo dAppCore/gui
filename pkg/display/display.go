@@ -45,18 +45,19 @@ type WindowInfo = window.WindowInfo
 // Bridges IPC actions to WebSocket events for TypeScript apps.
 type Service struct {
 	*core.ServiceRuntime[Options]
-	wailsApp       *application.App
-	app            App
-	configData     map[string]map[string]any
-	configFile     *config.Config // config instance for file persistence
-	mode           container.AppMode
-	events         *WSEventManager
-	schemeHandlers map[string]SchemeHandler
-	manifestCache  map[string]*loadedManifest
-	manifestMu     sync.Mutex
-	storage        *StorageRegistry
-	background     *BackgroundRegistry
-	sidecar        *deno.Manager
+	wailsApp        *application.App
+	app             App
+	configData      map[string]map[string]any
+	configFile      *config.Config // config instance for file persistence
+	mode            container.AppMode
+	events          *WSEventManager
+	p2pBridgeCancel context.CancelFunc
+	schemeHandlers  map[string]SchemeHandler
+	manifestCache   map[string]*loadedManifest
+	manifestMu      sync.Mutex
+	storage         *StorageRegistry
+	background      *BackgroundRegistry
+	sidecar         *deno.Manager
 }
 
 // New returns a display Service with empty config sections.
@@ -203,9 +204,14 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 }
 
 func (s *Service) OnShutdown(ctx context.Context) core.Result {
-	if s.events != nil {
-		s.events.Close()
-		s.events = nil
+	events := s.events
+	s.events = nil
+	if s.p2pBridgeCancel != nil {
+		s.p2pBridgeCancel()
+		s.p2pBridgeCancel = nil
+	}
+	if events != nil {
+		events.Close()
 	}
 	var shutdownErr error
 	if s.storage != nil {
