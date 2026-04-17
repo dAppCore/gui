@@ -1093,6 +1093,9 @@ func (s *Service) persistSection(key string, value map[string]any) error {
 
 // windowService returns the window service from Core, or nil if not registered.
 func (s *Service) windowService() *window.Service {
+	if s == nil || s.ServiceRuntime == nil {
+		return nil
+	}
 	svc, ok := core.ServiceFor[*window.Service](s.Core(), "window")
 	if !ok {
 		return nil

@@ -775,6 +775,20 @@ func TestDisplay_PublicCollections_AreNilSafe(t *testing.T) {
 	assert.Empty(t, states)
 }
 
+func TestDisplay_WindowService_NilSafe(t *testing.T) {
+	svc := &Service{}
+
+	assert.NotPanics(t, func() {
+		svc.ResetWindowState()
+	})
+
+	assert.NotPanics(t, func() {
+		states := svc.GetSavedWindowStates()
+		require.NotNil(t, states)
+		assert.Empty(t, states)
+	})
+}
+
 func TestHandleIPCEvents_WindowOpened_Good(t *testing.T) {
 	c := newTestConclave(t)
 
