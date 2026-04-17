@@ -11,6 +11,7 @@ import (
 	"time"
 
 	core "dappco.re/go/core"
+	coreerr "dappco.re/go/core/log"
 	gostore "dappco.re/go/store"
 )
 
@@ -56,7 +57,7 @@ func openStorageStore() *gostore.Store {
 				"storage registry init failed",
 				"path", path,
 				"step", "mkdir",
-				"err", core.E("display.storage.open", "failed to create storage directory", err),
+				"err", coreerr.E("display.storage.open", "failed to create storage directory", err),
 			)
 			return nil
 		}
@@ -67,7 +68,7 @@ func openStorageStore() *gostore.Store {
 			"storage registry init failed",
 			"path", path,
 			"step", "open",
-			"err", core.E("display.storage.open", "failed to open storage store", err),
+			"err", coreerr.E("display.storage.open", "failed to open storage store", err),
 		)
 		return nil
 	}
