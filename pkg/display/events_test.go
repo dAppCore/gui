@@ -402,3 +402,13 @@ func TestWSEventManager_AttachWindowListeners_Bad(t *testing.T) {
 	em.AttachWindowListeners(nil)
 	assert.Empty(t, em.eventBuffer)
 }
+
+func TestWSEventManager_CloseIsIdempotent(t *testing.T) {
+	em := NewWSEventManager()
+
+	assert.NotPanics(t, func() {
+		em.Close()
+		em.Close()
+		em.Emit(Event{Type: EventCustomEvent})
+	})
+}

@@ -186,3 +186,16 @@ func TestStorage_CompositeKey_Ugly(t *testing.T) {
 	assert.Empty(t, bucket)
 	assert.Empty(t, item)
 }
+
+func TestStorageRegistry_NilReceiverIsSafe(t *testing.T) {
+	var r *StorageRegistry
+
+	assert.False(t, r.Set("core://settings", "localStorage", "theme", "dark"))
+	assert.False(t, r.Delete("core://settings", "localStorage", "theme"))
+
+	entry, ok := r.Get("core://settings", "localStorage", "theme")
+	assert.False(t, ok)
+	assert.Zero(t, entry)
+	assert.Empty(t, r.Search("theme"))
+	assert.Empty(t, r.Snapshot("core://settings"))
+}

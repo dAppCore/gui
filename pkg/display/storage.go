@@ -137,6 +137,9 @@ func (r *StorageRegistry) loadPersistedEntries() {
 	if r == nil || r.store == nil {
 		return
 	}
+	if r.entries == nil {
+		r.entries = make(map[string]StorageEntry)
+	}
 	for entry, err := range r.store.AllSeq("storage") {
 		if err != nil {
 			continue
@@ -163,6 +166,9 @@ func (r *StorageRegistry) loadPersistedEntries() {
 }
 
 func (r *StorageRegistry) Set(origin, bucket, key, value string) bool {
+	if r == nil {
+		return false
+	}
 	if !validStorageField(origin, maxStorageOriginBytes) ||
 		!validStorageField(bucket, maxStorageBucketBytes) ||
 		!validStorageField(key, maxStorageKeyBytes) ||
@@ -174,6 +180,9 @@ func (r *StorageRegistry) Set(origin, bucket, key, value string) bool {
 	key = strings.TrimSpace(key)
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	if r.entries == nil {
+		r.entries = make(map[string]StorageEntry)
+	}
 	composite := makeStorageEntryKey(origin, bucket, key)
 	if !r.withinOriginQuotaLocked(origin, composite, StorageEntry{
 		Origin: origin,
@@ -190,16 +199,19 @@ func (r *StorageRegistry) Set(origin, bucket, key, value string) bool {
 		Value:     value,
 		UpdatedAt: time.Now(),
 	}
-	r.entries[composite] = entry
 	if r.store != nil {
 		if err := r.store.Set("storage", storageCompositeKey(origin, bucket, key), core.JSONMarshalString(entry)); err != nil {
 			return false
 		}
 	}
+	r.entries[composite] = entry
 	return true
 }
 
 func (r *StorageRegistry) Delete(origin, bucket, key string) bool {
+	if r == nil {
+		return false
+	}
 	if !validStorageField(origin, maxStorageOriginBytes) ||
 		!validStorageField(bucket, maxStorageBucketBytes) ||
 		!validStorageField(key, maxStorageKeyBytes) {
@@ -210,19 +222,28 @@ func (r *StorageRegistry) Delete(origin, bucket, key string) bool {
 	key = strings.TrimSpace(key)
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	if r.entries == nil {
+		r.entries = make(map[string]StorageEntry)
+	}
 	composite := makeStorageEntryKey(origin, bucket, key)
-	delete(r.entries, composite)
 	if r.store != nil {
 		if err := r.store.Delete("storage", storageCompositeKey(origin, bucket, key)); err != nil {
 			return false
 		}
 	}
+	delete(r.entries, composite)
 	return true
 }
 
 func (r *StorageRegistry) Get(origin, bucket, key string) (StorageEntry, bool) {
+	if r == nil {
+		return StorageEntry{}, false
+	}
 	r.mu.RLock()
 	defer r.mu.RUnlock()
+	if r.entries == nil {
+		return StorageEntry{}, false
+	}
 
 	if entry, ok := r.entries[makeStorageEntryKey(origin, bucket, key)]; ok {
 		return entry, true
@@ -249,8 +270,14 @@ func (r *StorageRegistry) Get(origin, bucket, key string) (StorageEntry, bool) {
 }
 
 func (r *StorageRegistry) Search(query string) []StorageEntry {
+	if r == nil {
+		return nil
+	}
 	r.mu.RLock()
 	defer r.mu.RUnlock()
+	if r.entries == nil {
+		return nil
+	}
 	needle := strings.ToLower(strings.TrimSpace(query))
 	results := make([]StorageEntry, 0)
 	for _, entry := range r.entries {
@@ -277,8 +304,14 @@ func validStorageField(value string, limit int) bool {
 }
 
 func (r *StorageRegistry) Snapshot(pageURL string) map[string]map[string]string {
+	if r == nil {
+		return map[string]map[string]string{}
+	}
 	r.mu.RLock()
 	defer r.mu.RUnlock()
+	if r.entries == nil {
+		return map[string]map[string]string{}
+	}
 
 	origin := storageOriginForPageURL(pageURL)
 	if strings.TrimSpace(origin) == "" {
@@ -300,6 +333,9 @@ func (r *StorageRegistry) Snapshot(pageURL string) map[string]map[string]string 
 }
 
 func (r *StorageRegistry) withinOriginQuotaLocked(origin, ignoreComposite string, candidate StorageEntry) bool {
+	if r == nil || r.entries == nil {
+		return true
+	}
 	entries := 0
 	bytes := 0
 	for composite, entry := range r.entries {

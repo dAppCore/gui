@@ -81,6 +81,7 @@ type WSEventManager struct {
 	mu          sync.RWMutex
 	nextSubID   int
 	eventBuffer chan Event
+	closed      bool
 }
 
 // clientState tracks a client's subscriptions.
@@ -429,12 +430,21 @@ func (em *WSEventManager) removeClient(conn *websocket.Conn) {
 
 // Emit sends an event to all subscribed clients.
 func (em *WSEventManager) Emit(event Event) {
+	if em == nil {
+		return
+	}
 	event.Timestamp = time.Now().UnixMilli()
+	em.mu.RLock()
+	if em.closed || em.eventBuffer == nil {
+		em.mu.RUnlock()
+		return
+	}
 	select {
 	case em.eventBuffer <- event:
 	default:
 		// Buffer full, drop event
 	}
+	em.mu.RUnlock()
 }
 
 // EmitWindowEvent is a helper to emit window-related events.
@@ -477,13 +487,29 @@ func (em *WSEventManager) Info() events.ServerInfo {
 
 // Close shuts down the event manager.
 func (em *WSEventManager) Close() {
+	if em == nil {
+		return
+	}
 	em.mu.Lock()
+	if em.closed {
+		em.mu.Unlock()
+		return
+	}
+	em.closed = true
+	conns := make([]*websocket.Conn, 0, len(em.clients))
 	for conn := range em.clients {
-		conn.Close()
+		conns = append(conns, conn)
 	}
 	em.clients = make(map[*websocket.Conn]*clientState)
+	if em.eventBuffer != nil {
+		close(em.eventBuffer)
+		em.eventBuffer = nil
+	}
 	em.mu.Unlock()
-	close(em.eventBuffer)
+
+	for _, conn := range conns {
+		_ = conn.Close()
+	}
 }
 
 type windowEventSource interface {
