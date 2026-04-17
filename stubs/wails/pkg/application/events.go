@@ -102,6 +102,15 @@ func newEventManager() *EventManager {
 	}
 }
 
+func (em *EventManager) ensureMapsLocked() {
+	if em.customListeners == nil {
+		em.customListeners = make(map[string][]*customEventListener)
+	}
+	if em.appListeners == nil {
+		em.appListeners = make(map[uint][]*applicationEventListener)
+	}
+}
+
 // Emit fires a named custom event with optional data to all registered listeners.
 // Returns true if the event was cancelled by a listener.
 //
@@ -151,11 +160,15 @@ func (em *EventManager) Emit(name string, data ...any) bool {
 func (em *EventManager) On(name string, callback func(*CustomEvent)) func() {
 	listener := &customEventListener{callback: callback, counter: -1}
 	em.mu.Lock()
+	em.ensureMapsLocked()
 	em.customListeners[name] = append(em.customListeners[name], listener)
 	em.mu.Unlock()
 	return func() {
 		em.mu.Lock()
 		defer em.mu.Unlock()
+		if em.customListeners == nil {
+			return
+		}
 		updated := em.customListeners[name][:0]
 		for _, existing := range em.customListeners[name] {
 			if existing != listener {
@@ -181,6 +194,7 @@ func (em *EventManager) Off(name string) {
 func (em *EventManager) OnMultiple(name string, callback func(*CustomEvent), counter int) {
 	listener := &customEventListener{callback: callback, counter: counter}
 	em.mu.Lock()
+	em.ensureMapsLocked()
 	em.customListeners[name] = append(em.customListeners[name], listener)
 	em.mu.Unlock()
 }
@@ -196,11 +210,15 @@ func (em *EventManager) OnApplicationEvent(eventType events.ApplicationEventType
 	eventID := uint(eventType)
 	listener := &applicationEventListener{callback: callback}
 	em.mu.Lock()
+	em.ensureMapsLocked()
 	em.appListeners[eventID] = append(em.appListeners[eventID], listener)
 	em.mu.Unlock()
 	return func() {
 		em.mu.Lock()
 		defer em.mu.Unlock()
+		if em.appListeners == nil {
+			return
+		}
 		updated := em.appListeners[eventID][:0]
 		for _, existing := range em.appListeners[eventID] {
 			if existing != listener {
