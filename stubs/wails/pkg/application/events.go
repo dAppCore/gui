@@ -128,6 +128,7 @@ func (em *EventManager) Emit(name string, data ...any) bool {
 	}
 
 	em.mu.Lock()
+	em.ensureMapsLocked()
 	listeners := append([]*customEventListener(nil), em.customListeners[name]...)
 	remaining := em.customListeners[name][:0]
 	for _, listener := range em.customListeners[name] {
