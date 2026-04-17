@@ -187,6 +187,7 @@ type WebviewWindowOptions struct {
 // WebviewWindow is a lightweight, in-memory window implementation.
 type WebviewWindow struct {
 	mu            sync.RWMutex
+	id            uint
 	opts          WebviewWindowOptions
 	title         string
 	url           string
@@ -204,9 +205,10 @@ type WebviewWindow struct {
 	eventHandlers map[events.WindowEventType][]func(*WindowEvent)
 }
 
-func newWebviewWindow(options WebviewWindowOptions) *WebviewWindow {
+func newWebviewWindow(id uint, options WebviewWindowOptions) *WebviewWindow {
 	window := &WebviewWindow{
 		opts:          options,
+		id:            id,
 		title:         options.Title,
 		url:           options.URL,
 		html:          options.HTML,
@@ -358,7 +360,7 @@ func (w *WebviewWindow) OnWindowEvent(eventType events.WindowEventType, callback
 // ID returns a stable numeric identifier for this window.
 //
 //	id := w.ID()
-func (w *WebviewWindow) ID() uint { return 0 }
+func (w *WebviewWindow) ID() uint { return w.id }
 
 // ClientID returns the client identifier (empty for native windows).
 //
@@ -751,12 +753,14 @@ func (w *WebviewWindow) selectAll()                                             
 // WindowManager manages in-memory windows.
 type WindowManager struct {
 	mu      sync.RWMutex
+	nextID  uint
 	windows []*WebviewWindow
 }
 
 func (wm *WindowManager) NewWithOptions(options WebviewWindowOptions) *WebviewWindow {
-	window := newWebviewWindow(options)
 	wm.mu.Lock()
+	wm.nextID++
+	window := newWebviewWindow(wm.nextID, options)
 	wm.windows = append(wm.windows, window)
 	wm.mu.Unlock()
 	return window

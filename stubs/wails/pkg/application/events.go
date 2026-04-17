@@ -90,9 +90,9 @@ type applicationEventListener struct {
 //	cancel := manager.On("data:ready", func(e *CustomEvent) { process(e.Data) })
 //	defer cancel()
 type EventManager struct {
-	mu                sync.RWMutex
-	customListeners   map[string][]*customEventListener
-	appListeners      map[uint][]*applicationEventListener
+	mu              sync.RWMutex
+	customListeners map[string][]*customEventListener
+	appListeners    map[uint][]*applicationEventListener
 }
 
 func newEventManager() *EventManager {

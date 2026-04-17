@@ -262,11 +262,11 @@ type MessageButton struct {
 //	dialog.SetTitle("Done").SetMessage("File saved successfully.")
 //	_ = dialog.Show()
 type MessageDialog struct {
-	mu           sync.RWMutex
-	dialogType   DialogType
-	title        string
-	message      string
-	buttons      []MessageButton
+	mu            sync.RWMutex
+	dialogType    DialogType
+	title         string
+	message       string
+	buttons       []MessageButton
 	clickedButton string
 }
 

@@ -21,12 +21,12 @@ type EnvironmentInfo struct {
 //	manager.SetDarkMode(true)
 //	dark := manager.IsDarkMode() // true
 type EnvironmentManager struct {
-	mu           sync.RWMutex
-	darkMode     bool
-	accentColour string
-	operatingSystem   string
-	architecture string
-	debugMode    bool
+	mu              sync.RWMutex
+	darkMode        bool
+	accentColour    string
+	operatingSystem string
+	architecture    string
+	debugMode       bool
 }
 
 // SetDarkMode sets the dark mode state used by IsDarkMode.
