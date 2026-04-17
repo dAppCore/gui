@@ -3,6 +3,7 @@ package environment
 
 import (
 	"context"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -42,7 +43,11 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 	})
 	s.Core().Action("environment.openFileManager", func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskOpenFileManager)
-		if err := s.platform.OpenFileManager(t.Path, t.Select); err != nil {
+		path, err := validatedOpenFileManagerPath(t.Path)
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		if err := s.platform.OpenFileManager(path, t.Select); err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{OK: true}
@@ -158,6 +163,21 @@ func normalizeTheme(theme string) (string, error) {
 	default:
 		return "", coreerr.E("environment.normalizeTheme", "invalid theme: "+theme, nil)
 	}
+}
+
+func validatedOpenFileManagerPath(raw string) (string, error) {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		return "", coreerr.E("environment.openFileManager", "path is required", nil)
+	}
+	if strings.ContainsRune(trimmed, '\x00') {
+		return "", coreerr.E("environment.openFileManager", "path contains a null byte", nil)
+	}
+	cleaned := filepath.Clean(trimmed)
+	if !filepath.IsAbs(cleaned) {
+		return "", coreerr.E("environment.openFileManager", "path must be absolute", nil)
+	}
+	return cleaned, nil
 }
 
 func themeName(isDark bool) string {

@@ -3,6 +3,7 @@ package environment
 
 import (
 	"context"
+	"path/filepath"
 	"sync"
 	"testing"
 
@@ -17,6 +18,8 @@ type mockPlatform struct {
 	info              EnvironmentInfo
 	accentColour      string
 	openFMErr         error
+	openFMPath        string
+	openFMSelect      bool
 	focusFollowsMouse bool
 	themeHandler      func(isDark bool)
 	mu                sync.Mutex
@@ -27,6 +30,8 @@ func (m *mockPlatform) Info() EnvironmentInfo      { return m.info }
 func (m *mockPlatform) AccentColour() string       { return m.accentColour }
 func (m *mockPlatform) HasFocusFollowsMouse() bool { return m.focusFollowsMouse }
 func (m *mockPlatform) OpenFileManager(path string, selectFile bool) error {
+	m.openFMPath = path
+	m.openFMSelect = selectFile
 	return m.openFMErr
 }
 func (m *mockPlatform) OnThemeChange(handler func(isDark bool)) func() {
@@ -100,11 +105,22 @@ func TestQueryAccentColour_Good(t *testing.T) {
 }
 
 func TestTaskOpenFileManager_Good(t *testing.T) {
-	_, c := newTestService(t)
+	mock, c := newTestService(t)
 	r := c.Action("environment.openFileManager").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: TaskOpenFileManager{Path: "/tmp", Select: true}},
 	))
 	require.True(t, r.OK)
+	assert.Equal(t, filepath.Clean("/tmp"), mock.openFMPath)
+	assert.True(t, mock.openFMSelect)
+}
+
+func TestTaskOpenFileManager_Bad_InvalidPath(t *testing.T) {
+	_, c := newTestService(t)
+	r := c.Action("environment.openFileManager").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: TaskOpenFileManager{Path: "../tmp", Select: false}},
+	))
+	assert.False(t, r.OK)
+	assert.Contains(t, r.Value.(error).Error(), "path must be absolute")
 }
 
 func TestThemeChange_ActionBroadcast_Good(t *testing.T) {
