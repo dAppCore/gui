@@ -1,2 +1,0 @@
-- @bug stubs/wails/pkg/application/application.go:73 — submenu items are not linked into the parent menu item, so submenu state is lost after AddSubmenu returns.
-- @bug stubs/wails/pkg/application/browser_window.go:113 — several browser-window state transitions still return fixed defaults, so the stub does not fully reflect fullscreen, resize, or geometry changes.

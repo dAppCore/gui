@@ -44,6 +44,7 @@ type MenuItem struct {
 	Tooltip     string
 	Checked     bool
 	Enabled     bool
+	submenu     *Menu
 	onClick     func(*Context)
 }
 
@@ -71,9 +72,9 @@ func (m *Menu) AddSeparator() {
 }
 
 func (m *Menu) AddSubmenu(label string) *Menu {
-	submenu := &Menu{}
-	m.Items = append(m.Items, &MenuItem{Label: label})
-	return submenu
+	item := NewSubMenuItem(label)
+	m.Items = append(m.Items, item)
+	return item.GetSubmenu()
 }
 
 func (m *Menu) AddRole(role MenuRole) {

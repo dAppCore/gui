@@ -66,6 +66,7 @@ func TestApplication_Menu_Good(t *testing.T) {
 	require.NotNil(t, menuItem)
 	assert.Equal(t, "Open", menuItem.Label)
 	require.NotNil(t, submenu)
+	assert.Same(t, submenu, menu.Items[2].GetSubmenu())
 	assert.Len(t, menu.Items, 4)
 	assert.Equal(t, "Open", menu.Items[0].Label)
 	assert.Equal(t, "---", menu.Items[1].Label)
@@ -229,6 +230,52 @@ func TestApplication_WebviewWindow_Ugly(t *testing.T) {
 	assert.Same(t, first, manager.Get("first"))
 	assert.Same(t, second, manager.GetByID(2))
 	assert.Len(t, manager.GetAll(), 2)
+}
+
+func TestApplication_BrowserWindow_StateTransitions(t *testing.T) {
+	window := NewBrowserWindow(99, "client")
+
+	assert.Equal(t, 0, window.Width())
+	assert.Equal(t, 0, window.Height())
+	assert.Equal(t, Rect{}, window.Bounds())
+	assert.False(t, window.Resizable())
+
+	window.SetPosition(10, 20)
+	assert.Same(t, window, window.SetSize(300, 200))
+	posX, posY := window.Position()
+	assert.Equal(t, 10, posX)
+	assert.Equal(t, 20, posY)
+	assert.Equal(t, 300, window.Width())
+	assert.Equal(t, 200, window.Height())
+	assert.Equal(t, Rect{X: 10, Y: 20, Width: 300, Height: 200}, window.Bounds())
+
+	window.SetBounds(Rect{X: 1, Y: 2, Width: 3, Height: 4})
+	assert.Equal(t, Rect{X: 1, Y: 2, Width: 3, Height: 4}, window.Bounds())
+	relX, relY := window.RelativePosition()
+	assert.Equal(t, 1, relX)
+	assert.Equal(t, 2, relY)
+
+	assert.Same(t, window, window.SetResizable(true))
+	assert.True(t, window.Resizable())
+	assert.Same(t, window, window.SetIgnoreMouseEvents(true))
+	assert.True(t, window.IsIgnoreMouseEvents())
+	assert.Same(t, window, window.SetZoom(1.5))
+	assert.Equal(t, 1.5, window.GetZoom())
+	assert.Same(t, window, window.ZoomReset())
+	assert.Equal(t, 1.0, window.GetZoom())
+
+	assert.Same(t, window, window.Fullscreen())
+	assert.True(t, window.IsFullscreen())
+	assert.Same(t, window, window.Maximise())
+	assert.True(t, window.IsMaximised())
+	assert.Same(t, window, window.Minimise())
+	assert.True(t, window.IsMinimised())
+	assert.Same(t, window, window.Show())
+	assert.True(t, window.IsVisible())
+	assert.False(t, window.IsMinimised())
+	window.Restore()
+	assert.False(t, window.IsFullscreen())
+	assert.False(t, window.IsMaximised())
 }
 
 func TestApplication_App_Good(t *testing.T) {

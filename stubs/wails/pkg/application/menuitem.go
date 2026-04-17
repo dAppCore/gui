@@ -173,7 +173,11 @@ func NewMenuItemRadio(label string, checked bool) *MenuItem {
 //
 //	sub := application.NewSubMenuItem("Recent Files")
 func NewSubMenuItem(label string) *MenuItem {
-	return &MenuItem{Label: label, Enabled: true}
+	return &MenuItem{
+		Label:   label,
+		Enabled: true,
+		submenu: &Menu{},
+	}
 }
 
 // NewRole creates a menu item pre-configured for a platform role.
@@ -195,6 +199,14 @@ func NewServicesMenu() *MenuItem {
 //	accel := item.GetAccelerator() // e.g. "CmdOrCtrl+S"
 func (mi *MenuItem) GetAccelerator() string {
 	return mi.Accelerator
+}
+
+// GetSubmenu returns the submenu associated with the item, if any.
+func (mi *MenuItem) GetSubmenu() *Menu {
+	if mi == nil {
+		return nil
+	}
+	return mi.submenu
 }
 
 // roleLabel maps a Role constant to a human-readable label.

@@ -35,11 +35,32 @@ type ContextMenuData struct {
 //
 //	browserWindow := application.NewBrowserWindow(1, "client-abc123")
 type BrowserWindow struct {
-	mu       sync.RWMutex
-	id       uint
-	name     string
-	clientID string
-	visible  bool
+	mu                sync.RWMutex
+	id                uint
+	name              string
+	clientID          string
+	visible           bool
+	focused           bool
+	maximised         bool
+	minimised         bool
+	fullscreen        bool
+	resizable         bool
+	ignoreMouseEvents bool
+	alwaysOnTop       bool
+	frameless         bool
+	title             string
+	url               string
+	html              string
+	x                 int
+	y                 int
+	width             int
+	height            int
+	minWidth          int
+	minHeight         int
+	maxWidth          int
+	maxHeight         int
+	zoom              float64
+	backgroundColour  RGBA
 }
 
 // NewBrowserWindow creates a browser window with the given ID and client ID.
@@ -51,12 +72,30 @@ func NewBrowserWindow(id uint, clientID string) *BrowserWindow {
 		name:     fmt.Sprintf("browser-%d", id),
 		clientID: clientID,
 		visible:  true,
+		zoom:     1.0,
 	}
 }
 
-func (browserWindow *BrowserWindow) ID() uint         { return browserWindow.id }
-func (browserWindow *BrowserWindow) Name() string     { return browserWindow.name }
-func (browserWindow *BrowserWindow) ClientID() string { return browserWindow.clientID }
+func (browserWindow *BrowserWindow) ID() uint {
+	if browserWindow == nil {
+		return 0
+	}
+	return browserWindow.id
+}
+
+func (browserWindow *BrowserWindow) Name() string {
+	if browserWindow == nil {
+		return ""
+	}
+	return browserWindow.name
+}
+
+func (browserWindow *BrowserWindow) ClientID() string {
+	if browserWindow == nil {
+		return ""
+	}
+	return browserWindow.clientID
+}
 
 func (browserWindow *BrowserWindow) DispatchWailsEvent(event *CustomEvent) {}
 func (browserWindow *BrowserWindow) EmitEvent(name string, data ...any) bool {
@@ -67,24 +106,68 @@ func (browserWindow *BrowserWindow) Error(message string, arguments ...any) {}
 func (browserWindow *BrowserWindow) Info(message string, arguments ...any)  {}
 
 // No-op methods — browser windows are controlled via WebSocket, not native APIs.
-func (browserWindow *BrowserWindow) Center()                  {}
-func (browserWindow *BrowserWindow) Close()                   {}
+func (browserWindow *BrowserWindow) Center() {}
+func (browserWindow *BrowserWindow) Close() {
+	if browserWindow == nil {
+		return
+	}
+	browserWindow.mu.Lock()
+	browserWindow.visible = false
+	browserWindow.focused = false
+	browserWindow.minimised = false
+	browserWindow.mu.Unlock()
+}
 func (browserWindow *BrowserWindow) DisableSizeConstraints()  {}
 func (browserWindow *BrowserWindow) EnableSizeConstraints()   {}
 func (browserWindow *BrowserWindow) ExecJS(javascript string) {}
-func (browserWindow *BrowserWindow) Focus()                   {}
-func (browserWindow *BrowserWindow) ForceReload()             {}
-func (browserWindow *BrowserWindow) Fullscreen() Window       { return browserWindow }
-func (browserWindow *BrowserWindow) GetBorderSizes() *LRTB    { return nil }
+func (browserWindow *BrowserWindow) Focus() {
+	if browserWindow == nil {
+		return
+	}
+	browserWindow.mu.Lock()
+	browserWindow.focused = true
+	browserWindow.mu.Unlock()
+}
+func (browserWindow *BrowserWindow) ForceReload() {}
+func (browserWindow *BrowserWindow) Fullscreen() Window {
+	if browserWindow == nil {
+		return nil
+	}
+	browserWindow.mu.Lock()
+	browserWindow.fullscreen = true
+	browserWindow.maximised = false
+	browserWindow.minimised = false
+	browserWindow.visible = true
+	browserWindow.mu.Unlock()
+	return browserWindow
+}
+func (browserWindow *BrowserWindow) GetBorderSizes() *LRTB { return nil }
 func (browserWindow *BrowserWindow) GetScreen() (*Screen, error) {
 	return nil, nil
 }
-func (browserWindow *BrowserWindow) GetZoom() float64 { return 1.0 }
+func (browserWindow *BrowserWindow) GetZoom() float64 {
+	if browserWindow == nil {
+		return 1.0
+	}
+	browserWindow.mu.RLock()
+	defer browserWindow.mu.RUnlock()
+	if browserWindow.zoom == 0 {
+		return 1.0
+	}
+	return browserWindow.zoom
+}
 func (browserWindow *BrowserWindow) handleDragAndDropMessage(filenames []string, dropTarget *DropTargetDetails) {
 }
 func (browserWindow *BrowserWindow) HandleMessage(message string)      {}
 func (browserWindow *BrowserWindow) HandleWindowEvent(identifier uint) {}
-func (browserWindow *BrowserWindow) Height() int                       { return 0 }
+func (browserWindow *BrowserWindow) Height() int {
+	if browserWindow == nil {
+		return 0
+	}
+	browserWindow.mu.RLock()
+	defer browserWindow.mu.RUnlock()
+	return browserWindow.height
+}
 func (browserWindow *BrowserWindow) Hide() Window {
 	if browserWindow == nil {
 		return nil
@@ -94,30 +177,154 @@ func (browserWindow *BrowserWindow) Hide() Window {
 	browserWindow.mu.Unlock()
 	return browserWindow
 }
-func (browserWindow *BrowserWindow) HideMenuBar()                      {}
-func (browserWindow *BrowserWindow) IsFocused() bool                   { return false }
-func (browserWindow *BrowserWindow) IsFullscreen() bool                { return false }
-func (browserWindow *BrowserWindow) IsIgnoreMouseEvents() bool         { return false }
-func (browserWindow *BrowserWindow) IsMaximised() bool                 { return false }
-func (browserWindow *BrowserWindow) IsMinimised() bool                 { return false }
+func (browserWindow *BrowserWindow) HideMenuBar() {}
+func (browserWindow *BrowserWindow) IsFocused() bool {
+	if browserWindow == nil {
+		return false
+	}
+	browserWindow.mu.RLock()
+	defer browserWindow.mu.RUnlock()
+	return browserWindow.focused
+}
+func (browserWindow *BrowserWindow) IsFullscreen() bool {
+	if browserWindow == nil {
+		return false
+	}
+	browserWindow.mu.RLock()
+	defer browserWindow.mu.RUnlock()
+	return browserWindow.fullscreen
+}
+func (browserWindow *BrowserWindow) IsIgnoreMouseEvents() bool {
+	if browserWindow == nil {
+		return false
+	}
+	browserWindow.mu.RLock()
+	defer browserWindow.mu.RUnlock()
+	return browserWindow.ignoreMouseEvents
+}
+func (browserWindow *BrowserWindow) IsMaximised() bool {
+	if browserWindow == nil {
+		return false
+	}
+	browserWindow.mu.RLock()
+	defer browserWindow.mu.RUnlock()
+	return browserWindow.maximised
+}
+func (browserWindow *BrowserWindow) IsMinimised() bool {
+	if browserWindow == nil {
+		return false
+	}
+	browserWindow.mu.RLock()
+	defer browserWindow.mu.RUnlock()
+	return browserWindow.minimised
+}
 func (browserWindow *BrowserWindow) HandleKeyEvent(accelerator string) {}
-func (browserWindow *BrowserWindow) Maximise() Window                  { return browserWindow }
-func (browserWindow *BrowserWindow) Minimise() Window                  { return browserWindow }
+func (browserWindow *BrowserWindow) Maximise() Window {
+	if browserWindow == nil {
+		return nil
+	}
+	browserWindow.mu.Lock()
+	browserWindow.maximised = true
+	browserWindow.fullscreen = false
+	browserWindow.minimised = false
+	browserWindow.visible = true
+	browserWindow.mu.Unlock()
+	return browserWindow
+}
+func (browserWindow *BrowserWindow) Minimise() Window {
+	if browserWindow == nil {
+		return nil
+	}
+	browserWindow.mu.Lock()
+	browserWindow.minimised = true
+	browserWindow.maximised = false
+	browserWindow.fullscreen = false
+	browserWindow.visible = false
+	browserWindow.focused = false
+	browserWindow.mu.Unlock()
+	return browserWindow
+}
 func (browserWindow *BrowserWindow) OnWindowEvent(eventType events.WindowEventType, callback func(event *WindowEvent)) func() {
 	return func() {}
 }
-func (browserWindow *BrowserWindow) OpenContextMenu(data *ContextMenuData)  {}
-func (browserWindow *BrowserWindow) Position() (int, int)                   { return 0, 0 }
-func (browserWindow *BrowserWindow) RelativePosition() (int, int)           { return 0, 0 }
-func (browserWindow *BrowserWindow) Reload()                                {}
-func (browserWindow *BrowserWindow) Resizable() bool                        { return false }
-func (browserWindow *BrowserWindow) Restore()                               {}
-func (browserWindow *BrowserWindow) Run()                                   {}
-func (browserWindow *BrowserWindow) SetPosition(x, y int)                   {}
-func (browserWindow *BrowserWindow) SetAlwaysOnTop(alwaysOnTop bool) Window { return browserWindow }
-func (browserWindow *BrowserWindow) SetBackgroundColour(colour RGBA) Window { return browserWindow }
-func (browserWindow *BrowserWindow) SetFrameless(frameless bool) Window     { return browserWindow }
-func (browserWindow *BrowserWindow) SetHTML(html string) Window             { return browserWindow }
+func (browserWindow *BrowserWindow) OpenContextMenu(data *ContextMenuData) {}
+func (browserWindow *BrowserWindow) Position() (int, int) {
+	if browserWindow == nil {
+		return 0, 0
+	}
+	browserWindow.mu.RLock()
+	defer browserWindow.mu.RUnlock()
+	return browserWindow.x, browserWindow.y
+}
+func (browserWindow *BrowserWindow) RelativePosition() (int, int) {
+	return browserWindow.Position()
+}
+func (browserWindow *BrowserWindow) Reload() {}
+func (browserWindow *BrowserWindow) Resizable() bool {
+	if browserWindow == nil {
+		return false
+	}
+	browserWindow.mu.RLock()
+	defer browserWindow.mu.RUnlock()
+	return browserWindow.resizable
+}
+func (browserWindow *BrowserWindow) Restore() {
+	if browserWindow == nil {
+		return
+	}
+	browserWindow.mu.Lock()
+	browserWindow.maximised = false
+	browserWindow.minimised = false
+	browserWindow.fullscreen = false
+	browserWindow.visible = true
+	browserWindow.mu.Unlock()
+}
+func (browserWindow *BrowserWindow) Run() {}
+func (browserWindow *BrowserWindow) SetPosition(x, y int) {
+	if browserWindow == nil {
+		return
+	}
+	browserWindow.mu.Lock()
+	browserWindow.x = x
+	browserWindow.y = y
+	browserWindow.mu.Unlock()
+}
+func (browserWindow *BrowserWindow) SetAlwaysOnTop(alwaysOnTop bool) Window {
+	if browserWindow == nil {
+		return nil
+	}
+	browserWindow.mu.Lock()
+	browserWindow.alwaysOnTop = alwaysOnTop
+	browserWindow.mu.Unlock()
+	return browserWindow
+}
+func (browserWindow *BrowserWindow) SetBackgroundColour(colour RGBA) Window {
+	if browserWindow == nil {
+		return nil
+	}
+	browserWindow.mu.Lock()
+	browserWindow.backgroundColour = colour
+	browserWindow.mu.Unlock()
+	return browserWindow
+}
+func (browserWindow *BrowserWindow) SetFrameless(frameless bool) Window {
+	if browserWindow == nil {
+		return nil
+	}
+	browserWindow.mu.Lock()
+	browserWindow.frameless = frameless
+	browserWindow.mu.Unlock()
+	return browserWindow
+}
+func (browserWindow *BrowserWindow) SetHTML(html string) Window {
+	if browserWindow == nil {
+		return nil
+	}
+	browserWindow.mu.Lock()
+	browserWindow.html = html
+	browserWindow.mu.Unlock()
+	return browserWindow
+}
 func (browserWindow *BrowserWindow) SetMinimiseButtonState(state ButtonState) Window {
 	return browserWindow
 }
@@ -128,24 +335,85 @@ func (browserWindow *BrowserWindow) SetCloseButtonState(state ButtonState) Windo
 	return browserWindow
 }
 func (browserWindow *BrowserWindow) SetMaxSize(maxWidth, maxHeight int) Window {
+	if browserWindow == nil {
+		return nil
+	}
+	browserWindow.mu.Lock()
+	browserWindow.maxWidth = maxWidth
+	browserWindow.maxHeight = maxHeight
+	browserWindow.mu.Unlock()
 	return browserWindow
 }
 func (browserWindow *BrowserWindow) SetMinSize(minWidth, minHeight int) Window {
+	if browserWindow == nil {
+		return nil
+	}
+	browserWindow.mu.Lock()
+	browserWindow.minWidth = minWidth
+	browserWindow.minHeight = minHeight
+	browserWindow.mu.Unlock()
 	return browserWindow
 }
 func (browserWindow *BrowserWindow) SetRelativePosition(x, y int) Window {
+	if browserWindow == nil {
+		return nil
+	}
+	browserWindow.SetPosition(x, y)
 	return browserWindow
 }
 func (browserWindow *BrowserWindow) SetResizable(resizable bool) Window {
+	if browserWindow == nil {
+		return nil
+	}
+	browserWindow.mu.Lock()
+	browserWindow.resizable = resizable
+	browserWindow.mu.Unlock()
 	return browserWindow
 }
 func (browserWindow *BrowserWindow) SetIgnoreMouseEvents(ignore bool) Window {
+	if browserWindow == nil {
+		return nil
+	}
+	browserWindow.mu.Lock()
+	browserWindow.ignoreMouseEvents = ignore
+	browserWindow.mu.Unlock()
 	return browserWindow
 }
-func (browserWindow *BrowserWindow) SetSize(width, height int) Window { return browserWindow }
-func (browserWindow *BrowserWindow) SetTitle(title string) Window     { return browserWindow }
-func (browserWindow *BrowserWindow) SetURL(url string) Window         { return browserWindow }
+func (browserWindow *BrowserWindow) SetSize(width, height int) Window {
+	if browserWindow == nil {
+		return nil
+	}
+	browserWindow.mu.Lock()
+	browserWindow.width = width
+	browserWindow.height = height
+	browserWindow.mu.Unlock()
+	return browserWindow
+}
+func (browserWindow *BrowserWindow) SetTitle(title string) Window {
+	if browserWindow == nil {
+		return nil
+	}
+	browserWindow.mu.Lock()
+	browserWindow.title = title
+	browserWindow.mu.Unlock()
+	return browserWindow
+}
+func (browserWindow *BrowserWindow) SetURL(url string) Window {
+	if browserWindow == nil {
+		return nil
+	}
+	browserWindow.mu.Lock()
+	browserWindow.url = url
+	browserWindow.mu.Unlock()
+	return browserWindow
+}
 func (browserWindow *BrowserWindow) SetZoom(magnification float64) Window {
+	if browserWindow == nil {
+		return nil
+	}
+	browserWindow.mu.Lock()
+	browserWindow.zoom = magnification
+	browserWindow.mu.Unlock()
 	return browserWindow
 }
 func (browserWindow *BrowserWindow) Show() Window {
@@ -154,20 +422,81 @@ func (browserWindow *BrowserWindow) Show() Window {
 	}
 	browserWindow.mu.Lock()
 	browserWindow.visible = true
+	browserWindow.minimised = false
 	browserWindow.mu.Unlock()
 	return browserWindow
 }
-func (browserWindow *BrowserWindow) ShowMenuBar()          {}
-func (browserWindow *BrowserWindow) Size() (int, int)      { return 0, 0 }
-func (browserWindow *BrowserWindow) OpenDevTools()         {}
-func (browserWindow *BrowserWindow) ToggleFullscreen()     {}
-func (browserWindow *BrowserWindow) ToggleMaximise()       {}
-func (browserWindow *BrowserWindow) ToggleMenuBar()        {}
-func (browserWindow *BrowserWindow) ToggleFrameless()      {}
-func (browserWindow *BrowserWindow) UnFullscreen()         {}
-func (browserWindow *BrowserWindow) UnMaximise()           {}
-func (browserWindow *BrowserWindow) UnMinimise()           {}
-func (browserWindow *BrowserWindow) Width() int            { return 0 }
+func (browserWindow *BrowserWindow) ShowMenuBar() {}
+func (browserWindow *BrowserWindow) Size() (int, int) {
+	if browserWindow == nil {
+		return 0, 0
+	}
+	browserWindow.mu.RLock()
+	defer browserWindow.mu.RUnlock()
+	return browserWindow.width, browserWindow.height
+}
+func (browserWindow *BrowserWindow) OpenDevTools() {}
+func (browserWindow *BrowserWindow) ToggleFullscreen() {
+	if browserWindow == nil {
+		return
+	}
+	browserWindow.mu.Lock()
+	browserWindow.fullscreen = !browserWindow.fullscreen
+	if browserWindow.fullscreen {
+		browserWindow.maximised = false
+		browserWindow.minimised = false
+		browserWindow.visible = true
+	}
+	browserWindow.mu.Unlock()
+}
+func (browserWindow *BrowserWindow) ToggleMaximise() {
+	if browserWindow == nil {
+		return
+	}
+	browserWindow.mu.Lock()
+	browserWindow.maximised = !browserWindow.maximised
+	if browserWindow.maximised {
+		browserWindow.fullscreen = false
+		browserWindow.minimised = false
+		browserWindow.visible = true
+	}
+	browserWindow.mu.Unlock()
+}
+func (browserWindow *BrowserWindow) ToggleMenuBar()   {}
+func (browserWindow *BrowserWindow) ToggleFrameless() {}
+func (browserWindow *BrowserWindow) UnFullscreen() {
+	if browserWindow == nil {
+		return
+	}
+	browserWindow.mu.Lock()
+	browserWindow.fullscreen = false
+	browserWindow.mu.Unlock()
+}
+func (browserWindow *BrowserWindow) UnMaximise() {
+	if browserWindow == nil {
+		return
+	}
+	browserWindow.mu.Lock()
+	browserWindow.maximised = false
+	browserWindow.mu.Unlock()
+}
+func (browserWindow *BrowserWindow) UnMinimise() {
+	if browserWindow == nil {
+		return
+	}
+	browserWindow.mu.Lock()
+	browserWindow.minimised = false
+	browserWindow.visible = true
+	browserWindow.mu.Unlock()
+}
+func (browserWindow *BrowserWindow) Width() int {
+	if browserWindow == nil {
+		return 0
+	}
+	browserWindow.mu.RLock()
+	defer browserWindow.mu.RUnlock()
+	return browserWindow.width
+}
 func (browserWindow *BrowserWindow) IsVisible() bool {
 	if browserWindow == nil {
 		return false
@@ -176,14 +505,39 @@ func (browserWindow *BrowserWindow) IsVisible() bool {
 	defer browserWindow.mu.RUnlock()
 	return browserWindow.visible
 }
-func (browserWindow *BrowserWindow) Bounds() Rect          { return Rect{} }
-func (browserWindow *BrowserWindow) SetBounds(bounds Rect) {}
-func (browserWindow *BrowserWindow) Zoom()                 {}
-func (browserWindow *BrowserWindow) ZoomIn()               {}
-func (browserWindow *BrowserWindow) ZoomOut()              {}
-func (browserWindow *BrowserWindow) ZoomReset() Window     { return browserWindow }
-func (browserWindow *BrowserWindow) SetMenu(menu *Menu)    {}
-func (browserWindow *BrowserWindow) SnapAssist()           {}
+func (browserWindow *BrowserWindow) Bounds() Rect {
+	if browserWindow == nil {
+		return Rect{}
+	}
+	browserWindow.mu.RLock()
+	defer browserWindow.mu.RUnlock()
+	return Rect{X: browserWindow.x, Y: browserWindow.y, Width: browserWindow.width, Height: browserWindow.height}
+}
+func (browserWindow *BrowserWindow) SetBounds(bounds Rect) {
+	if browserWindow == nil {
+		return
+	}
+	browserWindow.mu.Lock()
+	browserWindow.x = bounds.X
+	browserWindow.y = bounds.Y
+	browserWindow.width = bounds.Width
+	browserWindow.height = bounds.Height
+	browserWindow.mu.Unlock()
+}
+func (browserWindow *BrowserWindow) Zoom()    {}
+func (browserWindow *BrowserWindow) ZoomIn()  {}
+func (browserWindow *BrowserWindow) ZoomOut() {}
+func (browserWindow *BrowserWindow) ZoomReset() Window {
+	if browserWindow == nil {
+		return nil
+	}
+	browserWindow.mu.Lock()
+	browserWindow.zoom = 1.0
+	browserWindow.mu.Unlock()
+	return browserWindow
+}
+func (browserWindow *BrowserWindow) SetMenu(menu *Menu) {}
+func (browserWindow *BrowserWindow) SnapAssist()        {}
 func (browserWindow *BrowserWindow) SetContentProtection(protection bool) Window {
 	return browserWindow
 }
