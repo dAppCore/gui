@@ -2,6 +2,7 @@ package display
 
 import (
 	"context"
+	"os/exec"
 	"reflect"
 	"strings"
 
@@ -11,12 +12,19 @@ import (
 
 func (s *Service) registerSidecarActions() {
 	if strings.TrimSpace(core.Env("CORE_DENO_ENABLE")) != "" && s.sidecar == nil {
-		s.sidecar = s.ensureSidecar()
-		if _, err := s.sidecar.Start(context.Background()); err != nil {
-			if s != nil && s.ServiceRuntime != nil && s.Core() != nil {
-				s.Core().LogError(err, "display.registerSidecarActions", "failed to start enabled sidecar")
+		manager := s.ensureSidecar()
+		if binary := strings.TrimSpace(manager.Status().Binary); binary != "" {
+			if _, err := exec.LookPath(binary); err != nil {
+				if s != nil && s.ServiceRuntime != nil && s.Core() != nil {
+					s.Core().LogWarn(err, "display.registerSidecarActions", "skipping sidecar auto-start; binary unavailable")
+				}
+				s.sidecar = nil
+			} else if _, err := manager.Start(context.Background()); err != nil {
+				if s != nil && s.ServiceRuntime != nil && s.Core() != nil {
+					s.Core().LogError(err, "display.registerSidecarActions", "failed to start enabled sidecar")
+				}
+				s.sidecar = nil
 			}
-			s.sidecar = nil
 		}
 	}
 
