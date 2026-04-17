@@ -1415,7 +1415,10 @@ func (s *Service) CreateWindow(options CreateWindowOptions) (*window.WindowInfo,
 		}
 		return nil, coreerr.E("display.CreateWindow", "window.open action failed", nil)
 	}
-	info, _ := r.Value.(window.WindowInfo)
+	info, ok := r.Value.(window.WindowInfo)
+	if !ok {
+		return nil, coreerr.E("display.CreateWindow", "unexpected result type", nil)
+	}
 	return &info, nil
 }
 

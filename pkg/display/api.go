@@ -159,11 +159,11 @@ func (s *Service) GetScreenForWindow(name string) (*Screen, error) {
 func (s *Service) GetWorkAreas() []*WorkArea {
 	r := s.Core().QUERY(screen.QueryWorkAreas{})
 	if !r.OK {
-		return nil
+		return []*WorkArea{}
 	}
 	areas, ok := r.Value.([]screen.Rect)
 	if !ok {
-		return nil
+		return []*WorkArea{}
 	}
 	result := make([]*WorkArea, 0, len(areas))
 	for i := range areas {

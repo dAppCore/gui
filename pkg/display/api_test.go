@@ -199,6 +199,23 @@ func TestDisplayAPI_GetScreens_Ugly(t *testing.T) {
 	assert.Empty(t, screens)
 }
 
+func TestDisplayAPI_GetWorkAreas_Ugly(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
+		switch q.(type) {
+		case screen.QueryWorkAreas:
+			return core.Result{OK: false}
+		default:
+			return core.Result{}
+		}
+	})
+
+	areas := svc.GetWorkAreas()
+
+	require.NotNil(t, areas)
+	assert.Empty(t, areas)
+}
+
 func TestDisplayAPI_GetScreen_BadType(t *testing.T) {
 	svc, c := newTestDisplayAPIService(t)
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
@@ -214,6 +231,21 @@ func TestDisplayAPI_GetScreen_BadType(t *testing.T) {
 
 	require.Error(t, err)
 	assert.Nil(t, got)
+}
+
+func TestDisplayAPI_CreateWindow_UglyResultType(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+	c.Action("window.open", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{OK: true}
+	})
+
+	got, err := svc.CreateWindow(CreateWindowOptions{
+		Name: "broken-window",
+	})
+
+	require.Error(t, err)
+	assert.Nil(t, got)
+	assert.Contains(t, err.Error(), "unexpected result type")
 }
 
 func TestDisplayAPI_GetScreen_Ugly(t *testing.T) {
