@@ -52,11 +52,23 @@ func openStorageStore() *gostore.Store {
 	}
 	if path != ":memory:" {
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			core.Error(
+				"storage registry init failed",
+				"path", path,
+				"step", "mkdir",
+				"err", core.E("display.storage.open", "failed to create storage directory", err),
+			)
 			return nil
 		}
 	}
 	storeInstance, err := gostore.New(path)
 	if err != nil {
+		core.Error(
+			"storage registry init failed",
+			"path", path,
+			"step", "open",
+			"err", core.E("display.storage.open", "failed to open storage store", err),
+		)
 		return nil
 	}
 	return storeInstance
