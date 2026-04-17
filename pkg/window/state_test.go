@@ -27,6 +27,16 @@ func TestStateManagerState_NewStateManagerWithDir_Bad(t *testing.T) {
 	assert.Empty(t, sm.dataDir())
 }
 
+func TestStateManagerState_NewStateManagerWithDir_InvalidFile_Good(t *testing.T) {
+	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "window_state.json"), []byte("{invalid"), 0o644))
+
+	sm := NewStateManagerWithDir(dir)
+
+	require.NotNil(t, sm)
+	assert.Empty(t, sm.ListStates())
+}
+
 func TestStateManagerState_SetPath_Good(t *testing.T) {
 	dir := t.TempDir()
 	sm := NewStateManagerWithDir(dir)

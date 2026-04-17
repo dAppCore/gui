@@ -2,6 +2,7 @@
 package window
 
 import (
+	"io/fs"
 	"sync"
 	"time"
 
@@ -89,6 +90,9 @@ func (sm *StateManager) load() {
 	}
 	content, err := coreio.Local.Read(sm.filePath())
 	if err != nil {
+		if core.Is(err, fs.ErrNotExist) {
+			return
+		}
 		core.Error(
 			"window state load failed",
 			"path", sm.filePath(),
@@ -96,9 +100,8 @@ func (sm *StateManager) load() {
 		)
 		return
 	}
-	sm.mu.Lock()
-	defer sm.mu.Unlock()
-	result := core.JSONUnmarshalString(content, &sm.states)
+	loaded := make(map[string]WindowState)
+	result := core.JSONUnmarshalString(content, &loaded)
 	if !result.OK {
 		if decodeErr, ok := result.Value.(error); ok {
 			core.Error(
@@ -107,7 +110,11 @@ func (sm *StateManager) load() {
 				"err", core.E("window.StateManager.load", "failed to decode window state", decodeErr),
 			)
 		}
+		return
 	}
+	sm.mu.Lock()
+	sm.states = loaded
+	sm.mu.Unlock()
 }
 
 func (sm *StateManager) save() error {
