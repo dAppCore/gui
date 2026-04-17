@@ -71,6 +71,26 @@ func (m *mockPlatform) GetAll() map[string]ContextMenuDef {
 	return out
 }
 
+type flakyAddPlatform struct {
+	*mockPlatform
+	mu          sync.Mutex
+	failAddOnce bool
+}
+
+func newFlakyAddPlatform() *flakyAddPlatform {
+	return &flakyAddPlatform{mockPlatform: newMockPlatform()}
+}
+
+func (m *flakyAddPlatform) Add(name string, menu ContextMenuDef, onItemClick func(string, string, string)) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.failAddOnce {
+		m.failAddOnce = false
+		return ErrorMenuNotFound
+	}
+	return m.mockPlatform.Add(name, menu, onItemClick)
+}
+
 // simulateClick simulates a context menu item click by calling the registered handler.
 func (m *mockPlatform) simulateClick(menuName, actionID, data string) {
 	m.mu.Lock()
@@ -81,7 +101,7 @@ func (m *mockPlatform) simulateClick(menuName, actionID, data string) {
 	}
 }
 
-func newTestContextMenuService(t *testing.T, mp *mockPlatform) (*Service, *core.Core) {
+func newTestContextMenuService(t *testing.T, mp Platform) (*Service, *core.Core) {
 	t.Helper()
 	c := core.New(
 		core.WithService(Register(mp)),
@@ -266,6 +286,36 @@ func TestTaskAdd_Good_ClickBroadcast(t *testing.T) {
 	mu.Unlock()
 }
 
+func TestTaskAdd_Ugly_PlatformAddFailureRollsBackExistingMenu(t *testing.T) {
+	mp := newFlakyAddPlatform()
+	_, c := newTestContextMenuService(t, mp)
+
+	_ = taskRun(c, "contextmenu.add", TaskAdd{
+		Name: "file-menu",
+		Menu: ContextMenuDef{Name: "file-menu", Items: []MenuItemDef{{Label: "Open", ActionID: "open"}}},
+	})
+
+	mp.mu.Lock()
+	mp.failAddOnce = true
+	mp.mu.Unlock()
+
+	r := taskRun(c, "contextmenu.add", TaskAdd{
+		Name: "file-menu",
+		Menu: ContextMenuDef{Name: "file-menu", Items: []MenuItemDef{{Label: "Delete", ActionID: "delete"}}},
+	})
+	assert.False(t, r.OK)
+
+	qr := c.QUERY(QueryGet{Name: "file-menu"})
+	require.True(t, qr.OK)
+	def := qr.Value.(*ContextMenuDef)
+	require.Len(t, def.Items, 1)
+	assert.Equal(t, "Open", def.Items[0].Label)
+	platformMenu, ok := mp.Get("file-menu")
+	require.True(t, ok)
+	require.Len(t, platformMenu.Items, 1)
+	assert.Equal(t, "Open", platformMenu.Items[0].Label)
+}
+
 func TestTaskAdd_Good_SubmenuItems(t *testing.T) {
 	mp := newMockPlatform()
 	_, c := newTestContextMenuService(t, mp)
@@ -358,6 +408,36 @@ func TestTaskUpdate_Ugly_PlatformRemoveError(t *testing.T) {
 		Menu: ContextMenuDef{Name: "tricky", Items: []MenuItemDef{{Label: "X", ActionID: "x"}}},
 	})
 	assert.False(t, r.OK)
+}
+
+func TestTaskUpdate_Ugly_PlatformAddFailureRollsBackExistingMenu(t *testing.T) {
+	mp := newFlakyAddPlatform()
+	_, c := newTestContextMenuService(t, mp)
+
+	_ = taskRun(c, "contextmenu.add", TaskAdd{
+		Name: "edit-menu",
+		Menu: ContextMenuDef{Name: "edit-menu", Items: []MenuItemDef{{Label: "Cut", ActionID: "cut"}}},
+	})
+
+	mp.mu.Lock()
+	mp.failAddOnce = true
+	mp.mu.Unlock()
+
+	r := taskRun(c, "contextmenu.update", TaskUpdate{
+		Name: "edit-menu",
+		Menu: ContextMenuDef{Name: "edit-menu", Items: []MenuItemDef{{Label: "Copy", ActionID: "copy"}}},
+	})
+	assert.False(t, r.OK)
+
+	qr := c.QUERY(QueryGet{Name: "edit-menu"})
+	require.True(t, qr.OK)
+	def := qr.Value.(*ContextMenuDef)
+	require.Len(t, def.Items, 1)
+	assert.Equal(t, "Cut", def.Items[0].Label)
+	platformMenu, ok := mp.Get("edit-menu")
+	require.True(t, ok)
+	require.Len(t, platformMenu.Items, 1)
+	assert.Equal(t, "Cut", platformMenu.Items[0].Label)
 }
 
 // --- TaskDestroy ---

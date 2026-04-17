@@ -92,9 +92,12 @@ func (s *Service) queryList() map[string]ContextMenuDef {
 func (s *Service) taskAdd(t TaskAdd) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	// If menu already exists, remove it first (replace semantics)
-	if _, exists := s.registeredMenus[t.Name]; exists {
-		_ = s.platform.Remove(t.Name)
+	// If menu already exists, remove it first (replace semantics).
+	oldMenu, existed := s.registeredMenus[t.Name]
+	if existed {
+		if err := s.platform.Remove(t.Name); err != nil {
+			return coreerr.E("contextmenu.taskAdd", "platform remove failed", err)
+		}
 		delete(s.registeredMenus, t.Name)
 	}
 
@@ -107,6 +110,17 @@ func (s *Service) taskAdd(t TaskAdd) error {
 		})
 	})
 	if err != nil {
+		if existed {
+			if restoreErr := s.platform.Add(t.Name, oldMenu, func(menuName, actionID, data string) {
+				_ = s.Core().ACTION(ActionItemClicked{
+					MenuName: menuName,
+					ActionID: actionID,
+					Data:     data,
+				})
+			}); restoreErr == nil {
+				s.registeredMenus[t.Name] = oldMenu
+			}
+		}
 		return coreerr.E("contextmenu.taskAdd", "platform add failed", err)
 	}
 
@@ -133,7 +147,8 @@ func (s *Service) taskRemove(t TaskRemove) error {
 func (s *Service) taskUpdate(t TaskUpdate) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if _, exists := s.registeredMenus[t.Name]; !exists {
+	oldMenu, exists := s.registeredMenus[t.Name]
+	if !exists {
 		return ErrorMenuNotFound
 	}
 
@@ -150,6 +165,15 @@ func (s *Service) taskUpdate(t TaskUpdate) error {
 		})
 	})
 	if err != nil {
+		if restoreErr := s.platform.Add(t.Name, oldMenu, func(menuName, actionID, data string) {
+			_ = s.Core().ACTION(ActionItemClicked{
+				MenuName: menuName,
+				ActionID: actionID,
+				Data:     data,
+			})
+		}); restoreErr == nil {
+			s.registeredMenus[t.Name] = oldMenu
+		}
 		return coreerr.E("contextmenu.taskUpdate", "platform add failed", err)
 	}
 
