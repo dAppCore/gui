@@ -266,6 +266,33 @@ func TestMarketplace_Install_Ugly(t *testing.T) {
 	assert.NotContains(t, err.Error(), "token:")
 }
 
+func TestMarketplace_Install_CleansUpOnCloneFailure(t *testing.T) {
+	scriptDir := t.TempDir()
+	scriptPath := filepath.Join(scriptDir, "git")
+	targetRoot := t.TempDir()
+	script := "#!/bin/sh\nlast=''\nfor arg in \"$@\"; do last=\"$arg\"; done\nmkdir -p \"$last\"\ntouch \"$last/partial\"\nexit 1\n"
+	require.NoError(t, os.WriteFile(scriptPath, []byte(script), 0o755))
+
+	installer := Installer{
+		GitBinary:  scriptPath,
+		InstallDir: targetRoot,
+	}
+
+	manifest := signedManifest(t, Manifest{
+		Name:       "core-ui",
+		Version:    "1.2.3",
+		Repository: "https://example.com/core-ui.git",
+		Ref:        "main",
+	})
+	_, err := installer.Install(context.Background(), manifest)
+	require.Error(t, err)
+
+	targetDir := filepath.Join(targetRoot, "core-ui")
+	_, statErr := os.Stat(targetDir)
+	assert.Error(t, statErr)
+	assert.True(t, os.IsNotExist(statErr))
+}
+
 func TestMarketplace_Verify_Good(t *testing.T) {
 	manifest := signedManifest(t, Manifest{
 		Name:       "core-ui",

@@ -266,6 +266,15 @@ func (em *WSEventManager) HandleWebSocket(w http.ResponseWriter, r *http.Request
 		}
 		return
 	}
+	em.mu.RLock()
+	closed := em.closed
+	em.mu.RUnlock()
+	if closed {
+		if w != nil {
+			http.Error(w, http.StatusText(http.StatusServiceUnavailable), http.StatusServiceUnavailable)
+		}
+		return
+	}
 	if !trustedWebSocketOrigin(r) {
 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 		return
@@ -277,6 +286,11 @@ func (em *WSEventManager) HandleWebSocket(w http.ResponseWriter, r *http.Request
 	}
 
 	em.mu.Lock()
+	if em.closed {
+		em.mu.Unlock()
+		_ = conn.Close()
+		return
+	}
 	em.clients[conn] = &clientState{
 		subscriptions: make(map[string]*Subscription),
 	}

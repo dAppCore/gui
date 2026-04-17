@@ -153,6 +153,13 @@ func (i Installer) Install(ctx context.Context, manifest Manifest) (string, erro
 	if err != nil {
 		return "", err
 	}
+	cleanupTarget := true
+	defer func() {
+		if cleanupTarget {
+			_ = os.RemoveAll(targetDir)
+		}
+	}()
+
 	rel, err := filepath.Rel(rootResolved, targetAbs)
 	if err != nil {
 		return "", err
@@ -160,7 +167,9 @@ func (i Installer) Install(ctx context.Context, manifest Manifest) (string, erro
 	if rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
 		return "", errors.New("install path escapes install dir")
 	}
-	_ = os.RemoveAll(targetDir)
+	if err := os.RemoveAll(targetDir); err != nil {
+		return "", err
+	}
 	args := []string{"clone", "--depth", "1"}
 	if manifest.Ref != "" {
 		args = append(args, "--branch", manifest.Ref)
@@ -177,6 +186,7 @@ func (i Installer) Install(ctx context.Context, manifest Manifest) (string, erro
 	if err := writeInstalledManifest(targetDir, manifest); err != nil {
 		return "", err
 	}
+	cleanupTarget = false
 	return targetDir, nil
 }
 
