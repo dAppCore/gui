@@ -42,6 +42,9 @@ func (m *Manager) Build(items []MenuItem) PlatformMenu {
 }
 
 func (m *Manager) buildItems(menu PlatformMenu, items []MenuItem) {
+	if m == nil || menu == nil {
+		return
+	}
 	for _, item := range items {
 		if item.Role != nil {
 			menu.AddRole(*item.Role)
@@ -53,10 +56,16 @@ func (m *Manager) buildItems(menu PlatformMenu, items []MenuItem) {
 		}
 		if len(item.Children) > 0 {
 			sub := menu.AddSubmenu(item.Label)
+			if sub == nil {
+				continue
+			}
 			m.buildItems(sub, item.Children)
 			continue
 		}
 		mi := menu.Add(item.Label)
+		if mi == nil {
+			continue
+		}
 		if item.Accelerator != "" {
 			mi.SetAccelerator(item.Accelerator)
 		}
