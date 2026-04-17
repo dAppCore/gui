@@ -56,6 +56,43 @@ func TestApplication_MenuRole_String_Ugly(t *testing.T) {
 	assert.Equal(t, "unknown", MenuRole(999).String())
 }
 
+func TestApplication_MenuItem_OnClick_Good(t *testing.T) {
+	called := 0
+	item := &MenuItem{}
+
+	item.OnClick(func(*Context) {
+		called++
+	})
+	require.NotNil(t, item.onClick)
+	item.onClick(&Context{})
+
+	assert.Equal(t, 1, called)
+}
+
+func TestApplication_MenuItem_OnClick_Bad(t *testing.T) {
+	item := &MenuItem{}
+
+	item.OnClick(nil)
+
+	assert.Nil(t, item.onClick)
+}
+
+func TestApplication_MenuItem_OnClick_Ugly(t *testing.T) {
+	called := 0
+	item := &MenuItem{}
+
+	item.OnClick(func(*Context) {
+		called++
+	})
+	item.OnClick(func(*Context) {
+		called++
+	})
+	require.NotNil(t, item.onClick)
+	item.onClick(&Context{})
+
+	assert.Equal(t, 1, called)
+}
+
 func TestApplication_Menu_Good(t *testing.T) {
 	menu := NewMenu()
 	menuItem := menu.Add("Open")
@@ -88,6 +125,34 @@ func TestApplication_Menu_Ugly(t *testing.T) {
 	assert.Len(t, menu.Items, 1)
 	assert.Len(t, submenu.Items, 1)
 	assert.Equal(t, "Nested", menu.Items[0].Label)
+}
+
+func TestApplication_MenuManager_SetApplicationMenu_Good(t *testing.T) {
+	manager := &MenuManager{}
+	menu := NewMenu()
+
+	manager.SetApplicationMenu(menu)
+
+	assert.Same(t, menu, manager.applicationMenu)
+}
+
+func TestApplication_MenuManager_SetApplicationMenu_Bad(t *testing.T) {
+	manager := &MenuManager{}
+
+	manager.SetApplicationMenu(nil)
+
+	assert.Nil(t, manager.applicationMenu)
+}
+
+func TestApplication_MenuManager_SetApplicationMenu_Ugly(t *testing.T) {
+	manager := &MenuManager{}
+	first := NewMenu()
+	second := NewMenu()
+
+	manager.SetApplicationMenu(first)
+	manager.SetApplicationMenu(second)
+
+	assert.Same(t, second, manager.applicationMenu)
 }
 
 func TestApplication_SystemTray_Good(t *testing.T) {
