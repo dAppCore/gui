@@ -167,6 +167,19 @@ func TestWSEventManager_HandleWebSocket_RejectsLoopbackSpoofedOrigin(t *testing.
 	assert.Equal(t, http.StatusForbidden, recorder.Code)
 }
 
+func TestWSEventManager_HandleWebSocket_NilReceiverFailsClosed(t *testing.T) {
+	var em *WSEventManager
+
+	req := httptest.NewRequest(http.MethodGet, "http://127.0.0.1/events", nil)
+	req.RemoteAddr = "127.0.0.1:12345"
+	recorder := httptest.NewRecorder()
+
+	assert.NotPanics(t, func() {
+		em.HandleWebSocket(recorder, req)
+	})
+	assert.Equal(t, http.StatusServiceUnavailable, recorder.Code)
+}
+
 func TestEvents_trustedWebSocketOrigin_Good(t *testing.T) {
 	tests := []struct {
 		name string
