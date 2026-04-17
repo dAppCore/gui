@@ -908,3 +908,255 @@ func TestHandleConfigTask_Persists_Good(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, string(data), "default_width")
 }
+
+func TestDisplay_LayoutSuggest_Good(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+
+	var gotTask window.TaskLayoutSuggest
+	c.Action("window.layoutSuggest", func(_ context.Context, opts core.Options) core.Result {
+		gotTask = opts.Get("task").Value.(window.TaskLayoutSuggest)
+		return core.Result{
+			Value: window.LayoutSuggestion{
+				Mode:     "coding",
+				Reason:   "two-pane split",
+				ScreenID: "screen-1",
+				Width:    1280,
+				Height:   720,
+			},
+			OK: true,
+		}
+	})
+
+	got, err := svc.LayoutSuggest("screen-1", 2)
+
+	require.NoError(t, err)
+	assert.Equal(t, "coding", got.Mode)
+	assert.Equal(t, "two-pane split", got.Reason)
+	assert.Equal(t, "screen-1", got.ScreenID)
+	assert.Equal(t, 1280, got.Width)
+	assert.Equal(t, 720, got.Height)
+	assert.Equal(t, "screen-1", gotTask.ScreenID)
+	assert.Equal(t, 2, gotTask.WindowCount)
+}
+
+func TestDisplay_LayoutSuggest_Bad(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+
+	c.Action("window.layoutSuggest", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: assert.AnError, OK: false}
+	})
+
+	got, err := svc.LayoutSuggest("", 0)
+
+	require.Error(t, err)
+	assert.Equal(t, window.LayoutSuggestion{}, got)
+	assert.Equal(t, assert.AnError, err)
+}
+
+func TestDisplay_LayoutSuggest_Ugly(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+
+	c.Action("window.layoutSuggest", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: "unexpected", OK: true}
+	})
+
+	got, err := svc.LayoutSuggest("screen-1", 1)
+
+	require.Error(t, err)
+	assert.Equal(t, window.LayoutSuggestion{}, got)
+	assert.Contains(t, err.Error(), "unexpected result type")
+}
+
+func TestDisplay_GetLayout_Good(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+
+	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
+		switch typed := q.(type) {
+		case window.QueryLayoutGet:
+			assert.Equal(t, "development", typed.Name)
+			return core.Result{
+				Value: &window.Layout{
+					Name: "development",
+					Windows: map[string]window.WindowState{
+						"editor":   {},
+						"terminal": {},
+					},
+					CreatedAt: 1,
+					UpdatedAt: 2,
+				},
+				OK: true,
+			}
+		default:
+			return core.Result{}
+		}
+	})
+
+	got := svc.GetLayout("development")
+
+	require.NotNil(t, got)
+	assert.Equal(t, "development", got.Name)
+	assert.Len(t, got.Windows, 2)
+	assert.Equal(t, int64(1), got.CreatedAt)
+	assert.Equal(t, int64(2), got.UpdatedAt)
+}
+
+func TestDisplay_GetLayout_Bad(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+
+	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
+		switch q.(type) {
+		case window.QueryLayoutGet:
+			return core.Result{Value: nil, OK: true}
+		default:
+			return core.Result{}
+		}
+	})
+
+	got := svc.GetLayout("missing")
+
+	assert.Nil(t, got)
+}
+
+func TestDisplay_GetLayout_Ugly(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+
+	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
+		switch q.(type) {
+		case window.QueryLayoutGet:
+			return core.Result{Value: "unexpected", OK: true}
+		default:
+			return core.Result{}
+		}
+	})
+
+	got := svc.GetLayout("broken")
+
+	assert.Nil(t, got)
+}
+
+func TestDisplay_SaveLayout_Good(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+
+	var gotTask window.TaskSaveLayout
+	c.Action("window.saveLayout", func(_ context.Context, opts core.Options) core.Result {
+		gotTask = opts.Get("task").Value.(window.TaskSaveLayout)
+		return core.Result{OK: true}
+	})
+
+	err := svc.SaveLayout("development")
+
+	require.NoError(t, err)
+	assert.Equal(t, "development", gotTask.Name)
+}
+
+func TestDisplay_SaveLayout_Bad(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+
+	c.Action("window.saveLayout", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: assert.AnError, OK: false}
+	})
+
+	err := svc.SaveLayout("development")
+
+	require.Error(t, err)
+	assert.Equal(t, assert.AnError, err)
+}
+
+func TestDisplay_SaveLayout_Ugly(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+
+	c.Action("window.saveLayout", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: "unexpected", OK: false}
+	})
+
+	err := svc.SaveLayout("")
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "window.saveLayout")
+}
+
+func TestDisplay_RestoreLayout_Good(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+
+	var gotTask window.TaskRestoreLayout
+	c.Action("window.restoreLayout", func(_ context.Context, opts core.Options) core.Result {
+		gotTask = opts.Get("task").Value.(window.TaskRestoreLayout)
+		return core.Result{OK: true}
+	})
+
+	err := svc.RestoreLayout("development")
+
+	require.NoError(t, err)
+	assert.Equal(t, "development", gotTask.Name)
+}
+
+func TestDisplay_RestoreLayout_Bad(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+
+	c.Action("window.restoreLayout", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: assert.AnError, OK: false}
+	})
+
+	err := svc.RestoreLayout("development")
+
+	require.Error(t, err)
+	assert.Equal(t, assert.AnError, err)
+}
+
+func TestDisplay_RestoreLayout_Ugly(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+
+	c.Action("window.restoreLayout", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: "unexpected", OK: false}
+	})
+
+	err := svc.RestoreLayout("")
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "window.restoreLayout")
+}
+
+func TestDisplay_SetWindowBackgroundColour_Good(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+
+	var gotTask window.TaskSetBackgroundColour
+	c.Action("window.setBackgroundColour", func(_ context.Context, opts core.Options) core.Result {
+		gotTask = opts.Get("task").Value.(window.TaskSetBackgroundColour)
+		return core.Result{OK: true}
+	})
+
+	err := svc.SetWindowBackgroundColour("main", 1, 2, 3, 4)
+
+	require.NoError(t, err)
+	assert.Equal(t, "main", gotTask.Name)
+	assert.Equal(t, uint8(1), gotTask.Red)
+	assert.Equal(t, uint8(2), gotTask.Green)
+	assert.Equal(t, uint8(3), gotTask.Blue)
+	assert.Equal(t, uint8(4), gotTask.Alpha)
+}
+
+func TestDisplay_SetWindowBackgroundColour_Bad(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+
+	c.Action("window.setBackgroundColour", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: assert.AnError, OK: false}
+	})
+
+	err := svc.SetWindowBackgroundColour("main", 1, 2, 3, 4)
+
+	require.Error(t, err)
+	assert.Equal(t, assert.AnError, err)
+}
+
+func TestDisplay_SetWindowBackgroundColour_Ugly(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+
+	c.Action("window.setBackgroundColour", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: "unexpected", OK: false}
+	})
+
+	err := svc.SetWindowBackgroundColour("", 0, 0, 0, 0)
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "window.setBackgroundColour")
+}

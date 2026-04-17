@@ -1,0 +1,2 @@
+- @coverage pkg/display/api.go:286 — Tray, clipboard, notification, and theme wrapper methods still need direct unit coverage for their remaining branches.
+- @coverage pkg/display/display.go:1469 — Layout delegation wrappers for delete/tile/snap/stack/workflow/screen-space/pair-arrangement still need unit coverage.

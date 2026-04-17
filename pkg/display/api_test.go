@@ -9,7 +9,10 @@ import (
 	"forge.lthn.ai/core/gui/pkg/clipboard"
 	"forge.lthn.ai/core/gui/pkg/dialog"
 	"forge.lthn.ai/core/gui/pkg/environment"
+	"forge.lthn.ai/core/gui/pkg/notification"
 	"forge.lthn.ai/core/gui/pkg/screen"
+	"forge.lthn.ai/core/gui/pkg/systray"
+	"forge.lthn.ai/core/gui/pkg/window"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -648,4 +651,391 @@ func TestDisplayAPI_WriteClipboardImage_Ugly(t *testing.T) {
 	err := svc.WriteClipboardImage([]byte{1})
 
 	require.Error(t, err)
+}
+
+func TestDisplayAPI_GetScreenForWindow_Good(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+
+	var gotX, gotY int
+	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
+		switch typed := q.(type) {
+		case window.QueryWindowByName:
+			assert.Equal(t, "editor", typed.Name)
+			return core.Result{
+				Value: &window.WindowInfo{
+					Name:   typed.Name,
+					X:      100,
+					Y:      200,
+					Width:  300,
+					Height: 400,
+				},
+				OK: true,
+			}
+		case screen.QueryAtPoint:
+			gotX, gotY = typed.X, typed.Y
+			return core.Result{
+				Value: &screen.Screen{
+					ID:          "screen-1",
+					Name:        "Primary",
+					ScaleFactor: 2,
+					Bounds:      screen.Rect{X: 10, Y: 20, Width: 1920, Height: 1080},
+					IsPrimary:   true,
+				},
+				OK: true,
+			}
+		default:
+			return core.Result{}
+		}
+	})
+
+	got, err := svc.GetScreenForWindow("editor")
+
+	require.NoError(t, err)
+	require.NotNil(t, got)
+	assert.Equal(t, "screen-1", got.ID)
+	assert.Equal(t, 250, gotX)
+	assert.Equal(t, 400, gotY)
+	assert.Equal(t, 10, got.X)
+	assert.Equal(t, 20, got.Y)
+	assert.Equal(t, 1920, got.Width)
+	assert.Equal(t, 1080, got.Height)
+}
+
+func TestDisplayAPI_GetScreenForWindow_Bad(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+
+	var screenQueried bool
+	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
+		switch q.(type) {
+		case window.QueryWindowByName:
+			return core.Result{Value: (*window.WindowInfo)(nil), OK: true}
+		case screen.QueryAtPoint:
+			screenQueried = true
+			return core.Result{OK: true}
+		default:
+			return core.Result{}
+		}
+	})
+
+	got, err := svc.GetScreenForWindow("missing")
+
+	require.NoError(t, err)
+	assert.Nil(t, got)
+	assert.False(t, screenQueried)
+}
+
+func TestDisplayAPI_GetScreenForWindow_Ugly(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+
+	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
+		switch q.(type) {
+		case window.QueryWindowByName:
+			return core.Result{
+				Value: &window.WindowInfo{X: 1, Y: 2, Width: 3, Height: 4},
+				OK:    true,
+			}
+		case screen.QueryAtPoint:
+			return core.Result{Value: "unexpected", OK: true}
+		default:
+			return core.Result{}
+		}
+	})
+
+	got, err := svc.GetScreenForWindow("editor")
+
+	require.Error(t, err)
+	assert.Nil(t, got)
+	assert.Contains(t, err.Error(), "unexpected result type")
+}
+
+func TestDisplayAPI_OpenSingleFileDialog_Good(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+
+	var task dialog.TaskOpenFile
+	c.Action("dialog.openFile", func(_ context.Context, opts core.Options) core.Result {
+		task = opts.Get("task").Value.(dialog.TaskOpenFile)
+		return core.Result{Value: []string{"/tmp/report.csv"}, OK: true}
+	})
+
+	path, err := svc.OpenSingleFileDialog(OpenFileOptions{
+		Title:           "Pick report",
+		DefaultFilename: "report.csv",
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, "/tmp/report.csv", path)
+	assert.Equal(t, "Pick report", task.Options.Title)
+	assert.Equal(t, "report.csv", task.Options.Filename)
+}
+
+func TestDisplayAPI_OpenSingleFileDialog_Bad(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+
+	c.Action("dialog.openFile", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: []string{}, OK: true}
+	})
+
+	path, err := svc.OpenSingleFileDialog(OpenFileOptions{})
+
+	require.NoError(t, err)
+	assert.Empty(t, path)
+}
+
+func TestDisplayAPI_OpenSingleFileDialog_Ugly(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+
+	c.Action("dialog.openFile", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: "unexpected", OK: false}
+	})
+
+	path, err := svc.OpenSingleFileDialog(OpenFileOptions{})
+
+	require.Error(t, err)
+	assert.Empty(t, path)
+	assert.Contains(t, err.Error(), "dialog.openFile action failed")
+}
+
+func TestDisplayAPI_ConfirmDialog_Good(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+
+	var task dialog.TaskQuestion
+	c.Action("dialog.question", func(_ context.Context, opts core.Options) core.Result {
+		task = opts.Get("task").Value.(dialog.TaskQuestion)
+		return core.Result{Value: "Yes", OK: true}
+	})
+
+	confirmed, err := svc.ConfirmDialog("Confirm", "Delete this file?")
+
+	require.NoError(t, err)
+	assert.True(t, confirmed)
+	assert.Equal(t, "Confirm", task.Title)
+	assert.Equal(t, []string{"Yes", "No"}, task.Buttons)
+}
+
+func TestDisplayAPI_ConfirmDialog_Bad(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+
+	c.Action("dialog.question", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: assert.AnError, OK: false}
+	})
+
+	confirmed, err := svc.ConfirmDialog("Confirm", "Delete this file?")
+
+	require.Error(t, err)
+	assert.False(t, confirmed)
+	assert.Equal(t, assert.AnError, err)
+}
+
+func TestDisplayAPI_ConfirmDialog_Ugly(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+
+	c.Action("dialog.question", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: 42, OK: true}
+	})
+
+	confirmed, err := svc.ConfirmDialog("Confirm", "Delete this file?")
+
+	require.Error(t, err)
+	assert.False(t, confirmed)
+	assert.Contains(t, err.Error(), "unexpected result type")
+}
+
+func TestDisplayAPI_ReadClipboard_Good(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+
+	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
+		switch q.(type) {
+		case clipboard.QueryText:
+			return core.Result{
+				Value: clipboard.ClipboardContent{
+					Text:       "hello clipboard",
+					HasContent: true,
+				},
+				OK: true,
+			}
+		default:
+			return core.Result{}
+		}
+	})
+
+	text, err := svc.ReadClipboard()
+
+	require.NoError(t, err)
+	assert.Equal(t, "hello clipboard", text)
+}
+
+func TestDisplayAPI_ReadClipboard_Bad(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+
+	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
+		switch q.(type) {
+		case clipboard.QueryText:
+			return core.Result{OK: false}
+		default:
+			return core.Result{}
+		}
+	})
+
+	text, err := svc.ReadClipboard()
+
+	require.NoError(t, err)
+	assert.Empty(t, text)
+	// Missing seam: QUERY drops non-OK backend errors, so propagation is not observable here.
+}
+
+func TestDisplayAPI_ReadClipboard_Ugly(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+
+	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
+		switch q.(type) {
+		case clipboard.QueryText:
+			return core.Result{Value: "unexpected", OK: true}
+		default:
+			return core.Result{}
+		}
+	})
+
+	text, err := svc.ReadClipboard()
+
+	require.Error(t, err)
+	assert.Empty(t, text)
+	assert.Contains(t, err.Error(), "unexpected result type")
+}
+
+func TestDisplayAPI_CheckNotificationPermission_Good(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+
+	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
+		switch q.(type) {
+		case notification.QueryPermission:
+			return core.Result{Value: notification.PermissionStatus{Granted: true}, OK: true}
+		default:
+			return core.Result{}
+		}
+	})
+
+	granted, err := svc.CheckNotificationPermission()
+
+	require.NoError(t, err)
+	assert.True(t, granted)
+}
+
+func TestDisplayAPI_CheckNotificationPermission_Bad(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+
+	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
+		switch q.(type) {
+		case notification.QueryPermission:
+			return core.Result{OK: false}
+		default:
+			return core.Result{}
+		}
+	})
+
+	granted, err := svc.CheckNotificationPermission()
+
+	require.Error(t, err)
+	assert.False(t, granted)
+	assert.Contains(t, err.Error(), "notification query failed")
+}
+
+func TestDisplayAPI_CheckNotificationPermission_Ugly(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+
+	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
+		switch q.(type) {
+		case notification.QueryPermission:
+			return core.Result{Value: "unexpected", OK: true}
+		default:
+			return core.Result{}
+		}
+	})
+
+	granted, err := svc.CheckNotificationPermission()
+
+	require.Error(t, err)
+	assert.False(t, granted)
+	assert.Contains(t, err.Error(), "unexpected result type")
+}
+
+func TestDisplayAPI_WriteClipboard_Good(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+
+	var gotText string
+	c.Action("clipboard.setText", func(_ context.Context, opts core.Options) core.Result {
+		gotText = opts.Get("task").Value.(clipboard.TaskSetText).Text
+		return core.Result{OK: true}
+	})
+
+	err := svc.WriteClipboard("hello")
+
+	require.NoError(t, err)
+	assert.Equal(t, "hello", gotText)
+}
+
+func TestDisplayAPI_WriteClipboard_Bad(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+
+	c.Action("clipboard.setText", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: assert.AnError, OK: false}
+	})
+
+	err := svc.WriteClipboard("hello")
+
+	require.Error(t, err)
+	assert.Equal(t, assert.AnError, err)
+}
+
+func TestDisplayAPI_WriteClipboard_Ugly(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+
+	c.Action("clipboard.setText", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: "unexpected", OK: false}
+	})
+
+	err := svc.WriteClipboard("")
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "clipboard.setText")
+}
+
+func TestDisplayAPI_SetTrayIcon_Good(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+
+	var got []byte
+	c.Action("systray.setIcon", func(_ context.Context, opts core.Options) core.Result {
+		got = append([]byte(nil), opts.Get("task").Value.(systray.TaskSetTrayIcon).Data...)
+		return core.Result{OK: true}
+	})
+
+	err := svc.SetTrayIcon([]byte{1, 2, 3})
+
+	require.NoError(t, err)
+	assert.Equal(t, []byte{1, 2, 3}, got)
+}
+
+func TestDisplayAPI_SetTrayIcon_Bad(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+
+	c.Action("systray.setIcon", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: assert.AnError, OK: false}
+	})
+
+	err := svc.SetTrayIcon([]byte{1})
+
+	require.Error(t, err)
+	assert.Equal(t, assert.AnError, err)
+}
+
+func TestDisplayAPI_SetTrayIcon_Ugly(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+
+	c.Action("systray.setIcon", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: "unexpected", OK: false}
+	})
+
+	err := svc.SetTrayIcon(nil)
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "systray.setIcon")
 }
