@@ -69,6 +69,7 @@ func (d *TCPDriver) Publish(ctx context.Context, envelope Envelope) error {
 	if err != nil {
 		return err
 	}
+	var publishErr error
 	for _, peer := range d.options.PeerAddrs {
 		peer = strings.TrimSpace(peer)
 		if peer == "" {
@@ -76,15 +77,17 @@ func (d *TCPDriver) Publish(ctx context.Context, envelope Envelope) error {
 		}
 		conn, err := (&net.Dialer{}).DialContext(ctx, "tcp", peer)
 		if err != nil {
-			return err
+			publishErr = errors.Join(publishErr, err)
+			continue
 		}
 		if _, err := conn.Write(append(payload, '\n')); err != nil {
+			publishErr = errors.Join(publishErr, err)
 			_ = conn.Close()
-			return err
+			continue
 		}
 		_ = conn.Close()
 	}
-	return nil
+	return publishErr
 }
 
 func (d *TCPDriver) Close() error {
