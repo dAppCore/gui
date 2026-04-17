@@ -78,6 +78,10 @@ type Theme struct {
 	IsDark bool `json:"isDark"`
 }
 
+func unexpectedResultType(method string) error {
+	return coreerr.E(method, "unexpected result type", nil)
+}
+
 func (s *Service) GetScreens() []*Screen {
 	r := s.Core().QUERY(screen.QueryAll{})
 	if !r.OK {
@@ -102,7 +106,10 @@ func (s *Service) GetScreen(id string) (*Screen, error) {
 		}
 		return nil, nil
 	}
-	scr, _ := r.Value.(*screen.Screen)
+	scr, ok := r.Value.(*screen.Screen)
+	if !ok {
+		return nil, unexpectedResultType("display.GetScreen")
+	}
 	return screenToDisplay(scr), nil
 }
 
@@ -114,7 +121,10 @@ func (s *Service) GetPrimaryScreen() (*Screen, error) {
 		}
 		return nil, nil
 	}
-	scr, _ := r.Value.(*screen.Screen)
+	scr, ok := r.Value.(*screen.Screen)
+	if !ok {
+		return nil, unexpectedResultType("display.GetPrimaryScreen")
+	}
 	return screenToDisplay(scr), nil
 }
 
@@ -126,7 +136,10 @@ func (s *Service) GetScreenAtPoint(x, y int) (*Screen, error) {
 		}
 		return nil, nil
 	}
-	scr, _ := r.Value.(*screen.Screen)
+	scr, ok := r.Value.(*screen.Screen)
+	if !ok {
+		return nil, unexpectedResultType("display.GetScreenAtPoint")
+	}
 	return screenToDisplay(scr), nil
 }
 
@@ -173,7 +186,10 @@ func (s *Service) OpenFileDialog(opts OpenFileOptions) ([]string, error) {
 		}
 		return nil, coreerr.E("display.OpenFileDialog", "dialog.openFile action failed", nil)
 	}
-	paths, _ := result.Value.([]string)
+	paths, ok := result.Value.([]string)
+	if !ok {
+		return nil, unexpectedResultType("display.OpenFileDialog")
+	}
 	return paths, nil
 }
 
@@ -187,7 +203,10 @@ func (s *Service) SaveFileDialog(opts SaveFileOptions) (string, error) {
 		}
 		return "", coreerr.E("display.SaveFileDialog", "dialog.saveFile action failed", nil)
 	}
-	path, _ := result.Value.(string)
+	path, ok := result.Value.(string)
+	if !ok {
+		return "", unexpectedResultType("display.SaveFileDialog")
+	}
 	return path, nil
 }
 
@@ -201,7 +220,10 @@ func (s *Service) OpenDirectoryDialog(opts OpenDirectoryOptions) (string, error)
 		}
 		return "", coreerr.E("display.OpenDirectoryDialog", "dialog.openDirectory action failed", nil)
 	}
-	path, _ := result.Value.(string)
+	path, ok := result.Value.(string)
+	if !ok {
+		return "", unexpectedResultType("display.OpenDirectoryDialog")
+	}
 	return path, nil
 }
 
@@ -219,7 +241,10 @@ func (s *Service) ConfirmDialog(title, message string) (bool, error) {
 		}
 		return false, coreerr.E("display.ConfirmDialog", "dialog.question action failed", nil)
 	}
-	button, _ := result.Value.(string)
+	button, ok := result.Value.(string)
+	if !ok {
+		return false, unexpectedResultType("display.ConfirmDialog")
+	}
 	return button == "Yes", nil
 }
 
@@ -368,7 +393,7 @@ func (s *Service) ReadClipboardImage() ([]byte, error) {
 	}
 	content, ok := r.Value.(clipboard.ImageContent)
 	if !ok {
-		return nil, coreerr.E("display.ReadClipboardImage", "unexpected result type", nil)
+		return nil, unexpectedResultType("display.ReadClipboardImage")
 	}
 	if !content.HasImage {
 		return nil, nil
@@ -432,7 +457,10 @@ func (s *Service) RequestNotificationPermission() (bool, error) {
 		}
 		return false, coreerr.E("display.RequestNotificationPermission", "notification.requestPermission action failed", nil)
 	}
-	granted, _ := r.Value.(bool)
+	granted, ok := r.Value.(bool)
+	if !ok {
+		return false, unexpectedResultType("display.RequestNotificationPermission")
+	}
 	return granted, nil
 }
 
@@ -446,7 +474,7 @@ func (s *Service) CheckNotificationPermission() (bool, error) {
 	}
 	status, ok := r.Value.(notification.PermissionStatus)
 	if !ok {
-		return false, coreerr.E("display.CheckNotificationPermission", "unexpected result type", nil)
+		return false, unexpectedResultType("display.CheckNotificationPermission")
 	}
 	return status.Granted, nil
 }

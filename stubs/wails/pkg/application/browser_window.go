@@ -1,6 +1,7 @@
 package application
 
 import (
+	"fmt"
 	"sync"
 	"unsafe"
 
@@ -46,7 +47,7 @@ type BrowserWindow struct {
 func NewBrowserWindow(id uint, clientID string) *BrowserWindow {
 	return &BrowserWindow{
 		id:       id,
-		name:     "browser-" + string(rune('0'+id%10)),
+		name:     fmt.Sprintf("browser-%d", id),
 		clientID: clientID,
 	}
 }
@@ -64,15 +65,15 @@ func (browserWindow *BrowserWindow) Error(message string, arguments ...any) {}
 func (browserWindow *BrowserWindow) Info(message string, arguments ...any)  {}
 
 // No-op methods — browser windows are controlled via WebSocket, not native APIs.
-func (browserWindow *BrowserWindow) Center()                 {}
-func (browserWindow *BrowserWindow) Close()                  {}
-func (browserWindow *BrowserWindow) DisableSizeConstraints() {}
-func (browserWindow *BrowserWindow) EnableSizeConstraints()  {}
+func (browserWindow *BrowserWindow) Center()                  {}
+func (browserWindow *BrowserWindow) Close()                   {}
+func (browserWindow *BrowserWindow) DisableSizeConstraints()  {}
+func (browserWindow *BrowserWindow) EnableSizeConstraints()   {}
 func (browserWindow *BrowserWindow) ExecJS(javascript string) {}
-func (browserWindow *BrowserWindow) Focus()                  {}
-func (browserWindow *BrowserWindow) ForceReload()            {}
-func (browserWindow *BrowserWindow) Fullscreen() Window      { return browserWindow }
-func (browserWindow *BrowserWindow) GetBorderSizes() *LRTB   { return nil }
+func (browserWindow *BrowserWindow) Focus()                   {}
+func (browserWindow *BrowserWindow) ForceReload()             {}
+func (browserWindow *BrowserWindow) Fullscreen() Window       { return browserWindow }
+func (browserWindow *BrowserWindow) GetBorderSizes() *LRTB    { return nil }
 func (browserWindow *BrowserWindow) GetScreen() (*Screen, error) {
 	return nil, nil
 }
@@ -95,7 +96,7 @@ func (browserWindow *BrowserWindow) Minimise() Window                  { return 
 func (browserWindow *BrowserWindow) OnWindowEvent(eventType events.WindowEventType, callback func(event *WindowEvent)) func() {
 	return func() {}
 }
-func (browserWindow *BrowserWindow) OpenContextMenu(data *ContextMenuData) {}
+func (browserWindow *BrowserWindow) OpenContextMenu(data *ContextMenuData)  {}
 func (browserWindow *BrowserWindow) Position() (int, int)                   { return 0, 0 }
 func (browserWindow *BrowserWindow) RelativePosition() (int, int)           { return 0, 0 }
 func (browserWindow *BrowserWindow) Reload()                                {}
@@ -137,27 +138,27 @@ func (browserWindow *BrowserWindow) SetURL(url string) Window         { return b
 func (browserWindow *BrowserWindow) SetZoom(magnification float64) Window {
 	return browserWindow
 }
-func (browserWindow *BrowserWindow) Show() Window              { return browserWindow }
-func (browserWindow *BrowserWindow) ShowMenuBar()              {}
-func (browserWindow *BrowserWindow) Size() (int, int)          { return 0, 0 }
-func (browserWindow *BrowserWindow) OpenDevTools()             {}
-func (browserWindow *BrowserWindow) ToggleFullscreen()         {}
-func (browserWindow *BrowserWindow) ToggleMaximise()           {}
-func (browserWindow *BrowserWindow) ToggleMenuBar()            {}
-func (browserWindow *BrowserWindow) ToggleFrameless()          {}
-func (browserWindow *BrowserWindow) UnFullscreen()             {}
-func (browserWindow *BrowserWindow) UnMaximise()               {}
-func (browserWindow *BrowserWindow) UnMinimise()               {}
-func (browserWindow *BrowserWindow) Width() int                { return 0 }
-func (browserWindow *BrowserWindow) IsVisible() bool           { return true }
-func (browserWindow *BrowserWindow) Bounds() Rect              { return Rect{} }
-func (browserWindow *BrowserWindow) SetBounds(bounds Rect)     {}
-func (browserWindow *BrowserWindow) Zoom()                     {}
-func (browserWindow *BrowserWindow) ZoomIn()                   {}
-func (browserWindow *BrowserWindow) ZoomOut()                  {}
-func (browserWindow *BrowserWindow) ZoomReset() Window         { return browserWindow }
-func (browserWindow *BrowserWindow) SetMenu(menu *Menu)        {}
-func (browserWindow *BrowserWindow) SnapAssist()               {}
+func (browserWindow *BrowserWindow) Show() Window          { return browserWindow }
+func (browserWindow *BrowserWindow) ShowMenuBar()          {}
+func (browserWindow *BrowserWindow) Size() (int, int)      { return 0, 0 }
+func (browserWindow *BrowserWindow) OpenDevTools()         {}
+func (browserWindow *BrowserWindow) ToggleFullscreen()     {}
+func (browserWindow *BrowserWindow) ToggleMaximise()       {}
+func (browserWindow *BrowserWindow) ToggleMenuBar()        {}
+func (browserWindow *BrowserWindow) ToggleFrameless()      {}
+func (browserWindow *BrowserWindow) UnFullscreen()         {}
+func (browserWindow *BrowserWindow) UnMaximise()           {}
+func (browserWindow *BrowserWindow) UnMinimise()           {}
+func (browserWindow *BrowserWindow) Width() int            { return 0 }
+func (browserWindow *BrowserWindow) IsVisible() bool       { return true }
+func (browserWindow *BrowserWindow) Bounds() Rect          { return Rect{} }
+func (browserWindow *BrowserWindow) SetBounds(bounds Rect) {}
+func (browserWindow *BrowserWindow) Zoom()                 {}
+func (browserWindow *BrowserWindow) ZoomIn()               {}
+func (browserWindow *BrowserWindow) ZoomOut()              {}
+func (browserWindow *BrowserWindow) ZoomReset() Window     { return browserWindow }
+func (browserWindow *BrowserWindow) SetMenu(menu *Menu)    {}
+func (browserWindow *BrowserWindow) SnapAssist()           {}
 func (browserWindow *BrowserWindow) SetContentProtection(protection bool) Window {
 	return browserWindow
 }
@@ -172,7 +173,7 @@ func (browserWindow *BrowserWindow) RegisterHook(eventType events.WindowEventTyp
 
 func (browserWindow *BrowserWindow) InitiateFrontendDropProcessing(filenames []string, x int, y int) {
 }
-func (browserWindow *BrowserWindow) shouldUnconditionallyClose() bool { return false }
+func (browserWindow *BrowserWindow) shouldUnconditionallyClose() bool { return true }
 func (browserWindow *BrowserWindow) cut()                             {}
 func (browserWindow *BrowserWindow) copy()                            {}
 func (browserWindow *BrowserWindow) paste()                           {}

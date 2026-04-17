@@ -19,11 +19,11 @@ func newTestDisplayAPIService(t *testing.T) (*Service, *core.Core) {
 
 func TestDisplayAPI_screenToDisplay_Good(t *testing.T) {
 	got := screenToDisplay(&screen.Screen{
-		ID:         "screen-1",
-		Name:       "Primary",
+		ID:          "screen-1",
+		Name:        "Primary",
 		ScaleFactor: 2,
-		Bounds:     screen.Rect{X: 10, Y: 20, Width: 1920, Height: 1080},
-		IsPrimary:  true,
+		Bounds:      screen.Rect{X: 10, Y: 20, Width: 1920, Height: 1080},
+		IsPrimary:   true,
 	})
 
 	require.NotNil(t, got)
@@ -53,7 +53,7 @@ func TestDisplayAPI_screenToDisplay_Ugly(t *testing.T) {
 
 func TestDisplayAPI_toDialogOpenFileOptions_Good(t *testing.T) {
 	got := toDialogOpenFileOptions(OpenFileOptions{
-		Title:           "Pick",
+		Title:            "Pick",
 		DefaultDirectory: "/tmp",
 		DefaultFilename:  "report.csv",
 		AllowMultiple:    true,
@@ -131,11 +131,11 @@ func TestDisplayAPI_GetScreens_Good(t *testing.T) {
 		case screen.QueryAll:
 			return core.Result{Value: []screen.Screen{
 				{
-					ID:         "screen-1",
-					Name:       "Primary",
-					Bounds:     screen.Rect{X: 10, Y: 20, Width: 1920, Height: 1080},
+					ID:          "screen-1",
+					Name:        "Primary",
+					Bounds:      screen.Rect{X: 10, Y: 20, Width: 1920, Height: 1080},
 					ScaleFactor: 2,
-					IsPrimary:  true,
+					IsPrimary:   true,
 				},
 			}, OK: true}
 		default:
@@ -179,6 +179,23 @@ func TestDisplayAPI_GetScreens_Ugly(t *testing.T) {
 	assert.Nil(t, svc.GetScreens())
 }
 
+func TestDisplayAPI_GetScreen_BadType(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
+		switch q.(type) {
+		case screen.QueryByID:
+			return core.Result{Value: "unexpected", OK: true}
+		default:
+			return core.Result{}
+		}
+	})
+
+	got, err := svc.GetScreen("screen-1")
+
+	require.Error(t, err)
+	assert.Nil(t, got)
+}
+
 func TestDisplayAPI_OpenFileDialog_Good(t *testing.T) {
 	svc, c := newTestDisplayAPIService(t)
 	c.Action("dialog.openFile", func(_ context.Context, opts core.Options) core.Result {
@@ -195,6 +212,18 @@ func TestDisplayAPI_OpenFileDialog_Good(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, []string{"/tmp/a.txt", "/tmp/b.txt"}, paths)
+}
+
+func TestDisplayAPI_OpenFileDialog_BadType(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+	c.Action("dialog.openFile", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: 42, OK: true}
+	})
+
+	paths, err := svc.OpenFileDialog(OpenFileOptions{})
+
+	require.Error(t, err)
+	assert.Nil(t, paths)
 }
 
 func TestDisplayAPI_OpenFileDialog_Bad(t *testing.T) {
@@ -217,8 +246,20 @@ func TestDisplayAPI_OpenFileDialog_Ugly(t *testing.T) {
 
 	paths, err := svc.OpenFileDialog(OpenFileOptions{})
 
-	require.NoError(t, err)
+	require.Error(t, err)
 	assert.Nil(t, paths)
+}
+
+func TestDisplayAPI_RequestNotificationPermission_BadType(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+	c.Action("notification.requestPermission", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: "unexpected", OK: true}
+	})
+
+	granted, err := svc.RequestNotificationPermission()
+
+	require.Error(t, err)
+	assert.False(t, granted)
 }
 
 func TestDisplayAPI_GetTheme_Good(t *testing.T) {
