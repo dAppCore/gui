@@ -676,6 +676,270 @@ func TestDisplay_handleWSMessage_Ugly(t *testing.T) {
 	assert.Contains(t, result.Value.(error).Error(), "missing required field \"opacity\"")
 }
 
+func TestDisplay_handleWSMessage_LayoutCommands_Good(t *testing.T) {
+	cases := []struct {
+		name   string
+		action string
+		msg    WSMessage
+		check  func(*testing.T, core.Options)
+	}{
+		{
+			name:   "LayoutBesideEditor",
+			action: "window.layoutBesideEditor",
+			msg: WSMessage{
+				Action: "layout:beside-editor",
+				Data: map[string]any{
+					"name":   "preview",
+					"editor": "code",
+					"side":   "right",
+					"ratio":  0.62,
+				},
+			},
+			check: func(t *testing.T, opts core.Options) {
+				t.Helper()
+				task := opts.Get("task").Value.(window.TaskLayoutBesideEditor)
+				assert.Equal(t, "preview", task.Name)
+				assert.Equal(t, "code", task.Editor)
+				assert.Equal(t, "right", task.Side)
+				assert.InDelta(t, 0.62, task.Ratio, 0.0001)
+			},
+		},
+		{
+			name:   "LayoutSuggest",
+			action: "window.layoutSuggest",
+			msg: WSMessage{
+				Action: "layout:suggest",
+				Data: map[string]any{
+					"screen_id":    "screen-1",
+					"window_count": 3,
+				},
+			},
+			check: func(t *testing.T, opts core.Options) {
+				t.Helper()
+				task := opts.Get("task").Value.(window.TaskLayoutSuggest)
+				assert.Equal(t, "screen-1", task.ScreenID)
+				assert.Equal(t, 3, task.WindowCount)
+			},
+		},
+		{
+			name:   "FindScreenSpace",
+			action: "window.findSpace",
+			msg: WSMessage{
+				Action: "screen:find-space",
+				Data: map[string]any{
+					"screen_id": "screen-1",
+					"width":     800,
+					"height":    600,
+					"padding":   24,
+				},
+			},
+			check: func(t *testing.T, opts core.Options) {
+				t.Helper()
+				task := opts.Get("task").Value.(window.TaskScreenFindSpace)
+				assert.Equal(t, "screen-1", task.ScreenID)
+				assert.Equal(t, 800, task.Width)
+				assert.Equal(t, 600, task.Height)
+				assert.Equal(t, 24, task.Padding)
+			},
+		},
+		{
+			name:   "ArrangeWindowPair",
+			action: "window.arrangePair",
+			msg: WSMessage{
+				Action: "window:arrange-pair",
+				Data: map[string]any{
+					"primary":   "editor",
+					"secondary": "preview",
+					"screen_id": "screen-1",
+					"ratio":     0.55,
+				},
+			},
+			check: func(t *testing.T, opts core.Options) {
+				t.Helper()
+				task := opts.Get("task").Value.(window.TaskWindowArrangePair)
+				assert.Equal(t, "editor", task.Primary)
+				assert.Equal(t, "preview", task.Secondary)
+				assert.Equal(t, "screen-1", task.ScreenID)
+				assert.InDelta(t, 0.55, task.Ratio, 0.0001)
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			svc, c := newTestDisplayAPIService(t)
+			called := false
+			c.Action(tc.action, func(_ context.Context, opts core.Options) core.Result {
+				called = true
+				tc.check(t, opts)
+				return core.Result{OK: true}
+			})
+
+			result := svc.handleWSMessage(tc.msg)
+			require.True(t, result.OK)
+			assert.True(t, called)
+		})
+	}
+}
+
+func TestDisplay_handleWSMessage_LayoutCommands_Bad(t *testing.T) {
+	cases := []struct {
+		name   string
+		action string
+		msg    WSMessage
+		field  string
+	}{
+		{
+			name:   "LayoutBesideEditor",
+			action: "window.layoutBesideEditor",
+			msg: WSMessage{
+				Action: "layout:beside-editor",
+				Data: map[string]any{
+					"name":   "preview",
+					"editor": "code",
+					"side":   "right",
+				},
+			},
+			field: "ratio",
+		},
+		{
+			name:   "LayoutSuggest",
+			action: "window.layoutSuggest",
+			msg: WSMessage{
+				Action: "layout:suggest",
+				Data: map[string]any{
+					"screen_id": "screen-1",
+				},
+			},
+			field: "window_count",
+		},
+		{
+			name:   "FindScreenSpace",
+			action: "window.findSpace",
+			msg: WSMessage{
+				Action: "screen:find-space",
+				Data: map[string]any{
+					"screen_id": "screen-1",
+					"width":     800,
+					"height":    600,
+				},
+			},
+			field: "padding",
+		},
+		{
+			name:   "ArrangeWindowPair",
+			action: "window.arrangePair",
+			msg: WSMessage{
+				Action: "window:arrange-pair",
+				Data: map[string]any{
+					"primary":   "editor",
+					"secondary": "preview",
+					"screen_id": "screen-1",
+				},
+			},
+			field: "ratio",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			svc, c := newTestDisplayAPIService(t)
+			called := false
+			c.Action(tc.action, func(_ context.Context, _ core.Options) core.Result {
+				called = true
+				return core.Result{OK: true}
+			})
+
+			result := svc.handleWSMessage(tc.msg)
+
+			require.False(t, result.OK)
+			assert.False(t, called)
+			assert.Contains(t, result.Value.(error).Error(), "missing required field \""+tc.field+"\"")
+		})
+	}
+}
+
+func TestDisplay_handleWSMessage_LayoutCommands_Ugly(t *testing.T) {
+	cases := []struct {
+		name   string
+		action string
+		msg    WSMessage
+		field  string
+	}{
+		{
+			name:   "LayoutBesideEditor",
+			action: "window.layoutBesideEditor",
+			msg: WSMessage{
+				Action: "layout:beside-editor",
+				Data: map[string]any{
+					"name":   "preview",
+					"editor": "code",
+					"side":   "right",
+					"ratio":  "0.62",
+				},
+			},
+			field: "ratio",
+		},
+		{
+			name:   "LayoutSuggest",
+			action: "window.layoutSuggest",
+			msg: WSMessage{
+				Action: "layout:suggest",
+				Data: map[string]any{
+					"screen_id":    "screen-1",
+					"window_count": 2.5,
+				},
+			},
+			field: "window_count",
+		},
+		{
+			name:   "FindScreenSpace",
+			action: "window.findSpace",
+			msg: WSMessage{
+				Action: "screen:find-space",
+				Data: map[string]any{
+					"screen_id": "screen-1",
+					"width":     "800",
+					"height":    600,
+					"padding":   24,
+				},
+			},
+			field: "width",
+		},
+		{
+			name:   "ArrangeWindowPair",
+			action: "window.arrangePair",
+			msg: WSMessage{
+				Action: "window:arrange-pair",
+				Data: map[string]any{
+					"primary":   "editor",
+					"secondary": "preview",
+					"screen_id": "screen-1",
+					"ratio":     true,
+				},
+			},
+			field: "ratio",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			svc, c := newTestDisplayAPIService(t)
+			called := false
+			c.Action(tc.action, func(_ context.Context, _ core.Options) core.Result {
+				called = true
+				return core.Result{OK: true}
+			})
+
+			result := svc.handleWSMessage(tc.msg)
+
+			require.False(t, result.OK)
+			assert.False(t, called)
+			assert.Contains(t, result.Value.(error).Error(), "invalid required field \""+tc.field+"\"")
+		})
+	}
+}
+
 func TestDisplay_handleTrayAction_Good(t *testing.T) {
 	platform := window.NewMockPlatform()
 	c := core.New(

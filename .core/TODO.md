@@ -1,1 +1,0 @@
-- @security pkg/display/display.go:954 — WebSocket layout commands still coerce missing or malformed numeric fields to zero instead of rejecting the request.

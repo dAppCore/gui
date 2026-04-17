@@ -3,6 +3,7 @@ package display
 import (
 	"context"
 	"errors"
+	"math"
 	"net/url"
 	"runtime"
 	"sync"
@@ -514,6 +515,85 @@ func wsRequire(data map[string]any, key string) (string, error) {
 	return requireStringField(data, key)
 }
 
+func requireFloatField(data map[string]any, key string) (float64, error) {
+	value, ok := data[key]
+	if !ok || value == nil {
+		return 0, coreerr.E("display.handleWSMessage", "missing required field \""+key+"\"", nil)
+	}
+
+	switch v := value.(type) {
+	case float64:
+		return v, nil
+	case float32:
+		return float64(v), nil
+	case int:
+		return float64(v), nil
+	case int8:
+		return float64(v), nil
+	case int16:
+		return float64(v), nil
+	case int32:
+		return float64(v), nil
+	case int64:
+		return float64(v), nil
+	case uint:
+		return float64(v), nil
+	case uint8:
+		return float64(v), nil
+	case uint16:
+		return float64(v), nil
+	case uint32:
+		return float64(v), nil
+	case uint64:
+		return float64(v), nil
+	default:
+		return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
+	}
+}
+
+func requireIntField(data map[string]any, key string) (int, error) {
+	value, ok := data[key]
+	if !ok || value == nil {
+		return 0, coreerr.E("display.handleWSMessage", "missing required field \""+key+"\"", nil)
+	}
+
+	switch v := value.(type) {
+	case int:
+		return v, nil
+	case int8:
+		return int(v), nil
+	case int16:
+		return int(v), nil
+	case int32:
+		return int(v), nil
+	case int64:
+		return int(v), nil
+	case uint:
+		return int(v), nil
+	case uint8:
+		return int(v), nil
+	case uint16:
+		return int(v), nil
+	case uint32:
+		return int(v), nil
+	case uint64:
+		return int(v), nil
+	case float64:
+		if math.Trunc(v) != v {
+			return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
+		}
+		return int(v), nil
+	case float32:
+		f := float64(v)
+		if math.Trunc(f) != f {
+			return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
+		}
+		return int(f), nil
+	default:
+		return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
+	}
+}
+
 func optionsFromMap(data map[string]any) core.Options {
 	items := make([]core.Option, 0, len(data))
 	for key, value := range data {
@@ -926,7 +1006,10 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 		}
 		editor, _ := msg.Data["editor"].(string)
 		side, _ := msg.Data["side"].(string)
-		ratio, _ := msg.Data["ratio"].(float64)
+		ratio, e := requireFloatField(msg.Data, "ratio")
+		if e != nil {
+			return core.Result{Value: e, OK: false}
+		}
 		return c.Action("window.layoutBesideEditor").Run(ctx, core.NewOptions(
 			core.Option{Key: "task", Value: window.TaskLayoutBesideEditor{
 				Name: name, Editor: editor, Side: side, Ratio: ratio,
@@ -934,20 +1017,32 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 		))
 	case "layout:suggest":
 		screenID, _ := msg.Data["screen_id"].(string)
-		windowCount, _ := msg.Data["window_count"].(float64)
+		windowCount, e := requireIntField(msg.Data, "window_count")
+		if e != nil {
+			return core.Result{Value: e, OK: false}
+		}
 		return c.Action("window.layoutSuggest").Run(ctx, core.NewOptions(
 			core.Option{Key: "task", Value: window.TaskLayoutSuggest{
-				ScreenID: screenID, WindowCount: int(windowCount),
+				ScreenID: screenID, WindowCount: windowCount,
 			}},
 		))
 	case "screen:find-space":
 		screenID, _ := msg.Data["screen_id"].(string)
-		width, _ := msg.Data["width"].(float64)
-		height, _ := msg.Data["height"].(float64)
-		padding, _ := msg.Data["padding"].(float64)
+		width, e := requireIntField(msg.Data, "width")
+		if e != nil {
+			return core.Result{Value: e, OK: false}
+		}
+		height, e := requireIntField(msg.Data, "height")
+		if e != nil {
+			return core.Result{Value: e, OK: false}
+		}
+		padding, e := requireIntField(msg.Data, "padding")
+		if e != nil {
+			return core.Result{Value: e, OK: false}
+		}
 		return c.Action("window.findSpace").Run(ctx, core.NewOptions(
 			core.Option{Key: "task", Value: window.TaskScreenFindSpace{
-				ScreenID: screenID, Width: int(width), Height: int(height), Padding: int(padding),
+				ScreenID: screenID, Width: width, Height: height, Padding: padding,
 			}},
 		))
 	case "window:arrange-pair":
@@ -960,7 +1055,10 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 			return core.Result{Value: e, OK: false}
 		}
 		screenID, _ := msg.Data["screen_id"].(string)
-		ratio, _ := msg.Data["ratio"].(float64)
+		ratio, e := requireFloatField(msg.Data, "ratio")
+		if e != nil {
+			return core.Result{Value: e, OK: false}
+		}
 		return c.Action("window.arrangePair").Run(ctx, core.NewOptions(
 			core.Option{Key: "task", Value: window.TaskWindowArrangePair{
 				Primary: primary, Secondary: secondary, ScreenID: screenID, Ratio: ratio,
