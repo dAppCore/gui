@@ -1,6 +1,7 @@
 package display
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -23,12 +24,19 @@ func (s *Service) buildHLCRFComponents(pageURL string) (string, error) {
 		if templateBody == "" && strings.TrimSpace(component.Name) != "" {
 			resolvedPath, pathErr := safeManifestRelativePath(loaded.BaseDir, component.Name, "hlcrf component path")
 			if pathErr != nil {
+				if errors.Is(pathErr, os.ErrNotExist) {
+					continue
+				}
 				return "", pathErr
 			}
 			body, readErr := os.ReadFile(resolvedPath)
-			if readErr == nil {
-				templateBody = string(body)
+			if readErr != nil {
+				if errors.Is(readErr, os.ErrNotExist) {
+					continue
+				}
+				return "", readErr
 			}
+			templateBody = string(body)
 		}
 		if templateBody == "" {
 			continue

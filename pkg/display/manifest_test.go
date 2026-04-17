@@ -42,10 +42,14 @@ func TestInjectAppPreloads_RejectsTraversal(t *testing.T) {
 
 func TestManifest_SafeManifestPreloadPath_Good(t *testing.T) {
 	root := t.TempDir()
+	target := filepath.Join(root, "preload.js")
+	require.NoError(t, os.WriteFile(target, []byte("globalThis.ready = true;"), 0o644))
+	expected, err := filepath.EvalSymlinks(target)
+	require.NoError(t, err)
 	got, err := safeManifestPreloadPath(root, "preload.js")
 
 	require.NoError(t, err)
-	assert.Equal(t, filepath.Join(root, "preload.js"), got)
+	assert.Equal(t, expected, got)
 }
 
 func TestManifest_SafeManifestPreloadPath_Bad(t *testing.T) {
@@ -266,6 +270,14 @@ func TestManifest_SafeManifestRelativePath_Bad(t *testing.T) {
 	_, err := safeManifestRelativePath(root, "", "preload path")
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "empty")
+}
+
+func TestManifest_SafeManifestRelativePath_Bad_MissingFile(t *testing.T) {
+	root := t.TempDir()
+
+	_, err := safeManifestRelativePath(root, "missing.js", "preload path")
+
+	require.Error(t, err)
 }
 
 func TestManifest_SafeManifestRelativePath_Ugly(t *testing.T) {

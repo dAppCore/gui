@@ -135,8 +135,8 @@ func safeManifestRelativePath(baseDir, relativePath, label string) (string, erro
 	if rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
 		return "", errors.New(label + " escapes manifest directory")
 	}
-	if _, statErr := os.Stat(candidateAbs); statErr != nil {
-		return candidateAbs, nil
+	if _, err := os.Lstat(candidateAbs); err != nil {
+		return "", err
 	}
 	candidateResolved, err := filepath.EvalSymlinks(candidateAbs)
 	if err != nil {

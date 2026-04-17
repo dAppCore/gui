@@ -1,0 +1,1 @@
+- @security pkg/display/events.go:118 — WebSocket origin checks still trust any `file://` origin, so a local malicious file can reach the event bridge.
