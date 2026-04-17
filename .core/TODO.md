@@ -1,0 +1,1 @@
+- @bug pkg/display/sidecar.go:13 — sidecar startup is still gated by `CORE_DENO_ENABLE`, which makes display package tests brittle when the configured binary is missing.

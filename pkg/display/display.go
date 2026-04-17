@@ -38,6 +38,11 @@ func failedAction(method, action string) error {
 	return coreerr.E(method, action+" action failed", nil)
 }
 
+var (
+	maxInt = int(^uint(0) >> 1)
+	minInt = -int(^uint(0)>>1) - 1
+)
+
 // WindowInfo is an alias for window.WindowInfo (backward compatibility).
 type WindowInfo = window.WindowInfo
 
@@ -536,9 +541,16 @@ func requireFloatField(data map[string]any, key string) (float64, error) {
 
 	switch v := value.(type) {
 	case float64:
+		if math.IsNaN(v) || math.IsInf(v, 0) {
+			return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
+		}
 		return v, nil
 	case float32:
-		return float64(v), nil
+		f := float64(v)
+		if math.IsNaN(f) || math.IsInf(f, 0) {
+			return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
+		}
+		return f, nil
 	case int:
 		return float64(v), nil
 	case int8:
@@ -564,6 +576,19 @@ func requireFloatField(data map[string]any, key string) (float64, error) {
 	}
 }
 
+func intFromFloatField(value float64, key string) (int, error) {
+	if math.IsNaN(value) || math.IsInf(value, 0) {
+		return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
+	}
+	if math.Trunc(value) != value {
+		return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
+	}
+	if value < float64(minInt) || value > float64(maxInt-1) {
+		return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
+	}
+	return int(value), nil
+}
+
 func requireIntField(data map[string]any, key string) (int, error) {
 	value, ok := data[key]
 	if !ok || value == nil {
@@ -580,28 +605,33 @@ func requireIntField(data map[string]any, key string) (int, error) {
 	case int32:
 		return int(v), nil
 	case int64:
+		if v < int64(minInt) || v > int64(maxInt) {
+			return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
+		}
 		return int(v), nil
 	case uint:
+		if uint64(v) > uint64(maxInt) {
+			return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
+		}
 		return int(v), nil
 	case uint8:
 		return int(v), nil
 	case uint16:
 		return int(v), nil
 	case uint32:
+		if uint64(v) > uint64(maxInt) {
+			return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
+		}
 		return int(v), nil
 	case uint64:
+		if v > uint64(maxInt) {
+			return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
+		}
 		return int(v), nil
 	case float64:
-		if math.Trunc(v) != v {
-			return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
-		}
-		return int(v), nil
+		return intFromFloatField(v, key)
 	case float32:
-		f := float64(v)
-		if math.Trunc(f) != f {
-			return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
-		}
-		return int(f), nil
+		return intFromFloatField(float64(v), key)
 	default:
 		return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
 	}

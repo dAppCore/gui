@@ -2,6 +2,7 @@ package display
 
 import (
 	"context"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -676,6 +677,13 @@ func TestDisplay_handleWSMessage_Ugly(t *testing.T) {
 	assert.Contains(t, result.Value.(error).Error(), "missing required field \"opacity\"")
 }
 
+func TestDisplay_handleWSMessage_RejectsFloatOverflow(t *testing.T) {
+	_, err := requireFloatField(map[string]any{"opacity": math.Inf(1)}, "opacity")
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid required field \"opacity\"")
+}
+
 func TestDisplay_handleWSMessage_LayoutCommands_Good(t *testing.T) {
 	cases := []struct {
 		name   string
@@ -938,6 +946,13 @@ func TestDisplay_handleWSMessage_LayoutCommands_Ugly(t *testing.T) {
 			assert.Contains(t, result.Value.(error).Error(), "invalid required field \""+tc.field+"\"")
 		})
 	}
+}
+
+func TestDisplay_handleWSMessage_RejectsIntOverflow(t *testing.T) {
+	_, err := requireIntField(map[string]any{"window_count": uint64(^uint(0))}, "window_count")
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid required field \"window_count\"")
 }
 
 func TestDisplay_handleTrayAction_Good(t *testing.T) {
