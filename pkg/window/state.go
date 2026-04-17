@@ -89,35 +89,72 @@ func (sm *StateManager) load() {
 	}
 	content, err := coreio.Local.Read(sm.filePath())
 	if err != nil {
+		core.Error(
+			"window state load failed",
+			"path", sm.filePath(),
+			"err", core.E("window.StateManager.load", "failed to read window state", err),
+		)
 		return
 	}
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
-	_ = core.JSONUnmarshalString(content, &sm.states)
+	result := core.JSONUnmarshalString(content, &sm.states)
+	if !result.OK {
+		if decodeErr, ok := result.Value.(error); ok {
+			core.Error(
+				"window state load failed",
+				"path", sm.filePath(),
+				"err", core.E("window.StateManager.load", "failed to decode window state", decodeErr),
+			)
+		}
+	}
 }
 
-func (sm *StateManager) save() {
+func (sm *StateManager) save() error {
 	if sm.configDir == "" && sm.statePath == "" {
-		return
+		return nil
 	}
 	sm.mu.RLock()
 	result := core.JSONMarshal(sm.states)
 	sm.mu.RUnlock()
 	if !result.OK {
-		return
+		marshalErr, _ := result.Value.(error)
+		core.Error(
+			"window state save failed",
+			"path", sm.filePath(),
+			"err", core.E("window.StateManager.save", "failed to encode window state", marshalErr),
+		)
+		return core.E("window.StateManager.save", "failed to encode window state", marshalErr)
 	}
 	data := result.Value.([]byte)
 	if dir := sm.dataDir(); dir != "" {
-		_ = coreio.Local.EnsureDir(dir)
+		if err := coreio.Local.EnsureDir(dir); err != nil {
+			core.Error(
+				"window state save failed",
+				"path", sm.filePath(),
+				"err", core.E("window.StateManager.save", "failed to create window state directory", err),
+			)
+			return core.E("window.StateManager.save", "failed to create window state directory", err)
+		}
 	}
-	_ = coreio.Local.Write(sm.filePath(), string(data))
+	if err := coreio.Local.Write(sm.filePath(), string(data)); err != nil {
+		core.Error(
+			"window state save failed",
+			"path", sm.filePath(),
+			"err", core.E("window.StateManager.save", "failed to write window state", err),
+		)
+		return core.E("window.StateManager.save", "failed to write window state", err)
+	}
+	return nil
 }
 
 func (sm *StateManager) scheduleSave() {
 	if sm.saveTimer != nil {
 		sm.saveTimer.Stop()
 	}
-	sm.saveTimer = time.AfterFunc(500*time.Millisecond, sm.save)
+	sm.saveTimer = time.AfterFunc(500*time.Millisecond, func() {
+		_ = sm.save()
+	})
 }
 
 // GetState returns the saved state for a window name.
@@ -218,9 +255,9 @@ func (sm *StateManager) Clear() {
 }
 
 // ForceSync writes state to disk immediately.
-func (sm *StateManager) ForceSync() {
+func (sm *StateManager) ForceSync() error {
 	if sm.saveTimer != nil {
 		sm.saveTimer.Stop()
 	}
-	sm.save()
+	return sm.save()
 }
