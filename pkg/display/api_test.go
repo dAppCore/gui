@@ -153,6 +153,20 @@ func TestDisplayAPI_GetScreens_Good(t *testing.T) {
 	assert.Equal(t, 1920, screens[0].Width)
 }
 
+func TestDisplayAPI_GetScreens_Empty(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
+		switch q.(type) {
+		case screen.QueryAll:
+			return core.Result{Value: []screen.Screen{}, OK: true}
+		default:
+			return core.Result{}
+		}
+	})
+
+	assert.Nil(t, svc.GetScreens())
+}
+
 func TestDisplayAPI_GetScreens_Bad(t *testing.T) {
 	svc, c := newTestDisplayAPIService(t)
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
@@ -164,7 +178,9 @@ func TestDisplayAPI_GetScreens_Bad(t *testing.T) {
 		}
 	})
 
-	assert.Nil(t, svc.GetScreens())
+	screens := svc.GetScreens()
+	require.NotNil(t, screens)
+	assert.Empty(t, screens)
 }
 
 func TestDisplayAPI_GetScreens_Ugly(t *testing.T) {
@@ -178,7 +194,9 @@ func TestDisplayAPI_GetScreens_Ugly(t *testing.T) {
 		}
 	})
 
-	assert.Nil(t, svc.GetScreens())
+	screens := svc.GetScreens()
+	require.NotNil(t, screens)
+	assert.Empty(t, screens)
 }
 
 func TestDisplayAPI_GetScreen_BadType(t *testing.T) {

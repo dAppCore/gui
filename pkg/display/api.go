@@ -90,10 +90,13 @@ func failedQuery(method, query string) error {
 func (s *Service) GetScreens() []*Screen {
 	r := s.Core().QUERY(screen.QueryAll{})
 	if !r.OK {
-		return nil
+		return []*Screen{}
 	}
 	screens, ok := r.Value.([]screen.Screen)
 	if !ok {
+		return []*Screen{}
+	}
+	if len(screens) == 0 {
 		return nil
 	}
 	result := make([]*Screen, 0, len(screens))
