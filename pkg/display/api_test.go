@@ -198,6 +198,57 @@ func TestDisplayAPI_GetScreen_BadType(t *testing.T) {
 	assert.Nil(t, got)
 }
 
+func TestDisplayAPI_GetScreen_Ugly(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
+		switch q.(type) {
+		case screen.QueryByID:
+			return core.Result{OK: false}
+		default:
+			return core.Result{}
+		}
+	})
+
+	got, err := svc.GetScreen("screen-1")
+
+	require.Error(t, err)
+	assert.Nil(t, got)
+}
+
+func TestDisplayAPI_GetPrimaryScreen_Ugly(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
+		switch q.(type) {
+		case screen.QueryPrimary:
+			return core.Result{OK: false}
+		default:
+			return core.Result{}
+		}
+	})
+
+	got, err := svc.GetPrimaryScreen()
+
+	require.Error(t, err)
+	assert.Nil(t, got)
+}
+
+func TestDisplayAPI_GetScreenAtPoint_Ugly(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
+		switch q.(type) {
+		case screen.QueryAtPoint:
+			return core.Result{OK: false}
+		default:
+			return core.Result{}
+		}
+	})
+
+	got, err := svc.GetScreenAtPoint(10, 20)
+
+	require.Error(t, err)
+	assert.Nil(t, got)
+}
+
 func TestDisplayAPI_OpenFileDialog_Good(t *testing.T) {
 	svc, c := newTestDisplayAPIService(t)
 	c.Action("dialog.openFile", func(_ context.Context, opts core.Options) core.Result {
@@ -486,6 +537,23 @@ func TestDisplayAPI_ReadClipboardImage_Ugly(t *testing.T) {
 		switch q.(type) {
 		case clipboard.QueryImage:
 			return core.Result{Value: "unexpected", OK: true}
+		default:
+			return core.Result{}
+		}
+	})
+
+	got, err := svc.ReadClipboardImage()
+
+	require.Error(t, err)
+	assert.Nil(t, got)
+}
+
+func TestDisplayAPI_ReadClipboardImage_Ugly_BackendFailure(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
+		switch q.(type) {
+		case clipboard.QueryImage:
+			return core.Result{OK: false}
 		default:
 			return core.Result{}
 		}

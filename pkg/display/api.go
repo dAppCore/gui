@@ -83,6 +83,10 @@ func unexpectedResultType(method string) error {
 	return coreerr.E(method, "unexpected result type", nil)
 }
 
+func failedQuery(method, query string) error {
+	return coreerr.E(method, query+" query failed", nil)
+}
+
 func (s *Service) GetScreens() []*Screen {
 	r := s.Core().QUERY(screen.QueryAll{})
 	if !r.OK {
@@ -105,7 +109,7 @@ func (s *Service) GetScreen(id string) (*Screen, error) {
 		if err, ok := r.Value.(error); ok {
 			return nil, err
 		}
-		return nil, nil
+		return nil, failedQuery("display.GetScreen", "screen.queryByID")
 	}
 	scr, ok := r.Value.(*screen.Screen)
 	if !ok {
@@ -120,7 +124,7 @@ func (s *Service) GetPrimaryScreen() (*Screen, error) {
 		if err, ok := r.Value.(error); ok {
 			return nil, err
 		}
-		return nil, nil
+		return nil, failedQuery("display.GetPrimaryScreen", "screen.queryPrimary")
 	}
 	scr, ok := r.Value.(*screen.Screen)
 	if !ok {
@@ -135,7 +139,7 @@ func (s *Service) GetScreenAtPoint(x, y int) (*Screen, error) {
 		if err, ok := r.Value.(error); ok {
 			return nil, err
 		}
-		return nil, nil
+		return nil, failedQuery("display.GetScreenAtPoint", "screen.queryAtPoint")
 	}
 	scr, ok := r.Value.(*screen.Screen)
 	if !ok {
@@ -390,7 +394,7 @@ func (s *Service) ReadClipboardImage() ([]byte, error) {
 		if err, ok := r.Value.(error); ok {
 			return nil, err
 		}
-		return nil, nil
+		return nil, failedQuery("display.ReadClipboardImage", "clipboard.queryImage")
 	}
 	content, ok := r.Value.(clipboard.ImageContent)
 	if !ok {
