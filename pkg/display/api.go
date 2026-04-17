@@ -96,9 +96,6 @@ func (s *Service) GetScreens() []*Screen {
 	if !ok {
 		return []*Screen{}
 	}
-	if len(screens) == 0 {
-		return nil
-	}
 	result := make([]*Screen, 0, len(screens))
 	for i := range screens {
 		result = append(result, screenToDisplay(&screens[i]))

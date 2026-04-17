@@ -164,7 +164,7 @@ func TestDisplayAPI_GetScreens_Empty(t *testing.T) {
 		}
 	})
 
-	assert.Nil(t, svc.GetScreens())
+	assert.Empty(t, svc.GetScreens())
 }
 
 func TestDisplayAPI_GetScreens_Bad(t *testing.T) {
