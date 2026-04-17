@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -157,6 +158,30 @@ func TestManifest_ManifestWindowConfig_Ugly(t *testing.T) {
 	assert.Nil(t, got)
 }
 
+func TestManifest_ManifestWindowConfig_ReturnsCopy(t *testing.T) {
+	root := t.TempDir()
+	require.NoError(t, os.MkdirAll(filepath.Join(root, ".core"), 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(root, "index.html"), []byte("<html></html>"), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(root, ".core", "view.yaml"), []byte(strings.Join([]string{
+		"windows:",
+		"  main:",
+		"    title: Core GUI",
+		"    width: 1280",
+		"    height: 720",
+	}, "\n")), 0o644))
+
+	svc, err := New()
+	require.NoError(t, err)
+
+	first := svc.manifestWindowConfig(filepath.Join(root, "index.html"))
+	require.NotNil(t, first)
+	first["main"] = ManifestWindow{Title: "mutated"}
+
+	second := svc.manifestWindowConfig(filepath.Join(root, "index.html"))
+	require.NotNil(t, second)
+	assert.Equal(t, "Core GUI", second["main"].Title)
+}
+
 func TestManifest_LoadManifestForOrigin_RejectsOversizedFile(t *testing.T) {
 	root := t.TempDir()
 	require.NoError(t, os.MkdirAll(filepath.Join(root, ".core"), 0o755))
@@ -169,6 +194,44 @@ func TestManifest_LoadManifestForOrigin_RejectsOversizedFile(t *testing.T) {
 	_, err = svc.loadManifestForOrigin(filepath.Join(root, "index.html"))
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "exceeds")
+}
+
+func TestManifest_LoadManifestForOrigin_Concurrent(t *testing.T) {
+	root := t.TempDir()
+	require.NoError(t, os.MkdirAll(filepath.Join(root, ".core"), 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(root, "index.html"), []byte("<html></html>"), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(root, ".core", "view.yaml"), []byte(strings.Join([]string{
+		"name: demo",
+		"windows:",
+		"  main:",
+		"    title: Core GUI",
+	}, "\n")), 0o644))
+
+	svc, err := New()
+	require.NoError(t, err)
+
+	var wg sync.WaitGroup
+	errs := make(chan error, 16)
+	for i := 0; i < 16; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			loaded, loadErr := svc.loadManifestForOrigin(filepath.Join(root, "index.html"))
+			if loadErr != nil {
+				errs <- loadErr
+				return
+			}
+			if loaded == nil || loaded.Manifest.Name != "demo" {
+				errs <- assert.AnError
+			}
+		}()
+	}
+	wg.Wait()
+	close(errs)
+
+	for err := range errs {
+		require.NoError(t, err)
+	}
 }
 
 func TestManifest_ManifestBaseDir_Good(t *testing.T) {

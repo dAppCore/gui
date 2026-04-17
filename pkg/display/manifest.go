@@ -50,12 +50,16 @@ type loadedManifest struct {
 }
 
 func (s *Service) loadManifestForOrigin(pageURL string) (*loadedManifest, error) {
+	s.manifestMu.Lock()
 	if s.manifestCache == nil {
 		s.manifestCache = make(map[string]*loadedManifest)
 	}
 	if cached, ok := s.manifestCache[pageURL]; ok {
+		s.manifestMu.Unlock()
 		return cached, nil
 	}
+	s.manifestMu.Unlock()
+
 	path, err := discoverManifestPath(pageURL)
 	if err != nil {
 		return nil, err
@@ -81,7 +85,13 @@ func (s *Service) loadManifestForOrigin(pageURL string) (*loadedManifest, error)
 		BaseDir:  manifestBaseDir(path),
 		Manifest: manifest,
 	}
+
+	s.manifestMu.Lock()
+	if s.manifestCache == nil {
+		s.manifestCache = make(map[string]*loadedManifest)
+	}
 	s.manifestCache[pageURL] = loaded
+	s.manifestMu.Unlock()
 	return loaded, nil
 }
 
@@ -183,13 +193,18 @@ func discoverManifestPath(pageURL string) (string, error) {
 }
 
 func (s *Service) manifestWindowConfig(pageURL string) map[string]ManifestWindow {
-	s.manifestMu.Lock()
-	defer s.manifestMu.Unlock()
 	loaded, err := s.loadManifestForOrigin(pageURL)
 	if err != nil || loaded == nil {
 		return nil
 	}
-	return loaded.Manifest.Windows
+	if len(loaded.Manifest.Windows) == 0 {
+		return nil
+	}
+	windows := make(map[string]ManifestWindow, len(loaded.Manifest.Windows))
+	for name, cfg := range loaded.Manifest.Windows {
+		windows[name] = cfg
+	}
+	return windows
 }
 
 func (s *Service) readManifestPreload(baseDir, preloadPath string) ([]byte, error) {
