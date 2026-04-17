@@ -192,13 +192,16 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 	s.registerMarketplaceActions()
 	s.registerSidecarActions()
 	s.registerDefaultSchemes()
-	s.attachP2PBridge()
 
 	// Initialise Wails wrappers if app is available (nil in tests)
 	if s.wailsApp != nil {
 		s.app = newWailsApp(s.wailsApp)
-		s.events = NewWSEventManager()
+		if s.events == nil {
+			s.events = NewWSEventManager()
+		}
 	}
+
+	s.attachP2PBridge()
 
 	return core.Result{OK: true}
 }

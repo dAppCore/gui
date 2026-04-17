@@ -1,1 +1,0 @@
-- @hardening pkg/display/display.go:195 — The P2P bridge is attached before `WSEventManager` is initialized, so early bridged events can be dropped during startup.
