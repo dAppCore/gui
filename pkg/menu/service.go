@@ -5,6 +5,7 @@ import (
 	"context"
 
 	core "dappco.re/go/core"
+	coreerr "dappco.re/go/core/log"
 )
 
 type Options struct{}
@@ -27,6 +28,9 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 	s.Core().RegisterQuery(s.handleQuery)
 	s.Core().Action("menu.setAppMenu", func(_ context.Context, opts core.Options) core.Result {
 		t := taskSetAppMenuFromOptions(opts)
+		if s.manager == nil || s.manager.Platform() == nil {
+			return core.Result{Value: coreerr.E("menu.setAppMenu", "menu manager unavailable", nil), OK: false}
+		}
 		s.menuItems = t.Items
 		s.manager.SetApplicationMenu(t.Items)
 		return core.Result{OK: true}

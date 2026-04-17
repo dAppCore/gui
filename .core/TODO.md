@@ -1,0 +1,1 @@
+- @hardening pkg/mcp/tools_contextmenu.go:28 — The JSON marshal/unmarshal bridge still uses unchecked helper return shapes and can panic if the helper contract changes.

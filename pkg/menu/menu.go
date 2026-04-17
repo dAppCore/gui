@@ -30,7 +30,13 @@ func NewManager(platform Platform) *Manager {
 // Build constructs a PlatformMenu from a tree of MenuItems.
 // menu.NewManager(menu.NewWailsPlatform(app)).Build([]menu.MenuItem{{Label: "File"}})
 func (m *Manager) Build(items []MenuItem) PlatformMenu {
+	if m == nil || m.platform == nil {
+		return nil
+	}
 	menu := m.platform.NewMenu()
+	if menu == nil {
+		return nil
+	}
 	m.buildItems(menu, items)
 	return menu
 }
@@ -66,7 +72,13 @@ func (m *Manager) buildItems(menu PlatformMenu, items []MenuItem) {
 // SetApplicationMenu builds and sets the application menu.
 // menu.NewManager(menu.NewWailsPlatform(app)).SetApplicationMenu([]menu.MenuItem{{Label: "File"}})
 func (m *Manager) SetApplicationMenu(items []MenuItem) {
+	if m == nil || m.platform == nil {
+		return
+	}
 	menu := m.Build(items)
+	if menu == nil {
+		return
+	}
 	m.platform.SetApplicationMenu(menu)
 }
 

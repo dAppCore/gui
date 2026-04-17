@@ -92,3 +92,15 @@ func TestManager_Build_Empty_Good(t *testing.T) {
 	menu := m.Build(nil)
 	assert.NotNil(t, menu)
 }
+
+func TestManager_Build_NilReceiver_Good(t *testing.T) {
+	var m *Manager
+	assert.Nil(t, m.Build([]MenuItem{{Label: "Test"}}))
+}
+
+func TestManager_SetApplicationMenu_NilReceiver_Good(t *testing.T) {
+	var m *Manager
+	assert.NotPanics(t, func() {
+		m.SetApplicationMenu([]MenuItem{{Label: "Test"}})
+	})
+}

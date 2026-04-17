@@ -64,3 +64,19 @@ func TestTaskSetAppMenu_Bad(t *testing.T) {
 	r := c.Action("menu.setAppMenu").Run(context.Background(), core.NewOptions())
 	assert.False(t, r.OK)
 }
+
+func TestTaskSetAppMenu_NoManager_FailsClosed(t *testing.T) {
+	c := core.New(core.WithServiceLock())
+	svc := &Service{
+		ServiceRuntime: core.NewServiceRuntime[Options](c, Options{}),
+	}
+	require.True(t, svc.OnStartup(context.Background()).OK)
+
+	r := c.Action("menu.setAppMenu").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: TaskSetAppMenu{Items: []MenuItem{{Label: "File"}}}},
+	))
+	require.False(t, r.OK)
+	err, ok := r.Value.(error)
+	require.True(t, ok)
+	assert.Contains(t, err.Error(), "menu manager unavailable")
+}

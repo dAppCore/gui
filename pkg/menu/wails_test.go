@@ -63,6 +63,13 @@ func TestWailsPlatform_SetApplicationMenu_Bad(t *testing.T) {
 	assert.True(t, menuField.IsNil())
 }
 
+func TestWailsPlatform_SetApplicationMenu_NilReceiver_Good(t *testing.T) {
+	var platform *WailsPlatform
+	assert.NotPanics(t, func() {
+		platform.SetApplicationMenu(newMockPlatform().NewMenu())
+	})
+}
+
 func TestWailsPlatform_NewMenu_Ugly(t *testing.T) {
 	app := &application.App{}
 	platform := NewWailsPlatform(app)
