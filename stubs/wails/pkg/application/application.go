@@ -651,12 +651,12 @@ func (w *WebviewWindow) DispatchWailsEvent(event *CustomEvent) {}
 // GetScreen returns the screen on which this window is currently displayed.
 //
 //	screen, err := w.GetScreen()
-func (w *WebviewWindow) GetScreen() (*Screen, error) { return nil, nil }
+func (w *WebviewWindow) GetScreen() (*Screen, error) { return &Screen{}, nil }
 
 // GetBorderSizes returns the platform-specific window border dimensions.
 //
 //	borders := w.GetBorderSizes()
-func (w *WebviewWindow) GetBorderSizes() *LRTB { return nil }
+func (w *WebviewWindow) GetBorderSizes() *LRTB { return &LRTB{} }
 
 // EnableSizeConstraints activates the min/max size limits.
 //

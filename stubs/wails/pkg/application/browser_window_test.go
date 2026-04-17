@@ -22,6 +22,11 @@ func TestBrowserWindow_NewBrowserWindow_Good(t *testing.T) {
 	assert.False(t, window.IsIgnoreMouseEvents())
 	assert.False(t, window.Resizable())
 	assert.Equal(t, 1.0, window.GetZoom())
+	screen, err := window.GetScreen()
+	require.NoError(t, err)
+	require.NotNil(t, screen)
+	assert.Equal(t, Screen{}, *screen)
+	assert.Equal(t, &LRTB{}, window.GetBorderSizes())
 	assert.Nil(t, window.NativeWindow())
 	assert.True(t, window.shouldUnconditionallyClose())
 }

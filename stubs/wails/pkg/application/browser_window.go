@@ -141,9 +141,9 @@ func (browserWindow *BrowserWindow) Fullscreen() Window {
 	browserWindow.mu.Unlock()
 	return browserWindow
 }
-func (browserWindow *BrowserWindow) GetBorderSizes() *LRTB { return nil }
+func (browserWindow *BrowserWindow) GetBorderSizes() *LRTB { return &LRTB{} }
 func (browserWindow *BrowserWindow) GetScreen() (*Screen, error) {
-	return nil, nil
+	return &Screen{}, nil
 }
 func (browserWindow *BrowserWindow) GetZoom() float64 {
 	if browserWindow == nil {
