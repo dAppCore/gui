@@ -4,6 +4,7 @@ package browser
 import (
 	"context"
 	core "dappco.re/go/core"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -126,4 +127,82 @@ func TestTaskOpenURL_Bad_NoService(t *testing.T) {
 		core.Option{Key: "url", Value: "https://example.com"},
 	))
 	assert.False(t, r.OK)
+}
+
+func TestService_validatedOpenURL_Good(t *testing.T) {
+	cases := []struct {
+		name string
+		raw  string
+		want string
+	}{
+		{
+			name: "trimmed",
+			raw:  "  https://example.com  ",
+			want: "https://example.com",
+		},
+		{
+			name: "pathAndQuery",
+			raw:  "https://example.com/docs?q=core",
+			want: "https://example.com/docs?q=core",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := validatedOpenURL(tc.raw)
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, got)
+		})
+	}
+}
+
+func TestService_validatedOpenURL_Bad(t *testing.T) {
+	cases := []string{
+		"",
+		"   ",
+		"example.com",
+		"ftp://example.com",
+		"https://user:pass@example.com",
+	}
+
+	for _, raw := range cases {
+		t.Run(raw, func(t *testing.T) {
+			got, err := validatedOpenURL(raw)
+			require.Error(t, err)
+			assert.Empty(t, got)
+		})
+	}
+}
+
+func TestService_validatedOpenURL_Ugly(t *testing.T) {
+	got, err := validatedOpenURL("https://example.com/\x00")
+	require.Error(t, err)
+	assert.Empty(t, got)
+}
+
+func TestService_validatedOpenFilePath_Good(t *testing.T) {
+	got, err := validatedOpenFilePath("/tmp/../tmp/report.txt")
+	require.NoError(t, err)
+	assert.Equal(t, filepath.Clean("/tmp/report.txt"), got)
+}
+
+func TestService_validatedOpenFilePath_Bad(t *testing.T) {
+	cases := []string{
+		"",
+		"relative/report.txt",
+	}
+
+	for _, raw := range cases {
+		t.Run(raw, func(t *testing.T) {
+			got, err := validatedOpenFilePath(raw)
+			require.Error(t, err)
+			assert.Empty(t, got)
+		})
+	}
+}
+
+func TestService_validatedOpenFilePath_Ugly(t *testing.T) {
+	got, err := validatedOpenFilePath("/tmp/\x00report.txt")
+	require.Error(t, err)
+	assert.Empty(t, got)
 }

@@ -1,10 +1,12 @@
 package display
 
 import (
+	"bytes"
 	"context"
 	"testing"
 
 	core "dappco.re/go/core"
+	"forge.lthn.ai/core/gui/pkg/clipboard"
 	"forge.lthn.ai/core/gui/pkg/dialog"
 	"forge.lthn.ai/core/gui/pkg/environment"
 	"forge.lthn.ai/core/gui/pkg/screen"
@@ -308,4 +310,224 @@ func TestDisplayAPI_GetTheme_Ugly(t *testing.T) {
 
 	assert.Nil(t, svc.GetTheme())
 	assert.Empty(t, svc.GetSystemTheme())
+}
+
+func TestDisplayAPI_SaveFileDialog_Good(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+	c.Action("dialog.saveFile", func(_ context.Context, opts core.Options) core.Result {
+		task := opts.Get("task").Value.(dialog.TaskSaveFile)
+		assert.Equal(t, "Export", task.Options.Title)
+		assert.Equal(t, "/tmp", task.Options.Directory)
+		assert.Equal(t, "data.json", task.Options.Filename)
+		require.Len(t, task.Options.Filters, 1)
+		assert.Equal(t, "JSON", task.Options.Filters[0].DisplayName)
+		return core.Result{Value: "/exports/data.json", OK: true}
+	})
+
+	path, err := svc.SaveFileDialog(SaveFileOptions{
+		Title:            "Export",
+		DefaultDirectory: "/tmp",
+		DefaultFilename:  "data.json",
+		Filters:          []FileFilter{{DisplayName: "JSON", Pattern: "*.json"}},
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, "/exports/data.json", path)
+}
+
+func TestDisplayAPI_SaveFileDialog_Bad(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+	c.Action("dialog.saveFile", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: assert.AnError, OK: false}
+	})
+
+	path, err := svc.SaveFileDialog(SaveFileOptions{})
+
+	require.Error(t, err)
+	assert.Empty(t, path)
+}
+
+func TestDisplayAPI_SaveFileDialog_Ugly(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+	c.Action("dialog.saveFile", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: 42, OK: true}
+	})
+
+	path, err := svc.SaveFileDialog(SaveFileOptions{})
+
+	require.Error(t, err)
+	assert.Empty(t, path)
+}
+
+func TestDisplayAPI_OpenDirectoryDialog_Good(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+	c.Action("dialog.openDirectory", func(_ context.Context, opts core.Options) core.Result {
+		task := opts.Get("task").Value.(dialog.TaskOpenDirectory)
+		assert.Equal(t, "Choose", task.Options.Title)
+		assert.Equal(t, "/var", task.Options.Directory)
+		return core.Result{Value: "/var/data", OK: true}
+	})
+
+	path, err := svc.OpenDirectoryDialog(OpenDirectoryOptions{
+		Title:            "Choose",
+		DefaultDirectory: "/var",
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, "/var/data", path)
+}
+
+func TestDisplayAPI_OpenDirectoryDialog_Bad(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+	c.Action("dialog.openDirectory", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: assert.AnError, OK: false}
+	})
+
+	path, err := svc.OpenDirectoryDialog(OpenDirectoryOptions{})
+
+	require.Error(t, err)
+	assert.Empty(t, path)
+}
+
+func TestDisplayAPI_OpenDirectoryDialog_Ugly(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+	c.Action("dialog.openDirectory", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: 42, OK: true}
+	})
+
+	path, err := svc.OpenDirectoryDialog(OpenDirectoryOptions{})
+
+	require.Error(t, err)
+	assert.Empty(t, path)
+}
+
+func TestDisplayAPI_PromptDialog_Good(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+	c.Action("dialog.prompt", func(_ context.Context, opts core.Options) core.Result {
+		task := opts.Get("task").Value.(dialog.TaskPrompt)
+		assert.Equal(t, "Rename", task.Title)
+		assert.Equal(t, "Enter a new name", task.Message)
+		return core.Result{Value: dialog.PromptResult{Value: "draft", Confirmed: true}, OK: true}
+	})
+
+	value, confirmed, err := svc.PromptDialog("Rename", "Enter a new name")
+
+	require.NoError(t, err)
+	assert.True(t, confirmed)
+	assert.Equal(t, "draft", value)
+}
+
+func TestDisplayAPI_PromptDialog_Bad(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+	c.Action("dialog.prompt", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: assert.AnError, OK: false}
+	})
+
+	value, confirmed, err := svc.PromptDialog("Rename", "Enter a new name")
+
+	require.Error(t, err)
+	assert.False(t, confirmed)
+	assert.Empty(t, value)
+}
+
+func TestDisplayAPI_PromptDialog_Ugly(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+	c.Action("dialog.prompt", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: 42, OK: true}
+	})
+
+	value, confirmed, err := svc.PromptDialog("Rename", "Enter a new name")
+
+	require.Error(t, err)
+	assert.False(t, confirmed)
+	assert.Empty(t, value)
+}
+
+func TestDisplayAPI_ReadClipboardImage_Good(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+	payload := []byte{1, 2, 3}
+	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
+		switch q.(type) {
+		case clipboard.QueryImage:
+			return core.Result{Value: clipboard.ImageContent{Data: payload, HasImage: true}, OK: true}
+		default:
+			return core.Result{}
+		}
+	})
+
+	got, err := svc.ReadClipboardImage()
+
+	require.NoError(t, err)
+	require.Equal(t, []byte{1, 2, 3}, got)
+	payload[0] = 9
+	assert.Equal(t, byte(1), got[0])
+}
+
+func TestDisplayAPI_ReadClipboardImage_Bad(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
+		switch q.(type) {
+		case clipboard.QueryImage:
+			return core.Result{Value: clipboard.ImageContent{HasImage: false}, OK: true}
+		default:
+			return core.Result{}
+		}
+	})
+
+	got, err := svc.ReadClipboardImage()
+
+	require.NoError(t, err)
+	assert.Nil(t, got)
+}
+
+func TestDisplayAPI_ReadClipboardImage_Ugly(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
+		switch q.(type) {
+		case clipboard.QueryImage:
+			return core.Result{Value: "unexpected", OK: true}
+		default:
+			return core.Result{}
+		}
+	})
+
+	got, err := svc.ReadClipboardImage()
+
+	require.Error(t, err)
+	assert.Nil(t, got)
+}
+
+func TestDisplayAPI_WriteClipboardImage_Good(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+	var got []byte
+	c.Action("clipboard.setImage", func(_ context.Context, opts core.Options) core.Result {
+		got = append([]byte(nil), opts.Get("data").Value.([]byte)...)
+		return core.Result{OK: true}
+	})
+
+	input := []byte{4, 5, 6}
+	err := svc.WriteClipboardImage(input)
+
+	require.NoError(t, err)
+	input[0] = 9
+	assert.True(t, bytes.Equal([]byte{4, 5, 6}, got))
+}
+
+func TestDisplayAPI_WriteClipboardImage_Bad(t *testing.T) {
+	svc, _ := newTestDisplayAPIService(t)
+
+	err := svc.WriteClipboardImage(nil)
+
+	require.Error(t, err)
+}
+
+func TestDisplayAPI_WriteClipboardImage_Ugly(t *testing.T) {
+	svc, c := newTestDisplayAPIService(t)
+	c.Action("clipboard.setImage", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: assert.AnError, OK: false}
+	})
+
+	err := svc.WriteClipboardImage([]byte{1})
+
+	require.Error(t, err)
 }

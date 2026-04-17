@@ -3,9 +3,12 @@ package dialog
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	core "dappco.re/go/core"
+	"forge.lthn.ai/core/gui/pkg/webview"
+	"forge.lthn.ai/core/gui/pkg/window"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -293,6 +296,42 @@ func TestService_TaskError_Good(t *testing.T) {
 	assert.Equal(t, "could not write file: permission denied", mock.lastMsgOpts.Message)
 }
 
+func TestService_TaskPrompt_Good(t *testing.T) {
+	_, c := newTestService(t)
+
+	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
+		switch q.(type) {
+		case window.QueryWindowList:
+			return core.Result{Value: []window.WindowInfo{
+				{Name: "editor", Focused: true},
+			}, OK: true}
+		default:
+			return core.Result{}
+		}
+	})
+
+	var script string
+	c.Action("gui.webview.eval", func(_ context.Context, opts core.Options) core.Result {
+		task := opts.Get("task").Value.(webview.TaskEvaluate)
+		script = task.Script
+		assert.Equal(t, "editor", task.Window)
+		return core.Result{Value: "draft", OK: true}
+	})
+
+	r := taskRun(c, "dialog.prompt", TaskPrompt{
+		Title:        "Rename",
+		Message:      "Enter a new name",
+		DefaultValue: "draft",
+	})
+	require.True(t, r.OK)
+	result := r.Value.(PromptResult)
+	assert.Equal(t, "draft", result.Value)
+	assert.True(t, result.Confirmed)
+	assert.Contains(t, script, "window.prompt(")
+	assert.Contains(t, script, "Rename")
+	assert.Contains(t, script, "Enter a new name")
+}
+
 // --- Bad path tests ---
 
 func TestService_TaskOpenFile_Bad(t *testing.T) {
@@ -387,4 +426,123 @@ func TestService_UnknownTask_Ugly(t *testing.T) {
 	c := core.New(core.WithServiceLock())
 	r := c.Action("dialog.nonexistent").Run(context.Background(), core.NewOptions())
 	assert.False(t, r.OK)
+}
+
+func TestService_promptOptionsFrom_Good(t *testing.T) {
+	got, err := promptOptionsFrom(core.NewOptions(
+		core.Option{Key: "task", Value: TaskPrompt{
+			Title:        "Rename",
+			Message:      "Enter a new name",
+			DefaultValue: "draft",
+		}},
+	))
+	require.NoError(t, err)
+	assert.Equal(t, TaskPrompt{
+		Title:        "Rename",
+		Message:      "Enter a new name",
+		DefaultValue: "draft",
+	}, got)
+}
+
+func TestService_promptOptionsFrom_Bad(t *testing.T) {
+	got, err := promptOptionsFrom(core.NewOptions(
+		core.Option{Key: "title", Value: "Rename"},
+		core.Option{Key: "message", Value: "Enter a new name"},
+		core.Option{Key: "defaultValue", Value: "draft"},
+	))
+	require.NoError(t, err)
+	assert.Equal(t, TaskPrompt{
+		Title:        "Rename",
+		Message:      "Enter a new name",
+		DefaultValue: "draft",
+	}, got)
+}
+
+func TestService_promptOptionsFrom_Ugly(t *testing.T) {
+	got, err := promptOptionsFrom(core.NewOptions())
+	require.NoError(t, err)
+	assert.Zero(t, got)
+}
+
+func TestService_promptWindowName_Good(t *testing.T) {
+	_, c := newTestService(t)
+	svc := core.MustServiceFor[*Service](c, "dialog")
+
+	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
+		switch q.(type) {
+		case window.QueryWindowList:
+			return core.Result{Value: []window.WindowInfo{
+				{Name: "editor"},
+				{Name: "preview", Focused: true},
+			}, OK: true}
+		default:
+			return core.Result{}
+		}
+	})
+
+	got, err := svc.promptWindowName()
+	require.NoError(t, err)
+	assert.Equal(t, "preview", got)
+}
+
+func TestService_promptWindowName_Bad(t *testing.T) {
+	_, c := newTestService(t)
+	svc := core.MustServiceFor[*Service](c, "dialog")
+
+	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
+		switch q.(type) {
+		case window.QueryWindowList:
+			return core.Result{Value: "unexpected", OK: true}
+		default:
+			return core.Result{}
+		}
+	})
+
+	got, err := svc.promptWindowName()
+	require.Error(t, err)
+	assert.Empty(t, got)
+}
+
+func TestService_promptWindowName_Ugly(t *testing.T) {
+	_, c := newTestService(t)
+	svc := core.MustServiceFor[*Service](c, "dialog")
+
+	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
+		switch q.(type) {
+		case window.QueryWindowList:
+			return core.Result{Value: []window.WindowInfo{
+				{Name: "editor"},
+				{Name: "terminal"},
+			}, OK: true}
+		default:
+			return core.Result{}
+		}
+	})
+
+	got, err := svc.promptWindowName()
+	require.NoError(t, err)
+	assert.Equal(t, "editor", got)
+}
+
+func TestService_promptScript_Good(t *testing.T) {
+	script := promptScript("Rename", "Enter a new name", "draft")
+	assert.Contains(t, script, "window.prompt(")
+	assert.Contains(t, script, "Rename")
+	assert.Contains(t, script, "Enter a new name")
+	assert.Contains(t, script, "draft")
+}
+
+func TestService_promptScript_Bad(t *testing.T) {
+	script := promptScript("Rename", "", "")
+	assert.Contains(t, script, "window.prompt(")
+	assert.Contains(t, script, "Rename")
+	assert.NotContains(t, script, "Enter a new name")
+}
+
+func TestService_promptScript_Ugly(t *testing.T) {
+	script := promptScript("", "Line 1\nLine 2", "\"quoted\"")
+	assert.Contains(t, script, "Line 1")
+	assert.Contains(t, script, "Line 2")
+	assert.Contains(t, script, "quoted")
+	assert.True(t, strings.Contains(script, "window.prompt("))
 }
