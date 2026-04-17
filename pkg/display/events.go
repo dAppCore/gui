@@ -197,10 +197,13 @@ func trustedWebSocketHost(host string) bool {
 
 // broadcaster sends events to all subscribed clients.
 func (em *WSEventManager) broadcaster() {
+	if em == nil || em.eventBuffer == nil {
+		return
+	}
 	for event := range em.eventBuffer {
 		em.mu.RLock()
 		for conn, state := range em.clients {
-			if em.clientSubscribed(state, event.Type) {
+			if state != nil && em.clientSubscribed(state, event.Type) {
 				go em.sendEvent(conn, event)
 			}
 		}
@@ -210,6 +213,9 @@ func (em *WSEventManager) broadcaster() {
 
 // clientSubscribed checks if a client is subscribed to an event type.
 func (em *WSEventManager) clientSubscribed(state *clientState, eventType EventType) bool {
+	if state == nil {
+		return false
+	}
 	state.mu.RLock()
 	defer state.mu.RUnlock()
 
@@ -458,6 +464,9 @@ func (em *WSEventManager) EmitWindowEvent(eventType EventType, windowName string
 
 // ConnectedClients returns the number of connected WebSocket clients.
 func (em *WSEventManager) ConnectedClients() int {
+	if em == nil {
+		return 0
+	}
 	em.mu.RLock()
 	defer em.mu.RUnlock()
 	return len(em.clients)
@@ -467,11 +476,17 @@ func (em *WSEventManager) ConnectedClients() int {
 //
 //	info := display.GetEventManager().Info()
 func (em *WSEventManager) Info() events.ServerInfo {
+	if em == nil {
+		return events.ServerInfo{}
+	}
 	em.mu.RLock()
 	defer em.mu.RUnlock()
 
 	subscriptionCount := 0
 	for _, state := range em.clients {
+		if state == nil {
+			continue
+		}
 		state.mu.RLock()
 		subscriptionCount += len(state.subscriptions)
 		state.mu.RUnlock()

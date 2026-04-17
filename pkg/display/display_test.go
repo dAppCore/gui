@@ -2,15 +2,19 @@ package display
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	core "dappco.re/go/core"
 	"forge.lthn.ai/core/gui/pkg/menu"
 	"forge.lthn.ai/core/gui/pkg/systray"
 	"forge.lthn.ai/core/gui/pkg/window"
+	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -785,6 +789,31 @@ func TestWSEventManager_Good(t *testing.T) {
 
 	assert.NotNil(t, em)
 	assert.Equal(t, 0, em.ConnectedClients())
+}
+
+func TestService_OnShutdown_ClosesEventManager(t *testing.T) {
+	em := NewWSEventManager()
+	svc := &Service{events: em}
+
+	server := httptest.NewServer(http.HandlerFunc(em.HandleWebSocket))
+	t.Cleanup(server.Close)
+
+	wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
+	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	require.NoError(t, err)
+	defer func() { _ = conn.Close() }()
+	defer em.Close()
+
+	require.True(t, svc.OnShutdown(context.Background()).OK)
+	assert.Nil(t, svc.events)
+
+	require.Eventually(t, func() bool {
+		return em.ConnectedClients() == 0
+	}, 2*time.Second, 20*time.Millisecond)
+
+	_ = conn.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
+	_, _, err = conn.ReadMessage()
+	require.Error(t, err)
 }
 
 // --- Config file loading tests ---

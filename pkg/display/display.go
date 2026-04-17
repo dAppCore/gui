@@ -2,6 +2,7 @@ package display
 
 import (
 	"context"
+	"errors"
 	"net/url"
 	"runtime"
 	"sync"
@@ -191,14 +192,27 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 }
 
 func (s *Service) OnShutdown(ctx context.Context) core.Result {
+	if s.events != nil {
+		s.events.Close()
+		s.events = nil
+	}
+	var shutdownErr error
 	if s.storage != nil {
-		_ = s.storage.Close()
+		if err := s.storage.Close(); err != nil {
+			shutdownErr = err
+		}
 	}
 	if s.sidecar != nil {
 		_, err := s.sidecar.Stop(ctx)
-		return core.Result{}.New(nil, err)
+		if err != nil {
+			if shutdownErr != nil {
+				shutdownErr = errors.Join(shutdownErr, err)
+			} else {
+				shutdownErr = err
+			}
+		}
 	}
-	return core.Result{OK: true}
+	return core.Result{}.New(nil, shutdownErr)
 }
 
 // HandleIPCEvents bridges IPC actions from sub-services to WebSocket events for TS apps.

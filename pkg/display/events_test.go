@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"forge.lthn.ai/core/gui/pkg/events"
 	"forge.lthn.ai/core/gui/pkg/window"
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
@@ -378,6 +379,13 @@ func TestWSEventManager_ConnectedClients_Good(t *testing.T) {
 	em.clients[nil] = &clientState{subscriptions: map[string]*Subscription{}}
 
 	assert.Equal(t, 1, em.ConnectedClients())
+}
+
+func TestWSEventManager_NilSafety(t *testing.T) {
+	var em *WSEventManager
+
+	assert.Equal(t, 0, em.ConnectedClients())
+	assert.Equal(t, events.ServerInfo{}, em.Info())
 }
 
 func TestWSEventManager_AttachWindowListeners_Good(t *testing.T) {
