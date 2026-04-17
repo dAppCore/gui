@@ -106,6 +106,20 @@ func TestTaskCloseWindow_Bad(t *testing.T) {
 	assert.False(t, r.OK)
 }
 
+func TestTaskCloseWindow_Ugly(t *testing.T) {
+	_, c := newTestWindowService(t)
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+
+	r := c.Action("window.close").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: "not-a-task"},
+	))
+	assert.False(t, r.OK)
+
+	r2 := c.QUERY(QueryWindowByName{Name: "test"})
+	require.True(t, r2.OK)
+	assert.NotNil(t, r2.Value)
+}
+
 func TestTaskSetPosition_Good(t *testing.T) {
 	_, c := newTestWindowService(t)
 	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
