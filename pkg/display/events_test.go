@@ -180,6 +180,17 @@ func TestWSEventManager_HandleWebSocket_NilReceiverFailsClosed(t *testing.T) {
 	assert.Equal(t, http.StatusServiceUnavailable, recorder.Code)
 }
 
+func TestWSEventManager_HandleWebSocket_NilWriterFailsClosed(t *testing.T) {
+	em := NewWSEventManager()
+
+	req := httptest.NewRequest(http.MethodGet, "http://127.0.0.1/events", nil)
+	req.RemoteAddr = "127.0.0.1:12345"
+
+	assert.NotPanics(t, func() {
+		em.HandleWebSocket(nil, req)
+	})
+}
+
 func TestWSEventManager_HandleWebSocket_RejectsAfterClose(t *testing.T) {
 	em := NewWSEventManager()
 	em.Close()
