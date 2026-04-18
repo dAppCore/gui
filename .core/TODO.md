@@ -1,0 +1,1 @@
+- @bug pkg/window/state.go:26 — window state persistence writes to the default home config path, which breaks restricted test/runtime environments unless the target path is configurable.

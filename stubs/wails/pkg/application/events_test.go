@@ -35,6 +35,15 @@ func TestEvents_CustomEvent_Ugly(t *testing.T) {
 	assert.Equal(t, []any{"a", 1}, event.Data)
 }
 
+func TestEvents_CustomEvent_NilReceiver(t *testing.T) {
+	var event *CustomEvent
+
+	assert.NotPanics(t, func() {
+		event.Cancel()
+	})
+	assert.False(t, event.IsCancelled())
+}
+
 func TestEvents_ApplicationEvent_Good(t *testing.T) {
 	event := &ApplicationEvent{Id: 7, ctx: newApplicationEventContext()}
 
@@ -58,6 +67,15 @@ func TestEvents_ApplicationEvent_Ugly(t *testing.T) {
 	event.Cancel()
 
 	assert.True(t, event.IsCancelled())
+}
+
+func TestEvents_ApplicationEvent_NilReceiver(t *testing.T) {
+	var event *ApplicationEvent
+
+	assert.NotPanics(t, func() {
+		event.Cancel()
+	})
+	assert.False(t, event.IsCancelled())
 }
 
 func TestEvents_EventManager_Emit_Good(t *testing.T) {

@@ -143,10 +143,16 @@ type WindowEventContext struct {
 }
 
 func (c *WindowEventContext) DroppedFiles() []string {
+	if c == nil {
+		return nil
+	}
 	return append([]string(nil), c.droppedFiles...)
 }
 
 func (c *WindowEventContext) DropTargetDetails() *DropTargetDetails {
+	if c == nil {
+		return nil
+	}
 	if c.dropDetails == nil {
 		return nil
 	}
@@ -165,6 +171,9 @@ type WindowEvent struct {
 }
 
 func (e *WindowEvent) Context() *WindowEventContext {
+	if e == nil {
+		return nil
+	}
 	if e.ctx == nil {
 		e.ctx = &WindowEventContext{}
 	}

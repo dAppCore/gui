@@ -249,6 +249,19 @@ func TestApplication_WindowEvent_Ugly(t *testing.T) {
 	assert.Equal(t, []string{"file"}, event.Context().DroppedFiles())
 }
 
+func TestApplication_WindowEvent_NilReceiver(t *testing.T) {
+	var event *WindowEvent
+
+	assert.Nil(t, event.Context())
+}
+
+func TestApplication_WindowEventContext_NilReceiver(t *testing.T) {
+	var ctx *WindowEventContext
+
+	assert.Empty(t, ctx.DroppedFiles())
+	assert.Nil(t, ctx.DropTargetDetails())
+}
+
 func TestApplication_WebviewWindow_Good(t *testing.T) {
 	manager := &WindowManager{}
 	window := manager.NewWithOptions(WebviewWindowOptions{
