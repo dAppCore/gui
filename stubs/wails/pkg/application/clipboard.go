@@ -17,6 +17,9 @@ type Clipboard struct {
 //
 //	cb.SetText("copied content")
 func (c *Clipboard) SetText(text string) bool {
+	if c == nil {
+		return false
+	}
 	c.mu.Lock()
 	c.text = text
 	c.set = true
@@ -29,6 +32,9 @@ func (c *Clipboard) SetText(text string) bool {
 //	text, ok := cb.Text()
 //	if !ok { text = "" }
 func (c *Clipboard) Text() (string, bool) {
+	if c == nil {
+		return "", false
+	}
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	return c.text, c.set
@@ -48,6 +54,9 @@ type ClipboardManager struct {
 //
 //	manager.SetText("some text")
 func (cm *ClipboardManager) SetText(text string) bool {
+	if cm == nil {
+		return false
+	}
 	return cm.getClipboard().SetText(text)
 }
 
@@ -55,11 +64,17 @@ func (cm *ClipboardManager) SetText(text string) bool {
 //
 //	text, ok := manager.Text()
 func (cm *ClipboardManager) Text() (string, bool) {
+	if cm == nil {
+		return "", false
+	}
 	return cm.getClipboard().Text()
 }
 
 // getClipboard returns the clipboard instance, creating it if needed.
 func (cm *ClipboardManager) getClipboard() *Clipboard {
+	if cm == nil {
+		return &Clipboard{}
+	}
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
 	if cm.clipboard == nil {

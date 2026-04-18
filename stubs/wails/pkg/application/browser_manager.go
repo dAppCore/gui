@@ -18,6 +18,9 @@ type BrowserManager struct {
 //	manager.OpenURL("https://lthn.io")
 //	_ = manager.LastURL // "https://lthn.io"
 func (bm *BrowserManager) OpenURL(url string) error {
+	if bm == nil {
+		return nil
+	}
 	bm.mu.Lock()
 	bm.LastURL = url
 	bm.mu.Unlock()
@@ -29,6 +32,9 @@ func (bm *BrowserManager) OpenURL(url string) error {
 //	manager.OpenFile("/home/user/report.pdf")
 //	_ = manager.LastFile // "/home/user/report.pdf"
 func (bm *BrowserManager) OpenFile(path string) error {
+	if bm == nil {
+		return nil
+	}
 	bm.mu.Lock()
 	bm.LastFile = path
 	bm.mu.Unlock()

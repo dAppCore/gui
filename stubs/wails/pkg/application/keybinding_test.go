@@ -79,3 +79,14 @@ func TestKeyBindingManager_Remove_Ugly(t *testing.T) {
 
 	assert.Empty(t, manager.GetAll())
 }
+
+func TestKeyBindingManager_NilReceiver_IsSafe(t *testing.T) {
+	var manager *KeyBindingManager
+
+	assert.NotPanics(t, func() {
+		manager.Add("CmdOrCtrl+K", func(Window) {})
+		manager.Remove("CmdOrCtrl+K")
+		assert.False(t, manager.Process("CmdOrCtrl+K", nil))
+		assert.Nil(t, manager.GetAll())
+	})
+}

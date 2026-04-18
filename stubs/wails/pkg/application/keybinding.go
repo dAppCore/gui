@@ -23,6 +23,9 @@ type KeyBindingManager struct {
 //
 //	manager.Add("CmdOrCtrl+Shift+P", func(w Window) { launchCommandPalette(w) })
 func (m *KeyBindingManager) Add(accelerator string, callback func(window Window)) {
+	if m == nil {
+		return
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.bindings == nil {
@@ -35,6 +38,9 @@ func (m *KeyBindingManager) Add(accelerator string, callback func(window Window)
 //
 //	manager.Remove("CmdOrCtrl+Shift+P")
 func (m *KeyBindingManager) Remove(accelerator string) {
+	if m == nil {
+		return
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	delete(m.bindings, accelerator)
@@ -44,6 +50,9 @@ func (m *KeyBindingManager) Remove(accelerator string) {
 //
 //	if manager.Process("CmdOrCtrl+K", window) { return }
 func (m *KeyBindingManager) Process(accelerator string, window Window) (handled bool) {
+	if m == nil {
+		return false
+	}
 	m.mu.RLock()
 	callback, exists := m.bindings[accelerator]
 	m.mu.RUnlock()
@@ -64,6 +73,9 @@ func (m *KeyBindingManager) Process(accelerator string, window Window) (handled 
 //
 //	for _, kb := range manager.GetAll() { log(kb.Accelerator) }
 func (m *KeyBindingManager) GetAll() []*KeyBinding {
+	if m == nil {
+		return nil
+	}
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	bindings := make([]*KeyBinding, 0, len(m.bindings))
