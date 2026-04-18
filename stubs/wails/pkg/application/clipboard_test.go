@@ -71,3 +71,14 @@ func TestClipboardManager_Text_Ugly(t *testing.T) {
 	assert.True(t, present)
 	assert.Equal(t, raw, text)
 }
+
+func TestClipboardManager_NilReceiver_IsSafe(t *testing.T) {
+	var manager *ClipboardManager
+
+	assert.NotPanics(t, func() {
+		assert.False(t, manager.SetText("hello"))
+		text, present := manager.Text()
+		assert.Empty(t, text)
+		assert.False(t, present)
+	})
+}

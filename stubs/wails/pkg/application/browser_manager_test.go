@@ -59,3 +59,12 @@ func TestBrowserManager_OpenFile_Ugly(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "/tmp/\x00report.txt", manager.LastFile)
 }
+
+func TestBrowserManager_NilReceiver_IsSafe(t *testing.T) {
+	var manager *BrowserManager
+
+	assert.NotPanics(t, func() {
+		assert.NoError(t, manager.OpenURL("https://example.com"))
+		assert.NoError(t, manager.OpenFile("/tmp/report.txt"))
+	})
+}
