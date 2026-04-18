@@ -1,6 +1,8 @@
 package window
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -56,4 +58,23 @@ func TestLayoutManager_SaveLayout_Ugly(t *testing.T) {
 	assert.Equal(t, first.CreatedAt, second.CreatedAt)
 	assert.Greater(t, second.UpdatedAt, first.UpdatedAt)
 	assert.Equal(t, 1024, second.Windows["main"].Width)
+}
+
+func TestLayoutManager_NewLayoutManagerWithPathEnv_Good(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "custom", "layouts.json")
+	t.Setenv(layoutFileEnv, path)
+
+	lm := NewLayoutManager()
+
+	require.NotNil(t, lm)
+	assert.Equal(t, path, lm.filePath())
+	assert.Equal(t, filepath.Dir(path), lm.dataDir())
+
+	require.NoError(t, lm.SaveLayout("coding", map[string]WindowState{
+		"main": {Width: 800, Height: 600},
+	}))
+
+	content, err := os.ReadFile(path)
+	require.NoError(t, err)
+	assert.Contains(t, string(content), `"coding"`)
 }

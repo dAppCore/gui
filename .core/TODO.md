@@ -1,1 +1,0 @@
-- @bug pkg/window/layout.go:29 — layout persistence has the same hard-coded config-dir assumption and needs an explicit file-path override for restricted runtimes.
