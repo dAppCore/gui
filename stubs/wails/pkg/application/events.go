@@ -45,6 +45,9 @@ func (e *ApplicationEvent) Context() *ApplicationEventContext {
 //
 //	event.Cancel()
 func (e *ApplicationEvent) Cancel() {
+	if e == nil {
+		return
+	}
 	e.cancelled.Store(true)
 }
 
@@ -52,6 +55,9 @@ func (e *ApplicationEvent) Cancel() {
 //
 //	if event.IsCancelled() { return }
 func (e *ApplicationEvent) IsCancelled() bool {
+	if e == nil {
+		return false
+	}
 	return e.cancelled.Load()
 }
 
@@ -69,6 +75,9 @@ type CustomEvent struct {
 //
 //	event.Cancel()
 func (e *CustomEvent) Cancel() {
+	if e == nil {
+		return
+	}
 	e.cancelled.Store(true)
 }
 
@@ -76,6 +85,9 @@ func (e *CustomEvent) Cancel() {
 //
 //	if event.IsCancelled() { return }
 func (e *CustomEvent) IsCancelled() bool {
+	if e == nil {
+		return false
+	}
 	return e.cancelled.Load()
 }
 
