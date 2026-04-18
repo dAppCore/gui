@@ -10,6 +10,8 @@ import (
 	coreio "dappco.re/go/core/io"
 )
 
+const windowStateFileEnv = "WINDOW_STATE_FILE"
+
 // WindowState holds the persisted position/size of a window.
 // JSON tags match existing window_state.json format for backward compat.
 type WindowState struct {
@@ -23,7 +25,7 @@ type WindowState struct {
 	UpdatedAt int64  `json:"updatedAt,omitempty"`
 }
 
-// StateManager persists window positions to ~/.config/Core/window_state.json.
+// StateManager persists window positions to the configured window state file.
 type StateManager struct {
 	configDir string
 	statePath string
@@ -32,8 +34,12 @@ type StateManager struct {
 	saveTimer *time.Timer
 }
 
-// NewStateManager creates a StateManager loading from the default config directory.
+// NewStateManager creates a StateManager loading from the configured default path.
+// WINDOW_STATE_FILE overrides the directory-based default when present.
 func NewStateManager() *StateManager {
+	if stateFile := core.Env(windowStateFileEnv); stateFile != "" {
+		return NewStateManagerWithPath(stateFile)
+	}
 	sm := &StateManager{
 		states: make(map[string]WindowState),
 	}
@@ -49,6 +55,17 @@ func NewStateManager() *StateManager {
 func NewStateManagerWithDir(configDir string) *StateManager {
 	sm := &StateManager{
 		configDir: configDir,
+		states:    make(map[string]WindowState),
+	}
+	sm.load()
+	return sm
+}
+
+// NewStateManagerWithPath creates a StateManager loading from a custom state file.
+// Useful for tests or restricted runtimes that need an explicit writable target.
+func NewStateManagerWithPath(path string) *StateManager {
+	sm := &StateManager{
+		statePath: path,
 		states:    make(map[string]WindowState),
 	}
 	sm.load()

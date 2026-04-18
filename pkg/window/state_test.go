@@ -20,6 +20,17 @@ func TestStateManagerState_NewStateManagerWithDir_Good(t *testing.T) {
 	assert.Empty(t, sm.ListStates())
 }
 
+func TestStateManagerState_NewStateManagerWithPathEnv_Good(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "custom", "window_state.json")
+	t.Setenv(windowStateFileEnv, path)
+
+	sm := NewStateManager()
+
+	require.NotNil(t, sm)
+	assert.Equal(t, path, sm.filePath())
+	assert.Equal(t, filepath.Dir(path), sm.dataDir())
+}
+
 func TestStateManagerState_NewStateManagerWithDir_Bad(t *testing.T) {
 	sm := NewStateManagerWithDir("")
 
