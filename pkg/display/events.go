@@ -260,10 +260,11 @@ func (em *WSEventManager) sendEvent(conn *websocket.Conn, event Event) {
 
 // HandleWebSocket handles WebSocket upgrade and connection.
 func (em *WSEventManager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
-	if em == nil {
-		if w != nil {
-			http.Error(w, http.StatusText(http.StatusServiceUnavailable), http.StatusServiceUnavailable)
-		}
+	if w == nil {
+		return
+	}
+	if em == nil || r == nil {
+		http.Error(w, http.StatusText(http.StatusServiceUnavailable), http.StatusServiceUnavailable)
 		return
 	}
 	em.mu.RLock()
