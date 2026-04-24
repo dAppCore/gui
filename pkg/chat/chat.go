@@ -2,57 +2,13 @@ package chat
 
 import (
 	"bufio"
-	"context"
 	"io"
 	"slices"
 	"strings"
 	"time"
 
 	core "dappco.re/go/core"
-	guimcp "forge.lthn.ai/core/gui/pkg/mcp"
 )
-
-type ToolExecutor interface {
-	Manifest() []guimcp.ToolDescriptor
-	ManifestText() string
-	CallTool(ctx context.Context, name string, arguments map[string]any) (string, error)
-}
-
-type ToolCallHandler struct {
-	executor ToolExecutor
-}
-
-func NewToolCallHandler(executor ToolExecutor) *ToolCallHandler {
-	return &ToolCallHandler{executor: executor}
-}
-
-func (h *ToolCallHandler) Execute(ctx context.Context, call ToolCall) ToolResult {
-	if h == nil || h.executor == nil {
-		return ToolResult{
-			ToolCallID: call.ID,
-			Content:    "tool execution unavailable",
-		}
-	}
-	content, err := h.executor.CallTool(ctx, call.Name, call.Arguments)
-	if err != nil {
-		return ToolResult{
-			ToolCallID: call.ID,
-			Content:    err.Error(),
-		}
-	}
-	return ToolResult{
-		ToolCallID: call.ID,
-		Content:    content,
-	}
-}
-
-func (h *ToolCallHandler) ExecuteAll(ctx context.Context, calls []ToolCall) []ToolResult {
-	results := make([]ToolResult, 0, len(calls))
-	for _, call := range calls {
-		results = append(results, h.Execute(ctx, call))
-	}
-	return results
-}
 
 type StreamCallbacks struct {
 	OnStart          func(streamID string)

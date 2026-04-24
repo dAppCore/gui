@@ -64,7 +64,7 @@ type Service struct {
 	store              *store.Store
 	httpClient         *http.Client
 	toolExecutor       ToolExecutor
-	toolHandler        *ToolCallHandler
+	toolHandler        ToolCallHandler
 	pendingAttachments map[string][]ImageAttachment
 	thinkingStates     map[string]ThinkingState
 	mu                 sync.Mutex
@@ -227,6 +227,8 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		subsystem.RegisterTools(server)
 		s.toolExecutor = subsystem
 	}
+	registerMCPToolActions(s.Core(), s.toolExecutor)
+	s.toolExecutor = newActionToolExecutor(s.Core(), s.toolExecutor)
 	s.toolHandler = NewToolCallHandler(s.toolExecutor)
 	s.Core().RegisterQuery(s.handleQuery)
 	s.registerActions()
@@ -1078,6 +1080,7 @@ func (s *Service) send(ctx context.Context, input sendInput) (string, error) {
 		if err != nil {
 			return "", err
 		}
+		assistantMessage = s.withInlineToolCall(conv.ID, assistantMessage)
 		lastAssistantMessageID = assistantMessage.ID
 		if hasRenderableContent(assistantMessage) {
 			conv.Messages = append(conv.Messages, assistantMessage)
@@ -1092,9 +1095,19 @@ func (s *Service) send(ctx context.Context, input sendInput) (string, error) {
 		if len(assistantMessage.ToolCalls) == 0 {
 			break
 		}
+		if s.toolHandler == nil {
+			break
+		}
 
-		results := s.toolHandler.ExecuteAll(ctx, assistantMessage.ToolCalls)
-		for _, result := range results {
+		for _, call := range assistantMessage.ToolCalls {
+			resultContent, err := s.toolHandler.OnToolCall(ctx, call)
+			result := ToolResult{
+				ToolCallID: call.ID,
+				Content:    renderToolResultContent(resultContent),
+			}
+			if err != nil {
+				result.Content = err.Error()
+			}
 			toolMessage := ChatMessage{
 				ID:          "tool-" + strconv.FormatInt(s.now().UnixNano(), 36),
 				Role:        "tool",
@@ -1185,6 +1198,29 @@ func (s *Service) streamAssistant(ctx context.Context, conv Conversation, settin
 	return renderer.Message(messageID, conv.Model, s.now()), nil
 }
 
+func (s *Service) withInlineToolCall(conversationID string, message ChatMessage) ChatMessage {
+	if len(message.ToolCalls) > 0 {
+		return message
+	}
+
+	call, ok, err := parseInlineToolCall(message.Content)
+	if err != nil {
+		_ = s.Core().LogWarn(err, "chat.tool_call", "malformed inline tool_call ignored")
+		return message
+	}
+	if !ok {
+		return message
+	}
+	if call.ID == "" {
+		call.ID = "call-" + strconv.FormatInt(s.now().UnixNano(), 36)
+	}
+	message.Content = ""
+	message.ToolCalls = []ToolCall{call}
+	message.FinishReason = "tool_calls"
+	s.emit(ActionToolCallStarted{ConversationID: conversationID, MessageID: message.ID, Call: call})
+	return message
+}
+
 func (s *Service) buildCompletionRequest(conv Conversation, settings ChatSettings) openAIRequest {
 	request := openAIRequest{
 		Model:       s.resolveModel(conv.Model, settings.DefaultModel),
@@ -1197,13 +1233,18 @@ func (s *Service) buildCompletionRequest(conv Conversation, settings ChatSetting
 	}
 
 	systemPrompt := strings.TrimSpace(settings.SystemPrompt)
-	if s.toolExecutor != nil {
-		manifest := s.toolExecutor.ManifestText()
+	if s.toolHandler != nil {
+		manifest := s.toolHandler.BuildToolManifest()
 		if manifest != "" {
 			if systemPrompt != "" {
-				systemPrompt += "\n\n"
+				systemPrompt = manifest + "\n\n" + systemPrompt
+			} else {
+				systemPrompt = manifest
 			}
-			systemPrompt += manifest + "\nUse tools when helpful. When a tool is needed, emit a tool call with valid JSON arguments."
+		}
+	}
+	if s.toolExecutor != nil {
+		if len(s.toolExecutor.Manifest()) > 0 {
 			for _, tool := range s.toolExecutor.Manifest() {
 				request.Tools = append(request.Tools, openAIToolSpec{
 					Type: "function",
