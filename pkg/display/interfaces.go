@@ -1,7 +1,26 @@
 // pkg/display/interfaces.go
 package display
 
-import "github.com/wailsapp/wails/v3/pkg/application"
+import (
+	"net/url"
+
+	core "dappco.re/go/core"
+	"github.com/wailsapp/wails/v3/pkg/application"
+)
+
+// RouteSchemeHandler dispatches a parsed route URL through Core.
+//
+//	result := handler.Handle(parsedURL)
+type RouteSchemeHandler interface {
+	Handle(url *url.URL) core.Result
+}
+
+// SchemeHandlerProvider exposes the active route scheme handler.
+//
+//	handler := svc.SchemeHandler()
+type SchemeHandlerProvider interface {
+	SchemeHandler() RouteSchemeHandler
+}
 
 // App abstracts the Wails application for the orchestrator.
 // After Spec D cleanup, only Quit() and Logger() remain —
