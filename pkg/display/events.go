@@ -201,10 +201,16 @@ func trustedWebSocketHost(host string) bool {
 
 // broadcaster sends events to all subscribed clients.
 func (em *WSEventManager) broadcaster() {
-	if em == nil || em.eventBuffer == nil {
+	if em == nil {
 		return
 	}
-	for event := range em.eventBuffer {
+	em.mu.RLock()
+	eventBuffer := em.eventBuffer
+	em.mu.RUnlock()
+	if eventBuffer == nil {
+		return
+	}
+	for event := range eventBuffer {
 		em.mu.RLock()
 		for conn, state := range em.clients {
 			if state != nil && em.clientSubscribed(state, event.Type) {
