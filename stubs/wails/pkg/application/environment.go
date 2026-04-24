@@ -1,6 +1,10 @@
 package application
 
-import "sync"
+import (
+	"path/filepath"
+	"runtime"
+	"sync"
+)
 
 // EnvironmentInfo holds information about the host environment.
 //
@@ -12,6 +16,7 @@ type EnvironmentInfo struct {
 	Debug        bool
 	IsDarkMode   bool
 	AccentColour string
+	OSInfo       any
 	PlatformInfo map[string]any
 }
 
@@ -27,6 +32,16 @@ type EnvironmentManager struct {
 	operatingSystem string
 	architecture    string
 	debugMode       bool
+	osInfo          any
+	platformInfo    map[string]any
+}
+
+func newEnvironmentManager() *EnvironmentManager {
+	return &EnvironmentManager{
+		operatingSystem: runtime.GOOS,
+		architecture:    runtime.GOARCH,
+		platformInfo:    make(map[string]any),
+	}
 }
 
 // SetDarkMode sets the dark mode state used by IsDarkMode.
@@ -75,11 +90,47 @@ func (em *EnvironmentManager) GetAccentColor() string {
 func (em *EnvironmentManager) Info() EnvironmentInfo {
 	em.mu.RLock()
 	defer em.mu.RUnlock()
+	var platformInfo map[string]any
+	if len(em.platformInfo) > 0 {
+		platformInfo = make(map[string]any, len(em.platformInfo))
+		for key, value := range em.platformInfo {
+			platformInfo[key] = value
+		}
+	}
 	return EnvironmentInfo{
 		OS:           em.operatingSystem,
 		Arch:         em.architecture,
 		Debug:        em.debugMode,
 		IsDarkMode:   em.darkMode,
 		AccentColour: em.accentColour,
+		OSInfo:       em.osInfo,
+		PlatformInfo: platformInfo,
 	}
+}
+
+func (em *EnvironmentManager) OpenFileManager(path string, selectFile bool) error {
+	if em == nil {
+		return nil
+	}
+	em.mu.Lock()
+	if em.platformInfo == nil {
+		em.platformInfo = make(map[string]any)
+	}
+	em.platformInfo["lastOpenFileManagerPath"] = filepath.Clean(path)
+	em.platformInfo["lastOpenFileManagerSelect"] = selectFile
+	em.mu.Unlock()
+	return nil
+}
+
+func (em *EnvironmentManager) HasFocusFollowsMouse() bool {
+	if em == nil {
+		return false
+	}
+	em.mu.RLock()
+	defer em.mu.RUnlock()
+	if em.platformInfo == nil {
+		return false
+	}
+	ffm, _ := em.platformInfo["focusFollowsMouse"].(bool)
+	return ffm
 }

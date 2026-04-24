@@ -809,7 +809,6 @@ type App struct {
 	Logger      Logger
 	Window      WindowManager
 	Menu        MenuManager
-	SystemTray  SystemTrayManager
 	Dialog      DialogManager
 	Event       EventManager
 	Browser     BrowserManager
@@ -817,6 +816,7 @@ type App struct {
 	ContextMenu ContextMenuManager
 	Environment EnvironmentManager
 	Screen      ScreenManager
+	SystemTray  SystemTrayManager
 	KeyBinding  KeyBindingManager
 }
 

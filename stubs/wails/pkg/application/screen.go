@@ -2,6 +2,21 @@ package application
 
 import "sync"
 
+type Alignment int
+type OffsetReference int
+
+const (
+	TOP Alignment = iota
+	RIGHT
+	BOTTOM
+	LEFT
+)
+
+const (
+	BEGIN OffsetReference = iota
+	END
+)
+
 // Screen describes a physical or logical display.
 //
 //	primary := manager.GetPrimary()
@@ -47,6 +62,14 @@ type Size struct {
 	Height int
 }
 
+type ScreenPlacement struct {
+	Screen          *Screen
+	Parent          *Screen
+	Alignment       Alignment
+	Offset          int
+	OffsetReference OffsetReference
+}
+
 // Origin returns the top-left corner of the rectangle.
 func (r Rect) Origin() Point {
 	return Point{X: r.X, Y: r.Y}
@@ -74,6 +97,43 @@ func (r Rect) RectSize() Size {
 	return Size{Width: r.Width, Height: r.Height}
 }
 
+func (r Rect) Size() Size {
+	return r.RectSize()
+}
+
+func (s Screen) Origin() Point {
+	return Point{X: s.X, Y: s.Y}
+}
+
+func (p ScreenPlacement) Apply() {
+	if p.Screen == nil || p.Parent == nil {
+		return
+	}
+
+	x := p.Parent.X
+	y := p.Parent.Y
+
+	switch p.Alignment {
+	case TOP:
+		x += p.Offset
+		y -= p.Screen.Size.Height
+	case RIGHT:
+		x += p.Parent.Size.Width
+		y += p.Offset
+	case BOTTOM:
+		x += p.Offset
+		y += p.Parent.Size.Height
+	case LEFT:
+		x -= p.Screen.Size.Width
+		y += p.Offset
+	}
+
+	p.Screen.X = x
+	p.Screen.Y = y
+	p.Screen.Bounds.X = x
+	p.Screen.Bounds.Y = y
+}
+
 // ScreenManager tracks connected screens and the active screen.
 //
 //	manager.SetScreens(detectedScreens)
@@ -83,6 +143,10 @@ type ScreenManager struct {
 	screens []*Screen
 	current *Screen
 	primary *Screen
+}
+
+func newScreenManager() *ScreenManager {
+	return &ScreenManager{}
 }
 
 // SetScreens replaces the full list of known screens and recomputes primary.
@@ -158,4 +222,86 @@ func (m *ScreenManager) GetCurrent() *Screen {
 		return m.current
 	}
 	return m.primary
+}
+
+func (m *ScreenManager) LayoutScreens(screens []*Screen) error {
+	m.SetScreens(screens)
+	return nil
+}
+
+func (m *ScreenManager) All() []*Screen {
+	return m.GetAll()
+}
+
+func (m *ScreenManager) Primary() *Screen {
+	return m.GetPrimary()
+}
+
+func (m *ScreenManager) Current() *Screen {
+	return m.GetCurrent()
+}
+
+func (m *ScreenManager) DipToPhysicalPoint(dipPoint Point) Point {
+	return dipPoint
+}
+
+func (m *ScreenManager) PhysicalToDipPoint(physicalPoint Point) Point {
+	return physicalPoint
+}
+
+func (m *ScreenManager) DipToPhysicalRect(dipRect Rect) Rect {
+	return dipRect
+}
+
+func (m *ScreenManager) PhysicalToDipRect(physicalRect Rect) Rect {
+	return physicalRect
+}
+
+func (m *ScreenManager) ScreenNearestPhysicalPoint(physicalPoint Point) *Screen {
+	return m.screenNearestPoint(physicalPoint)
+}
+
+func (m *ScreenManager) ScreenNearestDipPoint(dipPoint Point) *Screen {
+	return m.screenNearestPoint(dipPoint)
+}
+
+func (m *ScreenManager) ScreenNearestPhysicalRect(physicalRect Rect) *Screen {
+	return m.screenNearestRect(physicalRect)
+}
+
+func (m *ScreenManager) ScreenNearestDipRect(dipRect Rect) *Screen {
+	return m.screenNearestRect(dipRect)
+}
+
+func (m *ScreenManager) screenNearestPoint(point Point) *Screen {
+	if m == nil {
+		return nil
+	}
+
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	for _, screen := range m.screens {
+		if screen != nil && screen.Bounds.Contains(point) {
+			return screen
+		}
+	}
+
+	if m.current != nil {
+		return m.current
+	}
+	if m.primary != nil {
+		return m.primary
+	}
+	if len(m.screens) > 0 {
+		return m.screens[0]
+	}
+	return nil
+}
+
+func (m *ScreenManager) screenNearestRect(rect Rect) *Screen {
+	if rect.IsEmpty() {
+		return m.screenNearestPoint(Point{})
+	}
+	return m.screenNearestPoint(rect.Origin())
 }

@@ -22,6 +22,12 @@ type ContextMenuManager struct {
 	contextMenus map[string]*ContextMenu
 }
 
+func newContextMenuManager() *ContextMenuManager {
+	return &ContextMenuManager{
+		contextMenus: make(map[string]*ContextMenu),
+	}
+}
+
 // New creates a new context menu.
 //
 //	menu := manager.New()

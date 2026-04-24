@@ -356,6 +356,10 @@ type DialogManager struct {
 	mu sync.RWMutex
 }
 
+func newDialogManager() *DialogManager {
+	return &DialogManager{}
+}
+
 // OpenFile creates an open-file dialog.
 //
 //	dialog := manager.OpenFile()
@@ -418,4 +422,33 @@ func (dm *DialogManager) Warning() *MessageDialog {
 //	manager.Error().SetTitle("Error").SetMessage("Operation failed.").Show()
 func (dm *DialogManager) Error() *MessageDialog {
 	return newMessageDialog(ErrorDialogType)
+}
+
+func (dm *DialogManager) ShowInfo(args ...string) (string, error) {
+	return dm.showDialog(dm.Info(), args...)
+}
+
+func (dm *DialogManager) ShowQuestion(args ...string) (string, error) {
+	return dm.showDialog(dm.Question(), args...)
+}
+
+func (dm *DialogManager) ShowWarning(args ...string) (string, error) {
+	return dm.showDialog(dm.Warning(), args...)
+}
+
+func (dm *DialogManager) ShowError(args ...string) (string, error) {
+	return dm.showDialog(dm.Error(), args...)
+}
+
+func (dm *DialogManager) showDialog(dialog *MessageDialog, args ...string) (string, error) {
+	if dialog == nil {
+		return "", nil
+	}
+	if len(args) > 0 {
+		dialog.SetTitle(args[0])
+	}
+	if len(args) > 1 {
+		dialog.SetMessage(args[1])
+	}
+	return dialog.Show()
 }

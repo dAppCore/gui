@@ -1,10 +1,13 @@
 package application
 
 import (
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/wailsapp/wails/v3/pkg/events"
 )
 
 var _ Window = (*WebviewWindow)(nil)
@@ -384,11 +387,154 @@ func TestApplication_App_Bad(t *testing.T) {
 	var app App
 
 	assert.Zero(t, app.Logger)
-	assert.Zero(t, app.Window)
-	assert.Zero(t, app.Menu)
+	assert.Empty(t, app.Window.GetAll())
+	assert.Nil(t, app.Menu.applicationMenu)
 }
 
 func TestApplication_App_Ugly(t *testing.T) {
 	app := &App{}
 	app.Quit()
+}
+
+func TestApplication_AppManagers_Good(t *testing.T) {
+	app := &App{}
+
+	require.NotNil(t, &app.Window)
+	require.NotNil(t, &app.Menu)
+	require.NotNil(t, &app.Dialog)
+	require.NotNil(t, &app.Event)
+	require.NotNil(t, &app.Browser)
+	require.NotNil(t, &app.Clipboard)
+	require.NotNil(t, &app.ContextMenu)
+	require.NotNil(t, &app.Environment)
+	require.NotNil(t, &app.Screen)
+	require.NotNil(t, &app.SystemTray)
+	require.NotNil(t, &app.KeyBinding)
+
+	assert.NotPanics(t, func() {
+		window := app.Window.NewWithOptions(WebviewWindowOptions{Name: "app-managers"})
+		require.NotNil(t, window)
+
+		menu := app.NewMenu()
+		app.Menu.SetApplicationMenu(menu)
+		assert.Same(t, menu, app.Menu.applicationMenu)
+		assert.NotNil(t, app.Dialog.Info())
+		_, err := app.Dialog.ShowInfo("Done", "Saved")
+		assert.NoError(t, err)
+
+		assert.NoError(t, app.Browser.OpenURL("https://example.com"))
+		assert.NoError(t, app.Browser.Open("https://example.com"))
+
+		assert.True(t, app.Clipboard.SetText("copied"))
+		text, ok := app.Clipboard.Text()
+		assert.True(t, ok)
+		assert.Equal(t, "copied", text)
+
+		contextMenu := app.ContextMenu.New()
+		app.ContextMenu.Add("main", contextMenu)
+		gotMenu, exists := app.ContextMenu.Get("main")
+		assert.True(t, exists)
+		assert.Same(t, contextMenu, gotMenu)
+
+		env := newEnvironmentManager().Info()
+		assert.Equal(t, runtime.GOOS, env.OS)
+		assert.Equal(t, runtime.GOARCH, env.Arch)
+		assert.NoError(t, app.Environment.OpenFileManager("/tmp", false))
+		assert.False(t, app.Environment.HasFocusFollowsMouse())
+
+		cancel := app.Event.Once("ready", func(*CustomEvent) {})
+		require.NotNil(t, cancel)
+		assert.False(t, app.Event.Emit("ready"))
+		cancel()
+
+		screen := &Screen{
+			ID:        "primary",
+			IsPrimary: true,
+			Bounds:    Rect{X: 0, Y: 0, Width: 1920, Height: 1080},
+			Size:      Size{Width: 1920, Height: 1080},
+		}
+		assert.NoError(t, app.Screen.LayoutScreens([]*Screen{screen}))
+		assert.Same(t, screen, app.Screen.GetPrimary())
+		assert.Same(t, screen, app.Screen.Primary())
+		assert.Equal(t, Point{X: 5, Y: 6}, app.Screen.DipToPhysicalPoint(Point{X: 5, Y: 6}))
+
+		triggered := 0
+		app.KeyBinding.Register("CmdOrCtrl+K", func(Window) { triggered++ })
+		assert.True(t, app.KeyBinding.Process("CmdOrCtrl+K", nil))
+		assert.Equal(t, 1, triggered)
+
+		tray := app.SystemTray.New()
+		assert.NotNil(t, tray)
+	})
+}
+
+func TestApplication_AppManagers_Bad(t *testing.T) {
+	app := &App{}
+
+	assert.NotPanics(t, func() {
+		assert.Nil(t, app.Window.GetByID(1))
+		app.Menu.SetApplicationMenu(nil)
+
+		_, err := app.Dialog.ShowError()
+		assert.NoError(t, err)
+
+		assert.NoError(t, app.Browser.Open(""))
+		text, ok := app.Clipboard.Text()
+		assert.False(t, ok)
+		assert.Empty(t, text)
+
+		app.ContextMenu.Remove("missing")
+		_, exists := app.ContextMenu.Get("missing")
+		assert.False(t, exists)
+
+		info := app.Environment.Info()
+		assert.Empty(t, info.OS)
+		assert.Empty(t, info.Arch)
+		assert.NoError(t, app.Environment.OpenFileManager("", false))
+
+		app.Event.Off("missing")
+		app.Event.Reset()
+
+		assert.Nil(t, app.Screen.Primary())
+		app.KeyBinding.Unregister("missing")
+		assert.False(t, app.KeyBinding.Process("missing", nil))
+	})
+}
+
+func TestApplication_AppManagers_Ugly(t *testing.T) {
+	app := &App{}
+
+	assert.NotPanics(t, func() {
+		assert.True(t, app.Clipboard.SetText("zero\x00byte"))
+		assert.NoError(t, app.Browser.Open("/tmp/\x00report.txt"))
+
+		app.ContextMenu.Add("dup", app.ContextMenu.New())
+		app.ContextMenu.Add("dup", app.ContextMenu.New())
+		assert.Len(t, app.ContextMenu.GetAll(), 1)
+
+		cancelHook := app.Event.RegisterApplicationEventHook(events.ApplicationEventType(9), func(event *ApplicationEvent) {
+			event.Cancel()
+		})
+		cancelListener := app.Event.OnApplicationEvent(events.ApplicationEventType(9), func(*ApplicationEvent) {
+			t.Fatal("cancelled event should not reach listeners")
+		})
+		app.Event.handleApplicationEvent(&ApplicationEvent{Id: 9})
+		cancelListener()
+		cancelHook()
+
+		screen := &Screen{
+			ID:        "primary",
+			IsPrimary: true,
+			Bounds:    Rect{X: 0, Y: 0, Width: 100, Height: 100},
+			Size:      Size{Width: 100, Height: 100},
+		}
+		app.Screen.SetScreens([]*Screen{screen})
+		assert.Same(t, screen, app.Screen.ScreenNearestDipPoint(Point{X: 50, Y: 50}))
+		assert.Same(t, screen, app.Screen.ScreenNearestDipRect(Rect{X: 10, Y: 10, Width: 5, Height: 5}))
+
+		triggered := 0
+		app.KeyBinding.Register("CmdOrCtrl+Shift+P", func(Window) { triggered++ })
+		app.KeyBinding.handleWindowKeyEvent(&windowKeyEvent{acceleratorString: "CmdOrCtrl+Shift+P"})
+		assert.Equal(t, 1, triggered)
+	})
 }

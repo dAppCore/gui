@@ -13,6 +13,10 @@ type Clipboard struct {
 	set  bool
 }
 
+func newClipboard() *Clipboard {
+	return &Clipboard{}
+}
+
 // SetText stores the given text in the in-memory clipboard.
 //
 //	cb.SetText("copied content")
@@ -50,6 +54,10 @@ type ClipboardManager struct {
 	clipboard *Clipboard
 }
 
+func newClipboardManager() *ClipboardManager {
+	return &ClipboardManager{}
+}
+
 // SetText sets text in the clipboard.
 //
 //	manager.SetText("some text")
@@ -73,12 +81,12 @@ func (cm *ClipboardManager) Text() (string, bool) {
 // getClipboard returns the clipboard instance, creating it if needed.
 func (cm *ClipboardManager) getClipboard() *Clipboard {
 	if cm == nil {
-		return &Clipboard{}
+		return newClipboard()
 	}
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
 	if cm.clipboard == nil {
-		cm.clipboard = &Clipboard{}
+		cm.clipboard = newClipboard()
 	}
 	return cm.clipboard
 }
