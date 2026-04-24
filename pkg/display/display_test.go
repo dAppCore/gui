@@ -14,6 +14,7 @@ import (
 	core "dappco.re/go/core"
 	"forge.lthn.ai/core/gui/pkg/menu"
 	"forge.lthn.ai/core/gui/pkg/systray"
+	"forge.lthn.ai/core/gui/pkg/webview"
 	"forge.lthn.ai/core/gui/pkg/window"
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
@@ -52,6 +53,144 @@ func taskRun(c *core.Core, name string, task any) core.Result {
 	return c.Action(name).Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: task},
 	))
+}
+
+func registerDisplayWithConfigPath(path string) func(*core.Core) core.Result {
+	return func(c *core.Core) core.Result {
+		result := Register(nil)(c)
+		if !result.OK {
+			return result
+		}
+		svc := core.MustServiceFor[*Service](c, "display")
+		svc.loadConfigFrom(path)
+		return result
+	}
+}
+
+func writeMenuConfig(t *testing.T, showDevTools bool) string {
+	t.Helper()
+
+	dir := t.TempDir()
+	cfgPath := core.JoinPath(dir, ".core", "gui", "config.yaml")
+	require.NoError(t, os.MkdirAll(core.PathDir(cfgPath), 0o755))
+	require.NoError(t, os.WriteFile(cfgPath, []byte(`
+menu:
+  show_dev_tools: `+map[bool]string{true: "true", false: "false"}[showDevTools]+`
+`), 0o644))
+	return cfgPath
+}
+
+func newDevToolsMenuConclave(t *testing.T, showDevTools bool) (*core.Core, *captureMenuPlatform, *window.MockPlatform) {
+	t.Helper()
+
+	menuPlatform := newCaptureMenuPlatform()
+	windowPlatform := window.NewMockPlatform()
+	c := core.New(
+		core.WithService(registerDisplayWithConfigPath(writeMenuConfig(t, showDevTools))),
+		core.WithService(window.Register(windowPlatform)),
+		core.WithService(systray.Register(systray.NewMockPlatform())),
+		core.WithService(webview.Register()),
+		core.WithService(menu.Register(menuPlatform)),
+		core.WithServiceLock(),
+	)
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	return c, menuPlatform, windowPlatform
+}
+
+type captureMenuPlatform struct {
+	appMenu *captureMenu
+}
+
+func newCaptureMenuPlatform() *captureMenuPlatform {
+	return &captureMenuPlatform{}
+}
+
+func (p *captureMenuPlatform) NewMenu() menu.PlatformMenu {
+	return &captureMenu{}
+}
+
+func (p *captureMenuPlatform) SetApplicationMenu(menuHandle menu.PlatformMenu) {
+	captured, _ := menuHandle.(*captureMenu)
+	p.appMenu = captured
+}
+
+type captureMenu struct {
+	items []*captureMenuItem
+	roles []menu.MenuRole
+}
+
+func (m *captureMenu) Add(label string) menu.PlatformMenuItem {
+	item := &captureMenuItem{label: label}
+	m.items = append(m.items, item)
+	return item
+}
+
+func (m *captureMenu) AddSeparator() {
+	m.items = append(m.items, &captureMenuItem{label: "---", separator: true})
+}
+
+func (m *captureMenu) AddSubmenu(label string) menu.PlatformMenu {
+	sub := &captureMenu{}
+	m.items = append(m.items, &captureMenuItem{label: label, submenu: sub})
+	return sub
+}
+
+func (m *captureMenu) AddRole(role menu.MenuRole) {
+	m.roles = append(m.roles, role)
+}
+
+func (m *captureMenu) findSubmenu(label string) *captureMenu {
+	for _, item := range m.items {
+		if item.label == label && item.submenu != nil {
+			return item.submenu
+		}
+	}
+	return nil
+}
+
+func (m *captureMenu) findItem(label string) *captureMenuItem {
+	for _, item := range m.items {
+		if item.label == label && item.submenu == nil && !item.separator {
+			return item
+		}
+	}
+	return nil
+}
+
+type captureMenuItem struct {
+	label       string
+	accelerator string
+	tooltip     string
+	checked     bool
+	enabled     bool
+	separator   bool
+	submenu     *captureMenu
+	onClick     func()
+}
+
+func (m *captureMenuItem) SetAccelerator(accel string) menu.PlatformMenuItem {
+	m.accelerator = accel
+	return m
+}
+
+func (m *captureMenuItem) SetTooltip(text string) menu.PlatformMenuItem {
+	m.tooltip = text
+	return m
+}
+
+func (m *captureMenuItem) SetChecked(checked bool) menu.PlatformMenuItem {
+	m.checked = checked
+	return m
+}
+
+func (m *captureMenuItem) SetEnabled(enabled bool) menu.PlatformMenuItem {
+	m.enabled = enabled
+	return m
+}
+
+func (m *captureMenuItem) OnClick(fn func()) menu.PlatformMenuItem {
+	m.onClick = fn
+	return m
 }
 
 // --- Tests ---
@@ -190,6 +329,43 @@ func TestServiceConclave_Bad(t *testing.T) {
 
 	r := c.QUERY(window.QueryConfig{})
 	assert.False(t, r.OK, "no display service means no config handler")
+}
+
+func TestBuildMenu_Good_ShowDevTools(t *testing.T) {
+	c, menuPlatform, windowPlatform := newDevToolsMenuConclave(t, true)
+
+	require.True(t, taskRun(c, "window.open", window.TaskOpenWindow{
+		Window: &window.Window{Name: "main"},
+	}).OK)
+	require.True(t, taskRun(c, "window.focus", window.TaskFocus{Name: "main"}).OK)
+
+	require.NotNil(t, menuPlatform.appMenu)
+	developer := menuPlatform.appMenu.findSubmenu("Developer")
+	require.NotNil(t, developer)
+
+	openItem := developer.findItem("Open DevTools")
+	closeItem := developer.findItem("Close DevTools")
+	require.NotNil(t, openItem)
+	require.NotNil(t, closeItem)
+	require.NotNil(t, openItem.onClick)
+	require.NotNil(t, closeItem.onClick)
+	require.Len(t, windowPlatform.Windows, 1)
+
+	openItem.onClick()
+	assert.True(t, windowPlatform.Windows[0].DevToolsOpen())
+
+	closeItem.onClick()
+	assert.False(t, windowPlatform.Windows[0].DevToolsOpen())
+}
+
+func TestBuildMenu_Bad_ShowDevToolsDisabled(t *testing.T) {
+	_, menuPlatform, _ := newDevToolsMenuConclave(t, false)
+
+	require.NotNil(t, menuPlatform.appMenu)
+	developer := menuPlatform.appMenu.findSubmenu("Developer")
+	require.NotNil(t, developer)
+	assert.Nil(t, developer.findItem("Open DevTools"))
+	assert.Nil(t, developer.findItem("Close DevTools"))
 }
 
 // --- IPC delegation tests (full conclave) ---

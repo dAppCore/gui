@@ -1790,6 +1790,25 @@ func (s *Service) GetEventManager() *WSEventManager {
 // --- Menu (handlers stay in display, structure delegated via IPC) ---
 
 func (s *Service) buildMenu() {
+	developerItems := []menu.MenuItem{
+		{Label: "New File", Accelerator: "CmdOrCtrl+N", OnClick: s.handleNewFile},
+		{Label: "Open File...", Accelerator: "CmdOrCtrl+O", OnClick: s.handleOpenFile},
+		{Label: "Save", Accelerator: "CmdOrCtrl+S", OnClick: s.handleSaveFile},
+		{Type: "separator"},
+		{Label: "Editor", OnClick: s.handleOpenEditor},
+		{Label: "Terminal", OnClick: s.handleOpenTerminal},
+		{Type: "separator"},
+		{Label: "Run", Accelerator: "CmdOrCtrl+R", OnClick: s.handleRun},
+		{Label: "Build", Accelerator: "CmdOrCtrl+B", OnClick: s.handleBuild},
+	}
+	if menuService, ok := core.ServiceFor[*menu.Service](s.Core(), "menu"); ok && menuService.ShowDevTools() {
+		developerItems = append(developerItems,
+			menu.MenuItem{Type: "separator"},
+			menu.MenuItem{Label: "Open DevTools", OnClick: s.handleOpenDevTools},
+			menu.MenuItem{Label: "Close DevTools", OnClick: s.handleCloseDevTools},
+		)
+	}
+
 	items := []menu.MenuItem{
 		{Role: pointerTo(menu.RoleAppMenu)},
 		{Role: pointerTo(menu.RoleFileMenu)},
@@ -1799,17 +1818,7 @@ func (s *Service) buildMenu() {
 			{Label: "New...", OnClick: s.handleNewWorkspace},
 			{Label: "List", OnClick: s.handleListWorkspaces},
 		}},
-		{Label: "Developer", Children: []menu.MenuItem{
-			{Label: "New File", Accelerator: "CmdOrCtrl+N", OnClick: s.handleNewFile},
-			{Label: "Open File...", Accelerator: "CmdOrCtrl+O", OnClick: s.handleOpenFile},
-			{Label: "Save", Accelerator: "CmdOrCtrl+S", OnClick: s.handleSaveFile},
-			{Type: "separator"},
-			{Label: "Editor", OnClick: s.handleOpenEditor},
-			{Label: "Terminal", OnClick: s.handleOpenTerminal},
-			{Type: "separator"},
-			{Label: "Run", Accelerator: "CmdOrCtrl+R", OnClick: s.handleRun},
-			{Label: "Build", Accelerator: "CmdOrCtrl+B", OnClick: s.handleBuild},
-		}},
+		{Label: "Developer", Children: developerItems},
 		{Role: pointerTo(menu.RoleWindowMenu)},
 		{Role: pointerTo(menu.RoleHelpMenu)},
 	}
@@ -1828,6 +1837,37 @@ func (s *Service) buildMenu() {
 func pointerTo[T any](value T) *T { return &value }
 
 // --- Menu handler methods ---
+
+func (s *Service) menuDevToolsWindow() string {
+	if name := s.GetFocusedWindow(); name != "" {
+		return name
+	}
+	infos := s.ListWindowInfos()
+	if len(infos) == 1 {
+		return infos[0].Name
+	}
+	return ""
+}
+
+func (s *Service) handleOpenDevTools() {
+	windowName := s.menuDevToolsWindow()
+	if windowName == "" {
+		return
+	}
+	_ = s.Core().Action("webview.devtoolsOpen").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: webview.TaskDevToolsOpen{Window: windowName}},
+	))
+}
+
+func (s *Service) handleCloseDevTools() {
+	windowName := s.menuDevToolsWindow()
+	if windowName == "" {
+		return
+	}
+	_ = s.Core().Action("webview.devtoolsClose").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: webview.TaskDevToolsClose{Window: windowName}},
+	))
+}
 
 func (s *Service) handleNewWorkspace() {
 	_ = s.Core().Action("window.open").Run(context.Background(), core.NewOptions(
