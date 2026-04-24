@@ -2,6 +2,10 @@
 package window
 
 import (
+	"reflect"
+	"strings"
+
+	"forge.lthn.ai/core/gui/pkg/preload"
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/events"
 )
@@ -38,8 +42,121 @@ func (wp *WailsPlatform) CreateWindow(options PlatformWindowOptions) PlatformWin
 		EnableFileDrop:   options.EnableFileDrop,
 		BackgroundColour: application.NewRGBA(options.BackgroundColour[0], options.BackgroundColour[1], options.BackgroundColour[2], options.BackgroundColour[3]),
 	}
+	var windowHandle *application.WebviewWindow
+	if wirePreloadOnPageLoad(&wOpts, options.URL, func(origin string, target preload.Webview) {
+		if target == nil {
+			target = windowHandle
+		}
+		if target == nil {
+			return
+		}
+		_ = preload.InjectPreload(target, origin)
+		if extra := postPageLoadWindowJS(options.JS); strings.TrimSpace(extra) != "" {
+			target.ExecJS(extra)
+		}
+	}) {
+		wOpts.JS = ""
+	}
 	w := wp.app.Window.NewWithOptions(wOpts)
+	windowHandle = w
 	return &wailsWindow{w: w, title: options.Title, opacity: 1.0}
+}
+
+func wirePreloadOnPageLoad(options *application.WebviewWindowOptions, fallbackOrigin string, inject func(origin string, target preload.Webview)) bool {
+	if options == nil || inject == nil {
+		return false
+	}
+
+	value := reflect.ValueOf(options)
+	if value.Kind() != reflect.Pointer || value.IsNil() {
+		return false
+	}
+	structValue := value.Elem()
+	if structValue.Kind() != reflect.Struct {
+		return false
+	}
+
+	field := structValue.FieldByName("OnPageLoad")
+	if !field.IsValid() || !field.CanSet() || field.Kind() != reflect.Func {
+		return false
+	}
+
+	fnType := field.Type()
+	field.Set(reflect.MakeFunc(fnType, func(args []reflect.Value) []reflect.Value {
+		inject(extractPageLoadOrigin(args, fallbackOrigin), extractPageLoadWebview(args))
+		return zeroReturnValues(fnType)
+	}))
+	return true
+}
+
+func extractPageLoadOrigin(args []reflect.Value, fallback string) string {
+	for _, arg := range args {
+		if !arg.IsValid() {
+			continue
+		}
+		if arg.Kind() == reflect.Pointer {
+			if arg.IsNil() {
+				continue
+			}
+			arg = arg.Elem()
+		}
+		switch arg.Kind() {
+		case reflect.String:
+			if value := strings.TrimSpace(arg.String()); value != "" {
+				return value
+			}
+		case reflect.Struct:
+			for _, name := range []string{"URL", "Url", "Origin", "Location"} {
+				field := arg.FieldByName(name)
+				if field.IsValid() && field.Kind() == reflect.String {
+					if value := strings.TrimSpace(field.String()); value != "" {
+						return value
+					}
+				}
+			}
+		}
+	}
+	return fallback
+}
+
+func extractPageLoadWebview(args []reflect.Value) preload.Webview {
+	for _, arg := range args {
+		if !arg.IsValid() || !arg.CanInterface() {
+			continue
+		}
+		if target, ok := arg.Interface().(preload.Webview); ok {
+			return target
+		}
+	}
+	return nil
+}
+
+func zeroReturnValues(fnType reflect.Type) []reflect.Value {
+	if fnType.NumOut() == 0 {
+		return nil
+	}
+	out := make([]reflect.Value, 0, fnType.NumOut())
+	for i := 0; i < fnType.NumOut(); i++ {
+		out = append(out, reflect.Zero(fnType.Out(i)))
+	}
+	return out
+}
+
+func postPageLoadWindowJS(raw string) string {
+	if looksLikeLegacyDisplayPreload(raw) {
+		return ""
+	}
+	return raw
+}
+
+func looksLikeLegacyDisplayPreload(raw string) bool {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		return false
+	}
+	return strings.Contains(trimmed, "const __corePageURL =") &&
+		strings.Contains(trimmed, "globalThis.core.ml") &&
+		strings.Contains(trimmed, "Document.prototype, 'cookie'")
 }
 
 func (wp *WailsPlatform) GetWindows() []PlatformWindow {
