@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	core "dappco.re/go/core"
-	gowebview "forge.lthn.ai/core/go-webview"
+	gowebview "dappco.re/go/webview"
 	"dappco.re/go/gui/pkg/window"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

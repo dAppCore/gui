@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"forge.lthn.ai/core/config"
+	"dappco.re/go/config"
 )
 
 type AppMode string

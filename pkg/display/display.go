@@ -10,7 +10,7 @@ import (
 
 	core "dappco.re/go/core"
 	coreerr "dappco.re/go/log"
-	"forge.lthn.ai/core/config"
+	"dappco.re/go/config"
 
 	"dappco.re/go/gui/pkg/chat"
 	"dappco.re/go/gui/pkg/clipboard"

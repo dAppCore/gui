@@ -4,12 +4,12 @@ go 1.26.0
 
 require (
 	dappco.re/go/core v0.8.0-alpha.1
-	dappco.re/go/inference v0.2.1
-	dappco.re/go/io v0.4.2
-	dappco.re/go/log v0.1.0
-	dappco.re/go/store v0.0.0
-	forge.lthn.ai/core/config v0.1.8
-	forge.lthn.ai/core/go-webview v0.1.7
+	dappco.re/go/inference v0.8.0-alpha.1
+	dappco.re/go/io v0.8.0-alpha.1
+	dappco.re/go/log v0.8.0-alpha.1
+	dappco.re/go/store v0.8.0-alpha.1
+	dappco.re/go/config v0.8.0-alpha.1
+	dappco.re/go/webview v0.8.0-alpha.1
 	github.com/gorilla/websocket v1.5.3
 	github.com/modelcontextprotocol/go-sdk v1.4.1
 	github.com/stretchr/testify v1.11.1
@@ -22,9 +22,9 @@ replace github.com/wailsapp/wails/v3 => ./stubs/wails
 replace dappco.re/go/store => ../go-store
 
 require (
-	forge.lthn.ai/core/go v0.3.3 // indirect
-	forge.lthn.ai/core/go-io v0.1.7 // indirect
-	forge.lthn.ai/core/go-log v0.0.4 // indirect
+	dappco.re/go/core v0.8.0-alpha.1 // indirect
+	dappco.re/go/io v0.8.0-alpha.1 // indirect
+	dappco.re/go/log v0.8.0-alpha.1 // indirect
 	github.com/andybalholm/brotli v1.2.0 // indirect
 	github.com/apache/arrow-go/v18 v18.1.0 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
