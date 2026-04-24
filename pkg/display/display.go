@@ -676,8 +676,10 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 		return c.Action("gui.chat.settings.reset").Run(ctx, wsOptions(msg.Data))
 	case "chat:conversations:list":
 		return c.Action("gui.chat.conversations.list").Run(ctx, wsOptions(msg.Data))
+	case "chat:conversations:load":
+		return c.Action("gui.chat.conversations.load").Run(ctx, wsOptions(msg.Data))
 	case "chat:conversations:get":
-		return c.Action("gui.chat.conversations.get").Run(ctx, wsOptions(msg.Data))
+		return c.Action("gui.chat.conversations.load").Run(ctx, wsOptions(msg.Data))
 	case "chat:conversations:delete":
 		return c.Action("gui.chat.conversations.delete").Run(ctx, wsOptions(msg.Data))
 	case "chat:conversations:search":
@@ -700,8 +702,10 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 		return c.Action("gui.chat.thinking.start").Run(ctx, wsOptions(msg.Data))
 	case "chat:thinking:append":
 		return c.Action("gui.chat.thinking.append").Run(ctx, wsOptions(msg.Data))
+	case "chat:thinking:stop":
+		return c.Action("gui.chat.thinking.stop").Run(ctx, wsOptions(msg.Data))
 	case "chat:thinking:end":
-		return c.Action("gui.chat.thinking.end").Run(ctx, wsOptions(msg.Data))
+		return c.Action("gui.chat.thinking.stop").Run(ctx, wsOptions(msg.Data))
 	case "marketplace:list":
 		return c.Action("display.marketplace.list").Run(ctx, wsOptions(msg.Data))
 	case "marketplace:fetch":

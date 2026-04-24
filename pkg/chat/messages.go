@@ -24,7 +24,8 @@ type QueryConversationSearch struct {
 	Query string `json:"q"`
 }
 
-type ChatMessage struct {
+// Message is the persisted chat transcript entry used by the MVP IPC surface.
+type Message struct {
 	ID           string            `json:"id"`
 	Role         string            `json:"role"`
 	Content      string            `json:"content"`
@@ -38,15 +39,22 @@ type ChatMessage struct {
 	FinishReason string            `json:"finish_reason,omitempty"`
 }
 
-type ModelEntry struct {
+type ChatMessage = Message
+
+// Model is the transport shape exposed by gui.chat.models.
+type Model struct {
 	Name           string `json:"name"`
-	Architecture   string `json:"architecture"`
-	QuantBits      int    `json:"quant_bits"`
-	SizeBytes      int64  `json:"size_bytes"`
-	Loaded         bool   `json:"loaded"`
-	Backend        string `json:"backend"`
-	SupportsVision bool   `json:"supports_vision"`
+	Size           int64  `json:"size"`
+	Status         string `json:"status"`
+	Architecture   string `json:"architecture,omitempty"`
+	QuantBits      int    `json:"quant_bits,omitempty"`
+	SizeBytes      int64  `json:"size_bytes,omitempty"`
+	Loaded         bool   `json:"loaded,omitempty"`
+	Backend        string `json:"backend,omitempty"`
+	SupportsVision bool   `json:"supports_vision,omitempty"`
 }
+
+type ModelEntry = Model
 
 type ChatSettings struct {
 	Temperature   float32 `json:"temperature"`
@@ -64,7 +72,7 @@ type Conversation struct {
 	Model     string        `json:"model"`
 	CreatedAt time.Time     `json:"created_at"`
 	UpdatedAt time.Time     `json:"updated_at"`
-	Messages  []ChatMessage `json:"messages"`
+	Messages  []Message     `json:"messages"`
 	Settings  *ChatSettings `json:"settings,omitempty"`
 }
 
@@ -139,8 +147,8 @@ type ActionConversationDeleted struct {
 }
 
 type ActionMessageAdded struct {
-	ConversationID string      `json:"conversation_id"`
-	Message        ChatMessage `json:"message"`
+	ConversationID string  `json:"conversation_id"`
+	Message        Message `json:"message"`
 }
 
 type ActionConversationCleared struct {

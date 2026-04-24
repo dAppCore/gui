@@ -44,6 +44,20 @@ type Options struct {
 	Now          func() time.Time
 }
 
+type contract interface {
+	Send(context.Context, sendInput) (string, error)
+	History(string, int) ([]Message, error)
+	Models() []ModelEntry
+	SelectModel(selectModelInput) (ChatSettings, error)
+	ListConversations() ([]Conversation, error)
+	LoadConversation(string) (Conversation, error)
+	DeleteConversation(string) error
+	StartThinking(thinkingInput) (ThinkingState, error)
+	StopThinking(thinkingInput) (ThinkingState, error)
+}
+
+var _ contract = (*Service)(nil)
+
 type Service struct {
 	*core.ServiceRuntime[Options]
 	options            Options
@@ -52,12 +66,20 @@ type Service struct {
 	toolExecutor       ToolExecutor
 	toolHandler        *ToolCallHandler
 	pendingAttachments map[string][]ImageAttachment
+	thinkingStates     map[string]ThinkingState
 	mu                 sync.Mutex
 }
 
 type sendInput struct {
 	ConversationID string `json:"conversation_id,omitempty"`
 	Content        string `json:"content"`
+	Model          string `json:"model,omitempty"`
+}
+
+type historyInput struct {
+	ID             string `json:"id,omitempty"`
+	ConversationID string `json:"conversation_id,omitempty"`
+	Limit          int    `json:"limit,omitempty"`
 }
 
 type conversationInput struct {
@@ -83,6 +105,7 @@ type thinkingInput struct {
 }
 
 type selectModelInput struct {
+	Name           string `json:"name,omitempty"`
 	Model          string `json:"model"`
 	ConversationID string `json:"conversation_id,omitempty"`
 	ID             string `json:"id,omitempty"`
@@ -180,6 +203,7 @@ func Register(optionFns ...func(*Options)) func(*core.Core) core.Result {
 			options:            options,
 			httpClient:         options.HTTPClient,
 			pendingAttachments: make(map[string][]ImageAttachment),
+			thinkingStates:     make(map[string]ThinkingState),
 		}
 		return core.Result{Value: svc, OK: true}
 	}
@@ -219,7 +243,7 @@ func (s *Service) handleQuery(_ *core.Core, q core.Query) core.Result {
 		conv, err := s.getConversation(typed.ID, typed.ConversationID)
 		return core.Result{}.New(conv, err)
 	case QueryModels:
-		return core.Result{Value: s.discoverModels(), OK: true}
+		return core.Result{Value: s.Models(), OK: true}
 	case QuerySettings:
 		return core.Result{Value: s.loadSettings(), OK: true}
 	case QuerySettingsDefaults:
@@ -245,8 +269,8 @@ func (s *Service) registerActions() {
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
-		conv, err := s.send(ctx, input)
-		return core.Result{}.New(conv, err)
+		messageID, err := s.Send(ctx, input)
+		return core.Result{}.New(messageID, err)
 	})
 	c.Action("gui.chat.clear", func(_ context.Context, opts core.Options) core.Result {
 		input, err := decodeInput[conversationInput](opts)
@@ -257,22 +281,22 @@ func (s *Service) registerActions() {
 		return core.Result{}.New(conv, err)
 	})
 	c.Action("gui.chat.history", func(_ context.Context, opts core.Options) core.Result {
-		input, err := decodeInput[conversationInput](opts)
+		input, err := decodeInput[historyInput](opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
-		conv, err := s.getConversation(input.ID, input.ConversationID)
-		return core.Result{}.New(conv, err)
+		messages, err := s.History(coalesce(input.ID, input.ConversationID), input.Limit)
+		return core.Result{}.New(messages, err)
 	})
 	c.Action("gui.chat.models", func(_ context.Context, _ core.Options) core.Result {
-		return core.Result{Value: s.discoverModels(), OK: true}
+		return core.Result{Value: s.Models(), OK: true}
 	})
 	c.Action("gui.chat.selectModel", func(_ context.Context, opts core.Options) core.Result {
 		input, err := decodeInput[selectModelInput](opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
-		settings, err := s.selectModel(input)
+		settings, err := s.SelectModel(input)
 		return core.Result{}.New(settings, err)
 	})
 	c.Action("gui.chat.settings.save", func(_ context.Context, opts core.Options) core.Result {
@@ -295,24 +319,26 @@ func (s *Service) registerActions() {
 		return core.Result{}.New(settings, err)
 	})
 	c.Action("gui.chat.conversations.list", func(_ context.Context, _ core.Options) core.Result {
-		conversations, err := s.listConversationSummaries()
+		conversations, err := s.ListConversations()
 		return core.Result{}.New(conversations, err)
 	})
-	c.Action("gui.chat.conversations.get", func(_ context.Context, opts core.Options) core.Result {
+	loadConversation := func(_ context.Context, opts core.Options) core.Result {
 		input, err := decodeInput[conversationInput](opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
-		conv, err := s.getConversation(input.ID, input.ConversationID)
+		conv, err := s.LoadConversation(coalesce(input.ID, input.ConversationID))
 		return core.Result{}.New(conv, err)
-	})
+	}
+	c.Action("gui.chat.conversations.load", loadConversation)
+	c.Action("gui.chat.conversations.get", loadConversation)
 	c.Action("gui.chat.conversations.delete", func(_ context.Context, opts core.Options) core.Result {
 		input, err := decodeInput[conversationInput](opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
-		err = s.deleteConversation(coalesce(input.ID, input.ConversationID))
-		return core.Result{}.New(nil, err)
+		err = s.DeleteConversation(coalesce(input.ID, input.ConversationID))
+		return core.Result{}.New(true, err)
 	})
 	c.Action("gui.chat.conversations.search", func(_ context.Context, opts core.Options) core.Result {
 		input, err := decodeInput[searchInput](opts)
@@ -393,15 +419,8 @@ func (s *Service) registerActions() {
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
-		if strings.TrimSpace(input.ConversationID) == "" {
-			return core.Result{Value: coreerr.E("chat.thinking.start", "conversation id is required", nil), OK: false}
-		}
-		s.emit(ActionThinkingStarted{
-			ConversationID: input.ConversationID,
-			MessageID:      input.MessageID,
-			StartedAt:      input.StartedAt,
-		})
-		return core.Result{Value: input, OK: true}
+		state, err := s.StartThinking(input)
+		return core.Result{}.New(state, err)
 	})
 	c.Action("gui.chat.thinking.append", func(_ context.Context, opts core.Options) core.Result {
 		input, err := decodeInput[thinkingInput](opts)
@@ -416,30 +435,19 @@ func (s *Service) registerActions() {
 			MessageID:      input.MessageID,
 			Content:        input.Content,
 		})
+		s.appendThinking(input.ConversationID, input.Content)
 		return core.Result{Value: input.Content, OK: true}
 	})
-	c.Action("gui.chat.thinking.end", func(_ context.Context, opts core.Options) core.Result {
+	stopThinking := func(_ context.Context, opts core.Options) core.Result {
 		input, err := decodeInput[thinkingInput](opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
-		if strings.TrimSpace(input.ConversationID) == "" {
-			return core.Result{Value: coreerr.E("chat.thinking.end", "conversation id is required", nil), OK: false}
-		}
-		duration := input.DurationMS
-		if duration == 0 && !input.StartedAt.IsZero() {
-			duration = time.Since(input.StartedAt).Milliseconds()
-			if duration < 0 {
-				duration = 0
-			}
-		}
-		s.emit(ActionThinkingEnded{
-			ConversationID: input.ConversationID,
-			MessageID:      input.MessageID,
-			DurationMS:     duration,
-		})
-		return core.Result{Value: duration, OK: true}
-	})
+		state, err := s.StopThinking(input)
+		return core.Result{}.New(state, err)
+	}
+	c.Action("gui.chat.thinking.stop", stopThinking)
+	c.Action("gui.chat.thinking.end", stopThinking)
 }
 
 func decodeInput[T any](opts core.Options) (T, error) {
@@ -483,6 +491,51 @@ func (s *Service) now() time.Time {
 	return time.Now()
 }
 
+func (s *Service) Send(ctx context.Context, input sendInput) (string, error) {
+	return s.send(ctx, input)
+}
+
+func (s *Service) History(conversationID string, limit int) ([]Message, error) {
+	if limit < 0 {
+		return nil, coreerr.E("chat.history", "limit must be greater than or equal to zero", nil)
+	}
+	conv, err := s.LoadConversation(conversationID)
+	if err != nil {
+		return nil, err
+	}
+	if limit == 0 || limit >= len(conv.Messages) {
+		return slices.Clone(conv.Messages), nil
+	}
+	return slices.Clone(conv.Messages[len(conv.Messages)-limit:]), nil
+}
+
+func (s *Service) Models() []ModelEntry {
+	models := s.discoverModels()
+	activeName := s.resolveModel("", s.loadSettings().DefaultModel)
+	if len(models) == 0 {
+		return []ModelEntry{{
+			Name:   activeName,
+			Size:   0,
+			Status: "active",
+			Loaded: true,
+		}}
+	}
+
+	for index := range models {
+		models[index].Size = models[index].SizeBytes
+		switch {
+		case strings.EqualFold(models[index].Name, activeName):
+			models[index].Loaded = true
+			models[index].Status = "active"
+		case models[index].Loaded:
+			models[index].Status = "loaded"
+		default:
+			models[index].Status = "available"
+		}
+	}
+	return models
+}
+
 func (s *Service) saveSettings(settings ChatSettings) error {
 	if err := s.validateSettings(settings); err != nil {
 		return err
@@ -504,12 +557,13 @@ func (s *Service) loadSettings() ChatSettings {
 	return settings
 }
 
-func (s *Service) selectModel(input selectModelInput) (ChatSettings, error) {
-	if err := s.validateModelName(input.Model); err != nil {
+func (s *Service) SelectModel(input selectModelInput) (ChatSettings, error) {
+	modelName := coalesce(input.Name, input.Model)
+	if err := s.validateModelName(modelName); err != nil {
 		return ChatSettings{}, err
 	}
 	settings := s.loadSettings()
-	settings.DefaultModel = input.Model
+	settings.DefaultModel = modelName
 	if err := s.saveSettings(settings); err != nil {
 		return ChatSettings{}, err
 	}
@@ -523,13 +577,104 @@ func (s *Service) selectModel(input selectModelInput) (ChatSettings, error) {
 	if err != nil {
 		return ChatSettings{}, err
 	}
-	conv.Model = input.Model
+	conv.Model = modelName
 	conv, err = s.saveConversation(conv)
 	if err != nil {
 		return ChatSettings{}, err
 	}
 	s.emit(ActionConversationUpdated{Conversation: conv})
 	return settings, nil
+}
+
+func (s *Service) ListConversations() ([]Conversation, error) {
+	return s.listConversations()
+}
+
+func (s *Service) LoadConversation(id string) (Conversation, error) {
+	return s.getConversation(id, "")
+}
+
+func (s *Service) DeleteConversation(id string) error {
+	return s.deleteConversation(id)
+}
+
+func (s *Service) StartThinking(input thinkingInput) (ThinkingState, error) {
+	if strings.TrimSpace(input.ConversationID) == "" {
+		return ThinkingState{}, coreerr.E("chat.thinking.start", "conversation id is required", nil)
+	}
+
+	state := ThinkingState{
+		Active:    true,
+		StartedAt: input.StartedAt,
+	}
+	if state.StartedAt.IsZero() {
+		state.StartedAt = s.now()
+	}
+
+	s.mu.Lock()
+	s.thinkingStates[input.ConversationID] = state
+	s.mu.Unlock()
+
+	s.emit(ActionThinkingStarted{
+		ConversationID: input.ConversationID,
+		MessageID:      input.MessageID,
+		StartedAt:      state.StartedAt,
+	})
+	return state, nil
+}
+
+func (s *Service) StopThinking(input thinkingInput) (ThinkingState, error) {
+	if strings.TrimSpace(input.ConversationID) == "" {
+		return ThinkingState{}, coreerr.E("chat.thinking.stop", "conversation id is required", nil)
+	}
+
+	s.mu.Lock()
+	state, ok := s.thinkingStates[input.ConversationID]
+	delete(s.thinkingStates, input.ConversationID)
+	s.mu.Unlock()
+
+	if !ok && !input.StartedAt.IsZero() {
+		state.StartedAt = input.StartedAt
+	}
+	if state.StartedAt.IsZero() {
+		state.StartedAt = s.now()
+	}
+
+	state.Active = false
+	state.Content = strings.TrimSpace(state.Content)
+	state.EndedAt = s.now()
+	state.DurationMS = input.DurationMS
+	if state.DurationMS == 0 {
+		state.DurationMS = state.EndedAt.Sub(state.StartedAt).Milliseconds()
+		if state.DurationMS < 0 {
+			state.DurationMS = 0
+		}
+	}
+
+	s.emit(ActionThinkingEnded{
+		ConversationID: input.ConversationID,
+		MessageID:      input.MessageID,
+		DurationMS:     state.DurationMS,
+	})
+	return state, nil
+}
+
+func (s *Service) appendThinking(conversationID, content string) {
+	key := strings.TrimSpace(conversationID)
+	if key == "" || strings.TrimSpace(content) == "" {
+		return
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	state := s.thinkingStates[key]
+	if state.StartedAt.IsZero() {
+		state.StartedAt = s.now()
+	}
+	state.Active = true
+	state.Content += content
+	s.thinkingStates[key] = state
 }
 
 func (s *Service) saveConversation(conv Conversation) (Conversation, error) {
@@ -567,7 +712,7 @@ func (s *Service) loadConversation(id string) (Conversation, error) {
 	return conv, nil
 }
 
-func (s *Service) listConversationSummaries() ([]ConversationSummary, error) {
+func (s *Service) listConversations() ([]Conversation, error) {
 	if s.store == nil {
 		return nil, nil
 	}
@@ -575,12 +720,29 @@ func (s *Service) listConversationSummaries() ([]ConversationSummary, error) {
 	if err != nil {
 		return nil, err
 	}
-	summaries := make([]ConversationSummary, 0, len(items))
+
+	conversations := make([]Conversation, 0, len(items))
 	for _, payload := range items {
 		var conv Conversation
 		if result := core.JSONUnmarshalString(payload, &conv); result.OK {
-			summaries = append(summaries, conv.Summary())
+			conversations = append(conversations, conv)
 		}
+	}
+	sort.Slice(conversations, func(i, j int) bool {
+		return conversations[i].UpdatedAt.After(conversations[j].UpdatedAt)
+	})
+	return conversations, nil
+}
+
+func (s *Service) listConversationSummaries() ([]ConversationSummary, error) {
+	conversations, err := s.listConversations()
+	if err != nil {
+		return nil, err
+	}
+
+	summaries := make([]ConversationSummary, 0, len(conversations))
+	for _, conv := range conversations {
+		summaries = append(summaries, conv.Summary())
 	}
 	sort.Slice(summaries, func(i, j int) bool {
 		return summaries[i].UpdatedAt.After(summaries[j].UpdatedAt)
@@ -851,16 +1013,17 @@ func (s *Service) mergedSettings(global ChatSettings, override *ChatSettings) Ch
 	return merged
 }
 
-func (s *Service) send(ctx context.Context, input sendInput) (Conversation, error) {
+func (s *Service) send(ctx context.Context, input sendInput) (string, error) {
 	if strings.TrimSpace(input.Content) == "" && !s.hasPendingAttachments(input.ConversationID) {
-		return Conversation{}, coreerr.E("chat.send", "message content is required", nil)
+		return "", coreerr.E("chat.send", "message content is required", nil)
 	}
 
 	settings := s.loadSettings()
 	var (
-		conv    Conversation
-		err     error
-		created bool
+		conv                   Conversation
+		err                    error
+		created                bool
+		lastAssistantMessageID string
 	)
 	if input.ConversationID != "" {
 		conv, err = s.loadConversation(input.ConversationID)
@@ -869,7 +1032,7 @@ func (s *Service) send(ctx context.Context, input sendInput) (Conversation, erro
 		created = true
 	}
 	if err != nil {
-		return Conversation{}, err
+		return "", err
 	}
 
 	attachments := s.drainAttachments(conv.ID)
@@ -878,6 +1041,12 @@ func (s *Service) send(ctx context.Context, input sendInput) (Conversation, erro
 	}
 
 	now := s.now()
+	if modelName := strings.TrimSpace(input.Model); modelName != "" {
+		if err := s.validateModelName(modelName); err != nil {
+			return "", err
+		}
+		conv.Model = modelName
+	}
 	conv.Model = s.resolveModel(conv.Model, settings.DefaultModel)
 	userMessage := ChatMessage{
 		ID:          "msg-" + strconv.FormatInt(now.UnixNano(), 36),
@@ -893,7 +1062,7 @@ func (s *Service) send(ctx context.Context, input sendInput) (Conversation, erro
 	}
 	conv, err = s.saveConversation(conv)
 	if err != nil {
-		return Conversation{}, err
+		return "", err
 	}
 	s.emit(ActionMessageAdded{ConversationID: conv.ID, Message: userMessage})
 	s.emit(ActionConversationUpdated{Conversation: conv})
@@ -902,18 +1071,19 @@ func (s *Service) send(ctx context.Context, input sendInput) (Conversation, erro
 		effectiveSettings := s.mergedSettings(settings, conv.Settings)
 		conv.Model = s.resolveModel(conv.Model, effectiveSettings.DefaultModel)
 		if err := s.validateAttachmentsForModel(conv.Model, attachmentsForConversationTurn(conv.Messages)); err != nil {
-			return conv, err
+			return "", err
 		}
 
 		assistantMessage, err := s.streamAssistant(ctx, conv, effectiveSettings)
 		if err != nil {
-			return conv, err
+			return "", err
 		}
+		lastAssistantMessageID = assistantMessage.ID
 		if hasRenderableContent(assistantMessage) {
 			conv.Messages = append(conv.Messages, assistantMessage)
 			conv, err = s.saveConversation(conv)
 			if err != nil {
-				return conv, err
+				return "", err
 			}
 			s.emit(ActionMessageAdded{ConversationID: conv.ID, Message: assistantMessage})
 			s.emit(ActionConversationUpdated{Conversation: conv})
@@ -940,12 +1110,15 @@ func (s *Service) send(ctx context.Context, input sendInput) (Conversation, erro
 		}
 		conv, err = s.saveConversation(conv)
 		if err != nil {
-			return conv, err
+			return "", err
 		}
 		s.emit(ActionConversationUpdated{Conversation: conv})
 	}
 
-	return conv, nil
+	if lastAssistantMessageID == "" {
+		lastAssistantMessageID = userMessage.ID
+	}
+	return lastAssistantMessageID, nil
 }
 
 func (s *Service) hasPendingAttachments(conversationID string) bool {
@@ -982,6 +1155,7 @@ func (s *Service) streamAssistant(ctx context.Context, conv Conversation, settin
 		return ChatMessage{}, coreerr.E("chat.streamAssistant", strings.TrimSpace(string(body)), nil)
 	}
 
+	// TODO(mantis-14): switch these callbacks to a dedicated GUI stream group when one exists.
 	renderer := NewStreamRenderer(StreamCallbacks{
 		OnStart: func(streamID string) {
 			s.emit(ActionStreamStarted{ConversationID: conv.ID, MessageID: messageID, StreamID: streamID})
@@ -1185,9 +1359,24 @@ func (s *Service) discoverModels() []ModelEntry {
 		names = append(names, name)
 	}
 	slices.Sort(names)
+	activeModel := strings.TrimSpace(settings.DefaultModel)
+	if activeModel == "" && len(names) > 0 {
+		activeModel = names[0]
+	}
 	results := make([]ModelEntry, 0, len(names))
 	for _, name := range names {
-		results = append(results, models[name])
+		entry := models[name]
+		entry.Size = entry.SizeBytes
+		switch {
+		case strings.EqualFold(entry.Name, activeModel):
+			entry.Loaded = true
+			entry.Status = "active"
+		case entry.Loaded:
+			entry.Status = "loaded"
+		default:
+			entry.Status = "available"
+		}
+		results = append(results, entry)
 	}
 	return results
 }
@@ -1325,11 +1514,13 @@ func discoverModelsOnDisk(root string) []ModelEntry {
 	for discovered := range inference.Discover(root) {
 		modelPath := discovered.Path
 		name := filepath.Base(modelPath)
+		size := directorySize(modelPath)
 		results = append(results, ModelEntry{
 			Name:           name,
+			Size:           size,
 			Architecture:   strings.ToLower(discovered.ModelType),
 			QuantBits:      coalesceQuantBits(discovered.QuantBits, quantBitsFromName(name)),
-			SizeBytes:      directorySize(modelPath),
+			SizeBytes:      size,
 			Backend:        "local",
 			SupportsVision: architectureSupportsVision(discovered.ModelType),
 		})

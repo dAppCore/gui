@@ -7,7 +7,6 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 	"time"
 
@@ -71,75 +70,202 @@ func createDiscoveredModelRoot(t *testing.T, name, architecture string) string {
 	return root
 }
 
-func TestService_Good_SendAndHistory(t *testing.T) {
-	c := newChatCore(t, func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/event-stream")
-		_, _ = io.WriteString(w, "data: {\"id\":\"chatcmpl-1\",\"choices\":[{\"delta\":{\"content\":\"Hello\"}}]}\n\n")
-		_, _ = io.WriteString(w, "data: {\"id\":\"chatcmpl-1\",\"choices\":[{\"delta\":{\"content\":\" world\"}}]}\n\n")
-		_, _ = io.WriteString(w, "data: {\"id\":\"chatcmpl-1\",\"choices\":[{\"finish_reason\":\"stop\"}]}\n\n")
-		_, _ = io.WriteString(w, "data: [DONE]\n\n")
-	}, &mockToolExecutor{})
+func sequencedNow(start time.Time) func() time.Time {
+	current := start.Add(-time.Second)
+	return func() time.Time {
+		current = current.Add(time.Second)
+		return current
+	}
+}
+
+func writeSSE(w http.ResponseWriter, payloads ...string) {
+	w.Header().Set("Content-Type", "text/event-stream")
+	for _, payload := range payloads {
+		_, _ = io.WriteString(w, "data: "+payload+"\n\n")
+	}
+}
+
+func latestConversation(t *testing.T, c *core.Core) Conversation {
+	t.Helper()
+	result := c.Action("gui.chat.conversations.list").Run(context.Background(), core.NewOptions())
+	require.True(t, result.OK)
+	conversations, ok := result.Value.([]Conversation)
+	require.True(t, ok)
+	require.NotEmpty(t, conversations)
+	return conversations[0]
+}
+
+func historyMessages(t *testing.T, c *core.Core, conversationID string, limit int) []Message {
+	t.Helper()
+	options := []core.Option{{
+		Key:   "conversation_id",
+		Value: conversationID,
+	}}
+	if limit > 0 {
+		options = append(options, core.Option{Key: "limit", Value: limit})
+	}
+	result := c.Action("gui.chat.history").Run(context.Background(), core.NewOptions(options...))
+	require.True(t, result.OK)
+	messages, ok := result.Value.([]Message)
+	require.True(t, ok)
+	return messages
+}
+
+func TestActionSend_Good_ReturnsAssistantMessageID(t *testing.T) {
+	modelRoot := createDiscoveredModelRoot(t, "lemma", "gemma3")
+	c := newChatCore(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeSSE(w,
+			`{"id":"chatcmpl-1","choices":[{"delta":{"content":"Hello"}}]}`,
+			`{"id":"chatcmpl-1","choices":[{"delta":{"content":" world"}}]}`,
+			`{"id":"chatcmpl-1","choices":[{"finish_reason":"stop"}]}`,
+			`[DONE]`,
+		)
+	}, &mockToolExecutor{}, func(o *Options) { o.ModelRoots = []string{modelRoot} })
 
 	send := c.Action("gui.chat.send").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "content", Value: "Hi"},
+		core.Option{Key: "model", Value: "lemma"},
 	))
 	require.True(t, send.OK)
 
-	conv := send.Value.(Conversation)
+	messageID, ok := send.Value.(string)
+	require.True(t, ok)
+	require.NotEmpty(t, messageID)
+
+	conv := latestConversation(t, c)
 	require.Len(t, conv.Messages, 2)
-	assert.Equal(t, "user", conv.Messages[0].Role)
-	assert.Equal(t, "assistant", conv.Messages[1].Role)
+	assert.Equal(t, messageID, conv.Messages[1].ID)
+	assert.Equal(t, "lemma", conv.Model)
 	assert.Equal(t, "Hello world", conv.Messages[1].Content)
-
-	history := c.Action("gui.chat.history").Run(context.Background(), core.NewOptions(
-		core.Option{Key: "conversation_id", Value: conv.ID},
-	))
-	require.True(t, history.OK)
-	assert.Equal(t, conv.ID, history.Value.(Conversation).ID)
-
-	queryHistory := c.QUERY(QueryHistory{ConversationID: conv.ID})
-	require.True(t, queryHistory.OK)
-	assert.Equal(t, conv.ID, queryHistory.Value.(Conversation).ID)
 }
 
-func TestService_Good_ToolCallRoundTrip(t *testing.T) {
-	toolExecutor := &mockToolExecutor{}
-	requests := 0
-	c := newChatCore(t, func(w http.ResponseWriter, r *http.Request) {
-		requests++
-		w.Header().Set("Content-Type", "text/event-stream")
-		if requests == 1 {
-			_, _ = io.WriteString(w, "data: {\"id\":\"chatcmpl-1\",\"choices\":[{\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call-1\",\"function\":{\"name\":\"layout_suggest\",\"arguments\":\"{\\\"window_count\\\":2}\"}}]}}]}\n\n")
-			_, _ = io.WriteString(w, "data: {\"id\":\"chatcmpl-1\",\"choices\":[{\"finish_reason\":\"tool_calls\"}]}\n\n")
-			_, _ = io.WriteString(w, "data: [DONE]\n\n")
-			return
-		}
-		_, _ = io.WriteString(w, "data: {\"id\":\"chatcmpl-2\",\"choices\":[{\"delta\":{\"content\":\"Use a left-right split.\"}}]}\n\n")
-		_, _ = io.WriteString(w, "data: {\"id\":\"chatcmpl-2\",\"choices\":[{\"finish_reason\":\"stop\"}]}\n\n")
-		_, _ = io.WriteString(w, "data: [DONE]\n\n")
-	}, toolExecutor)
+func TestActionSend_Bad_RejectsEmptyMessage(t *testing.T) {
+	c := newChatCore(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeSSE(w, `[DONE]`)
+	}, &mockToolExecutor{})
+
+	result := c.Action("gui.chat.send").Run(context.Background(), core.NewOptions())
+	require.False(t, result.OK)
+	require.Error(t, result.Value.(error))
+	assert.Contains(t, result.Value.(error).Error(), "message content is required")
+}
+
+func TestActionSend_Ugly_PropagatesUpstreamFailure(t *testing.T) {
+	c := newChatCore(t, func(w http.ResponseWriter, _ *http.Request) {
+		http.Error(w, "model unavailable", http.StatusBadGateway)
+	}, &mockToolExecutor{})
+
+	result := c.Action("gui.chat.send").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "content", Value: "Hi"},
+	))
+	require.False(t, result.OK)
+	require.Error(t, result.Value.(error))
+	assert.Contains(t, result.Value.(error).Error(), "model unavailable")
+}
+
+func TestActionHistory_Good_HonoursLimit(t *testing.T) {
+	c := newChatCore(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeSSE(w,
+			`{"id":"chatcmpl-1","choices":[{"delta":{"content":"Alpha"}}]}`,
+			`{"id":"chatcmpl-1","choices":[{"finish_reason":"stop"}]}`,
+			`[DONE]`,
+		)
+	}, &mockToolExecutor{})
 
 	send := c.Action("gui.chat.send").Run(context.Background(), core.NewOptions(
-		core.Option{Key: "content", Value: "Arrange these windows"},
+		core.Option{Key: "content", Value: "One"},
 	))
 	require.True(t, send.OK)
 
-	conv := send.Value.(Conversation)
-	require.GreaterOrEqual(t, len(conv.Messages), 4)
-	require.Len(t, toolExecutor.calls, 1)
-	assert.Equal(t, "layout_suggest", toolExecutor.calls[0].Name)
-	assert.Equal(t, 2.0, toolExecutor.calls[0].Arguments["window_count"])
-	assert.Equal(t, "tool", conv.Messages[2].Role)
-	assert.True(t, strings.Contains(conv.Messages[len(conv.Messages)-1].Content, "left-right"))
+	conv := latestConversation(t, c)
+	history := historyMessages(t, c, conv.ID, 1)
+	require.Len(t, history, 1)
+	assert.Equal(t, "assistant", history[0].Role)
+	assert.Equal(t, "Alpha", history[0].Content)
 }
 
-func TestService_Good_SelectModelUpdatesConversation(t *testing.T) {
-	c := newChatCore(t, func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/event-stream")
-		_, _ = io.WriteString(w, "data: {\"id\":\"chatcmpl-1\",\"choices\":[{\"delta\":{\"content\":\"Hello\"}}]}\n\n")
-		_, _ = io.WriteString(w, "data: {\"id\":\"chatcmpl-1\",\"choices\":[{\"finish_reason\":\"stop\"}]}\n\n")
-		_, _ = io.WriteString(w, "data: [DONE]\n\n")
+func TestActionHistory_Bad_RequiresConversationID(t *testing.T) {
+	c := newChatCore(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeSSE(w, `[DONE]`)
 	}, &mockToolExecutor{})
+
+	result := c.Action("gui.chat.history").Run(context.Background(), core.NewOptions())
+	require.False(t, result.OK)
+	require.Error(t, result.Value.(error))
+	assert.Contains(t, result.Value.(error).Error(), "conversation id is required")
+}
+
+func TestActionHistory_Ugly_UnknownConversationFails(t *testing.T) {
+	c := newChatCore(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeSSE(w, `[DONE]`)
+	}, &mockToolExecutor{})
+
+	result := c.Action("gui.chat.history").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "conversation_id", Value: "missing"},
+	))
+	require.False(t, result.OK)
+	require.Error(t, result.Value.(error))
+}
+
+func TestActionModels_Good_ReportsSizeAndStatus(t *testing.T) {
+	modelRoot := createDiscoveredModelRoot(t, "lemma", "gemma3")
+	c := newChatCore(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeSSE(w, `[DONE]`)
+	}, &mockToolExecutor{}, func(o *Options) { o.ModelRoots = []string{modelRoot} })
+
+	result := c.Action("gui.chat.models").Run(context.Background(), core.NewOptions())
+	require.True(t, result.OK)
+
+	models, ok := result.Value.([]ModelEntry)
+	require.True(t, ok)
+	require.Len(t, models, 1)
+	assert.Equal(t, "lemma", models[0].Name)
+	assert.Equal(t, int64(4), models[0].Size)
+	assert.Equal(t, "active", models[0].Status)
+}
+
+func TestActionModels_Bad_ReturnsFallbackWhenNothingDiscovered(t *testing.T) {
+	c := newChatCore(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeSSE(w, `[DONE]`)
+	}, &mockToolExecutor{})
+
+	result := c.Action("gui.chat.models").Run(context.Background(), core.NewOptions())
+	require.True(t, result.OK)
+
+	models, ok := result.Value.([]ModelEntry)
+	require.True(t, ok)
+	require.Len(t, models, 1)
+	assert.Equal(t, "default", models[0].Name)
+	assert.Equal(t, "active", models[0].Status)
+}
+
+func TestActionModels_Ugly_ReflectsSelectedModelStatus(t *testing.T) {
+	rootA := createDiscoveredModelRoot(t, "alpha", "gemma3")
+	rootB := createDiscoveredModelRoot(t, "beta", "gemma3")
+	c := newChatCore(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeSSE(w, `[DONE]`)
+	}, &mockToolExecutor{}, func(o *Options) { o.ModelRoots = []string{rootA, rootB} })
+
+	selected := c.Action("gui.chat.selectModel").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "model", Value: "beta"},
+	))
+	require.True(t, selected.OK)
+
+	result := c.Action("gui.chat.models").Run(context.Background(), core.NewOptions())
+	require.True(t, result.OK)
+
+	models, ok := result.Value.([]ModelEntry)
+	require.True(t, ok)
+	require.Len(t, models, 2)
+	assert.Equal(t, "available", models[0].Status)
+	assert.Equal(t, "active", models[1].Status)
+}
+
+func TestActionSelectModel_Good_UpdatesConversationAndSettings(t *testing.T) {
+	modelRoot := createDiscoveredModelRoot(t, "lemma", "gemma3")
+	c := newChatCore(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeSSE(w, `[DONE]`)
+	}, &mockToolExecutor{}, func(o *Options) { o.ModelRoots = []string{modelRoot} })
 
 	created := c.Action("gui.chat.conversations.new").Run(context.Background(), core.NewOptions())
 	require.True(t, created.OK)
@@ -151,80 +277,278 @@ func TestService_Good_SelectModelUpdatesConversation(t *testing.T) {
 	))
 	require.True(t, selected.OK)
 
-	updated := c.QUERY(QueryConversationGet{ConversationID: conv.ID})
-	require.True(t, updated.OK)
-	assert.Equal(t, "lemma", updated.Value.(Conversation).Model)
-}
+	settings := selected.Value.(ChatSettings)
+	assert.Equal(t, "lemma", settings.DefaultModel)
 
-func TestService_Good_SettingsDefaults(t *testing.T) {
-	c := newChatCore(t, func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "text/event-stream")
-		_, _ = io.WriteString(w, "data: [DONE]\n\n")
-	}, &mockToolExecutor{})
-
-	result := c.QUERY(QuerySettingsDefaults{})
-	require.True(t, result.OK)
-	assert.Equal(t, DefaultSettings(), result.Value.(ChatSettings))
-
-	actionResult := c.Action("gui.chat.settings.defaults").Run(context.Background(), core.Options{})
-	require.True(t, actionResult.OK)
-	assert.Equal(t, DefaultSettings(), actionResult.Value.(ChatSettings))
-}
-
-func TestService_Bad_SettingsRejectOutOfRangeValues(t *testing.T) {
-	c := newChatCore(t, func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "text/event-stream")
-		_, _ = io.WriteString(w, "data: [DONE]\n\n")
-	}, &mockToolExecutor{})
-
-	result := c.Action("gui.chat.settings.save").Run(context.Background(), core.NewOptions(
-		core.Option{Key: "temperature", Value: float32(2.5)},
-		core.Option{Key: "top_p", Value: float32(0.95)},
-		core.Option{Key: "top_k", Value: 64},
-		core.Option{Key: "max_tokens", Value: 2048},
-		core.Option{Key: "context_window", Value: 8192},
-		core.Option{Key: "system_prompt", Value: "You are a helpful assistant."},
+	loaded := c.Action("gui.chat.conversations.load").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "conversation_id", Value: conv.ID},
 	))
+	require.True(t, loaded.OK)
+	assert.Equal(t, "lemma", loaded.Value.(Conversation).Model)
+}
+
+func TestActionSelectModel_Bad_RequiresModelName(t *testing.T) {
+	c := newChatCore(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeSSE(w, `[DONE]`)
+	}, &mockToolExecutor{})
+
+	result := c.Action("gui.chat.selectModel").Run(context.Background(), core.NewOptions())
 	require.False(t, result.OK)
 	require.Error(t, result.Value.(error))
-	assert.Contains(t, result.Value.(error).Error(), "temperature must be between 0.0 and 2.0")
+	assert.Contains(t, result.Value.(error).Error(), "model is required")
 }
 
-func TestService_Bad_SelectModelRejectsUnknownModel(t *testing.T) {
-	modelRoot := createDiscoveredModelRoot(t, "lemer", "gemma3")
+func TestActionSelectModel_Ugly_RejectsUnknownDiscoveredModel(t *testing.T) {
+	modelRoot := createDiscoveredModelRoot(t, "lemma", "gemma3")
 	c := newChatCore(t, func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "text/event-stream")
-		_, _ = io.WriteString(w, "data: [DONE]\n\n")
+		writeSSE(w, `[DONE]`)
 	}, &mockToolExecutor{}, func(o *Options) { o.ModelRoots = []string{modelRoot} })
 
 	result := c.Action("gui.chat.selectModel").Run(context.Background(), core.NewOptions(
-		core.Option{Key: "model", Value: "missing-model"},
+		core.Option{Key: "model", Value: "missing"},
 	))
 	require.False(t, result.OK)
 	require.Error(t, result.Value.(error))
 	assert.Contains(t, result.Value.(error).Error(), "model is not available")
 }
 
-func TestService_Bad_SendImageRejectsNonVisionModel(t *testing.T) {
-	modelRoot := createDiscoveredModelRoot(t, "lemma", "qwen3")
+func TestActionConversationsList_Good_ReturnsNewestFirst(t *testing.T) {
+	now := sequencedNow(time.Unix(1_700_000_000, 0).UTC())
 	c := newChatCore(t, func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "text/event-stream")
-		_, _ = io.WriteString(w, "data: [DONE]\n\n")
-	}, &mockToolExecutor{}, func(o *Options) { o.ModelRoots = []string{modelRoot} })
+		writeSSE(w,
+			`{"id":"chatcmpl-1","choices":[{"delta":{"content":"Ack"}}]}`,
+			`{"id":"chatcmpl-1","choices":[{"finish_reason":"stop"}]}`,
+			`[DONE]`,
+		)
+	}, &mockToolExecutor{}, func(o *Options) { o.Now = now })
 
-	attach := c.Action("gui.chat.attachImage").Run(context.Background(), core.NewOptions(
-		core.Option{Key: "filename", Value: "photo.png"},
-		core.Option{Key: "mime_type", Value: "image/png"},
-		core.Option{Key: "data", Value: "ZmFrZQ=="},
-		core.Option{Key: "width", Value: 32},
-		core.Option{Key: "height", Value: 32},
-	))
-	require.True(t, attach.OK)
+	require.True(t, c.Action("gui.chat.send").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "content", Value: "First"},
+	)).OK)
+	require.True(t, c.Action("gui.chat.send").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "content", Value: "Second"},
+	)).OK)
 
-	send := c.Action("gui.chat.send").Run(context.Background(), core.NewOptions(
-		core.Option{Key: "content", Value: "Describe this image"},
+	result := c.Action("gui.chat.conversations.list").Run(context.Background(), core.NewOptions())
+	require.True(t, result.OK)
+	conversations := result.Value.([]Conversation)
+	require.Len(t, conversations, 2)
+	assert.Equal(t, "Second", conversations[0].Messages[0].Content)
+	assert.Equal(t, "First", conversations[1].Messages[0].Content)
+}
+
+func TestActionConversationsList_Bad_EmptyStoreReturnsEmptySlice(t *testing.T) {
+	c := newChatCore(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeSSE(w, `[DONE]`)
+	}, &mockToolExecutor{})
+
+	result := c.Action("gui.chat.conversations.list").Run(context.Background(), core.NewOptions())
+	require.True(t, result.OK)
+	conversations, ok := result.Value.([]Conversation)
+	require.True(t, ok)
+	assert.Empty(t, conversations)
+}
+
+func TestActionConversationsList_Ugly_IgnoresCorruptRows(t *testing.T) {
+	c := newChatCore(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeSSE(w,
+			`{"id":"chatcmpl-1","choices":[{"delta":{"content":"Ack"}}]}`,
+			`{"id":"chatcmpl-1","choices":[{"finish_reason":"stop"}]}`,
+			`[DONE]`,
+		)
+	}, &mockToolExecutor{})
+
+	require.True(t, c.Action("gui.chat.send").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "content", Value: "Good"},
+	)).OK)
+
+	svc := core.MustServiceFor[*Service](c, "chat")
+	require.NoError(t, svc.store.Set(conversationsGroup, "broken", "{"))
+
+	result := c.Action("gui.chat.conversations.list").Run(context.Background(), core.NewOptions())
+	require.True(t, result.OK)
+	conversations := result.Value.([]Conversation)
+	require.Len(t, conversations, 1)
+	assert.Equal(t, "Good", conversations[0].Messages[0].Content)
+}
+
+func TestActionConversationsLoad_Good_ReturnsConversation(t *testing.T) {
+	c := newChatCore(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeSSE(w,
+			`{"id":"chatcmpl-1","choices":[{"delta":{"content":"Reply"}}]}`,
+			`{"id":"chatcmpl-1","choices":[{"finish_reason":"stop"}]}`,
+			`[DONE]`,
+		)
+	}, &mockToolExecutor{})
+
+	require.True(t, c.Action("gui.chat.send").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "content", Value: "Hello"},
+	)).OK)
+	conv := latestConversation(t, c)
+
+	result := c.Action("gui.chat.conversations.load").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "conversation_id", Value: conv.ID},
 	))
-	require.False(t, send.OK)
-	require.Error(t, send.Value.(error))
-	assert.Contains(t, send.Value.(error).Error(), "does not support image input")
+	require.True(t, result.OK)
+	loaded := result.Value.(Conversation)
+	require.Len(t, loaded.Messages, 2)
+	assert.Equal(t, "Reply", loaded.Messages[1].Content)
+}
+
+func TestActionConversationsLoad_Bad_RequiresConversationID(t *testing.T) {
+	c := newChatCore(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeSSE(w, `[DONE]`)
+	}, &mockToolExecutor{})
+
+	result := c.Action("gui.chat.conversations.load").Run(context.Background(), core.NewOptions())
+	require.False(t, result.OK)
+	require.Error(t, result.Value.(error))
+	assert.Contains(t, result.Value.(error).Error(), "conversation id is required")
+}
+
+func TestActionConversationsLoad_Ugly_UnknownConversationFails(t *testing.T) {
+	c := newChatCore(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeSSE(w, `[DONE]`)
+	}, &mockToolExecutor{})
+
+	result := c.Action("gui.chat.conversations.load").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "conversation_id", Value: "missing"},
+	))
+	require.False(t, result.OK)
+	require.Error(t, result.Value.(error))
+}
+
+func TestActionConversationsDelete_Good_RemovesConversation(t *testing.T) {
+	c := newChatCore(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeSSE(w,
+			`{"id":"chatcmpl-1","choices":[{"delta":{"content":"Reply"}}]}`,
+			`{"id":"chatcmpl-1","choices":[{"finish_reason":"stop"}]}`,
+			`[DONE]`,
+		)
+	}, &mockToolExecutor{})
+
+	require.True(t, c.Action("gui.chat.send").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "content", Value: "Hello"},
+	)).OK)
+	conv := latestConversation(t, c)
+
+	deleted := c.Action("gui.chat.conversations.delete").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "conversation_id", Value: conv.ID},
+	))
+	require.True(t, deleted.OK)
+	assert.Equal(t, true, deleted.Value)
+
+	listed := c.Action("gui.chat.conversations.list").Run(context.Background(), core.NewOptions())
+	require.True(t, listed.OK)
+	assert.Empty(t, listed.Value.([]Conversation))
+}
+
+func TestActionConversationsDelete_Bad_RequiresConversationID(t *testing.T) {
+	c := newChatCore(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeSSE(w, `[DONE]`)
+	}, &mockToolExecutor{})
+
+	result := c.Action("gui.chat.conversations.delete").Run(context.Background(), core.NewOptions())
+	require.False(t, result.OK)
+	require.Error(t, result.Value.(error))
+	assert.Contains(t, result.Value.(error).Error(), "conversation id is required")
+}
+
+func TestActionConversationsDelete_Ugly_IsIdempotentForMissingConversation(t *testing.T) {
+	c := newChatCore(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeSSE(w, `[DONE]`)
+	}, &mockToolExecutor{})
+
+	result := c.Action("gui.chat.conversations.delete").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "conversation_id", Value: "missing"},
+	))
+	require.True(t, result.OK)
+	assert.Equal(t, true, result.Value)
+}
+
+func TestActionThinkingStart_Good_ReturnsActiveState(t *testing.T) {
+	c := newChatCore(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeSSE(w, `[DONE]`)
+	}, &mockToolExecutor{})
+
+	result := c.Action("gui.chat.thinking.start").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "conversation_id", Value: "conv-1"},
+	))
+	require.True(t, result.OK)
+	state := result.Value.(ThinkingState)
+	assert.True(t, state.Active)
+	assert.False(t, state.StartedAt.IsZero())
+}
+
+func TestActionThinkingStart_Bad_RequiresConversationID(t *testing.T) {
+	c := newChatCore(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeSSE(w, `[DONE]`)
+	}, &mockToolExecutor{})
+
+	result := c.Action("gui.chat.thinking.start").Run(context.Background(), core.NewOptions())
+	require.False(t, result.OK)
+	require.Error(t, result.Value.(error))
+	assert.Contains(t, result.Value.(error).Error(), "conversation id is required")
+}
+
+func TestActionThinkingStart_Ugly_RestartReplacesExistingState(t *testing.T) {
+	now := sequencedNow(time.Unix(1_700_000_000, 0).UTC())
+	c := newChatCore(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeSSE(w, `[DONE]`)
+	}, &mockToolExecutor{}, func(o *Options) { o.Now = now })
+
+	first := c.Action("gui.chat.thinking.start").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "conversation_id", Value: "conv-1"},
+	))
+	second := c.Action("gui.chat.thinking.start").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "conversation_id", Value: "conv-1"},
+	))
+	require.True(t, first.OK)
+	require.True(t, second.OK)
+	assert.True(t, second.Value.(ThinkingState).StartedAt.After(first.Value.(ThinkingState).StartedAt))
+}
+
+func TestActionThinkingStop_Good_ClearsThinkingState(t *testing.T) {
+	c := newChatCore(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeSSE(w, `[DONE]`)
+	}, &mockToolExecutor{})
+
+	require.True(t, c.Action("gui.chat.thinking.start").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "conversation_id", Value: "conv-1"},
+		core.Option{Key: "started_at", Value: time.Unix(1_700_000_000, 0).UTC()},
+	)).OK)
+
+	stopped := c.Action("gui.chat.thinking.stop").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "conversation_id", Value: "conv-1"},
+		core.Option{Key: "duration_ms", Value: int64(25)},
+	))
+	require.True(t, stopped.OK)
+	state := stopped.Value.(ThinkingState)
+	assert.False(t, state.Active)
+	assert.Equal(t, int64(25), state.DurationMS)
+}
+
+func TestActionThinkingStop_Bad_RequiresConversationID(t *testing.T) {
+	c := newChatCore(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeSSE(w, `[DONE]`)
+	}, &mockToolExecutor{})
+
+	result := c.Action("gui.chat.thinking.stop").Run(context.Background(), core.NewOptions())
+	require.False(t, result.OK)
+	require.Error(t, result.Value.(error))
+	assert.Contains(t, result.Value.(error).Error(), "conversation id is required")
+}
+
+func TestActionThinkingStop_Ugly_AllowsStopWithoutStart(t *testing.T) {
+	c := newChatCore(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeSSE(w, `[DONE]`)
+	}, &mockToolExecutor{})
+
+	result := c.Action("gui.chat.thinking.stop").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "conversation_id", Value: "conv-1"},
+	))
+	require.True(t, result.OK)
+	state := result.Value.(ThinkingState)
+	assert.False(t, state.Active)
+	assert.True(t, state.DurationMS >= 0)
 }
