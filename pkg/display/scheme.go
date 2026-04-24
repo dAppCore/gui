@@ -10,7 +10,7 @@ import (
 	"time"
 
 	core "dappco.re/go/core"
-	coreerr "dappco.re/go/core/log"
+	coreerr "dappco.re/go/log"
 	"dappco.re/go/gui/pkg/chat"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )

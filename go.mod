@@ -4,9 +4,9 @@ go 1.26.0
 
 require (
 	dappco.re/go/core v0.8.0-alpha.1
-	dappco.re/go/core/inference v0.2.1
-	dappco.re/go/core/io v0.4.2
-	dappco.re/go/core/log v0.1.0
+	dappco.re/go/inference v0.2.1
+	dappco.re/go/io v0.4.2
+	dappco.re/go/log v0.1.0
 	dappco.re/go/store v0.0.0
 	forge.lthn.ai/core/config v0.1.8
 	forge.lthn.ai/core/go-webview v0.1.7

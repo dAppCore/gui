@@ -2,7 +2,7 @@
 package systray
 
 import (
-	coreerr "dappco.re/go/core/log"
+	coreerr "dappco.re/go/log"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 

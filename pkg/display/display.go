@@ -9,7 +9,7 @@ import (
 	"sync"
 
 	core "dappco.re/go/core"
-	coreerr "dappco.re/go/core/log"
+	coreerr "dappco.re/go/log"
 	"forge.lthn.ai/core/config"
 
 	"dappco.re/go/gui/pkg/chat"

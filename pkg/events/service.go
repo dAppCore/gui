@@ -8,7 +8,7 @@ import (
 	"sync"
 
 	core "dappco.re/go/core"
-	coreerr "dappco.re/go/core/log"
+	coreerr "dappco.re/go/log"
 )
 
 // Options holds configuration for the events service (currently empty).

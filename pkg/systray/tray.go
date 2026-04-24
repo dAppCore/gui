@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"sync"
 
-	coreerr "dappco.re/go/core/log"
+	coreerr "dappco.re/go/log"
 )
 
 //go:embed assets/apptray.png

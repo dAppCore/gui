@@ -6,7 +6,7 @@ import (
 	"encoding/base64"
 
 	core "dappco.re/go/core"
-	coreerr "dappco.re/go/core/log"
+	coreerr "dappco.re/go/log"
 	"dappco.re/go/gui/pkg/systray"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )

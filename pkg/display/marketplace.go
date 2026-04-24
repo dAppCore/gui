@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	core "dappco.re/go/core"
-	coreerr "dappco.re/go/core/log"
+	coreerr "dappco.re/go/log"
 	"dappco.re/go/gui/pkg/marketplace"
 )
 

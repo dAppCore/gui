@@ -17,8 +17,8 @@ import (
 	"time"
 
 	core "dappco.re/go/core"
-	"dappco.re/go/core/inference"
-	coreerr "dappco.re/go/core/log"
+	"dappco.re/go/inference"
+	coreerr "dappco.re/go/log"
 	"dappco.re/go/store"
 	guimcp "dappco.re/go/gui/pkg/mcp"
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"

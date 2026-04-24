@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	core "dappco.re/go/core"
-	coreerr "dappco.re/go/core/log"
+	coreerr "dappco.re/go/log"
 	"dappco.re/go/gui/pkg/contextmenu"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )

@@ -5,7 +5,7 @@ import (
 	"context"
 
 	core "dappco.re/go/core"
-	coreerr "dappco.re/go/core/log"
+	coreerr "dappco.re/go/log"
 	"dappco.re/go/gui/pkg/dialog"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
