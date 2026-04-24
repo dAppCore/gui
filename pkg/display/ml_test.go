@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	core "dappco.re/go/core"
-	"forge.lthn.ai/core/gui/pkg/chat"
+	"dappco.re/go/gui/pkg/chat"
 	"github.com/stretchr/testify/assert"
 )
 

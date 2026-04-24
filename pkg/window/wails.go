@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"strings"
 
-	"forge.lthn.ai/core/gui/pkg/preload"
+	"dappco.re/go/gui/pkg/preload"
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/events"
 )

@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"forge.lthn.ai/core/gui/pkg/events"
-	"forge.lthn.ai/core/gui/pkg/window"
+	"dappco.re/go/gui/pkg/events"
+	"dappco.re/go/gui/pkg/window"
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

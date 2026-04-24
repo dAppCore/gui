@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	core "dappco.re/go/core"
-	"forge.lthn.ai/core/gui/pkg/chat"
+	"dappco.re/go/gui/pkg/chat"
 )
 
 type ModelRuntimeState struct {

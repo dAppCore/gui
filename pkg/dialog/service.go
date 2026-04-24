@@ -7,8 +7,8 @@ import (
 
 	core "dappco.re/go/core"
 	coreerr "dappco.re/go/core/log"
-	"forge.lthn.ai/core/gui/pkg/webview"
-	"forge.lthn.ai/core/gui/pkg/window"
+	"dappco.re/go/gui/pkg/webview"
+	"dappco.re/go/gui/pkg/window"
 )
 
 type Options struct{}

@@ -1,4 +1,4 @@
-module forge.lthn.ai/core/gui
+module dappco.re/go/gui
 
 go 1.26.0
 

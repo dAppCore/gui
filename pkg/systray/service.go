@@ -5,7 +5,7 @@ import (
 
 	core "dappco.re/go/core"
 	coreerr "dappco.re/go/core/log"
-	"forge.lthn.ai/core/gui/pkg/notification"
+	"dappco.re/go/gui/pkg/notification"
 )
 
 type Options struct{}

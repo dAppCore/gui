@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	core "dappco.re/go/core"
-	"forge.lthn.ai/core/gui/pkg/chat"
-	"forge.lthn.ai/core/gui/pkg/p2p"
+	"dappco.re/go/gui/pkg/chat"
+	"dappco.re/go/gui/pkg/p2p"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/wailsapp/wails/v3/pkg/application"

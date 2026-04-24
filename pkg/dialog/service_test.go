@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	core "dappco.re/go/core"
-	"forge.lthn.ai/core/gui/pkg/webview"
-	"forge.lthn.ai/core/gui/pkg/window"
+	"dappco.re/go/gui/pkg/webview"
+	"dappco.re/go/gui/pkg/window"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

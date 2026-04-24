@@ -6,12 +6,12 @@ import (
 
 	core "dappco.re/go/core"
 	coreerr "dappco.re/go/core/log"
-	"forge.lthn.ai/core/gui/pkg/clipboard"
-	"forge.lthn.ai/core/gui/pkg/dialog"
-	"forge.lthn.ai/core/gui/pkg/environment"
-	"forge.lthn.ai/core/gui/pkg/notification"
-	"forge.lthn.ai/core/gui/pkg/screen"
-	"forge.lthn.ai/core/gui/pkg/systray"
+	"dappco.re/go/gui/pkg/clipboard"
+	"dappco.re/go/gui/pkg/dialog"
+	"dappco.re/go/gui/pkg/environment"
+	"dappco.re/go/gui/pkg/notification"
+	"dappco.re/go/gui/pkg/screen"
+	"dappco.re/go/gui/pkg/systray"
 )
 
 // Screen is the public display-screen shape used by the display service API.

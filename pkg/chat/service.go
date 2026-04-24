@@ -20,7 +20,7 @@ import (
 	"dappco.re/go/core/inference"
 	coreerr "dappco.re/go/core/log"
 	"dappco.re/go/store"
-	guimcp "forge.lthn.ai/core/gui/pkg/mcp"
+	guimcp "dappco.re/go/gui/pkg/mcp"
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 	"gopkg.in/yaml.v3"
 

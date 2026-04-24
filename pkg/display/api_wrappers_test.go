@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	core "dappco.re/go/core"
-	"forge.lthn.ai/core/gui/pkg/clipboard"
-	"forge.lthn.ai/core/gui/pkg/environment"
-	"forge.lthn.ai/core/gui/pkg/notification"
-	"forge.lthn.ai/core/gui/pkg/systray"
+	"dappco.re/go/gui/pkg/clipboard"
+	"dappco.re/go/gui/pkg/environment"
+	"dappco.re/go/gui/pkg/notification"
+	"dappco.re/go/gui/pkg/systray"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

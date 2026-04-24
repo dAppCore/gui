@@ -4,7 +4,7 @@ import (
 	"context"
 
 	core "dappco.re/go/core"
-	"forge.lthn.ai/core/gui/pkg/p2p"
+	"dappco.re/go/gui/pkg/p2p"
 )
 
 func (s *Service) attachP2PBridge() {

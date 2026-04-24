@@ -11,7 +11,7 @@ import (
 
 	core "dappco.re/go/core"
 	coreerr "dappco.re/go/core/log"
-	"forge.lthn.ai/core/gui/pkg/chat"
+	"dappco.re/go/gui/pkg/chat"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 

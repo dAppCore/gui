@@ -6,7 +6,7 @@ import (
 	core "dappco.re/go/core"
 	"testing"
 
-	"forge.lthn.ai/core/gui/pkg/dialog"
+	"dappco.re/go/gui/pkg/dialog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

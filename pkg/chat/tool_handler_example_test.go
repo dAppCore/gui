@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	guimcp "forge.lthn.ai/core/gui/pkg/mcp"
+	guimcp "dappco.re/go/gui/pkg/mcp"
 )
 
 type exampleToolExecutor struct{}

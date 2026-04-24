@@ -7,7 +7,7 @@ import (
 
 	core "dappco.re/go/core"
 	coreerr "dappco.re/go/core/log"
-	"forge.lthn.ai/core/gui/pkg/systray"
+	"dappco.re/go/gui/pkg/systray"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 

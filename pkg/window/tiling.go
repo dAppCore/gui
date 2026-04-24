@@ -3,7 +3,7 @@ package window
 
 import (
 	coreerr "dappco.re/go/core/log"
-	"forge.lthn.ai/core/gui/pkg/screen"
+	"dappco.re/go/gui/pkg/screen"
 )
 
 // TileMode defines how windows are arranged.

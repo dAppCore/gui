@@ -6,7 +6,7 @@ import (
 
 	core "dappco.re/go/core"
 	coreerr "dappco.re/go/core/log"
-	"forge.lthn.ai/core/gui/pkg/dialog"
+	"dappco.re/go/gui/pkg/dialog"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 

@@ -3,7 +3,7 @@ package window
 import (
 	"testing"
 
-	"forge.lthn.ai/core/gui/pkg/screen"
+	"dappco.re/go/gui/pkg/screen"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

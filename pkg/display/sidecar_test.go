@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	core "dappco.re/go/core"
-	"forge.lthn.ai/core/gui/pkg/deno"
+	"dappco.re/go/gui/pkg/deno"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

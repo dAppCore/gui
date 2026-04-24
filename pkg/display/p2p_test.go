@@ -8,7 +8,7 @@ import (
 	"unsafe"
 
 	core "dappco.re/go/core"
-	"forge.lthn.ai/core/gui/pkg/p2p"
+	"dappco.re/go/gui/pkg/p2p"
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

@@ -5,7 +5,7 @@ import (
 	"context"
 
 	core "dappco.re/go/core"
-	"forge.lthn.ai/core/gui/pkg/keybinding"
+	"dappco.re/go/gui/pkg/keybinding"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 

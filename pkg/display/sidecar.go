@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	core "dappco.re/go/core"
-	"forge.lthn.ai/core/gui/pkg/deno"
+	"dappco.re/go/gui/pkg/deno"
 )
 
 func (s *Service) registerSidecarActions() {
