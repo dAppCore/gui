@@ -41,26 +41,16 @@ func TestDisplay_Good_WindowOpenIncludesPreload(t *testing.T) {
 	assert.NotContains(t, platform.Windows[0].ExecJSCalls()[0], "core.background.serviceWorker.register")
 }
 
-func TestDisplay_Good_WindowOpenTrustedOriginIncludesPrivilegedBridge(t *testing.T) {
-	platform := window.NewMockPlatform()
-	c := core.New(
-		core.WithService(Register(nil)),
-		core.WithService(window.Register(platform)),
-		core.WithServiceLock(),
-	)
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+func TestPreload_Good_TrustedOriginIncludesPrivilegedBridge(t *testing.T) {
+	svc, err := New()
+	require.NoError(t, err)
 
-	result := c.Action("window.open").Run(context.Background(), core.NewOptions(
-		core.Option{Key: "task", Value: window.TaskOpenWindow{
-			Options: []window.WindowOption{
-				window.WithName("preload"),
-				window.WithURL("http://localhost:3000"),
-			},
-		}},
-	))
-	require.True(t, result.OK)
-	require.Len(t, platform.Windows, 1)
-	script := platform.Windows[0].ExecJSCalls()[0]
+	script, err := svc.BuildPreloadScriptWithTrustedOriginPolicy(
+		"core://app/",
+		NewTrustedOriginPolicy([]string{"core://app/"}),
+	)
+	require.NoError(t, err)
+
 	assert.Contains(t, script, "globalThis.electron")
 	assert.Contains(t, script, "core.background.serviceWorker.register")
 	assert.Contains(t, script, "globalThis.core.ml")
@@ -140,15 +130,51 @@ func TestPreload_ValidatedLocalMLAPIURL_Ugly(t *testing.T) {
 }
 
 func TestPreload_TrustedPreloadOrigin_Good(t *testing.T) {
-	assert.True(t, trustedPreloadOrigin("core://store"))
-	assert.True(t, trustedPreloadOrigin("http://localhost:3000"))
-	assert.True(t, trustedPreloadOrigin("https://127.0.0.1:8443"))
+	policy := NewTrustedOriginPolicy([]string{"core://lab.lthn.sh/"})
+
+	assert.True(t, trustedPreloadOrigin("core://lab.lthn.sh/page", policy))
 }
 
 func TestPreload_TrustedPreloadOrigin_Bad(t *testing.T) {
-	assert.False(t, trustedPreloadOrigin("https://example.com"))
-	assert.False(t, trustedPreloadOrigin("http://10.0.0.1:3000"))
-	assert.False(t, trustedPreloadOrigin("file:///tmp/app/index.html"))
+	policy := NewTrustedOriginPolicy([]string{"core://lab.lthn.sh/"})
+
+	assert.False(t, trustedPreloadOrigin("core://attacker.com/x", policy))
+	assert.False(t, trustedPreloadOrigin("wails://lab.lthn.sh/x", policy))
+	assert.False(t, trustedPreloadOrigin("https://example.com", policy))
+	assert.False(t, trustedPreloadOrigin("http://localhost:3000", policy))
+	assert.False(t, trustedPreloadOrigin("file:///tmp/app/index.html", policy))
+}
+
+func TestPreload_TrustedPreloadOrigin_EmptyAllowListDeniesSchemeURLs(t *testing.T) {
+	policy := NewTrustedOriginPolicy(nil)
+
+	assert.False(t, trustedPreloadOrigin("core://lab.lthn.sh/page", policy))
+	assert.False(t, trustedPreloadOrigin("core://app/", policy))
+	assert.False(t, trustedPreloadOrigin("core://attacker.com/x", policy))
+}
+
+func TestPreload_TrustedPreloadOrigin_PathPrefix(t *testing.T) {
+	policy := NewTrustedOriginPolicy([]string{"core://lab.lthn.sh/x"})
+
+	assert.True(t, trustedPreloadOrigin("core://lab.lthn.sh/x/y", policy))
+	assert.False(t, trustedPreloadOrigin("core://lab.lthn.sh/y", policy))
+}
+
+func TestPreload_DefaultTrustedOriginPolicy_LoadsConfig(t *testing.T) {
+	home := t.TempDir()
+	require.NoError(t, os.MkdirAll(filepath.Join(home, ".core"), 0o755))
+	require.NoError(t, os.WriteFile(
+		filepath.Join(home, ".core", "preload-origins.yaml"),
+		[]byte("origins:\n  - core://app/\n"),
+		0o644,
+	))
+	t.Setenv("DIR_HOME", home)
+	t.Setenv("HOME", home)
+
+	policy := DefaultTrustedOriginPolicy()
+
+	assert.True(t, trustedPreloadOrigin("core://app/shell", policy))
+	assert.False(t, trustedPreloadOrigin("core://attacker.com/shell", policy))
 }
 
 type preloadCapture struct {

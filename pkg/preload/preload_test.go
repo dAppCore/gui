@@ -62,3 +62,26 @@ func TestInjectPreload_Ugly(t *testing.T) {
 	assert.NotContains(t, script, "globalThis.electron = electron")
 	assert.NotContains(t, script, "ipcRenderer")
 }
+
+func TestTrustedOrigin_EmptyAllowListDeniesSchemeURLs(t *testing.T) {
+	policy := NewTrustedOriginPolicy(nil)
+
+	assert.False(t, trustedOrigin("core://lab.lthn.sh/page", policy))
+	assert.False(t, trustedOrigin("core://app/", policy))
+	assert.False(t, trustedOrigin("core://attacker.com/x", policy))
+}
+
+func TestTrustedOrigin_AllowListMatchesSchemeHostAndPath(t *testing.T) {
+	policy := NewTrustedOriginPolicy([]string{"core://lab.lthn.sh/"})
+
+	assert.True(t, trustedOrigin("core://lab.lthn.sh/page", policy))
+	assert.False(t, trustedOrigin("core://attacker.com/x", policy))
+	assert.False(t, trustedOrigin("wails://lab.lthn.sh/x", policy))
+}
+
+func TestTrustedOrigin_PathPrefix(t *testing.T) {
+	policy := NewTrustedOriginPolicy([]string{"core://lab.lthn.sh/x"})
+
+	assert.True(t, trustedOrigin("core://lab.lthn.sh/x/y", policy))
+	assert.False(t, trustedOrigin("core://lab.lthn.sh/y", policy))
+}

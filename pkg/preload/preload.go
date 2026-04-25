@@ -51,11 +51,15 @@ var (
 )
 
 func InjectPreload(webview Webview, origin string) error {
+	return InjectPreloadWithTrustedOriginPolicy(webview, origin, DefaultTrustedOriginPolicy())
+}
+
+func InjectPreloadWithTrustedOriginPolicy(webview Webview, origin string, policy TrustedOriginPolicy) error {
 	if isNilWebview(webview) {
 		return errors.New("preload target is required")
 	}
 
-	script, err := buildScript(origin)
+	script, err := buildScriptWithTrustedOriginPolicy(origin, policy)
 	if err != nil {
 		return err
 	}
@@ -68,6 +72,10 @@ func InjectPreload(webview Webview, origin string) error {
 }
 
 func buildScript(pageURL string) (string, error) {
+	return buildScriptWithTrustedOriginPolicy(pageURL, DefaultTrustedOriginPolicy())
+}
+
+func buildScriptWithTrustedOriginPolicy(pageURL string, policy TrustedOriginPolicy) (string, error) {
 	loaded, manifestErr := loadManifestForOrigin(pageURL)
 	switch {
 	case manifestErr == nil:
@@ -77,7 +85,7 @@ func buildScript(pageURL string) (string, error) {
 		return "", manifestErr
 	}
 
-	allowPrivileged := trustedOrigin(pageURL) || loaded != nil
+	allowPrivileged := trustedOrigin(pageURL, policy) || loaded != nil
 	parts := []string{
 		renderStoragePolyfills(pageURL, allowPrivileged),
 		renderCoreMLShim(),
@@ -276,7 +284,48 @@ func safeManifestRelativePath(baseDir, relativePath string) (string, error) {
 	return candidateResolved, nil
 }
 
-func trustedOrigin(pageURL string) bool {
+const trustedPreloadOriginsConfigFile = "preload-origins.yaml"
+
+var defaultTrustedPreloadOriginURLs = []string{
+	"core://lab.lthn.sh/",
+	"core://app/",
+}
+
+type TrustedOriginPolicy struct {
+	rules []trustedOriginRule
+}
+
+type trustedOriginRule struct {
+	scheme     string
+	host       string
+	pathPrefix string
+}
+
+type trustedOriginConfig struct {
+	Origins        []string `yaml:"origins"`
+	TrustedOrigins []string `yaml:"trusted_origins"`
+	PreloadOrigins []string `yaml:"preload_origins"`
+}
+
+func NewTrustedOriginPolicy(allowedURLs []string) TrustedOriginPolicy {
+	policy := TrustedOriginPolicy{rules: make([]trustedOriginRule, 0, len(allowedURLs))}
+	for _, raw := range allowedURLs {
+		rule, ok := parseTrustedOriginRule(raw)
+		if ok {
+			policy.rules = append(policy.rules, rule)
+		}
+	}
+	return policy
+}
+
+func DefaultTrustedOriginPolicy() TrustedOriginPolicy {
+	if policy, ok := loadTrustedOriginPolicy(defaultTrustedOriginPolicyPath()); ok {
+		return policy
+	}
+	return NewTrustedOriginPolicy(defaultTrustedPreloadOriginURLs)
+}
+
+func trustedOrigin(pageURL string, policy TrustedOriginPolicy) bool {
 	trimmed := strings.TrimSpace(pageURL)
 	if trimmed == "" {
 		return false
@@ -289,26 +338,114 @@ func trustedOrigin(pageURL string) bool {
 
 	switch strings.ToLower(parsed.Scheme) {
 	case "core", "wails", "app":
-		return true
-	case "http", "https":
-		host := strings.TrimSpace(parsed.Host)
-		if host == "" {
-			return false
-		}
-		name := host
-		if parsedHost, _, err := net.SplitHostPort(host); err == nil {
-			name = parsedHost
-		}
-		name = strings.Trim(strings.ToLower(name), "[]")
-		switch name {
-		case "localhost", "127.0.0.1", "::1":
-			return true
-		default:
-			return false
-		}
+		return policy.Allows(parsed)
 	default:
 		return false
 	}
+}
+
+func (p TrustedOriginPolicy) Allows(parsed *url.URL) bool {
+	if parsed == nil || len(p.rules) == 0 {
+		return false
+	}
+	scheme := strings.ToLower(strings.TrimSpace(parsed.Scheme))
+	host := strings.ToLower(strings.TrimSpace(parsed.Host))
+	if scheme == "" || host == "" {
+		return false
+	}
+	path := trustedOriginPath(parsed)
+	for _, rule := range p.rules {
+		if rule.scheme == scheme && rule.host == host && trustedOriginPathMatches(path, rule.pathPrefix) {
+			return true
+		}
+	}
+	return false
+}
+
+func parseTrustedOriginRule(raw string) (trustedOriginRule, bool) {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		return trustedOriginRule{}, false
+	}
+	parsed, err := url.Parse(trimmed)
+	if err != nil {
+		return trustedOriginRule{}, false
+	}
+	scheme := strings.ToLower(strings.TrimSpace(parsed.Scheme))
+	switch scheme {
+	case "core", "wails", "app":
+	default:
+		return trustedOriginRule{}, false
+	}
+	host := strings.ToLower(strings.TrimSpace(parsed.Host))
+	if host == "" {
+		return trustedOriginRule{}, false
+	}
+	return trustedOriginRule{
+		scheme:     scheme,
+		host:       host,
+		pathPrefix: trustedOriginPath(parsed),
+	}, true
+}
+
+func trustedOriginPath(parsed *url.URL) string {
+	if parsed == nil {
+		return "/"
+	}
+	path := parsed.EscapedPath()
+	if path == "" {
+		return "/"
+	}
+	if !strings.HasPrefix(path, "/") {
+		return "/" + path
+	}
+	return path
+}
+
+func trustedOriginPathMatches(path, prefix string) bool {
+	if prefix == "" || prefix == "/" {
+		return true
+	}
+	if path == prefix {
+		return true
+	}
+	if strings.HasSuffix(prefix, "/") {
+		return strings.HasPrefix(path, prefix)
+	}
+	return strings.HasPrefix(path, prefix+"/")
+}
+
+func loadTrustedOriginPolicy(path string) (TrustedOriginPolicy, bool) {
+	body, err := os.ReadFile(path)
+	if err != nil {
+		return TrustedOriginPolicy{}, false
+	}
+	var origins []string
+	if err := yaml.Unmarshal(body, &origins); err == nil && origins != nil {
+		return NewTrustedOriginPolicy(origins), true
+	}
+	var config trustedOriginConfig
+	if err := yaml.Unmarshal(body, &config); err != nil {
+		return TrustedOriginPolicy{}, false
+	}
+	origins = append(origins, config.Origins...)
+	origins = append(origins, config.TrustedOrigins...)
+	origins = append(origins, config.PreloadOrigins...)
+	return NewTrustedOriginPolicy(origins), true
+}
+
+func defaultTrustedOriginPolicyPath() string {
+	home := strings.TrimSpace(os.Getenv("DIR_HOME"))
+	if home == "" {
+		home = strings.TrimSpace(core.Env("DIR_HOME"))
+	}
+	if home == "" {
+		home = strings.TrimSpace(core.Env("HOME"))
+	}
+	if home == "" {
+		return filepath.Join(".core", trustedPreloadOriginsConfigFile)
+	}
+	return filepath.Join(home, ".core", trustedPreloadOriginsConfigFile)
 }
 
 func storageOriginForPageURL(pageURL string) string {
