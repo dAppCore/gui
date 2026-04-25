@@ -2,8 +2,7 @@ package display
 
 import (
 	"context"
-	"strings"
-	"sync"
+	"sync" // Note: AX-6 — sync.Mutex for registry guard, no core wrapper in pinned core module
 	"time"
 
 	core "dappco.re/go/core"
@@ -92,7 +91,7 @@ func cloneMap(values map[string]any) map[string]any {
 
 func (s *Service) registerBackgroundActions() {
 	s.Core().Action("core.background.serviceWorker.register", func(_ context.Context, opts core.Options) core.Result {
-		scriptURL := strings.TrimSpace(opts.String("scriptURL"))
+		scriptURL := core.Trim(opts.String("scriptURL"))
 		record := s.background.RegisterServiceWorker(scriptURL, decodeMap(opts.Get("options").Value))
 		return core.Result{Value: map[string]any{
 			"scope":  record["scope"],
@@ -100,7 +99,7 @@ func (s *Service) registerBackgroundActions() {
 		}, OK: true}
 	})
 	s.Core().Action("core.background.fetch", func(_ context.Context, opts core.Options) core.Result {
-		record := s.background.AddFetch(strings.TrimSpace(opts.String("id")), opts.Get("requests").Value, decodeMap(opts.Get("options").Value))
+		record := s.background.AddFetch(core.Trim(opts.String("id")), opts.Get("requests").Value, decodeMap(opts.Get("options").Value))
 		return core.Result{Value: record, OK: true}
 	})
 	s.Core().Action("core.background.sync", func(_ context.Context, opts core.Options) core.Result {
@@ -121,7 +120,7 @@ func (s *Service) registerBackgroundActions() {
 		return core.Result{Value: record, OK: true}
 	})
 	s.Core().Action("core.background.push.subscribe", func(_ context.Context, opts core.Options) core.Result {
-		key := strings.TrimSpace(opts.String("applicationServerKey"))
+		key := core.Trim(opts.String("applicationServerKey"))
 		record := s.background.AddPush(map[string]any{
 			"endpoint":             coreRouteURL("push", key),
 			"applicationServerKey": key,
@@ -131,7 +130,7 @@ func (s *Service) registerBackgroundActions() {
 		return core.Result{Value: record, OK: true}
 	})
 	s.Core().Action("core.payment.instrument.set", func(_ context.Context, opts core.Options) core.Result {
-		record := s.background.SetPaymentInstrument(strings.TrimSpace(opts.String("key")), decodeMap(opts.Get("details").Value))
+		record := s.background.SetPaymentInstrument(core.Trim(opts.String("key")), decodeMap(opts.Get("details").Value))
 		return core.Result{Value: record, OK: true}
 	})
 }

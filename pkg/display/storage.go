@@ -1,13 +1,10 @@
 package display
 
 import (
-	"fmt"
 	"net/url"
-	"os"
 	"path/filepath"
 	"sort"
-	"strings"
-	"sync"
+	"sync" // Note: AX-6 — sync.RWMutex for registry guard, no core wrapper in pinned core module
 	"time"
 
 	core "dappco.re/go/core"
@@ -48,16 +45,17 @@ func NewStorageRegistry() *StorageRegistry {
 
 func openStorageStore() *gostore.Store {
 	path := storageDatabasePath()
-	if strings.TrimSpace(path) == "" {
+	if core.Trim(path) == "" {
 		return nil
 	}
 	if path != ":memory:" {
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		result := (&core.Fs{}).NewUnrestricted().EnsureDir(filepath.Dir(path))
+		if !result.OK {
 			core.Error(
 				"storage registry init failed",
 				"path", path,
 				"step", "mkdir",
-				"err", coreerr.E("display.storage.open", "failed to create storage directory", err),
+				"err", coreerr.E("display.storage.open", "failed to create storage directory", coreResultError(result, "failed to create storage directory")),
 			)
 			return nil
 		}
@@ -76,58 +74,65 @@ func openStorageStore() *gostore.Store {
 }
 
 func storageDatabasePath() string {
-	if override := strings.TrimSpace(core.Env("CORE_GUI_STORAGE_PATH")); override != "" {
+	if override := core.Trim(core.Env("CORE_GUI_STORAGE_PATH")); override != "" {
 		return override
 	}
-	if strings.TrimSpace(core.Env("CORE_GUI_STORAGE_PERSIST")) == "" {
+	if core.Trim(core.Env("CORE_GUI_STORAGE_PERSIST")) == "" {
 		return ":memory:"
 	}
-	home := strings.TrimSpace(core.Env("DIR_HOME"))
+	home := core.Trim(core.Env("DIR_HOME"))
 	if home == "" {
 		return ":memory:"
 	}
-	return core.Path(home, ".core", "state", fmt.Sprintf("gui-storage-%d.db", os.Getpid()))
+	return core.Path(home, ".core", "state", core.Concat("gui-storage-", core.Env("PID"), ".db"))
 }
 
 func storageOriginForPageURL(pageURL string) string {
-	trimmed := strings.TrimSpace(pageURL)
+	trimmed := core.Trim(pageURL)
 	if trimmed == "" {
 		return ""
 	}
 	parsed, err := url.Parse(trimmed)
-	if err != nil || strings.TrimSpace(parsed.Scheme) == "" {
+	if err != nil || core.Trim(parsed.Scheme) == "" {
 		return ""
 	}
-	switch strings.ToLower(strings.TrimSpace(parsed.Scheme)) {
+	switch core.Lower(core.Trim(parsed.Scheme)) {
 	case "http", "https":
 		if parsed.Host == "" {
 			return ""
 		}
-		return parsed.Scheme + "://" + parsed.Host
+		return core.Concat(parsed.Scheme, "://", parsed.Host)
 	case "core":
 		if parsed.Host == "" {
 			return "core://"
 		}
-		return "core://" + parsed.Host
+		return core.Concat("core://", parsed.Host)
 	case "file":
 		if parsed.Path == "" {
 			return ""
 		}
-		return "file://" + parsed.Path
+		return core.Concat("file://", parsed.Path)
 	default:
 		if parsed.Host == "" {
 			return ""
 		}
-		origin := parsed.Scheme + "://" + parsed.Host
+		origin := core.Concat(parsed.Scheme, "://", parsed.Host)
 		if parsed.Path != "" {
-			origin += parsed.Path
+			origin = core.Concat(origin, parsed.Path)
 		}
-		origin = strings.TrimRight(origin, "/")
-		if strings.TrimSpace(origin) == "://" {
+		origin = trimTrailingSlash(origin)
+		if core.Trim(origin) == "://" {
 			return trimmed
 		}
 		return origin
 	}
+}
+
+func trimTrailingSlash(value string) string {
+	for core.HasSuffix(value, "/") {
+		value = core.TrimSuffix(value, "/")
+	}
+	return value
 }
 
 func makeStorageEntryKey(origin, bucket, key string) string {
@@ -188,9 +193,9 @@ func (r *StorageRegistry) Set(origin, bucket, key, value string) bool {
 		(len(value) > maxStorageValueBytes) {
 		return false
 	}
-	origin = strings.TrimSpace(origin)
-	bucket = strings.TrimSpace(bucket)
-	key = strings.TrimSpace(key)
+	origin = core.Trim(origin)
+	bucket = core.Trim(bucket)
+	key = core.Trim(key)
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if r.entries == nil {
@@ -230,9 +235,9 @@ func (r *StorageRegistry) Delete(origin, bucket, key string) bool {
 		!validStorageField(key, maxStorageKeyBytes) {
 		return false
 	}
-	origin = strings.TrimSpace(origin)
-	bucket = strings.TrimSpace(bucket)
-	key = strings.TrimSpace(key)
+	origin = core.Trim(origin)
+	bucket = core.Trim(bucket)
+	key = core.Trim(key)
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if r.entries == nil {
@@ -291,14 +296,14 @@ func (r *StorageRegistry) Search(query string) []StorageEntry {
 	if r.entries == nil {
 		return nil
 	}
-	needle := strings.ToLower(strings.TrimSpace(query))
+	needle := core.Lower(core.Trim(query))
 	results := make([]StorageEntry, 0)
 	for _, entry := range r.entries {
 		if needle == "" ||
-			strings.Contains(strings.ToLower(entry.Origin), needle) ||
-			strings.Contains(strings.ToLower(entry.Bucket), needle) ||
-			strings.Contains(strings.ToLower(entry.Key), needle) ||
-			strings.Contains(strings.ToLower(entry.Value), needle) {
+			core.Contains(core.Lower(entry.Origin), needle) ||
+			core.Contains(core.Lower(entry.Bucket), needle) ||
+			core.Contains(core.Lower(entry.Key), needle) ||
+			core.Contains(core.Lower(entry.Value), needle) {
 			results = append(results, entry)
 			if len(results) >= maxStorageSearchResults {
 				break
@@ -312,7 +317,7 @@ func (r *StorageRegistry) Search(query string) []StorageEntry {
 }
 
 func validStorageField(value string, limit int) bool {
-	trimmed := strings.TrimSpace(value)
+	trimmed := core.Trim(value)
 	return trimmed != "" && len(trimmed) <= limit
 }
 
@@ -327,12 +332,12 @@ func (r *StorageRegistry) Snapshot(pageURL string) map[string]map[string]string 
 	}
 
 	origin := storageOriginForPageURL(pageURL)
-	if strings.TrimSpace(origin) == "" {
+	if core.Trim(origin) == "" {
 		return map[string]map[string]string{}
 	}
 	snapshot := make(map[string]map[string]string)
 	for _, entry := range r.entries {
-		if origin != "" && !strings.EqualFold(entry.Origin, origin) {
+		if origin != "" && !storageEqualFold(entry.Origin, origin) {
 			continue
 		}
 		bucket := snapshot[entry.Bucket]
@@ -352,7 +357,7 @@ func (r *StorageRegistry) withinOriginQuotaLocked(origin, ignoreComposite string
 	entries := 0
 	bytes := 0
 	for composite, entry := range r.entries {
-		if !strings.EqualFold(entry.Origin, origin) {
+		if !storageEqualFold(entry.Origin, origin) {
 			continue
 		}
 		if composite == ignoreComposite {
@@ -374,6 +379,10 @@ func (r *StorageRegistry) withinOriginQuotaLocked(origin, ignoreComposite string
 
 func storageEntrySizeBytes(entry StorageEntry) int {
 	return len(entry.Origin) + len(entry.Bucket) + len(entry.Key) + len(entry.Value)
+}
+
+func storageEqualFold(left, right string) bool {
+	return core.Lower(left) == core.Lower(right)
 }
 
 func (r *StorageRegistry) Close() error {

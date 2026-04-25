@@ -5,10 +5,9 @@ import (
 	"io"
 	"net"
 	"net/url"
-	"os"
+	"os" // Note: AX-6 — os.Getenv intrinsic, core.Env(...) preferred where reading config
 	"path/filepath"
-	"strings"
-	"sync"
+	"sync" // Note: AX-6 — sync.Mutex for manifest cache guard, no core wrapper in pinned core module
 
 	core "dappco.re/go/core"
 	"gopkg.in/yaml.v3"
@@ -65,12 +64,17 @@ func (s *Service) loadManifestForOrigin(pageURL string) (*loadedManifest, error)
 	if err != nil {
 		return nil, err
 	}
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, err
+	stream := (&core.Fs{}).NewUnrestricted().Open(path)
+	if !stream.OK {
+		return nil, coreResultError(stream, "failed to open view manifest")
 	}
-	defer file.Close()
-	body, err := io.ReadAll(io.LimitReader(file, maxViewManifestBytes+1))
+	reader, ok := stream.Value.(io.Reader)
+	if !ok {
+		core.CloseStream(stream.Value)
+		return nil, errors.New("view manifest stream is not readable")
+	}
+	defer core.CloseStream(stream.Value)
+	body, err := io.ReadAll(io.LimitReader(reader, maxViewManifestBytes+1))
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +113,7 @@ func safeManifestPreloadPath(baseDir, preloadPath string) (string, error) {
 }
 
 func safeManifestRelativePath(baseDir, relativePath, label string) (string, error) {
-	trimmed := strings.TrimSpace(relativePath)
+	trimmed := core.Trim(relativePath)
 	if trimmed == "" {
 		return "", errors.New(label + " is empty")
 	}
@@ -133,11 +137,11 @@ func safeManifestRelativePath(baseDir, relativePath, label string) (string, erro
 	if err != nil {
 		return "", err
 	}
-	if rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+	if rel == ".." || core.HasPrefix(rel, ".."+string(filepath.Separator)) {
 		return "", errors.New(label + " escapes manifest directory")
 	}
-	if _, err := os.Lstat(candidateAbs); err != nil {
-		return "", err
+	if !(&core.Fs{}).NewUnrestricted().Exists(candidateAbs) {
+		return "", errors.New(label + " does not exist")
 	}
 	candidateResolved, err := filepath.EvalSymlinks(candidateAbs)
 	if err != nil {
@@ -147,17 +151,18 @@ func safeManifestRelativePath(baseDir, relativePath, label string) (string, erro
 	if err != nil {
 		return "", err
 	}
-	if rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+	if rel == ".." || core.HasPrefix(rel, ".."+string(filepath.Separator)) {
 		return "", errors.New(label + " escapes manifest directory")
 	}
 	return candidateResolved, nil
 }
 
 func discoverManifestPath(pageURL string) (string, error) {
-	parsed, err := url.Parse(strings.TrimSpace(pageURL))
+	parsed, err := url.Parse(core.Trim(pageURL))
 	if err != nil {
 		return "", err
 	}
+	fsys := (&core.Fs{}).NewUnrestricted()
 	candidates := make([]string, 0, 4)
 	switch parsed.Scheme {
 	case "", "file":
@@ -165,8 +170,8 @@ func discoverManifestPath(pageURL string) (string, error) {
 		if path == "" {
 			path = pageURL
 		}
-		if info, err := os.Stat(path); err == nil {
-			if info.IsDir() {
+		if fsys.Exists(path) {
+			if fsys.IsDir(path) {
 				candidates = append(candidates, filepath.Join(path, ".core", "view.yaml"))
 			} else {
 				dir := filepath.Dir(path)
@@ -180,9 +185,9 @@ func discoverManifestPath(pageURL string) (string, error) {
 			if err != nil {
 				return "", err
 			}
-			home := strings.TrimSpace(os.Getenv("DIR_HOME"))
+			home := core.Trim(os.Getenv("DIR_HOME"))
 			if home == "" {
-				home = strings.TrimSpace(core.Env("DIR_HOME"))
+				home = core.Trim(core.Env("DIR_HOME"))
 			}
 			if home != "" {
 				candidates = append(candidates, filepath.Join(home, ".core", "apps", host, ".core", "view.yaml"))
@@ -190,7 +195,7 @@ func discoverManifestPath(pageURL string) (string, error) {
 		}
 	}
 	for _, candidate := range candidates {
-		if _, err := os.Stat(candidate); err == nil {
+		if fsys.Exists(candidate) {
 			return candidate, nil
 		}
 	}
@@ -214,19 +219,28 @@ func validateManifestHostPathComponent(host string) error {
 			return errors.New("manifest host contains control character")
 		}
 	}
-	if strings.ContainsAny(host, "[]") {
+	if containsAny(host, "[]") {
 		return errors.New("manifest host contains IPv6 brackets")
 	}
-	if host == "." || host == ".." || strings.HasPrefix(host, "../") || strings.Contains(host, "/../") {
+	if host == "." || host == ".." || core.HasPrefix(host, "../") || core.Contains(host, "/../") {
 		return errors.New("manifest host contains relative path segment")
 	}
-	if strings.ContainsAny(host, `/\`) {
+	if containsAny(host, `/\`) {
 		return errors.New("manifest host contains path separator")
 	}
-	if strings.Contains(host, ":") && net.ParseIP(host) == nil {
+	if core.Contains(host, ":") && net.ParseIP(host) == nil {
 		return errors.New("manifest host contains invalid colon")
 	}
 	return nil
+}
+
+func containsAny(value, chars string) bool {
+	for _, char := range chars {
+		if core.Contains(value, string(char)) {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *Service) manifestWindowConfig(pageURL string) map[string]ManifestWindow {
@@ -249,10 +263,25 @@ func (s *Service) readManifestPreload(baseDir, preloadPath string) ([]byte, erro
 	if err != nil {
 		return nil, err
 	}
-	return os.ReadFile(resolvedPath)
+	result := (&core.Fs{}).NewUnrestricted().Read(resolvedPath)
+	if !result.OK {
+		return nil, coreResultError(result, "failed to read manifest preload")
+	}
+	content, ok := result.Value.(string)
+	if !ok {
+		return nil, errors.New("manifest preload content is not text")
+	}
+	return []byte(content), nil
 }
 
 type manifestCacheState struct {
 	manifestCache map[string]*loadedManifest
 	manifestMu    sync.Mutex
+}
+
+func coreResultError(result core.Result, fallback string) error {
+	if err, ok := result.Value.(error); ok {
+		return err
+	}
+	return errors.New(fallback)
 }
