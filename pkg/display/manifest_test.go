@@ -113,6 +113,63 @@ func TestManifest_DiscoverManifestPath_Ugly(t *testing.T) {
 	assert.Equal(t, manifestPath, got)
 }
 
+func TestManifest_DiscoverManifestPath_RemoteHost_Good(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("DIR_HOME", home)
+	manifestPath := filepath.Join(home, ".core", "apps", "example.com", ".core", "view.yaml")
+	require.NoError(t, os.MkdirAll(filepath.Dir(manifestPath), 0o755))
+	require.NoError(t, os.WriteFile(manifestPath, []byte("name: remote\n"), 0o644))
+
+	got, err := discoverManifestPath("https://example.com/index.html")
+
+	require.NoError(t, err)
+	assert.Equal(t, manifestPath, got)
+}
+
+func TestManifest_DiscoverManifestPath_RemoteHost_StripsPort(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("DIR_HOME", home)
+	manifestPath := filepath.Join(home, ".core", "apps", "example.com", ".core", "view.yaml")
+	require.NoError(t, os.MkdirAll(filepath.Dir(manifestPath), 0o755))
+	require.NoError(t, os.WriteFile(manifestPath, []byte("name: remote\n"), 0o644))
+
+	got, err := discoverManifestPath("https://example.com:8080/x")
+
+	require.NoError(t, err)
+	assert.Equal(t, manifestPath, got)
+}
+
+func TestManifest_DiscoverManifestPath_RemoteHost_IPv6Literal(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("DIR_HOME", home)
+	manifestPath := filepath.Join(home, ".core", "apps", "::1", ".core", "view.yaml")
+	require.NoError(t, os.MkdirAll(filepath.Dir(manifestPath), 0o755))
+	require.NoError(t, os.WriteFile(manifestPath, []byte("name: remote\n"), 0o644))
+
+	got, err := discoverManifestPath("https://[::1]/x")
+
+	require.NoError(t, err)
+	assert.Equal(t, manifestPath, got)
+}
+
+func TestManifest_DiscoverManifestPath_RemoteHost_RejectsControlCharacter(t *testing.T) {
+	t.Setenv("DIR_HOME", t.TempDir())
+
+	_, err := discoverManifestPath("https://bad\nhost/x")
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "control")
+}
+
+func TestManifest_DiscoverManifestPath_RemoteHost_RejectsTraversalHost(t *testing.T) {
+	t.Setenv("DIR_HOME", t.TempDir())
+
+	_, err := discoverManifestPath("https://../x")
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "relative path")
+}
+
 func TestManifest_ManifestWindowConfig_Good(t *testing.T) {
 	root := t.TempDir()
 	require.NoError(t, os.MkdirAll(filepath.Join(root, ".core"), 0o755))

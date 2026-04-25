@@ -3,6 +3,7 @@ package display
 import (
 	"errors"
 	"io"
+	"net"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -175,12 +176,16 @@ func discoverManifestPath(pageURL string) (string, error) {
 		}
 	default:
 		if parsed.Host != "" {
+			host, err := manifestHostPathComponent(parsed)
+			if err != nil {
+				return "", err
+			}
 			home := strings.TrimSpace(os.Getenv("DIR_HOME"))
 			if home == "" {
 				home = strings.TrimSpace(core.Env("DIR_HOME"))
 			}
 			if home != "" {
-				candidates = append(candidates, filepath.Join(home, ".core", "apps", parsed.Host, ".core", "view.yaml"))
+				candidates = append(candidates, filepath.Join(home, ".core", "apps", host, ".core", "view.yaml"))
 			}
 		}
 	}
@@ -190,6 +195,38 @@ func discoverManifestPath(pageURL string) (string, error) {
 		}
 	}
 	return "", errors.New("view manifest not found")
+}
+
+func manifestHostPathComponent(parsed *url.URL) (string, error) {
+	host := parsed.Hostname()
+	if host == "" {
+		return "", errors.New("manifest host is empty")
+	}
+	if err := validateManifestHostPathComponent(host); err != nil {
+		return "", err
+	}
+	return host, nil
+}
+
+func validateManifestHostPathComponent(host string) error {
+	for i := 0; i < len(host); i++ {
+		if host[i] < 0x20 || host[i] == 0x7f {
+			return errors.New("manifest host contains control character")
+		}
+	}
+	if strings.ContainsAny(host, "[]") {
+		return errors.New("manifest host contains IPv6 brackets")
+	}
+	if host == "." || host == ".." || strings.HasPrefix(host, "../") || strings.Contains(host, "/../") {
+		return errors.New("manifest host contains relative path segment")
+	}
+	if strings.ContainsAny(host, `/\`) {
+		return errors.New("manifest host contains path separator")
+	}
+	if strings.Contains(host, ":") && net.ParseIP(host) == nil {
+		return errors.New("manifest host contains invalid colon")
+	}
+	return nil
 }
 
 func (s *Service) manifestWindowConfig(pageURL string) map[string]ManifestWindow {
