@@ -1,18 +1,13 @@
 package deno
 
 import (
-	"bufio"
+	"bufio" // AX-6-exception: streaming stdout framing for the long-lived Deno sidecar.
 	"context"
-	"encoding/json"
-	"errors"
-	"fmt"
-	"io"
-	"os"
-	"os/exec"
-	"strings"
-	"sync"
-	"sync/atomic"
-	"syscall"
+	"io"      // AX-6-exception: stdin/stdout pipe interfaces from exec.Cmd.
+	"os"      // AX-6-exception: sidecar inherits host env and compares os.ErrProcessDone.
+	"os/exec" // AX-6-exception: long-lived interactive child process with pipes; core.Process is action-based.
+	"sync"    // AX-6-exception: manager protects live process and pending RPC state across goroutines.
+	"syscall" // AX-6-exception: graceful sidecar shutdown sends SIGTERM.
 
 	core "dappco.re/go/core"
 )
@@ -48,11 +43,10 @@ type Manager struct {
 	stdin   io.WriteCloser
 	pending map[string]chan rpcMessage
 	events  []func(Event)
-	nextID  atomic.Uint64
 }
 
 func New(options Options) *Manager {
-	if strings.TrimSpace(options.Binary) == "" {
+	if core.Trim(options.Binary) == "" {
 		options.Binary = "deno"
 	}
 	if len(options.Args) == 0 {
@@ -100,7 +94,7 @@ func (m *Manager) Stop(context.Context) (Status, error) {
 		return Status{}, nil
 	}
 	err := m.cmd.Process.Signal(syscall.SIGTERM)
-	if err != nil && !errors.Is(err, os.ErrProcessDone) {
+	if err != nil && !core.Is(err, os.ErrProcessDone) {
 		return m.statusLocked(), err
 	}
 	m.cmd = nil
@@ -148,8 +142,8 @@ func (m *Manager) Eval(ctx context.Context, code string) (EvalResult, error) {
 }
 
 func (m *Manager) Emit(name string, data any) error {
-	if strings.TrimSpace(name) == "" {
-		return errors.New("event name is required")
+	if core.Trim(name) == "" {
+		return core.NewError("event name is required")
 	}
 	return m.send(rpcMessage{Type: "event", Name: name, Data: data})
 }
@@ -158,12 +152,12 @@ func (m *Manager) request(ctx context.Context, message rpcMessage) (rpcMessage, 
 	m.mu.Lock()
 	if m.stdin == nil {
 		m.mu.Unlock()
-		return rpcMessage{}, errors.New("deno sidecar is not running")
+		return rpcMessage{}, core.NewError("deno sidecar is not running")
 	}
-	message.ID = fmt.Sprintf("deno-%d", m.nextID.Add(1))
+	message.ID = core.Concat("deno-", core.ID())
 	responseCh := make(chan rpcMessage, 1)
 	m.pending[message.ID] = responseCh
-	payload, err := json.Marshal(message)
+	payload, err := marshalRPCMessage(message)
 	if err != nil {
 		delete(m.pending, message.ID)
 		m.mu.Unlock()
@@ -179,10 +173,10 @@ func (m *Manager) request(ctx context.Context, message rpcMessage) (rpcMessage, 
 		return rpcMessage{}, ctx.Err()
 	case response, ok := <-responseCh:
 		if !ok {
-			return rpcMessage{}, errors.New("deno sidecar disconnected")
+			return rpcMessage{}, core.NewError("deno sidecar disconnected")
 		}
 		if !response.OK {
-			return rpcMessage{}, errors.New(strings.TrimSpace(response.Error))
+			return rpcMessage{}, core.NewError(core.Trim(response.Error))
 		}
 		return response, nil
 	}
@@ -193,7 +187,7 @@ func (m *Manager) readLoop(stdout io.Reader) {
 	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
 	for scanner.Scan() {
 		var message rpcMessage
-		if err := json.Unmarshal(scanner.Bytes(), &message); err != nil {
+		if result := core.JSONUnmarshal(scanner.Bytes(), &message); !result.OK {
 			continue
 		}
 		m.handleMessage(message)
@@ -241,7 +235,7 @@ func (m *Manager) handleAction(message rpcMessage) {
 	} else if err, ok := result.Value.(error); ok {
 		response.Error = err.Error()
 	} else {
-		response.Error = fmt.Sprint(result.Value)
+		response.Error = core.Sprint(result.Value)
 	}
 	_ = m.send(response)
 }
@@ -250,14 +244,29 @@ func (m *Manager) send(message rpcMessage) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.stdin == nil {
-		return errors.New("deno sidecar is not running")
+		return core.NewError("deno sidecar is not running")
 	}
-	payload, err := json.Marshal(message)
+	payload, err := marshalRPCMessage(message)
 	if err != nil {
 		return err
 	}
 	_, err = m.stdin.Write(append(payload, '\n'))
 	return err
+}
+
+func marshalRPCMessage(message rpcMessage) ([]byte, error) {
+	result := core.JSONMarshal(message)
+	if !result.OK {
+		if err, ok := result.Value.(error); ok {
+			return nil, err
+		}
+		return nil, core.NewError("failed to marshal deno sidecar message")
+	}
+	payload, ok := result.Value.([]byte)
+	if !ok {
+		return nil, core.NewError("failed to marshal deno sidecar message")
+	}
+	return payload, nil
 }
 
 type rpcMessage struct {
