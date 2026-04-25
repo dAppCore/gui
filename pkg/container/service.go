@@ -2,33 +2,52 @@ package container
 
 import (
 	"context"
+	"regexp"
 	"strings"
+	"unicode"
 
 	core "dappco.re/go/core"
+	coreerr "dappco.re/go/log"
 )
 
 type Service struct {
 	*core.ServiceRuntime[TIMOptions]
-	manager *TIMManager
+	manager    *TIMManager
+	startupErr error
 }
 
+var timContainerNamePattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_.-]*$`)
+
 func NewService(c *core.Core, options TIMOptions) *Service {
+	options, err := normalizeTIMOptions(options)
 	return &Service{
 		ServiceRuntime: core.NewServiceRuntime(c, options),
 		manager:        NewTIMManager(options),
+		startupErr:     err,
 	}
 }
 
 func OptionsFromEnv() TIMOptions {
+	options, _ := OptionsFromEnvValidated()
+	return options
+}
+
+func OptionsFromEnvValidated() (TIMOptions, error) {
 	return TIMOptions{
 		Name:    strings.TrimSpace(core.Env("CORE_TIM_NAME")),
 		Image:   strings.TrimSpace(core.Env("CORE_TIM_IMAGE")),
 		Command: splitCSV(strings.TrimSpace(core.Env("CORE_TIM_COMMAND"))),
 		DataDir: strings.TrimSpace(core.Env("CORE_TIM_DATA_DIR")),
-	}
+		Resources: TIMResources{
+			GPU: strings.TrimSpace(core.Env("CORE_TIM_GPU")),
+		},
+	}.Validate()
 }
 
 func (s *Service) OnStartup(_ context.Context) core.Result {
+	if s.startupErr != nil {
+		return core.Result{Value: s.startupErr, OK: false}
+	}
 	s.Core().Action("container.runtime.detect", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: Detect(), OK: true}
 	})
@@ -44,6 +63,61 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		return core.Result{Value: s.manager.State(), OK: true}
 	})
 	return core.Result{OK: true}
+}
+
+func (options TIMOptions) Validate() (TIMOptions, error) {
+	return normalizeTIMOptions(options)
+}
+
+func normalizeTIMOptions(options TIMOptions) (TIMOptions, error) {
+	options.Name = strings.TrimSpace(options.Name)
+	options.Image = strings.TrimSpace(options.Image)
+	options.Resources.GPU = strings.TrimSpace(options.Resources.GPU)
+
+	if err := validateTIMContainerName(options.Name); err != nil {
+		return options, err
+	}
+	if err := validateTIMArgValue("image", options.Image); err != nil {
+		return options, err
+	}
+	if err := validateTIMArgValue("gpu", options.Resources.GPU); err != nil {
+		return options, err
+	}
+	return options, nil
+}
+
+func validateTIMContainerName(value string) error {
+	if value == "" {
+		return nil
+	}
+	if strings.HasPrefix(value, "-") {
+		return coreerr.E("container.validateTIMOptions", "name cannot start with -", nil)
+	}
+	if strings.HasPrefix(value, ".") {
+		return coreerr.E("container.validateTIMOptions", "name cannot start with .", nil)
+	}
+	if !timContainerNamePattern.MatchString(value) {
+		return coreerr.E("container.validateTIMOptions", "name must contain only letters, digits, underscores, dots, and hyphens", nil)
+	}
+	return nil
+}
+
+func validateTIMArgValue(label, value string) error {
+	if value == "" {
+		return nil
+	}
+	if strings.HasPrefix(value, "-") {
+		return coreerr.E("container.validateTIMOptions", label+" cannot start with -", nil)
+	}
+	for _, r := range value {
+		if unicode.IsControl(r) {
+			return coreerr.E("container.validateTIMOptions", label+" contains invalid control characters", nil)
+		}
+		if unicode.IsSpace(r) {
+			return coreerr.E("container.validateTIMOptions", label+" cannot contain whitespace", nil)
+		}
+	}
+	return nil
 }
 
 func (s *Service) State() TIMState {
