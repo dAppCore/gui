@@ -64,6 +64,11 @@ func TestDisplay_Good_WindowOpenManifestBackedOriginIncludesPrivilegedBridge(t *
 	home := t.TempDir()
 	require.NoError(t, os.MkdirAll(filepath.Join(home, ".core", "apps", "example.com", ".core"), 0o755))
 	require.NoError(t, os.WriteFile(filepath.Join(home, ".core", "apps", "example.com", ".core", "view.yaml"), []byte("name: example\n"), 0o644))
+	require.NoError(t, os.WriteFile(
+		filepath.Join(home, ".core", "preload-origins.yaml"),
+		[]byte("origins:\n  - https://example.com/\n"),
+		0o644,
+	))
 	t.Setenv("DIR_HOME", home)
 
 	platform := window.NewMockPlatform()
@@ -160,6 +165,55 @@ func TestPreload_TrustedPreloadOrigin_PathPrefix(t *testing.T) {
 	assert.False(t, trustedPreloadOrigin("core://lab.lthn.sh/y", policy))
 }
 
+func TestPreload_ManifestBackedPreloadOrigin_EmptyAllowListDeniesPlantedHTTPSManifest(t *testing.T) {
+	home := t.TempDir()
+	writeMarketplaceViewManifest(t, home, "attacker.com")
+	t.Setenv("DIR_HOME", home)
+
+	svc, err := New()
+	require.NoError(t, err)
+
+	assert.False(t, svc.manifestBackedPreloadOrigin(
+		"https://attacker.com/app",
+		NewTrustedOriginPolicy(nil),
+	))
+}
+
+func TestPreload_ManifestBackedPreloadOrigin_AllowsListedHTTPSManifest(t *testing.T) {
+	home := t.TempDir()
+	writeMarketplaceViewManifest(t, home, "lab.lthn.sh")
+	t.Setenv("DIR_HOME", home)
+
+	svc, err := New()
+	require.NoError(t, err)
+	policy := NewTrustedOriginPolicy([]string{"https://lab.lthn.sh/"})
+
+	assert.True(t, svc.manifestBackedPreloadOrigin("https://lab.lthn.sh/app", policy))
+}
+
+func TestPreload_ManifestBackedPreloadOrigin_DeniesUnlistedHTTPSManifest(t *testing.T) {
+	home := t.TempDir()
+	writeMarketplaceViewManifest(t, home, "attacker.com")
+	t.Setenv("DIR_HOME", home)
+
+	svc, err := New()
+	require.NoError(t, err)
+	policy := NewTrustedOriginPolicy([]string{"https://lab.lthn.sh/"})
+
+	assert.False(t, svc.manifestBackedPreloadOrigin("https://attacker.com/app", policy))
+}
+
+func TestPreload_ManifestBackedPreloadOrigin_DeniesListedHTTPSOriginWithoutManifest(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("DIR_HOME", home)
+
+	svc, err := New()
+	require.NoError(t, err)
+	policy := NewTrustedOriginPolicy([]string{"https://lab.lthn.sh/"})
+
+	assert.False(t, svc.manifestBackedPreloadOrigin("https://lab.lthn.sh/app", policy))
+}
+
 func TestPreload_DefaultTrustedOriginPolicy_LoadsConfig(t *testing.T) {
 	home := t.TempDir()
 	require.NoError(t, os.MkdirAll(filepath.Join(home, ".core"), 0o755))
@@ -183,6 +237,13 @@ type preloadCapture struct {
 
 func (p *preloadCapture) ExecJS(script string) {
 	p.scripts = append(p.scripts, script)
+}
+
+func writeMarketplaceViewManifest(t *testing.T, home, host string) {
+	t.Helper()
+	dir := filepath.Join(home, ".core", "apps", host, ".core")
+	require.NoError(t, os.MkdirAll(dir, 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "view.yaml"), []byte("name: "+host+"\n"), 0o644))
 }
 
 func TestPreload_InjectPreload_Good(t *testing.T) {

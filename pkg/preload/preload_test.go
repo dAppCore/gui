@@ -85,3 +85,47 @@ func TestTrustedOrigin_PathPrefix(t *testing.T) {
 	assert.True(t, trustedOrigin("core://lab.lthn.sh/x/y", policy))
 	assert.False(t, trustedOrigin("core://lab.lthn.sh/y", policy))
 }
+
+func TestManifestBackedPreloadOrigin_EmptyAllowListDeniesPlantedHTTPSManifest(t *testing.T) {
+	home := t.TempDir()
+	writeMarketplaceViewManifest(t, home, "attacker.com")
+	t.Setenv("DIR_HOME", home)
+
+	assert.False(t, manifestBackedPreloadOrigin(
+		"https://attacker.com/app",
+		NewTrustedOriginPolicy(nil),
+	))
+}
+
+func TestManifestBackedPreloadOrigin_AllowsListedHTTPSManifest(t *testing.T) {
+	home := t.TempDir()
+	writeMarketplaceViewManifest(t, home, "lab.lthn.sh")
+	t.Setenv("DIR_HOME", home)
+	policy := NewTrustedOriginPolicy([]string{"https://lab.lthn.sh/"})
+
+	assert.True(t, manifestBackedPreloadOrigin("https://lab.lthn.sh/app", policy))
+}
+
+func TestManifestBackedPreloadOrigin_DeniesUnlistedHTTPSManifest(t *testing.T) {
+	home := t.TempDir()
+	writeMarketplaceViewManifest(t, home, "attacker.com")
+	t.Setenv("DIR_HOME", home)
+	policy := NewTrustedOriginPolicy([]string{"https://lab.lthn.sh/"})
+
+	assert.False(t, manifestBackedPreloadOrigin("https://attacker.com/app", policy))
+}
+
+func TestManifestBackedPreloadOrigin_DeniesListedHTTPSOriginWithoutManifest(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("DIR_HOME", home)
+	policy := NewTrustedOriginPolicy([]string{"https://lab.lthn.sh/"})
+
+	assert.False(t, manifestBackedPreloadOrigin("https://lab.lthn.sh/app", policy))
+}
+
+func writeMarketplaceViewManifest(t *testing.T, home, host string) {
+	t.Helper()
+	dir := filepath.Join(home, ".core", "apps", host, ".core")
+	require.NoError(t, os.MkdirAll(dir, 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "view.yaml"), []byte("name: "+host+"\n"), 0o644))
+}

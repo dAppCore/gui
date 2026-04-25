@@ -76,13 +76,18 @@ func buildScript(pageURL string) (string, error) {
 }
 
 func buildScriptWithTrustedOriginPolicy(pageURL string, policy TrustedOriginPolicy) (string, error) {
-	loaded, manifestErr := loadManifestForOrigin(pageURL)
-	switch {
-	case manifestErr == nil:
-	case errors.Is(manifestErr, errViewManifestNotFound):
-		loaded = nil
-	default:
-		return "", manifestErr
+	var loaded *loadedManifest
+	manifestAllowed := manifestBackedPreloadOriginAllowedByPolicy(pageURL, policy)
+	if manifestAllowed {
+		var manifestErr error
+		loaded, manifestErr = loadManifestForOrigin(pageURL)
+		switch {
+		case manifestErr == nil:
+		case errors.Is(manifestErr, errViewManifestNotFound):
+			loaded = nil
+		default:
+			return "", manifestErr
+		}
 	}
 
 	allowPrivileged := trustedOrigin(pageURL, policy) || loaded != nil
@@ -100,6 +105,34 @@ func buildScriptWithTrustedOriginPolicy(pageURL string, policy TrustedOriginPoli
 	}
 
 	return strings.Join(filterEmpty(parts), "\n"), nil
+}
+
+func manifestBackedPreloadOrigin(pageURL string, policy TrustedOriginPolicy) bool {
+	if !manifestBackedPreloadOriginAllowedByPolicy(pageURL, policy) {
+		return false
+	}
+	loaded, err := loadManifestForOrigin(pageURL)
+	return err == nil && loaded != nil
+}
+
+func manifestBackedPreloadOriginAllowedByPolicy(pageURL string, policy TrustedOriginPolicy) bool {
+	trimmed := strings.TrimSpace(pageURL)
+	if trimmed == "" {
+		return false
+	}
+	parsed, err := url.Parse(trimmed)
+	if err != nil {
+		return false
+	}
+	switch strings.ToLower(strings.TrimSpace(parsed.Scheme)) {
+	case "", "file":
+		return true
+	default:
+		if strings.TrimSpace(parsed.Host) == "" {
+			return false
+		}
+		return policy.Allows(parsed)
+	}
 }
 
 func mustReadAsset(name string) string {
@@ -344,6 +377,18 @@ func trustedOrigin(pageURL string, policy TrustedOriginPolicy) bool {
 	}
 }
 
+func (p TrustedOriginPolicy) AllowsURL(raw string) bool {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		return false
+	}
+	parsed, err := url.Parse(trimmed)
+	if err != nil {
+		return false
+	}
+	return p.Allows(parsed)
+}
+
 func (p TrustedOriginPolicy) Allows(parsed *url.URL) bool {
 	if parsed == nil || len(p.rules) == 0 {
 		return false
@@ -373,7 +418,7 @@ func parseTrustedOriginRule(raw string) (trustedOriginRule, bool) {
 	}
 	scheme := strings.ToLower(strings.TrimSpace(parsed.Scheme))
 	switch scheme {
-	case "core", "wails", "app":
+	case "core", "wails", "app", "http", "https":
 	default:
 		return trustedOriginRule{}, false
 	}

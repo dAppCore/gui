@@ -40,7 +40,8 @@ func (s *Service) BuildPreloadScript(pageURL string) (string, error) {
 // the caller-provided scheme-origin allow-list.
 func (s *Service) BuildPreloadScriptWithTrustedOriginPolicy(pageURL string, policy TrustedOriginPolicy) (string, error) {
 	trustedOrigin := trustedPreloadOrigin(pageURL, policy)
-	if !trustedOrigin && s.manifestBackedPreloadOrigin(pageURL) {
+	manifestAllowed := manifestBackedPreloadOriginAllowedByPolicy(pageURL, policy)
+	if !trustedOrigin && manifestAllowed && s.manifestBackedPreloadOrigin(pageURL, policy) {
 		trustedOrigin = true
 	}
 	storageBootstrap := map[string]map[string]string{}
@@ -62,19 +63,44 @@ func (s *Service) BuildPreloadScriptWithTrustedOriginPolicy(pageURL string, poli
 			s.injectElectronShim(),
 		)
 	}
-	if appPreloads, err := s.injectAppPreloads(pageURL); err != nil {
-		if !strings.Contains(err.Error(), "view manifest not found") {
-			return "", err
+	if manifestAllowed {
+		if appPreloads, err := s.injectAppPreloads(pageURL); err != nil {
+			if !strings.Contains(err.Error(), "view manifest not found") {
+				return "", err
+			}
+		} else if strings.TrimSpace(appPreloads) != "" {
+			parts = append(parts, appPreloads)
 		}
-	} else if strings.TrimSpace(appPreloads) != "" {
-		parts = append(parts, appPreloads)
 	}
 	return strings.Join(parts, "\n"), nil
 }
 
-func (s *Service) manifestBackedPreloadOrigin(pageURL string) bool {
+func (s *Service) manifestBackedPreloadOrigin(pageURL string, policy TrustedOriginPolicy) bool {
+	if !manifestBackedPreloadOriginAllowedByPolicy(pageURL, policy) {
+		return false
+	}
 	loaded, err := s.loadManifestForOrigin(pageURL)
 	return err == nil && loaded != nil
+}
+
+func manifestBackedPreloadOriginAllowedByPolicy(pageURL string, policy TrustedOriginPolicy) bool {
+	trimmed := strings.TrimSpace(pageURL)
+	if trimmed == "" {
+		return false
+	}
+	parsed, err := url.Parse(trimmed)
+	if err != nil {
+		return false
+	}
+	switch strings.ToLower(strings.TrimSpace(parsed.Scheme)) {
+	case "", "file":
+		return true
+	default:
+		if strings.TrimSpace(parsed.Host) == "" {
+			return false
+		}
+		return policy.Allows(parsed)
+	}
 }
 
 const trustedPreloadOriginsConfigFile = "preload-origins.yaml"
@@ -136,6 +162,18 @@ func trustedPreloadOrigin(pageURL string, policy TrustedOriginPolicy) bool {
 	}
 }
 
+func (p TrustedOriginPolicy) AllowsURL(raw string) bool {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		return false
+	}
+	parsed, err := url.Parse(trimmed)
+	if err != nil {
+		return false
+	}
+	return p.Allows(parsed)
+}
+
 func (p TrustedOriginPolicy) Allows(parsed *url.URL) bool {
 	if parsed == nil || len(p.rules) == 0 {
 		return false
@@ -165,7 +203,7 @@ func parseTrustedOriginRule(raw string) (trustedOriginRule, bool) {
 	}
 	scheme := strings.ToLower(strings.TrimSpace(parsed.Scheme))
 	switch scheme {
-	case "core", "wails", "app":
+	case "core", "wails", "app", "http", "https":
 	default:
 		return trustedOriginRule{}, false
 	}
