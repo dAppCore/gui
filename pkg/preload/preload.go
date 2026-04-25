@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"sort"
 	"strings"
 
 	core "dappco.re/go/core"
@@ -92,6 +93,7 @@ func buildScriptWithTrustedOriginPolicy(pageURL string, policy TrustedOriginPoli
 
 	allowPrivileged := trustedOrigin(pageURL, policy) || loaded != nil
 	parts := []string{
+		renderBridgeAuthorization(pageURL, policy, allowPrivileged),
 		renderStoragePolyfills(pageURL, allowPrivileged),
 		renderCoreMLShim(),
 	}
@@ -324,6 +326,21 @@ var defaultTrustedPreloadOriginURLs = []string{
 	"core://app/",
 }
 
+var defaultTrustedPreloadOriginActions = map[string][]string{
+	"core://lab.lthn.sh/": {
+		"display.sidecar.eval",
+		"webview.evaluate",
+	},
+	"core://app/": {
+		"display.sidecar.eval",
+		"webview.evaluate",
+		"marketplace.install",
+		"marketplace.list",
+		"display.marketplace.install",
+		"display.marketplace.list",
+	},
+}
+
 type TrustedOriginPolicy struct {
 	rules []trustedOriginRule
 }
@@ -332,22 +349,28 @@ type trustedOriginRule struct {
 	scheme     string
 	host       string
 	pathPrefix string
+	actions    map[string]struct{}
 }
 
 type trustedOriginConfig struct {
-	Origins        []string `yaml:"origins"`
-	TrustedOrigins []string `yaml:"trusted_origins"`
-	PreloadOrigins []string `yaml:"preload_origins"`
+	Origins        []string            `yaml:"origins"`
+	TrustedOrigins []string            `yaml:"trusted_origins"`
+	PreloadOrigins []string            `yaml:"preload_origins"`
+	Actions        map[string][]string `yaml:"actions"`
+	OriginActions  map[string][]string `yaml:"origin_actions"`
 }
 
 func NewTrustedOriginPolicy(allowedURLs []string) TrustedOriginPolicy {
 	policy := TrustedOriginPolicy{rules: make([]trustedOriginRule, 0, len(allowedURLs))}
 	for _, raw := range allowedURLs {
-		rule, ok := parseTrustedOriginRule(raw)
-		if ok {
-			policy.rules = append(policy.rules, rule)
-		}
+		policy.addRule(raw, nil)
 	}
+	return policy
+}
+
+func NewTrustedOriginPolicyWithActions(allowed map[string][]string) TrustedOriginPolicy {
+	policy := TrustedOriginPolicy{rules: make([]trustedOriginRule, 0, len(allowed))}
+	policy.addRulesWithActions(allowed)
 	return policy
 }
 
@@ -355,7 +378,7 @@ func DefaultTrustedOriginPolicy() TrustedOriginPolicy {
 	if policy, ok := loadTrustedOriginPolicy(defaultTrustedOriginPolicyPath()); ok {
 		return policy
 	}
-	return NewTrustedOriginPolicy(defaultTrustedPreloadOriginURLs)
+	return NewTrustedOriginPolicyWithActions(defaultTrustedPreloadOriginActions)
 }
 
 func trustedOrigin(pageURL string, policy TrustedOriginPolicy) bool {
@@ -390,21 +413,145 @@ func (p TrustedOriginPolicy) AllowsURL(raw string) bool {
 }
 
 func (p TrustedOriginPolicy) Allows(parsed *url.URL) bool {
-	if parsed == nil || len(p.rules) == 0 {
+	scheme, host, path, ok := trustedOriginParts(parsed)
+	if !ok || len(p.rules) == 0 {
 		return false
 	}
-	scheme := strings.ToLower(strings.TrimSpace(parsed.Scheme))
-	host := strings.ToLower(strings.TrimSpace(parsed.Host))
-	if scheme == "" || host == "" {
-		return false
-	}
-	path := trustedOriginPath(parsed)
 	for _, rule := range p.rules {
-		if rule.scheme == scheme && rule.host == host && trustedOriginPathMatches(path, rule.pathPrefix) {
+		if rule.matches(scheme, host, path) {
 			return true
 		}
 	}
 	return false
+}
+
+func (p TrustedOriginPolicy) AllowsActionURL(raw, action string) bool {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		return false
+	}
+	parsed, err := url.Parse(trimmed)
+	if err != nil {
+		return false
+	}
+	return p.AllowsAction(parsed, action)
+}
+
+func (p TrustedOriginPolicy) AllowsAction(parsed *url.URL, action string) bool {
+	normalizedAction := normalizeTrustedAction(action)
+	if normalizedAction == "" {
+		return false
+	}
+	scheme, host, path, ok := trustedOriginParts(parsed)
+	if !ok || len(p.rules) == 0 {
+		return false
+	}
+	for _, rule := range p.rules {
+		if rule.matches(scheme, host, path) {
+			if _, ok := rule.actions[normalizedAction]; ok {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (p TrustedOriginPolicy) AllowedActionsForURL(raw string) []string {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		return nil
+	}
+	parsed, err := url.Parse(trimmed)
+	if err != nil {
+		return nil
+	}
+	return p.AllowedActions(parsed)
+}
+
+func (p TrustedOriginPolicy) AllowedActions(parsed *url.URL) []string {
+	scheme, host, path, ok := trustedOriginParts(parsed)
+	if !ok || len(p.rules) == 0 {
+		return nil
+	}
+	matched := false
+	actionSet := map[string]struct{}{}
+	for _, rule := range p.rules {
+		if rule.matches(scheme, host, path) {
+			matched = true
+			for action := range rule.actions {
+				actionSet[action] = struct{}{}
+			}
+		}
+	}
+	if !matched {
+		return nil
+	}
+	actions := make([]string, 0, len(actionSet))
+	for action := range actionSet {
+		actions = append(actions, action)
+	}
+	sort.Strings(actions)
+	return actions
+}
+
+func (p *TrustedOriginPolicy) addRulesWithActions(allowed map[string][]string) {
+	for raw, actions := range allowed {
+		p.addRule(raw, actions)
+	}
+}
+
+func (p *TrustedOriginPolicy) addRule(raw string, actions []string) {
+	rule, ok := parseTrustedOriginRule(raw)
+	if ok {
+		rule.actions = trustedActionSet(actions)
+		p.rules = append(p.rules, rule)
+	}
+}
+
+func (rule trustedOriginRule) matches(scheme, host, path string) bool {
+	return rule.scheme == scheme && rule.host == host && trustedOriginPathMatches(path, rule.pathPrefix)
+}
+
+func trustedOriginParts(parsed *url.URL) (scheme, host, path string, ok bool) {
+	if parsed == nil {
+		return "", "", "", false
+	}
+	scheme = strings.ToLower(strings.TrimSpace(parsed.Scheme))
+	host = strings.ToLower(strings.TrimSpace(parsed.Host))
+	if scheme == "" || host == "" {
+		return "", "", "", false
+	}
+	return scheme, host, trustedOriginPath(parsed), true
+}
+
+func trustedActionSet(actions []string) map[string]struct{} {
+	out := make(map[string]struct{}, len(actions))
+	for _, action := range actions {
+		normalized := normalizeTrustedAction(action)
+		if normalized != "" {
+			out[normalized] = struct{}{}
+		}
+	}
+	return out
+}
+
+func normalizeTrustedAction(action string) string {
+	return strings.TrimSpace(action)
+}
+
+func bridgeActionList(actions []string) []string {
+	if len(actions) == 0 {
+		return []string{}
+	}
+	out := make([]string, 0, len(actions))
+	for _, action := range actions {
+		normalized := normalizeTrustedAction(action)
+		if normalized != "" {
+			out = append(out, normalized)
+		}
+	}
+	sort.Strings(out)
+	return out
 }
 
 func parseTrustedOriginRule(raw string) (trustedOriginRule, bool) {
@@ -430,6 +577,7 @@ func parseTrustedOriginRule(raw string) (trustedOriginRule, bool) {
 		scheme:     scheme,
 		host:       host,
 		pathPrefix: trustedOriginPath(parsed),
+		actions:    map[string]struct{}{},
 	}, true
 }
 
@@ -476,7 +624,10 @@ func loadTrustedOriginPolicy(path string) (TrustedOriginPolicy, bool) {
 	origins = append(origins, config.Origins...)
 	origins = append(origins, config.TrustedOrigins...)
 	origins = append(origins, config.PreloadOrigins...)
-	return NewTrustedOriginPolicy(origins), true
+	policy := NewTrustedOriginPolicy(origins)
+	policy.addRulesWithActions(config.Actions)
+	policy.addRulesWithActions(config.OriginActions)
+	return policy, true
 }
 
 func defaultTrustedOriginPolicyPath() string {
@@ -563,6 +714,98 @@ func validatedLocalMLAPIURL(raw string) string {
 	default:
 		return "http://localhost:8090"
 	}
+}
+
+func renderBridgeAuthorization(pageURL string, policy TrustedOriginPolicy, allowPrivileged bool) string {
+	allowedActions := []string{}
+	if allowPrivileged {
+		allowedActions = bridgeActionList(policy.AllowedActionsForURL(pageURL))
+	}
+	return `(function () {
+  const __coreAllowedBridgeActions = new Set(` + core.JSONMarshalString(allowedActions) + `);
+  const __coreBridgeActionNotPermitted = () => new Error("Core bridge action not permitted for this origin");
+  const __coreBridgeActionPermitted = (route) => __coreAllowedBridgeActions.has(String(route ?? ""));
+  const __coreAsPromise = (value) => (
+    value && typeof value.then === "function" ? value : Promise.resolve(value)
+  );
+  const __coreRunCoreCall = (target, methodNames, name, payload) => {
+    if (!target || typeof target !== "object") {
+      return undefined;
+    }
+    for (const methodName of methodNames) {
+      const method = target[methodName];
+      if (typeof method !== "function") {
+        continue;
+      }
+      try {
+        const direct = method.call(target, name, payload);
+        if (direct && typeof direct.Run === "function") {
+          try {
+            return direct.Run(payload);
+          } catch (_) {
+            return direct.Run();
+          }
+        }
+        return direct;
+      } catch (_) {
+        try {
+          const deferred = method.call(target, name);
+          if (deferred && typeof deferred.Run === "function") {
+            try {
+              return deferred.Run(payload);
+            } catch (_) {
+              return deferred.Run();
+            }
+          }
+          return deferred;
+        } catch (_) {}
+      }
+    }
+    return undefined;
+  };
+  let __coreGUIInvokeTarget = typeof globalThis.__CORE_GUI_INVOKE__ === "function" ? globalThis.__CORE_GUI_INVOKE__ : undefined;
+  const __coreGuardedGUIInvoke = function(route, payload, options) {
+    if (!__coreBridgeActionPermitted(route)) {
+      return Promise.reject(__coreBridgeActionNotPermitted());
+    }
+    if (typeof __coreGUIInvokeTarget !== "function") {
+      return Promise.reject(new Error("Core bridge unavailable for this origin"));
+    }
+    return __coreGUIInvokeTarget.call(this, route, payload, options);
+  };
+  try {
+    Object.defineProperty(globalThis, "__CORE_GUI_INVOKE__", {
+      configurable: true,
+      enumerable: false,
+      get() { return __coreGuardedGUIInvoke; },
+      set(value) { __coreGUIInvokeTarget = value; }
+    });
+  } catch (_) {}
+  const __coreCallBridge = (methodNames, route, payload, options) => {
+    if (!__coreBridgeActionPermitted(route)) {
+      return Promise.reject(__coreBridgeActionNotPermitted());
+    }
+    const candidates = [globalThis.c, globalThis.Core, globalThis.core];
+    for (const candidate of candidates) {
+      const result = __coreRunCoreCall(candidate, methodNames, route, payload);
+      if (result !== undefined) {
+        return __coreAsPromise(result);
+      }
+    }
+    if (typeof __coreGUIInvokeTarget === "function") {
+      return __coreAsPromise(__coreGuardedGUIInvoke(route, payload, options));
+    }
+    return Promise.resolve(undefined);
+  };
+  globalThis.__corePreloadBridge = {
+    action(name, payload) {
+      return __coreCallBridge(["Action", "ACTION", "action"], name, payload, { mode: "action" });
+    },
+    query(name, payload) {
+      return __coreCallBridge(["QUERY", "Query", "query"], name, payload, { mode: "query" });
+    }
+  };
+})();`
 }
 
 func renderCoreMLShim() string {

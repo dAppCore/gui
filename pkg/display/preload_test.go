@@ -165,6 +165,34 @@ func TestPreload_TrustedPreloadOrigin_PathPrefix(t *testing.T) {
 	assert.False(t, trustedPreloadOrigin("core://lab.lthn.sh/y", policy))
 }
 
+func TestPreload_BridgeActionAllowList(t *testing.T) {
+	policy := NewTrustedOriginPolicyWithActions(map[string][]string{
+		"core://lab.lthn.sh/": {"display.sidecar.eval"},
+		"core://empty/":       {},
+	})
+
+	assert.False(t, policy.AllowsActionURL("core://lab.lthn.sh/page", "marketplace.install"))
+	assert.True(t, policy.AllowsActionURL("core://lab.lthn.sh/page", "display.sidecar.eval"))
+	assert.False(t, policy.AllowsActionURL("core://attacker.com/page", "display.sidecar.eval"))
+	assert.True(t, policy.AllowsURL("core://empty/page"))
+	assert.False(t, policy.AllowsActionURL("core://empty/page", "display.sidecar.eval"))
+}
+
+func TestPreload_BridgeActionGuardScript(t *testing.T) {
+	svc, err := New()
+	require.NoError(t, err)
+	policy := NewTrustedOriginPolicyWithActions(map[string][]string{
+		"core://lab.lthn.sh/": {"display.sidecar.eval"},
+	})
+
+	script, err := svc.BuildPreloadScriptWithTrustedOriginPolicy("core://lab.lthn.sh/page", policy)
+	require.NoError(t, err)
+
+	assert.Contains(t, script, "Core bridge action not permitted for this origin")
+	assert.Contains(t, script, `"display.sidecar.eval"`)
+	assert.NotContains(t, script, `"marketplace.install"`)
+}
+
 func TestPreload_ManifestBackedPreloadOrigin_EmptyAllowListDeniesPlantedHTTPSManifest(t *testing.T) {
 	home := t.TempDir()
 	writeMarketplaceViewManifest(t, home, "attacker.com")
