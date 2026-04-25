@@ -294,9 +294,10 @@ func DigestManifest(manifest Manifest) string {
 }
 
 func safeName(value string) string {
+	original := value
 	value = strings.TrimSpace(strings.ToLower(value))
 	if value == "" {
-		return "module"
+		return fallbackSafeName(original)
 	}
 	var builder strings.Builder
 	lastDash := false
@@ -317,9 +318,14 @@ func safeName(value string) string {
 	}
 	cleaned := strings.Trim(builder.String(), "-._")
 	if cleaned == "" {
-		return "module"
+		return fallbackSafeName(original)
 	}
 	return cleaned
+}
+
+func fallbackSafeName(value string) string {
+	hash := sha256.Sum256([]byte(value))
+	return "module-" + hex.EncodeToString(hash[:])[:8]
 }
 
 func decodeManifestList(body []byte) ([]Manifest, error) {

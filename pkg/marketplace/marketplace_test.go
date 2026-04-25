@@ -359,6 +359,18 @@ func TestMarketplace_DigestManifest_Ugly(t *testing.T) {
 	assert.NotEmpty(t, got)
 }
 
+func TestMarketplace_safeName_EmptyFallbackUsesInputDigest(t *testing.T) {
+	slashes := safeName("////")
+	ats := safeName("@@@")
+
+	assert.Equal(t, "module-0ea28b45", slashes)
+	assert.Equal(t, "module-2ec847d8", ats)
+	assert.NotEqual(t, slashes, ats)
+	assertSafeModuleName(t, slashes)
+	assertSafeModuleName(t, ats)
+	assert.Equal(t, "valid-name", safeName("valid-name"))
+}
+
 func TestMarketplace_validateManifestName_Good(t *testing.T) {
 	require.NoError(t, validateManifestName("core-ui"))
 }
@@ -458,4 +470,14 @@ func TestMarketplace_sanitizeCommandOutput_Ugly(t *testing.T) {
 
 func shellQuote(value string) string {
 	return "'" + strings.ReplaceAll(value, "'", "'\\''") + "'"
+}
+
+func assertSafeModuleName(t *testing.T, value string) {
+	t.Helper()
+
+	require.NotEmpty(t, value)
+	assert.LessOrEqual(t, len(value), 32)
+	for _, r := range value {
+		assert.Truef(t, (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-', "unsafe character %q in %q", r, value)
+	}
 }
