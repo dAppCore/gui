@@ -2,16 +2,14 @@ package display
 
 import (
 	"context"
-	"fmt"
-	"html"
-	"net/url"
-	"sort"
-	"strings"
+	"html"    // Note: AX-6 — html.EscapeString is the structural HTML escape primitive; no core wrapper
+	"net/url" // Note: AX-6 — url.Values and ParseQuery are structural URL primitives; core has parse/escape wrappers only
+	"sort"    // Note: AX-6 — slice sorting is structural; core has no sort wrapper
 	"time"
 
 	core "dappco.re/go/core"
-	coreerr "dappco.re/go/log"
 	"dappco.re/go/gui/pkg/chat"
+	coreerr "dappco.re/go/log"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
@@ -26,7 +24,7 @@ type assetMiddlewareHandler struct {
 
 func (h assetMiddlewareHandler) ServeHTTP(w application.ResponseWriter, r *application.Request) {
 	rawURL := r.URL
-	if strings.HasPrefix(strings.ToLower(strings.TrimSpace(rawURL)), "core://") {
+	if core.HasPrefix(core.Lower(core.Trim(rawURL)), "core://") {
 		result := h.service.ResolveSchemeRequest(context.Background(), rawURL, r.Method, r.Header, r.Body)
 		if !result.OK {
 			w.WriteHeader(404)
@@ -37,7 +35,7 @@ func (h assetMiddlewareHandler) ServeHTTP(w application.ResponseWriter, r *appli
 		body, _ := payload["body"].(string)
 		headers := w.Header()
 		contentType, _ := payload["content_type"].(string)
-		if strings.TrimSpace(contentType) == "" {
+		if core.Trim(contentType) == "" {
 			contentType = "text/html"
 		}
 		headers["Content-Type"] = []string{contentType + "; charset=utf-8"}
@@ -54,7 +52,7 @@ func (s *Service) HandleScheme(scheme string, handler SchemeHandler) {
 	if s.schemeHandlers == nil {
 		s.schemeHandlers = make(map[string]SchemeHandler)
 	}
-	s.schemeHandlers[strings.ToLower(strings.TrimSpace(scheme))] = handler
+	s.schemeHandlers[core.Lower(core.Trim(scheme))] = handler
 }
 
 func (s *Service) registerDefaultSchemes() {
@@ -98,15 +96,30 @@ func (s *Service) resolveCoreRoute(ctx context.Context, route string, query url.
 }
 
 func splitCoreRoute(route string) (string, string) {
-	route = strings.Trim(strings.TrimSpace(route), "/")
+	route = trimPathSlashes(route)
 	if route == "" {
 		return "", ""
 	}
-	segment, remainder, found := strings.Cut(route, "/")
-	if !found {
-		return segment, ""
+	parts := core.Split(route, "/")
+	if len(parts) == 1 {
+		return parts[0], ""
 	}
-	return segment, remainder
+	return parts[0], core.Join("/", parts[1:]...)
+}
+
+func trimPathSlashes(value string) string {
+	value = core.Trim(value)
+	for core.HasPrefix(value, "/") {
+		value = core.TrimPrefix(value, "/")
+	}
+	for core.HasSuffix(value, "/") {
+		value = core.TrimSuffix(value, "/")
+	}
+	return value
+}
+
+func equalFold(left, right string) bool {
+	return core.Lower(left) == core.Lower(right)
 }
 
 func (s *Service) resolveSettingsRoute(subpath string, query url.Values) core.Result {
@@ -143,10 +156,10 @@ func (s *Service) resolveSettingsRoute(subpath string, query url.Values) core.Re
 
 func (s *Service) resolveStoreRoute(subpath string, query url.Values) core.Result {
 	if subpath != "" {
-		parts := strings.Split(subpath, "/")
+		parts := core.Split(subpath, "/")
 		if len(parts) >= 2 {
-			bucket := strings.TrimSpace(parts[0])
-			key := strings.TrimSpace(strings.Join(parts[1:], "/"))
+			bucket := core.Trim(parts[0])
+			key := core.Trim(core.Join("/", parts[1:]...))
 			if s != nil && s.storage != nil {
 				if entry, ok := s.storage.Get("", bucket, key); ok {
 					return core.Result{
@@ -199,7 +212,7 @@ func (s *Service) resolveNetworkRoute(subpath string, query url.Values) core.Res
 	state := s.networkState()
 	if interfaceName := firstNonEmpty(query.Get("name"), subpath); interfaceName != "" {
 		for _, iface := range state.Interfaces {
-			if strings.EqualFold(iface.Name, interfaceName) {
+			if equalFold(iface.Name, interfaceName) {
 				return core.Result{
 					Value: map[string]any{
 						"content_type": "text/html",
@@ -252,7 +265,7 @@ func (s *Service) resolveServiceBackedCoreRoute(route, subpath string, query url
 		return s.resolveUnavailableCoreRoute(route, subpath, query)
 	}
 	for _, serviceName := range serviceNames {
-		serviceName = strings.TrimSpace(serviceName)
+		serviceName = core.Trim(serviceName)
 		if serviceName == "" {
 			continue
 		}
@@ -284,7 +297,7 @@ func (s *Service) resolveServiceBackedCoreRoute(route, subpath string, query url
 }
 
 func (s *Service) actionsForService(serviceName string) []string {
-	if strings.TrimSpace(serviceName) == "" {
+	if core.Trim(serviceName) == "" {
 		return nil
 	}
 	if s == nil || s.ServiceRuntime == nil {
@@ -298,7 +311,7 @@ func (s *Service) actionsForService(serviceName string) []string {
 	actions := make([]string, 0)
 	for _, actionName := range s.Core().Actions() {
 		for _, prefix := range prefixes {
-			if strings.HasPrefix(actionName, prefix) {
+			if core.HasPrefix(actionName, prefix) {
 				actions = append(actions, actionName)
 				break
 			}
@@ -335,7 +348,7 @@ func (s *Service) currentSettingValue(key string) (any, bool) {
 		}
 	}
 	for section, values := range s.configData {
-		if strings.Contains(key, ".") {
+		if core.Contains(key, ".") {
 			if nested, ok := values[key]; ok {
 				return nested, true
 			}
@@ -349,7 +362,7 @@ func (s *Service) currentSettingValue(key string) (any, bool) {
 
 func (s *Service) findChatModel(name string) (chat.ModelEntry, bool) {
 	for _, model := range s.chatModels() {
-		if strings.EqualFold(model.Name, name) {
+		if equalFold(model.Name, name) {
 			return model, true
 		}
 	}
@@ -365,24 +378,28 @@ func (s *Service) ResolveScheme(ctx context.Context, rawURL string) core.Result 
 //	result := svc.ResolveSchemeRequest(ctx, "core://store?q=theme", "POST", nil, []byte("q=theme"))
 //	// Routes that accept query semantics can use the request body when the caller submits a form or POST payload.
 func (s *Service) ResolveSchemeRequest(ctx context.Context, rawURL, method string, headers map[string][]string, body []byte) core.Result {
-	if strings.TrimSpace(rawURL) == "" {
+	if core.Trim(rawURL) == "" {
 		return core.Result{Value: coreerr.E("display.ResolveScheme", "scheme URL is required", nil), OK: false}
 	}
 	if len(body) > maxSchemeRequestBodyBytes {
 		return core.Result{
 			Value: coreerr.E(
 				"display.ResolveScheme",
-				fmt.Sprintf("request body exceeds %d bytes", maxSchemeRequestBodyBytes),
+				core.Sprintf("request body exceeds %d bytes", maxSchemeRequestBodyBytes),
 				nil,
 			),
 			OK: false,
 		}
 	}
-	parsed, err := url.Parse(rawURL)
-	if err != nil {
-		return core.Result{Value: err, OK: false}
+	parseResult := core.URLParse(rawURL)
+	if !parseResult.OK {
+		return core.Result{Value: parseResult.Value, OK: false}
 	}
-	handler, ok := s.schemeHandlers[strings.ToLower(parsed.Scheme)]
+	parsed, ok := parseResult.Value.(*url.URL)
+	if !ok || parsed == nil {
+		return core.Result{Value: coreerr.E("display.ResolveScheme", "scheme URL parse returned an invalid URL", nil), OK: false}
+	}
+	handler, ok := s.schemeHandlers[core.Lower(parsed.Scheme)]
 	if !ok {
 		return core.Result{Value: coreerr.E("display.ResolveScheme", "no handler registered for scheme "+parsed.Scheme, nil), OK: false}
 	}
@@ -396,18 +413,18 @@ func (s *Service) ResolveSchemeRequest(ctx context.Context, rawURL, method strin
 		}
 	}
 
-	route := strings.Trim(strings.TrimPrefix(parsed.Host+parsed.Path, "/"), "/")
+	route := trimPathSlashes(core.TrimPrefix(parsed.Host+parsed.Path, "/"))
 	resolved := handler(ctx, route, query)
 	if !resolved.OK {
 		return resolved
 	}
 
 	if payload, ok := resolved.Value.(map[string]any); ok {
-		if contentType, _ := payload["content_type"].(string); strings.TrimSpace(contentType) != "" {
-			if body, ok := payload["body"].(string); ok && strings.TrimSpace(body) != "" {
+		if contentType, _ := payload["content_type"].(string); core.Trim(contentType) != "" {
+			if body, ok := payload["body"].(string); ok && core.Trim(body) != "" {
 				return core.Result{Value: payload, OK: true}
 			}
-			if !strings.EqualFold(contentType, "text/html") {
+			if !equalFold(contentType, "text/html") {
 				payload["body"] = core.JSONMarshalString(payload["state"])
 				return core.Result{Value: payload, OK: true}
 			}
@@ -421,7 +438,7 @@ func (s *Service) ResolveSchemeRequest(ctx context.Context, rawURL, method strin
 			"body":         renderedBody,
 			"route":        route,
 			"url":          rawURL,
-			"method":       strings.ToUpper(strings.TrimSpace(method)),
+			"method":       core.Upper(core.Trim(method)),
 		},
 		OK: true,
 	}
@@ -442,25 +459,25 @@ func requestBodyQuery(method string, headers map[string][]string, body []byte) u
 	if len(body) == 0 {
 		return nil
 	}
-	normalizedMethod := strings.ToUpper(strings.TrimSpace(method))
+	normalizedMethod := core.Upper(core.Trim(method))
 	if normalizedMethod == "" || normalizedMethod == "GET" || normalizedMethod == "HEAD" {
 		return nil
 	}
 
 	contentType := ""
 	for key, values := range headers {
-		if strings.EqualFold(strings.TrimSpace(key), "Content-Type") && len(values) > 0 {
+		if equalFold(core.Trim(key), "Content-Type") && len(values) > 0 {
 			contentType = values[0]
 			break
 		}
 	}
 
-	trimmedBody := strings.TrimSpace(string(body))
+	trimmedBody := core.Trim(string(body))
 	if trimmedBody == "" {
 		return nil
 	}
 
-	if strings.Contains(strings.ToLower(contentType), "application/json") || strings.HasPrefix(trimmedBody, "{") {
+	if core.Contains(core.Lower(contentType), "application/json") || core.HasPrefix(trimmedBody, "{") {
 		var decoded map[string]any
 		if result := core.JSONUnmarshal(body, &decoded); result.OK {
 			values := make(url.Values, len(decoded))
@@ -577,10 +594,10 @@ func (s *Service) renderStoreSearchPage(query string, results []StorageEntry) st
 		})
 	}
 
-	var items strings.Builder
-	if len(results) == 0 && strings.TrimSpace(query) != "" {
+	items := core.NewBuilder()
+	if len(results) == 0 && core.Trim(query) != "" {
 		items.WriteString("<p class=\"empty\">No matches found in Core storage.</p>")
-	} else if strings.TrimSpace(query) == "" {
+	} else if core.Trim(query) == "" {
 		items.WriteString("<p class=\"meta\">Enter a search term to scan Core storage namespaces.</p>")
 	} else {
 		for _, group := range groups {
@@ -611,7 +628,7 @@ func (s *Service) renderStoreSearchPage(query string, results []StorageEntry) st
 }
 
 func (s *Service) searchAllStorage(query string) []StorageEntry {
-	if strings.TrimSpace(query) == "" {
+	if core.Trim(query) == "" {
 		return nil
 	}
 	results := make([]StorageEntry, 0)
@@ -665,7 +682,7 @@ func (s *Service) handleStoreSearch(_ context.Context, params url.Values) core.R
 
 func firstNonEmpty(values ...string) string {
 	for _, value := range values {
-		if strings.TrimSpace(value) != "" {
+		if core.Trim(value) != "" {
 			return value
 		}
 	}
@@ -677,7 +694,7 @@ func coreRouteURL(segment string, parts ...string) string {
 }
 
 func buildCoreURL(route string, query url.Values) string {
-	route = strings.Trim(strings.TrimSpace(route), "/")
+	route = trimPathSlashes(route)
 	if route == "" {
 		return "core://"
 	}
@@ -689,12 +706,13 @@ func buildCoreURL(route string, query url.Values) string {
 }
 
 func pathForCoreRoute(segment string, parts ...string) string {
-	route := strings.Trim(strings.TrimSpace(segment), "/")
+	route := trimPathSlashes(segment)
 	for _, part := range parts {
-		if strings.TrimSpace(part) == "" {
+		trimmedPart := core.Trim(part)
+		if trimmedPart == "" {
 			continue
 		}
-		route += "/" + url.PathEscape(strings.TrimSpace(part))
+		route += "/" + core.URLPathEscape(trimmedPart)
 	}
 	return route
 }
@@ -705,7 +723,7 @@ func sanitizeCoreQuery(query url.Values) url.Values {
 	}
 	sanitized := make(url.Values, len(query))
 	for key, values := range query {
-		key = strings.TrimSpace(key)
+		key = core.Trim(key)
 		if key == "" {
 			continue
 		}
@@ -717,15 +735,19 @@ func sanitizeCoreQuery(query url.Values) url.Values {
 }
 
 func safeOriginHref(origin string) string {
-	trimmed := strings.TrimSpace(origin)
+	trimmed := core.Trim(origin)
 	if trimmed == "" {
 		return "#"
 	}
-	parsed, err := url.Parse(trimmed)
-	if err != nil {
+	parseResult := core.URLParse(trimmed)
+	if !parseResult.OK {
 		return "#"
 	}
-	switch strings.ToLower(parsed.Scheme) {
+	parsed, ok := parseResult.Value.(*url.URL)
+	if !ok || parsed == nil {
+		return "#"
+	}
+	switch core.Lower(parsed.Scheme) {
 	case "http", "https", "file", "core":
 		return parsed.String()
 	default:
@@ -734,7 +756,7 @@ func safeOriginHref(origin string) string {
 }
 
 func anchorHTML(href, text string) string {
-	escapedHref := html.EscapeString(strings.TrimSpace(href))
+	escapedHref := html.EscapeString(core.Trim(href))
 	if escapedHref == "" {
 		escapedHref = "#"
 	}
