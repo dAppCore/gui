@@ -4,8 +4,8 @@ import (
 	"context"
 
 	core "dappco.re/go/core"
-	coreerr "dappco.re/go/log"
 	"dappco.re/go/gui/pkg/notification"
+	coreerr "dappco.re/go/log"
 )
 
 type Options struct{}

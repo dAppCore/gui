@@ -192,8 +192,6 @@ func trustedWebSocketHost(host string) bool {
 	switch strings.ToLower(name) {
 	case "localhost", "127.0.0.1", "::1":
 		return true
-	case "localhost:80", "localhost:443", "127.0.0.1:80", "127.0.0.1:443", "[::1]:80", "[::1]:443":
-		return true
 	default:
 		return false
 	}
@@ -467,6 +465,9 @@ func (em *WSEventManager) listSubscriptions(conn *websocket.Conn) {
 }
 
 func (em *WSEventManager) writeClientMessage(state *clientState, conn *websocket.Conn, data []byte) {
+	if state == nil || conn == nil {
+		return
+	}
 	state.writeMu.Lock()
 	defer state.writeMu.Unlock()
 	conn.SetWriteDeadline(time.Now().Add(10 * time.Second))

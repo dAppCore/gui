@@ -1,4 +1,4 @@
-# RFC-025: Agent Experience (AX) Design Principles
+# RFC-CORE-008: Agent Experience (AX) Design Principles
 
 - **Status:** Draft
 - **Authors:** Snider, Cladius
@@ -41,7 +41,7 @@ AX does not replace UX or DX. End users still need good UX. Developers still nee
 
 Names are tokens that agents pattern-match across languages and contexts. Abbreviations introduce mapping overhead.
 
-```
+```text
 Config    not  Cfg
 Service   not  Srv
 Embed     not  Emb
@@ -66,7 +66,7 @@ setup.Run(setup.Options{Path: ".", Template: "auto"})
 
 // Scaffold a PHP module workspace
 setup.Run(setup.Options{Path: "./my-module", Template: "php"})
-```
+```text
 
 **Rule:** If a comment restates what the type signature already says, delete it. If a comment shows a concrete usage with realistic values, keep it.
 
@@ -82,7 +82,7 @@ flow/deploy/from/github.yaml   — deploy FROM GitHub
 flow/code/review.yaml           — code review flow
 template/file/go/struct.go.tmpl — Go struct file template
 template/dir/workspace/php/     — PHP workspace scaffold
-```
+```text
 
 **Rule:** If an agent needs to read a file to understand what a directory contains, the directory naming has failed.
 
@@ -122,7 +122,7 @@ steps:
     flow: deploy/with/docker
     with:
       host: "{{ .host }}"
-```
+```text
 
 ```go
 // Imperative — agent must trace execution
@@ -152,7 +152,7 @@ core.New(core.Options{
         brain.New(core.Options{Name: "brain"}),
     },
 })
-```
+```text
 
 **Core primitive types:**
 
@@ -183,7 +183,7 @@ plans/
 ├── code/       # Pure primitives — read for WHAT exists
 ├── project/    # Products — read for WHAT we're building and WHY
 └── rfc/        # Contracts — read for constraints and rules
-```
+```text
 
 **Rule:** An agent should know what kind of document it's reading from the path alone. `code/core/go/io/RFC.md` = a lib primitive spec. `project/ofm/RFC.md` = a product spec that cross-references code/. `rfc/snider/borg/RFC-BORG-006-SMSG-FORMAT.md` = an immutable contract for the Borg SMSG protocol.
 
@@ -198,7 +198,7 @@ code/core/go/*     → lib tier (stable foundation)
 code/core/agent/   → consumer tier (composes from go/*)
 code/core/cli/     → consumer tier (composes from go/*)
 code/core/gui/     → consumer tier (composes from go/*)
-```
+```text
 
 **Rule:** If package A is in `go/` and package B is in the consumer tier, B may import A but A must never import B. The repo naming convention enforces this: `go-{name}` = lib, bare `{name}` = consumer.
 
@@ -215,7 +215,7 @@ Pass 3: Find 5 issues (architectural — signature mismatches, registration gaps
 Pass 4: Find 4 issues (contract — cross-spec API mismatches)
 Pass 5: Find 2 issues (mechanical — path format, nil safety)
 Pass N: Findings are trivial → spec/code is complete
-```
+```text
 
 **Rule:** Iteration is required, not a failure. Each pass sees what the previous pass could not, because the context changed. An agent dispatched with the same task on the same repo will find different things each time — this is correct behaviour.
 
@@ -241,7 +241,7 @@ tests/cli/
 │       └── security/
 │           ├── Taskfile.yaml      ← test `core-lint security`
 │           └── fixtures/
-```
+```text
 
 **Rule:** Every CLI command has a matching `tests/cli/{path}/Taskfile.yaml`. The Taskfile runs the compiled binary against fixtures with known inputs and validates the output. If the CLI test passes, the underlying actions work — because CLI commands call actions, MCP tools call actions, API endpoints call actions. Test the CLI, trust the rest.
 
@@ -266,7 +266,7 @@ tasks:
 
 ### File Structure
 
-```
+```text
 # AX-native: path describes content
 core/agent/
 ├── go/                    # Go source
@@ -299,7 +299,7 @@ cfg, err := c.Config().Get("database.host")
 if err != nil {
     _ = err // silenced because "it'll be fine"
 }
-```
+```text
 
 ### API Design
 
@@ -326,7 +326,7 @@ The `plans/` directory structure encodes a development methodology designed for 
 
 ### The Three-Way Split
 
-```
+```text
 plans/
 ├── project/    # 1. WHAT and WHY — start here
 ├── rfc/        # 2. CONSTRAINTS — immutable contracts
@@ -369,7 +369,7 @@ The code spec IS the product. Write the spec → dispatch to an agent → review
 
 Before dispatching for implementation, verify spec-model alignment:
 
-```
+```text
 1. REVIEW — The implementation model (Codex/Jules) reads the spec
    and reports missing elements. This surfaces the delta between
    the model's training and the spec's assumptions.
@@ -393,7 +393,7 @@ Before dispatching for implementation, verify spec-model alignment:
 
 Same prompt, multiple runs. Each pass sees deeper because the context evolved:
 
-```
+```text
 Round 1: Build features (the obvious gaps)
 Round 2: Write tests (verify what was built)
 Round 3: Harden security (what can go wrong?)

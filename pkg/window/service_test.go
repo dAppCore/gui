@@ -12,8 +12,16 @@ import (
 
 func newTestWindowService(t *testing.T) (*Service, *core.Core) {
 	t.Helper()
+	platform := newMockPlatform()
+	configDir := t.TempDir()
 	c := core.New(
-		core.WithService(Register(newMockPlatform())),
+		core.WithService(func(c *core.Core) core.Result {
+			return core.Result{Value: &Service{
+				ServiceRuntime: core.NewServiceRuntime[Options](c, Options{}),
+				platform:       platform,
+				manager:        NewManagerWithDir(platform, configDir),
+			}, OK: true}
+		}),
 		core.WithServiceLock(),
 	)
 	require.True(t, c.ServiceStartup(context.Background(), nil).OK)

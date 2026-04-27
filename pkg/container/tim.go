@@ -7,6 +7,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	coreerr "dappco.re/go/log"
 )
 
 type TIMOptions struct {
@@ -82,45 +84,62 @@ func NewTIMManager(options TIMOptions) *TIMManager {
 func (m *TIMManager) State() TIMState {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	return m.state
+	return cloneTIMState(m.state)
 }
 
 func (m *TIMManager) Start(ctx context.Context) (TIMState, error) {
 	m.mu.Lock()
-	defer m.mu.Unlock()
-
 	runtime := coalesceRuntime(m.options.Runtime, m.options.Detect())
 	m.state.Runtime = runtime
 	if runtime == RuntimeNone {
-		return m.state, fmt.Errorf("no supported container runtime detected")
+		state := cloneTIMState(m.state)
+		m.mu.Unlock()
+		return state, coreerr.E("container.TIMManager.Start", "no supported container runtime detected", nil)
 	}
 
 	command, args := m.runtimeCommand(runtime, "run")
+	m.mu.Unlock()
+
 	if err := m.options.Exec(ctx, command, args...); err != nil {
+		m.mu.Lock()
 		m.state.Status = "error"
-		return m.state, err
+		state := cloneTIMState(m.state)
+		m.mu.Unlock()
+		return state, coreerr.E("container.TIMManager.Start", "failed to execute runtime start command", err)
 	}
 
+	m.mu.Lock()
 	m.state.Status = "running"
 	m.state.StartedAt = m.options.Now()
-	return m.state, nil
+	state := cloneTIMState(m.state)
+	m.mu.Unlock()
+	return state, nil
 }
 
 func (m *TIMManager) Stop(ctx context.Context) (TIMState, error) {
 	m.mu.Lock()
-	defer m.mu.Unlock()
-
 	if m.state.Runtime == RuntimeNone {
 		m.state.Status = "stopped"
-		return m.state, nil
+		state := cloneTIMState(m.state)
+		m.mu.Unlock()
+		return state, nil
 	}
 	command, args := m.runtimeCommand(m.state.Runtime, "stop")
+	m.mu.Unlock()
+
 	if err := m.options.Exec(ctx, command, args...); err != nil {
+		m.mu.Lock()
 		m.state.Status = "error"
-		return m.state, err
+		state := cloneTIMState(m.state)
+		m.mu.Unlock()
+		return state, coreerr.E("container.TIMManager.Stop", "failed to execute runtime stop command", err)
 	}
+
+	m.mu.Lock()
 	m.state.Status = "stopped"
-	return m.state, nil
+	state := cloneTIMState(m.state)
+	m.mu.Unlock()
+	return state, nil
 }
 
 func (m *TIMManager) runtimeCommand(runtime ContainerRuntime, verb string) (string, []string) {
@@ -176,4 +195,9 @@ func coalesceRuntime(values ...ContainerRuntime) ContainerRuntime {
 		}
 	}
 	return RuntimeNone
+}
+
+func cloneTIMState(state TIMState) TIMState {
+	state.Command = append([]string(nil), state.Command...)
+	return state
 }

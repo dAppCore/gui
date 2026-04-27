@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	coreio "dappco.re/go/io"
 )
 
 var hlcrfSlotPattern = regexp.MustCompile(`\{\{\s*slot\s+"([^"]+)"\s*\}\}`)
@@ -29,14 +31,14 @@ func (s *Service) buildHLCRFComponents(pageURL string) (string, error) {
 				}
 				return "", pathErr
 			}
-			body, readErr := os.ReadFile(resolvedPath)
+			body, readErr := coreio.Local.Read(resolvedPath)
 			if readErr != nil {
 				if errors.Is(readErr, os.ErrNotExist) {
 					continue
 				}
 				return "", readErr
 			}
-			templateBody = string(body)
+			templateBody = body
 		}
 		if templateBody == "" {
 			continue

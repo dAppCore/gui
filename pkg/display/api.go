@@ -5,14 +5,16 @@ import (
 	"fmt"
 
 	core "dappco.re/go/core"
-	coreerr "dappco.re/go/log"
 	"dappco.re/go/gui/pkg/clipboard"
 	"dappco.re/go/gui/pkg/dialog"
 	"dappco.re/go/gui/pkg/environment"
 	"dappco.re/go/gui/pkg/notification"
 	"dappco.re/go/gui/pkg/screen"
 	"dappco.re/go/gui/pkg/systray"
+	coreerr "dappco.re/go/log"
 )
+
+const writeClipboardImageOp = "display.WriteClipboardImage"
 
 // Screen is the public display-screen shape used by the display service API.
 type Screen struct {
@@ -408,10 +410,10 @@ func (s *Service) ReadClipboardImage() ([]byte, error) {
 
 func (s *Service) WriteClipboardImage(data []byte) error {
 	if len(data) == 0 {
-		return coreerr.E("display.WriteClipboardImage", "clipboard image data is required", nil)
+		return coreerr.E(writeClipboardImageOp, "clipboard image data is required", nil)
 	}
 	if len(data) > clipboard.MaxImageBytes {
-		return coreerr.E("display.WriteClipboardImage", "clipboard image exceeds maximum size", nil)
+		return coreerr.E(writeClipboardImageOp, "clipboard image exceeds maximum size", nil)
 	}
 	result := s.Core().Action("clipboard.setImage").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "data", Value: append([]byte(nil), data...)},
@@ -420,7 +422,7 @@ func (s *Service) WriteClipboardImage(data []byte) error {
 		if err, ok := result.Value.(error); ok {
 			return err
 		}
-		return coreerr.E("display.WriteClipboardImage", "clipboard.setImage action failed", nil)
+		return coreerr.E(writeClipboardImageOp, "clipboard.setImage action failed", nil)
 	}
 	return nil
 }

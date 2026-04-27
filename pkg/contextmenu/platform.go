@@ -32,10 +32,10 @@ type ContextMenuDef struct {
 // Items may be nested (submenu children via Items field).
 type MenuItemDef struct {
 	Label       string        `json:"label"`
-	Type        string        `json:"type,omitempty"`        // "" (normal), "separator", "checkbox", "radio", "submenu"
+	Type        string        `json:"type,omitempty"` // "" (normal), "separator", "checkbox", "radio", "submenu"
 	Accelerator string        `json:"accelerator,omitempty"`
-	Enabled     *bool         `json:"enabled,omitempty"`     // nil = true (default)
+	Enabled     *bool         `json:"enabled,omitempty"` // nil = true (default)
 	Checked     bool          `json:"checked,omitempty"`
-	ActionID    string        `json:"actionId,omitempty"`    // identifies which item was clicked
-	Items       []MenuItemDef `json:"items,omitempty"`       // submenu children (recursive)
+	ActionID    string        `json:"actionId,omitempty"` // identifies which item was clicked
+	Items       []MenuItemDef `json:"items,omitempty"`    // submenu children (recursive)
 }

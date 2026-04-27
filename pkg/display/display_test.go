@@ -12,6 +12,7 @@ import (
 	"time"
 
 	core "dappco.re/go/core"
+	"dappco.re/go/gui/pkg/container"
 	"dappco.re/go/gui/pkg/menu"
 	"dappco.re/go/gui/pkg/systray"
 	"dappco.re/go/gui/pkg/webview"
@@ -19,18 +20,51 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 // --- Test helpers ---
 
+func newTestCore(t *testing.T, serviceFactories ...func(*core.Core) core.Result) *core.Core {
+	t.Helper()
+	configPath := core.JoinPath(t.TempDir(), "config.yaml")
+	options := []core.CoreOption{core.WithService(registerDisplayWithConfigPath(configPath))}
+	for _, factory := range serviceFactories {
+		options = append(options, core.WithService(factory))
+	}
+	options = append(options, core.WithServiceLock())
+	c := core.New(options...)
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	return c
+}
+
+func newServiceWithMockApp(t *testing.T, serviceFactories ...func(*core.Core) core.Result) (*Service, *core.Core) {
+	t.Helper()
+	configPath := core.JoinPath(t.TempDir(), "config.yaml")
+	options := []core.CoreOption{
+		core.WithService(func(c *core.Core) core.Result {
+			svc, err := New()
+			require.NoError(t, err)
+			svc.loadConfigFrom(configPath)
+			svc.ServiceRuntime = core.NewServiceRuntime(c, Options{})
+			svc.wailsApp = &application.App{Logger: application.Logger{}}
+			return core.Result{Value: svc, OK: true}
+		}),
+	}
+	for _, factory := range serviceFactories {
+		options = append(options, core.WithService(factory))
+	}
+	options = append(options, core.WithServiceLock())
+	c := core.New(options...)
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	svc := core.MustServiceFor[*Service](c, "display")
+	return svc, c
+}
+
 // newTestDisplayService creates a display service registered with Core for IPC testing.
 func newTestDisplayService(t *testing.T) (*Service, *core.Core) {
 	t.Helper()
-	c := core.New(
-		core.WithService(Register(nil)),
-		core.WithServiceLock(),
-	)
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	c := newTestCore(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 	return svc, c
 }
@@ -38,8 +72,9 @@ func newTestDisplayService(t *testing.T) (*Service, *core.Core) {
 // newTestConclave creates a full 4-service conclave for integration testing.
 func newTestConclave(t *testing.T) *core.Core {
 	t.Helper()
+	t.Setenv("HOME", t.TempDir())
 	c := core.New(
-		core.WithService(Register(nil)),
+		core.WithService(registerDisplayWithConfigPath(core.JoinPath(t.TempDir(), "config.yaml"))),
 		core.WithService(window.Register(window.NewMockPlatform())),
 		core.WithService(systray.Register(systray.NewMockPlatform())),
 		core.WithService(menu.Register(menu.NewMockPlatform())),
@@ -57,13 +92,26 @@ func taskRun(c *core.Core, name string, task any) core.Result {
 
 func registerDisplayWithConfigPath(path string) func(*core.Core) core.Result {
 	return func(c *core.Core) core.Result {
-		result := Register(nil)(c)
-		if !result.OK {
+		svc, err := New()
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		svc.loadConfigFrom(path)
+		svc.ServiceRuntime = core.NewServiceRuntime(c, Options{})
+		if result := c.RegisterService("display", svc); !result.OK {
 			return result
 		}
-		svc := core.MustServiceFor[*Service](c, "display")
-		svc.loadConfigFrom(path)
-		return result
+		if !c.Service("deno").OK {
+			if result := c.RegisterService("deno", svc.ensureSidecar()); !result.OK {
+				return result
+			}
+		}
+		if !c.Service("tim").OK {
+			if result := c.RegisterService("tim", container.NewService(c, container.OptionsFromEnv())); !result.OK {
+				return result
+			}
+		}
+		return core.Result{OK: true}
 	}
 }
 
@@ -1351,7 +1399,7 @@ func TestHandleConfigTask_Persists_Good(t *testing.T) {
 		}),
 		core.WithServiceLock(),
 	)
-	c.ServiceStartup(context.Background(), nil)
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
 
 	r := taskRun(c, "display.saveWindowConfig", window.TaskSaveConfig{
 		Config: map[string]any{"default_width": 1920},

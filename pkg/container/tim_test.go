@@ -188,24 +188,24 @@ func TestTIMManager_runtimeCommand_Good(t *testing.T) {
 		wantArgs []string
 	}{
 		{
-			name:    "docker run",
-			runtime: RuntimeDocker,
-			verb:    "run",
-			wantBin: "docker",
+			name:     "docker run",
+			runtime:  RuntimeDocker,
+			verb:     "run",
+			wantBin:  "docker",
 			wantArgs: []string{"run", "-d", "--rm", "--name", "tim"},
 		},
 		{
-			name:    "apple stop",
-			runtime: RuntimeApple,
-			verb:    "stop",
-			wantBin: "container",
+			name:     "apple stop",
+			runtime:  RuntimeApple,
+			verb:     "stop",
+			wantBin:  "container",
 			wantArgs: []string{"stop", "tim"},
 		},
 		{
-			name:    "podman run",
-			runtime: RuntimePodman,
-			verb:    "run",
-			wantBin: "podman",
+			name:     "podman run",
+			runtime:  RuntimePodman,
+			verb:     "run",
+			wantBin:  "podman",
 			wantArgs: []string{"run", "-d", "--replace", "--name", "tim"},
 		},
 	}
@@ -248,7 +248,7 @@ func TestTIMManager_runtimeCommand_Bad(t *testing.T) {
 
 func TestTIMManager_runtimeCommand_Ugly(t *testing.T) {
 	manager := NewTIMManager(TIMOptions{
-		Name: "tim",
+		Name:  "tim",
 		Image: "image",
 		Resources: TIMResources{
 			CPUCores: 2,

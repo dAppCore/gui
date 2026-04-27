@@ -24,16 +24,19 @@ func (s *Service) modelState() ModelRuntimeState {
 		apiURL = "http://localhost:8090"
 	}
 	models := s.chatModels()
-	loaded := make([]chat.ModelEntry, 0)
+	loaded := make([]chat.ModelEntry, 0, len(models))
+	available := make([]chat.ModelEntry, 0, len(models))
 	for _, model := range models {
 		if model.Loaded {
 			loaded = append(loaded, model)
+			continue
 		}
+		available = append(available, model)
 	}
 	return ModelRuntimeState{
 		APIURL:       apiURL,
 		Loaded:       loaded,
-		Available:    models,
+		Available:    available,
 		VRAMBytes:    estimateVRAM(models),
 		Backend:      dominantBackend(models),
 		InferenceURL: apiURL + "/v1/chat/completions",
@@ -69,5 +72,21 @@ func dominantBackend(models []chat.ModelEntry) string {
 }
 
 func quoteJS(value string) string {
-	return `"` + strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(value, `\`, `\\`), "\n", `\n`), `"`, `\"`) + `"`
+	escaped := strings.ReplaceAll(value, `\`, `\\`)
+	escaped = strings.ReplaceAll(escaped, "\n", `\n`)
+	escaped = strings.ReplaceAll(escaped, "\u2028", `\u2028`)
+	escaped = strings.ReplaceAll(escaped, "\u2029", `\u2029`)
+	escaped = strings.ReplaceAll(escaped, `"`, `\"`)
+	escaped = escapeClosingScriptTag(escaped)
+	return `"` + escaped + `"`
+}
+
+func escapeClosingScriptTag(value string) string {
+	for {
+		index := strings.Index(strings.ToLower(value), "</script>")
+		if index < 0 {
+			return value
+		}
+		value = value[:index] + `<\/script>` + value[index+len("</script>"):]
+	}
 }

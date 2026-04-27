@@ -95,49 +95,57 @@ func TestScheme_ResolveScheme_Good(t *testing.T) {
 	})
 
 	storeResult := svc.ResolveScheme(context.Background(), "core://store?q=theme")
-	require.True(t, storeResult.OK)
-	storePayload := storeResult.Value.(map[string]any)
+	storePayload := requireSchemePayload(t, storeResult)
 	assert.Equal(t, "text/html", storePayload["content_type"])
-	assert.Contains(t, storePayload["body"].(string), "origin-a")
-	assert.Contains(t, storePayload["body"].(string), "dark")
+	assert.Contains(t, requirePayloadString(t, storePayload, "body"), "origin-a")
+	assert.Contains(t, requirePayloadString(t, storePayload, "body"), "dark")
 
 	entryResult := svc.ResolveScheme(context.Background(), "core://store/localStorage/theme")
-	require.True(t, entryResult.OK)
-	entryPayload := entryResult.Value.(map[string]any)
+	entryPayload := requireSchemePayload(t, entryResult)
 	assert.Equal(t, "store", entryPayload["route"])
-	assert.Contains(t, entryPayload["body"].(string), "localStorage")
-	assert.Contains(t, entryPayload["body"].(string), "theme")
+	assert.Contains(t, requirePayloadString(t, entryPayload, "body"), "localStorage")
+	assert.Contains(t, requirePayloadString(t, entryPayload, "body"), "theme")
 
 	settingsResult := svc.ResolveScheme(context.Background(), "core://settings/window")
-	require.True(t, settingsResult.OK)
-	settingsPayload := settingsResult.Value.(map[string]any)
+	settingsPayload := requireSchemePayload(t, settingsResult)
 	assert.Equal(t, "settings", settingsPayload["route"])
-	assert.Contains(t, settingsPayload["body"].(string), "default_width")
-	assert.Contains(t, settingsPayload["body"].(string), "1024")
+	assert.Contains(t, requirePayloadString(t, settingsPayload, "body"), "default_width")
+	assert.Contains(t, requirePayloadString(t, settingsPayload, "body"), "1024")
 
 	modelResult := svc.ResolveScheme(context.Background(), "core://models/alpha")
-	require.True(t, modelResult.OK)
-	modelPayload := modelResult.Value.(map[string]any)
+	modelPayload := requireSchemePayload(t, modelResult)
 	assert.Equal(t, "models", modelPayload["route"])
-	assert.Contains(t, modelPayload["body"].(string), "Alpha")
-	assert.Contains(t, modelPayload["body"].(string), "2048")
+	assert.Contains(t, requirePayloadString(t, modelPayload, "body"), "Alpha")
+	assert.Contains(t, requirePayloadString(t, modelPayload, "body"), "2048")
 
 	chatListResult := svc.ResolveScheme(context.Background(), "core://chat")
-	require.True(t, chatListResult.OK)
-	chatListPayload := chatListResult.Value.(map[string]any)
+	chatListPayload := requireSchemePayload(t, chatListResult)
 	assert.Equal(t, "chat", chatListPayload["route"])
-	assert.Contains(t, chatListPayload["body"].(string), "Chat Route")
+	assert.Contains(t, requirePayloadString(t, chatListPayload, "body"), "Chat Route")
 
 	chatHistoryResult := svc.ResolveScheme(context.Background(), "core://chat?conversation_id=conv-1")
-	require.True(t, chatHistoryResult.OK)
-	chatHistoryPayload := chatHistoryResult.Value.(map[string]any)
+	chatHistoryPayload := requireSchemePayload(t, chatHistoryResult)
 	assert.Equal(t, "chat", chatHistoryPayload["route"])
-	assert.Contains(t, chatHistoryPayload["body"].(string), "conv-1")
+	assert.Contains(t, requirePayloadString(t, chatHistoryPayload, "body"), "conv-1")
 
 	chatSearchResult := svc.handleStoreSearch(context.Background(), url.Values{"q": []string{"chat"}})
-	require.True(t, chatSearchResult.OK)
-	chatSearchPayload := chatSearchResult.Value.(map[string]any)
-	assert.Contains(t, chatSearchPayload["body"].(string), "core://chat")
+	chatSearchPayload := requireSchemePayload(t, chatSearchResult)
+	assert.Contains(t, requirePayloadString(t, chatSearchPayload, "body"), "core://chat")
+}
+
+func requireSchemePayload(t *testing.T, result core.Result) map[string]any {
+	t.Helper()
+	require.True(t, result.OK)
+	payload, ok := result.Value.(map[string]any)
+	require.True(t, ok)
+	return payload
+}
+
+func requirePayloadString(t *testing.T, payload map[string]any, key string) string {
+	t.Helper()
+	value, ok := payload[key].(string)
+	require.True(t, ok)
+	return value
 }
 
 func TestScheme_ResolveScheme_Bad(t *testing.T) {

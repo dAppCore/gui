@@ -84,6 +84,7 @@ func (s *Service) ensureSidecar() *deno.Manager {
 func (s *Service) startSidecar(ctx context.Context) (deno.Status, error) {
 	manager, err := s.sidecarForStart()
 	if err != nil {
+		s.sidecar = nil
 		return deno.Status{}, err
 	}
 	return manager.Start(ctx)

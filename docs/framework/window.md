@@ -13,7 +13,7 @@ The Window service covers named application windows, persisted geometry, and lay
 ## Basic Usage
 
 ```go
-import "github.com/Snider/Core/pkg/window"
+import "dappco.re/go/gui/pkg/window"
 
 w := window.New(
     window.WithName("main"),

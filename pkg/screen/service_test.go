@@ -306,5 +306,5 @@ func TestScreenPlacement_Apply_Ugly(t *testing.T) {
 	// AlignBottom + OffsetEnd + offset=0 → secondary starts at right edge of parent
 	NewPlacement(secondary, primary, AlignBottom, 0, OffsetEnd).Apply()
 	assert.Equal(t, 1920-800, secondary.Bounds.X) // flush right
-	assert.Equal(t, 1080, secondary.Bounds.Y)      // just below parent
+	assert.Equal(t, 1080, secondary.Bounds.Y)     // just below parent
 }

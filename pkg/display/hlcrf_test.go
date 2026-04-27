@@ -1,11 +1,11 @@
 package display
 
 import (
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	coreio "dappco.re/go/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -24,15 +24,15 @@ func TestHLCRF_DefaultHLCRFTag_Ugly(t *testing.T) {
 
 func TestHLCRF_BuildHLCRFComponents_Good(t *testing.T) {
 	root := t.TempDir()
-	require.NoError(t, os.MkdirAll(filepath.Join(root, ".core"), 0o755))
-	require.NoError(t, os.WriteFile(filepath.Join(root, "index.html"), []byte("<html></html>"), 0o644))
-	require.NoError(t, os.WriteFile(filepath.Join(root, "card.html"), []byte("<article>Card</article>"), 0o644))
-	require.NoError(t, os.WriteFile(filepath.Join(root, ".core", "view.yaml"), []byte(strings.Join([]string{
+	require.NoError(t, coreio.Local.EnsureDir(filepath.Join(root, ".core")))
+	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, "index.html"), "<html></html>", 0o644))
+	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, "card.html"), "<article>Card</article>", 0o644))
+	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, ".core", "view.yaml"), strings.Join([]string{
 		"hlcrf:",
 		"  - name: card.html",
 		"  - tag: core-inline",
 		"    template: <section>Inline</section>",
-	}, "\n")), 0o644))
+	}, "\n"), 0o644))
 
 	svc := &Service{}
 
@@ -65,13 +65,13 @@ func TestHLCRF_BuildHLCRFComponents_Bad(t *testing.T) {
 
 func TestHLCRF_BuildHLCRFComponents_Ugly(t *testing.T) {
 	root := t.TempDir()
-	require.NoError(t, os.MkdirAll(filepath.Join(root, ".core"), 0o755))
-	require.NoError(t, os.WriteFile(filepath.Join(root, "index.html"), []byte("<html></html>"), 0o644))
-	require.NoError(t, os.WriteFile(filepath.Join(root, ".core", "view.yaml"), []byte(strings.Join([]string{
+	require.NoError(t, coreio.Local.EnsureDir(filepath.Join(root, ".core")))
+	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, "index.html"), "<html></html>", 0o644))
+	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, ".core", "view.yaml"), strings.Join([]string{
 		"hlcrf:",
 		"  - name: missing.html",
 		"  - template: <span>Fallback</span>",
-	}, "\n")), 0o644))
+	}, "\n"), 0o644))
 
 	svc := &Service{}
 
@@ -85,13 +85,13 @@ func TestHLCRF_BuildHLCRFComponents_Ugly(t *testing.T) {
 
 func TestHLCRF_BuildHLCRFComponents_RejectsTraversal(t *testing.T) {
 	root := t.TempDir()
-	require.NoError(t, os.MkdirAll(filepath.Join(root, ".core"), 0o755))
-	require.NoError(t, os.WriteFile(filepath.Join(root, "index.html"), []byte("<html></html>"), 0o644))
-	require.NoError(t, os.WriteFile(filepath.Join(root, "outside.html"), []byte("<span>Outside</span>"), 0o644))
-	require.NoError(t, os.WriteFile(filepath.Join(root, ".core", "view.yaml"), []byte(strings.Join([]string{
+	require.NoError(t, coreio.Local.EnsureDir(filepath.Join(root, ".core")))
+	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, "index.html"), "<html></html>", 0o644))
+	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, "outside.html"), "<span>Outside</span>", 0o644))
+	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, ".core", "view.yaml"), strings.Join([]string{
 		"hlcrf:",
 		"  - name: ../outside.html",
-	}, "\n")), 0o644))
+	}, "\n"), 0o644))
 
 	svc := &Service{}
 

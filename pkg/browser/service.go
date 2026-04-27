@@ -24,7 +24,7 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 			return core.Result{Value: err, OK: false}
 		}
 		if err := s.platform.OpenURL(parsedURL); err != nil {
-			return core.Result{Value: err, OK: false}
+			return core.Result{Value: coreerr.E("browser.openURL", "failed to open URL", err), OK: false}
 		}
 		return core.Result{OK: true}
 	}
@@ -34,7 +34,7 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 			return core.Result{Value: err, OK: false}
 		}
 		if err := s.platform.OpenFile(path); err != nil {
-			return core.Result{Value: err, OK: false}
+			return core.Result{Value: coreerr.E("browser.openFile", "failed to open file", err), OK: false}
 		}
 		return core.Result{OK: true}
 	}

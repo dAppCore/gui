@@ -36,7 +36,8 @@ choco install go-task
 ## Install Core
 
 ```bash
-go get github.com/Snider/Core@latest
+go get dappco.re/go/core
+go get dappco.re/go/gui
 ```
 
 ## Verify Installation

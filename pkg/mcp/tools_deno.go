@@ -4,8 +4,8 @@ import (
 	"context"
 
 	core "dappco.re/go/core"
-	coreerr "dappco.re/go/log"
 	"dappco.re/go/gui/pkg/deno"
+	coreerr "dappco.re/go/log"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 

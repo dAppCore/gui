@@ -17,11 +17,14 @@ import (
 	"time"
 
 	core "dappco.re/go/core"
+	guimcp "dappco.re/go/gui/pkg/mcp"
 	"dappco.re/go/inference"
+	coreio "dappco.re/go/io"
 	coreerr "dappco.re/go/log"
 	"dappco.re/go/store"
-	guimcp "dappco.re/go/gui/pkg/mcp"
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"gopkg.in/yaml.v3"
 
 	_ "image/gif"
@@ -33,6 +36,7 @@ const (
 	conversationsGroup = "chat_conversations"
 	settingsGroup      = "chat_settings"
 	settingsKey        = "global"
+	maxToolRounds      = 3
 )
 
 type Options struct {
@@ -210,7 +214,7 @@ func Register(optionFns ...func(*Options)) func(*core.Core) core.Result {
 }
 
 func (s *Service) OnStartup(_ context.Context) core.Result {
-	if err := os.MkdirAll(filepath.Dir(s.options.StorePath), 0o755); err != nil {
+	if err := coreio.Local.EnsureDir(filepath.Dir(s.options.StorePath)); err != nil {
 		return core.Result{Value: err, OK: false}
 	}
 
@@ -906,9 +910,10 @@ func (s *Service) exportConversation(id string) (string, error) {
 	builder.WriteString("# ")
 	builder.WriteString(conv.Title)
 	builder.WriteString("\n\n")
+	titleCaser := cases.Title(language.Und)
 	for _, message := range conv.Messages {
 		builder.WriteString("## ")
-		builder.WriteString(strings.Title(message.Role))
+		builder.WriteString(titleCaser.String(message.Role))
 		builder.WriteString("\n\n")
 		if message.Content != "" {
 			builder.WriteString(message.Content)
@@ -1069,7 +1074,7 @@ func (s *Service) send(ctx context.Context, input sendInput) (string, error) {
 	s.emit(ActionMessageAdded{ConversationID: conv.ID, Message: userMessage})
 	s.emit(ActionConversationUpdated{Conversation: conv})
 
-	for toolRound := 0; toolRound < 3; toolRound++ {
+	for toolRound := 0; toolRound < maxToolRounds; toolRound++ {
 		effectiveSettings := s.mergedSettings(settings, conv.Settings)
 		conv.Model = s.resolveModel(conv.Model, effectiveSettings.DefaultModel)
 		if err := s.validateAttachmentsForModel(conv.Model, attachmentsForConversationTurn(conv.Messages)); err != nil {
@@ -1232,31 +1237,10 @@ func (s *Service) buildCompletionRequest(conv Conversation, settings ChatSetting
 		Stream:      true,
 	}
 
-	systemPrompt := strings.TrimSpace(settings.SystemPrompt)
-	if s.toolHandler != nil {
-		manifest := s.toolHandler.BuildToolManifest()
-		if manifest != "" {
-			if systemPrompt != "" {
-				systemPrompt = manifest + "\n\n" + systemPrompt
-			} else {
-				systemPrompt = manifest
-			}
-		}
-	}
-	if s.toolExecutor != nil {
-		if len(s.toolExecutor.Manifest()) > 0 {
-			for _, tool := range s.toolExecutor.Manifest() {
-				request.Tools = append(request.Tools, openAIToolSpec{
-					Type: "function",
-					Function: openAIFunctionSpec{
-						Name:        tool.Name,
-						Description: tool.Description,
-						Parameters:  tool.InputSchema,
-					},
-				})
-			}
-			request.ToolChoice = "auto"
-		}
+	systemPrompt := s.buildSystemPrompt(settings)
+	if tools := s.buildToolSpecs(); len(tools) > 0 {
+		request.Tools = tools
+		request.ToolChoice = "auto"
 	}
 	if systemPrompt != "" {
 		request.Messages = append(request.Messages, openAIMessage{
@@ -1266,35 +1250,76 @@ func (s *Service) buildCompletionRequest(conv Conversation, settings ChatSetting
 	}
 
 	for _, message := range conv.Messages {
-		apiMessage := openAIMessage{Role: message.Role}
-		switch message.Role {
-		case "user":
-			apiMessage.Content = renderUserContent(message)
-		case "assistant":
-			apiMessage.Content = message.Content
-			if len(message.ToolCalls) > 0 {
-				apiMessage.ToolCalls = make([]openAIToolCall, 0, len(message.ToolCalls))
-				for _, call := range message.ToolCalls {
-					apiMessage.ToolCalls = append(apiMessage.ToolCalls, openAIToolCall{
-						ID:   call.ID,
-						Type: "function",
-						Function: openAIFunctionCall{
-							Name:      call.Name,
-							Arguments: core.JSONMarshalString(call.Arguments),
-						},
-					})
-				}
-			}
-		case "tool":
-			apiMessage.Content = message.Content
-			apiMessage.ToolCallID = message.ToolCallID
-		default:
-			apiMessage.Content = message.Content
-		}
-		request.Messages = append(request.Messages, apiMessage)
+		request.Messages = append(request.Messages, buildAPIMessage(message))
 	}
 
 	return request
+}
+
+func (s *Service) buildSystemPrompt(settings ChatSettings) string {
+	systemPrompt := strings.TrimSpace(settings.SystemPrompt)
+	if s.toolHandler == nil {
+		return systemPrompt
+	}
+	manifest := s.toolHandler.BuildToolManifest()
+	if manifest == "" {
+		return systemPrompt
+	}
+	if systemPrompt != "" {
+		return manifest + "\n\n" + systemPrompt
+	}
+	return manifest
+}
+
+func (s *Service) buildToolSpecs() []openAIToolSpec {
+	if s.toolExecutor == nil {
+		return nil
+	}
+	manifest := s.toolExecutor.Manifest()
+	if len(manifest) == 0 {
+		return nil
+	}
+	specs := make([]openAIToolSpec, 0, len(manifest))
+	for _, tool := range manifest {
+		specs = append(specs, openAIToolSpec{
+			Type: "function",
+			Function: openAIFunctionSpec{
+				Name:        tool.Name,
+				Description: tool.Description,
+				Parameters:  tool.InputSchema,
+			},
+		})
+	}
+	return specs
+}
+
+func buildAPIMessage(message ChatMessage) openAIMessage {
+	apiMessage := openAIMessage{Role: message.Role}
+	switch message.Role {
+	case "user":
+		apiMessage.Content = renderUserContent(message)
+	case "assistant":
+		apiMessage.Content = message.Content
+		if len(message.ToolCalls) > 0 {
+			apiMessage.ToolCalls = make([]openAIToolCall, 0, len(message.ToolCalls))
+			for _, call := range message.ToolCalls {
+				apiMessage.ToolCalls = append(apiMessage.ToolCalls, openAIToolCall{
+					ID:   call.ID,
+					Type: "function",
+					Function: openAIFunctionCall{
+						Name:      call.Name,
+						Arguments: core.JSONMarshalString(call.Arguments),
+					},
+				})
+			}
+		}
+	case "tool":
+		apiMessage.Content = message.Content
+		apiMessage.ToolCallID = message.ToolCallID
+	default:
+		apiMessage.Content = message.Content
+	}
+	return apiMessage
 }
 
 func (s *Service) resolveModel(current, configured string) string {
@@ -1371,9 +1396,9 @@ func (s *Service) discoverModels() []ModelEntry {
 	}
 
 	configPath := filepath.Join(core.Env("DIR_HOME"), ".core", "models.yaml")
-	if payload, err := os.ReadFile(configPath); err == nil {
+	if payload, err := coreio.Local.Read(configPath); err == nil {
 		var configured configuredModels
-		if err := yaml.Unmarshal(payload, &configured); err == nil {
+		if err := yaml.Unmarshal([]byte(payload), &configured); err == nil {
 			defaultModel := coalesce(configured.DefaultModel, configured.Default, settings.DefaultModel)
 			for _, item := range configured.Models {
 				name := coalesce(item.Name, filepath.Base(item.Path))
@@ -1588,10 +1613,11 @@ func imageAttachmentFromFile(rawPath string) (ImageAttachment, error) {
 	if err != nil {
 		return ImageAttachment{}, err
 	}
-	data, err := os.ReadFile(path)
+	content, err := coreio.Local.Read(path)
 	if err != nil {
 		return ImageAttachment{}, coreerr.E("chat.attachImageFile", "failed to read image file", err)
 	}
+	data := []byte(content)
 	mimeType, err := detectImageMimeType(path, data)
 	if err != nil {
 		return ImageAttachment{}, err

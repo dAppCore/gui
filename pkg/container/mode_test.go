@@ -24,6 +24,18 @@ func TestDetectModeWithEnvironment(t *testing.T) {
 	if mode != ModeManager {
 		t.Fatalf("expected manager mode, got %q", mode)
 	}
+
+	mode = DetectModeWithEnvironment(ModeEnvironment{
+		LookupEnv: func(key string) (string, bool) {
+			if key == "CORE_GUI_MODE" {
+				return "worker", true
+			}
+			return "", false
+		},
+	})
+	if mode != ModeWorker {
+		t.Fatalf("expected worker mode from environment, got %q", mode)
+	}
 }
 
 func TestMode_DetectMode_Good(t *testing.T) {

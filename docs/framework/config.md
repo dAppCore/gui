@@ -13,7 +13,7 @@ The Config service (`pkg/config`) provides unified configuration management with
 ## Basic Usage
 
 ```go
-import "github.com/Snider/Core/pkg/config"
+import "dappco.re/go/config"
 
 // Standalone usage
 cfg, err := config.New()

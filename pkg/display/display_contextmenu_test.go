@@ -1,7 +1,6 @@
 package display
 
 import (
-	"context"
 	"sync"
 	"testing"
 
@@ -58,12 +57,7 @@ func (m *wsContextMenuPlatform) GetAll() map[string]contextmenu.ContextMenuDef {
 
 func newDisplayWithContextMenu(t *testing.T, platform *wsContextMenuPlatform) (*Service, *core.Core) {
 	t.Helper()
-	c := core.New(
-		core.WithService(Register(nil)),
-		core.WithService(contextmenu.Register(platform)),
-		core.WithServiceLock(),
-	)
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	c := newTestCore(t, contextmenu.Register(platform))
 	return core.MustServiceFor[*Service](c, "display"), c
 }
 
@@ -79,7 +73,9 @@ func TestDisplay_handleWSMessage_ContextMenuAdd_MissingMenu(t *testing.T) {
 	})
 
 	require.False(t, result.OK)
-	assert.Contains(t, result.Value.(error).Error(), `missing required field "menu"`)
-	_, ok := platform.Get("menu")
+	err, ok := result.Value.(error)
+	require.True(t, ok)
+	assert.Contains(t, err.Error(), `missing required field "menu"`)
+	_, ok = platform.Get("menu")
 	assert.False(t, ok)
 }

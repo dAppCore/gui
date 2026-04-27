@@ -10,8 +10,8 @@ import (
 	"time"
 
 	core "dappco.re/go/core"
-	gowebview "dappco.re/go/webview"
 	"dappco.re/go/gui/pkg/window"
+	gowebview "dappco.re/go/webview"
 )
 
 // connector abstracts go-webview for testing. The real implementation wraps

@@ -66,6 +66,20 @@ func (r *BackgroundRegistry) AddPush(record map[string]any) map[string]any {
 	return cloneMap(record)
 }
 
+// SyncRegistrationsCount returns the number of registered sync entries.
+func (r *BackgroundRegistry) SyncRegistrationsCount() int {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return len(r.syncRegistrations)
+}
+
+// PushSubscriptionsCount returns the number of registered push subscriptions.
+func (r *BackgroundRegistry) PushSubscriptionsCount() int {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return len(r.pushSubscriptions)
+}
+
 func (r *BackgroundRegistry) SetPaymentInstrument(key string, details map[string]any) map[string]any {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -84,9 +98,24 @@ func cloneMap(values map[string]any) map[string]any {
 	}
 	cloned := make(map[string]any, len(values))
 	for key, value := range values {
-		cloned[key] = value
+		cloned[key] = cloneValue(value)
 	}
 	return cloned
+}
+
+func cloneValue(value any) any {
+	switch typed := value.(type) {
+	case map[string]any:
+		return cloneMap(typed)
+	case []any:
+		cloned := make([]any, len(typed))
+		for index, item := range typed {
+			cloned[index] = cloneValue(item)
+		}
+		return cloned
+	default:
+		return typed
+	}
 }
 
 func (s *Service) registerBackgroundActions() {

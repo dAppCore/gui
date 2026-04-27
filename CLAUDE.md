@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is `forge.lthn.ai/core/gui` — a display/windowing module for the Core web3 desktop framework. It provides window management, dialogs, system tray, clipboard, notifications, theming, layouts, and real-time WebSocket events. Built on **Wails v3** (Go backend) with an **Angular 20** custom element frontend.
+This is `dappco.re/go/gui` — a display/windowing module for the Core web3 desktop framework. It provides window management, dialogs, system tray, clipboard, notifications, theming, layouts, and real-time WebSocket events. Built on **Wails v3** (Go backend) with an **Angular 20** custom element frontend.
 
 ## Build & Development Commands
 
@@ -32,7 +32,7 @@ npm test                    # Unit tests (Karma/Jasmine)
 
 ### Service-based design with Core DI
 
-The display `Service` registers with `forge.lthn.ai/core/go`'s service container via `Register(c *core.Core)`. It embeds `core.ServiceRuntime[Options]` for lifecycle management and access to sibling services.
+The display `Service` registers with `dappco.re/go/core`'s service container via `Register(c *core.Core)`. It embeds `core.ServiceRuntime[Options]` for lifecycle management and access to sibling services.
 
 ### Interface abstraction for testability
 
@@ -65,8 +65,8 @@ All Wails application APIs are abstracted behind interfaces in `interfaces.go` (
 - **Functional options**: `WindowOption` functions (`WithName()`, `WithTitle()`, `WithSize()`, etc.) configure `window.Window` descriptors
 - **IPC message bus**: Sub-services communicate via `core.QUERY`, `core.PERFORM`, and `core.ACTION` — display orchestrates and bridges to WebSocket events
 - **Event broadcasting**: `WSEventManager` uses gorilla/websocket with a buffered channel (`eventBuffer`) and per-client subscription filtering (supports `"*"` wildcard)
-- **Error handling**: All errors use `coreerr.E(op, msg, err)` from `forge.lthn.ai/core/go-log` (aliased as `coreerr`), never `fmt.Errorf`
-- **File I/O**: Use `forge.lthn.ai/core/go-io` (`coreio.Local`) for filesystem operations, never `os.ReadFile`/`os.WriteFile`
+- **Error handling**: All errors use `coreerr.E(op, msg, err)` from `dappco.re/go/log` (aliased as `coreerr`), never `fmt.Errorf`
+- **File I/O**: Use `dappco.re/go/io` (`coreio.Local`) for filesystem operations, never `os.ReadFile`/`os.WriteFile`
 
 ## Testing
 
@@ -86,10 +86,10 @@ Both use reusable workflows from `core/go-devops`.
 
 ## Dependencies
 
-- `forge.lthn.ai/core/go` — Core framework with service container and DI
-- `forge.lthn.ai/core/go-log` — Structured errors (`coreerr.E()`)
-- `forge.lthn.ai/core/go-io` — Filesystem abstraction (`coreio.Local`)
-- `forge.lthn.ai/core/config` — Configuration file management
+- `dappco.re/go/core` — Core framework with service container and DI
+- `dappco.re/go/log` — Structured errors (`coreerr.E()`)
+- `dappco.re/go/io` — Filesystem abstraction (`coreio.Local`)
+- `dappco.re/go/config` — Configuration file management
 - `github.com/wailsapp/wails/v3` — Desktop app framework (alpha.74)
 - `github.com/gorilla/websocket` — WebSocket for real-time events
 - `github.com/stretchr/testify` — Test assertions
@@ -97,4 +97,4 @@ Both use reusable workflows from `core/go-devops`.
 
 ## Repository migration note
 
-Import paths were recently migrated from `github.com/Snider/Core` to `forge.lthn.ai/core/*`. The `cmd/` directories visible in git status are deleted artifacts from this migration and prior app scaffolds.
+Import paths were recently migrated to `dappco.re/go/*` from earlier GitHub and forge namespaces. The `cmd/` directories visible in git status are deleted artifacts from this migration and prior app scaffolds.

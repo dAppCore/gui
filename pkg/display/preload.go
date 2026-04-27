@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	core "dappco.re/go/core"
+	coreio "dappco.re/go/io"
 	"gopkg.in/yaml.v3"
 )
 
@@ -397,16 +398,16 @@ func trustedOriginPathMatches(path, prefix string) bool {
 }
 
 func loadTrustedOriginPolicy(path string) (TrustedOriginPolicy, bool) {
-	body, err := os.ReadFile(path)
+	body, err := coreio.Local.Read(path)
 	if err != nil {
 		return TrustedOriginPolicy{}, false
 	}
 	var origins []string
-	if err := yaml.Unmarshal(body, &origins); err == nil && origins != nil {
+	if err := yaml.Unmarshal([]byte(body), &origins); err == nil && origins != nil {
 		return NewTrustedOriginPolicy(origins), true
 	}
 	var config trustedOriginConfig
-	if err := yaml.Unmarshal(body, &config); err != nil {
+	if err := yaml.Unmarshal([]byte(body), &config); err != nil {
 		return TrustedOriginPolicy{}, false
 	}
 	origins = append(origins, config.Origins...)

@@ -13,21 +13,24 @@ import (
 type schemeDispatchRecorder struct {
 	queries []string
 	actions []string
+	params  map[string]url.Values
 }
 
 func newTestCoreSchemeHandler(t *testing.T) (RouteSchemeHandler, *schemeDispatchRecorder) {
 	t.Helper()
 
-	c := core.New(
-		core.WithService(Register(nil)),
-		core.WithServiceLock(),
-	)
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	c := newTestCore(t)
 
-	recorder := &schemeDispatchRecorder{}
+	recorder := &schemeDispatchRecorder{params: make(map[string]url.Values)}
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
-		name, ok := q.(string)
-		if !ok {
+		var name string
+		switch typed := q.(type) {
+		case CoreRouteQuery:
+			name = typed.Target
+			recorder.params[name] = cloneURLValues(typed.Params)
+		case string:
+			name = typed
+		default:
 			return core.Result{}
 		}
 
@@ -46,8 +49,9 @@ func newTestCoreSchemeHandler(t *testing.T) (RouteSchemeHandler, *schemeDispatch
 		}
 	})
 
-	c.Action("core.agent", func(_ context.Context, _ core.Options) core.Result {
+	c.Action("core.agent", func(_ context.Context, opts core.Options) core.Result {
 		recorder.actions = append(recorder.actions, "core.agent")
+		recorder.params["core.agent"] = url.Values{"q": []string{opts.String("q")}}
 		return core.Result{Value: "agent-action", OK: true}
 	})
 	c.Action("core.wallet", func(_ context.Context, _ core.Options) core.Result {
@@ -61,6 +65,27 @@ func newTestCoreSchemeHandler(t *testing.T) (RouteSchemeHandler, *schemeDispatch
 
 	svc := core.MustServiceFor[*Service](c, "display")
 	return svc.SchemeHandler(), recorder
+}
+
+func TestSchemeHandler_Handle_ForwardsQueryParameters(t *testing.T) {
+	handler, recorder := newTestCoreSchemeHandler(t)
+
+	parsedURL, err := url.Parse("core://store?q=invoice&tag=a&tag=b")
+	require.NoError(t, err)
+
+	result := handler.Handle(parsedURL)
+	require.True(t, result.OK)
+	assert.Equal(t, "store-query", result.Value)
+	assert.Equal(t, []string{"invoice"}, recorder.params["core.store"]["q"])
+	assert.Equal(t, []string{"a", "b"}, recorder.params["core.store"]["tag"])
+
+	actionURL, err := url.Parse("core://agent?q=launch")
+	require.NoError(t, err)
+
+	result = handler.Handle(actionURL)
+	require.True(t, result.OK)
+	assert.Equal(t, "agent-action", result.Value)
+	assert.Equal(t, []string{"launch"}, recorder.params["core.agent"]["q"])
 }
 
 func TestSchemeHandler_Handle_Good(t *testing.T) {

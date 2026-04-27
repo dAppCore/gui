@@ -8,6 +8,7 @@ import (
 	"time"
 
 	core "dappco.re/go/core"
+	"dappco.re/go/gui/pkg/internal/textutil"
 )
 
 type StreamCallbacks struct {
@@ -21,16 +22,17 @@ type StreamCallbacks struct {
 }
 
 type StreamRenderer struct {
-	callbacks     StreamCallbacks
-	now           func() time.Time
-	content       strings.Builder
-	thinking      strings.Builder
-	thinkingState ThinkingState
-	toolCalls     map[int]*streamToolCall
-	toolOrder     []int
-	streamID      string
-	started       bool
-	finishReason  string
+	callbacks      StreamCallbacks
+	now            func() time.Time
+	content        strings.Builder
+	thinking       strings.Builder
+	thinkingState  ThinkingState
+	toolCalls      map[int]*streamToolCall
+	parsedToolArgs map[int]map[string]any
+	toolOrder      []int
+	streamID       string
+	started        bool
+	finishReason   string
 }
 
 type streamToolCall struct {
@@ -64,9 +66,10 @@ type streamChunk struct {
 
 func NewStreamRenderer(callbacks StreamCallbacks) *StreamRenderer {
 	return &StreamRenderer{
-		callbacks: callbacks,
-		now:       time.Now,
-		toolCalls: make(map[int]*streamToolCall),
+		callbacks:      callbacks,
+		now:            time.Now,
+		toolCalls:      make(map[int]*streamToolCall),
+		parsedToolArgs: make(map[int]map[string]any),
 	}
 }
 
@@ -129,7 +132,7 @@ func (r *StreamRenderer) handleData(payload string) error {
 		if err, ok := result.Value.(error); ok {
 			return err
 		}
-		return nil
+		return core.E("chat.StreamRenderer.handleData", "failed to decode stream chunk", nil)
 	}
 	if !r.started {
 		r.started = true
@@ -141,7 +144,7 @@ func (r *StreamRenderer) handleData(payload string) error {
 
 	for _, choice := range chunk.Choices {
 		delta := choice.Delta
-		thought := firstNonEmpty(delta.Thinking, delta.Reasoning, delta.Thought)
+		thought := textutil.FirstNonEmpty(delta.Thinking, delta.Reasoning, delta.Thought)
 		if thought != "" {
 			r.appendThinking(thought)
 		}
@@ -209,6 +212,7 @@ func (r *StreamRenderer) appendToolCall(index int, id, name, arguments string) {
 	}
 	if arguments != "" {
 		call.Arguments.WriteString(arguments)
+		delete(r.parsedToolArgs, index)
 	}
 }
 
@@ -221,17 +225,21 @@ func (r *StreamRenderer) ToolCalls() []ToolCall {
 		if call == nil {
 			continue
 		}
-		arguments := map[string]any{}
-		raw := strings.TrimSpace(call.Arguments.String())
-		if raw != "" {
-			if decode := core.JSONUnmarshalString(raw, &arguments); !decode.OK {
-				arguments = map[string]any{"raw": raw}
+		arguments, ok := r.parsedToolArgs[index]
+		if !ok {
+			arguments = map[string]any{}
+			raw := strings.TrimSpace(call.Arguments.String())
+			if raw != "" {
+				if decode := core.JSONUnmarshalString(raw, &arguments); !decode.OK {
+					arguments = map[string]any{"raw": raw}
+				}
 			}
+			r.parsedToolArgs[index] = cloneArguments(arguments)
 		}
 		result = append(result, ToolCall{
 			ID:        call.ID,
 			Name:      call.Name,
-			Arguments: arguments,
+			Arguments: cloneArguments(arguments),
 		})
 	}
 	return result
@@ -257,13 +265,4 @@ func (r *StreamRenderer) Message(messageID, model string, createdAt time.Time) C
 		ToolCalls:    r.ToolCalls(),
 		FinishReason: r.finishReason,
 	}
-}
-
-func firstNonEmpty(values ...string) string {
-	for _, value := range values {
-		if strings.TrimSpace(value) != "" {
-			return value
-		}
-	}
-	return ""
 }

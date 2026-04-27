@@ -11,8 +11,8 @@ import (
 )
 
 type fakeDriver struct {
-	published  []Envelope
-	publishErr error
+	published    []Envelope
+	publishErr   error
 	subscribeErr error
 }
 

@@ -2,47 +2,54 @@ package display
 
 import (
 	"context"
-	"reflect"
+	"sync"
 	"testing"
 	"time"
-	"unsafe"
 
 	core "dappco.re/go/core"
 	"dappco.re/go/gui/pkg/p2p"
-	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 func newDisplayP2PTestService(t *testing.T) (*Service, *p2p.Service, *core.Core) {
 	t.Helper()
 
-	var displaySvc *Service
 	var p2pSvc *p2p.Service
-	c := core.New(
-		core.WithService(func(c *core.Core) core.Result {
-			svc, err := New()
-			require.NoError(t, err)
-			svc.ServiceRuntime = core.NewServiceRuntime(c, Options{})
-			displaySvc = svc
-			return core.Result{Value: svc, OK: true}
-		}),
-		core.WithService(func(c *core.Core) core.Result {
-			p2pSvc = p2p.NewService(c, p2p.Options{NodeID: "node-1"})
-			return core.Result{Value: p2pSvc, OK: true}
-		}),
-		core.WithServiceLock(),
-	)
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	driver := newLoopbackP2PDriver()
+	displaySvc, c := newServiceWithMockApp(t, func(c *core.Core) core.Result {
+		p2pSvc = p2p.NewServiceWithDriver(c, p2p.Options{NodeID: "node-1"}, driver)
+		return core.Result{Value: p2pSvc, OK: true}
+	})
 	require.NotNil(t, displaySvc)
 	require.NotNil(t, p2pSvc)
-	displaySvc.events = &WSEventManager{
-		eventBuffer: make(chan Event, 1),
-		clients:     make(map[*websocket.Conn]*clientState),
-	}
-	displaySvc.attachP2PBridge()
 	return displaySvc, p2pSvc, c
+}
+
+type loopbackP2PDriver struct {
+	mu       sync.Mutex
+	handlers map[string]func(p2p.Envelope)
+}
+
+func newLoopbackP2PDriver() *loopbackP2PDriver {
+	return &loopbackP2PDriver{handlers: make(map[string]func(p2p.Envelope))}
+}
+
+func (d *loopbackP2PDriver) Publish(_ context.Context, envelope p2p.Envelope) error {
+	d.mu.Lock()
+	handler := d.handlers[envelope.Topic]
+	d.mu.Unlock()
+	if handler != nil {
+		handler(envelope)
+	}
+	return nil
+}
+
+func (d *loopbackP2PDriver) Subscribe(_ context.Context, topic string, handler func(p2p.Envelope)) error {
+	d.mu.Lock()
+	d.handlers[topic] = handler
+	d.mu.Unlock()
+	return nil
 }
 
 type immediateP2PDriver struct {
@@ -63,14 +70,6 @@ func (d *immediateP2PDriver) Subscribe(_ context.Context, topic string, handler 
 		})
 	}
 	return nil
-}
-
-func replaceP2PDriver(t *testing.T, svc *p2p.Service, driver p2p.Driver) {
-	t.Helper()
-
-	router := p2p.New(driver)
-	field := reflect.ValueOf(svc).Elem().FieldByName("router")
-	reflect.NewAt(field.Type(), unsafe.Pointer(field.UnsafeAddr())).Elem().Set(reflect.ValueOf(router))
 }
 
 func TestDisplayP2P_attachP2PBridge_Good(t *testing.T) {
@@ -100,10 +99,6 @@ func TestDisplayP2P_attachP2PBridge_Good(t *testing.T) {
 func TestDisplayP2P_OnStartup_InitializesEventManagerBeforeBridge(t *testing.T) {
 	const route = "route-startup"
 
-	customEvents := &WSEventManager{
-		eventBuffer: make(chan Event, 1),
-		clients:     make(map[*websocket.Conn]*clientState),
-	}
 	driver := &immediateP2PDriver{
 		envelope: p2p.Envelope{
 			Route:    route,
@@ -112,27 +107,13 @@ func TestDisplayP2P_OnStartup_InitializesEventManagerBeforeBridge(t *testing.T) 
 		},
 	}
 
-	c := core.New(
-		core.WithService(func(c *core.Core) core.Result {
-			svc, err := New()
-			require.NoError(t, err)
-			svc.ServiceRuntime = core.NewServiceRuntime(c, Options{})
-			svc.wailsApp = &application.App{Logger: application.Logger{}}
-			svc.events = customEvents
-			return core.Result{Value: svc, OK: true}
-		}),
-		core.WithService(func(c *core.Core) core.Result {
-			p2pSvc := p2p.NewService(c, p2p.Options{NodeID: "node-startup"})
-			replaceP2PDriver(t, p2pSvc, driver)
-			return core.Result{Value: p2pSvc, OK: true}
-		}),
-		core.WithServiceLock(),
-	)
-
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	displaySvc, _ := newServiceWithMockApp(t, func(c *core.Core) core.Result {
+		p2pSvc := p2p.NewServiceWithDriver(c, p2p.Options{NodeID: "node-startup"}, driver)
+		return core.Result{Value: p2pSvc, OK: true}
+	})
 
 	select {
-	case event := <-customEvents.eventBuffer:
+	case event := <-displaySvc.events.eventBuffer:
 		assert.Equal(t, EventCustomEvent, event.Type)
 		require.NotNil(t, event.Data)
 		assert.Equal(t, "p2p", event.Data["source"])

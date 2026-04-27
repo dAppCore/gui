@@ -31,9 +31,19 @@ type mcpToolCallHandler struct {
 
 func NewToolCallHandler(executor ToolExecutor) ToolCallHandler {
 	if executor == nil {
-		return nil
+		return noopToolCallHandler{}
 	}
 	return &mcpToolCallHandler{executor: executor}
+}
+
+type noopToolCallHandler struct{}
+
+func (noopToolCallHandler) OnToolCall(context.Context, ToolCall) (any, error) {
+	return nil, core.E("chat.tool_call", "tool execution unavailable", nil)
+}
+
+func (noopToolCallHandler) BuildToolManifest() string {
+	return ""
 }
 
 func (h *mcpToolCallHandler) OnToolCall(ctx context.Context, call ToolCall) (any, error) {
@@ -162,7 +172,7 @@ func parseInlineToolCall(content string) (ToolCall, bool, error) {
 
 	var envelope inlineToolCallEnvelope
 	if result := core.JSONUnmarshal([]byte(trimmed), &envelope); !result.OK {
-		return ToolCall{}, false, resultError(result)
+		return ToolCall{}, false, core.E("chat.parseInlineToolCall", "failed parsing inline tool_call JSON", resultError(result))
 	}
 	if envelope.ToolCall == nil {
 		return ToolCall{}, false, nil
@@ -199,9 +209,24 @@ func cloneArguments(arguments map[string]any) map[string]any {
 	}
 	clone := make(map[string]any, len(arguments))
 	for key, value := range arguments {
-		clone[key] = value
+		clone[key] = cloneArgumentValue(value)
 	}
 	return clone
+}
+
+func cloneArgumentValue(value any) any {
+	switch typed := value.(type) {
+	case map[string]any:
+		return cloneArguments(typed)
+	case []any:
+		cloned := make([]any, len(typed))
+		for index, item := range typed {
+			cloned[index] = cloneArgumentValue(item)
+		}
+		return cloned
+	default:
+		return typed
+	}
 }
 
 func renderToolResultContent(result any) string {

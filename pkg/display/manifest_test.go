@@ -7,16 +7,17 @@ import (
 	"sync"
 	"testing"
 
+	coreio "dappco.re/go/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestInjectAppPreloads_FromManifest(t *testing.T) {
 	root := t.TempDir()
-	require.NoError(t, os.MkdirAll(filepath.Join(root, ".core"), 0o755))
-	require.NoError(t, os.WriteFile(filepath.Join(root, "index.html"), []byte("<html></html>"), 0o644))
-	require.NoError(t, os.WriteFile(filepath.Join(root, "preload.js"), []byte("globalThis.__manifestLoaded = true;"), 0o644))
-	require.NoError(t, os.WriteFile(filepath.Join(root, ".core", "view.yaml"), []byte("preloads:\n  - path: preload.js\n"), 0o644))
+	require.NoError(t, coreio.Local.EnsureDir(filepath.Join(root, ".core")))
+	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, "index.html"), "<html></html>", 0o644))
+	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, "preload.js"), "globalThis.__manifestLoaded = true;", 0o644))
+	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, ".core", "view.yaml"), "preloads:\n  - path: preload.js\n", 0o644))
 
 	svc, err := New()
 	require.NoError(t, err)
@@ -28,10 +29,10 @@ func TestInjectAppPreloads_FromManifest(t *testing.T) {
 
 func TestInjectAppPreloads_RejectsTraversal(t *testing.T) {
 	root := t.TempDir()
-	require.NoError(t, os.MkdirAll(filepath.Join(root, ".core"), 0o755))
-	require.NoError(t, os.WriteFile(filepath.Join(root, "index.html"), []byte("<html></html>"), 0o644))
-	require.NoError(t, os.WriteFile(filepath.Join(root, "preload.js"), []byte("globalThis.__manifestLoaded = true;"), 0o644))
-	require.NoError(t, os.WriteFile(filepath.Join(root, ".core", "view.yaml"), []byte("preloads:\n  - path: ../preload.js\n"), 0o644))
+	require.NoError(t, coreio.Local.EnsureDir(filepath.Join(root, ".core")))
+	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, "index.html"), "<html></html>", 0o644))
+	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, "preload.js"), "globalThis.__manifestLoaded = true;", 0o644))
+	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, ".core", "view.yaml"), "preloads:\n  - path: ../preload.js\n", 0o644))
 
 	svc, err := New()
 	require.NoError(t, err)
@@ -43,7 +44,7 @@ func TestInjectAppPreloads_RejectsTraversal(t *testing.T) {
 func TestManifest_SafeManifestPreloadPath_Good(t *testing.T) {
 	root := t.TempDir()
 	target := filepath.Join(root, "preload.js")
-	require.NoError(t, os.WriteFile(target, []byte("globalThis.ready = true;"), 0o644))
+	require.NoError(t, coreio.Local.WriteMode(target, "globalThis.ready = true;", 0o644))
 	expected, err := filepath.EvalSymlinks(target)
 	require.NoError(t, err)
 	got, err := safeManifestPreloadPath(root, "preload.js")
@@ -71,9 +72,11 @@ func TestManifest_SafeManifestPreloadPath_Ugly(t *testing.T) {
 func TestManifest_SafeManifestPreloadPath_RejectsSymlinkEscape(t *testing.T) {
 	root := t.TempDir()
 	outside := t.TempDir()
-	require.NoError(t, os.WriteFile(filepath.Join(outside, "preload.js"), []byte("globalThis.__outside = true;"), 0o644))
-	require.NoError(t, os.MkdirAll(filepath.Join(root, "assets"), 0o755))
-	require.NoError(t, os.Symlink(outside, filepath.Join(root, "assets", "linked")))
+	require.NoError(t, coreio.Local.WriteMode(filepath.Join(outside, "preload.js"), "globalThis.__outside = true;", 0o644))
+	require.NoError(t, coreio.Local.EnsureDir(filepath.Join(root, "assets")))
+	if err := os.Symlink(outside, filepath.Join(root, "assets", "linked")); err != nil {
+		t.Skipf("symlink creation unavailable: %v", err)
+	}
 
 	_, err := safeManifestPreloadPath(filepath.Join(root, "assets"), filepath.Join("linked", "preload.js"))
 
@@ -83,10 +86,10 @@ func TestManifest_SafeManifestPreloadPath_RejectsSymlinkEscape(t *testing.T) {
 
 func TestManifest_DiscoverManifestPath_Good(t *testing.T) {
 	root := t.TempDir()
-	require.NoError(t, os.MkdirAll(filepath.Join(root, ".core"), 0o755))
+	require.NoError(t, coreio.Local.EnsureDir(filepath.Join(root, ".core")))
 	manifestPath := filepath.Join(root, ".core", "view.yaml")
-	require.NoError(t, os.WriteFile(manifestPath, []byte("name: demo\n"), 0o644))
-	require.NoError(t, os.WriteFile(filepath.Join(root, "index.html"), []byte("<html></html>"), 0o644))
+	require.NoError(t, coreio.Local.WriteMode(manifestPath, "name: demo\n", 0o644))
+	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, "index.html"), "<html></html>", 0o644))
 
 	got, err := discoverManifestPath(filepath.Join(root, "index.html"))
 
@@ -103,9 +106,9 @@ func TestManifest_DiscoverManifestPath_Bad(t *testing.T) {
 
 func TestManifest_DiscoverManifestPath_Ugly(t *testing.T) {
 	root := t.TempDir()
-	require.NoError(t, os.MkdirAll(filepath.Join(root, ".core"), 0o755))
+	require.NoError(t, coreio.Local.EnsureDir(filepath.Join(root, ".core")))
 	manifestPath := filepath.Join(root, ".core", "view.yaml")
-	require.NoError(t, os.WriteFile(manifestPath, []byte("name: remote\n"), 0o644))
+	require.NoError(t, coreio.Local.WriteMode(manifestPath, "name: remote\n", 0o644))
 
 	got, err := discoverManifestPath(root)
 
@@ -117,8 +120,8 @@ func TestManifest_DiscoverManifestPath_RemoteHost_Good(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("DIR_HOME", home)
 	manifestPath := filepath.Join(home, ".core", "apps", "example.com", ".core", "view.yaml")
-	require.NoError(t, os.MkdirAll(filepath.Dir(manifestPath), 0o755))
-	require.NoError(t, os.WriteFile(manifestPath, []byte("name: remote\n"), 0o644))
+	require.NoError(t, coreio.Local.EnsureDir(filepath.Dir(manifestPath)))
+	require.NoError(t, coreio.Local.WriteMode(manifestPath, "name: remote\n", 0o644))
 
 	got, err := discoverManifestPath("https://example.com/index.html")
 
@@ -130,8 +133,8 @@ func TestManifest_DiscoverManifestPath_RemoteHost_StripsPort(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("DIR_HOME", home)
 	manifestPath := filepath.Join(home, ".core", "apps", "example.com", ".core", "view.yaml")
-	require.NoError(t, os.MkdirAll(filepath.Dir(manifestPath), 0o755))
-	require.NoError(t, os.WriteFile(manifestPath, []byte("name: remote\n"), 0o644))
+	require.NoError(t, coreio.Local.EnsureDir(filepath.Dir(manifestPath)))
+	require.NoError(t, coreio.Local.WriteMode(manifestPath, "name: remote\n", 0o644))
 
 	got, err := discoverManifestPath("https://example.com:8080/x")
 
@@ -143,8 +146,8 @@ func TestManifest_DiscoverManifestPath_RemoteHost_IPv6Literal(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("DIR_HOME", home)
 	manifestPath := filepath.Join(home, ".core", "apps", "::1", ".core", "view.yaml")
-	require.NoError(t, os.MkdirAll(filepath.Dir(manifestPath), 0o755))
-	require.NoError(t, os.WriteFile(manifestPath, []byte("name: remote\n"), 0o644))
+	require.NoError(t, coreio.Local.EnsureDir(filepath.Dir(manifestPath)))
+	require.NoError(t, coreio.Local.WriteMode(manifestPath, "name: remote\n", 0o644))
 
 	got, err := discoverManifestPath("https://[::1]/x")
 
@@ -172,16 +175,16 @@ func TestManifest_DiscoverManifestPath_RemoteHost_RejectsTraversalHost(t *testin
 
 func TestManifest_ManifestWindowConfig_Good(t *testing.T) {
 	root := t.TempDir()
-	require.NoError(t, os.MkdirAll(filepath.Join(root, ".core"), 0o755))
-	require.NoError(t, os.WriteFile(filepath.Join(root, "index.html"), []byte("<html></html>"), 0o644))
-	require.NoError(t, os.WriteFile(filepath.Join(root, ".core", "view.yaml"), []byte(strings.Join([]string{
+	require.NoError(t, coreio.Local.EnsureDir(filepath.Join(root, ".core")))
+	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, "index.html"), "<html></html>", 0o644))
+	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, ".core", "view.yaml"), strings.Join([]string{
 		"windows:",
 		"  main:",
 		"    title: Core GUI",
 		"    width: 1280",
 		"    height: 720",
 		"    preload: true",
-	}, "\n")), 0o644))
+	}, "\n"), 0o644))
 
 	svc, err := New()
 	require.NoError(t, err)
@@ -207,9 +210,9 @@ func TestManifest_ManifestWindowConfig_Bad(t *testing.T) {
 
 func TestManifest_ManifestWindowConfig_Ugly(t *testing.T) {
 	root := t.TempDir()
-	require.NoError(t, os.MkdirAll(filepath.Join(root, ".core"), 0o755))
-	require.NoError(t, os.WriteFile(filepath.Join(root, "index.html"), []byte("<html></html>"), 0o644))
-	require.NoError(t, os.WriteFile(filepath.Join(root, ".core", "view.yaml"), []byte("windows: [\n"), 0o644))
+	require.NoError(t, coreio.Local.EnsureDir(filepath.Join(root, ".core")))
+	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, "index.html"), "<html></html>", 0o644))
+	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, ".core", "view.yaml"), "windows: [\n", 0o644))
 
 	svc, err := New()
 	require.NoError(t, err)
@@ -221,15 +224,15 @@ func TestManifest_ManifestWindowConfig_Ugly(t *testing.T) {
 
 func TestManifest_ManifestWindowConfig_ReturnsCopy(t *testing.T) {
 	root := t.TempDir()
-	require.NoError(t, os.MkdirAll(filepath.Join(root, ".core"), 0o755))
-	require.NoError(t, os.WriteFile(filepath.Join(root, "index.html"), []byte("<html></html>"), 0o644))
-	require.NoError(t, os.WriteFile(filepath.Join(root, ".core", "view.yaml"), []byte(strings.Join([]string{
+	require.NoError(t, coreio.Local.EnsureDir(filepath.Join(root, ".core")))
+	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, "index.html"), "<html></html>", 0o644))
+	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, ".core", "view.yaml"), strings.Join([]string{
 		"windows:",
 		"  main:",
 		"    title: Core GUI",
 		"    width: 1280",
 		"    height: 720",
-	}, "\n")), 0o644))
+	}, "\n"), 0o644))
 
 	svc, err := New()
 	require.NoError(t, err)
@@ -245,9 +248,9 @@ func TestManifest_ManifestWindowConfig_ReturnsCopy(t *testing.T) {
 
 func TestManifest_LoadManifestForOrigin_RejectsOversizedFile(t *testing.T) {
 	root := t.TempDir()
-	require.NoError(t, os.MkdirAll(filepath.Join(root, ".core"), 0o755))
-	require.NoError(t, os.WriteFile(filepath.Join(root, "index.html"), []byte("<html></html>"), 0o644))
-	require.NoError(t, os.WriteFile(filepath.Join(root, ".core", "view.yaml"), []byte("name: "+strings.Repeat("a", maxViewManifestBytes)), 0o644))
+	require.NoError(t, coreio.Local.EnsureDir(filepath.Join(root, ".core")))
+	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, "index.html"), "<html></html>", 0o644))
+	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, ".core", "view.yaml"), "name: "+strings.Repeat("a", maxViewManifestBytes), 0o644))
 
 	svc, err := New()
 	require.NoError(t, err)
@@ -259,14 +262,14 @@ func TestManifest_LoadManifestForOrigin_RejectsOversizedFile(t *testing.T) {
 
 func TestManifest_LoadManifestForOrigin_Concurrent(t *testing.T) {
 	root := t.TempDir()
-	require.NoError(t, os.MkdirAll(filepath.Join(root, ".core"), 0o755))
-	require.NoError(t, os.WriteFile(filepath.Join(root, "index.html"), []byte("<html></html>"), 0o644))
-	require.NoError(t, os.WriteFile(filepath.Join(root, ".core", "view.yaml"), []byte(strings.Join([]string{
+	require.NoError(t, coreio.Local.EnsureDir(filepath.Join(root, ".core")))
+	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, "index.html"), "<html></html>", 0o644))
+	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, ".core", "view.yaml"), strings.Join([]string{
 		"name: demo",
 		"windows:",
 		"  main:",
 		"    title: Core GUI",
-	}, "\n")), 0o644))
+	}, "\n"), 0o644))
 
 	svc, err := New()
 	require.NoError(t, err)
@@ -311,7 +314,7 @@ func TestManifest_ManifestBaseDir_Ugly(t *testing.T) {
 func TestManifest_SafeManifestRelativePath_Good(t *testing.T) {
 	root := t.TempDir()
 	target := filepath.Join(root, "preload.js")
-	require.NoError(t, os.WriteFile(target, []byte("globalThis.ready = true;"), 0o644))
+	require.NoError(t, coreio.Local.WriteMode(target, "globalThis.ready = true;", 0o644))
 	expected, err := filepath.EvalSymlinks(target)
 	require.NoError(t, err)
 

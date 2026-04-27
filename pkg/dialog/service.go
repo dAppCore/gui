@@ -6,9 +6,9 @@ import (
 	"fmt"
 
 	core "dappco.re/go/core"
-	coreerr "dappco.re/go/log"
 	"dappco.re/go/gui/pkg/webview"
 	"dappco.re/go/gui/pkg/window"
+	coreerr "dappco.re/go/log"
 )
 
 type Options struct{}
@@ -212,10 +212,11 @@ func questionDialogOptionsFrom(opts core.Options) (MessageDialogOptions, error) 
 				Buttons: v.Buttons,
 			}, nil
 		case MessageDialogOptions:
+			v.Type = DialogQuestion
 			return v, nil
 		}
 	}
-	if direct, err := decodeOptions[TaskQuestion](opts); err == nil && (direct.Title != "" || direct.Message != "" || len(direct.Buttons) > 0) {
+	if direct, err := decodeOptions[TaskQuestion](opts); err == nil {
 		return MessageDialogOptions{
 			Type:    DialogQuestion,
 			Title:   direct.Title,
@@ -223,7 +224,12 @@ func questionDialogOptionsFrom(opts core.Options) (MessageDialogOptions, error) 
 			Buttons: direct.Buttons,
 		}, nil
 	}
-	return decodeOptions[MessageDialogOptions](opts)
+	decoded, err := decodeOptions[MessageDialogOptions](opts)
+	if err != nil {
+		return MessageDialogOptions{}, err
+	}
+	decoded.Type = DialogQuestion
+	return decoded, nil
 }
 
 func promptOptionsFrom(opts core.Options) (TaskPrompt, error) {

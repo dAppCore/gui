@@ -201,7 +201,7 @@ Declare module dependencies:
 ### Module Registration
 
 ```go
-import "github.com/Snider/Core/pkg/module"
+import "dappco.re/go/core/module"
 
 // Create from config
 cfg := module.Config{
@@ -238,7 +238,7 @@ walletModule.RegisterRoutes(apiGroup)
 The registry manages all modules:
 
 ```go
-import "github.com/Snider/Core/pkg/module"
+import "dappco.re/go/core/module"
 
 registry := module.NewRegistry()
 

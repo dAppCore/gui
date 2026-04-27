@@ -9,6 +9,7 @@ import (
 
 	core "dappco.re/go/core"
 	"dappco.re/go/gui/pkg/chat"
+	"dappco.re/go/gui/pkg/internal/textutil"
 	coreerr "dappco.re/go/log"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
@@ -123,7 +124,7 @@ func equalFold(left, right string) bool {
 }
 
 func (s *Service) resolveSettingsRoute(subpath string, query url.Values) core.Result {
-	key := firstNonEmpty(query.Get("key"), subpath)
+	key := textutil.FirstNonEmpty(query.Get("key"), subpath)
 	snapshot := s.currentSettingsSnapshot()
 	if key != "" {
 		value, ok := s.currentSettingValue(key)
@@ -180,7 +181,7 @@ func (s *Service) resolveStoreRoute(subpath string, query url.Values) core.Resul
 }
 
 func (s *Service) resolveModelsRoute(subpath string, query url.Values) core.Result {
-	if modelName := firstNonEmpty(query.Get("id"), subpath); modelName != "" {
+	if modelName := textutil.FirstNonEmpty(query.Get("id"), subpath); modelName != "" {
 		if model, ok := s.findChatModel(modelName); ok {
 			return core.Result{
 				Value: map[string]any{
@@ -210,7 +211,7 @@ func (s *Service) resolveModelsRoute(subpath string, query url.Values) core.Resu
 
 func (s *Service) resolveNetworkRoute(subpath string, query url.Values) core.Result {
 	state := s.networkState()
-	if interfaceName := firstNonEmpty(query.Get("name"), subpath); interfaceName != "" {
+	if interfaceName := textutil.FirstNonEmpty(query.Get("name"), subpath); interfaceName != "" {
 		for _, iface := range state.Interfaces {
 			if equalFold(iface.Name, interfaceName) {
 				return core.Result{
@@ -240,7 +241,7 @@ func (s *Service) resolveNetworkRoute(subpath string, query url.Values) core.Res
 }
 
 func (s *Service) resolveChatRoute(_ context.Context, subpath string, query url.Values) core.Result {
-	if id := firstNonEmpty(query.Get("conversation_id"), query.Get("id"), subpath); id != "" {
+	if id := textutil.FirstNonEmpty(query.Get("conversation_id"), query.Get("id"), subpath); id != "" {
 		return s.Core().QUERY(chat.QueryHistory{ConversationID: id})
 	}
 	return s.Core().QUERY(chat.QueryConversationList{})
@@ -665,7 +666,7 @@ func (s *Service) searchAllStorage(query string) []StorageEntry {
 }
 
 func (s *Service) handleStoreSearch(_ context.Context, params url.Values) core.Result {
-	query := firstNonEmpty(params.Get("q"), params.Get("query"))
+	query := textutil.FirstNonEmpty(params.Get("q"), params.Get("query"))
 	results := s.searchAllStorage(query)
 	return core.Result{
 		Value: map[string]any{
@@ -678,15 +679,6 @@ func (s *Service) handleStoreSearch(_ context.Context, params url.Values) core.R
 		},
 		OK: true,
 	}
-}
-
-func firstNonEmpty(values ...string) string {
-	for _, value := range values {
-		if core.Trim(value) != "" {
-			return value
-		}
-	}
-	return ""
 }
 
 func coreRouteURL(segment string, parts ...string) string {

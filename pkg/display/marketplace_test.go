@@ -50,7 +50,9 @@ func TestMarketplace_marketplaceInstallRoot_Good(t *testing.T) {
 func TestMarketplace_marketplaceInstallRoot_Bad(t *testing.T) {
 	t.Setenv("DIR_HOME", "")
 
-	require.True(t, strings.HasSuffix(marketplaceInstallRoot(""), filepath.Join(".core", "apps")))
+	root := marketplaceInstallRoot("")
+	require.NotContains(t, root, os.TempDir())
+	require.True(t, strings.HasSuffix(root, filepath.Join("core", "apps")) || strings.HasSuffix(root, filepath.Join(".core", "apps")))
 }
 
 func TestMarketplace_marketplaceInstallRoot_Ugly(t *testing.T) {
@@ -110,15 +112,20 @@ func TestMarketplace_registerMarketplaceActions_Good(t *testing.T) {
 	assert.Equal(t, marketplace.DigestManifest(manifest), verified["digest"])
 
 	installDir := t.TempDir()
-	gitLogDir := t.TempDir()
-	gitLog := filepath.Join(gitLogDir, "git.log")
-	gitBinary := filepath.Join(gitLogDir, "git")
-	require.NoError(t, os.WriteFile(gitBinary, []byte("#!/bin/sh\nprintf '%s\\n' \"$@\" > "+shellQuote(gitLog)+"\nlast=''\nfor arg in \"$@\"; do last=\"$arg\"; done\nmkdir -p \"$last\"\nexit 0\n"), 0o755))
+	var gitArgs []string
+	previousGitRunner := marketplaceGitRunner
+	marketplaceGitRunner = func(_ context.Context, _ string, args ...string) ([]byte, error) {
+		gitArgs = append([]string(nil), args...)
+		require.NotEmpty(t, args)
+		require.NoError(t, os.MkdirAll(args[len(args)-1], 0o755))
+		return nil, nil
+	}
+	t.Cleanup(func() { marketplaceGitRunner = previousGitRunner })
 
 	installResult := c.Action("display.marketplace.install").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "url", Value: manifestServer.URL},
 		core.Option{Key: "install_dir", Value: installDir},
-		core.Option{Key: "git_binary", Value: gitBinary},
+		core.Option{Key: "git_binary", Value: "git"},
 	))
 	require.True(t, installResult.OK)
 	installed, ok := installResult.Value.(map[string]any)
@@ -128,11 +135,9 @@ func TestMarketplace_registerMarketplaceActions_Good(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, filepath.Join(resolvedInstallDir, "core-ui"), installed["target_dir"])
 
-	contents, err := os.ReadFile(gitLog)
-	require.NoError(t, err)
-	assert.Contains(t, string(contents), "clone")
-	assert.Contains(t, string(contents), "--branch")
-	assert.Contains(t, string(contents), "--")
+	assert.Contains(t, gitArgs, "clone")
+	assert.Contains(t, gitArgs, "--branch")
+	assert.Contains(t, gitArgs, "--")
 }
 
 func TestMarketplace_registerMarketplaceActions_Bad(t *testing.T) {
@@ -167,8 +172,4 @@ func signedMarketplaceManifest(t *testing.T, manifest marketplace.Manifest) mark
 		Value:     base64.StdEncoding.EncodeToString(signature),
 	}
 	return manifest
-}
-
-func shellQuote(value string) string {
-	return "'" + strings.ReplaceAll(value, "'", "'\\''") + "'"
 }

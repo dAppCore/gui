@@ -260,8 +260,8 @@ package main
 
 import (
     "context"
-    "github.com/Snider/Core/pkg/core"
-    "github.com/Snider/Core/pkg/config"
+    "dappco.re/go/core"
+    "dappco.re/go/config"
 )
 
 type MyService struct {

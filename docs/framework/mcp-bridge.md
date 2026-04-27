@@ -201,7 +201,7 @@ Event types:
 ## Go Integration
 
 ```go
-import "github.com/Snider/Core/cmd/core-gui"
+import "dappco.re/go/gui/cmd/core-gui"
 
 // Create bridge
 bridge := NewMCPBridge(9877, displayService)

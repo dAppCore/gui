@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	core "dappco.re/go/core"
-	coreerr "dappco.re/go/log"
 	"dappco.re/go/gui/pkg/screen"
+	coreerr "dappco.re/go/log"
 )
 
 type Options struct{}

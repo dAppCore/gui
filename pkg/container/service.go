@@ -72,6 +72,7 @@ func (options TIMOptions) Validate() (TIMOptions, error) {
 func normalizeTIMOptions(options TIMOptions) (TIMOptions, error) {
 	options.Name = strings.TrimSpace(options.Name)
 	options.Image = strings.TrimSpace(options.Image)
+	options.DataDir = strings.TrimSpace(options.DataDir)
 	options.Resources.GPU = strings.TrimSpace(options.Resources.GPU)
 
 	if err := validateTIMContainerName(options.Name); err != nil {

@@ -6,10 +6,18 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	core "dappco.re/go/core"
-	coreerr "dappco.re/go/log"
 	"dappco.re/go/gui/pkg/marketplace"
+	coreerr "dappco.re/go/log"
+)
+
+const marketplaceHTTPTimeout = 30 * time.Second
+
+var (
+	marketplaceHTTPClient = &http.Client{Timeout: marketplaceHTTPTimeout}
+	marketplaceGitRunner  func(context.Context, string, ...string) ([]byte, error)
 )
 
 type marketplaceListInput struct {
@@ -32,10 +40,10 @@ func (s *Service) registerMarketplaceActions() {
 		if strings.TrimSpace(input.RegistryURL) == "" {
 			return core.Result{Value: coreerr.E("display.marketplace.list", "registry url is required", nil), OK: false}
 		}
-		installer := marketplace.Installer{HTTPClient: http.DefaultClient}
+		installer := marketplace.Installer{HTTPClient: marketplaceHTTPClient}
 		manifests, err := installer.List(ctx, input.RegistryURL)
 		if err != nil {
-			return core.Result{Value: err, OK: false}
+			return core.Result{Value: coreerr.E("display.marketplace.list", "failed to list marketplace manifests", err), OK: false}
 		}
 		return core.Result{Value: map[string]any{
 			"registry_url": input.RegistryURL,
@@ -48,10 +56,10 @@ func (s *Service) registerMarketplaceActions() {
 		if input.ManifestURL == "" {
 			return core.Result{Value: coreerr.E("display.marketplace.fetch", "manifest url is required", nil), OK: false}
 		}
-		installer := marketplace.Installer{HTTPClient: http.DefaultClient}
+		installer := marketplace.Installer{HTTPClient: marketplaceHTTPClient}
 		manifest, err := installer.FetchManifest(ctx, input.ManifestURL)
 		if err != nil {
-			return core.Result{Value: err, OK: false}
+			return core.Result{Value: coreerr.E("display.marketplace.fetch", "failed to fetch marketplace manifest", err), OK: false}
 		}
 		return core.Result{Value: manifest, OK: true}
 	})
@@ -61,10 +69,10 @@ func (s *Service) registerMarketplaceActions() {
 		if input.ManifestURL == "" {
 			return core.Result{Value: coreerr.E("display.marketplace.verify", "manifest url is required", nil), OK: false}
 		}
-		installer := marketplace.Installer{HTTPClient: http.DefaultClient}
+		installer := marketplace.Installer{HTTPClient: marketplaceHTTPClient}
 		manifest, err := installer.Verify(ctx, input.ManifestURL)
 		if err != nil {
-			return core.Result{Value: err, OK: false}
+			return core.Result{Value: coreerr.E("display.marketplace.verify", "failed to verify marketplace manifest", err), OK: false}
 		}
 		return core.Result{Value: map[string]any{
 			"manifest": manifest,
@@ -83,17 +91,18 @@ func (s *Service) registerMarketplaceActions() {
 		}
 
 		installer := marketplace.Installer{
-			HTTPClient: http.DefaultClient,
+			HTTPClient: marketplaceHTTPClient,
 			GitBinary:  input.GitBinary,
+			GitRunner:  marketplaceGitRunner,
 			InstallDir: marketplaceInstallRoot(input.InstallDir),
 		}
 		manifest, err := installer.Verify(ctx, input.ManifestURL)
 		if err != nil {
-			return core.Result{Value: err, OK: false}
+			return core.Result{Value: coreerr.E("display.marketplace.install", "failed to verify marketplace manifest", err), OK: false}
 		}
 		targetDir, err := installer.Install(ctx, manifest)
 		if err != nil {
-			return core.Result{Value: err, OK: false}
+			return core.Result{Value: coreerr.E("display.marketplace.install", "failed to install marketplace manifest", err), OK: false}
 		}
 		return core.Result{Value: map[string]any{
 			"manifest":    manifest,
@@ -117,7 +126,13 @@ func marketplaceInstallRoot(raw string) string {
 	}
 	home := strings.TrimSpace(core.Env("DIR_HOME"))
 	if home == "" {
-		return filepath.Join(os.TempDir(), "core", "apps")
+		if configDir, err := os.UserConfigDir(); err == nil && strings.TrimSpace(configDir) != "" {
+			return filepath.Join(configDir, "core", "apps")
+		}
+		if userHome, err := os.UserHomeDir(); err == nil && strings.TrimSpace(userHome) != "" {
+			return filepath.Join(userHome, ".core", "apps")
+		}
+		return ""
 	}
 	return filepath.Join(home, ".core", "apps")
 }

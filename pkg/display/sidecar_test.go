@@ -196,7 +196,7 @@ func TestSidecar_ValidateDir_Bad(t *testing.T) {
 		value string
 		want  string
 	}{
-		{name: "parent-component", value: filepath.Join(child, "..", "child"), want: ".."},
+		{name: "parent-component", value: child + string(filepath.Separator) + ".." + string(filepath.Separator) + "child", want: ".."},
 		{name: "file", value: file, want: "directory"},
 		{name: "symlink", value: link, want: "symlink"},
 	}

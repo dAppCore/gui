@@ -25,22 +25,41 @@ func platformUnavailableError(op string) error {
 func (s *Service) OnStartup(_ context.Context) core.Result {
 	s.Core().RegisterQuery(s.handleQuery)
 	s.Core().Action("contextmenu.add", func(_ context.Context, opts core.Options) core.Result {
-		t, _ := opts.Get("task").Value.(TaskAdd)
+		t, ok := opts.Get("task").Value.(TaskAdd)
+		if !ok {
+			return invalidTaskResult("add")
+		}
 		return core.Result{Value: nil, OK: true}.New(s.taskAdd(t))
 	})
 	s.Core().Action("contextmenu.remove", func(_ context.Context, opts core.Options) core.Result {
-		t, _ := opts.Get("task").Value.(TaskRemove)
+		t, ok := opts.Get("task").Value.(TaskRemove)
+		if !ok {
+			return invalidTaskResult("remove")
+		}
 		return core.Result{Value: nil, OK: true}.New(s.taskRemove(t))
 	})
 	s.Core().Action("contextmenu.update", func(_ context.Context, opts core.Options) core.Result {
-		t, _ := opts.Get("task").Value.(TaskUpdate)
+		t, ok := opts.Get("task").Value.(TaskUpdate)
+		if !ok {
+			return invalidTaskResult("update")
+		}
 		return core.Result{Value: nil, OK: true}.New(s.taskUpdate(t))
 	})
 	s.Core().Action("contextmenu.destroy", func(_ context.Context, opts core.Options) core.Result {
-		t, _ := opts.Get("task").Value.(TaskDestroy)
+		t, ok := opts.Get("task").Value.(TaskDestroy)
+		if !ok {
+			return invalidTaskResult("destroy")
+		}
 		return core.Result{Value: nil, OK: true}.New(s.taskDestroy(t))
 	})
 	return core.Result{OK: true}
+}
+
+func invalidTaskResult(op string) core.Result {
+	return core.Result{
+		Value: coreerr.E("contextmenu."+op, "invalid task payload", nil),
+		OK:    false,
+	}
 }
 
 func (s *Service) OnShutdown(_ context.Context) core.Result {
@@ -113,24 +132,10 @@ func (s *Service) taskAdd(t TaskAdd) error {
 	}
 
 	// Register on platform with a callback that broadcasts ActionItemClicked
-	err := s.platform.Add(t.Name, t.Menu, func(menuName, actionID, data string) {
-		_ = s.Core().ACTION(ActionItemClicked{
-			MenuName: menuName,
-			ActionID: actionID,
-			Data:     data,
-		})
-	})
+	err := s.platform.Add(t.Name, t.Menu, s.menuCallback())
 	if err != nil {
 		if existed {
-			if restoreErr := s.platform.Add(t.Name, oldMenu, func(menuName, actionID, data string) {
-				_ = s.Core().ACTION(ActionItemClicked{
-					MenuName: menuName,
-					ActionID: actionID,
-					Data:     data,
-				})
-			}); restoreErr == nil {
-				s.registeredMenus[t.Name] = oldMenu
-			}
+			s.tryRestoreMenu(t.Name, oldMenu)
 		}
 		return coreerr.E("contextmenu.taskAdd", "platform add failed", err)
 	}
@@ -174,23 +179,9 @@ func (s *Service) taskUpdate(t TaskUpdate) error {
 		return coreerr.E("contextmenu.taskUpdate", "platform remove failed", err)
 	}
 
-	err := s.platform.Add(t.Name, t.Menu, func(menuName, actionID, data string) {
-		_ = s.Core().ACTION(ActionItemClicked{
-			MenuName: menuName,
-			ActionID: actionID,
-			Data:     data,
-		})
-	})
+	err := s.platform.Add(t.Name, t.Menu, s.menuCallback())
 	if err != nil {
-		if restoreErr := s.platform.Add(t.Name, oldMenu, func(menuName, actionID, data string) {
-			_ = s.Core().ACTION(ActionItemClicked{
-				MenuName: menuName,
-				ActionID: actionID,
-				Data:     data,
-			})
-		}); restoreErr == nil {
-			s.registeredMenus[t.Name] = oldMenu
-		}
+		s.tryRestoreMenu(t.Name, oldMenu)
 		return coreerr.E("contextmenu.taskUpdate", "platform add failed", err)
 	}
 
@@ -214,4 +205,20 @@ func (s *Service) taskDestroy(t TaskDestroy) error {
 
 	delete(s.registeredMenus, t.Name)
 	return nil
+}
+
+func (s *Service) tryRestoreMenu(name string, menu ContextMenuDef) {
+	if restoreErr := s.platform.Add(name, menu, s.menuCallback()); restoreErr == nil {
+		s.registeredMenus[name] = menu
+	}
+}
+
+func (s *Service) menuCallback() func(string, string, string) {
+	return func(menuName, actionID, data string) {
+		_ = s.Core().ACTION(ActionItemClicked{
+			MenuName: menuName,
+			ActionID: actionID,
+			Data:     data,
+		})
+	}
 }

@@ -39,21 +39,23 @@ type Message struct {
 	FinishReason string            `json:"finish_reason,omitempty"`
 }
 
+// ChatMessage aliases Message to preserve the original public IPC type name.
 type ChatMessage = Message
 
 // Model is the transport shape exposed by gui.chat.models.
 type Model struct {
 	Name           string `json:"name"`
-	Size           int64  `json:"size"`
+	Size           int64  `json:"size"` // Size mirrors SizeBytes for legacy clients that read the original field.
 	Status         string `json:"status"`
 	Architecture   string `json:"architecture,omitempty"`
 	QuantBits      int    `json:"quant_bits,omitempty"`
-	SizeBytes      int64  `json:"size_bytes,omitempty"`
+	SizeBytes      int64  `json:"size_bytes,omitempty"` // SizeBytes is the exact model size in bytes.
 	Loaded         bool   `json:"loaded,omitempty"`
 	Backend        string `json:"backend,omitempty"`
 	SupportsVision bool   `json:"supports_vision,omitempty"`
 }
 
+// ModelEntry aliases Model for backwards-compatible model list APIs.
 type ModelEntry = Model
 
 type ChatSettings struct {

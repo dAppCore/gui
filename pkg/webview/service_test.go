@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	core "dappco.re/go/core"
-	gowebview "dappco.re/go/webview"
 	"dappco.re/go/gui/pkg/window"
+	gowebview "dappco.re/go/webview"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

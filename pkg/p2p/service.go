@@ -16,7 +16,7 @@ type Options struct {
 type Service struct {
 	*core.ServiceRuntime[Options]
 	router *Router
-	driver *TCPDriver
+	driver Driver
 }
 
 type State struct {
@@ -25,12 +25,18 @@ type State struct {
 	Peers      []Peer `json:"peers,omitempty"`
 }
 
+// NewService creates a P2P service backed by the TCP driver.
 func NewService(c *core.Core, options Options) *Service {
 	driver := NewTCPDriver(TCPOptions{
 		ListenAddr: options.ListenAddr,
 		PeerAddrs:  options.PeerAddrs,
 		NodeID:     options.NodeID,
 	})
+	return NewServiceWithDriver(c, options, driver)
+}
+
+// NewServiceWithDriver creates a P2P service with an injected driver.
+func NewServiceWithDriver(c *core.Core, options Options, driver Driver) *Service {
 	return &Service{
 		ServiceRuntime: core.NewServiceRuntime(c, options),
 		router:         New(driver),
@@ -72,7 +78,10 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 }
 
 func (s *Service) OnShutdown(_ context.Context) core.Result {
-	return core.Result{}.New(nil, s.driver.Close())
+	if closer, ok := s.driver.(interface{ Close() error }); ok {
+		return core.Result{}.New(nil, closer.Close())
+	}
+	return core.Result{OK: true}
 }
 
 func (s *Service) Publish(ctx context.Context, envelope Envelope) error {
@@ -88,9 +97,13 @@ func (s *Service) Peers() []Peer {
 }
 
 func (s *Service) State() State {
+	listenAddr := s.Options().ListenAddr
+	if listener, ok := s.driver.(interface{ ListenAddr() string }); ok {
+		listenAddr = listener.ListenAddr()
+	}
 	return State{
 		NodeID:     s.Options().NodeID,
-		ListenAddr: s.driver.ListenAddr(),
+		ListenAddr: listenAddr,
 		Peers:      s.Peers(),
 	}
 }

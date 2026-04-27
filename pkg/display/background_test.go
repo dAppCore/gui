@@ -137,7 +137,7 @@ func TestBackground_AddSync_Ugly(t *testing.T) {
 
 	require.NotNil(t, first)
 	require.NotNil(t, second)
-	assert.Len(t, r.syncRegistrations, 2)
+	assert.Equal(t, 2, r.SyncRegistrationsCount())
 }
 
 func TestBackground_AddPush_Good(t *testing.T) {
@@ -167,7 +167,7 @@ func TestBackground_AddPush_Ugly(t *testing.T) {
 
 	require.NotNil(t, first)
 	require.NotNil(t, second)
-	assert.Len(t, r.pushSubscriptions, 2)
+	assert.Equal(t, 2, r.PushSubscriptionsCount())
 	assert.Equal(t, "/push/abc", first["endpoint"])
 	assert.Equal(t, "/push/def", second["endpoint"])
 }

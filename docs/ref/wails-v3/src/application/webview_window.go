@@ -1290,12 +1290,12 @@ func (w *WebviewWindow) AttachModal(modalWindow Window) {
 	if w.impl == nil || w.isDestroyed() {
 		return
 	}
-	
+
 	modalWebviewWindow, ok := modalWindow.(*WebviewWindow)
 	if !ok || modalWebviewWindow == nil {
 		return
 	}
-	
+
 	InvokeSync(func() {
 		w.impl.attachModal(modalWebviewWindow)
 	})

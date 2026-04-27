@@ -2,8 +2,8 @@
 package window
 
 import (
-	coreerr "dappco.re/go/log"
 	"dappco.re/go/gui/pkg/screen"
+	coreerr "dappco.re/go/log"
 )
 
 // TileMode defines how windows are arranged.

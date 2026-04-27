@@ -1,7 +1,6 @@
 package container
 
 import (
-	"flag"
 	"os"
 	"strings"
 
@@ -40,21 +39,19 @@ func DetectMode() AppMode {
 
 func DetectModeWithEnvironment(environment ModeEnvironment) AppMode {
 	args := environment.Args
-	if len(args) == 0 {
+	if args == nil {
 		args = os.Args[1:]
 	}
 
-	fs := flag.NewFlagSet("core-gui", flag.ContinueOnError)
-	fs.SetOutput(nil)
-	modeFlag := fs.String("mode", "", "")
-	_ = fs.Parse(args)
-	if mode := parseMode(*modeFlag); mode != "" {
-		return mode
+	if value, found := modeArgValue(args); found {
+		if mode, ok := parseMode(value); ok {
+			return mode
+		}
 	}
 
 	if environment.LookupEnv != nil {
 		if value, ok := environment.LookupEnv("CORE_GUI_MODE"); ok {
-			if mode := parseMode(value); mode != "" {
+			if mode, ok := parseMode(value); ok {
 				return mode
 			}
 		}
@@ -62,7 +59,7 @@ func DetectModeWithEnvironment(environment ModeEnvironment) AppMode {
 
 	if environment.ConfigValue != nil {
 		for _, key := range []string{"gui.mode", "display.mode", "mode"} {
-			if mode := parseMode(environment.ConfigValue(key)); mode != "" {
+			if mode, ok := parseMode(environment.ConfigValue(key)); ok {
 				return mode
 			}
 		}
@@ -71,13 +68,32 @@ func DetectModeWithEnvironment(environment ModeEnvironment) AppMode {
 	return ModeManager
 }
 
-func parseMode(value string) AppMode {
+func modeArgValue(args []string) (string, bool) {
+	for i := 0; i < len(args); i++ {
+		arg := strings.TrimSpace(args[i])
+		if arg == "--mode" || arg == "-mode" {
+			if i+1 < len(args) {
+				return args[i+1], true
+			}
+			return "", true
+		}
+		if value, ok := strings.CutPrefix(arg, "--mode="); ok {
+			return value, true
+		}
+		if value, ok := strings.CutPrefix(arg, "-mode="); ok {
+			return value, true
+		}
+	}
+	return "", false
+}
+
+func parseMode(value string) (AppMode, bool) {
 	switch strings.ToLower(strings.TrimSpace(value)) {
 	case string(ModeWorker):
-		return ModeWorker
-	case "", string(ModeManager):
-		return ModeManager
+		return ModeWorker, true
+	case string(ModeManager):
+		return ModeManager, true
 	default:
-		return ModeManager
+		return "", false
 	}
 }

@@ -9,7 +9,7 @@ package myservice
 
 import (
     "context"
-    "github.com/Snider/Core/pkg/core"
+    "dappco.re/go/core"
 )
 
 type Service struct {

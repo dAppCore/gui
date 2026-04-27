@@ -8,9 +8,9 @@ import (
 	"runtime"
 	"sync"
 
+	"dappco.re/go/config"
 	core "dappco.re/go/core"
 	coreerr "dappco.re/go/log"
-	"dappco.re/go/config"
 
 	"dappco.re/go/gui/pkg/chat"
 	"dappco.re/go/gui/pkg/clipboard"

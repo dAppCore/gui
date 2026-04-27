@@ -2,10 +2,10 @@ package container
 
 import (
 	"errors"
-	"os"
 	"path/filepath"
 	"testing"
 
+	coreio "dappco.re/go/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -90,11 +90,20 @@ func TestMajorVersion(t *testing.T) {
 
 func TestDetect_Good(t *testing.T) {
 	binDir := t.TempDir()
-	writeExecutable(t, binDir, "sw_vers", "#!/bin/sh\nprintf '26.0\\n'\n")
-	writeExecutable(t, binDir, "container", "#!/bin/sh\nexit 0\n")
-	t.Setenv("PATH", binDir)
+	containerPath := writeExecutable(t, binDir, "container", "#!/bin/sh\nexit 0\n")
 
-	assert.Equal(t, RuntimeApple, Detect())
+	runtime := DetectWithEnvironment(DetectEnvironment{
+		GOOS:           "darwin",
+		ProductVersion: "26.0",
+		LookPath: func(file string) (string, error) {
+			if file == "container" {
+				return containerPath, nil
+			}
+			return "", errors.New("not found")
+		},
+	})
+
+	assert.Equal(t, RuntimeApple, runtime)
 }
 
 func TestDetect_Bad(t *testing.T) {
@@ -118,6 +127,6 @@ func writeExecutable(t *testing.T, dir, name, script string) string {
 	t.Helper()
 
 	path := filepath.Join(dir, name)
-	require.NoError(t, os.WriteFile(path, []byte(script), 0o755))
+	require.NoError(t, coreio.Local.WriteMode(path, script, 0o755))
 	return path
 }

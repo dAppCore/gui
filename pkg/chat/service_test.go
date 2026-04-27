@@ -257,8 +257,12 @@ func TestActionModels_Ugly_ReflectsSelectedModelStatus(t *testing.T) {
 	models, ok := result.Value.([]ModelEntry)
 	require.True(t, ok)
 	require.Len(t, models, 2)
-	assert.Equal(t, "available", models[0].Status)
-	assert.Equal(t, "active", models[1].Status)
+	statusByName := map[string]string{}
+	for _, model := range models {
+		statusByName[model.Name] = model.Status
+	}
+	assert.Equal(t, "available", statusByName["alpha"])
+	assert.Equal(t, "active", statusByName["beta"])
 }
 
 func TestActionSelectModel_Good_UpdatesConversationAndSettings(t *testing.T) {

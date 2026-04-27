@@ -182,7 +182,7 @@ func TestService_NewService_Ugly(t *testing.T) {
 	assert.Equal(t, "worker.node", state.Name)
 	assert.Equal(t, "ghcr.io/example/tim:edge", state.Image)
 	assert.Equal(t, []string{"alpha", "beta"}, state.Command)
-	assert.Equal(t, " /tmp/data ", state.DataDir)
+	assert.Equal(t, "/tmp/data", state.DataDir)
 	assert.Equal(t, TIMResources{CPUCores: 2, MemoryMB: 512, GPU: "all"}, state.Resources)
 	assert.Equal(t, RuntimePodman, state.Runtime)
 }

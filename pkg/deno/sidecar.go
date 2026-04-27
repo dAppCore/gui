@@ -37,12 +37,15 @@ type Event struct {
 }
 
 type Manager struct {
-	options Options
-	mu      sync.Mutex
-	cmd     *exec.Cmd
-	stdin   io.WriteCloser
-	pending map[string]chan rpcMessage
-	events  []func(Event)
+	options  Options
+	mu       sync.Mutex
+	cmd      *exec.Cmd
+	stdin    io.WriteCloser
+	ctx      context.Context
+	cancel   context.CancelFunc
+	readDone chan struct{}
+	pending  map[string]chan rpcMessage
+	events   []func(Event)
 }
 
 func New(options Options) *Manager {
@@ -65,40 +68,70 @@ func (m *Manager) Start(ctx context.Context) (Status, error) {
 		return m.statusLocked(), nil
 	}
 
-	cmd := exec.CommandContext(ctx, m.options.Binary, m.options.Args...)
+	sidecarCtx, cancel := context.WithCancel(ctx)
+	cmd := exec.CommandContext(sidecarCtx, m.options.Binary, m.options.Args...)
 	cmd.Dir = m.options.Dir
 	cmd.Env = append(os.Environ(), m.options.Env...)
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
+		cancel()
 		return Status{}, err
 	}
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
+		cancel()
 		return Status{}, err
 	}
 	if err := cmd.Start(); err != nil {
+		cancel()
 		return Status{}, err
 	}
 
 	m.cmd = cmd
 	m.stdin = stdin
-	go m.readLoop(stdout)
+	m.ctx = sidecarCtx
+	m.cancel = cancel
+	m.readDone = make(chan struct{})
+	go m.readLoop(stdout, m.readDone)
 	return m.statusLocked(), nil
 }
 
 func (m *Manager) Stop(context.Context) (Status, error) {
 	m.mu.Lock()
-	defer m.mu.Unlock()
 	if m.cmd == nil || m.cmd.Process == nil {
+		m.mu.Unlock()
 		return Status{}, nil
 	}
-	err := m.cmd.Process.Signal(syscall.SIGTERM)
+	cmd := m.cmd
+	done := m.readDone
+	cancel := m.cancel
+	err := cmd.Process.Signal(syscall.SIGTERM)
 	if err != nil && !core.Is(err, os.ErrProcessDone) {
+		status := m.statusLocked()
+		m.mu.Unlock()
+		return status, err
+	}
+	if cancel != nil {
+		cancel()
+	}
+	m.mu.Unlock()
+
+	_ = cmd.Wait()
+	if done != nil {
+		<-done
+	}
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.cmd != cmd {
 		return m.statusLocked(), err
 	}
 	m.cmd = nil
 	m.stdin = nil
+	m.ctx = nil
+	m.cancel = nil
+	m.readDone = nil
 	for id, ch := range m.pending {
 		close(ch)
 		delete(m.pending, id)
@@ -170,6 +203,9 @@ func (m *Manager) request(ctx context.Context, message rpcMessage) (rpcMessage, 
 	}
 	select {
 	case <-ctx.Done():
+		m.mu.Lock()
+		delete(m.pending, message.ID)
+		m.mu.Unlock()
 		return rpcMessage{}, ctx.Err()
 	case response, ok := <-responseCh:
 		if !ok {
@@ -182,7 +218,8 @@ func (m *Manager) request(ctx context.Context, message rpcMessage) (rpcMessage, 
 	}
 }
 
-func (m *Manager) readLoop(stdout io.Reader) {
+func (m *Manager) readLoop(stdout io.Reader, done chan struct{}) {
+	defer close(done)
 	scanner := bufio.NewScanner(stdout)
 	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
 	for scanner.Scan() {
@@ -228,7 +265,13 @@ func (m *Manager) handleAction(message rpcMessage) {
 	for key, value := range message.Options {
 		opts.Set(key, value)
 	}
-	result := m.options.Core.Action(message.Name).Run(context.Background(), opts)
+	m.mu.Lock()
+	ctx := m.ctx
+	m.mu.Unlock()
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	result := m.options.Core.Action(message.Name).Run(ctx, opts)
 	response.OK = result.OK
 	if result.OK {
 		response.Result = result.Value
@@ -342,7 +385,11 @@ while (true) {
     const line = buffer.slice(0, newline).trim();
     buffer = buffer.slice(newline + 1);
     if (line) {
-      await handle(JSON.parse(line));
+      try {
+        await handle(JSON.parse(line));
+      } catch (error) {
+        console.error("Failed to parse message:", line, error);
+      }
     }
     newline = buffer.indexOf("\n");
   }

@@ -42,6 +42,7 @@ type Installer struct {
 	HTTPClient *http.Client
 	GitBinary  string
 	InstallDir string
+	GitRunner  func(context.Context, string, ...string) ([]byte, error)
 }
 
 const maxManifestBytes = 1 << 20
@@ -179,8 +180,11 @@ func (i Installer) Install(ctx context.Context, manifest Manifest) (string, erro
 	if strings.TrimSpace(binary) == "" {
 		binary = "git"
 	}
-	cmd := exec.CommandContext(ctx, binary, args...)
-	if output, err := cmd.CombinedOutput(); err != nil {
+	runGit := i.GitRunner
+	if runGit == nil {
+		runGit = runGitCommand
+	}
+	if output, err := runGit(ctx, binary, args...); err != nil {
 		return "", fmt.Errorf("git clone failed: %w: %s", err, sanitizeCommandOutput(output))
 	}
 	if err := writeInstalledManifest(targetDir, manifest); err != nil {
@@ -188,6 +192,11 @@ func (i Installer) Install(ctx context.Context, manifest Manifest) (string, erro
 	}
 	cleanupTarget = false
 	return targetDir, nil
+}
+
+func runGitCommand(ctx context.Context, binary string, args ...string) ([]byte, error) {
+	cmd := exec.CommandContext(ctx, binary, args...)
+	return cmd.CombinedOutput()
 }
 
 func (i Installer) List(ctx context.Context, registryURL string) ([]Manifest, error) {
