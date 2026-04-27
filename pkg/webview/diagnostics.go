@@ -2,19 +2,16 @@
 package webview
 
 import (
-	"encoding/json"
-	"fmt"
-	"strings"
+	corego "dappco.re/go/core"
 )
 
 func jsQuote(v string) string {
-	b, _ := json.Marshal(v)
-	return string(b)
+	return corego.JSONMarshalString(v)
 }
 
 func computedStyleScript(selector string) string {
 	sel := jsQuote(selector)
-	return fmt.Sprintf(`(function(){
+	return corego.Sprintf(`(function(){
   const el = document.querySelector(%s);
   if (!el) return null;
   const style = window.getComputedStyle(el);
@@ -27,13 +24,17 @@ func computedStyleScript(selector string) string {
 })()`, sel)
 }
 
+func ComputedStyleScript(selector string) string {
+	return computedStyleScript(selector)
+}
+
 func highlightScript(selector, colour string) string {
 	sel := jsQuote(selector)
 	if colour == "" {
 		colour = "#ff9800"
 	}
 	col := jsQuote(colour)
-	return fmt.Sprintf(`(function(){
+	return corego.Sprintf(`(function(){
   const el = document.querySelector(%s);
   if (!el) return false;
   if (el.__coreHighlightOrigOutline === undefined) {
@@ -44,6 +45,10 @@ func highlightScript(selector, colour string) string {
   try { el.scrollIntoView({block: "center", inline: "center", behavior: "smooth"}); } catch (e) {}
   return true;
 })()`, sel, col)
+}
+
+func HighlightScript(selector, colour string) string {
+	return highlightScript(selector, colour)
 }
 
 func performanceScript() string {
@@ -65,6 +70,10 @@ func performanceScript() string {
 })()`
 }
 
+func PerformanceScript() string {
+	return performanceScript()
+}
+
 func resourcesScript() string {
 	return `(function(){
   return performance.getEntriesByType("resource").map((entry) => ({
@@ -78,6 +87,10 @@ func resourcesScript() string {
     decodedBodySize: entry.decodedBodySize || 0
   }));
 })()`
+}
+
+func ResourcesScript() string {
+	return resourcesScript()
 }
 
 func networkInitScript() string {
@@ -139,6 +152,10 @@ func networkInitScript() string {
 })()`
 }
 
+func NetworkInitScript() string {
+	return networkInitScript()
+}
+
 func networkClearScript() string {
 	return `(function(){
   window.__coreNetworkLog = [];
@@ -146,13 +163,42 @@ func networkClearScript() string {
 })()`
 }
 
+func NetworkClearScript() string {
+	return networkClearScript()
+}
+
 func networkLogScript(limit int) string {
 	if limit <= 0 {
-		return `(window.__coreNetworkLog || [])`
+		return `((window.__coreNetworkLog && window.__coreNetworkLog.length)
+  ? window.__coreNetworkLog
+  : performance.getEntriesByType("resource").map((entry) => ({
+      url: entry.name,
+      method: "GET",
+      status: 0,
+      ok: true,
+      resource: entry.initiatorType || entry.entryType,
+      timestamp: entry.startTime
+    })))`
 	}
-	return fmt.Sprintf(`(window.__coreNetworkLog || []).slice(-%d)`, limit)
+	return corego.Sprintf(`(function(){
+  const log = (window.__coreNetworkLog && window.__coreNetworkLog.length)
+    ? window.__coreNetworkLog
+    : performance.getEntriesByType("resource").map((entry) => ({
+        url: entry.name,
+        method: "GET",
+        status: 0,
+        ok: true,
+        resource: entry.initiatorType || entry.entryType,
+        timestamp: entry.startTime
+      }));
+  return log.slice(-%d);
+})()`, limit)
+}
+
+func NetworkLogScript(limit int) string {
+	return networkLogScript(limit)
 }
 
 func normalizeWhitespace(s string) string {
-	return strings.TrimSpace(s)
+	return corego.Trim(s)
 }

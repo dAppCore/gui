@@ -22,20 +22,29 @@ type Manager struct {
 }
 
 // NewManager creates a menu Manager.
-// Use: mgr := menu.NewManager(platform)
+// menu.NewManager(menu.NewWailsPlatform(app)).SetApplicationMenu([]menu.MenuItem{{Label: "File"}})
 func NewManager(platform Platform) *Manager {
 	return &Manager{platform: platform}
 }
 
 // Build constructs a PlatformMenu from a tree of MenuItems.
-// Use: built := mgr.Build([]menu.MenuItem{{Label: "File"}})
+// menu.NewManager(menu.NewWailsPlatform(app)).Build([]menu.MenuItem{{Label: "File"}})
 func (m *Manager) Build(items []MenuItem) PlatformMenu {
+	if m == nil || m.platform == nil {
+		return nil
+	}
 	menu := m.platform.NewMenu()
+	if menu == nil {
+		return nil
+	}
 	m.buildItems(menu, items)
 	return menu
 }
 
 func (m *Manager) buildItems(menu PlatformMenu, items []MenuItem) {
+	if m == nil || menu == nil {
+		return
+	}
 	for _, item := range items {
 		if item.Role != nil {
 			menu.AddRole(*item.Role)
@@ -47,10 +56,16 @@ func (m *Manager) buildItems(menu PlatformMenu, items []MenuItem) {
 		}
 		if len(item.Children) > 0 {
 			sub := menu.AddSubmenu(item.Label)
+			if sub == nil {
+				continue
+			}
 			m.buildItems(sub, item.Children)
 			continue
 		}
 		mi := menu.Add(item.Label)
+		if mi == nil {
+			continue
+		}
 		if item.Accelerator != "" {
 			mi.SetAccelerator(item.Accelerator)
 		}
@@ -64,9 +79,15 @@ func (m *Manager) buildItems(menu PlatformMenu, items []MenuItem) {
 }
 
 // SetApplicationMenu builds and sets the application menu.
-// Use: mgr.SetApplicationMenu([]menu.MenuItem{{Label: "Quit"}})
+// menu.NewManager(menu.NewWailsPlatform(app)).SetApplicationMenu([]menu.MenuItem{{Label: "File"}})
 func (m *Manager) SetApplicationMenu(items []MenuItem) {
+	if m == nil || m.platform == nil {
+		return
+	}
 	menu := m.Build(items)
+	if menu == nil {
+		return
+	}
 	m.platform.SetApplicationMenu(menu)
 }
 

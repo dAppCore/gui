@@ -1,0 +1,325 @@
+package display
+
+import (
+	"context"
+	"net/url"
+	"strings"
+	"testing"
+
+	core "dappco.re/go/core"
+	"dappco.re/go/gui/pkg/chat"
+	"dappco.re/go/gui/pkg/p2p"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/wailsapp/wails/v3/pkg/application"
+)
+
+type testApplicationResponseWriter struct {
+	header map[string][]string
+	body   []byte
+	status int
+}
+
+func newTestApplicationResponseWriter() *testApplicationResponseWriter {
+	return &testApplicationResponseWriter{header: map[string][]string{}}
+}
+
+func (w *testApplicationResponseWriter) Header() map[string][]string {
+	if w.header == nil {
+		w.header = map[string][]string{}
+	}
+	return w.header
+}
+
+func (w *testApplicationResponseWriter) Write(data []byte) (int, error) {
+	w.body = append(w.body, data...)
+	return len(data), nil
+}
+
+func (w *testApplicationResponseWriter) WriteHeader(statusCode int) {
+	w.status = statusCode
+}
+
+type testApplicationHandler struct {
+	called bool
+}
+
+func (h *testApplicationHandler) ServeHTTP(_ application.ResponseWriter, _ *application.Request) {
+	h.called = true
+}
+
+type mockPeerRouter struct {
+	peers []p2p.Peer
+}
+
+func (m mockPeerRouter) Peers() []p2p.Peer {
+	return m.peers
+}
+
+func TestScheme_ResolveScheme_Good(t *testing.T) {
+	svc, c := newTestDisplayService(t)
+	svc.registerDefaultSchemes()
+	svc.configFile = nil
+	svc.storage.Set("origin-a", "localStorage", "theme", "dark")
+	svc.configData["window"] = map[string]any{"default_width": 1024, "default_height": 768}
+
+	c.Action("gui.chat.models", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{
+			Value: []chat.ModelEntry{
+				{Name: "Alpha", Architecture: "gemma", SizeBytes: 2048, Loaded: true, Backend: "local"},
+				{Name: "Beta", Architecture: "phi", SizeBytes: 4096, Loaded: false},
+			},
+			OK: true,
+		}
+	})
+	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
+		switch q.(type) {
+		case chat.QueryConversationList:
+			return core.Result{
+				Value: []chat.ConversationSummary{{ID: "conv-1", Title: "Chat Route", MessageCount: 3}},
+				OK:    true,
+			}
+		case chat.QueryHistory:
+			return core.Result{
+				Value: chat.Conversation{ID: "conv-1", Title: "Chat Route"},
+				OK:    true,
+			}
+		case chat.QueryConversationSearch:
+			return core.Result{
+				Value: []any{"chat-match"},
+				OK:    true,
+			}
+		default:
+			return core.Result{}
+		}
+	})
+
+	storeResult := svc.ResolveScheme(context.Background(), "core://store?q=theme")
+	storePayload := requireSchemePayload(t, storeResult)
+	assert.Equal(t, "text/html", storePayload["content_type"])
+	assert.Contains(t, requirePayloadString(t, storePayload, "body"), "origin-a")
+	assert.Contains(t, requirePayloadString(t, storePayload, "body"), "dark")
+
+	entryResult := svc.ResolveScheme(context.Background(), "core://store/localStorage/theme")
+	entryPayload := requireSchemePayload(t, entryResult)
+	assert.Equal(t, "store", entryPayload["route"])
+	assert.Contains(t, requirePayloadString(t, entryPayload, "body"), "localStorage")
+	assert.Contains(t, requirePayloadString(t, entryPayload, "body"), "theme")
+
+	settingsResult := svc.ResolveScheme(context.Background(), "core://settings/window")
+	settingsPayload := requireSchemePayload(t, settingsResult)
+	assert.Equal(t, "settings", settingsPayload["route"])
+	assert.Contains(t, requirePayloadString(t, settingsPayload, "body"), "default_width")
+	assert.Contains(t, requirePayloadString(t, settingsPayload, "body"), "1024")
+
+	modelResult := svc.ResolveScheme(context.Background(), "core://models/alpha")
+	modelPayload := requireSchemePayload(t, modelResult)
+	assert.Equal(t, "models", modelPayload["route"])
+	assert.Contains(t, requirePayloadString(t, modelPayload, "body"), "Alpha")
+	assert.Contains(t, requirePayloadString(t, modelPayload, "body"), "2048")
+
+	chatListResult := svc.ResolveScheme(context.Background(), "core://chat")
+	chatListPayload := requireSchemePayload(t, chatListResult)
+	assert.Equal(t, "chat", chatListPayload["route"])
+	assert.Contains(t, requirePayloadString(t, chatListPayload, "body"), "Chat Route")
+
+	chatHistoryResult := svc.ResolveScheme(context.Background(), "core://chat?conversation_id=conv-1")
+	chatHistoryPayload := requireSchemePayload(t, chatHistoryResult)
+	assert.Equal(t, "chat", chatHistoryPayload["route"])
+	assert.Contains(t, requirePayloadString(t, chatHistoryPayload, "body"), "conv-1")
+
+	chatSearchResult := svc.handleStoreSearch(context.Background(), url.Values{"q": []string{"chat"}})
+	chatSearchPayload := requireSchemePayload(t, chatSearchResult)
+	assert.Contains(t, requirePayloadString(t, chatSearchPayload, "body"), "core://chat")
+}
+
+func requireSchemePayload(t *testing.T, result core.Result) map[string]any {
+	t.Helper()
+	require.True(t, result.OK)
+	payload, ok := result.Value.(map[string]any)
+	require.True(t, ok)
+	return payload
+}
+
+func requirePayloadString(t *testing.T, payload map[string]any, key string) string {
+	t.Helper()
+	value, ok := payload[key].(string)
+	require.True(t, ok)
+	return value
+}
+
+func TestScheme_ResolveScheme_Bad(t *testing.T) {
+	svc := &Service{}
+
+	emptyResult := svc.ResolveScheme(context.Background(), "")
+	require.False(t, emptyResult.OK)
+
+	malformedResult := svc.ResolveScheme(context.Background(), "://bad-url")
+	require.False(t, malformedResult.OK)
+
+	rootResult := svc.ResolveScheme(context.Background(), "core://")
+	require.False(t, rootResult.OK)
+
+	noHandlerResult := svc.ResolveScheme(context.Background(), "core://store")
+	require.False(t, noHandlerResult.OK)
+}
+
+func TestScheme_ResolveSchemeRequest_BodyQuery_Good(t *testing.T) {
+	svc, _ := newTestDisplayService(t)
+	svc.registerDefaultSchemes()
+
+	result := svc.ResolveSchemeRequest(
+		context.Background(),
+		"core://store",
+		"POST",
+		map[string][]string{"Content-Type": {"application/x-www-form-urlencoded"}},
+		[]byte("q=theme"),
+	)
+	require.True(t, result.OK)
+	payload := result.Value.(map[string]any)
+	assert.Equal(t, "store", payload["route"])
+	assert.Contains(t, payload["body"].(string), "Search the in-memory storage scopes")
+}
+
+func TestScheme_ResolveSchemeRequest_BodyQuery_Bad(t *testing.T) {
+	svc, _ := newTestDisplayService(t)
+	svc.registerDefaultSchemes()
+
+	result := svc.ResolveSchemeRequest(
+		context.Background(),
+		"core://store",
+		"POST",
+		nil,
+		[]byte(strings.Repeat("a", maxSchemeRequestBodyBytes+1)),
+	)
+	require.False(t, result.OK)
+	assert.Contains(t, result.Value.(error).Error(), "request body exceeds")
+}
+
+func TestScheme_ResolveScheme_Ugly(t *testing.T) {
+	svc, _ := newTestDisplayService(t)
+	svc.registerDefaultSchemes()
+
+	result := svc.ResolveScheme(context.Background(), "core://wallet/treasury?amount=1")
+	require.True(t, result.OK)
+	payload := result.Value.(map[string]any)
+	assert.Equal(t, "wallet", payload["route"])
+	assert.Equal(t, false, payload["available"])
+	assert.Contains(t, payload["body"].(string), "no backend is registered for this route")
+
+	searchResult := svc.handleStoreSearch(context.Background(), url.Values{"q": []string{"missing"}})
+	require.True(t, searchResult.OK)
+	searchPayload := searchResult.Value.(map[string]any)
+	assert.Contains(t, searchPayload["body"].(string), "No matches found in Core storage.")
+}
+
+func TestScheme_HandleStoreSearch_BlankQueryReturnsNoResults(t *testing.T) {
+	svc, _ := newTestDisplayService(t)
+	svc.storage.Set("origin-a", "local", "theme", "dark")
+
+	result := svc.handleStoreSearch(context.Background(), url.Values{})
+	require.True(t, result.OK)
+	payload := result.Value.(map[string]any)
+	assert.Empty(t, payload["results"])
+	assert.Contains(t, payload["body"].(string), "Enter a search term")
+}
+
+func TestScheme_ResolveScheme_ServiceBackedRoute_Good(t *testing.T) {
+	c := core.New(
+		core.WithService(Register(nil)),
+		core.WithName("wallet", func(_ *core.Core) core.Result {
+			return core.Result{
+				Value: map[string]any{
+					"balance": "42.0",
+					"address": "lthn1example",
+				},
+				OK: true,
+			}
+		}),
+		core.WithServiceLock(),
+	)
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+
+	svc := core.MustServiceFor[*Service](c, "display")
+	svc.registerDefaultSchemes()
+
+	result := svc.ResolveScheme(context.Background(), "core://wallet/treasury?amount=1")
+	require.True(t, result.OK)
+	payload := result.Value.(map[string]any)
+	assert.Equal(t, "wallet", payload["route"])
+	assert.Equal(t, "wallet", payload["service"])
+	assert.Contains(t, payload["body"].(string), "lthn1example")
+	assert.Contains(t, payload["body"].(string), "42.0")
+}
+
+func TestScheme_ResolveScheme_NetworkPeers_Good(t *testing.T) {
+	c := core.New(
+		core.WithService(Register(nil)),
+		core.WithName("p2p", func(_ *core.Core) core.Result {
+			return core.Result{
+				Value: mockPeerRouter{
+					peers: []p2p.Peer{
+						{ID: "peer-2", Topic: "timeline", Connected: true},
+						{ID: "peer-1", Topic: "timeline", Connected: false},
+					},
+				},
+				OK: true,
+			}
+		}),
+		core.WithServiceLock(),
+	)
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+
+	svc := core.MustServiceFor[*Service](c, "display")
+	svc.registerDefaultSchemes()
+
+	result := svc.ResolveScheme(context.Background(), "core://network")
+	require.True(t, result.OK)
+	payload := result.Value.(map[string]any)
+	body := payload["body"].(string)
+	assert.Contains(t, body, "Registered peers")
+	assert.Contains(t, body, "peer-1")
+	assert.Contains(t, body, "peer-2")
+	assert.Contains(t, body, "timeline")
+}
+
+func TestScheme_AssetMiddleware_Good(t *testing.T) {
+	svc, _ := newTestDisplayService(t)
+	svc.registerDefaultSchemes()
+
+	recorder := newTestApplicationResponseWriter()
+	request := &application.Request{Method: "GET", URL: "core://store?q=theme"}
+
+	svc.AssetMiddleware()(&testApplicationHandler{}).ServeHTTP(recorder, request)
+
+	require.Equal(t, 200, recorder.status)
+	assert.Equal(t, "text/html; charset=utf-8", recorder.Header()["Content-Type"][0])
+	assert.Contains(t, string(recorder.body), "core://store")
+}
+
+func TestScheme_AssetMiddleware_Bad(t *testing.T) {
+	svc, _ := newTestDisplayService(t)
+	svc.registerDefaultSchemes()
+
+	recorder := newTestApplicationResponseWriter()
+	request := &application.Request{Method: "GET", URL: "https://example.com/app"}
+	next := &testApplicationHandler{}
+
+	svc.AssetMiddleware()(next).ServeHTTP(recorder, request)
+
+	require.True(t, next.called)
+	require.Equal(t, 0, recorder.status)
+	assert.Empty(t, recorder.body)
+}
+
+func TestScheme_AssetMiddleware_Ugly(t *testing.T) {
+	svc, _ := New()
+
+	recorder := newTestApplicationResponseWriter()
+	request := &application.Request{Method: "GET", URL: "core://missing"}
+
+	svc.AssetMiddleware()(&testApplicationHandler{}).ServeHTTP(recorder, request)
+
+	require.Equal(t, 404, recorder.status)
+	assert.Contains(t, string(recorder.body), "core route not found")
+}

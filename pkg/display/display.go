@@ -1,119 +1,251 @@
-// pkg/display/display.go
 package display
 
 import (
 	"context"
-	"encoding/base64"
-	"fmt"
-	"os"
-	"path/filepath"
+	"errors"
+	"math"
+	"net/url"
 	"runtime"
+	"sync"
 
-	"encoding/json"
-	"forge.lthn.ai/core/config"
-	"forge.lthn.ai/core/go/pkg/core"
+	"dappco.re/go/config"
+	core "dappco.re/go/core"
+	coreerr "dappco.re/go/log"
 
-	"forge.lthn.ai/core/gui/pkg/browser"
-	"forge.lthn.ai/core/gui/pkg/clipboard"
-	"forge.lthn.ai/core/gui/pkg/contextmenu"
-	"forge.lthn.ai/core/gui/pkg/dialog"
-	"forge.lthn.ai/core/gui/pkg/dock"
-	"forge.lthn.ai/core/gui/pkg/environment"
-	"forge.lthn.ai/core/gui/pkg/keybinding"
-	"forge.lthn.ai/core/gui/pkg/lifecycle"
-	"forge.lthn.ai/core/gui/pkg/menu"
-	"forge.lthn.ai/core/gui/pkg/notification"
-	"forge.lthn.ai/core/gui/pkg/screen"
-	"forge.lthn.ai/core/gui/pkg/systray"
-	"forge.lthn.ai/core/gui/pkg/webview"
-	"forge.lthn.ai/core/gui/pkg/window"
+	"dappco.re/go/gui/pkg/chat"
+	"dappco.re/go/gui/pkg/clipboard"
+	"dappco.re/go/gui/pkg/container"
+	"dappco.re/go/gui/pkg/contextmenu"
+	"dappco.re/go/gui/pkg/deno"
+	"dappco.re/go/gui/pkg/dialog"
+	"dappco.re/go/gui/pkg/dock"
+	"dappco.re/go/gui/pkg/environment"
+	"dappco.re/go/gui/pkg/events"
+	"dappco.re/go/gui/pkg/keybinding"
+	"dappco.re/go/gui/pkg/lifecycle"
+	"dappco.re/go/gui/pkg/menu"
+	"dappco.re/go/gui/pkg/notification"
+	"dappco.re/go/gui/pkg/screen"
+	"dappco.re/go/gui/pkg/systray"
+	"dappco.re/go/gui/pkg/webview"
+	"dappco.re/go/gui/pkg/window"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
-// Options holds configuration for the display service.
-// Use: svc, err := display.NewService()
 type Options struct{}
+
+func failedAction(method, action string) error {
+	return coreerr.E(method, action+" action failed", nil)
+}
+
+var (
+	maxInt = int(^uint(0) >> 1)
+	minInt = -int(^uint(0)>>1) - 1
+)
 
 // WindowInfo is an alias for window.WindowInfo (backward compatibility).
 type WindowInfo = window.WindowInfo
 
-// LayoutSuggestion is an alias for window.LayoutSuggestion (backward compatibility).
-type LayoutSuggestion = window.LayoutSuggestion
-
-// Service manages windowing, dialogs, and other visual elements.
-// It orchestrates sub-services (window, systray, menu) via IPC and bridges
-// IPC actions to WebSocket events for TypeScript apps.
-// Use: svc, err := display.NewService()
+// Service orchestrates window, systray, and menu sub-services via IPC.
+// Bridges IPC actions to WebSocket events for TypeScript apps.
 type Service struct {
 	*core.ServiceRuntime[Options]
-	wailsApp   *application.App
-	app        App
-	config     Options
-	configData map[string]map[string]any
-	cfg        *config.Config // config instance for file persistence
-	events     *WSEventManager
+	wailsApp        *application.App
+	app             App
+	configData      map[string]map[string]any
+	configFile      *config.Config // config instance for file persistence
+	mode            container.AppMode
+	events          *WSEventManager
+	p2pBridgeCancel context.CancelFunc
+	schemeHandlers  map[string]SchemeHandler
+	manifestCache   map[string]*loadedManifest
+	manifestMu      sync.Mutex
+	storage         *StorageRegistry
+	background      *BackgroundRegistry
+	sidecar         *deno.Manager
 }
 
-// NewService creates a display service with empty config sections.
-// Use: svc, err := display.NewService()
-func NewService() (*Service, error) {
+// New returns a display Service with empty config sections.
+// s, _ := display.New(); s.loadConfigFrom("/path/to/config.yaml")
+func New() (*Service, error) {
 	return &Service{
 		configData: map[string]map[string]any{
 			"window":  {},
 			"systray": {},
 			"menu":    {},
 		},
+		mode:           container.DetectMode(),
+		schemeHandlers: make(map[string]SchemeHandler),
+		manifestCache:  make(map[string]*loadedManifest),
+		storage:        NewStorageRegistry(),
+		background:     NewBackgroundRegistry(),
 	}, nil
 }
 
-// Deprecated: use NewService.
-// Use: svc, err := display.New()
-func New() (*Service, error) {
-	return NewService()
-}
-
-// Register creates a factory closure that captures the Wails app.
-// Use: core.WithService(display.Register(app))
-// Pass nil for testing without a Wails runtime.
-func Register(wailsApp *application.App) func(*core.Core) (any, error) {
-	return func(c *core.Core) (any, error) {
-		s, err := NewService()
+// Register binds the display service to a Core instance.
+// core.WithService(display.Register(app))      // production (Wails app)
+// core.WithService(display.Register(nil))      // tests (no Wails runtime)
+func Register(wailsApp *application.App) func(*core.Core) core.Result {
+	return func(c *core.Core) core.Result {
+		s, err := New()
 		if err != nil {
-			return nil, err
+			return core.Result{Value: err, OK: false}
 		}
 		s.ServiceRuntime = core.NewServiceRuntime[Options](c, Options{})
 		s.wailsApp = wailsApp
-		return s, nil
+		if result := c.RegisterService("display", s); !result.OK {
+			return result
+		}
+		if !c.Service("deno").OK {
+			if result := c.RegisterService("deno", s.ensureSidecar()); !result.OK {
+				return result
+			}
+		}
+		if !c.Service("tim").OK {
+			if result := c.RegisterService("tim", container.NewService(c, container.OptionsFromEnv())); !result.OK {
+				return result
+			}
+		}
+		return core.Result{OK: true}
 	}
 }
 
-// OnStartup loads config and registers IPC handlers synchronously.
-// CRITICAL: config handlers MUST be registered before returning —
-// sub-services depend on them during their own OnStartup.
-// Use: _ = svc.OnStartup(context.Background())
-func (s *Service) OnStartup(ctx context.Context) error {
+// OnStartup loads config and registers handlers before sub-services start.
+// Config handlers are registered first — sub-services query them during their own OnStartup.
+func (s *Service) OnStartup(_ context.Context) core.Result {
 	s.loadConfig()
+	s.mode = container.DetectMode()
 
-	// Register config query/task handlers — available NOW for sub-services
+	// Register config query handler — available NOW for sub-services
 	s.Core().RegisterQuery(s.handleConfigQuery)
-	s.Core().RegisterTask(s.handleConfigTask)
+
+	// Register config save actions
+	s.Core().Action("display.saveWindowConfig", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(window.TaskSaveConfig)
+		s.configData["window"] = t.Config
+		if err := s.persistSection("window", t.Config); err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		return core.Result{OK: true}
+	})
+	s.Core().Action("display.saveSystrayConfig", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(systray.TaskSaveConfig)
+		s.configData["systray"] = t.Config
+		if err := s.persistSection("systray", t.Config); err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		return core.Result{OK: true}
+	})
+	s.Core().Action("display.saveMenuConfig", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(menu.TaskSaveConfig)
+		s.configData["menu"] = t.Config
+		if err := s.persistSection("menu", t.Config); err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		return core.Result{OK: true}
+	})
+	s.Core().Action("display.buildPreload", func(_ context.Context, opts core.Options) core.Result {
+		script, err := s.BuildPreloadScript(opts.String("url"))
+		return core.Result{}.New(script, err)
+	})
+	s.Core().Action("display.resolveScheme", func(ctx context.Context, opts core.Options) core.Result {
+		return s.ResolveScheme(ctx, opts.String("url"))
+	})
+	s.Core().Action("display.storage.set", func(_ context.Context, opts core.Options) core.Result {
+		origin := opts.String("origin")
+		bucket := opts.String("bucket")
+		key := opts.String("key")
+		value := opts.String("value")
+		if s.storage == nil {
+			return core.Result{Value: coreerr.E("display.storage.set", "storage registry unavailable", nil), OK: false}
+		}
+		if !s.storage.Set(origin, bucket, key, value) {
+			return core.Result{Value: coreerr.E("display.storage.set", "invalid storage entry", nil), OK: false}
+		}
+		return core.Result{Value: map[string]string{"origin": origin, "bucket": bucket, "key": key}, OK: true}
+	})
+	s.Core().Action("display.storage.delete", func(_ context.Context, opts core.Options) core.Result {
+		origin := opts.String("origin")
+		bucket := opts.String("bucket")
+		key := opts.String("key")
+		if s.storage == nil {
+			return core.Result{Value: coreerr.E("display.storage.delete", "storage registry unavailable", nil), OK: false}
+		}
+		if !s.storage.Delete(origin, bucket, key) {
+			return core.Result{Value: coreerr.E("display.storage.delete", "invalid storage entry", nil), OK: false}
+		}
+		return core.Result{Value: map[string]string{"origin": origin, "bucket": bucket, "key": key}, OK: true}
+	})
+	s.Core().Action("display.storage.search", func(_ context.Context, opts core.Options) core.Result {
+		return core.Result{Value: s.searchAllStorage(opts.String("q")), OK: true}
+	})
+	s.Core().RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
+		switch typed := q.(type) {
+		case QueryStoreRoute:
+			return s.handleStoreSearch(context.Background(), url.Values{"q": []string{typed.Query}})
+		default:
+			return core.Result{}
+		}
+	})
+	s.Core().Action("display.models.state", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: s.modelState(), OK: true}
+	})
+	s.Core().Action("display.network.state", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: s.networkState(), OK: true}
+	})
+	s.registerBackgroundActions()
+	s.registerMarketplaceActions()
+	s.registerSidecarActions()
+	s.registerDefaultSchemes()
 
 	// Initialise Wails wrappers if app is available (nil in tests)
 	if s.wailsApp != nil {
 		s.app = newWailsApp(s.wailsApp)
-		s.events = NewWSEventManager()
+		if s.events == nil {
+			s.events = NewWSEventManager()
+		}
 	}
 
-	return nil
+	s.attachP2PBridge()
+
+	return core.Result{OK: true}
 }
 
-// HandleIPCEvents is auto-discovered and registered by core.WithService.
-// It bridges sub-service IPC actions to WebSocket events for TS apps.
-// Use: _ = svc.HandleIPCEvents(core, msg)
-func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
+func (s *Service) OnShutdown(ctx context.Context) core.Result {
+	events := s.events
+	s.events = nil
+	if s.p2pBridgeCancel != nil {
+		s.p2pBridgeCancel()
+		s.p2pBridgeCancel = nil
+	}
+	if events != nil {
+		events.Close()
+	}
+	var shutdownErr error
+	if s.storage != nil {
+		if err := s.storage.Close(); err != nil {
+			shutdownErr = err
+		}
+	}
+	if s.sidecar != nil {
+		_, err := s.sidecar.Stop(ctx)
+		if err != nil {
+			if shutdownErr != nil {
+				shutdownErr = errors.Join(shutdownErr, err)
+			} else {
+				shutdownErr = err
+			}
+		}
+	}
+	return core.Result{}.New(nil, shutdownErr)
+}
+
+// HandleIPCEvents bridges IPC actions from sub-services to WebSocket events for TS apps.
+func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) core.Result {
+	s.forwardIPCToSidecar(msg)
 	switch m := msg.(type) {
 	case core.ActionServiceStartup:
-		// All services have completed OnStartup — safe to PERFORM on sub-services
+		// All services have completed OnStartup — safe to call sub-services
 		s.buildMenu()
 		s.setupTray()
 	case window.ActionWindowOpened:
@@ -134,7 +266,7 @@ func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 	case window.ActionWindowResized:
 		if s.events != nil {
 			s.events.Emit(Event{Type: EventWindowResize, Window: m.Name,
-				Data: map[string]any{"w": m.W, "h": m.H}})
+				Data: map[string]any{"w": m.Width, "h": m.Height}})
 		}
 	case window.ActionWindowFocused:
 		if s.events != nil {
@@ -245,8 +377,140 @@ func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
 			s.events.Emit(Event{Type: EventIDECommand,
 				Data: map[string]any{"command": m.Command}})
 		}
+	case events.ActionEventFired:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventCustomEvent,
+				Data: map[string]any{"name": m.Event.Name, "data": m.Event.Data}})
+		}
+	case dock.ActionProgressChanged:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventDockProgress,
+				Data: map[string]any{"progress": m.Progress}})
+		}
+	case dock.ActionBounceStarted:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventDockBounce,
+				Data: map[string]any{"requestId": m.RequestID, "bounceType": m.BounceType}})
+		}
+	case notification.ActionNotificationActionTriggered:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventNotificationAction,
+				Data: map[string]any{"notificationId": m.NotificationID, "actionId": m.ActionID}})
+		}
+	case notification.ActionNotificationDismissed:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventNotificationDismiss,
+				Data: map[string]any{"id": m.ID}})
+		}
+	case chat.ActionConversationCreated:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventChatConversation,
+				Data: map[string]any{"action": "created", "conversation": m.Conversation}})
+		}
+	case chat.ActionConversationUpdated:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventChatConversation,
+				Data: map[string]any{"action": "updated", "conversation": m.Conversation}})
+		}
+	case chat.ActionConversationDeleted:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventChatConversation,
+				Data: map[string]any{"action": "deleted", "conversationId": m.ConversationID}})
+		}
+	case chat.ActionConversationCleared:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventChatConversation,
+				Data: map[string]any{"action": "cleared", "conversationId": m.ConversationID}})
+		}
+	case chat.ActionMessageAdded:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventChatMessage,
+				Data: map[string]any{"conversationId": m.ConversationID, "message": m.Message}})
+		}
+	case chat.ActionStreamStarted:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventChatMessage,
+				Data: map[string]any{
+					"conversationId": m.ConversationID,
+					"messageId":      m.MessageID,
+					"streamId":       m.StreamID,
+					"state":          "started",
+				}})
+		}
+	case chat.ActionTokenAppended:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventChatToken,
+				Data: map[string]any{
+					"conversationId": m.ConversationID,
+					"messageId":      m.MessageID,
+					"content":        m.Content,
+				}})
+		}
+	case chat.ActionStreamFinished:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventChatMessage,
+				Data: map[string]any{
+					"conversationId": m.ConversationID,
+					"messageId":      m.MessageID,
+					"state":          "finished",
+					"finishReason":   m.FinishReason,
+				}})
+		}
+	case chat.ActionThinkingStarted:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventChatThinkingStart,
+				Data: map[string]any{
+					"conversationId": m.ConversationID,
+					"messageId":      m.MessageID,
+					"startedAt":      m.StartedAt,
+				}})
+		}
+	case chat.ActionThinkingAppended:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventChatThinkingAppend,
+				Data: map[string]any{
+					"conversationId": m.ConversationID,
+					"messageId":      m.MessageID,
+					"content":        m.Content,
+				}})
+		}
+	case chat.ActionThinkingEnded:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventChatThinkingEnd,
+				Data: map[string]any{
+					"conversationId": m.ConversationID,
+					"messageId":      m.MessageID,
+					"durationMs":     m.DurationMS,
+				}})
+		}
+	case chat.ActionToolCallStarted:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventChatToolCall,
+				Data: map[string]any{
+					"conversationId": m.ConversationID,
+					"messageId":      m.MessageID,
+					"call":           m.Call,
+				}})
+		}
+	case chat.ActionToolResultReady:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventChatToolResult,
+				Data: map[string]any{
+					"conversationId": m.ConversationID,
+					"messageId":      m.MessageID,
+					"result":         m.Result,
+				}})
+		}
+	case chat.ActionImageQueued:
+		if s.events != nil {
+			s.events.Emit(Event{Type: EventChatImageQueued,
+				Data: map[string]any{
+					"conversationId": m.ConversationID,
+					"attachment":     m.Attachment,
+				}})
+		}
 	}
-	return nil
+	return core.Result{OK: true}
 }
 
 // WSMessage represents a command received from a WebSocket client.
@@ -255,311 +519,432 @@ type WSMessage struct {
 	Data   map[string]any `json:"data,omitempty"`
 }
 
-// wsRequire extracts a string field from WS data and returns an error if it is empty.
-func wsRequire(data map[string]any, key string) (string, error) {
+// requireStringField extracts a string field from WebSocket data and fails when it is missing.
+func requireStringField(data map[string]any, key string) (string, error) {
 	v, _ := data[key].(string)
 	if v == "" {
-		return "", fmt.Errorf("ws: missing required field %q", key)
+		return "", coreerr.E("display.requireStringField", "missing required field \""+key+"\"", nil)
 	}
 	return v, nil
 }
 
+// wsRequire is kept for backward compatibility inside the display package.
+func wsRequire(data map[string]any, key string) (string, error) {
+	return requireStringField(data, key)
+}
+
+func requireFloatField(data map[string]any, key string) (float64, error) {
+	value, ok := data[key]
+	if !ok || value == nil {
+		return 0, coreerr.E("display.handleWSMessage", "missing required field \""+key+"\"", nil)
+	}
+
+	switch v := value.(type) {
+	case float64:
+		if math.IsNaN(v) || math.IsInf(v, 0) {
+			return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
+		}
+		return v, nil
+	case float32:
+		f := float64(v)
+		if math.IsNaN(f) || math.IsInf(f, 0) {
+			return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
+		}
+		return f, nil
+	case int:
+		return float64(v), nil
+	case int8:
+		return float64(v), nil
+	case int16:
+		return float64(v), nil
+	case int32:
+		return float64(v), nil
+	case int64:
+		return float64(v), nil
+	case uint:
+		return float64(v), nil
+	case uint8:
+		return float64(v), nil
+	case uint16:
+		return float64(v), nil
+	case uint32:
+		return float64(v), nil
+	case uint64:
+		return float64(v), nil
+	default:
+		return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
+	}
+}
+
+func intFromFloatField(value float64, key string) (int, error) {
+	if math.IsNaN(value) || math.IsInf(value, 0) {
+		return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
+	}
+	if math.Trunc(value) != value {
+		return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
+	}
+	if value < float64(minInt) || value > float64(maxInt-1) {
+		return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
+	}
+	return int(value), nil
+}
+
+func requireIntField(data map[string]any, key string) (int, error) {
+	value, ok := data[key]
+	if !ok || value == nil {
+		return 0, coreerr.E("display.handleWSMessage", "missing required field \""+key+"\"", nil)
+	}
+
+	switch v := value.(type) {
+	case int:
+		return v, nil
+	case int8:
+		return int(v), nil
+	case int16:
+		return int(v), nil
+	case int32:
+		return int(v), nil
+	case int64:
+		if v < int64(minInt) || v > int64(maxInt) {
+			return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
+		}
+		return int(v), nil
+	case uint:
+		if uint64(v) > uint64(maxInt) {
+			return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
+		}
+		return int(v), nil
+	case uint8:
+		return int(v), nil
+	case uint16:
+		return int(v), nil
+	case uint32:
+		if uint64(v) > uint64(maxInt) {
+			return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
+		}
+		return int(v), nil
+	case uint64:
+		if v > uint64(maxInt) {
+			return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
+		}
+		return int(v), nil
+	case float64:
+		return intFromFloatField(v, key)
+	case float32:
+		return intFromFloatField(float64(v), key)
+	default:
+		return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
+	}
+}
+
+func optionsFromMap(data map[string]any) core.Options {
+	items := make([]core.Option, 0, len(data))
+	for key, value := range data {
+		items = append(items, core.Option{Key: key, Value: value})
+	}
+	return core.NewOptions(items...)
+}
+
+// wsOptions is kept for backward compatibility inside the display package.
+func wsOptions(data map[string]any) core.Options {
+	return optionsFromMap(data)
+}
+
 // handleWSMessage bridges WebSocket commands to IPC calls.
-func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
-	var result any
-	var handled bool
-	var err error
+func (s *Service) handleWSMessage(msg WSMessage) core.Result {
+	ctx := context.Background()
+	c := s.Core()
 
 	switch msg.Action {
+	case "chat:send":
+		return c.Action("gui.chat.send").Run(ctx, wsOptions(msg.Data))
+	case "chat:clear":
+		return c.Action("gui.chat.clear").Run(ctx, wsOptions(msg.Data))
+	case "chat:history":
+		return c.Action("gui.chat.history").Run(ctx, wsOptions(msg.Data))
+	case "chat:models":
+		return c.Action("gui.chat.models").Run(ctx, wsOptions(msg.Data))
+	case "chat:select-model":
+		return c.Action("gui.chat.selectModel").Run(ctx, wsOptions(msg.Data))
+	case "chat:settings:save":
+		return c.Action("gui.chat.settings.save").Run(ctx, wsOptions(msg.Data))
+	case "chat:settings:defaults":
+		return c.Action("gui.chat.settings.defaults").Run(ctx, wsOptions(msg.Data))
+	case "chat:settings:load":
+		return c.Action("gui.chat.settings.load").Run(ctx, wsOptions(msg.Data))
+	case "chat:settings:reset":
+		return c.Action("gui.chat.settings.reset").Run(ctx, wsOptions(msg.Data))
+	case "chat:conversations:list":
+		return c.Action("gui.chat.conversations.list").Run(ctx, wsOptions(msg.Data))
+	case "chat:conversations:load":
+		return c.Action("gui.chat.conversations.load").Run(ctx, wsOptions(msg.Data))
+	case "chat:conversations:get":
+		return c.Action("gui.chat.conversations.load").Run(ctx, wsOptions(msg.Data))
+	case "chat:conversations:delete":
+		return c.Action("gui.chat.conversations.delete").Run(ctx, wsOptions(msg.Data))
+	case "chat:conversations:search":
+		return c.Action("gui.chat.conversations.search").Run(ctx, wsOptions(msg.Data))
+	case "chat:conversations:new":
+		return c.Action("gui.chat.conversations.new").Run(ctx, wsOptions(msg.Data))
+	case "chat:conversation:save":
+		return c.Action("gui.chat.conversation.save").Run(ctx, wsOptions(msg.Data))
+	case "chat:conversations:rename":
+		return c.Action("gui.chat.conversations.rename").Run(ctx, wsOptions(msg.Data))
+	case "chat:conversations:export":
+		return c.Action("gui.chat.conversations.export").Run(ctx, wsOptions(msg.Data))
+	case "chat:attach-image":
+		return c.Action("gui.chat.attachImage").Run(ctx, wsOptions(msg.Data))
+	case "chat:attach-image-file":
+		return c.Action("gui.chat.attachImageFile").Run(ctx, wsOptions(msg.Data))
+	case "chat:remove-image":
+		return c.Action("gui.chat.removeImage").Run(ctx, wsOptions(msg.Data))
+	case "chat:thinking:start":
+		return c.Action("gui.chat.thinking.start").Run(ctx, wsOptions(msg.Data))
+	case "chat:thinking:append":
+		return c.Action("gui.chat.thinking.append").Run(ctx, wsOptions(msg.Data))
+	case "chat:thinking:stop":
+		return c.Action("gui.chat.thinking.stop").Run(ctx, wsOptions(msg.Data))
+	case "chat:thinking:end":
+		return c.Action("gui.chat.thinking.stop").Run(ctx, wsOptions(msg.Data))
+	case "marketplace:list":
+		return c.Action("display.marketplace.list").Run(ctx, wsOptions(msg.Data))
+	case "marketplace:fetch":
+		return c.Action("display.marketplace.fetch").Run(ctx, wsOptions(msg.Data))
+	case "marketplace:verify":
+		return c.Action("display.marketplace.verify").Run(ctx, wsOptions(msg.Data))
+	case "marketplace:install":
+		return c.Action("display.marketplace.install").Run(ctx, wsOptions(msg.Data))
 	case "keybinding:add":
 		accelerator, _ := msg.Data["accelerator"].(string)
 		description, _ := msg.Data["description"].(string)
-		result, handled, err = s.Core().PERFORM(keybinding.TaskAdd{
-			Accelerator: accelerator, Description: description,
-		})
+		return c.Action("keybinding.add").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: keybinding.TaskAdd{Accelerator: accelerator, Description: description}},
+		))
 	case "keybinding:remove":
 		accelerator, _ := msg.Data["accelerator"].(string)
-		result, handled, err = s.Core().PERFORM(keybinding.TaskRemove{
-			Accelerator: accelerator,
-		})
+		return c.Action("keybinding.remove").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: keybinding.TaskRemove{Accelerator: accelerator}},
+		))
 	case "keybinding:list":
-		result, handled, err = s.Core().QUERY(keybinding.QueryList{})
+		return c.QUERY(keybinding.QueryList{})
 	case "browser:open-url":
 		url, _ := msg.Data["url"].(string)
-		result, handled, err = s.Core().PERFORM(browser.TaskOpenURL{URL: url})
+		return c.Action("browser.openURL").Run(ctx, core.NewOptions(
+			core.Option{Key: "url", Value: url},
+		))
 	case "browser:open-file":
 		path, _ := msg.Data["path"].(string)
-		result, handled, err = s.Core().PERFORM(browser.TaskOpenFile{Path: path})
-	case "window:list":
-		result, handled, err = s.Core().QUERY(window.QueryWindowList{})
-	case "window:get":
-		name, e := wsRequire(msg.Data, "name")
-		if e != nil {
-			return nil, false, e
-		}
-		result, handled, err = s.Core().QUERY(window.QueryWindowByName{Name: name})
-	case "window:focused":
-		result, handled, err = s.GetFocusedWindow(), true, nil
-	case "window:create":
-		var opts CreateWindowOptions
-		encoded, _ := json.Marshal(msg.Data)
-		if err := json.Unmarshal(encoded, &opts); err != nil {
-			return nil, false, fmt.Errorf("ws: invalid window create options: %w", err)
-		}
-		info, createErr := s.CreateWindow(opts)
-		if createErr != nil {
-			return nil, false, createErr
-		}
-		result, handled, err = info, true, nil
-	case "window:close":
-		name, e := wsRequire(msg.Data, "name")
-		if e != nil {
-			return nil, false, e
-		}
-		result, handled, err = nil, true, s.CloseWindow(name)
-	case "window:position":
-		name, e := wsRequire(msg.Data, "name")
-		if e != nil {
-			return nil, false, e
-		}
-		x, _ := msg.Data["x"].(float64)
-		y, _ := msg.Data["y"].(float64)
-		result, handled, err = nil, true, s.SetWindowPosition(name, int(x), int(y))
-	case "window:size":
-		name, e := wsRequire(msg.Data, "name")
-		if e != nil {
-			return nil, false, e
-		}
-		width, _ := msg.Data["width"].(float64)
-		height, _ := msg.Data["height"].(float64)
-		result, handled, err = nil, true, s.SetWindowSize(name, int(width), int(height))
-	case "window:bounds":
-		name, e := wsRequire(msg.Data, "name")
-		if e != nil {
-			return nil, false, e
-		}
-		x, _ := msg.Data["x"].(float64)
-		y, _ := msg.Data["y"].(float64)
-		width, _ := msg.Data["width"].(float64)
-		height, _ := msg.Data["height"].(float64)
-		result, handled, err = nil, true, s.SetWindowBounds(name, int(x), int(y), int(width), int(height))
-	case "window:maximize":
-		name, e := wsRequire(msg.Data, "name")
-		if e != nil {
-			return nil, false, e
-		}
-		result, handled, err = nil, true, s.MaximizeWindow(name)
-	case "window:minimize":
-		name, e := wsRequire(msg.Data, "name")
-		if e != nil {
-			return nil, false, e
-		}
-		result, handled, err = nil, true, s.MinimizeWindow(name)
-	case "window:restore":
-		name, e := wsRequire(msg.Data, "name")
-		if e != nil {
-			return nil, false, e
-		}
-		result, handled, err = nil, true, s.RestoreWindow(name)
-	case "window:focus":
-		name, e := wsRequire(msg.Data, "name")
-		if e != nil {
-			return nil, false, e
-		}
-		result, handled, err = nil, true, s.FocusWindow(name)
-	case "focus:set":
-		name, e := wsRequire(msg.Data, "name")
-		if e != nil {
-			return nil, false, e
-		}
-		result, handled, err = nil, true, s.FocusSet(name)
-	case "window:visibility":
-		name, e := wsRequire(msg.Data, "name")
-		if e != nil {
-			return nil, false, e
-		}
-		visible, _ := msg.Data["visible"].(bool)
-		result, handled, err = nil, true, s.SetWindowVisibility(name, visible)
-	case "window:title-set":
-		name, e := wsRequire(msg.Data, "name")
-		if e != nil {
-			return nil, false, e
-		}
-		title, e := wsRequire(msg.Data, "title")
-		if e != nil {
-			return nil, false, e
-		}
-		result, handled, err = nil, true, s.SetWindowTitle(name, title)
-	case "window:title-get":
-		name, e := wsRequire(msg.Data, "name")
-		if e != nil {
-			return nil, false, e
-		}
-		title, titleErr := s.GetWindowTitle(name)
-		if titleErr != nil {
-			return nil, false, titleErr
-		}
-		result, handled, err = title, true, nil
-	case "window:always-on-top":
-		name, e := wsRequire(msg.Data, "name")
-		if e != nil {
-			return nil, false, e
-		}
-		alwaysOnTop, _ := msg.Data["alwaysOnTop"].(bool)
-		result, handled, err = nil, true, s.SetWindowAlwaysOnTop(name, alwaysOnTop)
-	case "window:background-colour":
-		name, e := wsRequire(msg.Data, "name")
-		if e != nil {
-			return nil, false, e
-		}
-		red, _ := msg.Data["red"].(float64)
-		green, _ := msg.Data["green"].(float64)
-		blue, _ := msg.Data["blue"].(float64)
-		alpha, _ := msg.Data["alpha"].(float64)
-		result, handled, err = nil, true, s.SetWindowBackgroundColour(name, uint8(red), uint8(green), uint8(blue), uint8(alpha))
-	case "window:opacity":
-		name, e := wsRequire(msg.Data, "name")
-		if e != nil {
-			return nil, false, e
-		}
-		opacity, _ := msg.Data["opacity"].(float64)
-		result, handled, err = nil, true, s.SetWindowOpacity(name, float32(opacity))
-	case "window:fullscreen":
-		name, e := wsRequire(msg.Data, "name")
-		if e != nil {
-			return nil, false, e
-		}
-		fullscreen, _ := msg.Data["fullscreen"].(bool)
-		result, handled, err = nil, true, s.SetWindowFullscreen(name, fullscreen)
+		return c.Action("browser.openFile").Run(ctx, core.NewOptions(
+			core.Option{Key: "path", Value: path},
+		))
+	case "clipboard:read":
+		return c.QUERY(clipboard.QueryText{})
+	case "clipboard:write":
+		text, _ := msg.Data["text"].(string)
+		return c.Action("clipboard.setText").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: clipboard.TaskSetText{Text: text}},
+		))
+	case "clipboard:clear":
+		return c.Action("clipboard.clear").Run(ctx, core.NewOptions())
+	case "clipboard:read-image":
+		return c.QUERY(clipboard.QueryImage{})
+	case "clipboard:write-image":
+		data, _ := msg.Data["base64"].(string)
+		return c.Action("clipboard.setImage").Run(ctx, core.NewOptions(
+			core.Option{Key: "data", Value: data},
+		))
+	case "dialog:open-file":
+		return c.Action("dialog.openFile").Run(ctx, wsOptions(msg.Data))
+	case "dialog:save-file":
+		return c.Action("dialog.saveFile").Run(ctx, wsOptions(msg.Data))
+	case "dialog:open-directory":
+		return c.Action("dialog.openDirectory").Run(ctx, wsOptions(msg.Data))
+	case "dialog:confirm":
+		return c.Action("dialog.question").Run(ctx, wsOptions(msg.Data))
+	case "dialog:message":
+		return c.Action("dialog.message").Run(ctx, wsOptions(msg.Data))
+	case "dialog:prompt":
+		return c.Action("dialog.prompt").Run(ctx, wsOptions(msg.Data))
 	case "dock:show":
-		result, handled, err = s.Core().PERFORM(dock.TaskShowIcon{})
+		return c.Action("dock.showIcon").Run(ctx, core.NewOptions())
 	case "dock:hide":
-		result, handled, err = s.Core().PERFORM(dock.TaskHideIcon{})
+		return c.Action("dock.hideIcon").Run(ctx, core.NewOptions())
 	case "dock:badge":
 		label, _ := msg.Data["label"].(string)
-		result, handled, err = s.Core().PERFORM(dock.TaskSetBadge{Label: label})
+		return c.Action("dock.setBadge").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: dock.TaskSetBadge{Label: label}},
+		))
 	case "dock:badge-remove":
-		result, handled, err = s.Core().PERFORM(dock.TaskRemoveBadge{})
+		return c.Action("dock.removeBadge").Run(ctx, core.NewOptions())
 	case "dock:visible":
-		result, handled, err = s.Core().QUERY(dock.QueryVisible{})
+		return c.QUERY(dock.QueryVisible{})
+	case "notification:show":
+		return c.Action("notification.send").Run(ctx, wsOptions(msg.Data))
+	case "notification:clear":
+		id, _ := msg.Data["id"].(string)
+		return c.Action("notification.clear").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: notification.TaskClear{ID: id}},
+		))
+	case "notification:permission-request":
+		return c.Action("notification.requestPermission").Run(ctx, core.NewOptions())
+	case "notification:permission-check":
+		return c.QUERY(notification.QueryPermission{})
+	case "notification:with-actions":
+		return c.Action("notification.send").Run(ctx, wsOptions(msg.Data))
+	case "theme:get":
+		return c.QUERY(environment.QueryTheme{})
+	case "theme:system":
+		return c.QUERY(environment.QueryInfo{})
+	case "theme:set":
+		theme, _ := msg.Data["theme"].(string)
+		return c.Action("environment.setTheme").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: environment.TaskSetTheme{Theme: theme}},
+		))
 	case "contextmenu:add":
 		name, _ := msg.Data["name"].(string)
-		menuJSON, _ := json.Marshal(msg.Data["menu"])
+		menuValue, ok := msg.Data["menu"]
+		if !ok || menuValue == nil {
+			return core.Result{Value: coreerr.E("display.handleWSMessage", "missing required field \"menu\"", nil), OK: false}
+		}
+		marshalResult := core.JSONMarshal(menuValue)
+		if !marshalResult.OK {
+			if err, ok := marshalResult.Value.(error); ok {
+				return core.Result{Value: coreerr.E("display.handleWSMessage", "failed to marshal menu definition", err), OK: false}
+			}
+			return core.Result{Value: coreerr.E("display.handleWSMessage", "failed to marshal menu definition", nil), OK: false}
+		}
 		var menuDef contextmenu.ContextMenuDef
-		_ = json.Unmarshal(menuJSON, &menuDef)
-		result, handled, err = s.Core().PERFORM(contextmenu.TaskAdd{
-			Name: name, Menu: menuDef,
-		})
+		menuJSON, _ := marshalResult.Value.([]byte)
+		unmarshalResult := core.JSONUnmarshal(menuJSON, &menuDef)
+		if !unmarshalResult.OK {
+			if err, ok := unmarshalResult.Value.(error); ok {
+				return core.Result{Value: coreerr.E("display.handleWSMessage", "failed to unmarshal menu definition", err), OK: false}
+			}
+			return core.Result{Value: coreerr.E("display.handleWSMessage", "failed to unmarshal menu definition", nil), OK: false}
+		}
+		return c.Action("contextmenu.add").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: contextmenu.TaskAdd{Name: name, Menu: menuDef}},
+		))
 	case "contextmenu:remove":
 		name, _ := msg.Data["name"].(string)
-		result, handled, err = s.Core().PERFORM(contextmenu.TaskRemove{Name: name})
+		return c.Action("contextmenu.remove").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: contextmenu.TaskRemove{Name: name}},
+		))
 	case "contextmenu:get":
 		name, _ := msg.Data["name"].(string)
-		result, handled, err = s.Core().QUERY(contextmenu.QueryGet{Name: name})
+		return c.QUERY(contextmenu.QueryGet{Name: name})
 	case "contextmenu:list":
-		result, handled, err = s.Core().QUERY(contextmenu.QueryList{})
+		return c.QUERY(contextmenu.QueryList{})
 	case "webview:eval":
 		w, e := wsRequire(msg.Data, "window")
 		if e != nil {
-			return nil, false, e
+			return core.Result{Value: e, OK: false}
 		}
 		script, _ := msg.Data["script"].(string)
-		result, handled, err = s.Core().PERFORM(webview.TaskEvaluate{Window: w, Script: script})
+		return c.Action("webview.evaluate").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: webview.TaskEvaluate{Window: w, Script: script}},
+		))
 	case "webview:click":
 		w, e := wsRequire(msg.Data, "window")
 		if e != nil {
-			return nil, false, e
+			return core.Result{Value: e, OK: false}
 		}
 		sel, e := wsRequire(msg.Data, "selector")
 		if e != nil {
-			return nil, false, e
+			return core.Result{Value: e, OK: false}
 		}
-		result, handled, err = s.Core().PERFORM(webview.TaskClick{Window: w, Selector: sel})
+		return c.Action("webview.click").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: webview.TaskClick{Window: w, Selector: sel}},
+		))
 	case "webview:type":
 		w, e := wsRequire(msg.Data, "window")
 		if e != nil {
-			return nil, false, e
+			return core.Result{Value: e, OK: false}
 		}
 		sel, e := wsRequire(msg.Data, "selector")
 		if e != nil {
-			return nil, false, e
+			return core.Result{Value: e, OK: false}
 		}
 		text, _ := msg.Data["text"].(string)
-		result, handled, err = s.Core().PERFORM(webview.TaskType{Window: w, Selector: sel, Text: text})
+		return c.Action("webview.type").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: webview.TaskType{Window: w, Selector: sel, Text: text}},
+		))
 	case "webview:navigate":
 		w, e := wsRequire(msg.Data, "window")
 		if e != nil {
-			return nil, false, e
+			return core.Result{Value: e, OK: false}
 		}
 		url, e := wsRequire(msg.Data, "url")
 		if e != nil {
-			return nil, false, e
+			return core.Result{Value: e, OK: false}
 		}
-		result, handled, err = s.Core().PERFORM(webview.TaskNavigate{Window: w, URL: url})
+		return c.Action("webview.navigate").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: webview.TaskNavigate{Window: w, URL: url}},
+		))
 	case "webview:screenshot":
 		w, e := wsRequire(msg.Data, "window")
 		if e != nil {
-			return nil, false, e
+			return core.Result{Value: e, OK: false}
 		}
-		result, handled, err = s.Core().PERFORM(webview.TaskScreenshot{Window: w})
-	case "webview:screenshot-element":
-		w, e := wsRequire(msg.Data, "window")
-		if e != nil {
-			return nil, false, e
-		}
-		sel, e := wsRequire(msg.Data, "selector")
-		if e != nil {
-			return nil, false, e
-		}
-		result, handled, err = s.Core().PERFORM(webview.TaskScreenshotElement{Window: w, Selector: sel})
+		return c.Action("webview.screenshot").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: webview.TaskScreenshot{Window: w}},
+		))
 	case "webview:scroll":
 		w, e := wsRequire(msg.Data, "window")
 		if e != nil {
-			return nil, false, e
+			return core.Result{Value: e, OK: false}
 		}
 		x, _ := msg.Data["x"].(float64)
 		y, _ := msg.Data["y"].(float64)
-		result, handled, err = s.Core().PERFORM(webview.TaskScroll{Window: w, X: int(x), Y: int(y)})
+		return c.Action("webview.scroll").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: webview.TaskScroll{Window: w, X: int(x), Y: int(y)}},
+		))
 	case "webview:hover":
 		w, e := wsRequire(msg.Data, "window")
 		if e != nil {
-			return nil, false, e
+			return core.Result{Value: e, OK: false}
 		}
 		sel, e := wsRequire(msg.Data, "selector")
 		if e != nil {
-			return nil, false, e
+			return core.Result{Value: e, OK: false}
 		}
-		result, handled, err = s.Core().PERFORM(webview.TaskHover{Window: w, Selector: sel})
+		return c.Action("webview.hover").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: webview.TaskHover{Window: w, Selector: sel}},
+		))
 	case "webview:select":
 		w, e := wsRequire(msg.Data, "window")
 		if e != nil {
-			return nil, false, e
+			return core.Result{Value: e, OK: false}
 		}
 		sel, e := wsRequire(msg.Data, "selector")
 		if e != nil {
-			return nil, false, e
+			return core.Result{Value: e, OK: false}
 		}
 		val, _ := msg.Data["value"].(string)
-		result, handled, err = s.Core().PERFORM(webview.TaskSelect{Window: w, Selector: sel, Value: val})
+		return c.Action("webview.select").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: webview.TaskSelect{Window: w, Selector: sel, Value: val}},
+		))
 	case "webview:check":
 		w, e := wsRequire(msg.Data, "window")
 		if e != nil {
-			return nil, false, e
+			return core.Result{Value: e, OK: false}
 		}
 		sel, e := wsRequire(msg.Data, "selector")
 		if e != nil {
-			return nil, false, e
+			return core.Result{Value: e, OK: false}
 		}
 		checked, _ := msg.Data["checked"].(bool)
-		result, handled, err = s.Core().PERFORM(webview.TaskCheck{Window: w, Selector: sel, Checked: checked})
+		return c.Action("webview.check").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: webview.TaskCheck{Window: w, Selector: sel, Checked: checked}},
+		))
 	case "webview:upload":
 		w, e := wsRequire(msg.Data, "window")
 		if e != nil {
-			return nil, false, e
+			return core.Result{Value: e, OK: false}
 		}
 		sel, e := wsRequire(msg.Data, "selector")
 		if e != nil {
-			return nil, false, e
+			return core.Result{Value: e, OK: false}
 		}
 		pathsRaw, _ := msg.Data["paths"].([]any)
 		var paths []string
@@ -568,581 +953,217 @@ func (s *Service) handleWSMessage(msg WSMessage) (any, bool, error) {
 				paths = append(paths, ps)
 			}
 		}
-		result, handled, err = s.Core().PERFORM(webview.TaskUploadFile{Window: w, Selector: sel, Paths: paths})
+		return c.Action("webview.uploadFile").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: webview.TaskUploadFile{Window: w, Selector: sel, Paths: paths}},
+		))
 	case "webview:viewport":
 		w, e := wsRequire(msg.Data, "window")
 		if e != nil {
-			return nil, false, e
+			return core.Result{Value: e, OK: false}
 		}
 		width, _ := msg.Data["width"].(float64)
 		height, _ := msg.Data["height"].(float64)
-		result, handled, err = s.Core().PERFORM(webview.TaskSetViewport{Window: w, Width: int(width), Height: int(height)})
+		return c.Action("webview.setViewport").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: webview.TaskSetViewport{Window: w, Width: int(width), Height: int(height)}},
+		))
 	case "webview:clear-console":
 		w, e := wsRequire(msg.Data, "window")
 		if e != nil {
-			return nil, false, e
+			return core.Result{Value: e, OK: false}
 		}
-		result, handled, err = s.Core().PERFORM(webview.TaskClearConsole{Window: w})
-	case "webview:highlight":
-		w, e := wsRequire(msg.Data, "window")
-		if e != nil {
-			return nil, false, e
-		}
-		sel, e := wsRequire(msg.Data, "selector")
-		if e != nil {
-			return nil, false, e
-		}
-		colour, _ := msg.Data["colour"].(string)
-		result, handled, err = s.Core().PERFORM(webview.TaskHighlight{Window: w, Selector: sel, Colour: colour})
-	case "webview:computed-style":
-		w, e := wsRequire(msg.Data, "window")
-		if e != nil {
-			return nil, false, e
-		}
-		sel, e := wsRequire(msg.Data, "selector")
-		if e != nil {
-			return nil, false, e
-		}
-		result, handled, err = s.Core().QUERY(webview.QueryComputedStyle{Window: w, Selector: sel})
-	case "webview:performance":
-		w, e := wsRequire(msg.Data, "window")
-		if e != nil {
-			return nil, false, e
-		}
-		result, handled, err = s.Core().QUERY(webview.QueryPerformance{Window: w})
-	case "webview:resources":
-		w, e := wsRequire(msg.Data, "window")
-		if e != nil {
-			return nil, false, e
-		}
-		result, handled, err = s.Core().QUERY(webview.QueryResources{Window: w})
-	case "webview:network":
-		w, e := wsRequire(msg.Data, "window")
-		if e != nil {
-			return nil, false, e
-		}
-		limit := 0
-		if l, ok := msg.Data["limit"].(float64); ok {
-			limit = int(l)
-		}
-		result, handled, err = s.Core().QUERY(webview.QueryNetwork{Window: w, Limit: limit})
-	case "webview:network-inject":
-		w, e := wsRequire(msg.Data, "window")
-		if e != nil {
-			return nil, false, e
-		}
-		result, handled, err = s.Core().PERFORM(webview.TaskInjectNetworkLogging{Window: w})
-	case "webview:network-clear":
-		w, e := wsRequire(msg.Data, "window")
-		if e != nil {
-			return nil, false, e
-		}
-		result, handled, err = s.Core().PERFORM(webview.TaskClearNetworkLog{Window: w})
-	case "webview:print":
-		w, e := wsRequire(msg.Data, "window")
-		if e != nil {
-			return nil, false, e
-		}
-		result, handled, err = s.Core().PERFORM(webview.TaskPrint{Window: w})
-	case "webview:pdf":
-		w, e := wsRequire(msg.Data, "window")
-		if e != nil {
-			return nil, false, e
-		}
-		result, handled, err = s.Core().PERFORM(webview.TaskExportPDF{Window: w})
+		return c.Action("webview.clearConsole").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: webview.TaskClearConsole{Window: w}},
+		))
 	case "webview:console":
 		w, e := wsRequire(msg.Data, "window")
 		if e != nil {
-			return nil, false, e
+			return core.Result{Value: e, OK: false}
 		}
 		level, _ := msg.Data["level"].(string)
 		limit := 100
 		if l, ok := msg.Data["limit"].(float64); ok {
 			limit = int(l)
 		}
-		result, handled, err = s.Core().QUERY(webview.QueryConsole{Window: w, Level: level, Limit: limit})
+		return c.QUERY(webview.QueryConsole{Window: w, Level: level, Limit: limit})
 	case "webview:query":
 		w, e := wsRequire(msg.Data, "window")
 		if e != nil {
-			return nil, false, e
+			return core.Result{Value: e, OK: false}
 		}
 		sel, e := wsRequire(msg.Data, "selector")
 		if e != nil {
-			return nil, false, e
+			return core.Result{Value: e, OK: false}
 		}
-		result, handled, err = s.Core().QUERY(webview.QuerySelector{Window: w, Selector: sel})
+		return c.QUERY(webview.QuerySelector{Window: w, Selector: sel})
 	case "webview:query-all":
 		w, e := wsRequire(msg.Data, "window")
 		if e != nil {
-			return nil, false, e
+			return core.Result{Value: e, OK: false}
 		}
 		sel, e := wsRequire(msg.Data, "selector")
 		if e != nil {
-			return nil, false, e
+			return core.Result{Value: e, OK: false}
 		}
-		result, handled, err = s.Core().QUERY(webview.QuerySelectorAll{Window: w, Selector: sel})
+		return c.QUERY(webview.QuerySelectorAll{Window: w, Selector: sel})
 	case "webview:dom-tree":
 		w, e := wsRequire(msg.Data, "window")
 		if e != nil {
-			return nil, false, e
+			return core.Result{Value: e, OK: false}
 		}
 		sel, _ := msg.Data["selector"].(string) // selector optional for dom-tree (defaults to root)
-		result, handled, err = s.Core().QUERY(webview.QueryDOMTree{Window: w, Selector: sel})
-	case "webview:source":
-		w, e := wsRequire(msg.Data, "window")
-		if e != nil {
-			return nil, false, e
-		}
-		result, handled, err = s.Core().QUERY(webview.QueryDOMTree{Window: w})
-	case "webview:element-info":
-		w, e := wsRequire(msg.Data, "window")
-		if e != nil {
-			return nil, false, e
-		}
-		sel, e := wsRequire(msg.Data, "selector")
-		if e != nil {
-			return nil, false, e
-		}
-		result, handled, err = s.Core().QUERY(webview.QuerySelector{Window: w, Selector: sel})
+		return c.QUERY(webview.QueryDOMTree{Window: w, Selector: sel})
 	case "webview:url":
 		w, e := wsRequire(msg.Data, "window")
 		if e != nil {
-			return nil, false, e
+			return core.Result{Value: e, OK: false}
 		}
-		result, handled, err = s.Core().QUERY(webview.QueryURL{Window: w})
+		return c.QUERY(webview.QueryURL{Window: w})
 	case "webview:title":
 		w, e := wsRequire(msg.Data, "window")
 		if e != nil {
-			return nil, false, e
+			return core.Result{Value: e, OK: false}
 		}
-		result, handled, err = s.Core().QUERY(webview.QueryTitle{Window: w})
+		return c.QUERY(webview.QueryTitle{Window: w})
 	case "webview:devtools-open":
 		w, e := wsRequire(msg.Data, "window")
 		if e != nil {
-			return nil, false, e
+			return core.Result{Value: e, OK: false}
 		}
-		result, handled, err = s.Core().PERFORM(webview.TaskOpenDevTools{Window: w})
+		return c.Action("webview.devtoolsOpen").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: webview.TaskDevToolsOpen{Window: w}},
+		))
 	case "webview:devtools-close":
 		w, e := wsRequire(msg.Data, "window")
 		if e != nil {
-			return nil, false, e
+			return core.Result{Value: e, OK: false}
 		}
-		result, handled, err = s.Core().PERFORM(webview.TaskCloseDevTools{Window: w})
-	case "webview:errors":
-		w, e := wsRequire(msg.Data, "window")
-		if e != nil {
-			return nil, false, e
-		}
-		limit := 0
-		if l, ok := msg.Data["limit"].(float64); ok {
-			limit = int(l)
-		}
-		result, handled, err = s.Core().QUERY(webview.QueryExceptions{Window: w, Limit: limit})
-	case "layout:beside-editor":
-		editor, _ := msg.Data["editor"].(string)
-		windowName, _ := msg.Data["window"].(string)
-		result, handled, err = s.Core().PERFORM(window.TaskBesideEditor{
-			Editor: editor,
-			Window: windowName,
-		})
-	case "layout:stack":
-		offsetX, _ := msg.Data["offsetX"].(float64)
-		offsetY, _ := msg.Data["offsetY"].(float64)
-		var names []string
-		if raw, ok := msg.Data["windows"].([]any); ok {
-			for _, v := range raw {
-				if name, ok := v.(string); ok && name != "" {
-					names = append(names, name)
-				}
-			}
-		}
-		result, handled, err = s.Core().PERFORM(window.TaskStackWindows{
-			Windows: names,
-			OffsetX: int(offsetX),
-			OffsetY: int(offsetY),
-		})
-	case "layout:workflow":
-		workflowName, e := wsRequire(msg.Data, "workflow")
-		if e != nil {
-			return nil, false, e
-		}
-		workflow, ok := window.ParseWorkflowLayout(workflowName)
-		if !ok {
-			return nil, false, fmt.Errorf("ws: unknown workflow %q", workflowName)
-		}
-		var names []string
-		if raw, ok := msg.Data["windows"].([]any); ok {
-			for _, v := range raw {
-				if name, ok := v.(string); ok && name != "" {
-					names = append(names, name)
-				}
-			}
-		}
-		result, handled, err = s.Core().PERFORM(window.TaskApplyWorkflow{
-			Workflow: workflow,
-			Windows:  names,
-		})
-	case "window:arrange-pair":
-		first, e := wsRequire(msg.Data, "first")
-		if e != nil {
-			return nil, false, e
-		}
-		second, e := wsRequire(msg.Data, "second")
-		if e != nil {
-			return nil, false, e
-		}
-		result, handled, err = s.Core().PERFORM(window.TaskArrangePair{
-			First:  first,
-			Second: second,
-		})
-	case "layout:suggest":
-		windowCount := 0
-		if count, ok := msg.Data["windowCount"].(float64); ok {
-			windowCount = int(count)
-		}
-		screenWidth := 0
-		if width, ok := msg.Data["screenWidth"].(float64); ok {
-			screenWidth = int(width)
-		}
-		screenHeight := 0
-		if height, ok := msg.Data["screenHeight"].(float64); ok {
-			screenHeight = int(height)
-		}
-		if windowCount <= 0 {
-			windowCount = len(s.ListWindowInfos())
-		}
-		if screenWidth <= 0 || screenHeight <= 0 {
-			screenWidth, screenHeight = s.primaryScreenSize()
-		}
-		result, handled, err = s.Core().QUERY(window.QueryLayoutSuggestion{
-			WindowCount:  windowCount,
-			ScreenWidth:  screenWidth,
-			ScreenHeight: screenHeight,
-		})
-	case "screen:find-space":
-		width := 0
-		if w, ok := msg.Data["width"].(float64); ok {
-			width = int(w)
-		}
-		height := 0
-		if h, ok := msg.Data["height"].(float64); ok {
-			height = int(h)
-		}
-		screenWidth, screenHeight := s.primaryScreenSize()
-		result, handled, err = s.Core().QUERY(window.QueryFindSpace{
-			Width:        width,
-			Height:       height,
-			ScreenWidth:  screenWidth,
-			ScreenHeight: screenHeight,
-		})
-	case "screen:list":
-		result, handled, err = s.Core().QUERY(screen.QueryAll{})
-	case "screen:get":
-		id, e := wsRequire(msg.Data, "id")
-		if e != nil {
-			return nil, false, e
-		}
-		result, handled, err = s.Core().QUERY(screen.QueryByID{ID: id})
-	case "screen:primary":
-		result, handled, err = s.Core().QUERY(screen.QueryPrimary{})
-	case "screen:at-point":
-		x, _ := msg.Data["x"].(float64)
-		y, _ := msg.Data["y"].(float64)
-		result, handled, err = s.Core().QUERY(screen.QueryAtPoint{X: int(x), Y: int(y)})
-	case "screen:work-areas":
-		result, handled, err = s.Core().QUERY(screen.QueryWorkAreas{})
-	case "screen:for-window":
-		name, e := wsRequire(msg.Data, "window")
-		if e != nil {
-			return nil, false, e
-		}
-		screenInfo, screenErr := s.GetScreenForWindow(name)
-		if screenErr != nil {
-			return nil, false, screenErr
-		}
-		result, handled, err = screenInfo, true, nil
-	case "clipboard:read":
-		result, handled, err = s.Core().QUERY(clipboard.QueryText{})
-	case "clipboard:write":
-		text, e := wsRequire(msg.Data, "text")
-		if e != nil {
-			return nil, false, e
-		}
-		result, handled, err = s.Core().PERFORM(clipboard.TaskSetText{Text: text})
-	case "clipboard:has":
-		textResult, textHandled, textErr := s.Core().QUERY(clipboard.QueryText{})
-		if textErr != nil {
-			return nil, false, textErr
-		}
-		hasContent := false
-		if textHandled {
-			if content, ok := textResult.(clipboard.ClipboardContent); ok {
-				hasContent = content.HasContent
-			}
-		}
-		if !hasContent {
-			imageResult, imageHandled, imageErr := s.Core().QUERY(clipboard.QueryImage{})
-			if imageErr != nil {
-				return nil, false, imageErr
-			}
-			if imageHandled {
-				if content, ok := imageResult.(clipboard.ClipboardImageContent); ok {
-					hasContent = content.HasContent
-				}
-			}
-		}
-		result, handled, err = hasContent, true, nil
-	case "clipboard:clear":
-		result, handled, err = s.Core().PERFORM(clipboard.TaskClear{})
-	case "clipboard:read-image":
-		result, handled, err = s.Core().QUERY(clipboard.QueryImage{})
-	case "clipboard:write-image":
-		data, ok := msg.Data["data"].(string)
-		if !ok || data == "" {
-			return nil, false, fmt.Errorf("ws: missing required field %q", "data")
-		}
-		decoded, decodeErr := base64.StdEncoding.DecodeString(data)
-		if decodeErr != nil {
-			return nil, false, fmt.Errorf("ws: invalid base64 image data: %w", decodeErr)
-		}
-		result, handled, err = s.Core().PERFORM(clipboard.TaskSetImage{Data: decoded})
-	case "notification:show":
-		var opts notification.NotificationOptions
-		encoded, _ := json.Marshal(msg.Data)
-		_ = json.Unmarshal(encoded, &opts)
-		result, handled, err = s.Core().PERFORM(notification.TaskSend{Opts: opts})
-	case "notification:info":
-		title, e := wsRequire(msg.Data, "title")
-		if e != nil {
-			return nil, false, e
-		}
-		message, e := wsRequire(msg.Data, "message")
-		if e != nil {
-			return nil, false, e
-		}
-		result, handled, err = s.Core().PERFORM(notification.TaskSend{Opts: notification.NotificationOptions{
-			Title:    title,
-			Message:  message,
-			Severity: notification.SeverityInfo,
-		}})
-	case "notification:warning":
-		title, e := wsRequire(msg.Data, "title")
-		if e != nil {
-			return nil, false, e
-		}
-		message, e := wsRequire(msg.Data, "message")
-		if e != nil {
-			return nil, false, e
-		}
-		result, handled, err = s.Core().PERFORM(notification.TaskSend{Opts: notification.NotificationOptions{
-			Title:    title,
-			Message:  message,
-			Severity: notification.SeverityWarning,
-		}})
-	case "notification:error":
-		title, e := wsRequire(msg.Data, "title")
-		if e != nil {
-			return nil, false, e
-		}
-		message, e := wsRequire(msg.Data, "message")
-		if e != nil {
-			return nil, false, e
-		}
-		result, handled, err = s.Core().PERFORM(notification.TaskSend{Opts: notification.NotificationOptions{
-			Title:    title,
-			Message:  message,
-			Severity: notification.SeverityError,
-		}})
-	case "notification:with-actions":
-		title, e := wsRequire(msg.Data, "title")
-		if e != nil {
-			return nil, false, e
-		}
-		message, e := wsRequire(msg.Data, "message")
-		if e != nil {
-			return nil, false, e
-		}
-		subtitle, _ := msg.Data["subtitle"].(string)
-		actions := make([]notification.NotificationAction, 0)
-		if raw, ok := msg.Data["actions"]; ok {
-			encoded, _ := json.Marshal(raw)
-			_ = json.Unmarshal(encoded, &actions)
-		}
-		result, handled, err = s.Core().PERFORM(notification.TaskSend{
-			Opts: notification.NotificationOptions{
-				Title:    title,
-				Message:  message,
-				Subtitle: subtitle,
-				Actions:  actions,
-			},
-		})
-	case "notification:clear":
-		result, handled, err = s.Core().PERFORM(notification.TaskClear{})
-	case "notification:permission-request":
-		result, handled, err = s.Core().PERFORM(notification.TaskRequestPermission{})
-	case "notification:permission-check":
-		result, handled, err = s.Core().QUERY(notification.QueryPermission{})
+		return c.Action("webview.devtoolsClose").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: webview.TaskDevToolsClose{Window: w}},
+		))
 	case "tray:show-message":
-		title, e := wsRequire(msg.Data, "title")
+		title, _ := msg.Data["title"].(string)
+		message, _ := msg.Data["message"].(string)
+		return c.Action("systray.showMessage").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: systray.TaskShowMessage{Title: title, Message: message}},
+		))
+	case "layout:beside-editor":
+		name, e := wsRequire(msg.Data, "name")
 		if e != nil {
-			return nil, false, e
+			return core.Result{Value: e, OK: false}
 		}
-		message, e := wsRequire(msg.Data, "message")
+		editor, _ := msg.Data["editor"].(string)
+		side, _ := msg.Data["side"].(string)
+		ratio, e := requireFloatField(msg.Data, "ratio")
 		if e != nil {
-			return nil, false, e
+			return core.Result{Value: e, OK: false}
 		}
-		result, handled, err = s.Core().PERFORM(systray.TaskShowMessage{
-			Title:   title,
-			Message: message,
-		})
-	case "tray:set-tooltip":
-		tooltip, e := wsRequire(msg.Data, "tooltip")
+		return c.Action("window.layoutBesideEditor").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: window.TaskLayoutBesideEditor{
+				Name: name, Editor: editor, Side: side, Ratio: ratio,
+			}},
+		))
+	case "layout:suggest":
+		screenID, _ := msg.Data["screen_id"].(string)
+		windowCount, e := requireIntField(msg.Data, "window_count")
 		if e != nil {
-			return nil, false, e
+			return core.Result{Value: e, OK: false}
 		}
-		result, handled, err = s.Core().PERFORM(systray.TaskSetTooltip{Tooltip: tooltip})
-	case "tray:set-label":
-		label, e := wsRequire(msg.Data, "label")
+		return c.Action("window.layoutSuggest").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: window.TaskLayoutSuggest{
+				ScreenID: screenID, WindowCount: windowCount,
+			}},
+		))
+	case "screen:find-space":
+		screenID, _ := msg.Data["screen_id"].(string)
+		width, e := requireIntField(msg.Data, "width")
 		if e != nil {
-			return nil, false, e
+			return core.Result{Value: e, OK: false}
 		}
-		result, handled, err = s.Core().PERFORM(systray.TaskSetLabel{Label: label})
-	case "tray:set-icon":
-		data, e := wsRequire(msg.Data, "data")
+		height, e := requireIntField(msg.Data, "height")
 		if e != nil {
-			return nil, false, e
+			return core.Result{Value: e, OK: false}
 		}
-		decoded, decodeErr := base64.StdEncoding.DecodeString(data)
-		if decodeErr != nil {
-			return nil, false, fmt.Errorf("ws: invalid base64 tray icon data: %w", decodeErr)
+		padding, e := requireIntField(msg.Data, "padding")
+		if e != nil {
+			return core.Result{Value: e, OK: false}
 		}
-		result, handled, err = s.Core().PERFORM(systray.TaskSetTrayIcon{Data: decoded})
-	case "tray:set-menu":
-		raw, ok := msg.Data["items"]
+		return c.Action("window.findSpace").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: window.TaskScreenFindSpace{
+				ScreenID: screenID, Width: width, Height: height, Padding: padding,
+			}},
+		))
+	case "window:arrange-pair":
+		primary, e := wsRequire(msg.Data, "primary")
+		if e != nil {
+			return core.Result{Value: e, OK: false}
+		}
+		secondary, e := wsRequire(msg.Data, "secondary")
+		if e != nil {
+			return core.Result{Value: e, OK: false}
+		}
+		screenID, _ := msg.Data["screen_id"].(string)
+		ratio, e := requireFloatField(msg.Data, "ratio")
+		if e != nil {
+			return core.Result{Value: e, OK: false}
+		}
+		return c.Action("window.arrangePair").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: window.TaskWindowArrangePair{
+				Primary: primary, Secondary: secondary, ScreenID: screenID, Ratio: ratio,
+			}},
+		))
+	case "window:set-opacity":
+		name, e := wsRequire(msg.Data, "name")
+		if e != nil {
+			return core.Result{Value: e, OK: false}
+		}
+		opacity, ok := msg.Data["opacity"].(float64)
 		if !ok {
-			return nil, false, fmt.Errorf("ws: missing required field %q", "items")
+			return core.Result{Value: coreerr.E("display.handleWSMessage", "missing required field \"opacity\"", nil), OK: false}
 		}
-		encoded, _ := json.Marshal(raw)
-		var items []systray.TrayMenuItem
-		if err := json.Unmarshal(encoded, &items); err != nil {
-			return nil, false, fmt.Errorf("ws: invalid tray menu items: %w", err)
-		}
-		result, handled, err = s.Core().PERFORM(systray.TaskSetTrayMenu{Items: items})
-	case "tray:info":
-		result, handled, err = s.GetTrayInfo(), true, nil
-	case "event:info":
-		result, handled, err = s.GetEventInfo(), true, nil
-	case "theme:get":
-		result, handled, err = s.GetTheme(), true, nil
-	case "theme:system":
-		result, handled, err = s.GetSystemTheme(), true, nil
-	case "theme:set":
-		if theme, ok := msg.Data["theme"].(string); ok && theme != "" {
-			result, handled, err = nil, true, s.SetThemeMode(theme)
-			break
-		}
-		isDark, _ := msg.Data["isDark"].(bool)
-		result, handled, err = nil, true, s.SetTheme(isDark)
-	case "dialog:open-file":
-		var opts dialog.OpenFileOptions
-		encoded, _ := json.Marshal(msg.Data)
-		if err := json.Unmarshal(encoded, &opts); err != nil {
-			return nil, false, fmt.Errorf("ws: invalid open file options: %w", err)
-		}
-		paths, openErr := s.OpenFileDialog(opts)
-		if openErr != nil {
-			return nil, false, openErr
-		}
-		result, handled, err = paths, true, nil
-	case "dialog:save-file":
-		var opts dialog.SaveFileOptions
-		encoded, _ := json.Marshal(msg.Data)
-		if err := json.Unmarshal(encoded, &opts); err != nil {
-			return nil, false, fmt.Errorf("ws: invalid save file options: %w", err)
-		}
-		path, saveErr := s.SaveFileDialog(opts)
-		if saveErr != nil {
-			return nil, false, saveErr
-		}
-		result, handled, err = path, true, nil
-	case "dialog:open-directory":
-		var opts dialog.OpenDirectoryOptions
-		encoded, _ := json.Marshal(msg.Data)
-		if err := json.Unmarshal(encoded, &opts); err != nil {
-			return nil, false, fmt.Errorf("ws: invalid open directory options: %w", err)
-		}
-		path, dirErr := s.OpenDirectoryDialog(opts)
-		if dirErr != nil {
-			return nil, false, dirErr
-		}
-		result, handled, err = path, true, nil
-	case "dialog:confirm":
-		title, e := wsRequire(msg.Data, "title")
-		if e != nil {
-			return nil, false, e
-		}
-		message, e := wsRequire(msg.Data, "message")
-		if e != nil {
-			return nil, false, e
-		}
-		confirmed, confirmErr := s.ConfirmDialog(title, message)
-		if confirmErr != nil {
-			return nil, false, confirmErr
-		}
-		result, handled, err = confirmed, true, nil
-	case "dialog:prompt":
-		title, e := wsRequire(msg.Data, "title")
-		if e != nil {
-			return nil, false, e
-		}
-		message, e := wsRequire(msg.Data, "message")
-		if e != nil {
-			return nil, false, e
-		}
-		button, accepted, promptErr := s.PromptDialog(title, message)
-		if promptErr != nil {
-			return nil, false, promptErr
-		}
-		_ = accepted
-		result, handled, err = button, true, nil
+		return c.Action("window.setOpacity").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: window.TaskSetOpacity{Name: name, Opacity: opacity}},
+		))
 	default:
-		return nil, false, nil
+		return core.Result{Value: coreerr.E("display.handleWSMessage", "unknown websocket action: "+msg.Action, nil), OK: false}
 	}
-
-	return result, handled, err
 }
 
 // handleTrayAction processes tray menu item clicks.
 func (s *Service) handleTrayAction(actionID string) {
+	ctx := context.Background()
+	c := s.Core()
 	switch actionID {
 	case "open-desktop":
 		// Show all windows
 		infos := s.ListWindowInfos()
 		for _, info := range infos {
-			_, _, _ = s.Core().PERFORM(window.TaskFocus{Name: info.Name})
+			_ = c.Action("window.focus").Run(ctx, core.NewOptions(
+				core.Option{Key: "task", Value: window.TaskFocus{Name: info.Name}},
+			))
 		}
 	case "close-desktop":
-		// Hide all tracked windows using the existing visibility task.
+		// Hide all tracked windows so the tray action behaves like a real desktop "close" without quitting.
 		infos := s.ListWindowInfos()
 		for _, info := range infos {
-			_, _, _ = s.Core().PERFORM(window.TaskSetVisibility{
-				Name:    info.Name,
-				Visible: false,
-			})
+			_ = c.Action("window.setVisibility").Run(ctx, core.NewOptions(
+				core.Option{Key: "task", Value: window.TaskSetVisibility{Name: info.Name, Visible: false}},
+			))
 		}
 	case "env-info":
 		// Query environment info via IPC and show as dialog
-		result, handled, _ := s.Core().QUERY(environment.QueryInfo{})
-		if handled {
-			info := result.(environment.EnvironmentInfo)
-			details := fmt.Sprintf("OS: %s\nArch: %s\nPlatform: %s %s",
-				info.OS, info.Arch, info.Platform.Name, info.Platform.Version)
-			_, _, _ = s.Core().PERFORM(dialog.TaskMessageDialog{
-				Opts: dialog.MessageDialogOptions{
-					Type: dialog.DialogInfo, Title: "Environment",
-					Message: details, Buttons: []string{"OK"},
-				},
-			})
+		r := c.QUERY(environment.QueryInfo{})
+		if r.OK {
+			info, _ := r.Value.(environment.EnvironmentInfo)
+			details := "OS: " + info.OS + "\nArch: " + info.Arch + "\nPlatform: " +
+				info.Platform.Name + " " + info.Platform.Version
+			_ = c.Action("dialog.message").Run(ctx, core.NewOptions(
+				core.Option{Key: "task", Value: dialog.TaskMessageDialog{
+					Options: dialog.MessageDialogOptions{
+						Type: dialog.DialogInfo, Title: "Environment",
+						Message: details, Buttons: []string{"OK"},
+					},
+				}},
+			))
 		}
 	case "quit":
 		if s.app != nil {
@@ -1152,82 +1173,76 @@ func (s *Service) handleTrayAction(actionID string) {
 }
 
 func guiConfigPath() string {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return filepath.Join(".core", "gui", "config.yaml")
+	home := core.Env("HOME")
+	if home == "" {
+		return core.JoinPath(".core", "gui", "config.yaml")
 	}
-	return filepath.Join(home, ".core", "gui", "config.yaml")
+	return core.JoinPath(home, ".core", "gui", "config.yaml")
 }
 
 func (s *Service) loadConfig() {
-	if s.cfg != nil {
+	if s.configFile != nil {
 		return // Already loaded (e.g., via loadConfigFrom in tests)
 	}
 	s.loadConfigFrom(guiConfigPath())
 }
 
 func (s *Service) loadConfigFrom(path string) {
-	cfg, err := config.New(config.WithPath(path))
+	configFile, err := config.New(config.WithPath(path))
 	if err != nil {
 		// Non-critical — continue with empty configData
 		return
 	}
-	s.cfg = cfg
+	s.configFile = configFile
 
 	for _, section := range []string{"window", "systray", "menu"} {
 		var data map[string]any
-		if err := cfg.Get(section, &data); err == nil && data != nil {
+		if err := configFile.Get(section, &data); err == nil && data != nil {
 			s.configData[section] = data
 		}
 	}
 }
 
-func (s *Service) handleConfigQuery(c *core.Core, q core.Query) (any, bool, error) {
+func (s *Service) handleConfigQuery(_ *core.Core, q core.Query) core.Result {
 	switch q.(type) {
 	case window.QueryConfig:
-		return s.configData["window"], true, nil
+		return core.Result{Value: s.configData["window"], OK: true}
 	case systray.QueryConfig:
-		return s.configData["systray"], true, nil
+		return core.Result{Value: s.configData["systray"], OK: true}
 	case menu.QueryConfig:
-		return s.configData["menu"], true, nil
+		return core.Result{Value: s.configData["menu"], OK: true}
+	case QueryAppMode:
+		return core.Result{Value: s.mode, OK: true}
+	case events.QueryServerInfo:
+		if s.events == nil {
+			return core.Result{Value: events.ServerInfo{}, OK: true}
+		}
+		return core.Result{Value: s.events.Info(), OK: true}
 	default:
-		return nil, false, nil
+		return core.Result{}
 	}
 }
 
-func (s *Service) handleConfigTask(c *core.Core, t core.Task) (any, bool, error) {
-	switch t := t.(type) {
-	case window.TaskSaveConfig:
-		s.configData["window"] = t.Value
-		s.persistSection("window", t.Value)
-		return nil, true, nil
-	case systray.TaskSaveConfig:
-		s.configData["systray"] = t.Value
-		s.persistSection("systray", t.Value)
-		return nil, true, nil
-	case menu.TaskSaveConfig:
-		s.configData["menu"] = t.Value
-		s.persistSection("menu", t.Value)
-		return nil, true, nil
-	default:
-		return nil, false, nil
+func (s *Service) persistSection(key string, value map[string]any) error {
+	if s.configFile == nil {
+		return nil
 	}
-}
-
-func (s *Service) persistSection(key string, value map[string]any) {
-	if s.cfg == nil {
-		return
+	_ = s.configFile.Set(key, value)
+	if err := s.configFile.Commit(); err != nil {
+		return err
 	}
-	_ = s.cfg.Set(key, value)
-	_ = s.cfg.Commit()
+	return nil
 }
 
 // --- Service accessors ---
 
 // windowService returns the window service from Core, or nil if not registered.
 func (s *Service) windowService() *window.Service {
-	svc, err := core.ServiceFor[*window.Service](s.Core(), "window")
-	if err != nil {
+	if s == nil || s.ServiceRuntime == nil {
+		return nil
+	}
+	svc, ok := core.ServiceFor[*window.Service](s.Core(), "window")
+	if !ok {
 		return nil
 	}
 	return svc
@@ -1236,162 +1251,234 @@ func (s *Service) windowService() *window.Service {
 // --- Window Management (delegates via IPC) ---
 
 // OpenWindow creates a new window via IPC.
-// Use: _ = svc.OpenWindow(window.WithName("editor"), window.WithURL("/editor"))
-func (s *Service) OpenWindow(opts ...window.WindowOption) error {
-	_, _, err := s.Core().PERFORM(window.TaskOpenWindow{Opts: opts})
-	return err
+func (s *Service) OpenWindow(options ...window.WindowOption) error {
+	spec, err := window.ApplyOptions(options...)
+	if err != nil {
+		return err
+	}
+	r := s.Core().Action("window.open").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskOpenWindow{Window: spec}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return e
+		}
+		return coreerr.E("display.OpenWindow", "window.open action failed", nil)
+	}
+	return nil
 }
 
 // GetWindowInfo returns information about a window via IPC.
-// Use: info, err := svc.GetWindowInfo("editor")
 func (s *Service) GetWindowInfo(name string) (*window.WindowInfo, error) {
-	result, handled, err := s.Core().QUERY(window.QueryWindowByName{Name: name})
-	if err != nil {
-		return nil, err
+	r := s.Core().QUERY(window.QueryWindowByName{Name: name})
+	if !r.OK {
+		if err, ok := r.Value.(error); ok {
+			return nil, err
+		}
+		return nil, failedAction("display.GetWindowInfo", "window.queryWindowByName")
 	}
-	if !handled {
-		return nil, fmt.Errorf("window service not available")
+	if r.Value == nil {
+		return nil, nil
 	}
-	info, _ := result.(*window.WindowInfo)
+	info, ok := r.Value.(*window.WindowInfo)
+	if !ok {
+		return nil, coreerr.E("display.GetWindowInfo", "unexpected result type", nil)
+	}
 	return info, nil
 }
 
 // ListWindowInfos returns information about all tracked windows via IPC.
-// Use: infos := svc.ListWindowInfos()
 func (s *Service) ListWindowInfos() []window.WindowInfo {
-	result, handled, _ := s.Core().QUERY(window.QueryWindowList{})
-	if !handled {
-		return nil
+	r := s.Core().QUERY(window.QueryWindowList{})
+	if !r.OK {
+		return []window.WindowInfo{}
 	}
-	list, _ := result.([]window.WindowInfo)
+	list, _ := r.Value.([]window.WindowInfo)
+	if list == nil {
+		return []window.WindowInfo{}
+	}
 	return list
 }
 
 // SetWindowPosition moves a window via IPC.
-// Use: _ = svc.SetWindowPosition("editor", 160, 120)
 func (s *Service) SetWindowPosition(name string, x, y int) error {
-	_, _, err := s.Core().PERFORM(window.TaskSetPosition{Name: name, X: x, Y: y})
-	return err
+	r := s.Core().Action("window.setPosition").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskSetPosition{Name: name, X: x, Y: y}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return e
+		}
+		return failedAction("display.SetWindowPosition", "window.setPosition")
+	}
+	return nil
 }
 
 // SetWindowSize resizes a window via IPC.
-// Use: _ = svc.SetWindowSize("editor", 1280, 800)
 func (s *Service) SetWindowSize(name string, width, height int) error {
-	_, _, err := s.Core().PERFORM(window.TaskSetSize{Name: name, W: width, H: height})
-	return err
+	r := s.Core().Action("window.setSize").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskSetSize{Name: name, Width: width, Height: height}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return e
+		}
+		return failedAction("display.SetWindowSize", "window.setSize")
+	}
+	return nil
 }
 
 // SetWindowBounds sets both position and size of a window via IPC.
-// Use: _ = svc.SetWindowBounds("editor", 160, 120, 1280, 800)
 func (s *Service) SetWindowBounds(name string, x, y, width, height int) error {
-	if _, _, err := s.Core().PERFORM(window.TaskSetPosition{Name: name, X: x, Y: y}); err != nil {
+	if err := s.SetWindowPosition(name, x, y); err != nil {
 		return err
 	}
-	_, _, err := s.Core().PERFORM(window.TaskSetSize{Name: name, W: width, H: height})
-	return err
+	return s.SetWindowSize(name, width, height)
 }
 
 // MaximizeWindow maximizes a window via IPC.
-// Use: _ = svc.MaximizeWindow("editor")
 func (s *Service) MaximizeWindow(name string) error {
-	_, _, err := s.Core().PERFORM(window.TaskMaximise{Name: name})
-	return err
+	r := s.Core().Action("window.maximise").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskMaximise{Name: name}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return e
+		}
+		return failedAction("display.MaximizeWindow", "window.maximise")
+	}
+	return nil
 }
 
 // MinimizeWindow minimizes a window via IPC.
-// Use: _ = svc.MinimizeWindow("editor")
 func (s *Service) MinimizeWindow(name string) error {
-	_, _, err := s.Core().PERFORM(window.TaskMinimise{Name: name})
-	return err
+	r := s.Core().Action("window.minimise").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskMinimise{Name: name}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return e
+		}
+		return failedAction("display.MinimizeWindow", "window.minimise")
+	}
+	return nil
 }
 
 // FocusWindow brings a window to the front via IPC.
-// Use: _ = svc.FocusWindow("editor")
 func (s *Service) FocusWindow(name string) error {
-	_, _, err := s.Core().PERFORM(window.TaskFocus{Name: name})
-	return err
-}
-
-// FocusSet is a compatibility alias for FocusWindow.
-// Use: _ = svc.FocusSet("editor")
-func (s *Service) FocusSet(name string) error {
-	return s.FocusWindow(name)
+	r := s.Core().Action("window.focus").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskFocus{Name: name}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return e
+		}
+		return failedAction("display.FocusWindow", "window.focus")
+	}
+	return nil
 }
 
 // CloseWindow closes a window via IPC.
-// Use: _ = svc.CloseWindow("editor")
 func (s *Service) CloseWindow(name string) error {
-	_, _, err := s.Core().PERFORM(window.TaskCloseWindow{Name: name})
-	return err
+	r := s.Core().Action("window.close").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskCloseWindow{Name: name}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return e
+		}
+		return failedAction("display.CloseWindow", "window.close")
+	}
+	return nil
 }
 
-// RestoreWindow restores a maximized/minimized window via IPC.
-// Use: _ = svc.RestoreWindow("editor")
+// RestoreWindow restores a maximized/minimized window.
 func (s *Service) RestoreWindow(name string) error {
-	_, _, err := s.Core().PERFORM(window.TaskRestore{Name: name})
-	return err
+	r := s.Core().Action("window.restore").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskRestore{Name: name}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return e
+		}
+		return failedAction("display.RestoreWindow", "window.restore")
+	}
+	return nil
 }
 
-// SetWindowVisibility shows or hides a window via IPC.
-// Use: _ = svc.SetWindowVisibility("editor", false)
+// SetWindowVisibility shows or hides a window.
 func (s *Service) SetWindowVisibility(name string, visible bool) error {
-	_, _, err := s.Core().PERFORM(window.TaskSetVisibility{Name: name, Visible: visible})
-	return err
+	r := s.Core().Action("window.setVisibility").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskSetVisibility{Name: name, Visible: visible}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return e
+		}
+		return failedAction("display.SetWindowVisibility", "window.setVisibility")
+	}
+	return nil
 }
 
-// SetWindowAlwaysOnTop sets whether a window stays on top via IPC.
-// Use: _ = svc.SetWindowAlwaysOnTop("editor", true)
+// SetWindowAlwaysOnTop sets whether a window stays on top.
 func (s *Service) SetWindowAlwaysOnTop(name string, alwaysOnTop bool) error {
-	_, _, err := s.Core().PERFORM(window.TaskSetAlwaysOnTop{Name: name, AlwaysOnTop: alwaysOnTop})
-	return err
+	r := s.Core().Action("window.setAlwaysOnTop").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskSetAlwaysOnTop{Name: name, AlwaysOnTop: alwaysOnTop}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return e
+		}
+		return failedAction("display.SetWindowAlwaysOnTop", "window.setAlwaysOnTop")
+	}
+	return nil
 }
 
-// SetWindowTitle changes a window's title via IPC.
-// Use: _ = svc.SetWindowTitle("editor", "Core Editor")
+// SetWindowTitle changes a window's title.
 func (s *Service) SetWindowTitle(name string, title string) error {
-	_, _, err := s.Core().PERFORM(window.TaskSetTitle{Name: name, Title: title})
-	return err
+	r := s.Core().Action("window.setTitle").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskSetTitle{Name: name, Title: title}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return e
+		}
+		return failedAction("display.SetWindowTitle", "window.setTitle")
+	}
+	return nil
 }
 
-// SetWindowFullscreen sets a window to fullscreen mode via IPC.
-// Use: _ = svc.SetWindowFullscreen("editor", true)
+// SetWindowFullscreen sets a window to fullscreen mode.
 func (s *Service) SetWindowFullscreen(name string, fullscreen bool) error {
-	_, _, err := s.Core().PERFORM(window.TaskFullscreen{Name: name, Fullscreen: fullscreen})
-	return err
+	r := s.Core().Action("window.fullscreen").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskFullscreen{Name: name, Fullscreen: fullscreen}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return e
+		}
+		return failedAction("display.SetWindowFullscreen", "window.fullscreen")
+	}
+	return nil
 }
 
-// SetWindowBackgroundColour sets the background colour of a window via IPC.
-// Use: _ = svc.SetWindowBackgroundColour("editor", 0, 0, 0, 0)
+// SetWindowBackgroundColour sets the background colour of a window.
 func (s *Service) SetWindowBackgroundColour(name string, r, g, b, a uint8) error {
-	_, _, err := s.Core().PERFORM(window.TaskSetBackgroundColour{
-		Name:  name,
-		Red:   r,
-		Green: g,
-		Blue:  b,
-		Alpha: a,
-	})
-	return err
-}
-
-// SetWindowOpacity updates a window's opacity via IPC.
-// Use: _ = svc.SetWindowOpacity("editor", 0.85)
-func (s *Service) SetWindowOpacity(name string, opacity float32) error {
-	_, _, err := s.Core().PERFORM(window.TaskSetOpacity{
-		Name:    name,
-		Opacity: opacity,
-	})
-	return err
-}
-
-// ClearWebviewConsole clears the captured console buffer for a window.
-// Use: _ = svc.ClearWebviewConsole("editor")
-func (s *Service) ClearWebviewConsole(name string) error {
-	_, _, err := s.Core().PERFORM(webview.TaskClearConsole{Window: name})
-	return err
+	result := s.Core().Action("window.setBackgroundColour").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskSetBackgroundColour{
+			Name: name, Red: r, Green: g, Blue: b, Alpha: a,
+		}},
+	))
+	if !result.OK {
+		if e, ok := result.Value.(error); ok {
+			return e
+		}
+		return failedAction("display.SetWindowBackgroundColour", "window.setBackgroundColour")
+	}
+	return nil
 }
 
 // GetFocusedWindow returns the name of the currently focused window.
-// Use: focused := svc.GetFocusedWindow()
 func (s *Service) GetFocusedWindow() string {
 	infos := s.ListWindowInfos()
 	for _, info := range infos {
@@ -1403,20 +1490,18 @@ func (s *Service) GetFocusedWindow() string {
 }
 
 // GetWindowTitle returns the title of a window by name.
-// Use: title, err := svc.GetWindowTitle("editor")
 func (s *Service) GetWindowTitle(name string) (string, error) {
 	info, err := s.GetWindowInfo(name)
 	if err != nil {
 		return "", err
 	}
 	if info == nil {
-		return "", fmt.Errorf("window not found: %s", name)
+		return "", coreerr.E("display.GetWindowTitle", "window not found: "+name, nil)
 	}
 	return info.Title, nil
 }
 
 // ResetWindowState clears saved window positions.
-// Use: _ = svc.ResetWindowState()
 func (s *Service) ResetWindowState() error {
 	ws := s.windowService()
 	if ws != nil {
@@ -1426,11 +1511,10 @@ func (s *Service) ResetWindowState() error {
 }
 
 // GetSavedWindowStates returns all saved window states.
-// Use: states := svc.GetSavedWindowStates()
 func (s *Service) GetSavedWindowStates() map[string]window.WindowState {
 	ws := s.windowService()
 	if ws == nil {
-		return nil
+		return map[string]window.WindowState{}
 	}
 	result := make(map[string]window.WindowState)
 	for _, name := range ws.Manager().State().ListStates() {
@@ -1441,865 +1525,306 @@ func (s *Service) GetSavedWindowStates() map[string]window.WindowState {
 	return result
 }
 
-// CreateWindowOptions contains options for creating a new window.
-// Use: opts := display.CreateWindowOptions{Name: "editor", URL: "/editor"}
+// CreateWindowOptions specifies the initial state for a new named window.
+// svc.CreateWindow(display.CreateWindowOptions{Name: "settings", URL: "/settings", Width: 800, Height: 600})
 type CreateWindowOptions struct {
-	Name             string   `json:"name"`
-	Title            string   `json:"title,omitempty"`
-	URL              string   `json:"url,omitempty"`
-	X                int      `json:"x,omitempty"`
-	Y                int      `json:"y,omitempty"`
-	Width            int      `json:"width,omitempty"`
-	Height           int      `json:"height,omitempty"`
-	AlwaysOnTop      bool     `json:"alwaysOnTop,omitempty"`
-	BackgroundColour [4]uint8 `json:"backgroundColour,omitempty"`
+	Name   string `json:"name"`
+	Title  string `json:"title,omitempty"`
+	URL    string `json:"url,omitempty"`
+	X      int    `json:"x,omitempty"`
+	Y      int    `json:"y,omitempty"`
+	Width  int    `json:"width,omitempty"`
+	Height int    `json:"height,omitempty"`
 }
 
-// CreateWindow creates a new window with the specified options.
-// Use: info, err := svc.CreateWindow(display.CreateWindowOptions{Name: "editor", URL: "/editor"})
-func (s *Service) CreateWindow(opts CreateWindowOptions) (*window.WindowInfo, error) {
-	if opts.Name == "" {
-		return nil, fmt.Errorf("window name is required")
+func (s *Service) CreateWindow(options CreateWindowOptions) (*window.WindowInfo, error) {
+	if options.Name == "" {
+		return nil, coreerr.E("display.CreateWindow", "window name is required", nil)
 	}
-	result, _, err := s.Core().PERFORM(window.TaskOpenWindow{
-		Window: &window.Window{
-			Name:             opts.Name,
-			Title:            opts.Title,
-			URL:              opts.URL,
-			X:                opts.X,
-			Y:                opts.Y,
-			Width:            opts.Width,
-			Height:           opts.Height,
-			AlwaysOnTop:      opts.AlwaysOnTop,
-			BackgroundColour: opts.BackgroundColour,
-		},
-	})
-	if err != nil {
-		return nil, err
+	r := s.Core().Action("window.open").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskOpenWindow{
+			Window: &window.Window{
+				Name:   options.Name,
+				Title:  options.Title,
+				URL:    options.URL,
+				Width:  options.Width,
+				Height: options.Height,
+				X:      options.X,
+				Y:      options.Y,
+			},
+		}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return nil, e
+		}
+		return nil, coreerr.E("display.CreateWindow", "window.open action failed", nil)
 	}
-	info := result.(window.WindowInfo)
+	info, ok := r.Value.(window.WindowInfo)
+	if !ok {
+		return nil, coreerr.E("display.CreateWindow", "unexpected result type", nil)
+	}
 	return &info, nil
 }
 
 // --- Layout delegation ---
 
 // SaveLayout saves the current window arrangement as a named layout.
-// Use: _ = svc.SaveLayout("coding")
 func (s *Service) SaveLayout(name string) error {
-	ws := s.windowService()
-	if ws == nil {
-		return fmt.Errorf("window service not available")
-	}
-	states := make(map[string]window.WindowState)
-	for _, n := range ws.Manager().List() {
-		if pw, ok := ws.Manager().Get(n); ok {
-			x, y := pw.Position()
-			w, h := pw.Size()
-			states[n] = window.WindowState{X: x, Y: y, Width: w, Height: h, Maximized: pw.IsMaximised()}
+	r := s.Core().Action("window.saveLayout").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskSaveLayout{Name: name}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return e
 		}
+		return failedAction("display.SaveLayout", "window.saveLayout")
 	}
-	return ws.Manager().Layout().SaveLayout(name, states)
+	return nil
 }
 
 // RestoreLayout applies a saved layout.
-// Use: _ = svc.RestoreLayout("coding")
 func (s *Service) RestoreLayout(name string) error {
-	ws := s.windowService()
-	if ws == nil {
-		return fmt.Errorf("window service not available")
-	}
-	layout, ok := ws.Manager().Layout().GetLayout(name)
-	if !ok {
-		return fmt.Errorf("layout not found: %s", name)
-	}
-	for wName, state := range layout.Windows {
-		if pw, ok := ws.Manager().Get(wName); ok {
-			pw.SetPosition(state.X, state.Y)
-			pw.SetSize(state.Width, state.Height)
-			if state.Maximized {
-				pw.Maximise()
-			} else {
-				pw.Restore()
-			}
+	r := s.Core().Action("window.restoreLayout").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskRestoreLayout{Name: name}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return e
 		}
+		return failedAction("display.RestoreLayout", "window.restoreLayout")
 	}
 	return nil
 }
 
 // ListLayouts returns all saved layout names with metadata.
-// Use: layouts := svc.ListLayouts()
 func (s *Service) ListLayouts() []window.LayoutInfo {
-	ws := s.windowService()
-	if ws == nil {
-		return nil
+	r := s.Core().QUERY(window.QueryLayoutList{})
+	if !r.OK {
+		return []window.LayoutInfo{}
 	}
-	return ws.Manager().Layout().ListLayouts()
+	layouts, _ := r.Value.([]window.LayoutInfo)
+	if layouts == nil {
+		return []window.LayoutInfo{}
+	}
+	return layouts
 }
 
 // DeleteLayout removes a saved layout by name.
-// Use: _ = svc.DeleteLayout("coding")
 func (s *Service) DeleteLayout(name string) error {
-	ws := s.windowService()
-	if ws == nil {
-		return fmt.Errorf("window service not available")
+	r := s.Core().Action("window.deleteLayout").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskDeleteLayout{Name: name}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return e
+		}
+		return failedAction("display.DeleteLayout", "window.deleteLayout")
 	}
-	ws.Manager().Layout().DeleteLayout(name)
 	return nil
 }
 
 // GetLayout returns a specific layout by name.
-// Use: layout := svc.GetLayout("coding")
 func (s *Service) GetLayout(name string) *window.Layout {
-	ws := s.windowService()
-	if ws == nil {
+	r := s.Core().QUERY(window.QueryLayoutGet{Name: name})
+	if !r.OK {
 		return nil
 	}
-	layout, ok := ws.Manager().Layout().GetLayout(name)
+	if r.Value == nil {
+		return nil
+	}
+	layout, ok := r.Value.(*window.Layout)
 	if !ok {
 		return nil
 	}
-	return &layout
+	return layout
 }
 
 // --- Tiling/snapping delegation ---
 
 // TileWindows arranges windows in a tiled layout.
-// Use: _ = svc.TileWindows(window.TileModeLeftRight, []string{"left", "right"})
 func (s *Service) TileWindows(mode window.TileMode, windowNames []string) error {
-	ws := s.windowService()
-	if ws == nil {
-		return fmt.Errorf("window service not available")
+	r := s.Core().Action("window.tileWindows").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskTileWindows{Mode: mode.String(), Windows: windowNames}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return e
+		}
+		return failedAction("display.TileWindows", "window.tileWindows")
 	}
-	screenWidth, screenHeight := s.primaryScreenSize()
-	return ws.Manager().TileWindows(mode, windowNames, screenWidth, screenHeight)
+	return nil
 }
 
 // SnapWindow snaps a window to a screen edge or corner.
-// Use: _ = svc.SnapWindow("editor", window.SnapRight)
 func (s *Service) SnapWindow(name string, position window.SnapPosition) error {
-	ws := s.windowService()
-	if ws == nil {
-		return fmt.Errorf("window service not available")
+	r := s.Core().Action("window.snapWindow").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskSnapWindow{Name: name, Position: position.String()}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return e
+		}
+		return failedAction("display.SnapWindow", "window.snapWindow")
 	}
-	screenWidth, screenHeight := s.primaryScreenSize()
-	return ws.Manager().SnapWindow(name, position, screenWidth, screenHeight)
-}
-
-func (s *Service) primaryScreenSize() (int, int) {
-	const fallbackWidth = 1920
-	const fallbackHeight = 1080
-
-	result, handled, err := s.Core().QUERY(screen.QueryPrimary{})
-	if err != nil || !handled {
-		return fallbackWidth, fallbackHeight
-	}
-
-	primary, ok := result.(*screen.Screen)
-	if !ok || primary == nil {
-		return fallbackWidth, fallbackHeight
-	}
-
-	width := primary.WorkArea.Width
-	height := primary.WorkArea.Height
-	if width <= 0 || height <= 0 {
-		width = primary.Bounds.Width
-		height = primary.Bounds.Height
-	}
-	if width <= 0 || height <= 0 {
-		return fallbackWidth, fallbackHeight
-	}
-
-	return width, height
+	return nil
 }
 
 // StackWindows arranges windows in a cascade pattern.
-// Use: _ = svc.StackWindows([]string{"editor", "terminal"}, 24, 24)
 func (s *Service) StackWindows(windowNames []string, offsetX, offsetY int) error {
-	ws := s.windowService()
-	if ws == nil {
-		return fmt.Errorf("window service not available")
+	r := s.Core().Action("window.stackWindows").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskStackWindows{Windows: windowNames, OffsetX: offsetX, OffsetY: offsetY}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return e
+		}
+		return failedAction("display.StackWindows", "window.stackWindows")
 	}
-	return ws.Manager().StackWindows(windowNames, offsetX, offsetY)
+	return nil
 }
 
 // ApplyWorkflowLayout applies a predefined layout for a specific workflow.
-// Use: _ = svc.ApplyWorkflowLayout(window.WorkflowCoding)
 func (s *Service) ApplyWorkflowLayout(workflow window.WorkflowLayout) error {
-	ws := s.windowService()
-	if ws == nil {
-		return fmt.Errorf("window service not available")
-	}
-	screenWidth, screenHeight := s.primaryScreenSize()
-	return ws.Manager().ApplyWorkflow(workflow, ws.Manager().List(), screenWidth, screenHeight)
-}
-
-// ArrangeWindowPair places two windows side by side using the window manager's balanced split.
-// Use: _ = svc.ArrangeWindowPair("editor", "terminal")
-func (s *Service) ArrangeWindowPair(first, second string) error {
-	ws := s.windowService()
-	if ws == nil {
-		return fmt.Errorf("window service not available")
-	}
-	screenWidth, screenHeight := s.primaryScreenSize()
-	return ws.Manager().ArrangePair(first, second, screenWidth, screenHeight)
-}
-
-// FindSpace returns a free placement suggestion for a new window.
-// Use: space, err := svc.FindSpace(800, 600)
-func (s *Service) FindSpace(width, height int) (window.SpaceInfo, error) {
-	ws := s.windowService()
-	if ws == nil {
-		return window.SpaceInfo{}, fmt.Errorf("window service not available")
-	}
-	screenWidth, screenHeight := s.primaryScreenSize()
-	if width <= 0 {
-		width = screenWidth / 2
-	}
-	if height <= 0 {
-		height = screenHeight / 2
-	}
-	return ws.Manager().FindSpace(screenWidth, screenHeight, width, height), nil
-}
-
-// SuggestLayout returns a recommended arrangement for the current screen.
-// Use: suggestion, err := svc.SuggestLayout(3, 1920, 1080)
-func (s *Service) SuggestLayout(windowCount, screenWidth, screenHeight int) (window.LayoutSuggestion, error) {
-	result, handled, err := s.Core().QUERY(window.QueryLayoutSuggestion{
-		WindowCount:  windowCount,
-		ScreenWidth:  screenWidth,
-		ScreenHeight: screenHeight,
-	})
-	if err != nil {
-		return window.LayoutSuggestion{}, err
-	}
-	if !handled {
-		return window.LayoutSuggestion{}, fmt.Errorf("window service not available")
-	}
-	suggestion, _ := result.(window.LayoutSuggestion)
-	return suggestion, nil
-}
-
-// BesideEditor positions a target window beside an editor window.
-// Use: _ = svc.BesideEditor("editor", "assistant")
-func (s *Service) BesideEditor(editorName, windowName string) error {
-	_, _, err := s.Core().PERFORM(window.TaskBesideEditor{
-		Editor: editorName,
-		Window: windowName,
-	})
-	return err
-}
-
-// --- Screen management ---
-
-// GetScreens returns all known screens.
-// Use: screens := svc.GetScreens()
-func (s *Service) GetScreens() []screen.Screen {
-	result, handled, _ := s.Core().QUERY(screen.QueryAll{})
-	if !handled {
-		return nil
-	}
-	screens, _ := result.([]screen.Screen)
-	return screens
-}
-
-// GetScreen returns a screen by ID.
-// Use: screenInfo, err := svc.GetScreen("primary")
-func (s *Service) GetScreen(id string) (*screen.Screen, error) {
-	result, handled, err := s.Core().QUERY(screen.QueryByID{ID: id})
-	if err != nil {
-		return nil, err
-	}
-	if !handled {
-		return nil, fmt.Errorf("screen service not available")
-	}
-	scr, _ := result.(*screen.Screen)
-	return scr, nil
-}
-
-// GetPrimaryScreen returns the primary screen.
-// Use: primary, err := svc.GetPrimaryScreen()
-func (s *Service) GetPrimaryScreen() (*screen.Screen, error) {
-	result, handled, err := s.Core().QUERY(screen.QueryPrimary{})
-	if err != nil {
-		return nil, err
-	}
-	if !handled {
-		return nil, fmt.Errorf("screen service not available")
-	}
-	scr, _ := result.(*screen.Screen)
-	return scr, nil
-}
-
-// GetScreenAtPoint returns the screen containing the specified point.
-// Use: screenInfo, err := svc.GetScreenAtPoint(1280, 720)
-func (s *Service) GetScreenAtPoint(x, y int) (*screen.Screen, error) {
-	result, handled, err := s.Core().QUERY(screen.QueryAtPoint{X: x, Y: y})
-	if err != nil {
-		return nil, err
-	}
-	if !handled {
-		return nil, fmt.Errorf("screen service not available")
-	}
-	scr, _ := result.(*screen.Screen)
-	return scr, nil
-}
-
-// GetScreenForWindow returns the screen containing the named window.
-// Use: screenInfo, err := svc.GetScreenForWindow("editor")
-func (s *Service) GetScreenForWindow(name string) (*screen.Screen, error) {
-	info, err := s.GetWindowInfo(name)
-	if err != nil {
-		return nil, err
-	}
-	if info == nil {
-		return nil, nil
-	}
-	x := info.X
-	y := info.Y
-	if info.Width > 0 && info.Height > 0 {
-		x += info.Width / 2
-		y += info.Height / 2
-	}
-	return s.GetScreenAtPoint(x, y)
-}
-
-// GetWorkAreas returns the usable area of every screen.
-// Use: areas := svc.GetWorkAreas()
-func (s *Service) GetWorkAreas() []screen.Rect {
-	result, handled, _ := s.Core().QUERY(screen.QueryWorkAreas{})
-	if !handled {
-		return nil
-	}
-	areas, _ := result.([]screen.Rect)
-	return areas
-}
-
-// --- Clipboard ---
-
-// ReadClipboard returns the current clipboard text content.
-// Use: text, err := svc.ReadClipboard()
-func (s *Service) ReadClipboard() (string, error) {
-	result, handled, err := s.Core().QUERY(clipboard.QueryText{})
-	if err != nil {
-		return "", err
-	}
-	if !handled {
-		return "", core.E("display.ReadClipboard", "clipboard service not available", nil)
-	}
-	content, _ := result.(clipboard.ClipboardContent)
-	return content.Text, nil
-}
-
-// WriteClipboard writes text to the clipboard.
-// Use: _ = svc.WriteClipboard("updated")
-func (s *Service) WriteClipboard(text string) error {
-	result, handled, err := s.Core().PERFORM(clipboard.TaskSetText{Text: text})
-	if err != nil {
-		return err
-	}
-	if !handled {
-		return core.E("display.WriteClipboard", "clipboard service not available", nil)
-	}
-	if ok, _ := result.(bool); !ok {
-		return core.E("display.WriteClipboard", "clipboard write failed", nil)
-	}
-	return nil
-}
-
-// HasClipboard reports whether the clipboard has text or image content.
-// Use: hasContent := svc.HasClipboard()
-func (s *Service) HasClipboard() bool {
-	textResult, textHandled, _ := s.Core().QUERY(clipboard.QueryText{})
-	if textHandled {
-		if content, ok := textResult.(clipboard.ClipboardContent); ok && content.HasContent {
-			return true
+	r := s.Core().Action("window.applyWorkflow").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskApplyWorkflow{Workflow: workflow.String()}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return e
 		}
+		return failedAction("display.ApplyWorkflowLayout", "window.applyWorkflow")
 	}
-	imageResult, imageHandled, _ := s.Core().QUERY(clipboard.QueryImage{})
-	if imageHandled {
-		if content, ok := imageResult.(clipboard.ClipboardImageContent); ok && content.HasContent {
-			return true
+	return nil
+}
+
+// LayoutBesideEditor places a window beside a detected editor window.
+//
+//	result, err := svc.LayoutBesideEditor("preview", "code", "right", 0.62)
+func (s *Service) LayoutBesideEditor(name, editor, side string, ratio float64) (window.LayoutBesideEditorResult, error) {
+	r := s.Core().Action("window.layoutBesideEditor").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskLayoutBesideEditor{
+			Name: name, Editor: editor, Side: side, Ratio: ratio,
+		}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return window.LayoutBesideEditorResult{}, e
 		}
+		return window.LayoutBesideEditorResult{}, failedAction("display.LayoutBesideEditor", "window.layoutBesideEditor")
 	}
-	return false
-}
-
-// ClearClipboard clears clipboard text and any image data when supported.
-// Use: _ = svc.ClearClipboard()
-func (s *Service) ClearClipboard() error {
-	result, handled, err := s.Core().PERFORM(clipboard.TaskClear{})
-	if err != nil {
-		return err
-	}
-	if !handled {
-		return core.E("display.ClearClipboard", "clipboard service not available", nil)
-	}
-	if ok, _ := result.(bool); !ok {
-		return core.E("display.ClearClipboard", "clipboard clear failed", nil)
-	}
-	return nil
-}
-
-// ReadClipboardImage returns the clipboard image content.
-// Use: image, err := svc.ReadClipboardImage()
-func (s *Service) ReadClipboardImage() (clipboard.ClipboardImageContent, error) {
-	result, handled, err := s.Core().QUERY(clipboard.QueryImage{})
-	if err != nil {
-		return clipboard.ClipboardImageContent{}, err
-	}
-	if !handled {
-		return clipboard.ClipboardImageContent{}, core.E("display.ReadClipboardImage", "clipboard service not available", nil)
-	}
-	content, _ := result.(clipboard.ClipboardImageContent)
-	return content, nil
-}
-
-// WriteClipboardImage writes raw image data to the clipboard.
-// Use: _ = svc.WriteClipboardImage(data)
-func (s *Service) WriteClipboardImage(data []byte) error {
-	result, handled, err := s.Core().PERFORM(clipboard.TaskSetImage{Data: data})
-	if err != nil {
-		return err
-	}
-	if !handled {
-		return core.E("display.WriteClipboardImage", "clipboard service not available", nil)
-	}
-	if ok, _ := result.(bool); !ok {
-		return core.E("display.WriteClipboardImage", "clipboard image write failed", nil)
-	}
-	return nil
-}
-
-// --- Notifications ---
-
-// ShowNotification sends a native notification.
-// Use: _ = svc.ShowNotification(notification.NotificationOptions{Title: "Build complete", Message: "All checks passed"})
-func (s *Service) ShowNotification(opts notification.NotificationOptions) error {
-	_, handled, err := s.Core().PERFORM(notification.TaskSend{Opts: opts})
-	if err != nil {
-		return err
-	}
-	if !handled {
-		return core.E("display.ShowNotification", "notification service not available", nil)
-	}
-	return nil
-}
-
-// ShowInfoNotification sends an informational notification.
-// Use: _ = svc.ShowInfoNotification("Build complete", "All checks passed")
-func (s *Service) ShowInfoNotification(title, message string) error {
-	return s.ShowNotification(notification.NotificationOptions{
-		Title:    title,
-		Message:  message,
-		Severity: notification.SeverityInfo,
-	})
-}
-
-// ShowWarningNotification sends a warning notification.
-// Use: _ = svc.ShowWarningNotification("Build warning", "Tests are flaky")
-func (s *Service) ShowWarningNotification(title, message string) error {
-	return s.ShowNotification(notification.NotificationOptions{
-		Title:    title,
-		Message:  message,
-		Severity: notification.SeverityWarning,
-	})
-}
-
-// ShowErrorNotification sends an error notification.
-// Use: _ = svc.ShowErrorNotification("Build failed", "See the log output")
-func (s *Service) ShowErrorNotification(title, message string) error {
-	return s.ShowNotification(notification.NotificationOptions{
-		Title:    title,
-		Message:  message,
-		Severity: notification.SeverityError,
-	})
-}
-
-// RequestNotificationPermission requests notification permission.
-// Use: granted, err := svc.RequestNotificationPermission()
-func (s *Service) RequestNotificationPermission() (bool, error) {
-	result, handled, err := s.Core().PERFORM(notification.TaskRequestPermission{})
-	if err != nil {
-		return false, err
-	}
-	if !handled {
-		return false, fmt.Errorf("notification service not available")
-	}
-	granted, _ := result.(bool)
-	return granted, nil
-}
-
-// CheckNotificationPermission checks notification permission.
-// Use: granted, err := svc.CheckNotificationPermission()
-func (s *Service) CheckNotificationPermission() (bool, error) {
-	result, handled, err := s.Core().QUERY(notification.QueryPermission{})
-	if err != nil {
-		return false, err
-	}
-	if !handled {
-		return false, fmt.Errorf("notification service not available")
-	}
-	status, _ := result.(notification.PermissionStatus)
-	return status.Granted, nil
-}
-
-// ClearNotifications clears notifications when supported.
-// Use: _ = svc.ClearNotifications()
-func (s *Service) ClearNotifications() error {
-	_, handled, err := s.Core().PERFORM(notification.TaskClear{})
-	if err != nil {
-		return err
-	}
-	if !handled {
-		return fmt.Errorf("notification service not available")
-	}
-	return nil
-}
-
-// --- Dialogs ---
-
-// OpenFileDialog opens a file picker and returns all selected paths.
-// Use: paths, err := svc.OpenFileDialog(dialog.OpenFileOptions{Title: "Open report"})
-func (s *Service) OpenFileDialog(opts dialog.OpenFileOptions) ([]string, error) {
-	result, handled, err := s.Core().PERFORM(dialog.TaskOpenFile{Opts: opts})
-	if err != nil {
-		return nil, err
-	}
-	if !handled {
-		return nil, fmt.Errorf("dialog service not available")
-	}
-	paths, _ := result.([]string)
-	return paths, nil
-}
-
-// OpenSingleFileDialog opens a file picker and returns the first selected path.
-// Use: path, err := svc.OpenSingleFileDialog(dialog.OpenFileOptions{Title: "Open report"})
-func (s *Service) OpenSingleFileDialog(opts dialog.OpenFileOptions) (string, error) {
-	paths, err := s.OpenFileDialog(opts)
-	if err != nil {
-		return "", err
-	}
-	if len(paths) == 0 {
-		return "", nil
-	}
-	return paths[0], nil
-}
-
-// SaveFileDialog opens a save dialog and returns the selected path.
-// Use: path, err := svc.SaveFileDialog(dialog.SaveFileOptions{Title: "Export report"})
-func (s *Service) SaveFileDialog(opts dialog.SaveFileOptions) (string, error) {
-	result, handled, err := s.Core().PERFORM(dialog.TaskSaveFile{Opts: opts})
-	if err != nil {
-		return "", err
-	}
-	if !handled {
-		return "", fmt.Errorf("dialog service not available")
-	}
-	path, _ := result.(string)
-	return path, nil
-}
-
-// OpenDirectoryDialog opens a directory picker and returns the selected path.
-// Use: path, err := svc.OpenDirectoryDialog(dialog.OpenDirectoryOptions{Title: "Choose workspace"})
-func (s *Service) OpenDirectoryDialog(opts dialog.OpenDirectoryOptions) (string, error) {
-	result, handled, err := s.Core().PERFORM(dialog.TaskOpenDirectory{Opts: opts})
-	if err != nil {
-		return "", err
-	}
-	if !handled {
-		return "", fmt.Errorf("dialog service not available")
-	}
-	path, _ := result.(string)
-	return path, nil
-}
-
-// ConfirmDialog shows a confirmation prompt.
-// Use: confirmed, err := svc.ConfirmDialog("Delete file", "Remove report.txt?")
-func (s *Service) ConfirmDialog(title, message string) (bool, error) {
-	result, handled, err := s.Core().PERFORM(dialog.TaskMessageDialog{
-		Opts: dialog.MessageDialogOptions{
-			Type:    dialog.DialogQuestion,
-			Title:   title,
-			Message: message,
-			Buttons: []string{"Yes", "No"},
-		},
-	})
-	if err != nil {
-		return false, err
-	}
-	if !handled {
-		return false, fmt.Errorf("dialog service not available")
-	}
-	button, _ := result.(string)
-	return button == "Yes" || button == "OK", nil
-}
-
-// PromptDialog shows a prompt-style dialog and returns entered text when the webview
-// prompt path is available, otherwise it falls back to a button-based message dialog.
-// Use: value, accepted, err := svc.PromptDialog("Rename file", "Enter a new name")
-func (s *Service) PromptDialog(title, message string) (string, bool, error) {
-	if text, ok, err := s.promptViaWebView(title, message); err == nil {
-		if ok {
-			return text, true, nil
-		}
-		return "", false, nil
-	}
-
-	// Fall back to the native message dialog path when no webview prompt is available.
-	// The returned error is intentionally ignored unless the fallback also fails.
-
-	result, handled, err := s.Core().PERFORM(dialog.TaskMessageDialog{
-		Opts: dialog.MessageDialogOptions{
-			Type:    dialog.DialogInfo,
-			Title:   title,
-			Message: message,
-			Buttons: []string{"OK", "Cancel"},
-		},
-	})
-	if err != nil {
-		return "", false, err
-	}
-	if !handled {
-		return "", false, fmt.Errorf("dialog service not available")
-	}
-	button, _ := result.(string)
-	return button, button == "OK", nil
-}
-
-func (s *Service) promptViaWebView(title, message string) (string, bool, error) {
-	windowName := s.GetFocusedWindow()
-	if windowName == "" {
-		infos := s.ListWindowInfos()
-		if len(infos) > 0 {
-			windowName = infos[0].Name
-		}
-	}
-	if windowName == "" {
-		return "", false, fmt.Errorf("no webview window available")
-	}
-
-	encodedTitle, err := json.Marshal(title)
-	if err != nil {
-		return "", false, err
-	}
-	encodedMessage, err := json.Marshal(message)
-	if err != nil {
-		return "", false, err
-	}
-
-	result, handled, err := s.Core().PERFORM(webview.TaskEvaluate{
-		Window: windowName,
-		Script: "window.prompt(" + string(encodedTitle) + "," + string(encodedMessage) + ")",
-	})
-	if err != nil {
-		return "", false, err
-	}
-	if !handled {
-		return "", false, fmt.Errorf("webview service not available")
-	}
-	if result == nil {
-		return "", false, nil
-	}
-	if text, ok := result.(string); ok {
-		return text, true, nil
-	}
-	return fmt.Sprint(result), true, nil
-}
-
-// DialogMessage shows an informational, warning, or error message via the notification pipeline.
-// Use: _ = svc.DialogMessage("warning", "Build failed", "Check the log output")
-func (s *Service) DialogMessage(kind, title, message string) error {
-	var severity notification.NotificationSeverity
-	switch kind {
-	case "warning":
-		severity = notification.SeverityWarning
-	case "error":
-		severity = notification.SeverityError
-	default:
-		severity = notification.SeverityInfo
-	}
-	_, _, err := s.Core().PERFORM(notification.TaskSend{
-		Opts: notification.NotificationOptions{
-			Title:    title,
-			Message:  message,
-			Severity: severity,
-		},
-	})
-	return err
-}
-
-// --- Theme ---
-
-// GetTheme returns the current theme state.
-// Use: theme := svc.GetTheme()
-func (s *Service) GetTheme() *Theme {
-	result, handled, err := s.Core().QUERY(environment.QueryTheme{})
-	if err != nil || !handled {
-		return nil
-	}
-	theme, ok := result.(environment.ThemeInfo)
+	result, ok := r.Value.(window.LayoutBesideEditorResult)
 	if !ok {
-		return nil
+		return window.LayoutBesideEditorResult{}, coreerr.E("display.LayoutBesideEditor", "unexpected result type", nil)
 	}
-	return &Theme{IsDark: theme.IsDark}
+	return result, nil
 }
 
-// GetSystemTheme returns the current system theme preference.
-// Use: theme := svc.GetSystemTheme()
-func (s *Service) GetSystemTheme() string {
-	result, handled, err := s.Core().QUERY(environment.QueryTheme{})
-	if err != nil || !handled {
-		return ""
+// LayoutSuggest returns a layout recommendation for the current screen.
+//
+//	suggestion, err := svc.LayoutSuggest("", 2)
+func (s *Service) LayoutSuggest(screenID string, windowCount int) (window.LayoutSuggestion, error) {
+	r := s.Core().Action("window.layoutSuggest").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskLayoutSuggest{
+			ScreenID: screenID, WindowCount: windowCount,
+		}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return window.LayoutSuggestion{}, e
+		}
+		return window.LayoutSuggestion{}, failedAction("display.LayoutSuggest", "window.layoutSuggest")
 	}
-	theme, ok := result.(environment.ThemeInfo)
+	result, ok := r.Value.(window.LayoutSuggestion)
 	if !ok {
-		return ""
+		return window.LayoutSuggestion{}, coreerr.E("display.LayoutSuggest", "unexpected result type", nil)
 	}
-	if theme.IsDark {
-		return "dark"
-	}
-	return "light"
+	return result, nil
 }
 
-// SetTheme overrides the application theme.
-// Use: _ = svc.SetTheme(true)
-func (s *Service) SetTheme(isDark bool) error {
-	if isDark {
-		return s.SetThemeMode("dark")
+// FindScreenSpace finds an unused rectangle for a new window.
+//
+//	space, err := svc.FindScreenSpace("", 800, 600, 24)
+func (s *Service) FindScreenSpace(screenID string, width, height, padding int) (window.ScreenSpace, error) {
+	r := s.Core().Action("window.findSpace").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskScreenFindSpace{
+			ScreenID: screenID, Width: width, Height: height, Padding: padding,
+		}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return window.ScreenSpace{}, e
+		}
+		return window.ScreenSpace{}, failedAction("display.FindScreenSpace", "window.findSpace")
 	}
-	return s.SetThemeMode("light")
+	result, ok := r.Value.(window.ScreenSpace)
+	if !ok {
+		return window.ScreenSpace{}, coreerr.E("display.FindScreenSpace", "unexpected result type", nil)
+	}
+	return result, nil
 }
 
-// SetThemeMode overrides the application theme using a declarative mode string.
-// Use: _ = svc.SetThemeMode("system")
-func (s *Service) SetThemeMode(theme string) error {
-	_, handled, err := s.Core().PERFORM(environment.TaskSetTheme{Theme: theme})
-	if err != nil {
-		return err
+// ArrangeWindowPair positions two windows in an optimal split.
+//
+//	arrangement, err := svc.ArrangeWindowPair("editor", "preview", "", 0.55)
+func (s *Service) ArrangeWindowPair(primary, secondary, screenID string, ratio float64) (window.PairArrangement, error) {
+	r := s.Core().Action("window.arrangePair").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskWindowArrangePair{
+			Primary: primary, Secondary: secondary, ScreenID: screenID, Ratio: ratio,
+		}},
+	))
+	if !r.OK {
+		if e, ok := r.Value.(error); ok {
+			return window.PairArrangement{}, e
+		}
+		return window.PairArrangement{}, failedAction("display.ArrangeWindowPair", "window.arrangePair")
 	}
-	if !handled {
-		return fmt.Errorf("environment service not available")
+	result, ok := r.Value.(window.PairArrangement)
+	if !ok {
+		return window.PairArrangement{}, coreerr.E("display.ArrangeWindowPair", "unexpected result type", nil)
 	}
-	return nil
-}
-
-// --- Tray ---
-
-// SetTrayIcon sets the tray icon image.
-// Use: _ = svc.SetTrayIcon(iconBytes)
-func (s *Service) SetTrayIcon(data []byte) error {
-	_, handled, err := s.Core().PERFORM(systray.TaskSetTrayIcon{Data: data})
-	if err != nil {
-		return err
-	}
-	if !handled {
-		return fmt.Errorf("systray service not available")
-	}
-	return nil
-}
-
-// SetTrayTooltip updates the tray tooltip.
-// Use: _ = svc.SetTrayTooltip("Core is ready")
-func (s *Service) SetTrayTooltip(tooltip string) error {
-	_, handled, err := s.Core().PERFORM(systray.TaskSetTooltip{Tooltip: tooltip})
-	if err != nil {
-		return err
-	}
-	if !handled {
-		return fmt.Errorf("systray service not available")
-	}
-	return nil
-}
-
-// SetTrayLabel updates the tray label.
-// Use: _ = svc.SetTrayLabel("Core")
-func (s *Service) SetTrayLabel(label string) error {
-	_, handled, err := s.Core().PERFORM(systray.TaskSetLabel{Label: label})
-	if err != nil {
-		return err
-	}
-	if !handled {
-		return fmt.Errorf("systray service not available")
-	}
-	return nil
-}
-
-// SetTrayMenu replaces the tray menu items.
-// Use: _ = svc.SetTrayMenu([]systray.TrayMenuItem{{Label: "Quit", ActionID: "quit"}})
-func (s *Service) SetTrayMenu(items []systray.TrayMenuItem) error {
-	_, handled, err := s.Core().PERFORM(systray.TaskSetTrayMenu{Items: items})
-	if err != nil {
-		return err
-	}
-	if !handled {
-		return fmt.Errorf("systray service not available")
-	}
-	return nil
-}
-
-// GetTrayInfo returns current tray state information.
-// Use: info := svc.GetTrayInfo()
-func (s *Service) GetTrayInfo() map[string]any {
-	trayService, err := core.ServiceFor[*systray.Service](s.Core(), "systray")
-	if err != nil || trayService == nil || trayService.Manager() == nil {
-		return nil
-	}
-	return trayService.Manager().GetInfo()
-}
-
-// ShowTrayMessage shows a tray message or notification.
-// Use: _ = svc.ShowTrayMessage("Core", "Sync complete")
-func (s *Service) ShowTrayMessage(title, message string) error {
-	_, handled, err := s.Core().PERFORM(systray.TaskShowMessage{Title: title, Message: message})
-	if err != nil {
-		return err
-	}
-	if !handled {
-		return fmt.Errorf("systray service not available")
-	}
-	return nil
+	return result, nil
 }
 
 // GetEventManager returns the event manager for WebSocket event subscriptions.
-// Use: events := svc.GetEventManager()
 func (s *Service) GetEventManager() *WSEventManager {
 	return s.events
-}
-
-// GetEventInfo returns a summary of the live WebSocket event server state.
-// Use: info := svc.GetEventInfo()
-func (s *Service) GetEventInfo() EventServerInfo {
-	if s.events == nil {
-		return EventServerInfo{}
-	}
-	return s.events.Info()
 }
 
 // --- Menu (handlers stay in display, structure delegated via IPC) ---
 
 func (s *Service) buildMenu() {
+	developerItems := []menu.MenuItem{
+		{Label: "New File", Accelerator: "CmdOrCtrl+N", OnClick: s.handleNewFile},
+		{Label: "Open File...", Accelerator: "CmdOrCtrl+O", OnClick: s.handleOpenFile},
+		{Label: "Save", Accelerator: "CmdOrCtrl+S", OnClick: s.handleSaveFile},
+		{Type: "separator"},
+		{Label: "Editor", OnClick: s.handleOpenEditor},
+		{Label: "Terminal", OnClick: s.handleOpenTerminal},
+		{Type: "separator"},
+		{Label: "Run", Accelerator: "CmdOrCtrl+R", OnClick: s.handleRun},
+		{Label: "Build", Accelerator: "CmdOrCtrl+B", OnClick: s.handleBuild},
+	}
+	if menuService, ok := core.ServiceFor[*menu.Service](s.Core(), "menu"); ok && menuService.ShowDevTools() {
+		developerItems = append(developerItems,
+			menu.MenuItem{Type: "separator"},
+			menu.MenuItem{Label: "Open DevTools", OnClick: s.handleOpenDevTools},
+			menu.MenuItem{Label: "Close DevTools", OnClick: s.handleCloseDevTools},
+		)
+	}
+
 	items := []menu.MenuItem{
-		{Role: ptr(menu.RoleAppMenu)},
-		{Role: ptr(menu.RoleFileMenu)},
-		{Role: ptr(menu.RoleViewMenu)},
-		{Role: ptr(menu.RoleEditMenu)},
+		{Role: pointerTo(menu.RoleAppMenu)},
+		{Role: pointerTo(menu.RoleFileMenu)},
+		{Role: pointerTo(menu.RoleViewMenu)},
+		{Role: pointerTo(menu.RoleEditMenu)},
 		{Label: "Workspace", Children: []menu.MenuItem{
 			{Label: "New...", OnClick: s.handleNewWorkspace},
 			{Label: "List", OnClick: s.handleListWorkspaces},
 		}},
-		{Label: "Developer", Children: []menu.MenuItem{
-			{Label: "New File", Accelerator: "CmdOrCtrl+N", OnClick: s.handleNewFile},
-			{Label: "Open File...", Accelerator: "CmdOrCtrl+O", OnClick: s.handleOpenFile},
-			{Label: "Save", Accelerator: "CmdOrCtrl+S", OnClick: s.handleSaveFile},
-			{Type: "separator"},
-			{Label: "Editor", OnClick: s.handleOpenEditor},
-			{Label: "Terminal", OnClick: s.handleOpenTerminal},
-			{Type: "separator"},
-			{Label: "Run", Accelerator: "CmdOrCtrl+R", OnClick: s.handleRun},
-			{Label: "Build", Accelerator: "CmdOrCtrl+B", OnClick: s.handleBuild},
-		}},
-		{Role: ptr(menu.RoleWindowMenu)},
-		{Role: ptr(menu.RoleHelpMenu)},
+		{Label: "Developer", Children: developerItems},
+		{Role: pointerTo(menu.RoleWindowMenu)},
+		{Role: pointerTo(menu.RoleHelpMenu)},
 	}
 
 	// On non-macOS, remove the AppMenu role
@@ -2307,30 +1832,67 @@ func (s *Service) buildMenu() {
 		items = items[1:] // skip AppMenu
 	}
 
-	_, _, _ = s.Core().PERFORM(menu.TaskSetAppMenu{Items: items})
+	_ = s.Core().Action("menu.setAppMenu").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: menu.TaskSetAppMenu{Items: items}},
+	))
 }
 
-func ptr[T any](v T) *T { return &v }
+// pointerTo returns a pointer to value.
+func pointerTo[T any](value T) *T { return &value }
 
 // --- Menu handler methods ---
 
+func (s *Service) menuDevToolsWindow() string {
+	if name := s.GetFocusedWindow(); name != "" {
+		return name
+	}
+	infos := s.ListWindowInfos()
+	if len(infos) == 1 {
+		return infos[0].Name
+	}
+	return ""
+}
+
+func (s *Service) handleOpenDevTools() {
+	windowName := s.menuDevToolsWindow()
+	if windowName == "" {
+		return
+	}
+	_ = s.Core().Action("webview.devtoolsOpen").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: webview.TaskDevToolsOpen{Window: windowName}},
+	))
+}
+
+func (s *Service) handleCloseDevTools() {
+	windowName := s.menuDevToolsWindow()
+	if windowName == "" {
+		return
+	}
+	_ = s.Core().Action("webview.devtoolsClose").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: webview.TaskDevToolsClose{Window: windowName}},
+	))
+}
+
 func (s *Service) handleNewWorkspace() {
-	_, _, _ = s.Core().PERFORM(window.TaskOpenWindow{
-		Opts: []window.WindowOption{
-			window.WithName("workspace-new"),
-			window.WithTitle("New Workspace"),
-			window.WithURL("/workspace/new"),
-			window.WithSize(500, 400),
-		},
-	})
+	_ = s.Core().Action("window.open").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskOpenWindow{
+			Window: &window.Window{
+				Name:   "workspace-new",
+				Title:  "New Workspace",
+				URL:    "/workspace/new",
+				Width:  500,
+				Height: 400,
+			},
+		}},
+	))
 }
 
 func (s *Service) handleListWorkspaces() {
-	ws := s.Core().Service("workspace")
-	if ws == nil {
+	r := s.Core().Service("workspace")
+	if !r.OK || r.Value == nil {
 		return
 	}
-	lister, ok := ws.(interface{ ListWorkspaces() []string })
+	lister, ok := r.Value.(interface{ ListWorkspaces() []string })
 	if !ok {
 		return
 	}
@@ -2338,60 +1900,76 @@ func (s *Service) handleListWorkspaces() {
 }
 
 func (s *Service) handleNewFile() {
-	_, _, _ = s.Core().PERFORM(window.TaskOpenWindow{
-		Opts: []window.WindowOption{
-			window.WithName("editor"),
-			window.WithTitle("New File - Editor"),
-			window.WithURL("/#/developer/editor?new=true"),
-			window.WithSize(1200, 800),
-		},
-	})
+	_ = s.Core().Action("window.open").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskOpenWindow{
+			Window: &window.Window{
+				Name:   "editor",
+				Title:  "New File - Editor",
+				URL:    "/#/developer/editor?new=true",
+				Width:  1200,
+				Height: 800,
+			},
+		}},
+	))
 }
 
 func (s *Service) handleOpenFile() {
-	result, handled, err := s.Core().PERFORM(dialog.TaskOpenFile{
-		Opts: dialog.OpenFileOptions{
-			Title:         "Open File",
-			AllowMultiple: false,
-		},
-	})
-	if err != nil || !handled {
+	r := s.Core().Action("dialog.openFile").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: dialog.TaskOpenFile{
+			Options: dialog.OpenFileOptions{
+				Title:         "Open File",
+				AllowMultiple: false,
+			},
+		}},
+	))
+	if !r.OK {
 		return
 	}
-	paths, ok := result.([]string)
+	paths, ok := r.Value.([]string)
 	if !ok || len(paths) == 0 {
 		return
 	}
-	_, _, _ = s.Core().PERFORM(window.TaskOpenWindow{
-		Opts: []window.WindowOption{
-			window.WithName("editor"),
-			window.WithTitle(paths[0] + " - Editor"),
-			window.WithURL("/#/developer/editor?file=" + paths[0]),
-			window.WithSize(1200, 800),
-		},
-	})
+	fileURL := "/#/developer/editor?file=" + url.QueryEscape(paths[0])
+	_ = s.Core().Action("window.open").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskOpenWindow{
+			Window: &window.Window{
+				Name:   "editor",
+				Title:  paths[0] + " - Editor",
+				URL:    fileURL,
+				Width:  1200,
+				Height: 800,
+			},
+		}},
+	))
 }
 
 func (s *Service) handleSaveFile() { _ = s.Core().ACTION(ActionIDECommand{Command: "save"}) }
 func (s *Service) handleOpenEditor() {
-	_, _, _ = s.Core().PERFORM(window.TaskOpenWindow{
-		Opts: []window.WindowOption{
-			window.WithName("editor"),
-			window.WithTitle("Editor"),
-			window.WithURL("/#/developer/editor"),
-			window.WithSize(1200, 800),
-		},
-	})
+	_ = s.Core().Action("window.open").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskOpenWindow{
+			Window: &window.Window{
+				Name:   "editor",
+				Title:  "Editor",
+				URL:    "/#/developer/editor",
+				Width:  1200,
+				Height: 800,
+			},
+		}},
+	))
 }
+
 func (s *Service) handleOpenTerminal() {
-	_, _, _ = s.Core().PERFORM(window.TaskOpenWindow{
-		Opts: []window.WindowOption{
-			window.WithName("terminal"),
-			window.WithTitle("Terminal"),
-			window.WithURL("/#/developer/terminal"),
-			window.WithSize(800, 500),
-		},
-	})
+	_ = s.Core().Action("window.open").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskOpenWindow{
+			Window: &window.Window{
+				Name:   "terminal",
+				Title:  "Terminal",
+				URL:    "/#/developer/terminal",
+				Width:  800,
+				Height: 500,
+			},
+		}},
+	))
 }
 func (s *Service) handleRun()   { _ = s.Core().ACTION(ActionIDECommand{Command: "run"}) }
 func (s *Service) handleBuild() { _ = s.Core().ACTION(ActionIDECommand{Command: "build"}) }
@@ -2399,12 +1977,14 @@ func (s *Service) handleBuild() { _ = s.Core().ACTION(ActionIDECommand{Command: 
 // --- Tray (setup delegated via IPC) ---
 
 func (s *Service) setupTray() {
-	_, _, _ = s.Core().PERFORM(systray.TaskSetTrayMenu{Items: []systray.TrayMenuItem{
-		{Label: "Open Desktop", ActionID: "open-desktop"},
-		{Label: "Close Desktop", ActionID: "close-desktop"},
-		{Type: "separator"},
-		{Label: "Environment Info", ActionID: "env-info"},
-		{Type: "separator"},
-		{Label: "Quit", ActionID: "quit"},
-	}})
+	_ = s.Core().Action("systray.setMenu").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: systray.TaskSetTrayMenu{Items: []systray.TrayMenuItem{
+			{Label: "Open Desktop", ActionID: "open-desktop"},
+			{Label: "Close Desktop", ActionID: "close-desktop"},
+			{Type: "separator"},
+			{Label: "Environment Info", ActionID: "env-info"},
+			{Type: "separator"},
+			{Label: "Quit", ActionID: "quit"},
+		}}},
+	))
 }

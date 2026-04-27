@@ -4,73 +4,93 @@ package menu
 import (
 	"context"
 
-	"forge.lthn.ai/core/go/pkg/core"
+	core "dappco.re/go/core"
+	coreerr "dappco.re/go/log"
 )
 
-// Options holds configuration for the menu service.
 type Options struct{}
 
-// Service is a core.Service managing application menus via IPC.
 type Service struct {
 	*core.ServiceRuntime[Options]
 	manager      *Manager
 	platform     Platform
-	items        []MenuItem // last-set menu items for QueryGetAppMenu
+	menuItems    []MenuItem
 	showDevTools bool
 }
 
-// OnStartup queries config and registers IPC handlers.
-func (s *Service) OnStartup(ctx context.Context) error {
-	cfg, handled, _ := s.Core().QUERY(QueryConfig{})
-	if handled {
-		if mCfg, ok := cfg.(map[string]any); ok {
-			s.applyConfig(mCfg)
+func (s *Service) OnStartup(_ context.Context) core.Result {
+	r := s.Core().QUERY(QueryConfig{})
+	if r.OK {
+		if menuConfig, ok := r.Value.(map[string]any); ok {
+			s.applyConfig(menuConfig)
 		}
 	}
 	s.Core().RegisterQuery(s.handleQuery)
-	s.Core().RegisterTask(s.handleTask)
-	return nil
+	s.Core().Action("menu.setAppMenu", func(_ context.Context, opts core.Options) core.Result {
+		t := taskSetAppMenuFromOptions(opts)
+		if s.manager == nil || s.manager.Platform() == nil {
+			return core.Result{Value: coreerr.E("menu.setAppMenu", "menu manager unavailable", nil), OK: false}
+		}
+		s.menuItems = t.Items
+		s.manager.SetApplicationMenu(t.Items)
+		return core.Result{OK: true}
+	})
+	return core.Result{OK: true}
 }
 
-func (s *Service) applyConfig(cfg map[string]any) {
-	if v, ok := cfg["show_dev_tools"]; ok {
+func (s *Service) applyConfig(configData map[string]any) {
+	if v, ok := configData["show_dev_tools"]; ok {
 		if show, ok := v.(bool); ok {
 			s.showDevTools = show
 		}
 	}
 }
 
-// ShowDevTools returns whether developer tools menu items should be shown.
 func (s *Service) ShowDevTools() bool {
 	return s.showDevTools
 }
 
-// HandleIPCEvents is auto-discovered and registered by core.WithService.
-func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
-	return nil
+func (s *Service) HandleIPCEvents(_ *core.Core, _ core.Message) core.Result {
+	return core.Result{OK: true}
 }
 
-func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
+func (s *Service) handleQuery(_ *core.Core, q core.Query) core.Result {
 	switch q.(type) {
 	case QueryGetAppMenu:
-		return s.items, true, nil
+		return core.Result{Value: s.menuItems, OK: true}
 	default:
-		return nil, false, nil
+		return core.Result{}
 	}
 }
 
-func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
-	switch t := t.(type) {
-	case TaskSetAppMenu:
-		s.items = t.Items
-		s.manager.SetApplicationMenu(t.Items)
-		return nil, true, nil
-	default:
-		return nil, false, nil
-	}
-}
-
-// Manager returns the underlying menu Manager.
 func (s *Service) Manager() *Manager {
 	return s.manager
+}
+
+func taskSetAppMenuFromOptions(opts core.Options) TaskSetAppMenu {
+	if task := opts.Get("task"); task.OK {
+		switch value := task.Value.(type) {
+		case TaskSetAppMenu:
+			return value
+		case map[string]any:
+			var decoded TaskSetAppMenu
+			if result := core.JSONUnmarshalString(core.JSONMarshalString(value), &decoded); result.OK {
+				return decoded
+			}
+		}
+	}
+
+	var decoded TaskSetAppMenu
+	if result := core.JSONUnmarshalString(core.JSONMarshalString(optsToMap(opts)), &decoded); result.OK {
+		return decoded
+	}
+	return TaskSetAppMenu{}
+}
+
+func optsToMap(opts core.Options) map[string]any {
+	items := make(map[string]any, opts.Len())
+	for _, item := range opts.Items() {
+		items[item.Key] = item.Value
+	}
+	return items
 }

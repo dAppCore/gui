@@ -1,10 +1,11 @@
 import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { ChatPanelComponent } from '../chat/chat-panel.component';
 
 @Component({
   selector: 'core-display',
-  imports: [RouterOutlet],
-  template: '<router-outlet></router-outlet>',
+  templateUrl: './app.html',
   standalone: true,
+  imports: [ChatPanelComponent],
 })
-export class App {}
+export class App {
+}

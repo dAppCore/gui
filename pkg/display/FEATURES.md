@@ -31,7 +31,6 @@ This document tracks the implementation of display server features that enable A
 - [x] `window_title_get` - Get current window title (returns window name)
 - [x] `window_always_on_top` - Pin window above others
 - [x] `window_background_colour` - Set window background color with alpha (transparency)
-- [x] `window_opacity` - Set window opacity
 - [x] `window_fullscreen` - Enter/exit fullscreen mode
 
 ---
@@ -76,6 +75,10 @@ This document tracks the implementation of display server features that enable A
 ### JavaScript Execution
 - [x] `webview_eval` - Execute JavaScript and return result
 - [x] `webview_list` - List all webview windows
+
+### Browser
+- [x] `browser_open_url` - Open a URL in the default system browser
+- [x] `browser_open_file` - Open a file in the system default application
 
 ### Console & Errors
 - [x] `webview_console` - Get console messages (log, warn, error, info)
@@ -143,7 +146,7 @@ This document tracks the implementation of display server features that enable A
 - [x] `dialog_open_directory` - Show directory picker
 - [x] `dialog_message` - Show message dialog (info/warning/error) (via notification_show)
 - [x] `dialog_confirm` - Show confirmation dialog
-- [x] `dialog_prompt` - Show input prompt dialog with a webview fallback when native support is unavailable
+- [x] `dialog_prompt` - Show input prompt dialog via the active webview window
 
 ### Theme & Appearance
 - [x] `theme_get` - Get current theme (dark/light)
@@ -194,7 +197,7 @@ This document tracks the implementation of display server features that enable A
 ### Phase 3 - Layouts (DONE)
 - [x] layout_save, layout_restore, layout_list
 - [x] layout_delete, layout_get
-- [ ] layout_tile, layout_beside_editor (future)
+- [x] layout_tile, layout_beside_editor
 
 ### Phase 4 - WebView Debug (DONE)
 - [x] webview_screenshot, webview_screenshot_element
@@ -203,7 +206,7 @@ This document tracks the implementation of display server features that enable A
 - [x] webview_scroll, webview_hover, webview_select, webview_check
 - [x] webview_highlight, webview_errors
 - [x] webview_performance, webview_resources
-- [ ] webview_network, webview_devtools (future)
+- [x] webview_network, webview_devtools
 
 ### Phase 5 - System Integration (DONE)
 - [x] clipboard_read, clipboard_write, clipboard_has, clipboard_clear
@@ -236,8 +239,9 @@ This document tracks the implementation of display server features that enable A
 - [x] `tray_info` - Get tray status
 
 ### Phase 8 - Remaining Features (Future)
-- [ ] layout_beside_editor, layout_suggest
-- [ ] webview_devtools_open, webview_devtools_close
-- [ ] clipboard_read_image, clipboard_write_image
-- [ ] notification_with_actions, notification_clear
-- [ ] tray_show_message - Balloon notifications
+- [ ] window_opacity (true opacity if Wails adds support)
+- [x] layout_beside_editor, layout_suggest
+- [x] webview_devtools_open, webview_devtools_close
+- [x] clipboard_read_image, clipboard_write_image
+- [x] notification_with_actions, notification_clear
+- [x] tray_show_message - Balloon notifications

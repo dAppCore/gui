@@ -4,81 +4,96 @@ package screen
 import (
 	"context"
 
-	"forge.lthn.ai/core/go/pkg/core"
+	core "dappco.re/go/core"
 )
 
-// Options holds configuration for the screen service.
-// Use: svc, err := screen.Register(platform)(core.New())
 type Options struct{}
 
-// Service is a core.Service providing screen/display queries via IPC.
-// Use: svc, err := screen.Register(platform)(core.New())
 type Service struct {
 	*core.ServiceRuntime[Options]
 	platform Platform
 }
 
-// Register creates a factory closure that captures the Platform adapter.
-// Use: core.WithService(screen.Register(platform))
-func Register(p Platform) func(*core.Core) (any, error) {
-	return func(c *core.Core) (any, error) {
-		return &Service{
+// Register(p) binds the screen service to a Core instance.
+// core.WithService(screen.Register(wailsScreen))
+func Register(p Platform) func(*core.Core) core.Result {
+	return func(c *core.Core) core.Result {
+		return core.Result{Value: &Service{
 			ServiceRuntime: core.NewServiceRuntime[Options](c, Options{}),
 			platform:       p,
-		}, nil
+		}, OK: true}
 	}
 }
 
-// OnStartup registers IPC handlers.
-// Use: _ = svc.OnStartup(context.Background())
-func (s *Service) OnStartup(ctx context.Context) error {
+func (s *Service) OnStartup(_ context.Context) core.Result {
 	s.Core().RegisterQuery(s.handleQuery)
-	return nil
+	return core.Result{OK: true}
 }
 
-// HandleIPCEvents is auto-discovered by core.WithService.
-// Use: _ = svc.HandleIPCEvents(core, msg)
-func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
-	return nil
+func (s *Service) HandleIPCEvents(_ *core.Core, _ core.Message) core.Result {
+	return core.Result{OK: true}
 }
 
-func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
+func (s *Service) handleQuery(_ *core.Core, q core.Query) core.Result {
+	if s == nil || s.platform == nil {
+		switch q.(type) {
+		case QueryAll:
+			return core.Result{Value: []Screen{}, OK: true}
+		case QueryWorkAreas:
+			return core.Result{Value: []Rect{}, OK: true}
+		default:
+			return core.Result{Value: nil, OK: true}
+		}
+	}
 	switch q := q.(type) {
 	case QueryAll:
-		return s.platform.GetAll(), true, nil
+		return core.Result{Value: s.platform.GetAll(), OK: true}
 	case QueryPrimary:
-		return s.platform.GetPrimary(), true, nil
+		return core.Result{Value: s.platform.GetPrimary(), OK: true}
 	case QueryByID:
-		return s.queryByID(q.ID), true, nil
+		return core.Result{Value: s.queryByID(q.ID), OK: true}
 	case QueryAtPoint:
-		return s.queryAtPoint(q.X, q.Y), true, nil
+		return core.Result{Value: s.queryAtPoint(q.X, q.Y), OK: true}
 	case QueryWorkAreas:
-		return s.queryWorkAreas(), true, nil
+		return core.Result{Value: s.queryWorkAreas(), OK: true}
+	case QueryCurrent:
+		return core.Result{Value: s.platform.GetCurrent(), OK: true}
 	default:
-		return nil, false, nil
+		return core.Result{}
 	}
 }
 
 func (s *Service) queryByID(id string) *Screen {
-	for _, scr := range s.platform.GetAll() {
-		if scr.ID == id {
-			return &scr
+	if s == nil || s.platform == nil {
+		return nil
+	}
+	screens := s.platform.GetAll()
+	for i := range screens {
+		if screens[i].ID == id {
+			return &screens[i]
 		}
 	}
 	return nil
 }
 
 func (s *Service) queryAtPoint(x, y int) *Screen {
-	for _, scr := range s.platform.GetAll() {
-		b := scr.Bounds
+	if s == nil || s.platform == nil {
+		return nil
+	}
+	screens := s.platform.GetAll()
+	for i := range screens {
+		b := screens[i].Bounds
 		if x >= b.X && x < b.X+b.Width && y >= b.Y && y < b.Y+b.Height {
-			return &scr
+			return &screens[i]
 		}
 	}
 	return nil
 }
 
 func (s *Service) queryWorkAreas() []Rect {
+	if s == nil || s.platform == nil {
+		return nil
+	}
 	screens := s.platform.GetAll()
 	areas := make([]Rect, len(screens))
 	for i, scr := range screens {

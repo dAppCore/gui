@@ -12,7 +12,7 @@ The Help service (`pkg/help`) provides an embeddable documentation system that d
 ## Basic Usage
 
 ```go
-import "github.com/Snider/Core/pkg/help"
+import "dappco.re/go/core/help"
 
 // Create with default embedded content
 helpService, err := help.New(help.Options{})

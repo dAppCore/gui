@@ -17,7 +17,10 @@ func (wp *WailsPlatform) NewMenu() PlatformMenu {
 }
 
 func (wp *WailsPlatform) SetApplicationMenu(menu PlatformMenu) {
-	if wm, ok := menu.(*wailsMenu); ok {
+	if wp == nil || wp.app == nil {
+		return
+	}
+	if wm, ok := menu.(*wailsMenu); ok && wm != nil && wm.menu != nil {
 		wp.app.Menu.SetApplicationMenu(wm.menu)
 	}
 }

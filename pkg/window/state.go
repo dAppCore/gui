@@ -2,16 +2,18 @@
 package window
 
 import (
-	"encoding/json"
-	"os"
-	"path/filepath"
+	"io/fs"
 	"sync"
 	"time"
+
+	core "dappco.re/go/core"
+	coreio "dappco.re/go/io"
 )
+
+const windowStateFileEnv = "WINDOW_STATE_FILE"
 
 // WindowState holds the persisted position/size of a window.
 // JSON tags match existing window_state.json format for backward compat.
-// Use: state := window.WindowState{X: 10, Y: 20, Width: 1280, Height: 800}
 type WindowState struct {
 	X         int    `json:"x,omitempty"`
 	Y         int    `json:"y,omitempty"`
@@ -23,8 +25,7 @@ type WindowState struct {
 	UpdatedAt int64  `json:"updatedAt,omitempty"`
 }
 
-// StateManager persists window positions to ~/.config/Core/window_state.json.
-// Use: sm := window.NewStateManager()
+// StateManager persists window positions to the configured window state file.
 type StateManager struct {
 	configDir string
 	statePath string
@@ -33,15 +34,17 @@ type StateManager struct {
 	saveTimer *time.Timer
 }
 
-// NewStateManager creates a StateManager loading from the default config directory.
-// Use: sm := window.NewStateManager()
+// NewStateManager creates a StateManager loading from the configured default path.
+// WINDOW_STATE_FILE overrides the directory-based default when present.
 func NewStateManager() *StateManager {
+	if stateFile := core.Env(windowStateFileEnv); stateFile != "" {
+		return NewStateManagerWithPath(stateFile)
+	}
 	sm := &StateManager{
 		states: make(map[string]WindowState),
 	}
-	configDir, err := os.UserConfigDir()
-	if err == nil {
-		sm.configDir = filepath.Join(configDir, "Core")
+	if configDir := core.Env("DIR_CONFIG"); configDir != "" {
+		sm.configDir = core.JoinPath(configDir, "Core")
 	}
 	sm.load()
 	return sm
@@ -49,10 +52,20 @@ func NewStateManager() *StateManager {
 
 // NewStateManagerWithDir creates a StateManager loading from a custom config directory.
 // Useful for testing or when the default config directory is not appropriate.
-// Use: sm := window.NewStateManagerWithDir(t.TempDir())
 func NewStateManagerWithDir(configDir string) *StateManager {
 	sm := &StateManager{
 		configDir: configDir,
+		states:    make(map[string]WindowState),
+	}
+	sm.load()
+	return sm
+}
+
+// NewStateManagerWithPath creates a StateManager loading from a custom state file.
+// Useful for tests or restricted runtimes that need an explicit writable target.
+func NewStateManagerWithPath(path string) *StateManager {
+	sm := &StateManager{
+		statePath: path,
 		states:    make(map[string]WindowState),
 	}
 	sm.load()
@@ -63,27 +76,22 @@ func (sm *StateManager) filePath() string {
 	if sm.statePath != "" {
 		return sm.statePath
 	}
-	return filepath.Join(sm.configDir, "window_state.json")
+	return core.JoinPath(sm.configDir, "window_state.json")
 }
 
 func (sm *StateManager) dataDir() string {
 	if sm.statePath != "" {
-		return filepath.Dir(sm.statePath)
+		return core.PathDir(sm.statePath)
 	}
 	return sm.configDir
 }
 
-// SetPath overrides the persisted state file path.
-// Use: sm.SetPath(filepath.Join(t.TempDir(), "window_state.json"))
 func (sm *StateManager) SetPath(path string) {
 	if path == "" {
 		return
 	}
 	sm.mu.Lock()
-	if sm.saveTimer != nil {
-		sm.saveTimer.Stop()
-		sm.saveTimer = nil
-	}
+	sm.stopSaveTimerLocked()
 	sm.statePath = path
 	sm.states = make(map[string]WindowState)
 	sm.mu.Unlock()
@@ -94,38 +102,88 @@ func (sm *StateManager) load() {
 	if sm.configDir == "" && sm.statePath == "" {
 		return
 	}
-	data, err := os.ReadFile(sm.filePath())
+	content, err := coreio.Local.Read(sm.filePath())
 	if err != nil {
+		if core.Is(err, fs.ErrNotExist) {
+			return
+		}
+		core.Error(
+			"window state load failed",
+			"path", sm.filePath(),
+			"err", core.E("window.StateManager.load", "failed to read window state", err),
+		)
+		return
+	}
+	loaded := make(map[string]WindowState)
+	result := core.JSONUnmarshalString(content, &loaded)
+	if !result.OK {
+		if decodeErr, ok := result.Value.(error); ok {
+			core.Error(
+				"window state load failed",
+				"path", sm.filePath(),
+				"err", core.E("window.StateManager.load", "failed to decode window state", decodeErr),
+			)
+		}
 		return
 	}
 	sm.mu.Lock()
-	defer sm.mu.Unlock()
-	_ = json.Unmarshal(data, &sm.states)
+	sm.states = loaded
+	sm.mu.Unlock()
 }
 
-func (sm *StateManager) save() {
+func (sm *StateManager) save() error {
 	if sm.configDir == "" && sm.statePath == "" {
-		return
+		return nil
 	}
 	sm.mu.RLock()
-	data, err := json.MarshalIndent(sm.states, "", "  ")
-	sm.mu.RUnlock()
-	if err != nil {
-		return
+	filePath := sm.filePath()
+	states := make(map[string]WindowState, len(sm.states))
+	for name, state := range sm.states {
+		states[name] = state
 	}
-	_ = os.MkdirAll(sm.dataDir(), 0o755)
-	_ = os.WriteFile(sm.filePath(), data, 0o644)
+	sm.mu.RUnlock()
+	result := core.JSONMarshal(states)
+	if !result.OK {
+		marshalErr, _ := result.Value.(error)
+		core.Error(
+			"window state save failed",
+			"path", filePath,
+			"err", core.E("window.StateManager.save", "failed to encode window state", marshalErr),
+		)
+		return core.E("window.StateManager.save", "failed to encode window state", marshalErr)
+	}
+	data := result.Value.([]byte)
+	if dir := core.PathDir(filePath); dir != "" {
+		if err := coreio.Local.EnsureDir(dir); err != nil {
+			core.Error(
+				"window state save failed",
+				"path", filePath,
+				"err", core.E("window.StateManager.save", "failed to create window state directory", err),
+			)
+			return core.E("window.StateManager.save", "failed to create window state directory", err)
+		}
+	}
+	if err := coreio.Local.Write(filePath, string(data)); err != nil {
+		core.Error(
+			"window state save failed",
+			"path", filePath,
+			"err", core.E("window.StateManager.save", "failed to write window state", err),
+		)
+		return core.E("window.StateManager.save", "failed to write window state", err)
+	}
+	return nil
 }
 
 func (sm *StateManager) scheduleSave() {
-	if sm.saveTimer != nil {
-		sm.saveTimer.Stop()
-	}
-	sm.saveTimer = time.AfterFunc(500*time.Millisecond, sm.save)
+	sm.mu.Lock()
+	sm.stopSaveTimerLocked()
+	sm.saveTimer = time.AfterFunc(500*time.Millisecond, func() {
+		_ = sm.save()
+	})
+	sm.mu.Unlock()
 }
 
 // GetState returns the saved state for a window name.
-// Use: state, ok := sm.GetState("editor")
 func (sm *StateManager) GetState(name string) (WindowState, bool) {
 	sm.mu.RLock()
 	defer sm.mu.RUnlock()
@@ -134,7 +192,6 @@ func (sm *StateManager) GetState(name string) (WindowState, bool) {
 }
 
 // SetState saves state for a window name (debounced disk write).
-// Use: sm.SetState("editor", window.WindowState{Width: 1280, Height: 800})
 func (sm *StateManager) SetState(name string, state WindowState) {
 	state.UpdatedAt = time.Now().UnixMilli()
 	sm.mu.Lock()
@@ -144,7 +201,6 @@ func (sm *StateManager) SetState(name string, state WindowState) {
 }
 
 // UpdatePosition updates only the position fields.
-// Use: sm.UpdatePosition("editor", 160, 120)
 func (sm *StateManager) UpdatePosition(name string, x, y int) {
 	sm.mu.Lock()
 	s := sm.states[name]
@@ -157,7 +213,6 @@ func (sm *StateManager) UpdatePosition(name string, x, y int) {
 }
 
 // UpdateSize updates only the size fields.
-// Use: sm.UpdateSize("editor", 1280, 800)
 func (sm *StateManager) UpdateSize(name string, width, height int) {
 	sm.mu.Lock()
 	s := sm.states[name]
@@ -170,7 +225,6 @@ func (sm *StateManager) UpdateSize(name string, width, height int) {
 }
 
 // UpdateMaximized updates the maximized flag.
-// Use: sm.UpdateMaximized("editor", true)
 func (sm *StateManager) UpdateMaximized(name string, maximized bool) {
 	sm.mu.Lock()
 	s := sm.states[name]
@@ -182,7 +236,6 @@ func (sm *StateManager) UpdateMaximized(name string, maximized bool) {
 }
 
 // CaptureState snapshots the current state from a PlatformWindow.
-// Use: sm.CaptureState(pw)
 func (sm *StateManager) CaptureState(pw PlatformWindow) {
 	x, y := pw.Position()
 	w, h := pw.Size()
@@ -193,7 +246,6 @@ func (sm *StateManager) CaptureState(pw PlatformWindow) {
 }
 
 // ApplyState restores saved position/size to a Window descriptor.
-// Use: sm.ApplyState(&window.Window{Name: "editor"})
 func (sm *StateManager) ApplyState(w *Window) {
 	s, ok := sm.GetState(w.Name)
 	if !ok {
@@ -210,7 +262,6 @@ func (sm *StateManager) ApplyState(w *Window) {
 }
 
 // ListStates returns all stored window names.
-// Use: names := sm.ListStates()
 func (sm *StateManager) ListStates() []string {
 	sm.mu.RLock()
 	defer sm.mu.RUnlock()
@@ -222,7 +273,6 @@ func (sm *StateManager) ListStates() []string {
 }
 
 // Clear removes all stored states.
-// Use: sm.Clear()
 func (sm *StateManager) Clear() {
 	sm.mu.Lock()
 	sm.states = make(map[string]WindowState)
@@ -230,11 +280,18 @@ func (sm *StateManager) Clear() {
 	sm.scheduleSave()
 }
 
-// ForceSync writes state to disk immediately.
-// Use: sm.ForceSync()
-func (sm *StateManager) ForceSync() {
-	if sm.saveTimer != nil {
-		sm.saveTimer.Stop()
+func (sm *StateManager) stopSaveTimerLocked() {
+	if sm.saveTimer == nil {
+		return
 	}
-	sm.save()
+	sm.saveTimer.Stop()
+	sm.saveTimer = nil
+}
+
+// ForceSync writes state to disk immediately.
+func (sm *StateManager) ForceSync() error {
+	sm.mu.Lock()
+	sm.stopSaveTimerLocked()
+	sm.mu.Unlock()
+	return sm.save()
 }

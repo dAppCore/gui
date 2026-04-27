@@ -3,10 +3,10 @@ package browser
 
 import (
 	"context"
-	"errors"
+	core "dappco.re/go/core"
+	"path/filepath"
 	"testing"
 
-	"forge.lthn.ai/core/go/pkg/core"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -30,12 +30,11 @@ func (m *mockPlatform) OpenFile(path string) error {
 
 func newTestBrowserService(t *testing.T, mp *mockPlatform) (*Service, *core.Core) {
 	t.Helper()
-	c, err := core.New(
+	c := core.New(
 		core.WithService(Register(mp)),
 		core.WithServiceLock(),
 	)
-	require.NoError(t, err)
-	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
 	svc := core.MustServiceFor[*Service](c, "browser")
 	return svc, c
 }
@@ -51,42 +50,159 @@ func TestTaskOpenURL_Good(t *testing.T) {
 	mp := &mockPlatform{}
 	_, c := newTestBrowserService(t, mp)
 
-	_, handled, err := c.PERFORM(TaskOpenURL{URL: "https://example.com"})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := c.Action("browser.openURL").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "url", Value: "https://example.com"},
+	))
+	require.True(t, r.OK)
 	assert.Equal(t, "https://example.com", mp.lastURL)
 }
 
-func TestTaskOpenURL_Bad_PlatformError(t *testing.T) {
-	mp := &mockPlatform{urlErr: errors.New("browser not found")}
+func TestTaskOpenURL_Bad_Scheme(t *testing.T) {
+	mp := &mockPlatform{}
 	_, c := newTestBrowserService(t, mp)
 
-	_, handled, err := c.PERFORM(TaskOpenURL{URL: "https://example.com"})
-	assert.True(t, handled)
-	assert.Error(t, err)
+	r := c.Action("browser.openURL").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "url", Value: "javascript:alert(1)"},
+	))
+	assert.False(t, r.OK)
+	assert.Empty(t, mp.lastURL)
+}
+
+func TestTaskOpenURL_Bad_Credentials(t *testing.T) {
+	mp := &mockPlatform{}
+	_, c := newTestBrowserService(t, mp)
+
+	r := c.Action("browser.openURL").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "url", Value: "https://user:pass@example.com"},
+	))
+	assert.False(t, r.OK)
+	assert.Empty(t, mp.lastURL)
+}
+
+func TestTaskOpenURL_Bad_PlatformError(t *testing.T) {
+	mp := &mockPlatform{urlErr: core.NewError("browser not found")}
+	_, c := newTestBrowserService(t, mp)
+
+	r := c.Action("browser.openURL").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "url", Value: "https://example.com"},
+	))
+	assert.False(t, r.OK)
 }
 
 func TestTaskOpenFile_Good(t *testing.T) {
 	mp := &mockPlatform{}
 	_, c := newTestBrowserService(t, mp)
 
-	_, handled, err := c.PERFORM(TaskOpenFile{Path: "/tmp/readme.txt"})
-	require.NoError(t, err)
-	assert.True(t, handled)
+	r := c.Action("browser.openFile").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "path", Value: "/tmp/readme.txt"},
+	))
+	require.True(t, r.OK)
 	assert.Equal(t, "/tmp/readme.txt", mp.lastPath)
 }
 
-func TestTaskOpenFile_Bad_PlatformError(t *testing.T) {
-	mp := &mockPlatform{fileErr: errors.New("file not found")}
+func TestTaskOpenFile_Bad_RelativePath(t *testing.T) {
+	mp := &mockPlatform{}
 	_, c := newTestBrowserService(t, mp)
 
-	_, handled, err := c.PERFORM(TaskOpenFile{Path: "/nonexistent"})
-	assert.True(t, handled)
-	assert.Error(t, err)
+	r := c.Action("browser.openFile").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "path", Value: "relative/readme.txt"},
+	))
+	assert.False(t, r.OK)
+	assert.Empty(t, mp.lastPath)
+}
+
+func TestTaskOpenFile_Bad_PlatformError(t *testing.T) {
+	mp := &mockPlatform{fileErr: core.NewError("file not found")}
+	_, c := newTestBrowserService(t, mp)
+
+	r := c.Action("browser.openFile").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "path", Value: "/nonexistent"},
+	))
+	assert.False(t, r.OK)
 }
 
 func TestTaskOpenURL_Bad_NoService(t *testing.T) {
-	c, _ := core.New(core.WithServiceLock())
-	_, handled, _ := c.PERFORM(TaskOpenURL{URL: "https://example.com"})
-	assert.False(t, handled)
+	c := core.New(core.WithServiceLock())
+	r := c.Action("browser.openURL").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "url", Value: "https://example.com"},
+	))
+	assert.False(t, r.OK)
+}
+
+func TestService_validatedOpenURL_Good(t *testing.T) {
+	cases := []struct {
+		name string
+		raw  string
+		want string
+	}{
+		{
+			name: "trimmed",
+			raw:  "  https://example.com  ",
+			want: "https://example.com",
+		},
+		{
+			name: "pathAndQuery",
+			raw:  "https://example.com/docs?q=core",
+			want: "https://example.com/docs?q=core",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := validatedOpenURL(tc.raw)
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, got)
+		})
+	}
+}
+
+func TestService_validatedOpenURL_Bad(t *testing.T) {
+	cases := []string{
+		"",
+		"   ",
+		"example.com",
+		"ftp://example.com",
+		"https://user:pass@example.com",
+	}
+
+	for _, raw := range cases {
+		t.Run(raw, func(t *testing.T) {
+			got, err := validatedOpenURL(raw)
+			require.Error(t, err)
+			assert.Empty(t, got)
+		})
+	}
+}
+
+func TestService_validatedOpenURL_Ugly(t *testing.T) {
+	got, err := validatedOpenURL("https://example.com/\x00")
+	require.Error(t, err)
+	assert.Empty(t, got)
+}
+
+func TestService_validatedOpenFilePath_Good(t *testing.T) {
+	got, err := validatedOpenFilePath("/tmp/../tmp/report.txt")
+	require.NoError(t, err)
+	assert.Equal(t, filepath.Clean("/tmp/report.txt"), got)
+}
+
+func TestService_validatedOpenFilePath_Bad(t *testing.T) {
+	cases := []string{
+		"",
+		"relative/report.txt",
+	}
+
+	for _, raw := range cases {
+		t.Run(raw, func(t *testing.T) {
+			got, err := validatedOpenFilePath(raw)
+			require.Error(t, err)
+			assert.Empty(t, got)
+		})
+	}
+}
+
+func TestService_validatedOpenFilePath_Ugly(t *testing.T) {
+	got, err := validatedOpenFilePath("/tmp/\x00report.txt")
+	require.Error(t, err)
+	assert.Empty(t, got)
 }

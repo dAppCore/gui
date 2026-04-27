@@ -1,15 +1,16 @@
 // pkg/menu/register.go
 package menu
 
-import "forge.lthn.ai/core/go/pkg/core"
+import core "dappco.re/go/core"
 
-// Register creates a factory closure that captures the Platform adapter.
-func Register(p Platform) func(*core.Core) (any, error) {
-	return func(c *core.Core) (any, error) {
-		return &Service{
+// Register(p) binds the menu service to a Core instance.
+// core.WithService(menu.Register(wailsMenu))
+func Register(p Platform) func(*core.Core) core.Result {
+	return func(c *core.Core) core.Result {
+		return core.Result{Value: &Service{
 			ServiceRuntime: core.NewServiceRuntime[Options](c, Options{}),
 			platform:       p,
 			manager:        NewManager(p),
-		}, nil
+		}, OK: true}
 	}
 }

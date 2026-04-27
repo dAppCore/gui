@@ -92,3 +92,39 @@ func TestManager_Build_Empty_Good(t *testing.T) {
 	menu := m.Build(nil)
 	assert.NotNil(t, menu)
 }
+
+func TestManager_Build_NilReceiver_Good(t *testing.T) {
+	var m *Manager
+	assert.Nil(t, m.Build([]MenuItem{{Label: "Test"}}))
+}
+
+func TestManager_SetApplicationMenu_NilReceiver_Good(t *testing.T) {
+	var m *Manager
+	assert.NotPanics(t, func() {
+		m.SetApplicationMenu([]MenuItem{{Label: "Test"}})
+	})
+}
+
+type nilMenuPlatform struct{}
+
+func (p *nilMenuPlatform) NewMenu() PlatformMenu                { return &nilMenu{} }
+func (p *nilMenuPlatform) SetApplicationMenu(menu PlatformMenu) {}
+
+type nilMenu struct{}
+
+func (m *nilMenu) Add(label string) PlatformMenuItem { return nil }
+func (m *nilMenu) AddSeparator()                     {}
+func (m *nilMenu) AddSubmenu(label string) PlatformMenu {
+	return nil
+}
+func (m *nilMenu) AddRole(role MenuRole) {}
+
+func TestManager_Build_NilMenuHandles_Good(t *testing.T) {
+	m := NewManager(&nilMenuPlatform{})
+	assert.NotPanics(t, func() {
+		assert.NotNil(t, m.Build([]MenuItem{
+			{Label: "File"},
+			{Label: "Parent", Children: []MenuItem{{Label: "Child"}}},
+		}))
+	})
+}

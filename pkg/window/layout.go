@@ -2,16 +2,18 @@
 package window
 
 import (
-	"encoding/json"
-	"fmt"
-	"os"
-	"path/filepath"
+	"io/fs"
 	"sync"
 	"time"
+
+	core "dappco.re/go/core"
+	coreio "dappco.re/go/io"
+	coreerr "dappco.re/go/log"
 )
 
+const layoutFileEnv = "WINDOW_LAYOUT_FILE"
+
 // Layout is a named window arrangement.
-// Use: layout := window.Layout{Name: "coding"}
 type Layout struct {
 	Name      string                 `json:"name"`
 	Windows   map[string]WindowState `json:"windows"`
@@ -20,7 +22,6 @@ type Layout struct {
 }
 
 // LayoutInfo is a summary of a layout.
-// Use: info := window.LayoutInfo{Name: "coding", WindowCount: 2}
 type LayoutInfo struct {
 	Name        string `json:"name"`
 	WindowCount int    `json:"windowCount"`
@@ -29,75 +30,156 @@ type LayoutInfo struct {
 }
 
 // LayoutManager persists named window arrangements to ~/.config/Core/layouts.json.
-// Use: lm := window.NewLayoutManager()
 type LayoutManager struct {
-	configDir string
-	layouts   map[string]Layout
-	mu        sync.RWMutex
+	configDir  string
+	layoutPath string
+	layouts    map[string]Layout
+	mu         sync.RWMutex
 }
 
 // NewLayoutManager creates a LayoutManager loading from the default config directory.
-// Use: lm := window.NewLayoutManager()
+// WINDOW_LAYOUT_FILE overrides the directory-based default when present.
 func NewLayoutManager() *LayoutManager {
+	if layoutFile := core.Env(layoutFileEnv); layoutFile != "" {
+		return NewLayoutManagerWithPath(layoutFile)
+	}
 	lm := &LayoutManager{
 		layouts: make(map[string]Layout),
 	}
-	configDir, err := os.UserConfigDir()
-	if err == nil {
-		lm.configDir = filepath.Join(configDir, "Core")
+	if configDir := core.Env("DIR_CONFIG"); configDir != "" {
+		lm.configDir = core.JoinPath(configDir, "Core")
 	}
-	lm.loadLayouts()
+	lm.load()
 	return lm
 }
 
 // NewLayoutManagerWithDir creates a LayoutManager loading from a custom config directory.
 // Useful for testing or when the default config directory is not appropriate.
-// Use: lm := window.NewLayoutManagerWithDir(t.TempDir())
 func NewLayoutManagerWithDir(configDir string) *LayoutManager {
 	lm := &LayoutManager{
 		configDir: configDir,
 		layouts:   make(map[string]Layout),
 	}
-	lm.loadLayouts()
+	lm.load()
 	return lm
 }
 
-func (lm *LayoutManager) layoutsFilePath() string {
-	return filepath.Join(lm.configDir, "layouts.json")
+// NewLayoutManagerWithPath creates a LayoutManager loading from a custom layout file.
+// Useful for tests and restricted runtimes that need an explicit writable target.
+func NewLayoutManagerWithPath(path string) *LayoutManager {
+	lm := &LayoutManager{
+		layoutPath: path,
+		layouts:    make(map[string]Layout),
+	}
+	lm.load()
+	return lm
 }
 
-func (lm *LayoutManager) loadLayouts() {
-	if lm.configDir == "" {
-		return
+func (lm *LayoutManager) filePath() string {
+	if lm.layoutPath != "" {
+		return lm.layoutPath
 	}
-	data, err := os.ReadFile(lm.layoutsFilePath())
-	if err != nil {
+	return core.JoinPath(lm.configDir, "layouts.json")
+}
+
+func (lm *LayoutManager) dataDir() string {
+	if lm.layoutPath != "" {
+		return core.PathDir(lm.layoutPath)
+	}
+	return lm.configDir
+}
+
+// SetPath switches the manager to a custom layout file path.
+func (lm *LayoutManager) SetPath(path string) {
+	if path == "" {
 		return
 	}
 	lm.mu.Lock()
-	defer lm.mu.Unlock()
-	_ = json.Unmarshal(data, &lm.layouts)
+	lm.layoutPath = path
+	lm.layouts = make(map[string]Layout)
+	lm.mu.Unlock()
+	lm.load()
 }
 
-func (lm *LayoutManager) saveLayouts() {
-	if lm.configDir == "" {
+func (lm *LayoutManager) load() {
+	if lm.configDir == "" && lm.layoutPath == "" {
 		return
+	}
+	content, err := coreio.Local.Read(lm.filePath())
+	if err != nil {
+		if core.Is(err, fs.ErrNotExist) {
+			return
+		}
+		core.Error(
+			"window layout load failed",
+			"path", lm.filePath(),
+			"err", core.E("window.LayoutManager.load", "failed to read window layouts", err),
+		)
+		return
+	}
+	loaded := make(map[string]Layout)
+	if result := core.JSONUnmarshalString(content, &loaded); !result.OK {
+		if decodeErr, ok := result.Value.(error); ok {
+			core.Error(
+				"window layout load failed",
+				"path", lm.filePath(),
+				"err", core.E("window.LayoutManager.load", "failed to decode window layouts", decodeErr),
+			)
+		}
+		return
+	}
+	lm.mu.Lock()
+	lm.layouts = loaded
+	lm.mu.Unlock()
+}
+
+func (lm *LayoutManager) save() error {
+	if lm.configDir == "" && lm.layoutPath == "" {
+		return nil
 	}
 	lm.mu.RLock()
-	data, err := json.MarshalIndent(lm.layouts, "", "  ")
-	lm.mu.RUnlock()
-	if err != nil {
-		return
+	filePath := lm.filePath()
+	layouts := make(map[string]Layout, len(lm.layouts))
+	for name, layout := range lm.layouts {
+		layouts[name] = layout
 	}
-	_ = os.MkdirAll(lm.configDir, 0o755)
-	_ = os.WriteFile(lm.layoutsFilePath(), data, 0o644)
+	result := core.JSONMarshal(layouts)
+	lm.mu.RUnlock()
+	if !result.OK {
+		marshalErr, _ := result.Value.(error)
+		core.Error(
+			"window layout save failed",
+			"path", filePath,
+			"err", core.E("window.LayoutManager.save", "failed to encode window layouts", marshalErr),
+		)
+		return core.E("window.LayoutManager.save", "failed to encode window layouts", marshalErr)
+	}
+	data := result.Value.([]byte)
+	if dir := lm.dataDir(); dir != "" {
+		if err := coreio.Local.EnsureDir(dir); err != nil {
+			core.Error(
+				"window layout save failed",
+				"path", filePath,
+				"err", core.E("window.LayoutManager.save", "failed to create window layout directory", err),
+			)
+			return core.E("window.LayoutManager.save", "failed to create window layout directory", err)
+		}
+	}
+	if err := coreio.Local.Write(filePath, string(data)); err != nil {
+		core.Error(
+			"window layout save failed",
+			"path", filePath,
+			"err", core.E("window.LayoutManager.save", "failed to write window layouts", err),
+		)
+		return core.E("window.LayoutManager.save", "failed to write window layouts", err)
+	}
+	return nil
 }
 
 // SaveLayout creates or updates a named layout.
-// Use: _ = lm.SaveLayout("coding", windowStates)
 func (lm *LayoutManager) SaveLayout(name string, windowStates map[string]WindowState) error {
 	if name == "" {
-		return fmt.Errorf("layout name cannot be empty")
+		return coreerr.E("window.LayoutManager.SaveLayout", "layout name cannot be empty", nil)
 	}
 	now := time.Now().UnixMilli()
 	lm.mu.Lock()
@@ -114,12 +196,13 @@ func (lm *LayoutManager) SaveLayout(name string, windowStates map[string]WindowS
 	}
 	lm.layouts[name] = layout
 	lm.mu.Unlock()
-	lm.saveLayouts()
+	if err := lm.save(); err != nil {
+		return err
+	}
 	return nil
 }
 
 // GetLayout returns a layout by name.
-// Use: layout, ok := lm.GetLayout("coding")
 func (lm *LayoutManager) GetLayout(name string) (Layout, bool) {
 	lm.mu.RLock()
 	defer lm.mu.RUnlock()
@@ -128,7 +211,6 @@ func (lm *LayoutManager) GetLayout(name string) (Layout, bool) {
 }
 
 // ListLayouts returns info summaries for all layouts.
-// Use: layouts := lm.ListLayouts()
 func (lm *LayoutManager) ListLayouts() []LayoutInfo {
 	lm.mu.RLock()
 	defer lm.mu.RUnlock()
@@ -143,10 +225,9 @@ func (lm *LayoutManager) ListLayouts() []LayoutInfo {
 }
 
 // DeleteLayout removes a layout by name.
-// Use: lm.DeleteLayout("coding")
 func (lm *LayoutManager) DeleteLayout(name string) {
 	lm.mu.Lock()
 	delete(lm.layouts, name)
 	lm.mu.Unlock()
-	lm.saveLayouts()
+	_ = lm.save()
 }

@@ -3,9 +3,10 @@ package mcp
 
 import (
 	"context"
-	"fmt"
 
-	"forge.lthn.ai/core/gui/pkg/notification"
+	core "dappco.re/go/core"
+	"dappco.re/go/gui/pkg/notification"
+	coreerr "dappco.re/go/log"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -21,40 +22,20 @@ type NotificationShowOutput struct {
 }
 
 func (s *Subsystem) notificationShow(_ context.Context, _ *mcp.CallToolRequest, input NotificationShowInput) (*mcp.CallToolResult, NotificationShowOutput, error) {
-	_, _, err := s.core.PERFORM(notification.TaskSend{Opts: notification.NotificationOptions{
-		Title:    input.Title,
-		Message:  input.Message,
-		Subtitle: input.Subtitle,
-	}})
-	if err != nil {
-		return nil, NotificationShowOutput{}, err
+	result := s.core.Action("notification.send").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: notification.TaskSend{Options: notification.NotificationOptions{
+			Title:    input.Title,
+			Message:  input.Message,
+			Subtitle: input.Subtitle,
+		}}},
+	))
+	if !result.OK {
+		if err, ok := result.Value.(error); ok {
+			return nil, NotificationShowOutput{}, err
+		}
+		return nil, NotificationShowOutput{}, nil
 	}
 	return nil, NotificationShowOutput{Success: true}, nil
-}
-
-// --- notification_with_actions ---
-
-type NotificationWithActionsInput struct {
-	Title    string                            `json:"title"`
-	Message  string                            `json:"message"`
-	Subtitle string                            `json:"subtitle,omitempty"`
-	Actions  []notification.NotificationAction `json:"actions,omitempty"`
-}
-type NotificationWithActionsOutput struct {
-	Success bool `json:"success"`
-}
-
-func (s *Subsystem) notificationWithActions(_ context.Context, _ *mcp.CallToolRequest, input NotificationWithActionsInput) (*mcp.CallToolResult, NotificationWithActionsOutput, error) {
-	_, _, err := s.core.PERFORM(notification.TaskSend{Opts: notification.NotificationOptions{
-		Title:    input.Title,
-		Message:  input.Message,
-		Subtitle: input.Subtitle,
-		Actions:  input.Actions,
-	}})
-	if err != nil {
-		return nil, NotificationWithActionsOutput{}, err
-	}
-	return nil, NotificationWithActionsOutput{Success: true}, nil
 }
 
 // --- notification_permission_request ---
@@ -65,13 +46,16 @@ type NotificationPermissionRequestOutput struct {
 }
 
 func (s *Subsystem) notificationPermissionRequest(_ context.Context, _ *mcp.CallToolRequest, _ NotificationPermissionRequestInput) (*mcp.CallToolResult, NotificationPermissionRequestOutput, error) {
-	result, _, err := s.core.PERFORM(notification.TaskRequestPermission{})
-	if err != nil {
-		return nil, NotificationPermissionRequestOutput{}, err
+	result := s.core.Action("notification.requestPermission").Run(context.Background(), core.NewOptions())
+	if !result.OK {
+		if err, ok := result.Value.(error); ok {
+			return nil, NotificationPermissionRequestOutput{}, err
+		}
+		return nil, NotificationPermissionRequestOutput{}, nil
 	}
-	granted, ok := result.(bool)
+	granted, ok := result.Value.(bool)
 	if !ok {
-		return nil, NotificationPermissionRequestOutput{}, fmt.Errorf("unexpected result type from notification permission request")
+		return nil, NotificationPermissionRequestOutput{}, coreerr.E("mcp.notificationPermissionRequest", "unexpected result type", nil)
 	}
 	return nil, NotificationPermissionRequestOutput{Granted: granted}, nil
 }
@@ -84,71 +68,88 @@ type NotificationPermissionCheckOutput struct {
 }
 
 func (s *Subsystem) notificationPermissionCheck(_ context.Context, _ *mcp.CallToolRequest, _ NotificationPermissionCheckInput) (*mcp.CallToolResult, NotificationPermissionCheckOutput, error) {
-	result, _, err := s.core.QUERY(notification.QueryPermission{})
-	if err != nil {
-		return nil, NotificationPermissionCheckOutput{}, err
+	result := s.core.QUERY(notification.QueryPermission{})
+	if !result.OK {
+		if err, ok := result.Value.(error); ok {
+			return nil, NotificationPermissionCheckOutput{}, err
+		}
+		return nil, NotificationPermissionCheckOutput{}, nil
 	}
-	status, ok := result.(notification.PermissionStatus)
+	status, ok := result.Value.(notification.PermissionStatus)
 	if !ok {
-		return nil, NotificationPermissionCheckOutput{}, fmt.Errorf("unexpected result type from notification permission check")
+		return nil, NotificationPermissionCheckOutput{}, coreerr.E("mcp.notificationPermissionCheck", "unexpected result type", nil)
 	}
 	return nil, NotificationPermissionCheckOutput{Granted: status.Granted}, nil
 }
 
 // --- notification_clear ---
 
-type NotificationClearInput struct{}
+type NotificationClearInput struct {
+	ID string `json:"id,omitempty"`
+}
+
 type NotificationClearOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) notificationClear(_ context.Context, _ *mcp.CallToolRequest, _ NotificationClearInput) (*mcp.CallToolResult, NotificationClearOutput, error) {
-	_, _, err := s.core.PERFORM(notification.TaskClear{})
-	if err != nil {
-		return nil, NotificationClearOutput{}, err
+func (s *Subsystem) notificationClear(_ context.Context, _ *mcp.CallToolRequest, input NotificationClearInput) (*mcp.CallToolResult, NotificationClearOutput, error) {
+	result := s.core.Action("notification.clear").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: notification.TaskClear{ID: input.ID}},
+	))
+	if !result.OK {
+		if err, ok := result.Value.(error); ok {
+			return nil, NotificationClearOutput{}, err
+		}
+		return nil, NotificationClearOutput{}, nil
 	}
 	return nil, NotificationClearOutput{Success: true}, nil
 }
 
-// --- dialog_message ---
+// --- notification_with_actions ---
 
-type DialogMessageInput struct {
-	Title   string `json:"title"`
-	Message string `json:"message"`
-	Kind    string `json:"kind,omitempty"`
+type NotificationWithActionsInput struct {
+	Title      string                            `json:"title"`
+	Message    string                            `json:"message"`
+	Subtitle   string                            `json:"subtitle,omitempty"`
+	CategoryID string                            `json:"category_id,omitempty"`
+	Actions    []notification.NotificationAction `json:"actions,omitempty"`
 }
-type DialogMessageOutput struct {
+
+type NotificationWithActionsOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) dialogMessage(_ context.Context, _ *mcp.CallToolRequest, input DialogMessageInput) (*mcp.CallToolResult, DialogMessageOutput, error) {
-	var severity notification.NotificationSeverity
-	switch input.Kind {
-	case "warning":
-		severity = notification.SeverityWarning
-	case "error":
-		severity = notification.SeverityError
-	default:
-		severity = notification.SeverityInfo
+func (s *Subsystem) notificationWithActions(_ context.Context, _ *mcp.CallToolRequest, input NotificationWithActionsInput) (*mcp.CallToolResult, NotificationWithActionsOutput, error) {
+	result := s.core.Action("notification.send").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: notification.TaskSend{Options: notification.NotificationOptions{
+			Title:      input.Title,
+			Message:    input.Message,
+			Subtitle:   input.Subtitle,
+			CategoryID: input.CategoryID,
+			Actions:    input.Actions,
+		}}},
+	))
+	if !result.OK {
+		if err, ok := result.Value.(error); ok {
+			return nil, NotificationWithActionsOutput{}, err
+		}
+		return nil, NotificationWithActionsOutput{}, nil
 	}
-	_, _, err := s.core.PERFORM(notification.TaskSend{Opts: notification.NotificationOptions{
-		Title:    input.Title,
-		Message:  input.Message,
-		Severity: severity,
-	}})
-	if err != nil {
-		return nil, DialogMessageOutput{}, err
-	}
-	return nil, DialogMessageOutput{Success: true}, nil
+	return nil, NotificationWithActionsOutput{Success: true}, nil
 }
 
 // --- Registration ---
 
 func (s *Subsystem) registerNotificationTools(server *mcp.Server) {
-	mcp.AddTool(server, &mcp.Tool{Name: "notification_show", Description: "Show a desktop notification"}, s.notificationShow)
-	mcp.AddTool(server, &mcp.Tool{Name: "notification_with_actions", Description: "Show a desktop notification with actions"}, s.notificationWithActions)
-	mcp.AddTool(server, &mcp.Tool{Name: "notification_permission_request", Description: "Request notification permission"}, s.notificationPermissionRequest)
-	mcp.AddTool(server, &mcp.Tool{Name: "notification_permission_check", Description: "Check notification permission status"}, s.notificationPermissionCheck)
-	mcp.AddTool(server, &mcp.Tool{Name: "notification_clear", Description: "Clear notifications when supported"}, s.notificationClear)
-	mcp.AddTool(server, &mcp.Tool{Name: "dialog_message", Description: "Show a message dialog using the notification pipeline"}, s.dialogMessage)
+	addTool(s, server, &mcp.Tool{Name: "notification_show", Description: "Show a desktop notification"}, s.notificationShow)
+	addTool(s, server, &mcp.Tool{Name: "notification_permission_request", Description: "Request notification permission"}, s.notificationPermissionRequest)
+	addTool(s, server, &mcp.Tool{Name: "notification_permission_check", Description: "Check notification permission status"}, s.notificationPermissionCheck)
+	addTool(s, server, &mcp.Tool{
+		Name:        "notification_clear",
+		Description: `Clear a notification by id or clear all notifications. Example: {"id":"core-123"}`,
+	}, s.notificationClear)
+	addTool(s, server, &mcp.Tool{
+		Name:        "notification_with_actions",
+		Description: `Show an interactive desktop notification with action buttons. Example: {"title":"Deploy","message":"Start deployment?","actions":[{"id":"confirm","label":"Deploy"}]}`,
+	}, s.notificationWithActions)
 }

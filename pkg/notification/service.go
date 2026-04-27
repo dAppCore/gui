@@ -3,102 +3,140 @@ package notification
 
 import (
 	"context"
-	"fmt"
+	"strconv"
+	"sync"
 	"time"
 
-	"forge.lthn.ai/core/go/pkg/core"
-	"forge.lthn.ai/core/gui/pkg/dialog"
+	core "dappco.re/go/core"
+	"dappco.re/go/gui/pkg/dialog"
+	coreerr "dappco.re/go/log"
 )
 
-// Options configures the notification service.
-// Use: core.WithService(notification.Register(platform))
 type Options struct{}
 
-// Service manages notifications via Core tasks and queries.
-// Use: svc := &notification.Service{}
 type Service struct {
 	*core.ServiceRuntime[Options]
-	platform Platform
+	platform   Platform
+	categories map[string]NotificationCategory
+	mu         sync.Mutex
+	active     map[string]NotificationOptions
 }
 
-// Register creates a Core service factory for the notification backend.
-// Use: core.New(core.WithService(notification.Register(platform)))
-func Register(p Platform) func(*core.Core) (any, error) {
-	return func(c *core.Core) (any, error) {
-		return &Service{
+func Register(p Platform) func(*core.Core) core.Result {
+	return func(c *core.Core) core.Result {
+		return core.Result{Value: &Service{
 			ServiceRuntime: core.NewServiceRuntime[Options](c, Options{}),
 			platform:       p,
-		}, nil
+			categories:     make(map[string]NotificationCategory),
+			active:         make(map[string]NotificationOptions),
+		}, OK: true}
 	}
 }
 
-// OnStartup registers notification handlers with Core.
-// Use: _ = svc.OnStartup(context.Background())
-func (s *Service) OnStartup(ctx context.Context) error {
+func (s *Service) OnStartup(_ context.Context) core.Result {
 	s.Core().RegisterQuery(s.handleQuery)
-	s.Core().RegisterTask(s.handleTask)
-	return nil
+	send := func(_ context.Context, opts core.Options) core.Result {
+		options, err := notificationOptionsFrom(opts)
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		return core.Result{Value: nil, OK: true}.New(s.send(options))
+	}
+	s.Core().Action("notification.requestPermission", func(_ context.Context, _ core.Options) core.Result {
+		granted, err := s.platform.RequestPermission()
+		return core.Result{}.New(granted, err)
+	})
+	s.Core().Action("gui.notification.requestPermission", func(_ context.Context, _ core.Options) core.Result {
+		granted, err := s.platform.RequestPermission()
+		return core.Result{}.New(granted, err)
+	})
+	s.Core().Action("notification.revokePermission", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: nil, OK: true}.New(s.platform.RevokePermission())
+	})
+	s.Core().Action("gui.notification.revokePermission", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: nil, OK: true}.New(s.platform.RevokePermission())
+	})
+	s.Core().Action("notification.registerCategory", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskRegisterCategory)
+		s.categories[t.Category.ID] = t.Category
+		return core.Result{OK: true}
+	})
+	s.Core().Action("gui.notification.registerCategory", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskRegisterCategory)
+		s.categories[t.Category.ID] = t.Category
+		return core.Result{OK: true}
+	})
+	s.Core().Action("notification.clear", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskClear)
+		return core.Result{Value: nil, OK: true}.New(s.clear(t.ID))
+	})
+	s.Core().Action("gui.notification.clear", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskClear)
+		return core.Result{Value: nil, OK: true}.New(s.clear(t.ID))
+	})
+	s.Core().Action("notification.send", send)
+	s.Core().Action("gui.notification.send", send)
+	return core.Result{OK: true}
 }
 
-// HandleIPCEvents satisfies Core's IPC hook.
-func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
-	return nil
+func (s *Service) HandleIPCEvents(_ *core.Core, _ core.Message) core.Result {
+	return core.Result{OK: true}
 }
 
-func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
+func (s *Service) handleQuery(_ *core.Core, q core.Query) core.Result {
 	switch q.(type) {
 	case QueryPermission:
 		granted, err := s.platform.CheckPermission()
-		return PermissionStatus{Granted: granted}, true, err
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		return core.Result{Value: PermissionStatus{Granted: granted}, OK: true}
 	default:
-		return nil, false, nil
+		return core.Result{}
 	}
 }
 
-func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
-	switch t := t.(type) {
-	case TaskSend:
-		return nil, true, s.sendNotification(t.Opts)
-	case TaskRequestPermission:
-		granted, err := s.platform.RequestPermission()
-		return granted, true, err
-	case TaskClear:
-		if clr, ok := s.platform.(clearer); ok {
-			return nil, true, clr.Clear()
-		}
-		return nil, true, nil
-	default:
-		return nil, false, nil
+// send attempts native notification, falls back to dialog via IPC.
+func (s *Service) send(options NotificationOptions) error {
+	// Generate ID if not provided
+	if options.ID == "" {
+		options.ID = "core-" + strconv.FormatInt(time.Now().UnixNano(), 10)
 	}
-}
+	options = s.applyCategoryActions(options)
 
-// sendNotification attempts a native notification and falls back to a dialog via IPC.
-func (s *Service) sendNotification(opts NotificationOptions) error {
-	// Generate an ID when the caller does not provide one.
-	if opts.ID == "" {
-		opts.ID = fmt.Sprintf("core-%d", time.Now().UnixNano())
-	}
-
-	if len(opts.Actions) > 0 {
-		if sender, ok := s.platform.(actionSender); ok {
-			if err := sender.SendWithActions(opts); err == nil {
-				return nil
-			}
+	if err := s.platform.Send(options); err != nil {
+		// Fallback: show as dialog via IPC
+		if err := s.fallbackDialog(options); err != nil {
+			return err
 		}
 	}
-
-	if err := s.platform.Send(opts); err != nil {
-		// Fall back to a dialog when the native notification fails.
-		return s.showFallbackDialog(opts)
-	}
+	s.mu.Lock()
+	s.active[options.ID] = options
+	s.mu.Unlock()
 	return nil
 }
 
-// showFallbackDialog shows a dialog via IPC when native notifications fail.
-func (s *Service) showFallbackDialog(opts NotificationOptions) error {
-	// Map severity to dialog type.
+func (s *Service) applyCategoryActions(options NotificationOptions) NotificationOptions {
+	if options.CategoryID == "" || len(options.Actions) > 0 {
+		return options
+	}
+
+	s.mu.Lock()
+	category, ok := s.categories[options.CategoryID]
+	s.mu.Unlock()
+	if !ok || len(category.Actions) == 0 {
+		return options
+	}
+
+	options.Actions = append([]NotificationAction(nil), category.Actions...)
+	return options
+}
+
+// fallbackDialog shows a dialog via IPC when native notifications fail.
+func (s *Service) fallbackDialog(options NotificationOptions) error {
+	// Map severity to dialog type
 	var dt dialog.DialogType
-	switch opts.Severity {
+	switch options.Severity {
 	case SeverityWarning:
 		dt = dialog.DialogWarning
 	case SeverityError:
@@ -107,18 +145,90 @@ func (s *Service) showFallbackDialog(opts NotificationOptions) error {
 		dt = dialog.DialogInfo
 	}
 
-	msg := opts.Message
-	if opts.Subtitle != "" {
-		msg = opts.Subtitle + "\n\n" + msg
+	message := options.Message
+	if options.Subtitle != "" {
+		message = options.Subtitle + "\n\n" + message
 	}
 
-	_, _, err := s.Core().PERFORM(dialog.TaskMessageDialog{
-		Opts: dialog.MessageDialogOptions{
-			Type:    dt,
-			Title:   opts.Title,
-			Message: msg,
-			Buttons: []string{"OK"},
-		},
-	})
-	return err
+	r := s.Core().Action("dialog.message").Run(context.Background(), core.NewOptions(
+		core.Option{Key: "task", Value: dialog.TaskMessageDialog{
+			Options: dialog.MessageDialogOptions{
+				Type:    dt,
+				Title:   options.Title,
+				Message: message,
+				Buttons: []string{"OK"},
+			},
+		}},
+	))
+	if !r.OK {
+		if err, ok := r.Value.(error); ok {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *Service) clear(id string) error {
+	if clearer, ok := s.platform.(ClearPlatform); ok {
+		if err := clearer.Clear(id); err != nil {
+			return err
+		}
+	}
+
+	ids := s.removeActive(id)
+	for _, notificationID := range ids {
+		_ = s.Core().ACTION(ActionNotificationDismissed{ID: notificationID})
+	}
+	return nil
+}
+
+func (s *Service) removeActive(id string) []string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if id != "" {
+		if _, ok := s.active[id]; !ok {
+			return nil
+		}
+		delete(s.active, id)
+		return []string{id}
+	}
+
+	ids := make([]string, 0, len(s.active))
+	for notificationID := range s.active {
+		ids = append(ids, notificationID)
+	}
+	clear(s.active)
+	return ids
+}
+
+func notificationOptionsFrom(opts core.Options) (NotificationOptions, error) {
+	if task := opts.Get("task"); task.OK {
+		switch v := task.Value.(type) {
+		case TaskSend:
+			return v.Options, nil
+		case NotificationOptions:
+			return v, nil
+		}
+	}
+	return decodeOptions[NotificationOptions](opts)
+}
+
+func decodeOptions[T any](opts core.Options) (T, error) {
+	var input T
+	items := make(map[string]any, opts.Len())
+	for _, item := range opts.Items() {
+		items[item.Key] = item.Value
+	}
+	if len(items) == 0 {
+		return input, nil
+	}
+	result := core.JSONUnmarshalString(core.JSONMarshalString(items), &input)
+	if !result.OK {
+		if err, ok := result.Value.(error); ok {
+			return input, err
+		}
+		return input, coreerr.E("notification.decodeOptions", "failed to decode notification options", nil)
+	}
+	return input, nil
 }

@@ -1,42 +1,86 @@
-// pkg/browser/service.go
 package browser
 
 import (
 	"context"
+	"net/url"
+	"path/filepath"
+	"strings"
 
-	"forge.lthn.ai/core/go/pkg/core"
+	core "dappco.re/go/core"
+	coreerr "dappco.re/go/log"
 )
 
-// Options holds configuration for the browser service.
 type Options struct{}
 
-// Service is a core.Service that delegates browser/file-open operations
-// to the platform. It is stateless — no queries, no actions.
 type Service struct {
 	*core.ServiceRuntime[Options]
 	platform Platform
 }
 
-// OnStartup registers IPC handlers.
-func (s *Service) OnStartup(ctx context.Context) error {
-	s.Core().RegisterTask(s.handleTask)
-	return nil
-}
-
-// HandleIPCEvents is auto-discovered and registered by core.WithService.
-func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
-	return nil
-}
-
-// --- Task Handlers ---
-
-func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
-	switch t := t.(type) {
-	case TaskOpenURL:
-		return nil, true, s.platform.OpenURL(t.URL)
-	case TaskOpenFile:
-		return nil, true, s.platform.OpenFile(t.Path)
-	default:
-		return nil, false, nil
+func (s *Service) OnStartup(_ context.Context) core.Result {
+	openURL := func(_ context.Context, opts core.Options) core.Result {
+		parsedURL, err := validatedOpenURL(opts.String("url"))
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		if err := s.platform.OpenURL(parsedURL); err != nil {
+			return core.Result{Value: coreerr.E("browser.openURL", "failed to open URL", err), OK: false}
+		}
+		return core.Result{OK: true}
 	}
+	openFile := func(_ context.Context, opts core.Options) core.Result {
+		path, err := validatedOpenFilePath(opts.String("path"))
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		if err := s.platform.OpenFile(path); err != nil {
+			return core.Result{Value: coreerr.E("browser.openFile", "failed to open file", err), OK: false}
+		}
+		return core.Result{OK: true}
+	}
+	s.Core().Action("browser.openURL", openURL)
+	s.Core().Action("gui.browser.open", openURL)
+	s.Core().Action("browser.openFile", openFile)
+	s.Core().Action("gui.browser.openFile", openFile)
+	return core.Result{OK: true}
+}
+
+func (s *Service) HandleIPCEvents(_ *core.Core, _ core.Message) core.Result {
+	return core.Result{OK: true}
+}
+
+func validatedOpenURL(raw string) (string, error) {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		return "", coreerr.E("browser.openURL", "url is required", nil)
+	}
+	parsed, err := url.ParseRequestURI(trimmed)
+	if err != nil {
+		return "", coreerr.E("browser.openURL", "invalid url", err)
+	}
+	if parsed.Scheme != "http" && parsed.Scheme != "https" {
+		return "", coreerr.E("browser.openURL", "unsupported url scheme: "+parsed.Scheme, nil)
+	}
+	if parsed.Host == "" {
+		return "", coreerr.E("browser.openURL", "url host is required", nil)
+	}
+	if parsed.User != nil {
+		return "", coreerr.E("browser.openURL", "url must not include credentials", nil)
+	}
+	return parsed.String(), nil
+}
+
+func validatedOpenFilePath(raw string) (string, error) {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		return "", coreerr.E("browser.openFile", "path is required", nil)
+	}
+	if strings.ContainsRune(trimmed, '\x00') {
+		return "", coreerr.E("browser.openFile", "path contains a null byte", nil)
+	}
+	cleaned := filepath.Clean(trimmed)
+	if !filepath.IsAbs(cleaned) {
+		return "", coreerr.E("browser.openFile", "path must be absolute", nil)
+	}
+	return cleaned, nil
 }

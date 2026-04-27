@@ -37,7 +37,7 @@ type Plugin interface {
 For simple plugins, embed `BasePlugin`:
 
 ```go
-import "github.com/Snider/Core/pkg/plugin"
+import "dappco.re/go/core/plugin"
 
 func NewMyPlugin() *plugin.BasePlugin {
     handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -148,7 +148,7 @@ Located at `pkg/plugin/builtin/system`:
 The Router manages plugin registration:
 
 ```go
-import "github.com/Snider/Core/pkg/plugin"
+import "dappco.re/go/core/plugin"
 
 router := plugin.NewRouter()
 

@@ -15,7 +15,7 @@ The WebView service (`pkg/webview`) provides programmatic interaction with web c
 ## Basic Usage
 
 ```go
-import "github.com/Snider/Core/pkg/webview"
+import "dappco.re/go/gui/pkg/webview"
 
 // Create service
 wv := webview.New()

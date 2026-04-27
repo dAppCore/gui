@@ -17,6 +17,7 @@ type PlatformTray interface {
 	SetLabel(text string)
 	SetMenu(menu PlatformMenu)
 	AttachWindow(w WindowHandle)
+	ShowMessage(title, message string) error
 }
 
 // PlatformMenu is a tray menu built by the backend.
@@ -34,17 +35,14 @@ type PlatformMenuItem interface {
 	SetChecked(checked bool)
 	SetEnabled(enabled bool)
 	OnClick(fn func())
-	AddSubmenu() PlatformMenu
 }
 
-// WindowHandle is a cross-package interface for window operations.
+// WindowHandle is a minimal cross-package window reference.
 // Defined locally to avoid circular imports (display imports systray).
-// pkg/window.PlatformWindow satisfies this implicitly.
+// Concrete panel operations are invoked dynamically because Wails windows use
+// fluent Show/Hide methods while the internal window abstraction uses void
+// methods.
 // Use: var w systray.WindowHandle
 type WindowHandle interface {
 	Name() string
-	Show()
-	Hide()
-	SetPosition(x, y int)
-	SetSize(width, height int)
 }

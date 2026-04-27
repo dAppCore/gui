@@ -13,7 +13,7 @@ The Workspace service (`pkg/workspace`) manages isolated user workspaces with en
 ## Basic Usage
 
 ```go
-import "github.com/Snider/Core/pkg/workspace"
+import "dappco.re/go/core/workspace"
 
 // With IO medium (standalone)
 medium, _ := local.New("/app/workspaces")

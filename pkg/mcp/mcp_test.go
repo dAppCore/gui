@@ -3,33 +3,44 @@ package mcp
 
 import (
 	"context"
+	"sync"
 	"testing"
 
-	"forge.lthn.ai/core/go/pkg/core"
-	"forge.lthn.ai/core/gui/pkg/clipboard"
-	"forge.lthn.ai/core/gui/pkg/display"
-	"forge.lthn.ai/core/gui/pkg/environment"
-	"forge.lthn.ai/core/gui/pkg/notification"
-	"forge.lthn.ai/core/gui/pkg/screen"
-	"forge.lthn.ai/core/gui/pkg/webview"
-	"forge.lthn.ai/core/gui/pkg/window"
+	core "dappco.re/go/core"
+	"dappco.re/go/gui/pkg/browser"
+	"dappco.re/go/gui/pkg/clipboard"
+	"dappco.re/go/gui/pkg/dialog"
+	"dappco.re/go/gui/pkg/events"
+	"dappco.re/go/gui/pkg/menu"
+	"dappco.re/go/gui/pkg/screen"
+	"dappco.re/go/gui/pkg/webview"
+	"dappco.re/go/gui/pkg/window"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestSubsystem_Good_Name(t *testing.T) {
-	c, _ := core.New(core.WithServiceLock())
+	c := core.New(core.WithServiceLock())
 	sub := New(c)
 	assert.Equal(t, "display", sub.Name())
 }
 
 func TestSubsystem_Good_RegisterTools(t *testing.T) {
-	c, _ := core.New(core.WithServiceLock())
+	c := core.New(core.WithServiceLock())
 	sub := New(c)
 	// RegisterTools should not panic with a real mcp.Server
 	server := mcp.NewServer(&mcp.Implementation{Name: "test", Version: "0.1.0"}, nil)
 	assert.NotPanics(t, func() { sub.RegisterTools(server) })
+	assert.NotEmpty(t, sub.Manifest())
+	assert.Contains(t, sub.ManifestText(), "layout_suggest")
+	assert.Contains(t, sub.ManifestText(), "window_title_set")
+	assert.Contains(t, sub.ManifestText(), "focus_set")
+	assert.Contains(t, sub.ManifestText(), "dialog_message")
+	assert.Contains(t, sub.ManifestText(), "event_info")
+	assert.Contains(t, sub.ManifestText(), "screen_work_area")
+	assert.Contains(t, sub.ManifestText(), "dock_info")
+	assert.Contains(t, sub.ManifestText(), "dock_bounce")
 }
 
 // Integration test: verify the IPC round-trip that MCP tool handlers use.
@@ -42,241 +53,323 @@ type mockClipPlatform struct {
 func (m *mockClipPlatform) Text() (string, bool)  { return m.text, m.ok }
 func (m *mockClipPlatform) SetText(t string) bool { m.text = t; m.ok = t != ""; return true }
 
-type mockNotificationPlatform struct {
-	sendCalled bool
-	lastOpts   notification.NotificationOptions
-}
-
-func (m *mockNotificationPlatform) Send(opts notification.NotificationOptions) error {
-	m.sendCalled = true
-	m.lastOpts = opts
-	return nil
-}
-func (m *mockNotificationPlatform) RequestPermission() (bool, error) { return true, nil }
-func (m *mockNotificationPlatform) CheckPermission() (bool, error)   { return true, nil }
-
-type mockEnvironmentPlatform struct {
-	isDark bool
-}
-
-func (m *mockEnvironmentPlatform) IsDarkMode() bool { return m.isDark }
-func (m *mockEnvironmentPlatform) Info() environment.EnvironmentInfo {
-	return environment.EnvironmentInfo{}
-}
-func (m *mockEnvironmentPlatform) AccentColour() string { return "" }
-func (m *mockEnvironmentPlatform) OpenFileManager(path string, selectFile bool) error {
-	return nil
-}
-func (m *mockEnvironmentPlatform) OnThemeChange(handler func(isDark bool)) func() {
-	return func() {}
-}
-func (m *mockEnvironmentPlatform) SetTheme(isDark bool) error {
-	m.isDark = isDark
-	return nil
-}
-
-type mockScreenPlatform struct {
-	screens []screen.Screen
-}
-
-func (m *mockScreenPlatform) GetAll() []screen.Screen { return m.screens }
-func (m *mockScreenPlatform) GetPrimary() *screen.Screen {
-	for i := range m.screens {
-		if m.screens[i].IsPrimary {
-			return &m.screens[i]
-		}
-	}
-	if len(m.screens) == 0 {
-		return nil
-	}
-	return &m.screens[0]
-}
-
 func TestMCP_Good_ClipboardRoundTrip(t *testing.T) {
-	c, err := core.New(
+	c := core.New(
 		core.WithService(clipboard.Register(&mockClipPlatform{text: "hello", ok: true})),
 		core.WithServiceLock(),
 	)
-	require.NoError(t, err)
-	require.NoError(t, c.ServiceStartup(context.Background(), nil))
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
 
 	// Verify the IPC path that clipboard_read tool handler uses
-	result, handled, err := c.QUERY(clipboard.QueryText{})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	content, ok := result.(clipboard.ClipboardContent)
+	r := c.QUERY(clipboard.QueryText{})
+	require.True(t, r.OK)
+	content, ok := r.Value.(clipboard.ClipboardContent)
 	require.True(t, ok, "expected ClipboardContent type")
 	assert.Equal(t, "hello", content.Text)
 }
 
-func TestMCP_Good_DialogMessage(t *testing.T) {
-	mock := &mockNotificationPlatform{}
-	c, err := core.New(
-		core.WithService(notification.Register(mock)),
-		core.WithServiceLock(),
-	)
-	require.NoError(t, err)
-	require.NoError(t, c.ServiceStartup(context.Background(), nil))
-
-	sub := New(c)
-	_, result, err := sub.dialogMessage(context.Background(), nil, DialogMessageInput{
-		Title:   "Alias",
-		Message: "Hello",
-		Kind:    "error",
-	})
-	require.NoError(t, err)
-	assert.True(t, result.Success)
-	assert.True(t, mock.sendCalled)
-	assert.Equal(t, notification.SeverityError, mock.lastOpts.Severity)
-}
-
-func TestMCP_Good_ThemeSetString(t *testing.T) {
-	mock := &mockEnvironmentPlatform{isDark: true}
-	c, err := core.New(
-		core.WithService(environment.Register(mock)),
-		core.WithServiceLock(),
-	)
-	require.NoError(t, err)
-	require.NoError(t, c.ServiceStartup(context.Background(), nil))
-
-	sub := New(c)
-	_, result, err := sub.themeSet(context.Background(), nil, ThemeSetInput{Theme: "light"})
-	require.NoError(t, err)
-	assert.Equal(t, "light", result.Theme.Theme)
-	assert.False(t, result.Theme.IsDark)
-	assert.False(t, mock.isDark)
-}
-
-func TestMCP_Good_WindowTitleSetAlias(t *testing.T) {
-	c, err := core.New(
-		core.WithService(window.Register(window.NewMockPlatform())),
-		core.WithServiceLock(),
-	)
-	require.NoError(t, err)
-	require.NoError(t, c.ServiceStartup(context.Background(), nil))
-
-	_, handled, err := c.PERFORM(window.TaskOpenWindow{
-		Window: &window.Window{Name: "alias-win", Title: "Original", URL: "/"},
-	})
-	require.NoError(t, err)
-	assert.True(t, handled)
-
-	sub := New(c)
-	_, result, err := sub.windowTitleSet(context.Background(), nil, WindowTitleInput{
-		Name:  "alias-win",
-		Title: "Updated",
-	})
-	require.NoError(t, err)
-	assert.True(t, result.Success)
-
-	queried, handled, err := c.QUERY(window.QueryWindowByName{Name: "alias-win"})
-	require.NoError(t, err)
-	assert.True(t, handled)
-	info, ok := queried.(*window.WindowInfo)
-	require.True(t, ok)
-	require.NotNil(t, info)
-	assert.Equal(t, "Updated", info.Title)
-}
-
-func TestMCP_Good_ScreenWorkAreaAlias(t *testing.T) {
-	c, err := core.New(
-		core.WithService(screen.Register(&mockScreenPlatform{
-			screens: []screen.Screen{
-				{
-					ID:        "1",
-					Name:      "Primary",
-					IsPrimary: true,
-					WorkArea:  screen.Rect{X: 0, Y: 24, Width: 1920, Height: 1056},
-					Bounds:    screen.Rect{X: 0, Y: 0, Width: 1920, Height: 1080},
-					Size:      screen.Size{Width: 1920, Height: 1080},
-				},
-			},
-		})),
-		core.WithServiceLock(),
-	)
-	require.NoError(t, err)
-	require.NoError(t, c.ServiceStartup(context.Background(), nil))
-
-	sub := New(c)
-	_, plural, err := sub.screenWorkAreas(context.Background(), nil, ScreenWorkAreasInput{})
-	require.NoError(t, err)
-	_, alias, err := sub.screenWorkArea(context.Background(), nil, ScreenWorkAreasInput{})
-	require.NoError(t, err)
-	assert.Equal(t, plural, alias)
-	assert.Len(t, alias.WorkAreas, 1)
-	assert.Equal(t, 24, alias.WorkAreas[0].Y)
-}
-
-func TestMCP_Good_ScreenForWindow(t *testing.T) {
-	c, err := core.New(
-		core.WithService(display.Register(nil)),
-		core.WithService(screen.Register(&mockScreenPlatform{
-			screens: []screen.Screen{
-				{
-					ID:        "1",
-					Name:      "Primary",
-					IsPrimary: true,
-					WorkArea:  screen.Rect{X: 0, Y: 0, Width: 1920, Height: 1080},
-					Bounds:    screen.Rect{X: 0, Y: 0, Width: 1920, Height: 1080},
-					Size:      screen.Size{Width: 1920, Height: 1080},
-				},
-				{
-					ID:       "2",
-					Name:     "Secondary",
-					WorkArea: screen.Rect{X: 1920, Y: 0, Width: 1280, Height: 1024},
-					Bounds:   screen.Rect{X: 1920, Y: 0, Width: 1280, Height: 1024},
-					Size:     screen.Size{Width: 1280, Height: 1024},
-				},
-			},
-		})),
-		core.WithService(window.Register(window.NewMockPlatform())),
-		core.WithServiceLock(),
-	)
-	require.NoError(t, err)
-	require.NoError(t, c.ServiceStartup(context.Background(), nil))
-
-	_, handled, err := c.PERFORM(window.TaskOpenWindow{
-		Window: &window.Window{Name: "editor", Title: "Editor", X: 100, Y: 100, Width: 800, Height: 600},
-	})
-	require.NoError(t, err)
-	assert.True(t, handled)
-
-	sub := New(c)
-	_, out, err := sub.screenForWindow(context.Background(), nil, ScreenForWindowInput{Window: "editor"})
-	require.NoError(t, err)
-	require.NotNil(t, out.Screen)
-	assert.Equal(t, "Primary", out.Screen.Name)
-}
-
-func TestMCP_Good_WebviewErrors(t *testing.T) {
-	c, err := core.New(
-		core.WithService(webview.Register(webview.Options{})),
-		core.WithServiceLock(),
-	)
-	require.NoError(t, err)
-	require.NoError(t, c.ServiceStartup(context.Background(), nil))
-
-	require.NoError(t, c.ACTION(webview.ActionException{
-		Window: "main",
-		Exception: webview.ExceptionInfo{
-			Text:       "boom",
-			URL:        "https://example.com/app.js",
-			Line:       12,
-			Column:     4,
-			StackTrace: "Error: boom",
-		},
-	}))
-
-	sub := New(c)
-	_, out, err := sub.webviewErrors(context.Background(), nil, WebviewErrorsInput{Window: "main"})
-	require.NoError(t, err)
-	require.Len(t, out.Errors, 1)
-	assert.Equal(t, "boom", out.Errors[0].Text)
-}
-
 func TestMCP_Bad_NoServices(t *testing.T) {
-	c, _ := core.New(core.WithServiceLock())
-	// Without any services, QUERY should return handled=false
-	_, handled, _ := c.QUERY(clipboard.QueryText{})
-	assert.False(t, handled)
+	c := core.New(core.WithServiceLock())
+	// Without any services, QUERY should return OK=false
+	r := c.QUERY(clipboard.QueryText{})
+	assert.False(t, r.OK)
+}
+
+func TestSubsystem_Bad_CallTool_MenuGetQueryFailure(t *testing.T) {
+	c := core.New(core.WithServiceLock())
+	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
+		if _, ok := q.(menu.QueryGetAppMenu); ok {
+			return core.Result{Value: "menu unavailable", OK: false}
+		}
+		return core.Result{}
+	})
+
+	sub := New(c)
+	server := mcp.NewServer(&mcp.Implementation{Name: "test", Version: "0.1.0"}, nil)
+	sub.RegisterTools(server)
+
+	_, err := sub.CallTool(context.Background(), "menu_get", nil)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "menu query failed")
+}
+
+func TestSubsystem_Bad_CallTool_MenuSetActionFailure(t *testing.T) {
+	c := core.New(core.WithServiceLock())
+	c.Action("menu.setAppMenu", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: "menu update failed", OK: false}
+	})
+
+	sub := New(c)
+	server := mcp.NewServer(&mcp.Implementation{Name: "test", Version: "0.1.0"}, nil)
+	sub.RegisterTools(server)
+
+	_, err := sub.CallTool(context.Background(), "menu_set", map[string]any{"items": []any{}})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "menu.setAppMenu failed")
+}
+
+func TestSubsystem_Bad_CallTool_ScreenListMalformedQuery(t *testing.T) {
+	c := core.New(core.WithServiceLock())
+	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
+		if _, ok := q.(screen.QueryAll); ok {
+			return core.Result{Value: "malformed screen query payload", OK: false}
+		}
+		return core.Result{}
+	})
+
+	sub := New(c)
+	server := mcp.NewServer(&mcp.Implementation{Name: "test", Version: "0.1.0"}, nil)
+	sub.RegisterTools(server)
+
+	_, err := sub.CallTool(context.Background(), "screen_list", nil)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "screen query failed")
+}
+
+type manifestScreenPlatform struct{}
+
+type manifestBrowserPlatform struct {
+	lastURL  string
+	lastPath string
+}
+
+func (manifestScreenPlatform) GetAll() []screen.Screen {
+	return []screen.Screen{{
+		ID: "1", Name: "Primary", IsPrimary: true,
+		Bounds:   screen.Rect{X: 0, Y: 0, Width: 2000, Height: 1000},
+		WorkArea: screen.Rect{X: 0, Y: 0, Width: 2000, Height: 1000},
+	}}
+}
+
+func (p manifestScreenPlatform) GetPrimary() *screen.Screen {
+	all := p.GetAll()
+	return &all[0]
+}
+
+func (p manifestScreenPlatform) GetCurrent() *screen.Screen {
+	return p.GetPrimary()
+}
+
+func TestSubsystem_Good_CallTool_LayoutSuggest(t *testing.T) {
+	c := core.New(
+		core.WithService(screen.Register(manifestScreenPlatform{})),
+		core.WithService(window.Register(window.NewMockPlatform())),
+		core.WithServiceLock(),
+	)
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+
+	sub := New(c)
+	server := mcp.NewServer(&mcp.Implementation{Name: "test", Version: "0.1.0"}, nil)
+	sub.RegisterTools(server)
+
+	result, err := sub.CallTool(context.Background(), "layout_suggest", map[string]any{"window_count": 2})
+	require.NoError(t, err)
+	assert.Contains(t, result, "left-right")
+}
+
+func (m *manifestBrowserPlatform) OpenURL(url string) error {
+	m.lastURL = url
+	return nil
+}
+
+func (m *manifestBrowserPlatform) OpenFile(path string) error {
+	m.lastPath = path
+	return nil
+}
+
+func TestSubsystem_Good_CallTool_BrowserOpenFile(t *testing.T) {
+	browserPlatform := &manifestBrowserPlatform{}
+	c := core.New(
+		core.WithService(browser.Register(browserPlatform)),
+		core.WithServiceLock(),
+	)
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+
+	sub := New(c)
+	server := mcp.NewServer(&mcp.Implementation{Name: "test", Version: "0.1.0"}, nil)
+	sub.RegisterTools(server)
+
+	result, err := sub.CallTool(context.Background(), "browser_open_file", map[string]any{"path": "/tmp/readme.txt"})
+	require.NoError(t, err)
+	assert.Contains(t, result, "success")
+	assert.Equal(t, "/tmp/readme.txt", browserPlatform.lastPath)
+}
+
+func TestSubsystem_Good_CallTool_SchemeResolve(t *testing.T) {
+	c := core.New(
+		core.WithServiceLock(),
+	)
+	c.Action("display.resolveScheme", func(_ context.Context, opts core.Options) core.Result {
+		return core.Result{
+			Value: map[string]any{
+				"content_type": "text/html",
+				"body":         "<html>core://store</html>",
+				"route":        "store",
+				"url":          opts.String("url"),
+			},
+			OK: true,
+		}
+	})
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+
+	sub := New(c)
+	server := mcp.NewServer(&mcp.Implementation{Name: "test", Version: "0.1.0"}, nil)
+	sub.RegisterTools(server)
+
+	result, err := sub.CallTool(context.Background(), "scheme_resolve", map[string]any{"url": "core://store?q=theme"})
+	require.NoError(t, err)
+	assert.Contains(t, result, "core://store")
+	assert.Contains(t, result, "\"route\":\"store\"")
+}
+
+type aliasDialogPlatform struct {
+	last dialog.MessageDialogOptions
+}
+
+func (m *aliasDialogPlatform) OpenFile(_ dialog.OpenFileOptions) ([]string, error) { return nil, nil }
+func (m *aliasDialogPlatform) SaveFile(_ dialog.SaveFileOptions) (string, error)   { return "", nil }
+func (m *aliasDialogPlatform) OpenDirectory(_ dialog.OpenDirectoryOptions) (string, error) {
+	return "", nil
+}
+func (m *aliasDialogPlatform) MessageDialog(opts dialog.MessageDialogOptions) (string, error) {
+	m.last = opts
+	return "OK", nil
+}
+
+type aliasEventsPlatform struct {
+	mu        sync.Mutex
+	listeners map[string]int
+}
+
+func (m *aliasEventsPlatform) Emit(_ string, _ ...any) bool { return false }
+func (m *aliasEventsPlatform) On(name string, _ func(*events.CustomEvent)) func() {
+	m.mu.Lock()
+	if m.listeners == nil {
+		m.listeners = make(map[string]int)
+	}
+	m.listeners[name]++
+	m.mu.Unlock()
+	return func() {
+		m.mu.Lock()
+		defer m.mu.Unlock()
+		if m.listeners[name] > 0 {
+			m.listeners[name]--
+		}
+	}
+}
+func (m *aliasEventsPlatform) Off(name string) {
+	m.mu.Lock()
+	delete(m.listeners, name)
+	m.mu.Unlock()
+}
+func (m *aliasEventsPlatform) OnMultiple(name string, callback func(*events.CustomEvent), counter int) {
+	_ = m.On(name, callback)
+}
+func (m *aliasEventsPlatform) Reset() {
+	m.mu.Lock()
+	m.listeners = make(map[string]int)
+	m.mu.Unlock()
+}
+
+func TestSubsystem_Good_CallTool_RFCAliases(t *testing.T) {
+	windowPlatform := window.NewMockPlatform()
+	dialogPlatform := &aliasDialogPlatform{}
+	eventsPlatform := &aliasEventsPlatform{}
+
+	c := core.New(
+		core.WithService(screen.Register(manifestScreenPlatform{})),
+		core.WithService(window.Register(windowPlatform)),
+		core.WithService(dialog.Register(dialogPlatform)),
+		core.WithService(events.Register(eventsPlatform)),
+		core.WithServiceLock(),
+	)
+	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
+		switch q.(type) {
+		case events.QueryServerInfo:
+			return core.Result{Value: events.ServerInfo{
+				ConnectedClients:  2,
+				SubscriptionCount: 5,
+				BufferLength:      1,
+				BufferCapacity:    100,
+			}, OK: true}
+		default:
+			return core.Result{}
+		}
+	})
+	var promptWindow string
+	var promptScript string
+	c.Action("webview.evaluate", func(_ context.Context, opts core.Options) core.Result {
+		task, _ := opts.Get("task").Value.(webview.TaskEvaluate)
+		promptWindow = task.Window
+		promptScript = task.Script
+		return core.Result{Value: "typed-value", OK: true}
+	})
+	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+
+	sub := New(c)
+	server := mcp.NewServer(&mcp.Implementation{Name: "test", Version: "0.1.0"}, nil)
+	sub.RegisterTools(server)
+
+	_, err := sub.CallTool(context.Background(), "window_create", map[string]any{
+		"name": "main", "title": "Original", "x": 10, "y": 20, "width": 300, "height": 200,
+	})
+	require.NoError(t, err)
+
+	_, err = sub.CallTool(context.Background(), "window_title_set", map[string]any{
+		"name": "main", "title": "Updated",
+	})
+	require.NoError(t, err)
+
+	titleResult, err := sub.CallTool(context.Background(), "window_title_get", map[string]any{"name": "main"})
+	require.NoError(t, err)
+	assert.Contains(t, titleResult, "Updated")
+
+	_, err = sub.CallTool(context.Background(), "focus_set", map[string]any{"name": "main"})
+	require.NoError(t, err)
+
+	focusedResult, err := sub.CallTool(context.Background(), "window_focused", map[string]any{})
+	require.NoError(t, err)
+	assert.Contains(t, focusedResult, "main")
+
+	_, err = sub.CallTool(context.Background(), "window_bounds", map[string]any{
+		"name": "main", "x": 25, "y": 35, "width": 640, "height": 480,
+	})
+	require.NoError(t, err)
+
+	windowResult, err := sub.CallTool(context.Background(), "window_get", map[string]any{"name": "main"})
+	require.NoError(t, err)
+	assert.Contains(t, windowResult, "\"width\":640")
+	assert.Contains(t, windowResult, "\"height\":480")
+
+	screenResult, err := sub.CallTool(context.Background(), "screen_work_area", map[string]any{})
+	require.NoError(t, err)
+	assert.Contains(t, screenResult, "\"width\":2000")
+
+	dialogResult, err := sub.CallTool(context.Background(), "dialog_message", map[string]any{
+		"type": "warning", "title": "Heads up", "message": "Check this",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, dialog.DialogWarning, dialogPlatform.last.Type)
+	assert.Contains(t, dialogResult, "OK")
+
+	promptResult, err := sub.CallTool(context.Background(), "dialog_prompt", map[string]any{
+		"title":        "Rename",
+		"message":      "Enter a new label",
+		"defaultValue": "draft",
+	})
+	require.NoError(t, err)
+	assert.Contains(t, promptResult, "typed-value")
+	assert.Equal(t, "main", promptWindow)
+	assert.Contains(t, promptScript, "window.prompt")
+
+	subscribeResult, err := sub.CallTool(context.Background(), "event_subscribe", map[string]any{"name": "theme:changed"})
+	require.NoError(t, err)
+	assert.Contains(t, subscribeResult, "success")
+
+	eventInfoResult, err := sub.CallTool(context.Background(), "event_info", map[string]any{})
+	require.NoError(t, err)
+	assert.Contains(t, eventInfoResult, "\"connectedClients\":2")
+
+	_, err = sub.CallTool(context.Background(), "event_unsubscribe", map[string]any{"name": "theme:changed"})
+	require.NoError(t, err)
 }

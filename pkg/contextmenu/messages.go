@@ -1,15 +1,10 @@
-// pkg/contextmenu/messages.go
 package contextmenu
 
-import "errors"
+import core "dappco.re/go/core"
 
-// ErrMenuNotFound is returned when attempting to remove or get a menu
-// that does not exist in the registry.
-var ErrMenuNotFound = errors.New("contextmenu: menu not found")
+var ErrorMenuNotFound = core.E("contextmenu", "menu not found", nil)
 
-// --- Queries ---
-
-// QueryGet returns a single context menu by name. Result: *ContextMenuDef (nil if not found)
+// QueryGet returns a named context menu definition. Result: *ContextMenuDef (nil if not found)
 type QueryGet struct {
 	Name string `json:"name"`
 }
@@ -17,26 +12,34 @@ type QueryGet struct {
 // QueryList returns all registered context menus. Result: map[string]ContextMenuDef
 type QueryList struct{}
 
-// --- Tasks ---
+// QueryGetAll returns all registered context menus. Equivalent to QueryList.
+// Result: map[string]ContextMenuDef
+type QueryGetAll struct{}
 
-// TaskAdd registers a context menu. Result: nil
-// If a menu with the same name already exists it is replaced (remove + re-add).
+// TaskAdd registers a named context menu. Replaces if already exists.
 type TaskAdd struct {
 	Name string         `json:"name"`
 	Menu ContextMenuDef `json:"menu"`
 }
 
-// TaskRemove unregisters a context menu. Result: nil
-// Returns ErrMenuNotFound if the menu does not exist.
+// TaskRemove unregisters a context menu by name. Error: ErrorMenuNotFound if missing.
 type TaskRemove struct {
 	Name string `json:"name"`
 }
 
-// --- Actions ---
+// TaskUpdate replaces an existing context menu's definition. Error: ErrorMenuNotFound if missing.
+type TaskUpdate struct {
+	Name string         `json:"name"`
+	Menu ContextMenuDef `json:"menu"`
+}
+
+// TaskDestroy removes a context menu and releases all associated resources.
+// Error: ErrorMenuNotFound if missing.
+type TaskDestroy struct {
+	Name string `json:"name"`
+}
 
 // ActionItemClicked is broadcast when a context menu item is clicked.
-// The Data field is populated from the CSS --custom-contextmenu-data property
-// on the element that triggered the context menu.
 type ActionItemClicked struct {
 	MenuName string `json:"menuName"`
 	ActionID string `json:"actionId"`

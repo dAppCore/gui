@@ -6,12 +6,12 @@ type EventType int
 
 const (
 	EventApplicationStarted EventType = iota
-	EventWillTerminate                        // macOS only
-	EventDidBecomeActive                      // macOS only
-	EventDidResignActive                      // macOS only
-	EventPowerStatusChanged                   // Windows only (APMPowerStatusChange)
-	EventSystemSuspend                        // Windows only (APMSuspend)
-	EventSystemResume                         // Windows only (APMResume)
+	EventWillTerminate                // macOS only
+	EventDidBecomeActive              // macOS only
+	EventDidResignActive              // macOS only
+	EventPowerStatusChanged           // Windows only (APMPowerStatusChange)
+	EventSystemSuspend                // Windows only (APMSuspend)
+	EventSystemResume                 // Windows only (APMResume)
 )
 
 // Platform abstracts the application lifecycle backend (Wails v3).

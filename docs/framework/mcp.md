@@ -14,7 +14,7 @@ MCP provides a standardized way for AI tools to:
 ## Basic Setup
 
 ```go
-import "github.com/Snider/Core/pkg/mcp"
+import "dappco.re/go/gui/pkg/mcp"
 
 // Create standalone MCP server
 mcpService := mcp.NewStandaloneWithPort(9877)
@@ -64,6 +64,13 @@ The MCP service exposes numerous tools organized by category:
 | `webview_screenshot` | Capture page |
 | `webview_navigate` | Navigate to URL |
 | `webview_console` | Get console logs |
+
+### Browser
+
+| Tool | Description |
+|------|-------------|
+| `browser_open_url` | Open a URL in the default system browser |
+| `browser_open_file` | Open a file with the system default application |
 
 ### Process Management
 

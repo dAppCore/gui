@@ -1,17 +1,16 @@
 // pkg/window/register.go
 package window
 
-import "forge.lthn.ai/core/go/pkg/core"
+import core "dappco.re/go/core"
 
-// Register creates a factory closure that captures the Platform adapter.
-// The returned function has the signature WithService requires: func(*Core) (any, error).
-// Use: core.WithService(window.Register(platform))
-func Register(p Platform) func(*core.Core) (any, error) {
-	return func(c *core.Core) (any, error) {
-		return &Service{
+// Register(p) binds the window service to a Core instance.
+// core.WithService(window.Register(window.NewWailsPlatform(app)))
+func Register(p Platform) func(*core.Core) core.Result {
+	return func(c *core.Core) core.Result {
+		return core.Result{Value: &Service{
 			ServiceRuntime: core.NewServiceRuntime[Options](c, Options{}),
 			platform:       p,
 			manager:        NewManager(p),
-		}, nil
+		}, OK: true}
 	}
 }

@@ -4,16 +4,13 @@ import {
   Component,
   CUSTOM_ELEMENTS_SCHEMA,
   ElementRef,
-  DestroyRef,
   Input,
   OnChanges,
   OnInit,
-  inject,
   Renderer2,
   ViewChild,
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ApiConfigService } from '../services/api-config.service';
 import { ProviderDiscoveryService } from '../services/provider-discovery.service';
 
@@ -38,16 +35,6 @@ import { ProviderDiscoveryService } from '../services/provider-discovery.service
         width: 100%;
         height: 100%;
       }
-
-      .provider-host-empty {
-        display: grid;
-        place-items: center;
-        min-height: 100%;
-        padding: 1.5rem;
-        color: rgb(156 163 175);
-        background: rgba(255, 255, 255, 0.02);
-        text-align: center;
-      }
     `,
   ],
 })
@@ -59,7 +46,6 @@ export class ProviderHostComponent implements OnInit, OnChanges {
   @Input() apiUrl = '';
 
   @ViewChild('container', { static: true }) container!: ElementRef;
-  private readonly destroyRef = inject(DestroyRef);
 
   constructor(
     private renderer: Renderer2,
@@ -69,8 +55,8 @@ export class ProviderHostComponent implements OnInit, OnChanges {
   ) {}
 
   ngOnInit(): void {
-    this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-      const providerName = this.normalizeProviderName(params['provider']);
+    this.route.params.subscribe((params) => {
+      const providerName = params['provider'];
       if (providerName) {
         const provider = this.providerService
           .providers()
@@ -78,12 +64,8 @@ export class ProviderHostComponent implements OnInit, OnChanges {
         if (provider?.element?.tag) {
           this.tag = provider.element.tag;
           this.renderElement();
-          return;
         }
       }
-
-      this.tag = '';
-      this.renderEmptyState();
     });
   }
 
@@ -92,12 +74,7 @@ export class ProviderHostComponent implements OnInit, OnChanges {
   }
 
   private renderElement(): void {
-    if (!this.container) {
-      return;
-    }
-
-    if (!this.tag) {
-      this.renderEmptyState();
+    if (!this.tag || !this.container) {
       return;
     }
 
@@ -110,41 +87,10 @@ export class ProviderHostComponent implements OnInit, OnChanges {
 
     // Create and append the custom element
     const el = this.renderer.createElement(this.tag);
-    const url = this.apiUrl || this.apiConfig.effectiveBaseUrl;
+    const url = this.apiUrl || this.apiConfig.baseUrl;
     if (url) {
       this.renderer.setAttribute(el, 'api-url', url);
     }
     this.renderer.appendChild(native, el);
-  }
-
-  private renderEmptyState(): void {
-    if (!this.container) {
-      return;
-    }
-
-    const native = this.container.nativeElement;
-    while (native.firstChild) {
-      this.renderer.removeChild(native, native.firstChild);
-    }
-
-    const empty = this.renderer.createElement('div');
-    this.renderer.addClass(empty, 'provider-host-empty');
-    this.renderer.appendChild(
-      empty,
-      this.renderer.createText('Select a renderable provider to preview its custom element.'),
-    );
-    this.renderer.appendChild(native, empty);
-  }
-
-  private normalizeProviderName(value: unknown): string {
-    if (typeof value !== 'string') {
-      return '';
-    }
-
-    try {
-      return decodeURIComponent(value).trim();
-    } catch {
-      return value.trim();
-    }
   }
 }

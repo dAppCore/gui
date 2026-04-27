@@ -79,6 +79,7 @@ Response:
 
 | Tool | Description |
 |------|-------------|
+| `webview_list` | List all webview windows |
 | `webview_eval` | Execute JavaScript |
 | `webview_click` | Click element |
 | `webview_type` | Type into element |
@@ -86,6 +87,15 @@ Response:
 | `webview_navigate` | Navigate to URL |
 | `webview_console` | Get console messages |
 | `webview_errors` | Get structured JavaScript errors |
+
+### Event Stream
+
+| Tool | Description |
+|------|-------------|
+| `event_subscribe` | Alias for `event_on` |
+| `event_unsubscribe` | Alias for `event_off` |
+| `event_info` | Get display event server info and listener counts |
+| `theme_on_change` | Describe the `theme.change` event stream on `/events` |
 
 ### Screen Management
 
@@ -191,7 +201,7 @@ Event types:
 ## Go Integration
 
 ```go
-import "github.com/Snider/Core/cmd/core-gui"
+import "dappco.re/go/gui/cmd/core-gui"
 
 // Create bridge
 bridge := NewMCPBridge(9877, displayService)

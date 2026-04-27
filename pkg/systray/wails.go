@@ -2,6 +2,7 @@
 package systray
 
 import (
+	coreerr "dappco.re/go/log"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
@@ -45,19 +46,16 @@ func (wt *wailsTray) SetMenu(menu PlatformMenu) {
 }
 
 func (wt *wailsTray) AttachWindow(w WindowHandle) {
-	if wt.tray == nil {
-		return
-	}
-	window, ok := w.(interface {
-		Show()
-		Hide()
-		Focus()
-		IsVisible() bool
-	})
-	if !ok {
-		return
-	}
-	wt.tray.AttachWindow(window)
+	_ = w
+	// Wails expects an application.Window implementation here, but the GUI
+	// package passes a lighter abstraction. Keep this as a no-op until the
+	// bridge is routed through a concrete Wails window wrapper.
+}
+
+func (wt *wailsTray) ShowMessage(title, message string) error {
+	_ = title
+	_ = message
+	return coreerr.E("systray.wailsTray.ShowMessage", "tray balloon messages are not supported by this backend", nil)
 }
 
 // wailsTrayMenu wraps *application.Menu for the PlatformMenu interface.
@@ -87,8 +85,4 @@ func (mi *wailsTrayMenuItem) SetChecked(checked bool) { mi.item.SetChecked(check
 func (mi *wailsTrayMenuItem) SetEnabled(enabled bool) { mi.item.SetEnabled(enabled) }
 func (mi *wailsTrayMenuItem) OnClick(fn func()) {
 	mi.item.OnClick(func(ctx *application.Context) { fn() })
-}
-func (mi *wailsTrayMenuItem) AddSubmenu() PlatformMenu {
-	// Wails doesn't have a direct AddSubmenu on MenuItem — use Menu.AddSubmenu instead
-	return &wailsTrayMenu{menu: application.NewMenu()}
 }

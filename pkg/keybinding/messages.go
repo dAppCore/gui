@@ -1,40 +1,39 @@
-// pkg/keybinding/messages.go
 package keybinding
 
-import "errors"
+import core "dappco.re/go/core"
 
-// ErrAlreadyRegistered is returned when attempting to add a binding
-// that already exists. Callers must TaskRemove first to rebind.
-var ErrAlreadyRegistered = errors.New("keybinding: accelerator already registered")
+var ErrorAlreadyRegistered = core.E("keybinding", "accelerator already registered", nil)
+var ErrorNotRegistered = core.E("keybinding", "accelerator not registered", nil)
 
-// BindingInfo describes a registered keyboard shortcut.
+// BindingInfo describes a registered global key binding.
 type BindingInfo struct {
 	Accelerator string `json:"accelerator"`
 	Description string `json:"description"`
 }
 
-// --- Queries ---
-
-// QueryList returns all registered bindings. Result: []BindingInfo
+// QueryList returns all registered key bindings. Result: []BindingInfo
 type QueryList struct{}
 
-// --- Tasks ---
-
-// TaskAdd registers a new keyboard shortcut. Result: nil
-// Returns ErrAlreadyRegistered if the accelerator is already bound.
+// TaskAdd registers a global key binding. Error: ErrorAlreadyRegistered if accelerator taken.
 type TaskAdd struct {
 	Accelerator string `json:"accelerator"`
 	Description string `json:"description"`
 }
 
-// TaskRemove unregisters a keyboard shortcut. Result: nil
+// TaskRemove unregisters a global key binding by accelerator. Error: ErrorNotRegistered if not found.
 type TaskRemove struct {
 	Accelerator string `json:"accelerator"`
 }
 
-// --- Actions ---
+// TaskProcess triggers a registered key binding programmatically.
+// Returns ActionTriggered if the accelerator was handled, ErrorNotRegistered if not found.
+//
+//	c.PERFORM(keybinding.TaskProcess{Accelerator: "Ctrl+S"})
+type TaskProcess struct {
+	Accelerator string `json:"accelerator"`
+}
 
-// ActionTriggered is broadcast when a registered shortcut is activated.
+// ActionTriggered is broadcast when a registered key binding fires.
 type ActionTriggered struct {
 	Accelerator string `json:"accelerator"`
 }

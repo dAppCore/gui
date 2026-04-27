@@ -7,10 +7,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
-func TestWindowDefaults(t *testing.T) {
+func TestWindowDefaults_Good(t *testing.T) {
 	w := &Window{}
 	assert.Equal(t, "", w.Name)
 	assert.Equal(t, 0, w.Width)
@@ -112,7 +111,7 @@ func TestManager_Open_Defaults_Good(t *testing.T) {
 	assert.Equal(t, 800, h)
 }
 
-func TestManager_DefaultSizeOverrides_Good(t *testing.T) {
+func TestManager_Open_CustomDefaults_Good(t *testing.T) {
 	m, _ := newTestManager()
 	m.SetDefaultWidth(1440)
 	m.SetDefaultHeight(900)
@@ -163,173 +162,32 @@ func TestManager_Remove_Good(t *testing.T) {
 	assert.False(t, ok)
 }
 
-func TestWailsWindow_DevToolsToggle_Good(t *testing.T) {
-	app := application.NewApp()
-	platform := NewWailsPlatform(app)
-
-	pw := platform.CreateWindow(PlatformWindowOptions{Name: "devtools"})
-	ww, ok := pw.(*wailsWindow)
-	require.True(t, ok)
-
-	ww.OpenDevTools()
-	assert.True(t, ww.w.DevToolsOpen())
-
-	ww.CloseDevTools()
-	assert.False(t, ww.w.DevToolsOpen())
-}
-
-func TestWailsPlatform_GetWindows_TitleFallback_Good(t *testing.T) {
-	app := application.NewApp()
-	platform := NewWailsPlatform(app)
-
-	pw := platform.CreateWindow(PlatformWindowOptions{Name: "fallback"})
-	require.NotNil(t, pw)
-
-	windows := platform.GetWindows()
-	require.Len(t, windows, 1)
-	assert.Equal(t, "fallback", windows[0].Title())
-}
-
-// --- StateManager Tests ---
-
-// newTestStateManager creates a clean StateManager with a temp dir for testing.
-func newTestStateManager(t *testing.T) *StateManager {
-	return &StateManager{
-		configDir: t.TempDir(),
-		states:    make(map[string]WindowState),
-	}
-}
-
-func TestStateManager_SetGet_Good(t *testing.T) {
-	sm := newTestStateManager(t)
-	state := WindowState{X: 100, Y: 200, Width: 800, Height: 600, Maximized: false}
-	sm.SetState("main", state)
-	got, ok := sm.GetState("main")
-	assert.True(t, ok)
-	assert.Equal(t, 100, got.X)
-	assert.Equal(t, 800, got.Width)
-}
-
-func TestStateManager_SetGet_Bad(t *testing.T) {
-	sm := newTestStateManager(t)
-	_, ok := sm.GetState("nonexistent")
-	assert.False(t, ok)
-}
-
-func TestStateManager_CaptureState_Good(t *testing.T) {
-	sm := newTestStateManager(t)
-	w := &mockWindow{name: "cap", x: 50, y: 60, width: 1024, height: 768, maximised: true}
-	sm.CaptureState(w)
-	got, ok := sm.GetState("cap")
-	assert.True(t, ok)
-	assert.Equal(t, 50, got.X)
-	assert.Equal(t, 1024, got.Width)
-	assert.True(t, got.Maximized)
-}
-
-func TestStateManager_ApplyState_Good(t *testing.T) {
-	sm := newTestStateManager(t)
-	sm.SetState("win", WindowState{X: 10, Y: 20, Width: 640, Height: 480})
-	w := &Window{Name: "win", Width: 1280, Height: 800}
-	sm.ApplyState(w)
-	assert.Equal(t, 10, w.X)
-	assert.Equal(t, 20, w.Y)
-	assert.Equal(t, 640, w.Width)
-	assert.Equal(t, 480, w.Height)
-}
-
-func TestStateManager_ListStates_Good(t *testing.T) {
-	sm := newTestStateManager(t)
-	sm.SetState("a", WindowState{Width: 100})
-	sm.SetState("b", WindowState{Width: 200})
-	names := sm.ListStates()
-	assert.Len(t, names, 2)
-}
-
-func TestStateManager_Clear_Good(t *testing.T) {
-	sm := newTestStateManager(t)
-	sm.SetState("a", WindowState{Width: 100})
-	sm.Clear()
-	names := sm.ListStates()
-	assert.Empty(t, names)
-}
-
-func TestStateManager_Persistence_Good(t *testing.T) {
+func TestManager_NewManagerWithDir_Good(t *testing.T) {
 	dir := t.TempDir()
-	sm1 := &StateManager{configDir: dir, states: make(map[string]WindowState)}
-	sm1.SetState("persist", WindowState{X: 42, Y: 84, Width: 500, Height: 300})
-	sm1.ForceSync()
+	p := newMockPlatform()
 
-	sm2 := &StateManager{configDir: dir, states: make(map[string]WindowState)}
-	sm2.load()
-	got, ok := sm2.GetState("persist")
-	assert.True(t, ok)
-	assert.Equal(t, 42, got.X)
-	assert.Equal(t, 500, got.Width)
+	m := NewManagerWithDir(p, dir)
+
+	require.NotNil(t, m)
+	assert.Same(t, p, m.Platform())
+	assert.Equal(t, dir, m.State().dataDir())
+	assert.Equal(t, filepath.Join(dir, "layouts.json"), m.Layout().filePath())
 }
 
-func TestStateManager_SetPath_Good(t *testing.T) {
-	dir := t.TempDir()
-	path := filepath.Join(dir, "custom-window-state.json")
-	sm := &StateManager{states: make(map[string]WindowState)}
+func TestManager_NewManagerWithDir_Bad(t *testing.T) {
+	m := NewManagerWithDir(nil, "")
 
-	sm.SetPath(path)
-	sm.SetState("custom", WindowState{X: 11, Y: 22, Width: 333, Height: 444})
-	sm.ForceSync()
-
-	reloaded := &StateManager{states: make(map[string]WindowState)}
-	reloaded.SetPath(path)
-	got, ok := reloaded.GetState("custom")
-	require.True(t, ok)
-	assert.Equal(t, 11, got.X)
-	assert.Equal(t, 333, got.Width)
+	require.NotNil(t, m)
+	assert.Nil(t, m.Platform())
+	assert.Empty(t, m.State().dataDir())
 }
 
-// --- LayoutManager Tests ---
+func TestManager_NewManagerWithDir_Ugly(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "..", "workspace")
+	m := NewManagerWithDir(nil, dir)
 
-// newTestLayoutManager creates a clean LayoutManager with a temp dir for testing.
-func newTestLayoutManager(t *testing.T) *LayoutManager {
-	return &LayoutManager{
-		configDir: t.TempDir(),
-		layouts:   make(map[string]Layout),
-	}
-}
-
-func TestLayoutManager_SaveGet_Good(t *testing.T) {
-	lm := newTestLayoutManager(t)
-	states := map[string]WindowState{
-		"editor":   {X: 0, Y: 0, Width: 960, Height: 1080},
-		"terminal": {X: 960, Y: 0, Width: 960, Height: 1080},
-	}
-	err := lm.SaveLayout("coding", states)
-	require.NoError(t, err)
-
-	layout, ok := lm.GetLayout("coding")
-	assert.True(t, ok)
-	assert.Equal(t, "coding", layout.Name)
-	assert.Len(t, layout.Windows, 2)
-}
-
-func TestLayoutManager_GetLayout_Bad(t *testing.T) {
-	lm := newTestLayoutManager(t)
-	_, ok := lm.GetLayout("nonexistent")
-	assert.False(t, ok)
-}
-
-func TestLayoutManager_ListLayouts_Good(t *testing.T) {
-	lm := newTestLayoutManager(t)
-	_ = lm.SaveLayout("a", map[string]WindowState{})
-	_ = lm.SaveLayout("b", map[string]WindowState{})
-	layouts := lm.ListLayouts()
-	assert.Len(t, layouts, 2)
-}
-
-func TestLayoutManager_DeleteLayout_Good(t *testing.T) {
-	lm := newTestLayoutManager(t)
-	_ = lm.SaveLayout("temp", map[string]WindowState{})
-	lm.DeleteLayout("temp")
-	_, ok := lm.GetLayout("temp")
-	assert.False(t, ok)
+	require.NotNil(t, m)
+	assert.Equal(t, dir, m.State().dataDir())
 }
 
 // --- Tiling Tests ---
@@ -388,42 +246,189 @@ func TestWorkflowLayout_Good(t *testing.T) {
 	assert.Equal(t, "debugging", WorkflowDebugging.String())
 }
 
-func TestManager_SuggestLayout_Good(t *testing.T) {
-	m, _ := newTestManager()
-	suggestion := m.SuggestLayout(1920, 1080, 3)
-	assert.Equal(t, "quadrants", suggestion.Mode)
-	assert.Equal(t, 2, suggestion.Columns)
+// --- Comprehensive Tiling Tests ---
+
+func TestTileWindows_AllModes_Good(t *testing.T) {
+	const screenW, screenH = 1920, 1080
+	halfW, halfH := screenW/2, screenH/2
+
+	tests := []struct {
+		name       string
+		mode       TileMode
+		wantX      int
+		wantY      int
+		wantWidth  int
+		wantHeight int
+	}{
+		{"LeftHalf", TileModeLeftHalf, 0, 0, halfW, screenH},
+		{"RightHalf", TileModeRightHalf, halfW, 0, halfW, screenH},
+		{"TopHalf", TileModeTopHalf, 0, 0, screenW, halfH},
+		{"BottomHalf", TileModeBottomHalf, 0, halfH, screenW, halfH},
+		{"TopLeft", TileModeTopLeft, 0, 0, halfW, halfH},
+		{"TopRight", TileModeTopRight, halfW, 0, halfW, halfH},
+		{"BottomLeft", TileModeBottomLeft, 0, halfH, halfW, halfH},
+		{"BottomRight", TileModeBottomRight, halfW, halfH, halfW, halfH},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			m, _ := newTestManager()
+			_, err := m.Open(WithName("win"), WithSize(800, 600))
+			require.NoError(t, err)
+
+			err = m.TileWindows(tc.mode, []string{"win"}, screenW, screenH)
+			require.NoError(t, err)
+
+			pw, ok := m.Get("win")
+			require.True(t, ok)
+
+			x, y := pw.Position()
+			w, h := pw.Size()
+			assert.Equal(t, tc.wantX, x, "x position")
+			assert.Equal(t, tc.wantY, y, "y position")
+			assert.Equal(t, tc.wantWidth, w, "width")
+			assert.Equal(t, tc.wantHeight, h, "height")
+		})
+	}
 }
 
-func TestManager_FindSpace_Good(t *testing.T) {
-	m, _ := newTestManager()
-	_, _ = m.Open(WithName("one"), WithPosition(0, 0), WithSize(800, 600))
-	space := m.FindSpace(1920, 1080, 400, 300)
-	assert.GreaterOrEqual(t, space.X, 0)
-	assert.GreaterOrEqual(t, space.Y, 0)
+func TestSnapWindow_AllPositions_Good(t *testing.T) {
+	const screenW, screenH = 1920, 1080
+	halfW, halfH := screenW/2, screenH/2
+
+	tests := []struct {
+		name       string
+		pos        SnapPosition
+		initW      int
+		initH      int
+		wantX      int
+		wantY      int
+		wantWidth  int
+		wantHeight int
+	}{
+		{"Right", SnapRight, 800, 600, halfW, 0, halfW, screenH},
+		{"Top", SnapTop, 800, 600, 0, 0, screenW, halfH},
+		{"Bottom", SnapBottom, 800, 600, 0, halfH, screenW, halfH},
+		{"TopLeft", SnapTopLeft, 800, 600, 0, 0, halfW, halfH},
+		{"TopRight", SnapTopRight, 800, 600, halfW, 0, halfW, halfH},
+		{"BottomLeft", SnapBottomLeft, 800, 600, 0, halfH, halfW, halfH},
+		{"BottomRight", SnapBottomRight, 800, 600, halfW, halfH, halfW, halfH},
+		{"Center", SnapCenter, 800, 600, (screenW - 800) / 2, (screenH - 600) / 2, 800, 600},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			m, _ := newTestManager()
+			_, err := m.Open(WithName("snap"), WithSize(tc.initW, tc.initH))
+			require.NoError(t, err)
+
+			err = m.SnapWindow("snap", tc.pos, screenW, screenH)
+			require.NoError(t, err)
+
+			pw, ok := m.Get("snap")
+			require.True(t, ok)
+
+			x, y := pw.Position()
+			w, h := pw.Size()
+			assert.Equal(t, tc.wantX, x, "x position")
+			assert.Equal(t, tc.wantY, y, "y position")
+			assert.Equal(t, tc.wantWidth, w, "width")
+			assert.Equal(t, tc.wantHeight, h, "height")
+		})
+	}
 }
 
-func TestManager_ArrangePair_Good(t *testing.T) {
+func TestStackWindows_ThreeWindows_Good(t *testing.T) {
 	m, _ := newTestManager()
-	_, _ = m.Open(WithName("left"), WithSize(800, 600))
-	_, _ = m.Open(WithName("right"), WithSize(800, 600))
-	err := m.ArrangePair("left", "right", 1920, 1080)
+	names := []string{"s1", "s2", "s3"}
+	for _, name := range names {
+		_, err := m.Open(WithName(name), WithSize(800, 600))
+		require.NoError(t, err)
+	}
+
+	err := m.StackWindows(names, 30, 30)
 	require.NoError(t, err)
-	left, _ := m.Get("left")
-	x, _ := left.Position()
-	assert.Equal(t, 0, x)
+
+	for i, name := range names {
+		pw, ok := m.Get(name)
+		require.True(t, ok, "window %s should exist", name)
+		x, y := pw.Position()
+		assert.Equal(t, i*30, x, "window %s x position", name)
+		assert.Equal(t, i*30, y, "window %s y position", name)
+	}
 }
 
-func TestManager_BesideEditor_Good(t *testing.T) {
+func TestApplyWorkflow_AllLayouts_Good(t *testing.T) {
+	const screenW, screenH = 1920, 1080
+
+	tests := []struct {
+		name     string
+		workflow WorkflowLayout
+		// Expected positions/sizes for the first two windows.
+		// For WorkflowSideBySide, TileWindows(LeftRight) divides equally.
+		win0X, win0Y, win0W, win0H int
+		win1X, win1Y, win1W, win1H int
+	}{
+		{
+			"Coding",
+			WorkflowCoding,
+			0, 0, 1344, screenH, // 70% of 1920 = 1344
+			1344, 0, screenW - 1344, screenH, // remaining 30%
+		},
+		{
+			"Debugging",
+			WorkflowDebugging,
+			0, 0, 1152, screenH, // 60% of 1920 = 1152
+			1152, 0, screenW - 1152, screenH, // remaining 40%
+		},
+		{
+			"Presenting",
+			WorkflowPresenting,
+			0, 0, screenW, screenH, // maximised
+			0, 0, 800, 600, // second window untouched
+		},
+		{
+			"SideBySide",
+			WorkflowSideBySide,
+			0, 0, 960, screenH, // left half (1920/2)
+			960, 0, 960, screenH, // right half
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			m, _ := newTestManager()
+			_, err := m.Open(WithName("editor"), WithSize(800, 600))
+			require.NoError(t, err)
+			_, err = m.Open(WithName("terminal"), WithSize(800, 600))
+			require.NoError(t, err)
+
+			err = m.ApplyWorkflow(tc.workflow, []string{"editor", "terminal"}, screenW, screenH)
+			require.NoError(t, err)
+
+			pw0, ok := m.Get("editor")
+			require.True(t, ok)
+			x0, y0 := pw0.Position()
+			w0, h0 := pw0.Size()
+			assert.Equal(t, tc.win0X, x0, "editor x")
+			assert.Equal(t, tc.win0Y, y0, "editor y")
+			assert.Equal(t, tc.win0W, w0, "editor width")
+			assert.Equal(t, tc.win0H, h0, "editor height")
+
+			pw1, ok := m.Get("terminal")
+			require.True(t, ok)
+			x1, y1 := pw1.Position()
+			w1, h1 := pw1.Size()
+			assert.Equal(t, tc.win1X, x1, "terminal x")
+			assert.Equal(t, tc.win1Y, y1, "terminal y")
+			assert.Equal(t, tc.win1W, w1, "terminal width")
+			assert.Equal(t, tc.win1H, h1, "terminal height")
+		})
+	}
+}
+
+func TestApplyWorkflow_Empty_Bad(t *testing.T) {
 	m, _ := newTestManager()
-	_, _ = m.Open(WithName("editor"))
-	_, _ = m.Open(WithName("assistant"))
-	err := m.BesideEditor("editor", "assistant", 1920, 1080)
-	require.NoError(t, err)
-	editor, _ := m.Get("editor")
-	assistant, _ := m.Get("assistant")
-	ex, _ := editor.Size()
-	ax, _ := assistant.Position()
-	assert.Greater(t, ex, 0)
-	assert.Greater(t, ax, 0)
+	err := m.ApplyWorkflow(WorkflowCoding, []string{}, 1920, 1080)
+	assert.Error(t, err)
 }

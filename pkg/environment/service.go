@@ -3,125 +3,186 @@ package environment
 
 import (
 	"context"
-	"fmt"
+	"path/filepath"
+	"strings"
+	"sync"
 
-	"forge.lthn.ai/core/go/pkg/core"
+	core "dappco.re/go/core"
+	coreerr "dappco.re/go/log"
 )
 
-// Options holds configuration for the environment service.
 type Options struct{}
 
-// Service is a core.Service providing environment queries and theme change events via IPC.
 type Service struct {
 	*core.ServiceRuntime[Options]
-	platform     Platform
-	cancelTheme  func() // cancel function for theme change listener
-	overrideDark *bool
+	platform    Platform
+	cancelTheme func() // returned by Platform.OnThemeChange — called on shutdown
+	themeMu     sync.RWMutex
+	override    string
 }
 
-// Register creates a factory closure that captures the Platform adapter.
-func Register(p Platform) func(*core.Core) (any, error) {
-	return func(c *core.Core) (any, error) {
-		return &Service{
+// Register(p) binds the environment service to a Core instance.
+// core.WithService(environment.Register(wailsEnvironment))
+func Register(p Platform) func(*core.Core) core.Result {
+	return func(c *core.Core) core.Result {
+		return core.Result{Value: &Service{
 			ServiceRuntime: core.NewServiceRuntime[Options](c, Options{}),
 			platform:       p,
-		}, nil
+		}, OK: true}
 	}
 }
 
-// OnStartup registers IPC handlers and the theme change listener.
-func (s *Service) OnStartup(ctx context.Context) error {
+func (s *Service) OnStartup(_ context.Context) core.Result {
 	s.Core().RegisterQuery(s.handleQuery)
-	s.Core().RegisterTask(s.handleTask)
+	s.Core().Action("theme.get", func(_ context.Context, _ core.Options) core.Result {
+		isDark := s.currentTheme()
+		return core.Result{Value: ThemeInfo{IsDark: isDark, Theme: themeName(isDark)}, OK: true}
+	})
+	s.Core().Action("theme.system", func(_ context.Context, _ core.Options) core.Result {
+		return core.Result{Value: s.platform.Info(), OK: true}
+	})
+	s.Core().Action("environment.openFileManager", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskOpenFileManager)
+		path, err := validatedOpenFileManagerPath(t.Path)
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		if err := s.platform.OpenFileManager(path, t.Select); err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		return core.Result{OK: true}
+	})
+	s.Core().Action("theme.set", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskSetTheme)
+		isDark, err := s.setThemeOverride(t.Theme)
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		return core.Result{Value: ThemeInfo{IsDark: isDark, Theme: themeName(isDark)}, OK: true}
+	})
+	s.Core().Action("environment.setTheme", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskSetTheme)
+		isDark, err := s.setThemeOverride(t.Theme)
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		return core.Result{Value: ThemeInfo{IsDark: isDark, Theme: themeName(isDark)}, OK: true}
+	})
+	s.Core().Action("gui.theme.set", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskSetTheme)
+		isDark, err := s.setThemeOverride(t.Theme)
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		return core.Result{Value: ThemeInfo{IsDark: isDark, Theme: themeName(isDark)}, OK: true}
+	})
 
 	// Register theme change callback — broadcasts ActionThemeChanged via IPC
 	s.cancelTheme = s.platform.OnThemeChange(func(isDark bool) {
+		if s.hasThemeOverride() {
+			return
+		}
 		_ = s.Core().ACTION(ActionThemeChanged{IsDark: isDark})
 	})
-	return nil
+	return core.Result{OK: true}
 }
 
-// OnShutdown cancels the theme change listener.
-func (s *Service) OnShutdown(ctx context.Context) error {
+func (s *Service) OnShutdown(_ context.Context) core.Result {
 	if s.cancelTheme != nil {
 		s.cancelTheme()
 	}
-	return nil
+	return core.Result{OK: true}
 }
 
-// HandleIPCEvents is auto-discovered by core.WithService.
-func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
-	return nil
+func (s *Service) HandleIPCEvents(_ *core.Core, _ core.Message) core.Result {
+	return core.Result{OK: true}
 }
 
-func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
+func (s *Service) handleQuery(_ *core.Core, q core.Query) core.Result {
 	switch q.(type) {
 	case QueryTheme:
 		isDark := s.currentTheme()
-		theme := "light"
-		if isDark {
-			theme = "dark"
-		}
-		return ThemeInfo{IsDark: isDark, Theme: theme}, true, nil
+		return core.Result{Value: ThemeInfo{IsDark: isDark, Theme: themeName(isDark)}, OK: true}
 	case QueryInfo:
-		return s.platform.Info(), true, nil
+		return core.Result{Value: s.platform.Info(), OK: true}
 	case QueryAccentColour:
-		return s.platform.AccentColour(), true, nil
+		return core.Result{Value: s.platform.AccentColour(), OK: true}
+	case QueryFocusFollowsMouse:
+		return core.Result{Value: s.platform.HasFocusFollowsMouse(), OK: true}
 	default:
-		return nil, false, nil
+		return core.Result{}
 	}
-}
-
-func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
-	switch t := t.(type) {
-	case TaskOpenFileManager:
-		return nil, true, s.platform.OpenFileManager(t.Path, t.Select)
-	case TaskSetTheme:
-		if err := s.taskSetTheme(t); err != nil {
-			return nil, true, err
-		}
-		return nil, true, nil
-	default:
-		return nil, false, nil
-	}
-}
-
-func (s *Service) taskSetTheme(task TaskSetTheme) error {
-	shouldApplyTheme := false
-	switch task.Theme {
-	case "dark":
-		isDark := true
-		s.overrideDark = &isDark
-		shouldApplyTheme = true
-	case "light":
-		isDark := false
-		s.overrideDark = &isDark
-		shouldApplyTheme = true
-	case "system":
-		s.overrideDark = nil
-	case "":
-		isDark := task.IsDark
-		s.overrideDark = &isDark
-		shouldApplyTheme = true
-	default:
-		return fmt.Errorf("invalid theme mode: %s", task.Theme)
-	}
-
-	if shouldApplyTheme {
-		if setter, ok := s.platform.(interface{ SetTheme(bool) error }); ok {
-			if err := setter.SetTheme(s.currentTheme()); err != nil {
-				return err
-			}
-		}
-	}
-
-	_ = s.Core().ACTION(ActionThemeChanged{IsDark: s.currentTheme()})
-	return nil
 }
 
 func (s *Service) currentTheme() bool {
-	if s.overrideDark != nil {
-		return *s.overrideDark
+	s.themeMu.RLock()
+	override := s.override
+	s.themeMu.RUnlock()
+	switch override {
+	case "dark":
+		return true
+	case "light":
+		return false
+	default:
+		return s.platform.IsDarkMode()
 	}
-	return s.platform.IsDarkMode()
+}
+
+func (s *Service) hasThemeOverride() bool {
+	s.themeMu.RLock()
+	defer s.themeMu.RUnlock()
+	return s.override != ""
+}
+
+func (s *Service) setThemeOverride(theme string) (bool, error) {
+	normalized, err := normalizeTheme(theme)
+	if err != nil {
+		return false, err
+	}
+	before := s.currentTheme()
+
+	s.themeMu.Lock()
+	s.override = normalized
+	s.themeMu.Unlock()
+
+	after := s.currentTheme()
+	if before != after {
+		_ = s.Core().ACTION(ActionThemeChanged{IsDark: after})
+	}
+	return after, nil
+}
+
+func normalizeTheme(theme string) (string, error) {
+	switch strings.ToLower(strings.TrimSpace(theme)) {
+	case "", "system":
+		return "", nil
+	case "dark":
+		return "dark", nil
+	case "light":
+		return "light", nil
+	default:
+		return "", coreerr.E("environment.normalizeTheme", "invalid theme: "+theme, nil)
+	}
+}
+
+func validatedOpenFileManagerPath(raw string) (string, error) {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		return "", coreerr.E("environment.openFileManager", "path is required", nil)
+	}
+	if strings.ContainsRune(trimmed, '\x00') {
+		return "", coreerr.E("environment.openFileManager", "path contains a null byte", nil)
+	}
+	cleaned := filepath.Clean(trimmed)
+	if !filepath.IsAbs(cleaned) {
+		return "", coreerr.E("environment.openFileManager", "path must be absolute", nil)
+	}
+	return cleaned, nil
+}
+
+func themeName(isDark bool) string {
+	if isDark {
+		return "dark"
+	}
+	return "light"
 }

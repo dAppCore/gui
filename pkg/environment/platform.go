@@ -7,6 +7,7 @@ type Platform interface {
 	Info() EnvironmentInfo
 	AccentColour() string
 	OpenFileManager(path string, selectFile bool) error
+	HasFocusFollowsMouse() bool
 	OnThemeChange(handler func(isDark bool)) func() // returns cancel func
 }
 

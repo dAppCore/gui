@@ -3,112 +3,222 @@ package contextmenu
 
 import (
 	"context"
-	"fmt"
+	"sync"
 
-	"forge.lthn.ai/core/go/pkg/core"
+	core "dappco.re/go/core"
+	coreerr "dappco.re/go/log"
 )
 
-// Options holds configuration for the context menu service.
 type Options struct{}
 
-// Service is a core.Service managing context menus via IPC.
-// It maintains an in-memory registry of menus (map[string]ContextMenuDef)
-// and delegates platform-level registration to the Platform interface.
 type Service struct {
 	*core.ServiceRuntime[Options]
-	platform Platform
-	menus    map[string]ContextMenuDef
+	platform        Platform
+	mu              sync.RWMutex
+	registeredMenus map[string]ContextMenuDef
 }
 
-// OnStartup registers IPC handlers.
-func (s *Service) OnStartup(ctx context.Context) error {
+func platformUnavailableError(op string) error {
+	return coreerr.E("contextmenu."+op, "platform backend unavailable", nil)
+}
+
+func (s *Service) OnStartup(_ context.Context) core.Result {
 	s.Core().RegisterQuery(s.handleQuery)
-	s.Core().RegisterTask(s.handleTask)
-	return nil
+	s.Core().Action("contextmenu.add", func(_ context.Context, opts core.Options) core.Result {
+		t, ok := opts.Get("task").Value.(TaskAdd)
+		if !ok {
+			return invalidTaskResult("add")
+		}
+		return core.Result{Value: nil, OK: true}.New(s.taskAdd(t))
+	})
+	s.Core().Action("contextmenu.remove", func(_ context.Context, opts core.Options) core.Result {
+		t, ok := opts.Get("task").Value.(TaskRemove)
+		if !ok {
+			return invalidTaskResult("remove")
+		}
+		return core.Result{Value: nil, OK: true}.New(s.taskRemove(t))
+	})
+	s.Core().Action("contextmenu.update", func(_ context.Context, opts core.Options) core.Result {
+		t, ok := opts.Get("task").Value.(TaskUpdate)
+		if !ok {
+			return invalidTaskResult("update")
+		}
+		return core.Result{Value: nil, OK: true}.New(s.taskUpdate(t))
+	})
+	s.Core().Action("contextmenu.destroy", func(_ context.Context, opts core.Options) core.Result {
+		t, ok := opts.Get("task").Value.(TaskDestroy)
+		if !ok {
+			return invalidTaskResult("destroy")
+		}
+		return core.Result{Value: nil, OK: true}.New(s.taskDestroy(t))
+	})
+	return core.Result{OK: true}
 }
 
-// HandleIPCEvents is auto-discovered and registered by core.WithService.
-func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
-	return nil
+func invalidTaskResult(op string) core.Result {
+	return core.Result{
+		Value: coreerr.E("contextmenu."+op, "invalid task payload", nil),
+		OK:    false,
+	}
+}
+
+func (s *Service) OnShutdown(_ context.Context) core.Result {
+	// Destroy all registered menus on shutdown to release platform resources
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.platform == nil {
+		s.registeredMenus = make(map[string]ContextMenuDef)
+		return core.Result{OK: true}
+	}
+	for name := range s.registeredMenus {
+		_ = s.platform.Remove(name)
+	}
+	s.registeredMenus = make(map[string]ContextMenuDef)
+	return core.Result{OK: true}
+}
+
+func (s *Service) HandleIPCEvents(_ *core.Core, _ core.Message) core.Result {
+	return core.Result{OK: true}
 }
 
 // --- Query Handlers ---
 
-func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
+func (s *Service) handleQuery(_ *core.Core, q core.Query) core.Result {
 	switch q := q.(type) {
 	case QueryGet:
-		return s.queryGet(q), true, nil
+		return core.Result{Value: s.queryGet(q), OK: true}
 	case QueryList:
-		return s.queryList(), true, nil
+		return core.Result{Value: s.queryList(), OK: true}
+	case QueryGetAll:
+		return core.Result{Value: s.queryList(), OK: true}
 	default:
-		return nil, false, nil
+		return core.Result{}
 	}
 }
 
-// queryGet returns a single menu definition by name, or nil if not found.
 func (s *Service) queryGet(q QueryGet) *ContextMenuDef {
-	menu, ok := s.menus[q.Name]
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	menu, ok := s.registeredMenus[q.Name]
 	if !ok {
 		return nil
 	}
 	return &menu
 }
 
-// queryList returns a copy of all registered menus.
 func (s *Service) queryList() map[string]ContextMenuDef {
-	result := make(map[string]ContextMenuDef, len(s.menus))
-	for k, v := range s.menus {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	result := make(map[string]ContextMenuDef, len(s.registeredMenus))
+	for k, v := range s.registeredMenus {
 		result[k] = v
 	}
 	return result
 }
 
-// --- Task Handlers ---
-
-func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
-	switch t := t.(type) {
-	case TaskAdd:
-		return nil, true, s.taskAdd(t)
-	case TaskRemove:
-		return nil, true, s.taskRemove(t)
-	default:
-		return nil, false, nil
-	}
-}
-
 func (s *Service) taskAdd(t TaskAdd) error {
-	// If menu already exists, remove it first (replace semantics)
-	if _, exists := s.menus[t.Name]; exists {
-		_ = s.platform.Remove(t.Name)
-		delete(s.menus, t.Name)
+	if s.platform == nil {
+		return platformUnavailableError("taskAdd")
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	// If menu already exists, remove it first (replace semantics).
+	oldMenu, existed := s.registeredMenus[t.Name]
+	if existed {
+		if err := s.platform.Remove(t.Name); err != nil {
+			return coreerr.E("contextmenu.taskAdd", "platform remove failed", err)
+		}
+		delete(s.registeredMenus, t.Name)
 	}
 
 	// Register on platform with a callback that broadcasts ActionItemClicked
-	err := s.platform.Add(t.Name, t.Menu, func(menuName, actionID, data string) {
+	err := s.platform.Add(t.Name, t.Menu, s.menuCallback())
+	if err != nil {
+		if existed {
+			s.tryRestoreMenu(t.Name, oldMenu)
+		}
+		return coreerr.E("contextmenu.taskAdd", "platform add failed", err)
+	}
+
+	s.registeredMenus[t.Name] = t.Menu
+	return nil
+}
+
+func (s *Service) taskRemove(t TaskRemove) error {
+	if s.platform == nil {
+		return platformUnavailableError("taskRemove")
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if _, exists := s.registeredMenus[t.Name]; !exists {
+		return ErrorMenuNotFound
+	}
+
+	err := s.platform.Remove(t.Name)
+	if err != nil {
+		return coreerr.E("contextmenu.taskRemove", "platform remove failed", err)
+	}
+
+	delete(s.registeredMenus, t.Name)
+	return nil
+}
+
+func (s *Service) taskUpdate(t TaskUpdate) error {
+	if s.platform == nil {
+		return platformUnavailableError("taskUpdate")
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	oldMenu, exists := s.registeredMenus[t.Name]
+	if !exists {
+		return ErrorMenuNotFound
+	}
+
+	// Re-register with updated definition — remove then add
+	if err := s.platform.Remove(t.Name); err != nil {
+		return coreerr.E("contextmenu.taskUpdate", "platform remove failed", err)
+	}
+
+	err := s.platform.Add(t.Name, t.Menu, s.menuCallback())
+	if err != nil {
+		s.tryRestoreMenu(t.Name, oldMenu)
+		return coreerr.E("contextmenu.taskUpdate", "platform add failed", err)
+	}
+
+	s.registeredMenus[t.Name] = t.Menu
+	return nil
+}
+
+func (s *Service) taskDestroy(t TaskDestroy) error {
+	if s.platform == nil {
+		return platformUnavailableError("taskDestroy")
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if _, exists := s.registeredMenus[t.Name]; !exists {
+		return ErrorMenuNotFound
+	}
+
+	if err := s.platform.Remove(t.Name); err != nil {
+		return coreerr.E("contextmenu.taskDestroy", "platform remove failed", err)
+	}
+
+	delete(s.registeredMenus, t.Name)
+	return nil
+}
+
+func (s *Service) tryRestoreMenu(name string, menu ContextMenuDef) {
+	if restoreErr := s.platform.Add(name, menu, s.menuCallback()); restoreErr == nil {
+		s.registeredMenus[name] = menu
+	}
+}
+
+func (s *Service) menuCallback() func(string, string, string) {
+	return func(menuName, actionID, data string) {
 		_ = s.Core().ACTION(ActionItemClicked{
 			MenuName: menuName,
 			ActionID: actionID,
 			Data:     data,
 		})
-	})
-	if err != nil {
-		return fmt.Errorf("contextmenu: platform add failed: %w", err)
 	}
-
-	s.menus[t.Name] = t.Menu
-	return nil
-}
-
-func (s *Service) taskRemove(t TaskRemove) error {
-	if _, exists := s.menus[t.Name]; !exists {
-		return ErrMenuNotFound
-	}
-
-	err := s.platform.Remove(t.Name)
-	if err != nil {
-		return fmt.Errorf("contextmenu: platform remove failed: %w", err)
-	}
-
-	delete(s.menus, t.Name)
-	return nil
 }

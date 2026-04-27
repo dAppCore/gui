@@ -12,6 +12,12 @@ type Platform interface {
 	// Remove unregisters a previously registered keyboard shortcut.
 	Remove(accelerator string) error
 
+	// Process triggers the registered handler for the given accelerator programmatically.
+	// Returns true if a handler was found and invoked, false if not registered.
+	//
+	//	handled := platform.Process("Ctrl+S")
+	Process(accelerator string) bool
+
 	// GetAll returns all currently registered accelerator strings.
 	// Used for adapter-level reconciliation only — not read by QueryList.
 	GetAll() []string

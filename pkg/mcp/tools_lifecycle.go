@@ -4,7 +4,7 @@ package mcp
 import (
 	"context"
 
-	"forge.lthn.ai/core/gui/pkg/lifecycle"
+	"dappco.re/go/gui/pkg/lifecycle"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -17,15 +17,12 @@ type AppQuitOutput struct {
 
 func (s *Subsystem) appQuit(_ context.Context, _ *mcp.CallToolRequest, _ AppQuitInput) (*mcp.CallToolResult, AppQuitOutput, error) {
 	// Broadcast the will-terminate action which triggers application shutdown
-	err := s.core.ACTION(lifecycle.ActionWillTerminate{})
-	if err != nil {
-		return nil, AppQuitOutput{}, err
-	}
+	_ = s.core.ACTION(lifecycle.ActionWillTerminate{})
 	return nil, AppQuitOutput{Success: true}, nil
 }
 
 // --- Registration ---
 
 func (s *Subsystem) registerLifecycleTools(server *mcp.Server) {
-	mcp.AddTool(server, &mcp.Tool{Name: "app_quit", Description: "Quit the application"}, s.appQuit)
+	addTool(s, server, &mcp.Tool{Name: "app_quit", Description: "Quit the application"}, s.appQuit)
 }

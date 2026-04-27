@@ -1,72 +1,82 @@
-// pkg/dock/service.go
 package dock
 
 import (
 	"context"
 
-	"forge.lthn.ai/core/go/pkg/core"
+	core "dappco.re/go/core"
 )
 
-// Options holds configuration for the dock service.
 type Options struct{}
 
-// Service is a core.Service managing dock/taskbar operations via IPC.
-// It embeds ServiceRuntime for Core access and delegates to Platform.
 type Service struct {
 	*core.ServiceRuntime[Options]
 	platform Platform
 }
 
-// OnStartup registers IPC handlers.
-func (s *Service) OnStartup(ctx context.Context) error {
+func (s *Service) OnStartup(_ context.Context) core.Result {
 	s.Core().RegisterQuery(s.handleQuery)
-	s.Core().RegisterTask(s.handleTask)
-	return nil
-}
-
-// HandleIPCEvents is auto-discovered and registered by core.WithService.
-func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) error {
-	return nil
-}
-
-// --- Query Handlers ---
-
-func (s *Service) handleQuery(c *core.Core, q core.Query) (any, bool, error) {
-	switch q.(type) {
-	case QueryVisible:
-		return s.platform.IsVisible(), true, nil
-	default:
-		return nil, false, nil
-	}
-}
-
-// --- Task Handlers ---
-
-func (s *Service) handleTask(c *core.Core, t core.Task) (any, bool, error) {
-	switch t := t.(type) {
-	case TaskShowIcon:
+	s.Core().Action("dock.showIcon", func(_ context.Context, _ core.Options) core.Result {
 		if err := s.platform.ShowIcon(); err != nil {
-			return nil, true, err
+			return core.Result{Value: err, OK: false}
 		}
 		_ = s.Core().ACTION(ActionVisibilityChanged{Visible: true})
-		return nil, true, nil
-	case TaskHideIcon:
+		return core.Result{OK: true}
+	})
+	s.Core().Action("dock.hideIcon", func(_ context.Context, _ core.Options) core.Result {
 		if err := s.platform.HideIcon(); err != nil {
-			return nil, true, err
+			return core.Result{Value: err, OK: false}
 		}
 		_ = s.Core().ACTION(ActionVisibilityChanged{Visible: false})
-		return nil, true, nil
-	case TaskSetBadge:
-		if err := s.platform.SetBadge(t.Label); err != nil {
-			return nil, true, err
+		return core.Result{OK: true}
+	})
+	s.Core().Action("dock.setBadge", func(_ context.Context, opts core.Options) core.Result {
+		if err := s.platform.SetBadge(opts.String("label")); err != nil {
+			return core.Result{Value: err, OK: false}
 		}
-		return nil, true, nil
-	case TaskRemoveBadge:
+		return core.Result{OK: true}
+	})
+	s.Core().Action("dock.removeBadge", func(_ context.Context, _ core.Options) core.Result {
 		if err := s.platform.RemoveBadge(); err != nil {
-			return nil, true, err
+			return core.Result{Value: err, OK: false}
 		}
-		return nil, true, nil
+		return core.Result{OK: true}
+	})
+	s.Core().Action("dock.setProgressBar", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskSetProgressBar)
+		if err := s.platform.SetProgressBar(t.Progress); err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		_ = s.Core().ACTION(ActionProgressChanged{Progress: t.Progress})
+		return core.Result{OK: true}
+	})
+	s.Core().Action("dock.bounce", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskBounce)
+		requestID, err := s.platform.Bounce(t.BounceType)
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		_ = s.Core().ACTION(ActionBounceStarted{RequestID: requestID, BounceType: t.BounceType})
+		return core.Result{Value: requestID, OK: true}
+	})
+	s.Core().Action("dock.stopBounce", func(_ context.Context, opts core.Options) core.Result {
+		t, _ := opts.Get("task").Value.(TaskStopBounce)
+		if err := s.platform.StopBounce(t.RequestID); err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		return core.Result{OK: true}
+	})
+	return core.Result{OK: true}
+}
+
+func (s *Service) HandleIPCEvents(_ *core.Core, _ core.Message) core.Result {
+	return core.Result{OK: true}
+}
+
+func (s *Service) handleQuery(_ *core.Core, q core.Query) core.Result {
+	switch q.(type) {
+	case QueryVisible:
+		return core.Result{Value: s.platform.IsVisible(), OK: true}
 	default:
-		return nil, false, nil
+		return core.Result{}
 	}
 }

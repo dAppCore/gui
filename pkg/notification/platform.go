@@ -3,15 +3,16 @@ package notification
 
 // Platform abstracts the native notification backend.
 type Platform interface {
-	Send(opts NotificationOptions) error
+	Send(options NotificationOptions) error
 	RequestPermission() (bool, error)
 	CheckPermission() (bool, error)
+	RevokePermission() error
 }
 
-// NotificationAction represents an interactive notification action.
-type NotificationAction struct {
-	ID    string `json:"id"`
-	Label string `json:"label"`
+// ClearPlatform is an optional extension for backends that can dismiss
+// notifications after they have been shown. An empty id means "clear all".
+type ClearPlatform interface {
+	Clear(id string) error
 }
 
 // NotificationSeverity indicates the severity for dialog fallback.
@@ -23,25 +24,33 @@ const (
 	SeverityError
 )
 
+// NotificationAction is a button that can be attached to a notification.
+// id := "reply"; action := NotificationAction{ID: id, Title: "Reply", Destructive: false}
+type NotificationAction struct {
+	ID          string `json:"id"`
+	Title       string `json:"title"`
+	Destructive bool   `json:"destructive,omitempty"`
+}
+
+// NotificationCategory groups actions under a named category/channel.
+// category := NotificationCategory{ID: "message", Actions: []NotificationAction{{ID: "reply", Title: "Reply"}}}
+type NotificationCategory struct {
+	ID      string               `json:"id"`
+	Actions []NotificationAction `json:"actions,omitempty"`
+}
+
 // NotificationOptions contains options for sending a notification.
 type NotificationOptions struct {
-	ID       string               `json:"id,omitempty"`
-	Title    string               `json:"title"`
-	Message  string               `json:"message"`
-	Subtitle string               `json:"subtitle,omitempty"`
-	Severity NotificationSeverity `json:"severity,omitempty"`
-	Actions  []NotificationAction `json:"actions,omitempty"`
+	ID         string               `json:"id,omitempty"`
+	Title      string               `json:"title"`
+	Message    string               `json:"message"`
+	Subtitle   string               `json:"subtitle,omitempty"`
+	Severity   NotificationSeverity `json:"severity,omitempty"`
+	CategoryID string               `json:"categoryId,omitempty"`
+	Actions    []NotificationAction `json:"actions,omitempty"`
 }
 
 // PermissionStatus indicates whether notifications are authorised.
 type PermissionStatus struct {
 	Granted bool `json:"granted"`
-}
-
-type clearer interface {
-	Clear() error
-}
-
-type actionSender interface {
-	SendWithActions(opts NotificationOptions) error
 }
