@@ -2,7 +2,6 @@ package display
 
 import (
 	"context"
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -10,6 +9,7 @@ import (
 	core "dappco.re/go/core"
 	"dappco.re/go/gui/pkg/chat"
 	"dappco.re/go/gui/pkg/window"
+	coreio "dappco.re/go/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -62,12 +62,12 @@ func TestPreload_Good_TrustedOriginIncludesPrivilegedBridge(t *testing.T) {
 
 func TestDisplay_Good_WindowOpenManifestBackedOriginIncludesManifestPreloadOnly(t *testing.T) {
 	home := t.TempDir()
-	require.NoError(t, os.MkdirAll(filepath.Join(home, ".core", "apps", "example.com", ".core"), 0o755))
-	require.NoError(t, os.WriteFile(filepath.Join(home, ".core", "apps", "example.com", "preload.js"), []byte("globalThis.__manifestLoaded = true;"), 0o644))
-	require.NoError(t, os.WriteFile(filepath.Join(home, ".core", "apps", "example.com", ".core", "view.yaml"), []byte("name: example\npreloads:\n  - path: preload.js\n"), 0o644))
-	require.NoError(t, os.WriteFile(
+	require.NoError(t, coreio.Local.EnsureDir(filepath.Join(home, ".core", "apps", "example.com", ".core")))
+	require.NoError(t, coreio.Local.WriteMode(filepath.Join(home, ".core", "apps", "example.com", "preload.js"), "globalThis.__manifestLoaded = true;", 0o644))
+	require.NoError(t, coreio.Local.WriteMode(filepath.Join(home, ".core", "apps", "example.com", ".core", "view.yaml"), "name: example\npreloads:\n  - path: preload.js\n", 0o644))
+	require.NoError(t, coreio.Local.WriteMode(
 		filepath.Join(home, ".core", "preload-origins.yaml"),
-		[]byte("origins:\n  - https://example.com/\n"),
+		"origins:\n  - https://example.com/\n",
 		0o644,
 	))
 	t.Setenv("DIR_HOME", home)
@@ -246,10 +246,10 @@ func TestPreload_ManifestBackedPreloadOrigin_DeniesListedHTTPSOriginWithoutManif
 
 func TestPreload_DefaultTrustedOriginPolicy_LoadsConfig(t *testing.T) {
 	home := t.TempDir()
-	require.NoError(t, os.MkdirAll(filepath.Join(home, ".core"), 0o755))
-	require.NoError(t, os.WriteFile(
+	require.NoError(t, coreio.Local.EnsureDir(filepath.Join(home, ".core")))
+	require.NoError(t, coreio.Local.WriteMode(
 		filepath.Join(home, ".core", "preload-origins.yaml"),
-		[]byte("origins:\n  - core://app/\n"),
+		"origins:\n  - core://app/\n",
 		0o644,
 	))
 	t.Setenv("DIR_HOME", home)
@@ -272,16 +272,16 @@ func (p *preloadCapture) ExecJS(script string) {
 func writeMarketplaceViewManifest(t *testing.T, home, host string) {
 	t.Helper()
 	dir := filepath.Join(home, ".core", "apps", host, ".core")
-	require.NoError(t, os.MkdirAll(dir, 0o755))
-	require.NoError(t, os.WriteFile(filepath.Join(dir, "view.yaml"), []byte("name: "+host+"\n"), 0o644))
+	require.NoError(t, coreio.Local.EnsureDir(dir))
+	require.NoError(t, coreio.Local.WriteMode(filepath.Join(dir, "view.yaml"), "name: "+host+"\n", 0o644))
 }
 
 func TestPreload_InjectPreload_Good(t *testing.T) {
 	root := t.TempDir()
-	require.NoError(t, os.MkdirAll(filepath.Join(root, ".core"), 0o755))
-	require.NoError(t, os.WriteFile(filepath.Join(root, "index.html"), []byte("<html></html>"), 0o644))
-	require.NoError(t, os.WriteFile(filepath.Join(root, "preload.js"), []byte("globalThis.__manifestLoaded = true;"), 0o644))
-	require.NoError(t, os.WriteFile(filepath.Join(root, ".core", "view.yaml"), []byte("preloads:\n  - path: preload.js\n"), 0o644))
+	require.NoError(t, coreio.Local.EnsureDir(filepath.Join(root, ".core")))
+	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, "index.html"), "<html></html>", 0o644))
+	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, "preload.js"), "globalThis.__manifestLoaded = true;", 0o644))
+	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, ".core", "view.yaml"), "preloads:\n  - path: preload.js\n", 0o644))
 
 	svc, err := New()
 	require.NoError(t, err)
@@ -310,9 +310,9 @@ func TestPreload_InjectPreload_Bad(t *testing.T) {
 
 func TestPreload_InjectPreload_Ugly(t *testing.T) {
 	root := t.TempDir()
-	require.NoError(t, os.MkdirAll(filepath.Join(root, ".core"), 0o755))
-	require.NoError(t, os.WriteFile(filepath.Join(root, "index.html"), []byte("<html></html>"), 0o644))
-	require.NoError(t, os.WriteFile(filepath.Join(root, ".core", "view.yaml"), []byte("preloads: [\n"), 0o644))
+	require.NoError(t, coreio.Local.EnsureDir(filepath.Join(root, ".core")))
+	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, "index.html"), "<html></html>", 0o644))
+	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, ".core", "view.yaml"), "preloads: [\n", 0o644))
 
 	svc, err := New()
 	require.NoError(t, err)

@@ -74,14 +74,14 @@ func (s *Service) loadManifestForOrigin(pageURL string) (*loadedManifest, error)
 	defer core.CloseStream(stream.Value)
 	body, err := io.ReadAll(io.LimitReader(reader, maxViewManifestBytes+1))
 	if err != nil {
-		return nil, err
+		return nil, coreerr.E("display.loadManifestForOrigin", "failed to read view manifest", err)
 	}
 	if len(body) > maxViewManifestBytes {
 		return nil, coreerr.E("display.loadManifestForOrigin", "view manifest exceeds 1048576 bytes", nil)
 	}
 	var manifest ViewManifest
 	if err := yaml.Unmarshal(body, &manifest); err != nil {
-		return nil, err
+		return nil, coreerr.E("display.loadManifestForOrigin", "failed to parse view manifest", err)
 	}
 	loaded := &loadedManifest{
 		Path:     path,
@@ -89,9 +89,6 @@ func (s *Service) loadManifestForOrigin(pageURL string) (*loadedManifest, error)
 		Manifest: manifest,
 	}
 
-	if s.manifestCache == nil {
-		s.manifestCache = make(map[string]*loadedManifest)
-	}
 	s.manifestCache[pageURL] = loaded
 	return loaded, nil
 }
@@ -119,19 +116,19 @@ func safeManifestRelativePath(baseDir, relativePath, label string) (string, erro
 
 	baseAbs, err := filepath.Abs(baseDir)
 	if err != nil {
-		return "", err
+		return "", coreerr.E("display.safeManifestRelativePath", "failed to resolve manifest base directory", err)
 	}
 	baseResolved, err := filepath.EvalSymlinks(baseAbs)
 	if err != nil {
-		return "", err
+		return "", coreerr.E("display.safeManifestRelativePath", "failed to resolve manifest base symlinks", err)
 	}
 	candidateAbs, err := filepath.Abs(filepath.Join(baseAbs, trimmed))
 	if err != nil {
-		return "", err
+		return "", coreerr.E("display.safeManifestRelativePath", "failed to resolve manifest relative path", err)
 	}
 	rel, err := filepath.Rel(baseAbs, candidateAbs)
 	if err != nil {
-		return "", err
+		return "", coreerr.E("display.safeManifestRelativePath", "failed to compare manifest relative path", err)
 	}
 	if rel == ".." || core.HasPrefix(rel, ".."+string(filepath.Separator)) {
 		return "", coreerr.E("display.safeManifestRelativePath", label+" escapes manifest directory", nil)
@@ -141,11 +138,11 @@ func safeManifestRelativePath(baseDir, relativePath, label string) (string, erro
 	}
 	candidateResolved, err := filepath.EvalSymlinks(candidateAbs)
 	if err != nil {
-		return "", err
+		return "", coreerr.E("display.safeManifestRelativePath", "failed to resolve manifest relative path symlinks", err)
 	}
 	rel, err = filepath.Rel(baseResolved, candidateResolved)
 	if err != nil {
-		return "", err
+		return "", coreerr.E("display.safeManifestRelativePath", "failed to compare resolved manifest relative path", err)
 	}
 	if rel == ".." || core.HasPrefix(rel, ".."+string(filepath.Separator)) {
 		return "", coreerr.E("display.safeManifestRelativePath", label+" escapes manifest directory", nil)

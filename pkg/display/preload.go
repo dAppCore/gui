@@ -402,6 +402,7 @@ func loadTrustedOriginPolicy(path string) (TrustedOriginPolicy, bool) {
 	if err != nil {
 		return TrustedOriginPolicy{}, false
 	}
+	// Support both the legacy plain origin list and the current config map with per-action rules.
 	var origins []string
 	if err := yaml.Unmarshal([]byte(body), &origins); err == nil && origins != nil {
 		return NewTrustedOriginPolicy(origins), true
@@ -1328,7 +1329,7 @@ func (s *Service) injectCoreMLShim(trustedOrigin bool) string {
     },
     async models() {
       const state = await this.state();
-      return state.available || state.models || [];
+      return state.models || [];
     }
   };
 })();`

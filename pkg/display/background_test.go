@@ -39,10 +39,15 @@ func TestBackground_CloneMap_Ugly(t *testing.T) {
 }
 
 func TestBackground_DecodeMap_Good(t *testing.T) {
-	decoded := decodeMap(map[string]any{"scope": "/app"})
+	source := map[string]any{"scope": "/app"}
+	decoded := decodeMap(source)
 
 	require.NotNil(t, decoded)
 	assert.Equal(t, map[string]any{"scope": "/app"}, decoded)
+	source["scope"] = "/mutated"
+	if decoded["scope"] != "/app" {
+		t.Fatalf("decoded map changed after source mutation: %v", decoded["scope"])
+	}
 }
 
 func TestBackground_DecodeMap_Bad(t *testing.T) {
