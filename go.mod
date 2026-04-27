@@ -20,21 +20,21 @@ require (
 
 replace github.com/wailsapp/wails/v3 => ./stubs/wails
 
-replace dappco.re/go/config => ../go-config
+replace dappco.re/go/config => github.com/dappcore/config v0.2.4-0.20260427154541-06abfbaf84b8
 
-replace dappco.re/go/core => ../go
+replace dappco.re/go/core => forge.lthn.ai/core/go v0.8.0-alpha.2.0.20260425180327-a87e70661389
 
-replace dappco.re/go/core/io => ../core/go-io
+replace dappco.re/go/core/io => forge.lthn.ai/core/go-io v0.4.2
 
-replace dappco.re/go/inference => ../go-inference
+replace dappco.re/go/inference => github.com/dappcore/go-inference v0.8.0-alpha.1
 
-replace dappco.re/go/io => ../go-io
+replace dappco.re/go/io => github.com/dappcore/go-io v0.8.0-alpha.1.0.20260427150022-0891b7b1e856
 
-replace dappco.re/go/log => ../go-log
+replace dappco.re/go/log => github.com/dappcore/go-log v0.8.0-alpha.1
 
-replace dappco.re/go/store => ../go-store
+replace dappco.re/go/store => github.com/dappcore/go-store v0.8.0-alpha.1.0.20260427172959-fc77445de076
 
-replace dappco.re/go/webview => ../go-webview
+replace dappco.re/go/webview => github.com/dappcore/go-webview v0.8.0-alpha.1.0.20260425135446-1c47ae2c183c
 
 require (
 	dappco.re/go/core/io v0.4.2 // indirect

@@ -281,6 +281,7 @@ func TestService_OnStartup_Good(t *testing.T) {
 	require.True(t, stopped.OK)
 	stopState := stopped.Value.(TIMState)
 	assert.Equal(t, "stopped", stopState.Status)
+	assert.Empty(t, stopState.StartedAt)
 	assert.Equal(t, "coregui-tim", svc.State().Name)
 }
 

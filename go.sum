@@ -1,3 +1,7 @@
+forge.lthn.ai/core/go v0.8.0-alpha.2.0.20260425180327-a87e70661389 h1:6FOYh2/r4LQQgNmBGpTWIdUVxogGrLuVqnvC8e0rMDk=
+forge.lthn.ai/core/go v0.8.0-alpha.2.0.20260425180327-a87e70661389/go.mod h1:f2/tBZ3+3IqDrg2F5F598llv0nmb/4gJVCFzM5geE4A=
+forge.lthn.ai/core/go-io v0.4.2 h1:GRHy8x6ZynJ0cINc1vtkX1/zNJmQyPL7QWbp9cY7rdQ=
+forge.lthn.ai/core/go-io v0.4.2/go.mod h1:w71dukyunczLb8frT9JOd5B78PjwWQD3YAXiCt3AcPA=
 github.com/RaveNoX/go-jsoncommentstrip v1.0.0/go.mod h1:78ihd09MekBnJnxpICcwzCMzGrKSKYe4AqU6PDYYpjk=
 github.com/andybalholm/brotli v1.2.0 h1:ukwgCxwYrmACq68yiUqwIWnGY0cTPox/M94sVwToPjQ=
 github.com/andybalholm/brotli v1.2.0/go.mod h1:rzTDkvFWvIrjDXZHkuS16NPggd91W3kUSvPlQ1pLaKY=
@@ -30,6 +34,18 @@ github.com/aws/aws-sdk-go-v2/service/s3 v1.97.1/go.mod h1:qXVal5H0ChqXP63t6jze5L
 github.com/aws/smithy-go v1.24.2 h1:FzA3bu/nt/vDvmnkg+R8Xl46gmzEDam6mZ1hzmwXFng=
 github.com/aws/smithy-go v1.24.2/go.mod h1:YE2RhdIuDbA5E5bTdciG9KrW3+TiEONeUWCqxX9i1Fc=
 github.com/bmatcuk/doublestar v1.1.1/go.mod h1:UD6OnuiIn0yFxxA2le/rnRU1G4RaI4UvFv1sNto9p6w=
+github.com/dappcore/config v0.2.4-0.20260427154541-06abfbaf84b8 h1:Jos7fiZtIR3gUs5SRjaXz+SkFjJhv8SLw0SPeGfuqJM=
+github.com/dappcore/config v0.2.4-0.20260427154541-06abfbaf84b8/go.mod h1:f4Q+8pviM5eZDr//gYLysupUqy6ZomtESHHCT127rC8=
+github.com/dappcore/go-inference v0.8.0-alpha.1 h1:pzJoaJI0FhzUakq7tZqD6VdgMoMiuFTflVXXHCQuI0I=
+github.com/dappcore/go-inference v0.8.0-alpha.1/go.mod h1:rfNXLcfMilEI3nKpcdrC0PQKyUyaf6bDYseowgRwDP8=
+github.com/dappcore/go-io v0.8.0-alpha.1.0.20260427150022-0891b7b1e856 h1:yTIuyMOaEytS0z7irKSBgENMKpOd/z4BIt2gVoeLX6s=
+github.com/dappcore/go-io v0.8.0-alpha.1.0.20260427150022-0891b7b1e856/go.mod h1:zcW1Ah55AotbL/qsisFNspAPIQYYKbaahHCxegibGxg=
+github.com/dappcore/go-log v0.8.0-alpha.1 h1:OqZ9Njhz4fr+2BCHOgWxZZcPj/T46jN2UlOCytOCr2Y=
+github.com/dappcore/go-log v0.8.0-alpha.1/go.mod h1:IC04Em9SfVTcXiWc1BqZDQfa1MtOuMDEermZkQcTz9c=
+github.com/dappcore/go-store v0.8.0-alpha.1.0.20260427172959-fc77445de076 h1:dj+Gu2rFMZeRmJBUUFm9rQbL7/6weVyQwBL6MOtRh0g=
+github.com/dappcore/go-store v0.8.0-alpha.1.0.20260427172959-fc77445de076/go.mod h1:N0LtJ1F4XhIBqVgPKNKTi1x+Bq6JTp9e2ClvYvUTrdU=
+github.com/dappcore/go-webview v0.8.0-alpha.1.0.20260425135446-1c47ae2c183c h1:MrLhYXjDsFzMQg+IECy+ibM8PPBPzrwndObxaA+X8d0=
+github.com/dappcore/go-webview v0.8.0-alpha.1.0.20260425135446-1c47ae2c183c/go.mod h1:dI3z/hYFDFUJbGhxI1q9tGsg7oBndQtCWsqAkYrbAn4=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1VwoXQT9A3Wy9MM3WgvqSxFWenqJduM=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

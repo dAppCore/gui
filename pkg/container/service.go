@@ -49,7 +49,7 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		return core.Result{Value: s.startupErr, OK: false}
 	}
 	s.Core().Action("container.runtime.detect", func(_ context.Context, _ core.Options) core.Result {
-		return core.Result{Value: Detect(), OK: true}
+		return core.Result{Value: coalesceRuntime(s.manager.options.Runtime, s.manager.options.Detect()), OK: true}
 	})
 	s.Core().Action("tim.start", func(ctx context.Context, _ core.Options) core.Result {
 		state, err := s.manager.Start(ctx)

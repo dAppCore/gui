@@ -154,39 +154,36 @@ func safeManifestRelativePath(baseDir, relativePath, label string) (string, erro
 }
 
 func discoverManifestPath(pageURL string) (string, error) {
-	parsed, err := url.Parse(core.Trim(pageURL))
-	if err != nil {
-		return "", err
-	}
+	trimmed := core.Trim(pageURL)
 	fsys := (&core.Fs{}).NewUnrestricted()
 	candidates := make([]string, 0, 4)
-	switch parsed.Scheme {
-	case "", "file":
-		path := parsed.Path
-		if path == "" {
-			path = pageURL
+	if filepath.VolumeName(trimmed) != "" {
+		appendLocalManifestCandidates(&candidates, fsys, trimmed)
+	} else {
+		parsed, err := url.Parse(trimmed)
+		if err != nil {
+			return "", err
 		}
-		if fsys.Exists(path) {
-			if fsys.IsDir(path) {
-				candidates = append(candidates, filepath.Join(path, ".core", "view.yaml"))
-			} else {
-				dir := filepath.Dir(path)
-				candidates = append(candidates, filepath.Join(dir, ".core", "view.yaml"))
-				candidates = append(candidates, filepath.Join(filepath.Dir(dir), ".core", "view.yaml"))
+		switch parsed.Scheme {
+		case "", "file":
+			path := parsed.Path
+			if path == "" {
+				path = trimmed
 			}
-		}
-	default:
-		if parsed.Host != "" {
-			host, err := manifestHostPathComponent(parsed)
-			if err != nil {
-				return "", err
-			}
-			home := core.Trim(os.Getenv("DIR_HOME"))
-			if home == "" {
-				home = core.Trim(core.Env("DIR_HOME"))
-			}
-			if home != "" {
-				candidates = append(candidates, filepath.Join(home, ".core", "apps", host, ".core", "view.yaml"))
+			appendLocalManifestCandidates(&candidates, fsys, path)
+		default:
+			if parsed.Host != "" {
+				host, err := manifestHostPathComponent(parsed)
+				if err != nil {
+					return "", err
+				}
+				home := core.Trim(os.Getenv("DIR_HOME"))
+				if home == "" {
+					home = core.Trim(core.Env("DIR_HOME"))
+				}
+				if home != "" {
+					candidates = append(candidates, filepath.Join(home, ".core", "apps", host, ".core", "view.yaml"))
+				}
 			}
 		}
 	}
@@ -196,6 +193,19 @@ func discoverManifestPath(pageURL string) (string, error) {
 		}
 	}
 	return "", coreerr.E("display.discoverManifestPath", "view manifest not found", nil)
+}
+
+func appendLocalManifestCandidates(candidates *[]string, fsys *core.Fs, path string) {
+	if candidates == nil || fsys == nil || !fsys.Exists(path) {
+		return
+	}
+	if fsys.IsDir(path) {
+		*candidates = append(*candidates, filepath.Join(path, ".core", "view.yaml"))
+		return
+	}
+	dir := filepath.Dir(path)
+	*candidates = append(*candidates, filepath.Join(dir, ".core", "view.yaml"))
+	*candidates = append(*candidates, filepath.Join(filepath.Dir(dir), ".core", "view.yaml"))
 }
 
 func manifestHostPathComponent(parsed *url.URL) (string, error) {

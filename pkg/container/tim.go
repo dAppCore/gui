@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -120,6 +121,7 @@ func (m *TIMManager) Stop(ctx context.Context) (TIMState, error) {
 	m.mu.Lock()
 	if m.state.Runtime == RuntimeNone {
 		m.state.Status = "stopped"
+		m.state.StartedAt = time.Time{}
 		state := cloneTIMState(m.state)
 		m.mu.Unlock()
 		return state, nil
@@ -137,6 +139,7 @@ func (m *TIMManager) Stop(ctx context.Context) (TIMState, error) {
 
 	m.mu.Lock()
 	m.state.Status = "stopped"
+	m.state.StartedAt = time.Time{}
 	state := cloneTIMState(m.state)
 	m.mu.Unlock()
 	return state, nil
@@ -148,7 +151,8 @@ func (m *TIMManager) runtimeCommand(runtime ContainerRuntime, verb string) (stri
 	switch runtime {
 	case RuntimeApple:
 		if verb == "run" {
-			args := []string{"run", "--name", name, image}
+			args := append([]string{"run", "--name", name}, m.containerRunArgs()...)
+			args = append(args, image)
 			args = append(args, m.options.Command...)
 			return "container", args
 		}
@@ -157,6 +161,7 @@ func (m *TIMManager) runtimeCommand(runtime ContainerRuntime, verb string) (stri
 		if verb == "run" {
 			args := []string{"run", "-d", "--replace", "--name", name}
 			args = append(args, resourceArgs(m.options.Resources)...)
+			args = append(args, m.containerRunArgs()...)
 			args = append(args, image)
 			args = append(args, m.options.Command...)
 			return "podman", args
@@ -166,12 +171,37 @@ func (m *TIMManager) runtimeCommand(runtime ContainerRuntime, verb string) (stri
 		if verb == "run" {
 			args := []string{"run", "-d", "--rm", "--name", name}
 			args = append(args, resourceArgs(m.options.Resources)...)
+			args = append(args, m.containerRunArgs()...)
 			args = append(args, image)
 			args = append(args, m.options.Command...)
 			return "docker", args
 		}
 		return "docker", []string{"stop", name}
 	}
+}
+
+func (m *TIMManager) containerRunArgs() []string {
+	var args []string
+	if dataDir := strings.TrimSpace(m.options.DataDir); dataDir != "" {
+		args = append(args, "-v", dataDir+":"+dataDir)
+	}
+	if workDir := strings.TrimSpace(m.options.WorkDir); workDir != "" {
+		args = append(args, "-w", workDir)
+	}
+	env := make(map[string]string, len(m.options.Env))
+	envKeys := make([]string, 0, len(m.options.Env))
+	for key, value := range m.options.Env {
+		trimmedKey := strings.TrimSpace(key)
+		if trimmedKey != "" {
+			env[trimmedKey] = value
+			envKeys = append(envKeys, trimmedKey)
+		}
+	}
+	sort.Strings(envKeys)
+	for _, key := range envKeys {
+		args = append(args, "-e", key+"="+env[key])
+	}
+	return args
 }
 
 func resourceArgs(resources TIMResources) []string {

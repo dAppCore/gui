@@ -142,6 +142,7 @@ func TestTIMManager_Stop_Good(t *testing.T) {
 	stopped, err := manager.Stop(context.Background())
 	require.NoError(t, err)
 	assert.Equal(t, "stopped", stopped.Status)
+	assert.Empty(t, stopped.StartedAt)
 	require.GreaterOrEqual(t, len(calls), 3)
 	assert.Equal(t, "docker", calls[len(calls)-3])
 	assert.Equal(t, "stop", calls[len(calls)-2])
@@ -248,8 +249,13 @@ func TestTIMManager_runtimeCommand_Bad(t *testing.T) {
 
 func TestTIMManager_runtimeCommand_Ugly(t *testing.T) {
 	manager := NewTIMManager(TIMOptions{
-		Name:  "tim",
-		Image: "image",
+		Name:    "tim",
+		Image:   "image",
+		DataDir: "/host/tim",
+		WorkDir: "/work",
+		Env: map[string]string{
+			"CORE_ENV": "test",
+		},
 		Resources: TIMResources{
 			CPUCores: 2,
 			MemoryMB: 512,
@@ -268,6 +274,12 @@ func TestTIMManager_runtimeCommand_Ugly(t *testing.T) {
 	assert.Contains(t, args, "512m")
 	assert.Contains(t, args, "--gpus")
 	assert.Contains(t, args, "all")
+	assert.Contains(t, args, "-v")
+	assert.Contains(t, args, "/host/tim:/host/tim")
+	assert.Contains(t, args, "-w")
+	assert.Contains(t, args, "/work")
+	assert.Contains(t, args, "-e")
+	assert.Contains(t, args, "CORE_ENV=test")
 }
 
 func TestTIMManager_resourceArgs_Good(t *testing.T) {

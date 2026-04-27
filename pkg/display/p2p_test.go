@@ -12,18 +12,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func newDisplayP2PTestService(t *testing.T) (*Service, *p2p.Service, *core.Core) {
+func newDisplayP2PTestService(t *testing.T) (*Service, *p2p.Service, *core.Core, <-chan Event) {
 	t.Helper()
 
 	var p2pSvc *p2p.Service
 	driver := newLoopbackP2PDriver()
-	displaySvc, c := newServiceWithMockApp(t, func(c *core.Core) core.Result {
+	displaySvc, c, eventBuffer := newServiceWithMockApp(t, func(c *core.Core) core.Result {
 		p2pSvc = p2p.NewServiceWithDriver(c, p2p.Options{NodeID: "node-1"}, driver)
 		return core.Result{Value: p2pSvc, OK: true}
 	})
 	require.NotNil(t, displaySvc)
 	require.NotNil(t, p2pSvc)
-	return displaySvc, p2pSvc, c
+	return displaySvc, p2pSvc, c, eventBuffer
 }
 
 type loopbackP2PDriver struct {
@@ -73,7 +73,7 @@ func (d *immediateP2PDriver) Subscribe(_ context.Context, topic string, handler 
 }
 
 func TestDisplayP2P_attachP2PBridge_Good(t *testing.T) {
-	displaySvc, p2pSvc, _ := newDisplayP2PTestService(t)
+	_, p2pSvc, _, eventBuffer := newDisplayP2PTestService(t)
 
 	err := p2pSvc.Publish(context.Background(), p2p.Envelope{
 		Topic:    "display",
@@ -84,7 +84,7 @@ func TestDisplayP2P_attachP2PBridge_Good(t *testing.T) {
 	require.NoError(t, err)
 
 	select {
-	case event := <-displaySvc.events.eventBuffer:
+	case event := <-eventBuffer:
 		assert.Equal(t, EventCustomEvent, event.Type)
 		require.NotNil(t, event.Data)
 		assert.Equal(t, "p2p", event.Data["source"])
@@ -107,13 +107,13 @@ func TestDisplayP2P_OnStartup_InitializesEventManagerBeforeBridge(t *testing.T) 
 		},
 	}
 
-	displaySvc, _ := newServiceWithMockApp(t, func(c *core.Core) core.Result {
+	_, _, eventBuffer := newServiceWithMockApp(t, func(c *core.Core) core.Result {
 		p2pSvc := p2p.NewServiceWithDriver(c, p2p.Options{NodeID: "node-startup"}, driver)
 		return core.Result{Value: p2pSvc, OK: true}
 	})
 
 	select {
-	case event := <-displaySvc.events.eventBuffer:
+	case event := <-eventBuffer:
 		assert.Equal(t, EventCustomEvent, event.Type)
 		require.NotNil(t, event.Data)
 		assert.Equal(t, "p2p", event.Data["source"])
@@ -137,7 +137,7 @@ func TestDisplayP2P_attachP2PBridge_Bad(t *testing.T) {
 }
 
 func TestDisplayP2P_attachP2PBridge_Ugly(t *testing.T) {
-	displaySvc, p2pSvc, _ := newDisplayP2PTestService(t)
+	displaySvc, p2pSvc, _, _ := newDisplayP2PTestService(t)
 	displaySvc.events = nil
 
 	require.NotPanics(t, func() {

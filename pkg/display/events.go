@@ -303,8 +303,11 @@ func (em *WSEventManager) HandleWebSocket(w http.ResponseWriter, r *http.Request
 
 	em.prepareConnection(conn)
 
+	done := make(chan struct{})
+	go em.pingConnection(conn, done)
+
 	// Handle incoming messages
-	go em.handleMessages(conn)
+	go em.handleMessages(conn, done)
 }
 
 func (em *WSEventManager) prepareConnection(conn *websocket.Conn) {
@@ -320,9 +323,54 @@ func (em *WSEventManager) prepareConnection(conn *websocket.Conn) {
 	}
 }
 
+func (em *WSEventManager) pingConnection(conn *websocket.Conn, done <-chan struct{}) {
+	if conn == nil || em == nil || em.readTimeout <= 0 {
+		return
+	}
+	interval := em.readTimeout / 2
+	if interval <= 0 {
+		interval = em.readTimeout
+	}
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-done:
+			return
+		case <-ticker.C:
+			if !em.writePing(conn) {
+				em.removeClient(conn)
+				return
+			}
+		}
+	}
+}
+
+func (em *WSEventManager) writePing(conn *websocket.Conn) bool {
+	em.mu.RLock()
+	state, exists := em.clients[conn]
+	timeout := em.readTimeout
+	em.mu.RUnlock()
+	if !exists || state == nil {
+		return false
+	}
+	deadline := time.Now().Add(10 * time.Second)
+	if timeout > 0 && timeout < 10*time.Second {
+		deadline = time.Now().Add(timeout / 2)
+	}
+	state.writeMu.Lock()
+	err := conn.WriteControl(websocket.PingMessage, nil, deadline)
+	state.writeMu.Unlock()
+	return err == nil
+}
+
 // handleMessages processes incoming WebSocket messages.
-func (em *WSEventManager) handleMessages(conn *websocket.Conn) {
-	defer em.removeClient(conn)
+func (em *WSEventManager) handleMessages(conn *websocket.Conn, done chan<- struct{}) {
+	defer func() {
+		close(done)
+		em.removeClient(conn)
+	}()
 
 	for {
 		if em.readTimeout > 0 {

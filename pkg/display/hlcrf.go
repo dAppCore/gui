@@ -10,7 +10,7 @@ import (
 	coreio "dappco.re/go/io"
 )
 
-var hlcrfSlotPattern = regexp.MustCompile(`\{\{\s*slot\s+"([^"]+)"\s*\}\}`)
+var hlcrfSlotPattern = regexp.MustCompile(`\{\{\s*slot\s+"([^"]*)"\s*\}\}`)
 
 func (s *Service) buildHLCRFComponents(pageURL string) (string, error) {
 	loaded, err := s.loadManifestForOrigin(pageURL)

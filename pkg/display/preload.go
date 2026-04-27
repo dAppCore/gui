@@ -43,9 +43,7 @@ func (s *Service) BuildPreloadScript(pageURL string) (string, error) {
 func (s *Service) BuildPreloadScriptWithTrustedOriginPolicy(pageURL string, policy TrustedOriginPolicy) (string, error) {
 	trustedOrigin := trustedPreloadOrigin(pageURL, policy)
 	manifestAllowed := manifestBackedPreloadOriginAllowedByPolicy(pageURL, policy)
-	if !trustedOrigin && manifestAllowed && s.manifestBackedPreloadOrigin(pageURL, policy) {
-		trustedOrigin = true
-	}
+	manifestBackedAllowed := manifestAllowed && s.manifestBackedPreloadOrigin(pageURL, policy)
 	bridgeActions := []string{}
 	if trustedOrigin {
 		bridgeActions = policy.AllowedActionsForURL(pageURL)
@@ -69,7 +67,7 @@ func (s *Service) BuildPreloadScriptWithTrustedOriginPolicy(pageURL string, poli
 			s.injectElectronShim(),
 		)
 	}
-	if manifestAllowed {
+	if manifestBackedAllowed {
 		if appPreloads, err := s.injectAppPreloads(pageURL); err != nil {
 			if !strings.Contains(err.Error(), "view manifest not found") {
 				return "", err
@@ -119,10 +117,12 @@ var defaultTrustedPreloadOriginURLs = []string{
 var defaultTrustedPreloadOriginActions = map[string][]string{
 	"core://lab.lthn.sh/": {
 		"display.sidecar.eval",
+		"display.models.state",
 		"webview.evaluate",
 	},
 	"core://app/": {
 		"display.sidecar.eval",
+		"display.models.state",
 		"webview.evaluate",
 		"marketplace.install",
 		"marketplace.list",
@@ -1324,7 +1324,7 @@ func (s *Service) injectCoreMLShim(trustedOrigin bool) string {
       if (!__coreCanInvoke) {
         return { available: false, models: [] };
       }
-      return invokeBridge('display.models.state', {}).then((value) => value);
+      return (globalThis.__coreBridge?.invoke?.('display.models.state', {}) ?? Promise.resolve({ available: false, models: [] })).then((value) => value);
     },
     async models() {
       const state = await this.state();

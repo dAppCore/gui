@@ -64,10 +64,11 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		return core.Result{}.New(button, err)
 	}
 	info := func(_ context.Context, opts core.Options) core.Result {
-		t, _ := opts.Get("task").Value.(TaskInfo)
-		button, err := s.platform.MessageDialog(MessageDialogOptions{
-			Type: DialogInfo, Title: t.Title, Message: t.Message, Buttons: t.Buttons,
-		})
+		infoOpts, err := infoDialogOptionsFrom(opts)
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		button, err := s.platform.MessageDialog(infoOpts)
 		return core.Result{}.New(button, err)
 	}
 	question := func(_ context.Context, opts core.Options) core.Result {
@@ -79,20 +80,22 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		return core.Result{}.New(button, err)
 	}
 	warning := func(_ context.Context, opts core.Options) core.Result {
-		t, _ := opts.Get("task").Value.(TaskWarning)
-		button, err := s.platform.MessageDialog(MessageDialogOptions{
-			Type: DialogWarning, Title: t.Title, Message: t.Message, Buttons: t.Buttons,
-		})
+		warningOpts, err := warningDialogOptionsFrom(opts)
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		button, err := s.platform.MessageDialog(warningOpts)
 		return core.Result{}.New(button, err)
 	}
 	errDialog := func(_ context.Context, opts core.Options) core.Result {
-		t, _ := opts.Get("task").Value.(TaskError)
-		button, err := s.platform.MessageDialog(MessageDialogOptions{
-			Type: DialogError, Title: t.Title, Message: t.Message, Buttons: t.Buttons,
-		})
+		errOpts, err := errorDialogOptionsFrom(opts)
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		button, err := s.platform.MessageDialog(errOpts)
 		return core.Result{}.New(button, err)
 	}
-	prompt := func(_ context.Context, opts core.Options) core.Result {
+	prompt := func(ctx context.Context, opts core.Options) core.Result {
 		promptOpts, err := promptOptionsFrom(opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
@@ -103,10 +106,10 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		}
 		script := promptScript(promptOpts.Title, promptOpts.Message, promptOpts.DefaultValue)
 		task := core.NewOptions(core.Option{Key: "task", Value: webview.TaskEvaluate{Window: windowName, Script: script}})
-		result := s.Core().Action("webview.evaluate").Run(context.Background(), task)
+		result := s.Core().Action("webview.evaluate").Run(ctx, task)
 		if !result.OK {
 			// Keep the legacy GUI alias as a fallback for older startup wiring.
-			result = s.Core().Action("gui.webview.eval").Run(context.Background(), task)
+			result = s.Core().Action("gui.webview.eval").Run(ctx, task)
 		}
 		if !result.OK {
 			if e, ok := result.Value.(error); ok {
@@ -199,6 +202,87 @@ func messageDialogOptionsFrom(opts core.Options) (MessageDialogOptions, error) {
 		}
 	}
 	return decodeOptions[MessageDialogOptions](opts)
+}
+
+func infoDialogOptionsFrom(opts core.Options) (MessageDialogOptions, error) {
+	if task := opts.Get("task"); task.OK {
+		switch v := task.Value.(type) {
+		case TaskInfo:
+			return MessageDialogOptions{
+				Type:    DialogInfo,
+				Title:   v.Title,
+				Message: v.Message,
+				Buttons: v.Buttons,
+			}, nil
+		case MessageDialogOptions:
+			v.Type = DialogInfo
+			return v, nil
+		default:
+			return MessageDialogOptions{}, coreerr.E("dialog.infoDialogOptionsFrom", "failed to decode info dialog options", nil)
+		}
+	}
+	return typedMessageDialogOptionsFrom(opts, DialogInfo, "dialog.infoDialogOptionsFrom")
+}
+
+func warningDialogOptionsFrom(opts core.Options) (MessageDialogOptions, error) {
+	if task := opts.Get("task"); task.OK {
+		switch v := task.Value.(type) {
+		case TaskWarning:
+			return MessageDialogOptions{
+				Type:    DialogWarning,
+				Title:   v.Title,
+				Message: v.Message,
+				Buttons: v.Buttons,
+			}, nil
+		case MessageDialogOptions:
+			v.Type = DialogWarning
+			return v, nil
+		default:
+			return MessageDialogOptions{}, coreerr.E("dialog.warningDialogOptionsFrom", "failed to decode warning dialog options", nil)
+		}
+	}
+	return typedMessageDialogOptionsFrom(opts, DialogWarning, "dialog.warningDialogOptionsFrom")
+}
+
+func errorDialogOptionsFrom(opts core.Options) (MessageDialogOptions, error) {
+	if task := opts.Get("task"); task.OK {
+		switch v := task.Value.(type) {
+		case TaskError:
+			return MessageDialogOptions{
+				Type:    DialogError,
+				Title:   v.Title,
+				Message: v.Message,
+				Buttons: v.Buttons,
+			}, nil
+		case MessageDialogOptions:
+			v.Type = DialogError
+			return v, nil
+		default:
+			return MessageDialogOptions{}, coreerr.E("dialog.errorDialogOptionsFrom", "failed to decode error dialog options", nil)
+		}
+	}
+	return typedMessageDialogOptionsFrom(opts, DialogError, "dialog.errorDialogOptionsFrom")
+}
+
+func typedMessageDialogOptionsFrom(opts core.Options, dialogType DialogType, op string) (MessageDialogOptions, error) {
+	if !hasDirectDialogOptions(opts) {
+		return MessageDialogOptions{}, coreerr.E(op, "failed to decode dialog options", nil)
+	}
+	decoded, err := decodeOptions[MessageDialogOptions](opts)
+	if err != nil {
+		return MessageDialogOptions{}, err
+	}
+	decoded.Type = dialogType
+	return decoded, nil
+}
+
+func hasDirectDialogOptions(opts core.Options) bool {
+	for _, item := range opts.Items() {
+		if item.Key != "task" {
+			return true
+		}
+	}
+	return false
 }
 
 func questionDialogOptionsFrom(opts core.Options) (MessageDialogOptions, error) {

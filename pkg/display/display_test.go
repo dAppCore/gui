@@ -20,7 +20,6 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 // --- Test helpers ---
@@ -38,16 +37,19 @@ func newTestCore(t *testing.T, serviceFactories ...func(*core.Core) core.Result)
 	return c
 }
 
-func newServiceWithMockApp(t *testing.T, serviceFactories ...func(*core.Core) core.Result) (*Service, *core.Core) {
+func newServiceWithMockApp(t *testing.T, serviceFactories ...func(*core.Core) core.Result) (*Service, *core.Core, <-chan Event) {
 	t.Helper()
 	configPath := core.JoinPath(t.TempDir(), "config.yaml")
+	var eventBuffer chan Event
 	options := []core.CoreOption{
 		core.WithService(func(c *core.Core) core.Result {
 			svc, err := New()
 			require.NoError(t, err)
 			svc.loadConfigFrom(configPath)
 			svc.ServiceRuntime = core.NewServiceRuntime(c, Options{})
-			svc.wailsApp = &application.App{Logger: application.Logger{}}
+			svc.app = &mockDisplayApp{}
+			svc.events = newTestEventManager()
+			eventBuffer = svc.events.eventBuffer
 			return core.Result{Value: svc, OK: true}
 		}),
 	}
@@ -58,7 +60,29 @@ func newServiceWithMockApp(t *testing.T, serviceFactories ...func(*core.Core) co
 	c := core.New(options...)
 	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
 	svc := core.MustServiceFor[*Service](c, "display")
-	return svc, c
+	return svc, c, eventBuffer
+}
+
+type mockDisplayApp struct {
+	logger mockDisplayLogger
+}
+
+func (m *mockDisplayApp) Logger() Logger {
+	return m.logger
+}
+
+func (m *mockDisplayApp) Quit() {}
+
+type mockDisplayLogger struct{}
+
+func (mockDisplayLogger) Info(string, ...any) {}
+
+func newTestEventManager() *WSEventManager {
+	return &WSEventManager{
+		clients:     make(map[*websocket.Conn]*clientState),
+		eventBuffer: make(chan Event, 100),
+		readTimeout: websocketReadTimeout,
+	}
 }
 
 // newTestDisplayService creates a display service registered with Core for IPC testing.

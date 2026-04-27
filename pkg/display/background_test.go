@@ -34,7 +34,7 @@ func TestBackground_CloneMap_Ugly(t *testing.T) {
 	cloned := cloneMap(source)
 	require.NotNil(t, cloned)
 
-	source["nested"] = map[string]any{"value": "changed"}
+	source["nested"].(map[string]any)["value"] = "changed"
 	assert.Equal(t, map[string]any{"value": "original"}, cloned["nested"])
 }
 

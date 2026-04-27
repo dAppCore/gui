@@ -5,13 +5,13 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
 	core "dappco.re/go/core"
 	guimcp "dappco.re/go/gui/pkg/mcp"
+	coreio "dappco.re/go/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -63,10 +63,10 @@ func createDiscoveredModelRoot(t *testing.T, name, architecture string) string {
 	t.Helper()
 	root := t.TempDir()
 	modelDir := filepath.Join(root, name)
-	require.NoError(t, os.MkdirAll(modelDir, 0o755))
+	require.NoError(t, coreio.Local.EnsureDir(modelDir))
 	configJSON := `{"model_type":"` + architecture + `","quantization":{"bits":4,"group_size":32}}`
-	require.NoError(t, os.WriteFile(filepath.Join(modelDir, "config.json"), []byte(configJSON), 0o644))
-	require.NoError(t, os.WriteFile(filepath.Join(modelDir, "weights.safetensors"), []byte("fake"), 0o644))
+	require.NoError(t, coreio.Local.WriteMode(filepath.Join(modelDir, "config.json"), configJSON, 0o644))
+	require.NoError(t, coreio.Local.WriteMode(filepath.Join(modelDir, "weights.safetensors"), "fake", 0o644))
 	return root
 }
 

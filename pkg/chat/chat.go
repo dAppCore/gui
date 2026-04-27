@@ -9,6 +9,7 @@ import (
 
 	core "dappco.re/go/core"
 	"dappco.re/go/gui/pkg/internal/textutil"
+	coreerr "dappco.re/go/log"
 )
 
 type StreamCallbacks struct {
@@ -132,7 +133,7 @@ func (r *StreamRenderer) handleData(payload string) error {
 		if err, ok := result.Value.(error); ok {
 			return err
 		}
-		return core.E("chat.StreamRenderer.handleData", "failed to decode stream chunk", nil)
+		return coreerr.E("chat.StreamRenderer.handleData", "failed to decode stream chunk", nil)
 	}
 	if !r.started {
 		r.started = true

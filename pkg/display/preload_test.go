@@ -60,10 +60,11 @@ func TestPreload_Good_TrustedOriginIncludesPrivilegedBridge(t *testing.T) {
 	assert.Contains(t, script, "webview.devtoolsOpen")
 }
 
-func TestDisplay_Good_WindowOpenManifestBackedOriginIncludesPrivilegedBridge(t *testing.T) {
+func TestDisplay_Good_WindowOpenManifestBackedOriginIncludesManifestPreloadOnly(t *testing.T) {
 	home := t.TempDir()
 	require.NoError(t, os.MkdirAll(filepath.Join(home, ".core", "apps", "example.com", ".core"), 0o755))
-	require.NoError(t, os.WriteFile(filepath.Join(home, ".core", "apps", "example.com", ".core", "view.yaml"), []byte("name: example\n"), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(home, ".core", "apps", "example.com", "preload.js"), []byte("globalThis.__manifestLoaded = true;"), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(home, ".core", "apps", "example.com", ".core", "view.yaml"), []byte("name: example\npreloads:\n  - path: preload.js\n"), 0o644))
 	require.NoError(t, os.WriteFile(
 		filepath.Join(home, ".core", "preload-origins.yaml"),
 		[]byte("origins:\n  - https://example.com/\n"),
@@ -90,9 +91,10 @@ func TestDisplay_Good_WindowOpenManifestBackedOriginIncludesPrivilegedBridge(t *
 	require.True(t, result.OK)
 	require.Len(t, platform.Windows, 1)
 	script := platform.Windows[0].ExecJSCalls()[0]
-	assert.Contains(t, script, "globalThis.electron")
-	assert.Contains(t, script, "core.background.serviceWorker.register")
+	assert.Contains(t, script, "__manifestLoaded")
 	assert.Contains(t, script, "globalThis.core.ml")
+	assert.NotContains(t, script, "globalThis.electron")
+	assert.NotContains(t, script, "core.background.serviceWorker.register")
 }
 
 func TestDisplay_Good_CoreSchemeRoutesThroughBackend(t *testing.T) {
@@ -289,7 +291,7 @@ func TestPreload_InjectPreload_Good(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, target.scripts, 1)
 	assert.Contains(t, target.scripts[0], "globalThis.core.ml")
-	assert.Contains(t, target.scripts[0], "globalThis.electron")
+	assert.NotContains(t, target.scripts[0], "globalThis.electron")
 	assert.Contains(t, target.scripts[0], "__manifestLoaded")
 }
 
