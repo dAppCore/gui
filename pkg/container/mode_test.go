@@ -1,11 +1,11 @@
 package container
 
 import (
+	core "dappco.re/go"
 	"os"
-	"testing"
 )
 
-func TestDetectModeWithEnvironment(t *testing.T) {
+func TestDetectModeWithEnvironment(t *core.T) {
 	mode := DetectModeWithEnvironment(ModeEnvironment{
 		Args: []string{"--mode=worker"},
 	})
@@ -38,7 +38,7 @@ func TestDetectModeWithEnvironment(t *testing.T) {
 	}
 }
 
-func TestMode_DetectMode_Good(t *testing.T) {
+func TestMode_DetectMode_Good(t *core.T) {
 	oldArgs := os.Args
 	os.Args = []string{"core-gui", "--mode=worker"}
 	t.Cleanup(func() { os.Args = oldArgs })
@@ -50,7 +50,7 @@ func TestMode_DetectMode_Good(t *testing.T) {
 	}
 }
 
-func TestMode_DetectMode_Bad(t *testing.T) {
+func TestMode_DetectMode_Bad(t *core.T) {
 	oldArgs := os.Args
 	os.Args = []string{"core-gui"}
 	t.Cleanup(func() { os.Args = oldArgs })
@@ -62,7 +62,7 @@ func TestMode_DetectMode_Bad(t *testing.T) {
 	}
 }
 
-func TestMode_DetectMode_Ugly(t *testing.T) {
+func TestMode_DetectMode_Ugly(t *core.T) {
 	oldArgs := os.Args
 	os.Args = []string{"core-gui", "--unexpected=flag"}
 	t.Cleanup(func() { os.Args = oldArgs })

@@ -7,8 +7,9 @@ import (
 	"sync"
 	"time"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/dialog"
+	"dappco.re/go/gui/pkg/internal/coreutil"
 	coreerr "dappco.re/go/log"
 )
 
@@ -177,7 +178,7 @@ func (s *Service) clear(id string) error {
 
 	ids := s.removeActive(id)
 	for _, notificationID := range ids {
-		_ = s.Core().ACTION(ActionNotificationDismissed{ID: notificationID})
+		coreutil.DispatchAction(s.Core(), "notification.dismiss", ActionNotificationDismissed{ID: notificationID})
 	}
 	return nil
 }

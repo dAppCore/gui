@@ -4,7 +4,8 @@ import (
 	"context"
 	"strings"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
+	"dappco.re/go/gui/pkg/internal/coreutil"
 	"dappco.re/go/gui/pkg/screen"
 	coreerr "dappco.re/go/log"
 )
@@ -491,7 +492,7 @@ func (s *Service) taskOpenWindow(t TaskOpenWindow) core.Result {
 	s.trackWindow(pw)
 
 	// Broadcast to all listeners
-	_ = s.Core().ACTION(ActionWindowOpened{Name: pw.Name()})
+	coreutil.DispatchAction(s.Core(), "window.create", ActionWindowOpened{Name: pw.Name()})
 	return core.Result{Value: info, OK: true}
 }
 
@@ -500,27 +501,27 @@ func (s *Service) trackWindow(pw PlatformWindow) {
 	pw.OnWindowEvent(func(e WindowEvent) {
 		switch e.Type {
 		case "focus":
-			_ = s.Core().ACTION(ActionWindowFocused{Name: e.Name})
+			coreutil.DispatchAction(s.Core(), "window.focus", ActionWindowFocused{Name: e.Name})
 		case "blur":
-			_ = s.Core().ACTION(ActionWindowBlurred{Name: e.Name})
+			coreutil.DispatchAction(s.Core(), "window.blur", ActionWindowBlurred{Name: e.Name})
 		case "move":
 			if data := e.Data; data != nil {
 				x, _ := data["x"].(int)
 				y, _ := data["y"].(int)
-				_ = s.Core().ACTION(ActionWindowMoved{Name: e.Name, X: x, Y: y})
+				coreutil.DispatchAction(s.Core(), "window.move", ActionWindowMoved{Name: e.Name, X: x, Y: y})
 			}
 		case "resize":
 			if data := e.Data; data != nil {
 				w, _ := data["w"].(int)
 				h, _ := data["h"].(int)
-				_ = s.Core().ACTION(ActionWindowResized{Name: e.Name, Width: w, Height: h})
+				coreutil.DispatchAction(s.Core(), "window.resize", ActionWindowResized{Name: e.Name, Width: w, Height: h})
 			}
 		case "close":
-			_ = s.Core().ACTION(ActionWindowClosed{Name: e.Name})
+			coreutil.DispatchAction(s.Core(), "window.closeEvent", ActionWindowClosed{Name: e.Name})
 		}
 	})
 	pw.OnFileDrop(func(paths []string, targetID string) {
-		_ = s.Core().ACTION(ActionFilesDropped{
+		coreutil.DispatchAction(s.Core(), "window.fileDrop", ActionFilesDropped{
 			Name:     pw.Name(),
 			Paths:    paths,
 			TargetID: targetID,
@@ -537,7 +538,7 @@ func (s *Service) taskCloseWindow(name string) error {
 	s.manager.State().CaptureState(pw)
 	pw.Close()
 	s.manager.Remove(name)
-	_ = s.Core().ACTION(ActionWindowClosed{Name: name})
+	coreutil.DispatchAction(s.Core(), "window.taskClose", ActionWindowClosed{Name: name})
 	return nil
 }
 

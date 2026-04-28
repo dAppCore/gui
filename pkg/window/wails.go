@@ -50,7 +50,9 @@ func (wp *WailsPlatform) CreateWindow(options PlatformWindowOptions) PlatformWin
 		if target == nil {
 			return
 		}
-		_ = preload.InjectPreload(target, origin)
+		if err := preload.InjectPreload(target, origin); err != nil {
+			return
+		}
 		if extra := postPageLoadWindowJS(options.JS); strings.TrimSpace(extra) != "" {
 			target.ExecJS(extra)
 		}

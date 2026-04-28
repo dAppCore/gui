@@ -1,35 +1,32 @@
 package display
 
 import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	core "dappco.re/go"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
-func TestInterfaces_newWailsApp_Good(t *testing.T) {
+func TestInterfaces_newWailsApp_Good(t *core.T) {
 	app := &application.App{Logger: application.Logger{}}
 	wrapped := newWailsApp(app)
 
-	require.NotNil(t, wrapped)
-	require.NotNil(t, wrapped.Logger())
-	assert.NotPanics(t, func() {
+	core.AssertNotNil(t, wrapped)
+	core.AssertNotNil(t, wrapped.Logger())
+	core.AssertNotPanics(t, func() {
 		wrapped.Quit()
 		wrapped.Logger().Info("ready")
 	})
 }
 
-func TestInterfaces_newWailsApp_Bad(t *testing.T) {
+func TestInterfaces_newWailsApp_Bad(t *core.T) {
 	wrapped := newWailsApp(&application.App{})
-	require.NotNil(t, wrapped)
-	assert.NotNil(t, wrapped.Logger())
+	core.AssertNotNil(t, wrapped)
+	core.AssertNotNil(t, wrapped.Logger())
 }
 
-func TestInterfaces_newWailsApp_Ugly(t *testing.T) {
+func TestInterfaces_newWailsApp_Ugly(t *core.T) {
 	wrapped := newWailsApp(nil)
-	require.NotNil(t, wrapped)
-	assert.Panics(t, func() {
+	core.AssertNotNil(t, wrapped)
+	core.AssertPanics(t, func() {
 		_ = wrapped.Logger()
 	})
 }

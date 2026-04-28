@@ -5,7 +5,8 @@ import (
 	"context"
 	"sync"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
+	"dappco.re/go/gui/pkg/internal/coreutil"
 	coreerr "dappco.re/go/log"
 )
 
@@ -69,7 +70,7 @@ func (s *Service) taskAdd(t TaskAdd) error {
 
 	// Register on platform with a callback that broadcasts ActionTriggered
 	err := s.platform.Add(t.Accelerator, func() {
-		_ = s.Core().ACTION(ActionTriggered{Accelerator: t.Accelerator})
+		coreutil.DispatchAction(s.Core(), "keybinding.taskAdd", ActionTriggered{Accelerator: t.Accelerator})
 	})
 	if err != nil {
 		return coreerr.E("keybinding.taskAdd", "platform add failed", err)

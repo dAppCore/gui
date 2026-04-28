@@ -6,12 +6,9 @@ import (
 	"net/http"
 	"strings"
 	"sync"
-	"testing"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	guimcp "dappco.re/go/gui/pkg/mcp"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 type strictToolExecutor struct {
@@ -84,7 +81,7 @@ func (r *completionRecorder) Requests() []openAIRequest {
 	return append([]openAIRequest(nil), r.requests...)
 }
 
-func TestToolCallHandler_Good_ServiceDispatchesInlineToolCall(t *testing.T) {
+func TestToolCallHandler_Good_ServiceDispatchesInlineToolCall(t *core.T) {
 	executor := &strictToolExecutor{}
 	recorder := &completionRecorder{responses: [][]string{
 		{
@@ -103,33 +100,33 @@ func TestToolCallHandler_Good_ServiceDispatchesInlineToolCall(t *testing.T) {
 	send := c.Action("gui.chat.send").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "content", Value: "Arrange this workspace"},
 	))
-	require.True(t, send.OK)
+	core.RequireTrue(t, send.OK)
 
 	calls := executor.Calls()
-	require.Len(t, calls, 1)
-	assert.Equal(t, "layout_suggest", calls[0].Name)
-	assert.Equal(t, float64(2), calls[0].Arguments["window_count"])
+	core.AssertLen(t, calls, 1)
+	core.AssertEqual(t, "layout_suggest", calls[0].Name)
+	core.AssertEqual(t, float64(2), calls[0].Arguments["window_count"])
 
 	conv := latestConversation(t, c)
 	history := historyMessages(t, c, conv.ID, 0)
-	require.Len(t, history, 4)
-	assert.Equal(t, "assistant", history[1].Role)
-	require.Len(t, history[1].ToolCalls, 1)
-	assert.Equal(t, "tool", history[2].Role)
-	assert.Contains(t, history[2].Content, "left-right")
-	assert.Equal(t, "Layout applied", history[3].Content)
+	core.AssertLen(t, history, 4)
+	core.AssertEqual(t, "assistant", history[1].Role)
+	core.AssertLen(t, history[1].ToolCalls, 1)
+	core.AssertEqual(t, "tool", history[2].Role)
+	core.AssertContains(t, history[2].Content, "left-right")
+	core.AssertEqual(t, "Layout applied", history[3].Content)
 
 	requests := recorder.Requests()
-	require.Len(t, requests, 2)
-	require.NotEmpty(t, requests[0].Messages)
+	core.AssertLen(t, requests, 2)
+	core.RequireNotEmpty(t, requests[0].Messages)
 	systemPrompt, ok := requests[0].Messages[0].Content.(string)
-	require.True(t, ok)
-	assert.True(t, strings.HasPrefix(systemPrompt, "Available MCP tools:"))
-	assert.Contains(t, systemPrompt, "layout_suggest")
-	assert.Contains(t, systemPrompt, "You are a helpful assistant.")
+	core.RequireTrue(t, ok)
+	core.AssertTrue(t, strings.HasPrefix(systemPrompt, "Available MCP tools:"))
+	core.AssertContains(t, systemPrompt, "layout_suggest")
+	core.AssertContains(t, systemPrompt, "You are a helpful assistant.")
 }
 
-func TestToolCallHandler_Bad_UnknownToolErrorAppearsInConversation(t *testing.T) {
+func TestToolCallHandler_Bad_UnknownToolErrorAppearsInConversation(t *core.T) {
 	executor := &strictToolExecutor{}
 	recorder := &completionRecorder{responses: [][]string{
 		{
@@ -148,17 +145,17 @@ func TestToolCallHandler_Bad_UnknownToolErrorAppearsInConversation(t *testing.T)
 	send := c.Action("gui.chat.send").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "content", Value: "Use the missing tool"},
 	))
-	require.True(t, send.OK)
+	core.RequireTrue(t, send.OK)
 
 	conv := latestConversation(t, c)
 	history := historyMessages(t, c, conv.ID, 0)
-	require.Len(t, history, 4)
-	assert.Equal(t, "tool", history[2].Role)
-	assert.Contains(t, history[2].Content, "missing_tool")
-	assert.Equal(t, "Could not run that tool", history[3].Content)
+	core.AssertLen(t, history, 4)
+	core.AssertEqual(t, "tool", history[2].Role)
+	core.AssertContains(t, history[2].Content, "missing_tool")
+	core.AssertEqual(t, "Could not run that tool", history[3].Content)
 }
 
-func TestToolCallHandler_Ugly_MalformedInlineToolCallDoesNotDispatch(t *testing.T) {
+func TestToolCallHandler_Ugly_MalformedInlineToolCallDoesNotDispatch(t *core.T) {
 	executor := &strictToolExecutor{}
 	recorder := &completionRecorder{responses: [][]string{{
 		`{"id":"chatcmpl-1","choices":[{"delta":{"content":"{\"tool_call\":{\"name\":\"layout_suggest\",\"arguments\":"}}]}`,
@@ -170,15 +167,15 @@ func TestToolCallHandler_Ugly_MalformedInlineToolCallDoesNotDispatch(t *testing.
 	send := c.Action("gui.chat.send").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "content", Value: "Try malformed JSON"},
 	))
-	require.True(t, send.OK)
+	core.RequireTrue(t, send.OK)
 
-	assert.Empty(t, executor.Calls())
-	assert.Len(t, recorder.Requests(), 1)
+	core.AssertEmpty(t, executor.Calls())
+	core.AssertLen(t, recorder.Requests(), 1)
 
 	conv := latestConversation(t, c)
 	history := historyMessages(t, c, conv.ID, 0)
-	require.Len(t, history, 2)
-	assert.Equal(t, "assistant", history[1].Role)
-	assert.Contains(t, history[1].Content, "tool_call")
-	assert.Empty(t, history[1].ToolCalls)
+	core.AssertLen(t, history, 2)
+	core.AssertEqual(t, "assistant", history[1].Role)
+	core.AssertContains(t, history[1].Content, "tool_call")
+	core.AssertEmpty(t, history[1].ToolCalls)
 }

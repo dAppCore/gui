@@ -3,9 +3,8 @@ package display
 import (
 	"bytes"
 	"context"
-	"testing"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/clipboard"
 	"dappco.re/go/gui/pkg/dialog"
 	"dappco.re/go/gui/pkg/environment"
@@ -13,16 +12,14 @@ import (
 	"dappco.re/go/gui/pkg/screen"
 	"dappco.re/go/gui/pkg/systray"
 	"dappco.re/go/gui/pkg/window"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-func newTestDisplayAPIService(t *testing.T) (*Service, *core.Core) {
+func newTestDisplayAPIService(t *core.T) (*Service, *core.Core) {
 	t.Helper()
 	return newTestDisplayService(t)
 }
 
-func TestDisplayAPI_screenToDisplay_Good(t *testing.T) {
+func TestDisplayAPI_screenToDisplay_Good(t *core.T) {
 	got := screenToDisplay(&screen.Screen{
 		ID:          "screen-1",
 		Name:        "Primary",
@@ -31,32 +28,34 @@ func TestDisplayAPI_screenToDisplay_Good(t *testing.T) {
 		IsPrimary:   true,
 	})
 
-	require.NotNil(t, got)
-	assert.Equal(t, "screen-1", got.ID)
-	assert.Equal(t, "Primary", got.Name)
-	assert.Equal(t, 10, got.X)
-	assert.Equal(t, 20, got.Y)
-	assert.Equal(t, 1920, got.Width)
-	assert.Equal(t, 1080, got.Height)
-	assert.Equal(t, 2.0, got.ScaleFactor)
-	assert.True(t, got.IsPrimary)
+	core.AssertNotNil(t, got)
+	core.AssertEqual(t, "screen-1", got.ID)
+	core.AssertEqual(t, "Primary", got.Name)
+	core.AssertEqual(t, 10, got.X)
+	core.AssertEqual(t, 20, got.Y)
+	core.AssertEqual(t, 1920, got.Width)
+	core.AssertEqual(t, 1080, got.Height)
+	core.AssertEqual(t, 2.0, got.ScaleFactor)
+	core.AssertTrue(t, got.IsPrimary)
 }
 
-func TestDisplayAPI_screenToDisplay_Bad(t *testing.T) {
-	assert.Nil(t, screenToDisplay(nil))
+func TestDisplayAPI_screenToDisplay_Bad(t *core.T) {
+	core.AssertNil(t, screenToDisplay(nil))
+	observedType := core.Sprintf("%T", screenToDisplay(nil))
+	core.AssertNotEmpty(t, observedType)
 }
 
-func TestDisplayAPI_screenToDisplay_Ugly(t *testing.T) {
+func TestDisplayAPI_screenToDisplay_Ugly(t *core.T) {
 	got := screenToDisplay(&screen.Screen{})
 
-	require.NotNil(t, got)
-	assert.Zero(t, got.ID)
-	assert.Zero(t, got.Name)
-	assert.Zero(t, got.Width)
-	assert.Zero(t, got.Height)
+	core.AssertNotNil(t, got)
+	core.AssertEmpty(t, got.ID)
+	core.AssertEmpty(t, got.Name)
+	core.AssertEmpty(t, got.Width)
+	core.AssertEmpty(t, got.Height)
 }
 
-func TestDisplayAPI_toDialogOpenFileOptions_Good(t *testing.T) {
+func TestDisplayAPI_toDialogOpenFileOptions_Good(t *core.T) {
 	got := toDialogOpenFileOptions(OpenFileOptions{
 		Title:            "Pick",
 		DefaultDirectory: "/tmp",
@@ -67,26 +66,26 @@ func TestDisplayAPI_toDialogOpenFileOptions_Good(t *testing.T) {
 		},
 	})
 
-	assert.Equal(t, "Pick", got.Title)
-	assert.Equal(t, "/tmp", got.Directory)
-	assert.Equal(t, "report.csv", got.Filename)
-	assert.True(t, got.AllowMultiple)
-	require.Len(t, got.Filters, 1)
-	assert.Equal(t, "CSV", got.Filters[0].DisplayName)
-	assert.Equal(t, "*.csv", got.Filters[0].Pattern)
+	core.AssertEqual(t, "Pick", got.Title)
+	core.AssertEqual(t, "/tmp", got.Directory)
+	core.AssertEqual(t, "report.csv", got.Filename)
+	core.AssertTrue(t, got.AllowMultiple)
+	core.AssertLen(t, got.Filters, 1)
+	core.AssertEqual(t, "CSV", got.Filters[0].DisplayName)
+	core.AssertEqual(t, "*.csv", got.Filters[0].Pattern)
 }
 
-func TestDisplayAPI_toDialogOpenFileOptions_Bad(t *testing.T) {
+func TestDisplayAPI_toDialogOpenFileOptions_Bad(t *core.T) {
 	got := toDialogOpenFileOptions(OpenFileOptions{})
 
-	assert.Empty(t, got.Title)
-	assert.Empty(t, got.Directory)
-	assert.Empty(t, got.Filename)
-	assert.False(t, got.AllowMultiple)
-	assert.Nil(t, got.Filters)
+	core.AssertEmpty(t, got.Title)
+	core.AssertEmpty(t, got.Directory)
+	core.AssertEmpty(t, got.Filename)
+	core.AssertFalse(t, got.AllowMultiple)
+	core.AssertNil(t, got.Filters)
 }
 
-func TestDisplayAPI_toDialogOpenFileOptions_Ugly(t *testing.T) {
+func TestDisplayAPI_toDialogOpenFileOptions_Ugly(t *core.T) {
 	got := toDialogOpenFileOptions(OpenFileOptions{
 		Filters: []FileFilter{
 			{DisplayName: "All", Pattern: "*.*"},
@@ -94,12 +93,12 @@ func TestDisplayAPI_toDialogOpenFileOptions_Ugly(t *testing.T) {
 		},
 	})
 
-	require.Len(t, got.Filters, 2)
-	assert.Equal(t, "All", got.Filters[0].DisplayName)
-	assert.Equal(t, "*.png;*.jpg", got.Filters[1].Pattern)
+	core.AssertLen(t, got.Filters, 2)
+	core.AssertEqual(t, "All", got.Filters[0].DisplayName)
+	core.AssertEqual(t, "*.png;*.jpg", got.Filters[1].Pattern)
 }
 
-func TestDisplayAPI_trayMenuItemsToSystray_Good(t *testing.T) {
+func TestDisplayAPI_trayMenuItemsToSystray_Good(t *core.T) {
 	got := trayMenuItemsToSystray([]TrayMenuItem{
 		{Label: "Open", ActionID: "open"},
 		{IsSeparator: true},
@@ -110,26 +109,28 @@ func TestDisplayAPI_trayMenuItemsToSystray_Good(t *testing.T) {
 		},
 	})
 
-	require.Len(t, got, 3)
-	assert.Equal(t, "Open", got[0].Label)
-	assert.Equal(t, "separator", got[1].Type)
-	require.Len(t, got[2].Submenu, 1)
-	assert.Equal(t, "nested", got[2].Submenu[0].ActionID)
+	core.AssertLen(t, got, 3)
+	core.AssertEqual(t, "Open", got[0].Label)
+	core.AssertEqual(t, "separator", got[1].Type)
+	core.AssertLen(t, got[2].Submenu, 1)
+	core.AssertEqual(t, "nested", got[2].Submenu[0].ActionID)
 }
 
-func TestDisplayAPI_trayMenuItemsToSystray_Bad(t *testing.T) {
-	assert.Nil(t, trayMenuItemsToSystray(nil))
+func TestDisplayAPI_trayMenuItemsToSystray_Bad(t *core.T) {
+	core.AssertNil(t, trayMenuItemsToSystray(nil))
+	observedType := core.Sprintf("%T", trayMenuItemsToSystray(nil))
+	core.AssertNotEmpty(t, observedType)
 }
 
-func TestDisplayAPI_trayMenuItemsToSystray_Ugly(t *testing.T) {
+func TestDisplayAPI_trayMenuItemsToSystray_Ugly(t *core.T) {
 	got := trayMenuItemsToSystray([]TrayMenuItem{{Children: []TrayMenuItem{{IsSeparator: true}}}})
 
-	require.Len(t, got, 1)
-	require.Len(t, got[0].Submenu, 1)
-	assert.Equal(t, "separator", got[0].Submenu[0].Type)
+	core.AssertLen(t, got, 1)
+	core.AssertLen(t, got[0].Submenu, 1)
+	core.AssertEqual(t, "separator", got[0].Submenu[0].Type)
 }
 
-func TestDisplayAPI_GetScreens_Good(t *testing.T) {
+func TestDisplayAPI_GetScreens_Good(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
 		switch q.(type) {
@@ -150,13 +151,13 @@ func TestDisplayAPI_GetScreens_Good(t *testing.T) {
 
 	screens := svc.GetScreens()
 
-	require.Len(t, screens, 1)
-	assert.Equal(t, "screen-1", screens[0].ID)
-	assert.Equal(t, 10, screens[0].X)
-	assert.Equal(t, 1920, screens[0].Width)
+	core.AssertLen(t, screens, 1)
+	core.AssertEqual(t, "screen-1", screens[0].ID)
+	core.AssertEqual(t, 10, screens[0].X)
+	core.AssertEqual(t, 1920, screens[0].Width)
 }
 
-func TestDisplayAPI_GetScreens_Empty(t *testing.T) {
+func TestDisplayAPI_GetScreens_Empty(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
 		switch q.(type) {
@@ -167,10 +168,10 @@ func TestDisplayAPI_GetScreens_Empty(t *testing.T) {
 		}
 	})
 
-	assert.Empty(t, svc.GetScreens())
+	core.AssertEmpty(t, svc.GetScreens())
 }
 
-func TestDisplayAPI_GetScreens_Bad(t *testing.T) {
+func TestDisplayAPI_GetScreens_Bad(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
 		switch q.(type) {
@@ -182,11 +183,11 @@ func TestDisplayAPI_GetScreens_Bad(t *testing.T) {
 	})
 
 	screens := svc.GetScreens()
-	require.NotNil(t, screens)
-	assert.Empty(t, screens)
+	core.AssertNotNil(t, screens)
+	core.AssertEmpty(t, screens)
 }
 
-func TestDisplayAPI_GetScreens_Ugly(t *testing.T) {
+func TestDisplayAPI_GetScreens_Ugly(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
 		switch q.(type) {
@@ -198,11 +199,11 @@ func TestDisplayAPI_GetScreens_Ugly(t *testing.T) {
 	})
 
 	screens := svc.GetScreens()
-	require.NotNil(t, screens)
-	assert.Empty(t, screens)
+	core.AssertNotNil(t, screens)
+	core.AssertEmpty(t, screens)
 }
 
-func TestDisplayAPI_GetWorkAreas_Ugly(t *testing.T) {
+func TestDisplayAPI_GetWorkAreas_Ugly(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
 		switch q.(type) {
@@ -215,11 +216,11 @@ func TestDisplayAPI_GetWorkAreas_Ugly(t *testing.T) {
 
 	areas := svc.GetWorkAreas()
 
-	require.NotNil(t, areas)
-	assert.Empty(t, areas)
+	core.AssertNotNil(t, areas)
+	core.AssertEmpty(t, areas)
 }
 
-func TestDisplayAPI_GetScreen_BadType(t *testing.T) {
+func TestDisplayAPI_GetScreen_BadType(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
 		switch q.(type) {
@@ -232,11 +233,11 @@ func TestDisplayAPI_GetScreen_BadType(t *testing.T) {
 
 	got, err := svc.GetScreen("screen-1")
 
-	require.Error(t, err)
-	assert.Nil(t, got)
+	core.AssertError(t, err)
+	core.AssertNil(t, got)
 }
 
-func TestDisplayAPI_CreateWindow_UglyResultType(t *testing.T) {
+func TestDisplayAPI_CreateWindow_UglyResultType(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 	c.Action("window.open", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{OK: true}
@@ -246,12 +247,12 @@ func TestDisplayAPI_CreateWindow_UglyResultType(t *testing.T) {
 		Name: "broken-window",
 	})
 
-	require.Error(t, err)
-	assert.Nil(t, got)
-	assert.Contains(t, err.Error(), "unexpected result type")
+	core.AssertError(t, err)
+	core.AssertNil(t, got)
+	core.AssertContains(t, err.Error(), "unexpected result type")
 }
 
-func TestDisplayAPI_GetScreen_Ugly(t *testing.T) {
+func TestDisplayAPI_GetScreen_Ugly(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
 		switch q.(type) {
@@ -264,11 +265,11 @@ func TestDisplayAPI_GetScreen_Ugly(t *testing.T) {
 
 	got, err := svc.GetScreen("screen-1")
 
-	require.Error(t, err)
-	assert.Nil(t, got)
+	core.AssertError(t, err)
+	core.AssertNil(t, got)
 }
 
-func TestDisplayAPI_GetPrimaryScreen_Ugly(t *testing.T) {
+func TestDisplayAPI_GetPrimaryScreen_Ugly(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
 		switch q.(type) {
@@ -281,11 +282,11 @@ func TestDisplayAPI_GetPrimaryScreen_Ugly(t *testing.T) {
 
 	got, err := svc.GetPrimaryScreen()
 
-	require.Error(t, err)
-	assert.Nil(t, got)
+	core.AssertError(t, err)
+	core.AssertNil(t, got)
 }
 
-func TestDisplayAPI_GetScreenAtPoint_Ugly(t *testing.T) {
+func TestDisplayAPI_GetScreenAtPoint_Ugly(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
 		switch q.(type) {
@@ -298,16 +299,16 @@ func TestDisplayAPI_GetScreenAtPoint_Ugly(t *testing.T) {
 
 	got, err := svc.GetScreenAtPoint(10, 20)
 
-	require.Error(t, err)
-	assert.Nil(t, got)
+	core.AssertError(t, err)
+	core.AssertNil(t, got)
 }
 
-func TestDisplayAPI_OpenFileDialog_Good(t *testing.T) {
+func TestDisplayAPI_OpenFileDialog_Good(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 	c.Action("dialog.openFile", func(_ context.Context, opts core.Options) core.Result {
 		task := opts.Get("task").Value.(dialog.TaskOpenFile)
-		assert.Equal(t, "Pick file", task.Options.Title)
-		assert.True(t, task.Options.AllowMultiple)
+		core.AssertEqual(t, "Pick file", task.Options.Title)
+		core.AssertTrue(t, task.Options.AllowMultiple)
 		return core.Result{Value: []string{"/tmp/a.txt", "/tmp/b.txt"}, OK: true}
 	})
 
@@ -316,11 +317,11 @@ func TestDisplayAPI_OpenFileDialog_Good(t *testing.T) {
 		AllowMultiple: true,
 	})
 
-	require.NoError(t, err)
-	assert.Equal(t, []string{"/tmp/a.txt", "/tmp/b.txt"}, paths)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, []string{"/tmp/a.txt", "/tmp/b.txt"}, paths)
 }
 
-func TestDisplayAPI_OpenFileDialog_BadType(t *testing.T) {
+func TestDisplayAPI_OpenFileDialog_BadType(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 	c.Action("dialog.openFile", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: 42, OK: true}
@@ -328,23 +329,23 @@ func TestDisplayAPI_OpenFileDialog_BadType(t *testing.T) {
 
 	paths, err := svc.OpenFileDialog(OpenFileOptions{})
 
-	require.Error(t, err)
-	assert.Nil(t, paths)
+	core.AssertError(t, err)
+	core.AssertNil(t, paths)
 }
 
-func TestDisplayAPI_OpenFileDialog_Bad(t *testing.T) {
+func TestDisplayAPI_OpenFileDialog_Bad(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 	c.Action("dialog.openFile", func(_ context.Context, _ core.Options) core.Result {
-		return core.Result{Value: assert.AnError, OK: false}
+		return core.Result{Value: core.AnError, OK: false}
 	})
 
 	paths, err := svc.OpenFileDialog(OpenFileOptions{})
 
-	require.Error(t, err)
-	assert.Nil(t, paths)
+	core.AssertError(t, err)
+	core.AssertNil(t, paths)
 }
 
-func TestDisplayAPI_OpenFileDialog_Ugly(t *testing.T) {
+func TestDisplayAPI_OpenFileDialog_Ugly(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 	c.Action("dialog.openFile", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{OK: true}
@@ -352,11 +353,11 @@ func TestDisplayAPI_OpenFileDialog_Ugly(t *testing.T) {
 
 	paths, err := svc.OpenFileDialog(OpenFileOptions{})
 
-	require.Error(t, err)
-	assert.Nil(t, paths)
+	core.AssertError(t, err)
+	core.AssertNil(t, paths)
 }
 
-func TestDisplayAPI_RequestNotificationPermission_BadType(t *testing.T) {
+func TestDisplayAPI_RequestNotificationPermission_BadType(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 	c.Action("notification.requestPermission", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: "unexpected", OK: true}
@@ -364,11 +365,11 @@ func TestDisplayAPI_RequestNotificationPermission_BadType(t *testing.T) {
 
 	granted, err := svc.RequestNotificationPermission()
 
-	require.Error(t, err)
-	assert.False(t, granted)
+	core.AssertError(t, err)
+	core.AssertFalse(t, granted)
 }
 
-func TestDisplayAPI_GetTheme_Good(t *testing.T) {
+func TestDisplayAPI_GetTheme_Good(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
 		switch q.(type) {
@@ -380,12 +381,12 @@ func TestDisplayAPI_GetTheme_Good(t *testing.T) {
 	})
 
 	theme := svc.GetTheme()
-	require.NotNil(t, theme)
-	assert.True(t, theme.IsDark)
-	assert.Equal(t, "dark", svc.GetSystemTheme())
+	core.AssertNotNil(t, theme)
+	core.AssertTrue(t, theme.IsDark)
+	core.AssertEqual(t, "dark", svc.GetSystemTheme())
 }
 
-func TestDisplayAPI_GetTheme_Bad(t *testing.T) {
+func TestDisplayAPI_GetTheme_Bad(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
 		switch q.(type) {
@@ -397,11 +398,11 @@ func TestDisplayAPI_GetTheme_Bad(t *testing.T) {
 	})
 
 	theme := svc.GetTheme()
-	assert.Nil(t, theme)
-	assert.Empty(t, svc.GetSystemTheme())
+	core.AssertNil(t, theme)
+	core.AssertEmpty(t, svc.GetSystemTheme())
 }
 
-func TestDisplayAPI_GetTheme_Ugly(t *testing.T) {
+func TestDisplayAPI_GetTheme_Ugly(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
 		switch q.(type) {
@@ -412,19 +413,19 @@ func TestDisplayAPI_GetTheme_Ugly(t *testing.T) {
 		}
 	})
 
-	assert.Nil(t, svc.GetTheme())
-	assert.Empty(t, svc.GetSystemTheme())
+	core.AssertNil(t, svc.GetTheme())
+	core.AssertEmpty(t, svc.GetSystemTheme())
 }
 
-func TestDisplayAPI_SaveFileDialog_Good(t *testing.T) {
+func TestDisplayAPI_SaveFileDialog_Good(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 	c.Action("dialog.saveFile", func(_ context.Context, opts core.Options) core.Result {
 		task := opts.Get("task").Value.(dialog.TaskSaveFile)
-		assert.Equal(t, "Export", task.Options.Title)
-		assert.Equal(t, "/tmp", task.Options.Directory)
-		assert.Equal(t, "data.json", task.Options.Filename)
-		require.Len(t, task.Options.Filters, 1)
-		assert.Equal(t, "JSON", task.Options.Filters[0].DisplayName)
+		core.AssertEqual(t, "Export", task.Options.Title)
+		core.AssertEqual(t, "/tmp", task.Options.Directory)
+		core.AssertEqual(t, "data.json", task.Options.Filename)
+		core.AssertLen(t, task.Options.Filters, 1)
+		core.AssertEqual(t, "JSON", task.Options.Filters[0].DisplayName)
 		return core.Result{Value: "/exports/data.json", OK: true}
 	})
 
@@ -435,23 +436,23 @@ func TestDisplayAPI_SaveFileDialog_Good(t *testing.T) {
 		Filters:          []FileFilter{{DisplayName: "JSON", Pattern: "*.json"}},
 	})
 
-	require.NoError(t, err)
-	assert.Equal(t, "/exports/data.json", path)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, "/exports/data.json", path)
 }
 
-func TestDisplayAPI_SaveFileDialog_Bad(t *testing.T) {
+func TestDisplayAPI_SaveFileDialog_Bad(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 	c.Action("dialog.saveFile", func(_ context.Context, _ core.Options) core.Result {
-		return core.Result{Value: assert.AnError, OK: false}
+		return core.Result{Value: core.AnError, OK: false}
 	})
 
 	path, err := svc.SaveFileDialog(SaveFileOptions{})
 
-	require.Error(t, err)
-	assert.Empty(t, path)
+	core.AssertError(t, err)
+	core.AssertEmpty(t, path)
 }
 
-func TestDisplayAPI_SaveFileDialog_Ugly(t *testing.T) {
+func TestDisplayAPI_SaveFileDialog_Ugly(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 	c.Action("dialog.saveFile", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: 42, OK: true}
@@ -459,16 +460,16 @@ func TestDisplayAPI_SaveFileDialog_Ugly(t *testing.T) {
 
 	path, err := svc.SaveFileDialog(SaveFileOptions{})
 
-	require.Error(t, err)
-	assert.Empty(t, path)
+	core.AssertError(t, err)
+	core.AssertEmpty(t, path)
 }
 
-func TestDisplayAPI_OpenDirectoryDialog_Good(t *testing.T) {
+func TestDisplayAPI_OpenDirectoryDialog_Good(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 	c.Action("dialog.openDirectory", func(_ context.Context, opts core.Options) core.Result {
 		task := opts.Get("task").Value.(dialog.TaskOpenDirectory)
-		assert.Equal(t, "Choose", task.Options.Title)
-		assert.Equal(t, "/var", task.Options.Directory)
+		core.AssertEqual(t, "Choose", task.Options.Title)
+		core.AssertEqual(t, "/var", task.Options.Directory)
 		return core.Result{Value: "/var/data", OK: true}
 	})
 
@@ -477,23 +478,23 @@ func TestDisplayAPI_OpenDirectoryDialog_Good(t *testing.T) {
 		DefaultDirectory: "/var",
 	})
 
-	require.NoError(t, err)
-	assert.Equal(t, "/var/data", path)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, "/var/data", path)
 }
 
-func TestDisplayAPI_OpenDirectoryDialog_Bad(t *testing.T) {
+func TestDisplayAPI_OpenDirectoryDialog_Bad(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 	c.Action("dialog.openDirectory", func(_ context.Context, _ core.Options) core.Result {
-		return core.Result{Value: assert.AnError, OK: false}
+		return core.Result{Value: core.AnError, OK: false}
 	})
 
 	path, err := svc.OpenDirectoryDialog(OpenDirectoryOptions{})
 
-	require.Error(t, err)
-	assert.Empty(t, path)
+	core.AssertError(t, err)
+	core.AssertEmpty(t, path)
 }
 
-func TestDisplayAPI_OpenDirectoryDialog_Ugly(t *testing.T) {
+func TestDisplayAPI_OpenDirectoryDialog_Ugly(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 	c.Action("dialog.openDirectory", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: 42, OK: true}
@@ -501,40 +502,40 @@ func TestDisplayAPI_OpenDirectoryDialog_Ugly(t *testing.T) {
 
 	path, err := svc.OpenDirectoryDialog(OpenDirectoryOptions{})
 
-	require.Error(t, err)
-	assert.Empty(t, path)
+	core.AssertError(t, err)
+	core.AssertEmpty(t, path)
 }
 
-func TestDisplayAPI_PromptDialog_Good(t *testing.T) {
+func TestDisplayAPI_PromptDialog_Good(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 	c.Action("dialog.prompt", func(_ context.Context, opts core.Options) core.Result {
 		task := opts.Get("task").Value.(dialog.TaskPrompt)
-		assert.Equal(t, "Rename", task.Title)
-		assert.Equal(t, "Enter a new name", task.Message)
+		core.AssertEqual(t, "Rename", task.Title)
+		core.AssertEqual(t, "Enter a new name", task.Message)
 		return core.Result{Value: dialog.PromptResult{Value: "draft", Confirmed: true}, OK: true}
 	})
 
 	value, confirmed, err := svc.PromptDialog("Rename", "Enter a new name")
 
-	require.NoError(t, err)
-	assert.True(t, confirmed)
-	assert.Equal(t, "draft", value)
+	core.RequireNoError(t, err)
+	core.AssertTrue(t, confirmed)
+	core.AssertEqual(t, "draft", value)
 }
 
-func TestDisplayAPI_PromptDialog_Bad(t *testing.T) {
+func TestDisplayAPI_PromptDialog_Bad(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 	c.Action("dialog.prompt", func(_ context.Context, _ core.Options) core.Result {
-		return core.Result{Value: assert.AnError, OK: false}
+		return core.Result{Value: core.AnError, OK: false}
 	})
 
 	value, confirmed, err := svc.PromptDialog("Rename", "Enter a new name")
 
-	require.Error(t, err)
-	assert.False(t, confirmed)
-	assert.Empty(t, value)
+	core.AssertError(t, err)
+	core.AssertFalse(t, confirmed)
+	core.AssertEmpty(t, value)
 }
 
-func TestDisplayAPI_PromptDialog_Ugly(t *testing.T) {
+func TestDisplayAPI_PromptDialog_Ugly(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 	c.Action("dialog.prompt", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: 42, OK: true}
@@ -542,12 +543,12 @@ func TestDisplayAPI_PromptDialog_Ugly(t *testing.T) {
 
 	value, confirmed, err := svc.PromptDialog("Rename", "Enter a new name")
 
-	require.Error(t, err)
-	assert.False(t, confirmed)
-	assert.Empty(t, value)
+	core.AssertError(t, err)
+	core.AssertFalse(t, confirmed)
+	core.AssertEmpty(t, value)
 }
 
-func TestDisplayAPI_ReadClipboardImage_Good(t *testing.T) {
+func TestDisplayAPI_ReadClipboardImage_Good(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 	payload := []byte{1, 2, 3}
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
@@ -561,13 +562,13 @@ func TestDisplayAPI_ReadClipboardImage_Good(t *testing.T) {
 
 	got, err := svc.ReadClipboardImage()
 
-	require.NoError(t, err)
-	require.Equal(t, []byte{1, 2, 3}, got)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, []byte{1, 2, 3}, got)
 	payload[0] = 9
-	assert.Equal(t, byte(1), got[0])
+	core.AssertEqual(t, byte(1), got[0])
 }
 
-func TestDisplayAPI_ReadClipboardImage_Bad(t *testing.T) {
+func TestDisplayAPI_ReadClipboardImage_Bad(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
 		switch q.(type) {
@@ -580,11 +581,11 @@ func TestDisplayAPI_ReadClipboardImage_Bad(t *testing.T) {
 
 	got, err := svc.ReadClipboardImage()
 
-	require.NoError(t, err)
-	assert.Nil(t, got)
+	core.RequireNoError(t, err)
+	core.AssertNil(t, got)
 }
 
-func TestDisplayAPI_ReadClipboardImage_Ugly(t *testing.T) {
+func TestDisplayAPI_ReadClipboardImage_Ugly(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
 		switch q.(type) {
@@ -597,11 +598,11 @@ func TestDisplayAPI_ReadClipboardImage_Ugly(t *testing.T) {
 
 	got, err := svc.ReadClipboardImage()
 
-	require.Error(t, err)
-	assert.Nil(t, got)
+	core.AssertError(t, err)
+	core.AssertNil(t, got)
 }
 
-func TestDisplayAPI_ReadClipboardImage_Ugly_BackendFailure(t *testing.T) {
+func TestDisplayAPI_ReadClipboardImage_Ugly_BackendFailure(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
 		switch q.(type) {
@@ -614,11 +615,11 @@ func TestDisplayAPI_ReadClipboardImage_Ugly_BackendFailure(t *testing.T) {
 
 	got, err := svc.ReadClipboardImage()
 
-	require.Error(t, err)
-	assert.Nil(t, got)
+	core.AssertError(t, err)
+	core.AssertNil(t, got)
 }
 
-func TestDisplayAPI_WriteClipboardImage_Good(t *testing.T) {
+func TestDisplayAPI_WriteClipboardImage_Good(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 	var got []byte
 	c.Action("clipboard.setImage", func(_ context.Context, opts core.Options) core.Result {
@@ -629,38 +630,38 @@ func TestDisplayAPI_WriteClipboardImage_Good(t *testing.T) {
 	input := []byte{4, 5, 6}
 	err := svc.WriteClipboardImage(input)
 
-	require.NoError(t, err)
+	core.RequireNoError(t, err)
 	input[0] = 9
-	assert.True(t, bytes.Equal([]byte{4, 5, 6}, got))
+	core.AssertTrue(t, bytes.Equal([]byte{4, 5, 6}, got))
 }
 
-func TestDisplayAPI_WriteClipboardImage_Bad(t *testing.T) {
+func TestDisplayAPI_WriteClipboardImage_Bad(t *core.T) {
 	svc, _ := newTestDisplayAPIService(t)
 
 	err := svc.WriteClipboardImage(nil)
 
-	require.Error(t, err)
+	core.AssertError(t, err)
 }
 
-func TestDisplayAPI_WriteClipboardImage_Ugly(t *testing.T) {
+func TestDisplayAPI_WriteClipboardImage_Ugly(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 	c.Action("clipboard.setImage", func(_ context.Context, _ core.Options) core.Result {
-		return core.Result{Value: assert.AnError, OK: false}
+		return core.Result{Value: core.AnError, OK: false}
 	})
 
 	err := svc.WriteClipboardImage([]byte{1})
 
-	require.Error(t, err)
+	core.AssertError(t, err)
 }
 
-func TestDisplayAPI_GetScreenForWindow_Good(t *testing.T) {
+func TestDisplayAPI_GetScreenForWindow_Good(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 
 	var gotX, gotY int
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
 		switch typed := q.(type) {
 		case window.QueryWindowByName:
-			assert.Equal(t, "editor", typed.Name)
+			core.AssertEqual(t, "editor", typed.Name)
 			return core.Result{
 				Value: &window.WindowInfo{
 					Name:   typed.Name,
@@ -690,18 +691,18 @@ func TestDisplayAPI_GetScreenForWindow_Good(t *testing.T) {
 
 	got, err := svc.GetScreenForWindow("editor")
 
-	require.NoError(t, err)
-	require.NotNil(t, got)
-	assert.Equal(t, "screen-1", got.ID)
-	assert.Equal(t, 250, gotX)
-	assert.Equal(t, 400, gotY)
-	assert.Equal(t, 10, got.X)
-	assert.Equal(t, 20, got.Y)
-	assert.Equal(t, 1920, got.Width)
-	assert.Equal(t, 1080, got.Height)
+	core.RequireNoError(t, err)
+	core.AssertNotNil(t, got)
+	core.AssertEqual(t, "screen-1", got.ID)
+	core.AssertEqual(t, 250, gotX)
+	core.AssertEqual(t, 400, gotY)
+	core.AssertEqual(t, 10, got.X)
+	core.AssertEqual(t, 20, got.Y)
+	core.AssertEqual(t, 1920, got.Width)
+	core.AssertEqual(t, 1080, got.Height)
 }
 
-func TestDisplayAPI_GetScreenForWindow_Bad(t *testing.T) {
+func TestDisplayAPI_GetScreenForWindow_Bad(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 
 	var screenQueried bool
@@ -719,12 +720,12 @@ func TestDisplayAPI_GetScreenForWindow_Bad(t *testing.T) {
 
 	got, err := svc.GetScreenForWindow("missing")
 
-	require.NoError(t, err)
-	assert.Nil(t, got)
-	assert.False(t, screenQueried)
+	core.RequireNoError(t, err)
+	core.AssertNil(t, got)
+	core.AssertFalse(t, screenQueried)
 }
 
-func TestDisplayAPI_GetScreenForWindow_Ugly(t *testing.T) {
+func TestDisplayAPI_GetScreenForWindow_Ugly(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
@@ -743,12 +744,12 @@ func TestDisplayAPI_GetScreenForWindow_Ugly(t *testing.T) {
 
 	got, err := svc.GetScreenForWindow("editor")
 
-	require.Error(t, err)
-	assert.Nil(t, got)
-	assert.Contains(t, err.Error(), "unexpected result type")
+	core.AssertError(t, err)
+	core.AssertNil(t, got)
+	core.AssertContains(t, err.Error(), "unexpected result type")
 }
 
-func TestDisplayAPI_OpenSingleFileDialog_Good(t *testing.T) {
+func TestDisplayAPI_OpenSingleFileDialog_Good(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 
 	var task dialog.TaskOpenFile
@@ -762,13 +763,13 @@ func TestDisplayAPI_OpenSingleFileDialog_Good(t *testing.T) {
 		DefaultFilename: "report.csv",
 	})
 
-	require.NoError(t, err)
-	assert.Equal(t, "/tmp/report.csv", path)
-	assert.Equal(t, "Pick report", task.Options.Title)
-	assert.Equal(t, "report.csv", task.Options.Filename)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, "/tmp/report.csv", path)
+	core.AssertEqual(t, "Pick report", task.Options.Title)
+	core.AssertEqual(t, "report.csv", task.Options.Filename)
 }
 
-func TestDisplayAPI_OpenSingleFileDialog_Bad(t *testing.T) {
+func TestDisplayAPI_OpenSingleFileDialog_Bad(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 
 	c.Action("dialog.openFile", func(_ context.Context, _ core.Options) core.Result {
@@ -777,11 +778,11 @@ func TestDisplayAPI_OpenSingleFileDialog_Bad(t *testing.T) {
 
 	path, err := svc.OpenSingleFileDialog(OpenFileOptions{})
 
-	require.NoError(t, err)
-	assert.Empty(t, path)
+	core.RequireNoError(t, err)
+	core.AssertEmpty(t, path)
 }
 
-func TestDisplayAPI_OpenSingleFileDialog_Ugly(t *testing.T) {
+func TestDisplayAPI_OpenSingleFileDialog_Ugly(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 
 	c.Action("dialog.openFile", func(_ context.Context, _ core.Options) core.Result {
@@ -790,12 +791,12 @@ func TestDisplayAPI_OpenSingleFileDialog_Ugly(t *testing.T) {
 
 	path, err := svc.OpenSingleFileDialog(OpenFileOptions{})
 
-	require.Error(t, err)
-	assert.Empty(t, path)
-	assert.Contains(t, err.Error(), "dialog.openFile action failed")
+	core.AssertError(t, err)
+	core.AssertEmpty(t, path)
+	core.AssertContains(t, err.Error(), "dialog.openFile action failed")
 }
 
-func TestDisplayAPI_ConfirmDialog_Good(t *testing.T) {
+func TestDisplayAPI_ConfirmDialog_Good(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 
 	var task dialog.TaskQuestion
@@ -806,27 +807,27 @@ func TestDisplayAPI_ConfirmDialog_Good(t *testing.T) {
 
 	confirmed, err := svc.ConfirmDialog("Confirm", "Delete this file?")
 
-	require.NoError(t, err)
-	assert.True(t, confirmed)
-	assert.Equal(t, "Confirm", task.Title)
-	assert.Equal(t, []string{"Yes", "No"}, task.Buttons)
+	core.RequireNoError(t, err)
+	core.AssertTrue(t, confirmed)
+	core.AssertEqual(t, "Confirm", task.Title)
+	core.AssertEqual(t, []string{"Yes", "No"}, task.Buttons)
 }
 
-func TestDisplayAPI_ConfirmDialog_Bad(t *testing.T) {
+func TestDisplayAPI_ConfirmDialog_Bad(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 
 	c.Action("dialog.question", func(_ context.Context, _ core.Options) core.Result {
-		return core.Result{Value: assert.AnError, OK: false}
+		return core.Result{Value: core.AnError, OK: false}
 	})
 
 	confirmed, err := svc.ConfirmDialog("Confirm", "Delete this file?")
 
-	require.Error(t, err)
-	assert.False(t, confirmed)
-	assert.Equal(t, assert.AnError, err)
+	core.AssertError(t, err)
+	core.AssertFalse(t, confirmed)
+	core.AssertEqual(t, core.AnError, err)
 }
 
-func TestDisplayAPI_ConfirmDialog_Ugly(t *testing.T) {
+func TestDisplayAPI_ConfirmDialog_Ugly(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 
 	c.Action("dialog.question", func(_ context.Context, _ core.Options) core.Result {
@@ -835,12 +836,12 @@ func TestDisplayAPI_ConfirmDialog_Ugly(t *testing.T) {
 
 	confirmed, err := svc.ConfirmDialog("Confirm", "Delete this file?")
 
-	require.Error(t, err)
-	assert.False(t, confirmed)
-	assert.Contains(t, err.Error(), "unexpected result type")
+	core.AssertError(t, err)
+	core.AssertFalse(t, confirmed)
+	core.AssertContains(t, err.Error(), "unexpected result type")
 }
 
-func TestDisplayAPI_ReadClipboard_Good(t *testing.T) {
+func TestDisplayAPI_ReadClipboard_Good(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
@@ -860,11 +861,11 @@ func TestDisplayAPI_ReadClipboard_Good(t *testing.T) {
 
 	text, err := svc.ReadClipboard()
 
-	require.NoError(t, err)
-	assert.Equal(t, "hello clipboard", text)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, "hello clipboard", text)
 }
 
-func TestDisplayAPI_ReadClipboard_Bad(t *testing.T) {
+func TestDisplayAPI_ReadClipboard_Bad(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
@@ -878,12 +879,12 @@ func TestDisplayAPI_ReadClipboard_Bad(t *testing.T) {
 
 	text, err := svc.ReadClipboard()
 
-	require.NoError(t, err)
-	assert.Empty(t, text)
+	core.RequireNoError(t, err)
+	core.AssertEmpty(t, text)
 	// Missing seam: QUERY drops non-OK backend errors, so propagation is not observable here.
 }
 
-func TestDisplayAPI_ReadClipboard_Ugly(t *testing.T) {
+func TestDisplayAPI_ReadClipboard_Ugly(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
@@ -897,12 +898,12 @@ func TestDisplayAPI_ReadClipboard_Ugly(t *testing.T) {
 
 	text, err := svc.ReadClipboard()
 
-	require.Error(t, err)
-	assert.Empty(t, text)
-	assert.Contains(t, err.Error(), "unexpected result type")
+	core.AssertError(t, err)
+	core.AssertEmpty(t, text)
+	core.AssertContains(t, err.Error(), "unexpected result type")
 }
 
-func TestDisplayAPI_CheckNotificationPermission_Good(t *testing.T) {
+func TestDisplayAPI_CheckNotificationPermission_Good(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
@@ -916,11 +917,11 @@ func TestDisplayAPI_CheckNotificationPermission_Good(t *testing.T) {
 
 	granted, err := svc.CheckNotificationPermission()
 
-	require.NoError(t, err)
-	assert.True(t, granted)
+	core.RequireNoError(t, err)
+	core.AssertTrue(t, granted)
 }
 
-func TestDisplayAPI_CheckNotificationPermission_Bad(t *testing.T) {
+func TestDisplayAPI_CheckNotificationPermission_Bad(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
@@ -934,12 +935,12 @@ func TestDisplayAPI_CheckNotificationPermission_Bad(t *testing.T) {
 
 	granted, err := svc.CheckNotificationPermission()
 
-	require.Error(t, err)
-	assert.False(t, granted)
-	assert.Contains(t, err.Error(), "notification query failed")
+	core.AssertError(t, err)
+	core.AssertFalse(t, granted)
+	core.AssertContains(t, err.Error(), "notification query failed")
 }
 
-func TestDisplayAPI_CheckNotificationPermission_Ugly(t *testing.T) {
+func TestDisplayAPI_CheckNotificationPermission_Ugly(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
@@ -953,12 +954,12 @@ func TestDisplayAPI_CheckNotificationPermission_Ugly(t *testing.T) {
 
 	granted, err := svc.CheckNotificationPermission()
 
-	require.Error(t, err)
-	assert.False(t, granted)
-	assert.Contains(t, err.Error(), "unexpected result type")
+	core.AssertError(t, err)
+	core.AssertFalse(t, granted)
+	core.AssertContains(t, err.Error(), "unexpected result type")
 }
 
-func TestDisplayAPI_WriteClipboard_Good(t *testing.T) {
+func TestDisplayAPI_WriteClipboard_Good(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 
 	var gotText string
@@ -969,24 +970,24 @@ func TestDisplayAPI_WriteClipboard_Good(t *testing.T) {
 
 	err := svc.WriteClipboard("hello")
 
-	require.NoError(t, err)
-	assert.Equal(t, "hello", gotText)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, "hello", gotText)
 }
 
-func TestDisplayAPI_WriteClipboard_Bad(t *testing.T) {
+func TestDisplayAPI_WriteClipboard_Bad(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 
 	c.Action("clipboard.setText", func(_ context.Context, _ core.Options) core.Result {
-		return core.Result{Value: assert.AnError, OK: false}
+		return core.Result{Value: core.AnError, OK: false}
 	})
 
 	err := svc.WriteClipboard("hello")
 
-	require.Error(t, err)
-	assert.Equal(t, assert.AnError, err)
+	core.AssertError(t, err)
+	core.AssertEqual(t, core.AnError, err)
 }
 
-func TestDisplayAPI_WriteClipboard_Ugly(t *testing.T) {
+func TestDisplayAPI_WriteClipboard_Ugly(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 
 	c.Action("clipboard.setText", func(_ context.Context, _ core.Options) core.Result {
@@ -995,11 +996,11 @@ func TestDisplayAPI_WriteClipboard_Ugly(t *testing.T) {
 
 	err := svc.WriteClipboard("")
 
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "clipboard.setText")
+	core.AssertError(t, err)
+	core.AssertContains(t, err.Error(), "clipboard.setText")
 }
 
-func TestDisplayAPI_SetTrayIcon_Good(t *testing.T) {
+func TestDisplayAPI_SetTrayIcon_Good(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 
 	var got []byte
@@ -1010,24 +1011,24 @@ func TestDisplayAPI_SetTrayIcon_Good(t *testing.T) {
 
 	err := svc.SetTrayIcon([]byte{1, 2, 3})
 
-	require.NoError(t, err)
-	assert.Equal(t, []byte{1, 2, 3}, got)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, []byte{1, 2, 3}, got)
 }
 
-func TestDisplayAPI_SetTrayIcon_Bad(t *testing.T) {
+func TestDisplayAPI_SetTrayIcon_Bad(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 
 	c.Action("systray.setIcon", func(_ context.Context, _ core.Options) core.Result {
-		return core.Result{Value: assert.AnError, OK: false}
+		return core.Result{Value: core.AnError, OK: false}
 	})
 
 	err := svc.SetTrayIcon([]byte{1})
 
-	require.Error(t, err)
-	assert.Equal(t, assert.AnError, err)
+	core.AssertError(t, err)
+	core.AssertEqual(t, core.AnError, err)
 }
 
-func TestDisplayAPI_SetTrayIcon_Ugly(t *testing.T) {
+func TestDisplayAPI_SetTrayIcon_Ugly(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 
 	c.Action("systray.setIcon", func(_ context.Context, _ core.Options) core.Result {
@@ -1036,6 +1037,6 @@ func TestDisplayAPI_SetTrayIcon_Ugly(t *testing.T) {
 
 	err := svc.SetTrayIcon(nil)
 
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "systray.setIcon")
+	core.AssertError(t, err)
+	core.AssertContains(t, err.Error(), "systray.setIcon")
 }

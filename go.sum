@@ -1,3 +1,5 @@
+dappco.re/go v0.9.0 h1:4ruZRNqKDDva8o6g65tYggjGVe42E6/lMZfVKXtr3p0=
+dappco.re/go v0.9.0/go.mod h1:xapr7fLK4/9Pu2iSCr4qZuIuatmtx1j56zS/oPDbGyQ=
 forge.lthn.ai/core/go v0.8.0-alpha.2.0.20260425180327-a87e70661389 h1:6FOYh2/r4LQQgNmBGpTWIdUVxogGrLuVqnvC8e0rMDk=
 forge.lthn.ai/core/go v0.8.0-alpha.2.0.20260425180327-a87e70661389/go.mod h1:f2/tBZ3+3IqDrg2F5F598llv0nmb/4gJVCFzM5geE4A=
 forge.lthn.ai/core/go-io v0.4.2 h1:GRHy8x6ZynJ0cINc1vtkX1/zNJmQyPL7QWbp9cY7rdQ=

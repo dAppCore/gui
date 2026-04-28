@@ -1,7 +1,7 @@
 // pkg/systray/register.go
 package systray
 
-import core "dappco.re/go/core"
+import core "dappco.re/go"
 
 // Register(p) binds the systray service to a Core instance.
 // core.WithService(systray.Register(wailsSystray))

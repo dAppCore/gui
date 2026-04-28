@@ -1,13 +1,10 @@
 package display
 
 import (
+	core "dappco.re/go"
 	"fmt"
 	"strings"
-	"testing"
 	"time"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func storageEntryKey(origin, bucket, key string) string {
@@ -23,7 +20,7 @@ func setStorageEntryTime(r *StorageRegistry, origin, bucket, key string, ts time
 	r.entries[storageEntryKey(origin, bucket, key)] = entry
 }
 
-func TestStorageRegistry_Get_Good(t *testing.T) {
+func TestStorageRegistry_Get_Good(t *core.T) {
 	r := NewStorageRegistry()
 	r.Set("origin-a", "local", "theme", "dark")
 	r.Set("origin-b", "local", "theme", "light")
@@ -31,21 +28,21 @@ func TestStorageRegistry_Get_Good(t *testing.T) {
 	setStorageEntryTime(r, "origin-b", "local", "theme", time.Unix(200, 0).UTC())
 
 	entry, ok := r.Get("origin-a", "local", "theme")
-	require.True(t, ok)
-	assert.Equal(t, "dark", entry.Value)
-	assert.Equal(t, "origin-a", entry.Origin)
+	core.RequireTrue(t, ok)
+	core.AssertEqual(t, "dark", entry.Value)
+	core.AssertEqual(t, "origin-a", entry.Origin)
 }
 
-func TestStorageRegistry_Get_Bad(t *testing.T) {
+func TestStorageRegistry_Get_Bad(t *core.T) {
 	r := NewStorageRegistry()
 	r.Set("origin-a", "local", "theme", "dark")
 
 	entry, ok := r.Get("missing", "local", "theme")
-	assert.False(t, ok)
-	assert.Zero(t, entry)
+	core.AssertFalse(t, ok)
+	core.AssertEmpty(t, entry)
 }
 
-func TestStorageRegistry_Get_Ugly(t *testing.T) {
+func TestStorageRegistry_Get_Ugly(t *core.T) {
 	r := NewStorageRegistry()
 	r.Set("origin-a", "local", "theme", "dark")
 	r.Set("origin-b", "local", "theme", "light")
@@ -53,12 +50,12 @@ func TestStorageRegistry_Get_Ugly(t *testing.T) {
 	setStorageEntryTime(r, "origin-b", "local", "theme", time.Unix(200, 0).UTC())
 
 	entry, ok := r.Get("", "local", "")
-	require.True(t, ok)
-	assert.Equal(t, "origin-b", entry.Origin)
-	assert.Equal(t, "light", entry.Value)
+	core.RequireTrue(t, ok)
+	core.AssertEqual(t, "origin-b", entry.Origin)
+	core.AssertEqual(t, "light", entry.Value)
 }
 
-func TestStorageRegistry_Search_Good(t *testing.T) {
+func TestStorageRegistry_Search_Good(t *core.T) {
 	r := NewStorageRegistry()
 	r.Set("origin-a", "local", "theme", "alpha")
 	r.Set("origin-b", "session", "token", "bravo")
@@ -68,12 +65,12 @@ func TestStorageRegistry_Search_Good(t *testing.T) {
 	setStorageEntryTime(r, "origin-c", "local", "theme", time.Unix(200, 0).UTC())
 
 	results := r.Search("alpha")
-	require.Len(t, results, 2)
-	assert.Equal(t, "origin-c", results[0].Origin)
-	assert.Equal(t, "origin-a", results[1].Origin)
+	core.AssertLen(t, results, 2)
+	core.AssertEqual(t, "origin-c", results[0].Origin)
+	core.AssertEqual(t, "origin-a", results[1].Origin)
 }
 
-func TestStorageRegistry_Search_Bad(t *testing.T) {
+func TestStorageRegistry_Search_Bad(t *core.T) {
 	r := NewStorageRegistry()
 	r.Set("origin-a", "local", "theme", "alpha")
 	r.Set("origin-b", "session", "token", "bravo")
@@ -81,121 +78,125 @@ func TestStorageRegistry_Search_Bad(t *testing.T) {
 	setStorageEntryTime(r, "origin-b", "session", "token", time.Unix(200, 0).UTC())
 
 	results := r.Search("")
-	require.Len(t, results, 2)
-	assert.Equal(t, "origin-b", results[0].Origin)
-	assert.Equal(t, "origin-a", results[1].Origin)
+	core.AssertLen(t, results, 2)
+	core.AssertEqual(t, "origin-b", results[0].Origin)
+	core.AssertEqual(t, "origin-a", results[1].Origin)
 }
 
-func TestStorageRegistry_Search_Ugly(t *testing.T) {
+func TestStorageRegistry_Search_Ugly(t *core.T) {
 	r := NewStorageRegistry()
 	r.Set("origin-a", "local", "theme", "alpha")
 
 	results := r.Search("does-not-exist")
-	require.Empty(t, results)
+	core.AssertEmpty(t, results)
 }
 
-func TestStorageRegistry_Snapshot_Good(t *testing.T) {
+func TestStorageRegistry_Snapshot_Good(t *core.T) {
 	r := NewStorageRegistry()
 	r.Set("core://settings", "localStorage", "theme", "dark")
 	r.Set("core://settings", "cookies", "session", `{"value":"abc","path":"/","secure":false}`)
 	r.Set("core://other", "localStorage", "theme", "light")
 
 	snapshot := r.Snapshot("core://settings/profile")
-	require.Contains(t, snapshot, "localStorage")
-	require.Contains(t, snapshot, "cookies")
-	assert.Equal(t, "dark", snapshot["localStorage"]["theme"])
-	assert.Equal(t, `{"value":"abc","path":"/","secure":false}`, snapshot["cookies"]["session"])
+	core.AssertContains(t, snapshot, "localStorage")
+	core.AssertContains(t, snapshot, "cookies")
+	core.AssertEqual(t, "dark", snapshot["localStorage"]["theme"])
+	core.AssertEqual(t, `{"value":"abc","path":"/","secure":false}`, snapshot["cookies"]["session"])
 	_, otherOriginPresent := snapshot["other"]
-	assert.False(t, otherOriginPresent)
+	core.AssertFalse(t, otherOriginPresent)
 }
 
-func TestStorageRegistry_Set_Bad(t *testing.T) {
+func TestStorageRegistry_Set_Bad(t *core.T) {
 	r := NewStorageRegistry()
 
-	assert.False(t, r.Set("", "localStorage", "theme", "dark"))
-	assert.False(t, r.Set("core://settings", "", "theme", "dark"))
-	assert.False(t, r.Set("core://settings", "localStorage", "", "dark"))
-	assert.False(t, r.Set("core://settings", "localStorage", "theme", strings.Repeat("x", maxStorageValueBytes+1)))
+	core.AssertFalse(t, r.Set("", "localStorage", "theme", "dark"))
+	core.AssertFalse(t, r.Set("core://settings", "", "theme", "dark"))
+	core.AssertFalse(t, r.Set("core://settings", "localStorage", "", "dark"))
+	core.AssertFalse(t, r.Set("core://settings", "localStorage", "theme", strings.Repeat("x", maxStorageValueBytes+1)))
 }
 
-func TestStorageRegistry_Delete_Good(t *testing.T) {
+func TestStorageRegistry_Delete_Good(t *core.T) {
 	r := NewStorageRegistry()
 	r.Set("core://settings", "localStorage", "theme", "dark")
 
-	assert.True(t, r.Delete("core://settings", "localStorage", "theme"))
+	core.AssertTrue(t, r.Delete("core://settings", "localStorage", "theme"))
 	_, ok := r.Get("core://settings", "localStorage", "theme")
-	assert.False(t, ok)
+	core.AssertFalse(t, ok)
 }
 
-func TestStorageRegistry_Set_RejectsQuotaOverflow(t *testing.T) {
+func TestStorageRegistry_Set_RejectsQuotaOverflow(t *core.T) {
 	r := NewStorageRegistry()
 	for i := 0; i < maxStorageEntriesPerOrigin; i++ {
-		require.True(t, r.Set("core://settings", "localStorage", fmt.Sprintf("key-%d", i), "v"))
+		core.RequireTrue(t, r.Set("core://settings", "localStorage", fmt.Sprintf("key-%d", i), "v"))
 	}
-	assert.False(t, r.Set("core://settings", "localStorage", "overflow", "v"))
+	core.AssertFalse(t, r.Set("core://settings", "localStorage", "overflow", "v"))
 }
 
-func TestStorage_StorageOriginForPageURL_Good(t *testing.T) {
-	assert.Equal(t, "https://app.example.com", storageOriginForPageURL("https://app.example.com/path?q=1"))
-	assert.Equal(t, "core://settings", storageOriginForPageURL("core://settings/view"))
+func TestStorage_StorageOriginForPageURL_Good(t *core.T) {
+	core.AssertEqual(t, "https://app.example.com", storageOriginForPageURL("https://app.example.com/path?q=1"))
+	core.AssertEqual(t, "core://settings", storageOriginForPageURL("core://settings/view"))
+	core.AssertNotEmpty(t, core.Sprintf("%T", storageOriginForPageURL("https://app.example.com/path?q=1")))
 }
 
-func TestStorage_StorageOriginForPageURL_Bad(t *testing.T) {
-	assert.Equal(t, "custom://host/path", storageOriginForPageURL("custom://host/path"))
+func TestStorage_StorageOriginForPageURL_Bad(t *core.T) {
+	core.AssertEqual(t, "custom://host/path", storageOriginForPageURL("custom://host/path"))
+	observedType := core.Sprintf("%T", storageOriginForPageURL("custom://host/path"))
+	core.AssertNotEmpty(t, observedType)
 }
 
-func TestStorage_StorageOriginForPageURL_Ugly(t *testing.T) {
-	assert.Equal(t, "", storageOriginForPageURL(""))
-	assert.Equal(t, "", storageOriginForPageURL("   "))
+func TestStorage_StorageOriginForPageURL_Ugly(t *core.T) {
+	core.AssertEqual(t, "", storageOriginForPageURL(""))
+	core.AssertEqual(t, "", storageOriginForPageURL("   "))
+	core.AssertNotEmpty(t, core.Sprintf("%T", storageOriginForPageURL("")))
 }
 
-func TestStorage_Snapshot_BlankOriginReturnsEmpty(t *testing.T) {
+func TestStorage_Snapshot_BlankOriginReturnsEmpty(t *core.T) {
 	r := NewStorageRegistry()
 	r.Set("core://settings", "localStorage", "theme", "dark")
 
 	snapshot := r.Snapshot("")
 
-	assert.Empty(t, snapshot)
+	core.AssertEmpty(t, snapshot)
 }
 
-func TestStorage_CompositeKey_Good(t *testing.T) {
+func TestStorage_CompositeKey_Good(t *core.T) {
 	key := storageCompositeKey("origin", "bucket", "item")
 
 	origin, bucket, item, ok := decodeStorageCompositeKey(key)
-	require.True(t, ok)
-	assert.Equal(t, "origin", origin)
-	assert.Equal(t, "bucket", bucket)
-	assert.Equal(t, "item", item)
-	assert.Equal(t, key, makeStorageEntryKey("origin", "bucket", "item"))
+	core.RequireTrue(t, ok)
+	core.AssertEqual(t, "origin", origin)
+	core.AssertEqual(t, "bucket", bucket)
+	core.AssertEqual(t, "item", item)
+	core.AssertEqual(t, key, makeStorageEntryKey("origin", "bucket", "item"))
 }
 
-func TestStorage_CompositeKey_Bad(t *testing.T) {
+func TestStorage_CompositeKey_Bad(t *core.T) {
 	origin, bucket, item, ok := decodeStorageCompositeKey("not-json")
 
-	assert.False(t, ok)
-	assert.Empty(t, origin)
-	assert.Empty(t, bucket)
-	assert.Empty(t, item)
+	core.AssertFalse(t, ok)
+	core.AssertEmpty(t, origin)
+	core.AssertEmpty(t, bucket)
+	core.AssertEmpty(t, item)
 }
 
-func TestStorage_CompositeKey_Ugly(t *testing.T) {
+func TestStorage_CompositeKey_Ugly(t *core.T) {
 	origin, bucket, item, ok := decodeStorageCompositeKey(`["one","two"]`)
 
-	assert.False(t, ok)
-	assert.Empty(t, origin)
-	assert.Empty(t, bucket)
-	assert.Empty(t, item)
+	core.AssertFalse(t, ok)
+	core.AssertEmpty(t, origin)
+	core.AssertEmpty(t, bucket)
+	core.AssertEmpty(t, item)
 }
 
-func TestStorageRegistry_NilReceiverIsSafe(t *testing.T) {
+func TestStorageRegistry_NilReceiverIsSafe(t *core.T) {
 	var r *StorageRegistry
 
-	assert.False(t, r.Set("core://settings", "localStorage", "theme", "dark"))
-	assert.False(t, r.Delete("core://settings", "localStorage", "theme"))
+	core.AssertFalse(t, r.Set("core://settings", "localStorage", "theme", "dark"))
+	core.AssertFalse(t, r.Delete("core://settings", "localStorage", "theme"))
 
 	entry, ok := r.Get("core://settings", "localStorage", "theme")
-	assert.False(t, ok)
-	assert.Zero(t, entry)
-	assert.Empty(t, r.Search("theme"))
-	assert.Empty(t, r.Snapshot("core://settings"))
+	core.AssertFalse(t, ok)
+	core.AssertEmpty(t, entry)
+	core.AssertEmpty(t, r.Search("theme"))
+	core.AssertEmpty(t, r.Snapshot("core://settings"))
 }

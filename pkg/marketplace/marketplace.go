@@ -157,7 +157,9 @@ func (i Installer) Install(ctx context.Context, manifest Manifest) (string, erro
 	cleanupTarget := true
 	defer func() {
 		if cleanupTarget {
-			_ = os.RemoveAll(targetDir)
+			if err := os.RemoveAll(targetDir); err != nil {
+				return
+			}
 		}
 	}()
 

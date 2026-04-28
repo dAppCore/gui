@@ -3,7 +3,8 @@ package lifecycle
 import (
 	"context"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
+	"dappco.re/go/gui/pkg/internal/coreutil"
 )
 
 type Options struct{}
@@ -16,13 +17,13 @@ type Service struct {
 
 func (s *Service) OnStartup(_ context.Context) core.Result {
 	eventActions := map[EventType]func(){
-		EventApplicationStarted: func() { _ = s.Core().ACTION(ActionApplicationStarted{}) },
-		EventWillTerminate:      func() { _ = s.Core().ACTION(ActionWillTerminate{}) },
-		EventDidBecomeActive:    func() { _ = s.Core().ACTION(ActionDidBecomeActive{}) },
-		EventDidResignActive:    func() { _ = s.Core().ACTION(ActionDidResignActive{}) },
-		EventPowerStatusChanged: func() { _ = s.Core().ACTION(ActionPowerStatusChanged{}) },
-		EventSystemSuspend:      func() { _ = s.Core().ACTION(ActionSystemSuspend{}) },
-		EventSystemResume:       func() { _ = s.Core().ACTION(ActionSystemResume{}) },
+		EventApplicationStarted: func() { coreutil.DispatchAction(s.Core(), "lifecycle.applicationStarted", ActionApplicationStarted{}) },
+		EventWillTerminate:      func() { coreutil.DispatchAction(s.Core(), "lifecycle.willTerminate", ActionWillTerminate{}) },
+		EventDidBecomeActive:    func() { coreutil.DispatchAction(s.Core(), "lifecycle.didBecomeActive", ActionDidBecomeActive{}) },
+		EventDidResignActive:    func() { coreutil.DispatchAction(s.Core(), "lifecycle.didResignActive", ActionDidResignActive{}) },
+		EventPowerStatusChanged: func() { coreutil.DispatchAction(s.Core(), "lifecycle.powerStatusChanged", ActionPowerStatusChanged{}) },
+		EventSystemSuspend:      func() { coreutil.DispatchAction(s.Core(), "lifecycle.systemSuspend", ActionSystemSuspend{}) },
+		EventSystemResume:       func() { coreutil.DispatchAction(s.Core(), "lifecycle.systemResume", ActionSystemResume{}) },
 	}
 
 	for eventType, handler := range eventActions {
@@ -31,7 +32,7 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 	}
 
 	cancel := s.platform.OnOpenedWithFile(func(path string) {
-		_ = s.Core().ACTION(ActionOpenedWithFile{Path: path})
+		coreutil.DispatchAction(s.Core(), "lifecycle.openedWithFile", ActionOpenedWithFile{Path: path})
 	})
 	s.cancels = append(s.cancels, cancel)
 

@@ -1,12 +1,9 @@
 package preload
 
 import (
+	core "dappco.re/go"
 	"os"
 	"path/filepath"
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 type captureWebview struct {
@@ -17,16 +14,16 @@ func (c *captureWebview) ExecJS(script string) {
 	c.scripts = append(c.scripts, script)
 }
 
-func TestInjectPreload_Good(t *testing.T) {
+func TestInjectPreload_Good(t *core.T) {
 	root := t.TempDir()
-	require.NoError(t, os.MkdirAll(filepath.Join(root, ".core"), 0o755))
-	require.NoError(t, os.WriteFile(filepath.Join(root, "index.html"), []byte("<html></html>"), 0o644))
-	require.NoError(t, os.WriteFile(
+	core.RequireNoError(t, os.MkdirAll(filepath.Join(root, ".core"), 0o755))
+	core.RequireNoError(t, os.WriteFile(filepath.Join(root, "index.html"), []byte("<html></html>"), 0o644))
+	core.RequireNoError(t, os.WriteFile(
 		filepath.Join(root, ".core", "view.yaml"),
 		[]byte("manifest:\n  preloads:\n    - path: preload.js\n"),
 		0o644,
 	))
-	require.NoError(t, os.WriteFile(
+	core.RequireNoError(t, os.WriteFile(
 		filepath.Join(root, "preload.js"),
 		[]byte("globalThis.__manifestPreloadLoaded = true;"),
 		0o644,
@@ -34,124 +31,124 @@ func TestInjectPreload_Good(t *testing.T) {
 
 	target := &captureWebview{}
 	err := InjectPreload(target, "file://"+filepath.ToSlash(filepath.Join(root, "index.html")))
-	require.NoError(t, err)
-	require.Len(t, target.scripts, 1)
+	core.RequireNoError(t, err)
+	core.AssertLen(t, target.scripts, 1)
 
 	script := target.scripts[0]
-	assert.Contains(t, script, "globalThis.core.storage.local")
-	assert.Contains(t, script, "globalThis.core.ml = globalThis.core.ml ||")
-	assert.Contains(t, script, "globalThis.electron = electron")
-	assert.Contains(t, script, "globalThis.__manifestPreloadLoaded = true;")
+	core.AssertContains(t, script, "globalThis.core.storage.local")
+	core.AssertContains(t, script, "globalThis.core.ml = globalThis.core.ml ||")
+	core.AssertContains(t, script, "globalThis.electron = electron")
+	core.AssertContains(t, script, "globalThis.__manifestPreloadLoaded = true;")
 }
 
-func TestInjectPreload_Bad(t *testing.T) {
+func TestInjectPreload_Bad(t *core.T) {
 	err := InjectPreload(nil, "http://localhost:3000")
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "preload target is required")
+	core.AssertError(t, err)
+	core.AssertContains(t, err.Error(), "preload target is required")
 }
 
-func TestInjectPreload_Ugly(t *testing.T) {
+func TestInjectPreload_Ugly(t *core.T) {
 	target := &captureWebview{}
 	err := InjectPreload(target, "https://example.com/app")
-	require.NoError(t, err)
-	require.Len(t, target.scripts, 1)
+	core.RequireNoError(t, err)
+	core.AssertLen(t, target.scripts, 1)
 
 	script := target.scripts[0]
-	assert.Contains(t, script, "globalThis.core.storage.local")
-	assert.Contains(t, script, "globalThis.core.ml = globalThis.core.ml ||")
-	assert.NotContains(t, script, "globalThis.electron = electron")
-	assert.NotContains(t, script, "ipcRenderer")
+	core.AssertContains(t, script, "globalThis.core.storage.local")
+	core.AssertContains(t, script, "globalThis.core.ml = globalThis.core.ml ||")
+	core.AssertNotContains(t, script, "globalThis.electron = electron")
+	core.AssertNotContains(t, script, "ipcRenderer")
 }
 
-func TestTrustedOrigin_EmptyAllowListDeniesSchemeURLs(t *testing.T) {
+func TestTrustedOrigin_EmptyAllowListDeniesSchemeURLs(t *core.T) {
 	policy := NewTrustedOriginPolicy(nil)
 
-	assert.False(t, trustedOrigin("core://lab.lthn.sh/page", policy))
-	assert.False(t, trustedOrigin("core://app/", policy))
-	assert.False(t, trustedOrigin("core://attacker.com/x", policy))
+	core.AssertFalse(t, trustedOrigin("core://lab.lthn.sh/page", policy))
+	core.AssertFalse(t, trustedOrigin("core://app/", policy))
+	core.AssertFalse(t, trustedOrigin("core://attacker.com/x", policy))
 }
 
-func TestTrustedOrigin_AllowListMatchesSchemeHostAndPath(t *testing.T) {
+func TestTrustedOrigin_AllowListMatchesSchemeHostAndPath(t *core.T) {
 	policy := NewTrustedOriginPolicy([]string{"core://lab.lthn.sh/"})
 
-	assert.True(t, trustedOrigin("core://lab.lthn.sh/page", policy))
-	assert.False(t, trustedOrigin("core://attacker.com/x", policy))
-	assert.False(t, trustedOrigin("wails://lab.lthn.sh/x", policy))
+	core.AssertTrue(t, trustedOrigin("core://lab.lthn.sh/page", policy))
+	core.AssertFalse(t, trustedOrigin("core://attacker.com/x", policy))
+	core.AssertFalse(t, trustedOrigin("wails://lab.lthn.sh/x", policy))
 }
 
-func TestTrustedOrigin_PathPrefix(t *testing.T) {
+func TestTrustedOrigin_PathPrefix(t *core.T) {
 	policy := NewTrustedOriginPolicy([]string{"core://lab.lthn.sh/x"})
 
-	assert.True(t, trustedOrigin("core://lab.lthn.sh/x/y", policy))
-	assert.False(t, trustedOrigin("core://lab.lthn.sh/y", policy))
+	core.AssertTrue(t, trustedOrigin("core://lab.lthn.sh/x/y", policy))
+	core.AssertFalse(t, trustedOrigin("core://lab.lthn.sh/y", policy))
 }
 
-func TestBridgeActionAllowList(t *testing.T) {
+func TestBridgeActionAllowList(t *core.T) {
 	policy := NewTrustedOriginPolicyWithActions(map[string][]string{
 		"core://lab.lthn.sh/": {"display.sidecar.eval"},
 		"core://empty/":       {},
 	})
 
-	assert.False(t, policy.AllowsActionURL("core://lab.lthn.sh/page", "marketplace.install"))
-	assert.True(t, policy.AllowsActionURL("core://lab.lthn.sh/page", "display.sidecar.eval"))
-	assert.False(t, policy.AllowsActionURL("core://attacker.com/page", "display.sidecar.eval"))
-	assert.True(t, policy.AllowsURL("core://empty/page"))
-	assert.False(t, policy.AllowsActionURL("core://empty/page", "display.sidecar.eval"))
+	core.AssertFalse(t, policy.AllowsActionURL("core://lab.lthn.sh/page", "marketplace.install"))
+	core.AssertTrue(t, policy.AllowsActionURL("core://lab.lthn.sh/page", "display.sidecar.eval"))
+	core.AssertFalse(t, policy.AllowsActionURL("core://attacker.com/page", "display.sidecar.eval"))
+	core.AssertTrue(t, policy.AllowsURL("core://empty/page"))
+	core.AssertFalse(t, policy.AllowsActionURL("core://empty/page", "display.sidecar.eval"))
 }
 
-func TestBridgeActionGuardScript(t *testing.T) {
+func TestBridgeActionGuardScript(t *core.T) {
 	policy := NewTrustedOriginPolicyWithActions(map[string][]string{
 		"core://lab.lthn.sh/": {"display.sidecar.eval"},
 	})
 
 	script, err := buildScriptWithTrustedOriginPolicy("core://lab.lthn.sh/page", policy)
-	require.NoError(t, err)
+	core.RequireNoError(t, err)
 
-	assert.Contains(t, script, "Core bridge action not permitted for this origin")
-	assert.Contains(t, script, `"display.sidecar.eval"`)
-	assert.NotContains(t, script, `"marketplace.install"`)
+	core.AssertContains(t, script, "Core bridge action not permitted for this origin")
+	core.AssertContains(t, script, `"display.sidecar.eval"`)
+	core.AssertNotContains(t, script, `"marketplace.install"`)
 }
 
-func TestManifestBackedPreloadOrigin_EmptyAllowListDeniesPlantedHTTPSManifest(t *testing.T) {
+func TestManifestBackedPreloadOrigin_EmptyAllowListDeniesPlantedHTTPSManifest(t *core.T) {
 	home := t.TempDir()
 	writeMarketplaceViewManifest(t, home, "attacker.com")
 	t.Setenv("DIR_HOME", home)
 
-	assert.False(t, manifestBackedPreloadOrigin(
+	core.AssertFalse(t, manifestBackedPreloadOrigin(
 		"https://attacker.com/app",
 		NewTrustedOriginPolicy(nil),
 	))
 }
 
-func TestManifestBackedPreloadOrigin_AllowsListedHTTPSManifest(t *testing.T) {
+func TestManifestBackedPreloadOrigin_AllowsListedHTTPSManifest(t *core.T) {
 	home := t.TempDir()
 	writeMarketplaceViewManifest(t, home, "lab.lthn.sh")
 	t.Setenv("DIR_HOME", home)
 	policy := NewTrustedOriginPolicy([]string{"https://lab.lthn.sh/"})
 
-	assert.True(t, manifestBackedPreloadOrigin("https://lab.lthn.sh/app", policy))
+	core.AssertTrue(t, manifestBackedPreloadOrigin("https://lab.lthn.sh/app", policy))
 }
 
-func TestManifestBackedPreloadOrigin_DeniesUnlistedHTTPSManifest(t *testing.T) {
+func TestManifestBackedPreloadOrigin_DeniesUnlistedHTTPSManifest(t *core.T) {
 	home := t.TempDir()
 	writeMarketplaceViewManifest(t, home, "attacker.com")
 	t.Setenv("DIR_HOME", home)
 	policy := NewTrustedOriginPolicy([]string{"https://lab.lthn.sh/"})
 
-	assert.False(t, manifestBackedPreloadOrigin("https://attacker.com/app", policy))
+	core.AssertFalse(t, manifestBackedPreloadOrigin("https://attacker.com/app", policy))
 }
 
-func TestManifestBackedPreloadOrigin_DeniesListedHTTPSOriginWithoutManifest(t *testing.T) {
+func TestManifestBackedPreloadOrigin_DeniesListedHTTPSOriginWithoutManifest(t *core.T) {
 	home := t.TempDir()
 	t.Setenv("DIR_HOME", home)
 	policy := NewTrustedOriginPolicy([]string{"https://lab.lthn.sh/"})
 
-	assert.False(t, manifestBackedPreloadOrigin("https://lab.lthn.sh/app", policy))
+	core.AssertFalse(t, manifestBackedPreloadOrigin("https://lab.lthn.sh/app", policy))
 }
 
-func writeMarketplaceViewManifest(t *testing.T, home, host string) {
+func writeMarketplaceViewManifest(t *core.T, home, host string) {
 	t.Helper()
 	dir := filepath.Join(home, ".core", "apps", host, ".core")
-	require.NoError(t, os.MkdirAll(dir, 0o755))
-	require.NoError(t, os.WriteFile(filepath.Join(dir, "view.yaml"), []byte("name: "+host+"\n"), 0o644))
+	core.RequireNoError(t, os.MkdirAll(dir, 0o755))
+	core.RequireNoError(t, os.WriteFile(filepath.Join(dir, "view.yaml"), []byte("name: "+host+"\n"), 0o644))
 }

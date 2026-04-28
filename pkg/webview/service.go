@@ -9,7 +9,8 @@ import (
 	"sync"
 	"time"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
+	"dappco.re/go/gui/pkg/internal/coreutil"
 	"dappco.re/go/gui/pkg/window"
 	gowebview "dappco.re/go/webview"
 )
@@ -135,7 +136,7 @@ func (s *Service) defaultWatcherSetup(conn connector, windowName string) {
 
 	cw := gowebview.NewConsoleWatcher(rc.wv)
 	cw.AddHandler(func(msg gowebview.ConsoleMessage) {
-		_ = s.Core().ACTION(ActionConsoleMessage{
+		coreutil.DispatchAction(s.Core(), "webview.console", ActionConsoleMessage{
 			Window: windowName,
 			Message: ConsoleMessage{
 				Type:      msg.Type,
@@ -159,7 +160,7 @@ func (s *Service) defaultWatcherSetup(conn connector, windowName string) {
 			Timestamp:  exc.Timestamp,
 		}
 		s.recordException(windowName, info)
-		_ = s.Core().ACTION(ActionException{
+		coreutil.DispatchAction(s.Core(), "webview.exception", ActionException{
 			Window:    windowName,
 			Exception: info,
 		})

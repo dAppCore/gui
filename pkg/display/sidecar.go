@@ -9,8 +9,9 @@ import (
 	"reflect"
 	"strings"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/deno"
+	"dappco.re/go/gui/pkg/internal/coreutil"
 )
 
 func (s *Service) registerSidecarActions() {
@@ -292,10 +293,12 @@ func (s *Service) forwardIPCToSidecar(msg core.Message) {
 	if t := reflect.TypeOf(msg); t != nil {
 		typeName = t.String()
 	}
-	_ = s.sidecar.Emit("core.ipc.message", map[string]any{
+	if err := s.sidecar.Emit("core.ipc.message", map[string]any{
 		"type": typeName,
 		"data": normalizeSidecarValue(msg),
-	})
+	}); err != nil {
+		coreutil.LogWarn(s.Core(), err, "display.emitSidecarIPC", "sidecar emit failed")
+	}
 }
 
 func normalizeSidecarValue(value any) any {

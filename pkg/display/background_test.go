@@ -2,69 +2,66 @@ package display
 
 import (
 	"context"
-	"testing"
 
-	core "dappco.re/go/core"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	core "dappco.re/go"
 )
 
-func TestBackground_CloneMap_Good(t *testing.T) {
+func TestBackground_CloneMap_Good(t *core.T) {
 	source := map[string]any{"alpha": "one", "beta": 2}
 
 	cloned := cloneMap(source)
 
-	require.NotNil(t, cloned)
-	assert.Equal(t, source, cloned)
+	core.AssertNotNil(t, cloned)
+	core.AssertEqual(t, source, cloned)
 
 	source["alpha"] = "mutated"
-	assert.Equal(t, "one", cloned["alpha"])
+	core.AssertEqual(t, "one", cloned["alpha"])
 }
 
-func TestBackground_CloneMap_Bad(t *testing.T) {
+func TestBackground_CloneMap_Bad(t *core.T) {
 	cloned := cloneMap(nil)
 
-	require.NotNil(t, cloned)
-	assert.Empty(t, cloned)
+	core.AssertNotNil(t, cloned)
+	core.AssertEmpty(t, cloned)
 }
 
-func TestBackground_CloneMap_Ugly(t *testing.T) {
+func TestBackground_CloneMap_Ugly(t *core.T) {
 	source := map[string]any{"nested": map[string]any{"value": "original"}}
 
 	cloned := cloneMap(source)
-	require.NotNil(t, cloned)
+	core.AssertNotNil(t, cloned)
 
 	source["nested"].(map[string]any)["value"] = "changed"
-	assert.Equal(t, map[string]any{"value": "original"}, cloned["nested"])
+	core.AssertEqual(t, map[string]any{"value": "original"}, cloned["nested"])
 }
 
-func TestBackground_DecodeMap_Good(t *testing.T) {
+func TestBackground_DecodeMap_Good(t *core.T) {
 	source := map[string]any{"scope": "/app"}
 	decoded := decodeMap(source)
 
-	require.NotNil(t, decoded)
-	assert.Equal(t, map[string]any{"scope": "/app"}, decoded)
+	core.AssertNotNil(t, decoded)
+	core.AssertEqual(t, map[string]any{"scope": "/app"}, decoded)
 	source["scope"] = "/mutated"
 	if decoded["scope"] != "/app" {
 		t.Fatalf("decoded map changed after source mutation: %v", decoded["scope"])
 	}
 }
 
-func TestBackground_DecodeMap_Bad(t *testing.T) {
+func TestBackground_DecodeMap_Bad(t *core.T) {
 	decoded := decodeMap("not-a-map")
 
-	require.NotNil(t, decoded)
-	assert.Empty(t, decoded)
+	core.AssertNotNil(t, decoded)
+	core.AssertEmpty(t, decoded)
 }
 
-func TestBackground_DecodeMap_Ugly(t *testing.T) {
+func TestBackground_DecodeMap_Ugly(t *core.T) {
 	decoded := decodeMap(nil)
 
-	require.NotNil(t, decoded)
-	assert.Empty(t, decoded)
+	core.AssertNotNil(t, decoded)
+	core.AssertEmpty(t, decoded)
 }
 
-func TestBackground_RegisterBackgroundActions_Good(t *testing.T) {
+func TestBackground_RegisterBackgroundActions_Good(t *core.T) {
 	svc, c := newTestDisplayService(t)
 	svc.background = NewBackgroundRegistry()
 
@@ -73,15 +70,15 @@ func TestBackground_RegisterBackgroundActions_Good(t *testing.T) {
 		core.Option{Key: "options", Value: map[string]any{"scope": "/app"}},
 	))
 
-	require.True(t, result.OK)
+	core.RequireTrue(t, result.OK)
 	payload, ok := result.Value.(map[string]any)
-	require.True(t, ok)
-	assert.Equal(t, "/app", payload["scope"])
-	require.Contains(t, payload, "active")
-	assert.Equal(t, map[string]any{"scriptURL": "https://example.com/sw.js"}, payload["active"])
+	core.RequireTrue(t, ok)
+	core.AssertEqual(t, "/app", payload["scope"])
+	core.AssertContains(t, payload, "active")
+	core.AssertEqual(t, map[string]any{"scriptURL": "https://example.com/sw.js"}, payload["active"])
 }
 
-func TestBackground_RegisterBackgroundActions_Bad(t *testing.T) {
+func TestBackground_RegisterBackgroundActions_Bad(t *core.T) {
 	svc, c := newTestDisplayService(t)
 	svc.background = NewBackgroundRegistry()
 
@@ -91,15 +88,15 @@ func TestBackground_RegisterBackgroundActions_Bad(t *testing.T) {
 		core.Option{Key: "options", Value: nil},
 	))
 
-	require.True(t, result.OK)
+	core.RequireTrue(t, result.OK)
 	payload, ok := result.Value.(map[string]any)
-	require.True(t, ok)
-	assert.Equal(t, "", payload["id"])
-	assert.Equal(t, "registered", payload["state"])
-	assert.Nil(t, payload["requests"])
+	core.RequireTrue(t, ok)
+	core.AssertEqual(t, "", payload["id"])
+	core.AssertEqual(t, "registered", payload["state"])
+	core.AssertNil(t, payload["requests"])
 }
 
-func TestBackground_RegisterBackgroundActions_Ugly(t *testing.T) {
+func TestBackground_RegisterBackgroundActions_Ugly(t *core.T) {
 	svc, c := newTestDisplayService(t)
 	svc.background = NewBackgroundRegistry()
 
@@ -108,71 +105,71 @@ func TestBackground_RegisterBackgroundActions_Ugly(t *testing.T) {
 		core.Option{Key: "details", Value: map[string]any{"network": "visa", "last4": "4242"}},
 	))
 
-	require.True(t, result.OK)
+	core.RequireTrue(t, result.OK)
 	payload, ok := result.Value.(map[string]any)
-	require.True(t, ok)
-	assert.Equal(t, "card-01", payload["key"])
-	assert.Equal(t, map[string]any{"network": "visa", "last4": "4242"}, payload["details"])
+	core.RequireTrue(t, ok)
+	core.AssertEqual(t, "card-01", payload["key"])
+	core.AssertEqual(t, map[string]any{"network": "visa", "last4": "4242"}, payload["details"])
 }
 
-func TestBackground_AddSync_Good(t *testing.T) {
+func TestBackground_AddSync_Good(t *core.T) {
 	r := NewBackgroundRegistry()
 	source := map[string]any{"tag": "refresh", "kind": "sync"}
 	record := r.AddSync(source)
 
-	require.NotNil(t, record)
-	assert.Equal(t, "refresh", record["tag"])
-	assert.Equal(t, "sync", record["kind"])
+	core.AssertNotNil(t, record)
+	core.AssertEqual(t, "refresh", record["tag"])
+	core.AssertEqual(t, "sync", record["kind"])
 	source["tag"] = "mutated"
-	assert.Equal(t, "refresh", record["tag"])
+	core.AssertEqual(t, "refresh", record["tag"])
 }
 
-func TestBackground_AddSync_Bad(t *testing.T) {
+func TestBackground_AddSync_Bad(t *core.T) {
 	r := NewBackgroundRegistry()
 	record := r.AddSync(nil)
 
-	require.NotNil(t, record)
-	assert.Empty(t, record)
+	core.AssertNotNil(t, record)
+	core.AssertEmpty(t, record)
 }
 
-func TestBackground_AddSync_Ugly(t *testing.T) {
+func TestBackground_AddSync_Ugly(t *core.T) {
 	r := NewBackgroundRegistry()
 	first := r.AddSync(map[string]any{"tag": "sync-1"})
 	second := r.AddSync(map[string]any{"tag": "sync-2"})
 
-	require.NotNil(t, first)
-	require.NotNil(t, second)
-	assert.Equal(t, 2, r.SyncRegistrationsCount())
+	core.AssertNotNil(t, first)
+	core.AssertNotNil(t, second)
+	core.AssertEqual(t, 2, r.SyncRegistrationsCount())
 }
 
-func TestBackground_AddPush_Good(t *testing.T) {
+func TestBackground_AddPush_Good(t *core.T) {
 	r := NewBackgroundRegistry()
 	source := map[string]any{"endpoint": "/push/abc", "auth": "core-local"}
 	record := r.AddPush(source)
 
-	require.NotNil(t, record)
-	assert.Equal(t, "/push/abc", record["endpoint"])
-	assert.Equal(t, "core-local", record["auth"])
+	core.AssertNotNil(t, record)
+	core.AssertEqual(t, "/push/abc", record["endpoint"])
+	core.AssertEqual(t, "core-local", record["auth"])
 	source["endpoint"] = "/push/mutated"
-	assert.Equal(t, "/push/abc", record["endpoint"])
+	core.AssertEqual(t, "/push/abc", record["endpoint"])
 }
 
-func TestBackground_AddPush_Bad(t *testing.T) {
+func TestBackground_AddPush_Bad(t *core.T) {
 	r := NewBackgroundRegistry()
 	record := r.AddPush(nil)
 
-	require.NotNil(t, record)
-	assert.Empty(t, record)
+	core.AssertNotNil(t, record)
+	core.AssertEmpty(t, record)
 }
 
-func TestBackground_AddPush_Ugly(t *testing.T) {
+func TestBackground_AddPush_Ugly(t *core.T) {
 	r := NewBackgroundRegistry()
 	first := r.AddPush(map[string]any{"endpoint": "/push/abc"})
 	second := r.AddPush(map[string]any{"endpoint": "/push/def"})
 
-	require.NotNil(t, first)
-	require.NotNil(t, second)
-	assert.Equal(t, 2, r.PushSubscriptionsCount())
-	assert.Equal(t, "/push/abc", first["endpoint"])
-	assert.Equal(t, "/push/def", second["endpoint"])
+	core.AssertNotNil(t, first)
+	core.AssertNotNil(t, second)
+	core.AssertEqual(t, 2, r.PushSubscriptionsCount())
+	core.AssertEqual(t, "/push/abc", first["endpoint"])
+	core.AssertEqual(t, "/push/def", second["endpoint"])
 }

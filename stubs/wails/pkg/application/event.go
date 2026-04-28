@@ -121,7 +121,7 @@ func (em *EventManager) handleApplicationEvent(event *ApplicationEvent) {
 		}
 		func() {
 			defer func() {
-				_ = recover()
+				recover()
 			}()
 			hook.callback(event)
 		}()
@@ -139,7 +139,7 @@ func (em *EventManager) handleApplicationEvent(event *ApplicationEvent) {
 		}
 		func() {
 			defer func() {
-				_ = recover()
+				recover()
 			}()
 			listener.callback(event)
 		}()

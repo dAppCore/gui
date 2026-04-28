@@ -1,17 +1,14 @@
 package window
 
 import (
-	"reflect"
-	"testing"
-	"unsafe"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	core "dappco.re/go"
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/events"
+	"reflect"
+	"unsafe"
 )
 
-func TestWailsPlatform_CreateWindow_Good(t *testing.T) {
+func TestWailsPlatform_CreateWindow_Good(t *core.T) {
 	app := &application.App{}
 	platform := NewWailsPlatform(app)
 
@@ -36,22 +33,22 @@ func TestWailsPlatform_CreateWindow_Good(t *testing.T) {
 		EnableFileDrop:   true,
 		BackgroundColour: [4]uint8{1, 2, 3, 4},
 	})
-	require.NotNil(t, w)
+	core.AssertNotNil(t, w)
 	wails, ok := w.(*wailsWindow)
-	require.True(t, ok)
+	core.RequireTrue(t, ok)
 
-	assert.Equal(t, "main", wails.Name())
-	assert.Equal(t, "Core GUI", wails.Title())
+	core.AssertEqual(t, "main", wails.Name())
+	core.AssertEqual(t, "Core GUI", wails.Title())
 	x, y := wails.Position()
-	assert.Equal(t, 10, x)
-	assert.Equal(t, 20, y)
+	core.AssertEqual(t, 10, x)
+	core.AssertEqual(t, 20, y)
 
 	underlying := app.Window.GetAll()[0].(*application.WebviewWindow)
-	assert.Equal(t, "main", underlying.Name())
-	assert.Equal(t, "Core GUI", underlying.Title())
-	assert.Equal(t, 1280, underlying.Width())
-	assert.Equal(t, 800, underlying.Height())
-	assert.False(t, underlying.IsVisible())
+	core.AssertEqual(t, "main", underlying.Name())
+	core.AssertEqual(t, "Core GUI", underlying.Title())
+	core.AssertEqual(t, 1280, underlying.Width())
+	core.AssertEqual(t, 800, underlying.Height())
+	core.AssertFalse(t, underlying.IsVisible())
 
 	wails.SetTitle("Updated")
 	wails.SetPosition(30, 40)
@@ -81,28 +78,28 @@ func TestWailsPlatform_CreateWindow_Good(t *testing.T) {
 	wails.Flash(true)
 	wails.OpenDevTools()
 	wails.CloseDevTools()
-	require.NoError(t, wails.Print())
+	core.RequireNoError(t, wails.Print())
 
 	x, y = underlying.Position()
-	assert.Equal(t, 1, x)
-	assert.Equal(t, 2, y)
+	core.AssertEqual(t, 1, x)
+	core.AssertEqual(t, 2, y)
 	width, height := underlying.Size()
-	assert.Equal(t, 3, width)
-	assert.Equal(t, 4, height)
-	assert.True(t, underlying.IsMaximised())
-	assert.True(t, underlying.IsFullscreen())
-	assert.True(t, underlying.IsFocused())
-	assert.False(t, underlying.IsVisible())
-	assert.False(t, underlying.IsMinimised())
-	assert.Equal(t, 0.85, wails.GetOpacity())
+	core.AssertEqual(t, 3, width)
+	core.AssertEqual(t, 4, height)
+	core.AssertTrue(t, underlying.IsMaximised())
+	core.AssertTrue(t, underlying.IsFullscreen())
+	core.AssertTrue(t, underlying.IsFocused())
+	core.AssertFalse(t, underlying.IsVisible())
+	core.AssertFalse(t, underlying.IsMinimised())
+	core.AssertEqual(t, 0.85, wails.GetOpacity())
 	execJSField := reflect.ValueOf(underlying).Elem().FieldByName("execJSCalls")
-	require.True(t, execJSField.IsValid())
+	core.RequireTrue(t, execJSField.IsValid())
 	execJSCalls := reflect.NewAt(execJSField.Type(), unsafe.Pointer(execJSField.UnsafeAddr())).Elem().Interface().([]string)
-	assert.Equal(t, []string{"globalThis.ready = true", "alert(1)"}, execJSCalls)
+	core.AssertEqual(t, []string{"globalThis.ready = true", "alert(1)"}, execJSCalls)
 
 	handlers := reflect.ValueOf(underlying).Elem().FieldByName("eventHandlers")
-	require.True(t, handlers.IsValid())
-	require.Zero(t, handlers.Len())
+	core.RequireTrue(t, handlers.IsValid())
+	core.AssertEmpty(t, handlers.Len())
 
 	var eventsSeen []WindowEvent
 	wails.OnWindowEvent(func(event WindowEvent) {
@@ -110,26 +107,26 @@ func TestWailsPlatform_CreateWindow_Good(t *testing.T) {
 	})
 
 	handlers = reflect.ValueOf(underlying).Elem().FieldByName("eventHandlers")
-	require.Equal(t, 5, handlers.Len())
+	core.AssertEqual(t, 5, handlers.Len())
 	handlerMap := reflect.NewAt(handlers.Type(), unsafe.Pointer(handlers.UnsafeAddr())).Elem().Interface().(map[events.WindowEventType][]func(*application.WindowEvent))
 	moveHandlers := handlerMap[events.Common.WindowDidMove]
-	require.Greater(t, len(moveHandlers), 0)
+	core.AssertGreater(t, len(moveHandlers), 0)
 	wails.SetPosition(77, 88)
 	moveHandlers[0](&application.WindowEvent{})
 
 	resizeHandlers := handlerMap[events.Common.WindowDidResize]
-	require.Greater(t, len(resizeHandlers), 0)
+	core.AssertGreater(t, len(resizeHandlers), 0)
 	wails.SetSize(640, 360)
 	resizeHandlers[0](&application.WindowEvent{})
 
-	require.Len(t, eventsSeen, 2)
-	assert.Equal(t, "move", eventsSeen[0].Type)
-	assert.Equal(t, "main", eventsSeen[0].Name)
-	assert.Equal(t, 77, eventsSeen[0].Data["x"])
-	assert.Equal(t, 88, eventsSeen[0].Data["y"])
-	assert.Equal(t, "resize", eventsSeen[1].Type)
-	assert.Equal(t, 640, eventsSeen[1].Data["width"])
-	assert.Equal(t, 360, eventsSeen[1].Data["height"])
+	core.AssertLen(t, eventsSeen, 2)
+	core.AssertEqual(t, "move", eventsSeen[0].Type)
+	core.AssertEqual(t, "main", eventsSeen[0].Name)
+	core.AssertEqual(t, 77, eventsSeen[0].Data["x"])
+	core.AssertEqual(t, 88, eventsSeen[0].Data["y"])
+	core.AssertEqual(t, "resize", eventsSeen[1].Type)
+	core.AssertEqual(t, 640, eventsSeen[1].Data["width"])
+	core.AssertEqual(t, 360, eventsSeen[1].Data["height"])
 
 	var filesSeen []string
 	var targetSeen string
@@ -141,7 +138,7 @@ func TestWailsPlatform_CreateWindow_Good(t *testing.T) {
 	dropHandlers := reflect.ValueOf(underlying).Elem().FieldByName("eventHandlers")
 	dropHandlerMap := reflect.NewAt(dropHandlers.Type(), unsafe.Pointer(dropHandlers.UnsafeAddr())).Elem().Interface().(map[events.WindowEventType][]func(*application.WindowEvent))
 	fileDropHandlers := dropHandlerMap[events.Common.WindowFilesDropped]
-	require.Greater(t, len(fileDropHandlers), 0)
+	core.AssertGreater(t, len(fileDropHandlers), 0)
 
 	event := &application.WindowEvent{}
 	ctx := event.Context()
@@ -152,12 +149,12 @@ func TestWailsPlatform_CreateWindow_Good(t *testing.T) {
 	reflect.NewAt(detailsField.Type(), unsafe.Pointer(detailsField.UnsafeAddr())).Elem().Set(reflect.ValueOf(&application.DropTargetDetails{ElementID: "drop-zone"}))
 	fileDropHandlers[0](event)
 
-	assert.Equal(t, []string{"a.txt", "b.txt"}, filesSeen)
-	assert.Equal(t, "drop-zone", targetSeen)
+	core.AssertEqual(t, []string{"a.txt", "b.txt"}, filesSeen)
+	core.AssertEqual(t, "drop-zone", targetSeen)
 }
 
-func TestWailsPlatform_GetWindows_Bad(t *testing.T) {
+func TestWailsPlatform_GetWindows_Bad(t *core.T) {
 	app := &application.App{}
 	platform := NewWailsPlatform(app)
-	assert.Empty(t, platform.GetWindows())
+	core.AssertEmpty(t, platform.GetWindows())
 }

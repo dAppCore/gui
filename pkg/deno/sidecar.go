@@ -9,7 +9,7 @@ import (
 	"sync"    // AX-6-exception: manager protects live process and pending RPC state across goroutines.
 	"syscall" // AX-6-exception: graceful sidecar shutdown sends SIGTERM.
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 )
 
 type Options struct {
@@ -117,7 +117,11 @@ func (m *Manager) Stop(context.Context) (Status, error) {
 	}
 	m.mu.Unlock()
 
-	_ = cmd.Wait()
+	if waitErr := cmd.Wait(); waitErr != nil && m.options.Core != nil {
+		if warn := m.options.Core.LogWarn(waitErr, "deno.stop", "sidecar wait returned after termination"); !warn.OK {
+			err = waitErr
+		}
+	}
 	if done != nil {
 		<-done
 	}
@@ -258,7 +262,9 @@ func (m *Manager) handleAction(message rpcMessage) {
 	response := rpcMessage{Type: "result", ID: message.ID}
 	if m.options.Core == nil {
 		response.Error = "core is unavailable"
-		_ = m.send(response)
+		if err := m.send(response); err != nil {
+			return
+		}
 		return
 	}
 	opts := core.NewOptions()
@@ -280,7 +286,11 @@ func (m *Manager) handleAction(message rpcMessage) {
 	} else {
 		response.Error = core.Sprint(result.Value)
 	}
-	_ = m.send(response)
+	if err := m.send(response); err != nil && m.options.Core != nil {
+		if warn := m.options.Core.LogWarn(err, "deno.handleAction", "failed to send action response"); !warn.OK {
+			return
+		}
+	}
 }
 
 func (m *Manager) send(message rpcMessage) error {

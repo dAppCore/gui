@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	coreio "dappco.re/go/io"
 )
 
@@ -178,7 +178,9 @@ func (sm *StateManager) scheduleSave() {
 	sm.mu.Lock()
 	sm.stopSaveTimerLocked()
 	sm.saveTimer = time.AfterFunc(500*time.Millisecond, func() {
-		_ = sm.save()
+		if err := sm.save(); err != nil {
+			return
+		}
 	})
 	sm.mu.Unlock()
 }

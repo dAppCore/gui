@@ -1,61 +1,58 @@
 package application
 
 import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	core "dappco.re/go"
 )
 
-func TestWebviewWindowOptions_Constants_Good(t *testing.T) {
-	assert.Equal(t, WindowStateNormal, WindowState(0))
-	assert.Equal(t, WindowStateMinimised, WindowState(1))
-	assert.Equal(t, WindowStateMaximised, WindowState(2))
-	assert.Equal(t, WindowStateFullscreen, WindowState(3))
-	assert.Equal(t, WindowCentered, WindowStartPosition(0))
-	assert.Equal(t, WindowXY, WindowStartPosition(1))
-	assert.Equal(t, BackgroundTypeSolid, BackgroundType(0))
-	assert.Equal(t, BackgroundTypeTransparent, BackgroundType(1))
-	assert.Equal(t, BackgroundTypeTranslucent, BackgroundType(2))
-	assert.Equal(t, Auto, BackdropType(0))
-	assert.Equal(t, None, BackdropType(1))
-	assert.Equal(t, Mica, BackdropType(2))
-	assert.Equal(t, Acrylic, BackdropType(3))
-	assert.Equal(t, Tabbed, BackdropType(4))
-	assert.Equal(t, SystemDefault, Theme(0))
-	assert.Equal(t, Dark, Theme(1))
-	assert.Equal(t, Light, Theme(2))
-	assert.Equal(t, MacBackdropNormal, MacBackdrop(0))
-	assert.Equal(t, MacBackdropTransparent, MacBackdrop(1))
-	assert.Equal(t, MacBackdropTranslucent, MacBackdrop(2))
-	assert.Equal(t, MacBackdropLiquidGlass, MacBackdrop(3))
-	assert.Equal(t, MacToolbarStyleAutomatic, MacToolbarStyle(0))
-	assert.Equal(t, MacToolbarStyleUnifiedCompact, MacToolbarStyle(4))
-	assert.Equal(t, LiquidGlassStyleAutomatic, MacLiquidGlassStyle(0))
-	assert.Equal(t, LiquidGlassStyleVibrant, MacLiquidGlassStyle(3))
-	assert.Equal(t, WebviewGpuPolicyAlways, WebviewGpuPolicy(0))
-	assert.Equal(t, WebviewGpuPolicyNever, WebviewGpuPolicy(2))
-	assert.Equal(t, LinuxMenuStyleMenuBar, LinuxMenuStyle(0))
-	assert.Equal(t, LinuxMenuStylePrimaryMenu, LinuxMenuStyle(1))
-	assert.Equal(t, DefaultAppearance, MacAppearanceType(""))
-	assert.Equal(t, NSAppearanceNameDarkAqua, MacAppearanceType("NSAppearanceNameDarkAqua"))
+func TestWebviewWindowOptions_Constants_Good(t *core.T) {
+	core.AssertEqual(t, WindowStateNormal, WindowState(0))
+	core.AssertEqual(t, WindowStateMinimised, WindowState(1))
+	core.AssertEqual(t, WindowStateMaximised, WindowState(2))
+	core.AssertEqual(t, WindowStateFullscreen, WindowState(3))
+	core.AssertEqual(t, WindowCentered, WindowStartPosition(0))
+	core.AssertEqual(t, WindowXY, WindowStartPosition(1))
+	core.AssertEqual(t, BackgroundTypeSolid, BackgroundType(0))
+	core.AssertEqual(t, BackgroundTypeTransparent, BackgroundType(1))
+	core.AssertEqual(t, BackgroundTypeTranslucent, BackgroundType(2))
+	core.AssertEqual(t, Auto, BackdropType(0))
+	core.AssertEqual(t, None, BackdropType(1))
+	core.AssertEqual(t, Mica, BackdropType(2))
+	core.AssertEqual(t, Acrylic, BackdropType(3))
+	core.AssertEqual(t, Tabbed, BackdropType(4))
+	core.AssertEqual(t, SystemDefault, Theme(0))
+	core.AssertEqual(t, Dark, Theme(1))
+	core.AssertEqual(t, Light, Theme(2))
+	core.AssertEqual(t, MacBackdropNormal, MacBackdrop(0))
+	core.AssertEqual(t, MacBackdropTransparent, MacBackdrop(1))
+	core.AssertEqual(t, MacBackdropTranslucent, MacBackdrop(2))
+	core.AssertEqual(t, MacBackdropLiquidGlass, MacBackdrop(3))
+	core.AssertEqual(t, MacToolbarStyleAutomatic, MacToolbarStyle(0))
+	core.AssertEqual(t, MacToolbarStyleUnifiedCompact, MacToolbarStyle(4))
+	core.AssertEqual(t, LiquidGlassStyleAutomatic, MacLiquidGlassStyle(0))
+	core.AssertEqual(t, LiquidGlassStyleVibrant, MacLiquidGlassStyle(3))
+	core.AssertEqual(t, WebviewGpuPolicyAlways, WebviewGpuPolicy(0))
+	core.AssertEqual(t, WebviewGpuPolicyNever, WebviewGpuPolicy(2))
+	core.AssertEqual(t, LinuxMenuStyleMenuBar, LinuxMenuStyle(0))
+	core.AssertEqual(t, LinuxMenuStylePrimaryMenu, LinuxMenuStyle(1))
+	core.AssertEqual(t, DefaultAppearance, MacAppearanceType(""))
+	core.AssertEqual(t, NSAppearanceNameDarkAqua, MacAppearanceType("NSAppearanceNameDarkAqua"))
 }
 
-func TestWebviewWindowOptions_Constants_Bad(t *testing.T) {
-	assert.Equal(t, MacTitleBarDefault, MacTitleBar{})
-	assert.Equal(t, MacTitleBarHidden, MacTitleBar{
+func TestWebviewWindowOptions_Constants_Bad(t *core.T) {
+	core.AssertEqual(t, MacTitleBarDefault, MacTitleBar{})
+	core.AssertEqual(t, MacTitleBarHidden, MacTitleBar{
 		AppearsTransparent: true,
 		HideTitle:          true,
 		FullSizeContent:    true,
 	})
-	assert.Equal(t, MacTitleBarHiddenInset, MacTitleBar{
+	core.AssertEqual(t, MacTitleBarHiddenInset, MacTitleBar{
 		AppearsTransparent:   true,
 		HideTitle:            true,
 		FullSizeContent:      true,
 		UseToolbar:           true,
 		HideToolbarSeparator: true,
 	})
-	assert.Equal(t, MacTitleBarHiddenInsetUnified, MacTitleBar{
+	core.AssertEqual(t, MacTitleBarHiddenInsetUnified, MacTitleBar{
 		AppearsTransparent:   true,
 		HideTitle:            true,
 		FullSizeContent:      true,
@@ -63,13 +60,13 @@ func TestWebviewWindowOptions_Constants_Bad(t *testing.T) {
 		HideToolbarSeparator: true,
 		ToolbarStyle:         MacToolbarStyleUnified,
 	})
-	assert.Equal(t, NSVisualEffectMaterialAuto, NSVisualEffectMaterial(-1))
-	assert.Equal(t, MacWindowLevelNormal, MacWindowLevel("normal"))
-	assert.Equal(t, MacWindowCollectionBehaviorCanJoinAllSpaces, MacWindowCollectionBehavior(1))
-	assert.Equal(t, MacWindowCollectionBehaviorFullScreenAuxiliary, MacWindowCollectionBehavior(1<<8))
+	core.AssertEqual(t, NSVisualEffectMaterialAuto, NSVisualEffectMaterial(-1))
+	core.AssertEqual(t, MacWindowLevelNormal, MacWindowLevel("normal"))
+	core.AssertEqual(t, MacWindowCollectionBehaviorCanJoinAllSpaces, MacWindowCollectionBehavior(1))
+	core.AssertEqual(t, MacWindowCollectionBehaviorFullScreenAuxiliary, MacWindowCollectionBehavior(1<<8))
 }
 
-func TestWebviewWindowOptions_Constants_Ugly(t *testing.T) {
+func TestWebviewWindowOptions_Constants_Ugly(t *core.T) {
 	options := WebviewWindowOptions{
 		Name:             "main",
 		Title:            "Main",
@@ -92,14 +89,14 @@ func TestWebviewWindowOptions_Constants_Ugly(t *testing.T) {
 		BackgroundColour: NewRGBA(1, 2, 3, 4),
 	}
 
-	require.Equal(t, "main", options.Name)
-	assert.Equal(t, "Main", options.Title)
-	assert.Equal(t, 800, options.Width)
-	assert.Equal(t, 600, options.Height)
-	assert.True(t, options.Frameless)
-	assert.True(t, options.Hidden)
-	assert.True(t, options.AlwaysOnTop)
-	assert.True(t, options.DisableResize)
-	assert.True(t, options.EnableFileDrop)
-	assert.Equal(t, RGBA{Red: 1, Green: 2, Blue: 3, Alpha: 4}, options.BackgroundColour)
+	core.AssertEqual(t, "main", options.Name)
+	core.AssertEqual(t, "Main", options.Title)
+	core.AssertEqual(t, 800, options.Width)
+	core.AssertEqual(t, 600, options.Height)
+	core.AssertTrue(t, options.Frameless)
+	core.AssertTrue(t, options.Hidden)
+	core.AssertTrue(t, options.AlwaysOnTop)
+	core.AssertTrue(t, options.DisableResize)
+	core.AssertTrue(t, options.EnableFileDrop)
+	core.AssertEqual(t, RGBA{Red: 1, Green: 2, Blue: 3, Alpha: 4}, options.BackgroundColour)
 }

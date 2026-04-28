@@ -2,12 +2,9 @@ package window
 
 import (
 	"context"
-	"testing"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/screen"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 type mockScreenPlatform struct {
@@ -29,7 +26,7 @@ func (m *mockScreenPlatform) GetCurrent() *screen.Screen {
 	return m.GetPrimary()
 }
 
-func newTestWindowServiceWithScreen(t *testing.T, screens []screen.Screen) (*Service, *core.Core) {
+func newTestWindowServiceWithScreen(t *core.T, screens []screen.Screen) (*Service, *core.Core) {
 	t.Helper()
 
 	c := core.New(
@@ -37,13 +34,13 @@ func newTestWindowServiceWithScreen(t *testing.T, screens []screen.Screen) (*Ser
 		core.WithService(Register(newMockPlatform())),
 		core.WithServiceLock(),
 	)
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	core.RequireTrue(t, c.ServiceStartup(context.Background(), nil).OK)
 
 	svc := core.MustServiceFor[*Service](c, "window")
 	return svc, c
 }
 
-func TestTaskTileWindows_Good_UsesPrimaryScreenSize(t *testing.T) {
+func TestTaskTileWindows_Good_UsesPrimaryScreenSize(t *core.T) {
 	_, c := newTestWindowServiceWithScreen(t, []screen.Screen{
 		{
 			ID: "1", Name: "Primary", IsPrimary: true,
@@ -52,28 +49,28 @@ func TestTaskTileWindows_Good_UsesPrimaryScreenSize(t *testing.T) {
 		},
 	})
 
-	require.True(t, taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("left"), WithSize(400, 400)}}).OK)
-	require.True(t, taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("right"), WithSize(400, 400)}}).OK)
+	core.RequireTrue(t, taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("left"), WithSize(400, 400)}}).OK)
+	core.RequireTrue(t, taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("right"), WithSize(400, 400)}}).OK)
 
 	r := taskRun(c, "window.tileWindows", TaskTileWindows{Mode: "left-right", Windows: []string{"left", "right"}})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 
 	r2 := c.QUERY(QueryWindowByName{Name: "left"})
-	require.True(t, r2.OK)
+	core.RequireTrue(t, r2.OK)
 	left := r2.Value.(*WindowInfo)
-	assert.Equal(t, 0, left.X)
-	assert.Equal(t, 1000, left.Width)
-	assert.Equal(t, 1000, left.Height)
+	core.AssertEqual(t, 0, left.X)
+	core.AssertEqual(t, 1000, left.Width)
+	core.AssertEqual(t, 1000, left.Height)
 
 	r3 := c.QUERY(QueryWindowByName{Name: "right"})
-	require.True(t, r3.OK)
+	core.RequireTrue(t, r3.OK)
 	right := r3.Value.(*WindowInfo)
-	assert.Equal(t, 1000, right.X)
-	assert.Equal(t, 1000, right.Width)
-	assert.Equal(t, 1000, right.Height)
+	core.AssertEqual(t, 1000, right.X)
+	core.AssertEqual(t, 1000, right.Width)
+	core.AssertEqual(t, 1000, right.Height)
 }
 
-func TestTaskSnapWindow_Good_UsesPrimaryScreenSize(t *testing.T) {
+func TestTaskSnapWindow_Good_UsesPrimaryScreenSize(t *core.T) {
 	_, c := newTestWindowServiceWithScreen(t, []screen.Screen{
 		{
 			ID: "1", Name: "Primary", IsPrimary: true,
@@ -82,21 +79,21 @@ func TestTaskSnapWindow_Good_UsesPrimaryScreenSize(t *testing.T) {
 		},
 	})
 
-	require.True(t, taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("snap"), WithSize(400, 300)}}).OK)
+	core.RequireTrue(t, taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("snap"), WithSize(400, 300)}}).OK)
 
 	r := taskRun(c, "window.snapWindow", TaskSnapWindow{Name: "snap", Position: "left"})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 
 	r2 := c.QUERY(QueryWindowByName{Name: "snap"})
-	require.True(t, r2.OK)
+	core.RequireTrue(t, r2.OK)
 	info := r2.Value.(*WindowInfo)
-	assert.Equal(t, 0, info.X)
-	assert.Equal(t, 0, info.Y)
-	assert.Equal(t, 1000, info.Width)
-	assert.Equal(t, 1000, info.Height)
+	core.AssertEqual(t, 0, info.X)
+	core.AssertEqual(t, 0, info.Y)
+	core.AssertEqual(t, 1000, info.Width)
+	core.AssertEqual(t, 1000, info.Height)
 }
 
-func TestTaskTileWindows_Good_UsesPrimaryWorkAreaOrigin(t *testing.T) {
+func TestTaskTileWindows_Good_UsesPrimaryWorkAreaOrigin(t *core.T) {
 	_, c := newTestWindowServiceWithScreen(t, []screen.Screen{
 		{
 			ID: "1", Name: "Primary", IsPrimary: true,
@@ -105,25 +102,25 @@ func TestTaskTileWindows_Good_UsesPrimaryWorkAreaOrigin(t *testing.T) {
 		},
 	})
 
-	require.True(t, taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("left"), WithSize(400, 400)}}).OK)
-	require.True(t, taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("right"), WithSize(400, 400)}}).OK)
+	core.RequireTrue(t, taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("left"), WithSize(400, 400)}}).OK)
+	core.RequireTrue(t, taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("right"), WithSize(400, 400)}}).OK)
 
 	r := taskRun(c, "window.tileWindows", TaskTileWindows{Mode: "left-right", Windows: []string{"left", "right"}})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 
 	r2 := c.QUERY(QueryWindowByName{Name: "left"})
-	require.True(t, r2.OK)
+	core.RequireTrue(t, r2.OK)
 	left := r2.Value.(*WindowInfo)
-	assert.Equal(t, 100, left.X)
-	assert.Equal(t, 50, left.Y)
-	assert.Equal(t, 1000, left.Width)
-	assert.Equal(t, 1000, left.Height)
+	core.AssertEqual(t, 100, left.X)
+	core.AssertEqual(t, 50, left.Y)
+	core.AssertEqual(t, 1000, left.Width)
+	core.AssertEqual(t, 1000, left.Height)
 
 	r3 := c.QUERY(QueryWindowByName{Name: "right"})
-	require.True(t, r3.OK)
+	core.RequireTrue(t, r3.OK)
 	right := r3.Value.(*WindowInfo)
-	assert.Equal(t, 1100, right.X)
-	assert.Equal(t, 50, right.Y)
-	assert.Equal(t, 1000, right.Width)
-	assert.Equal(t, 1000, right.Height)
+	core.AssertEqual(t, 1100, right.X)
+	core.AssertEqual(t, 50, right.Y)
+	core.AssertEqual(t, 1000, right.Width)
+	core.AssertEqual(t, 1000, right.Height)
 }

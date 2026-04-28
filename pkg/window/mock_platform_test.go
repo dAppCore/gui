@@ -1,13 +1,10 @@
 package window
 
 import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	core "dappco.re/go"
 )
 
-func TestMockPlatform_CreateWindow_Good(t *testing.T) {
+func TestMockPlatform_CreateWindow_Good(t *core.T) {
 	p := NewMockPlatform()
 	w := p.CreateWindow(PlatformWindowOptions{
 		Name:   "main",
@@ -21,13 +18,13 @@ func TestMockPlatform_CreateWindow_Good(t *testing.T) {
 		Y:      20,
 	})
 
-	require.Len(t, p.Windows, 1)
+	core.AssertLen(t, p.Windows, 1)
 	got := w.(*MockWindow)
-	assert.Equal(t, "main", got.Name())
-	assert.Equal(t, []string{"globalThis.ready = true"}, got.ExecJSCalls())
-	assert.Equal(t, "Core GUI", got.Title())
-	assert.Equal(t, 10, got.x)
-	assert.Equal(t, 20, got.y)
+	core.AssertEqual(t, "main", got.Name())
+	core.AssertEqual(t, []string{"globalThis.ready = true"}, got.ExecJSCalls())
+	core.AssertEqual(t, "Core GUI", got.Title())
+	core.AssertEqual(t, 10, got.x)
+	core.AssertEqual(t, 20, got.y)
 
 	got.SetPosition(30, 40)
 	got.SetSize(1920, 1080)
@@ -54,35 +51,36 @@ func TestMockPlatform_CreateWindow_Good(t *testing.T) {
 	got.OpenDevTools()
 	got.CloseDevTools()
 
-	assert.Equal(t, 1, got.x)
-	assert.Equal(t, 2, got.y)
-	assert.Equal(t, 3, got.width)
-	assert.Equal(t, 4, got.height)
-	assert.True(t, got.maximised)
-	assert.True(t, got.focused)
-	assert.False(t, got.visible)
-	assert.True(t, got.fullscreened)
-	assert.True(t, got.minimised)
-	assert.Equal(t, 0.75, got.opacity)
-	assert.Equal(t, []string{"globalThis.ready = true", "alert(1)"}, got.ExecJSCalls())
-	assert.True(t, got.flashed)
-	assert.False(t, got.DevToolsOpen())
+	core.AssertEqual(t, 1, got.x)
+	core.AssertEqual(t, 2, got.y)
+	core.AssertEqual(t, 3, got.width)
+	core.AssertEqual(t, 4, got.height)
+	core.AssertTrue(t, got.maximised)
+	core.AssertTrue(t, got.focused)
+	core.AssertFalse(t, got.visible)
+	core.AssertTrue(t, got.fullscreened)
+	core.AssertTrue(t, got.minimised)
+	core.AssertEqual(t, 0.75, got.opacity)
+	core.AssertEqual(t, []string{"globalThis.ready = true", "alert(1)"}, got.ExecJSCalls())
+	core.AssertTrue(t, got.flashed)
+	core.AssertFalse(t, got.DevToolsOpen())
 }
 
-func TestMockPlatform_GetWindows_Bad(t *testing.T) {
+func TestMockPlatform_GetWindows_Bad(t *core.T) {
 	p := NewMockPlatform()
-	assert.Empty(t, p.GetWindows())
+	core.AssertEmpty(t, p.GetWindows())
+	core.AssertNotEmpty(t, core.Sprintf("%T", p))
 }
 
-func TestMockWindow_FileDrop_Ugly(t *testing.T) {
+func TestMockWindow_FileDrop_Ugly(t *core.T) {
 	w := &mockWindow{}
 	calls := 0
 	w.OnFileDrop(func(paths []string, targetID string) {
 		calls++
-		assert.Equal(t, []string{"a.txt"}, paths)
-		assert.Equal(t, "drop-zone", targetID)
+		core.AssertEqual(t, []string{"a.txt"}, paths)
+		core.AssertEqual(t, "drop-zone", targetID)
 	})
 	w.emitFileDrop([]string{"a.txt"}, "drop-zone")
 
-	assert.Equal(t, 1, calls)
+	core.AssertEqual(t, 1, calls)
 }

@@ -4,11 +4,8 @@ package events
 import (
 	"context"
 	"sync"
-	"testing"
 
-	core "dappco.re/go/core"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	core "dappco.re/go"
 )
 
 // --- Mock Platform ---
@@ -117,14 +114,14 @@ func (m *mockPlatform) listenerCount() int {
 
 // --- Test helpers ---
 
-func newTestService(t *testing.T) (*Service, *core.Core, *mockPlatform) {
+func newTestService(t *core.T) (*Service, *core.Core, *mockPlatform) {
 	t.Helper()
 	mock := newMockPlatform()
 	c := core.New(
 		core.WithService(Register(mock)),
 		core.WithServiceLock(),
 	)
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	core.RequireTrue(t, c.ServiceStartup(context.Background(), nil).OK)
 	svc := core.MustServiceFor[*Service](c, "events")
 	return svc, c, mock
 }
@@ -137,33 +134,34 @@ func taskRun(c *core.Core, name string, task any) core.Result {
 
 // --- Good path tests ---
 
-func TestRegister_Good(t *testing.T) {
+func TestRegister_Good(t *core.T) {
 	svc, _, _ := newTestService(t)
-	assert.NotNil(t, svc)
+	core.AssertNotNil(t, svc)
+	core.AssertNotEmpty(t, core.Sprintf("%T", svc))
 }
 
-func TestTaskEmit_Good(t *testing.T) {
+func TestTaskEmit_Good(t *core.T) {
 	_, c, mock := newTestService(t)
 
 	r := taskRun(c, "events.emit", TaskEmit{Name: "user:login", Data: "alice"})
-	require.True(t, r.OK)
-	assert.Equal(t, false, r.Value) // not cancelled
+	core.RequireTrue(t, r.OK)
+	core.AssertEqual(t, false, r.Value) // not cancelled
 
-	assert.Len(t, mock.emitted, 1)
-	assert.Equal(t, "user:login", mock.emitted[0].Name)
-	assert.Equal(t, "alice", mock.emitted[0].Data)
+	core.AssertLen(t, mock.emitted, 1)
+	core.AssertEqual(t, "user:login", mock.emitted[0].Name)
+	core.AssertEqual(t, "alice", mock.emitted[0].Data)
 }
 
-func TestTaskEmit_NoData_Good(t *testing.T) {
+func TestTaskEmit_NoData_Good(t *core.T) {
 	_, c, mock := newTestService(t)
 
 	r := taskRun(c, "events.emit", TaskEmit{Name: "ping"})
-	require.True(t, r.OK)
-	assert.Len(t, mock.emitted, 1)
-	assert.Nil(t, mock.emitted[0].Data)
+	core.RequireTrue(t, r.OK)
+	core.AssertLen(t, mock.emitted, 1)
+	core.AssertNil(t, mock.emitted[0].Data)
 }
 
-func TestTaskOn_Good(t *testing.T) {
+func TestTaskOn_Good(t *core.T) {
 	_, c, mock := newTestService(t)
 
 	var received []ActionEventFired
@@ -175,16 +173,16 @@ func TestTaskOn_Good(t *testing.T) {
 	})
 
 	r := taskRun(c, "events.on", TaskOn{Name: "theme:changed"})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 
 	mock.simulateEvent("theme:changed", "dark")
 
-	assert.Len(t, received, 1)
-	assert.Equal(t, "theme:changed", received[0].Event.Name)
-	assert.Equal(t, "dark", received[0].Event.Data)
+	core.AssertLen(t, received, 1)
+	core.AssertEqual(t, "theme:changed", received[0].Event.Name)
+	core.AssertEqual(t, "dark", received[0].Event.Data)
 }
 
-func TestTaskOn_NilEvent_Ignores(t *testing.T) {
+func TestTaskOn_NilEvent_Ignores(t *core.T) {
 	_, c, mock := newTestService(t)
 
 	var received []ActionEventFired
@@ -196,88 +194,88 @@ func TestTaskOn_NilEvent_Ignores(t *testing.T) {
 	})
 
 	r := taskRun(c, "events.on", TaskOn{Name: "theme:changed"})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 
-	require.NotEmpty(t, mock.listeners["theme:changed"])
-	require.NotPanics(t, func() {
+	core.RequireNotEmpty(t, mock.listeners["theme:changed"])
+	core.AssertNotPanics(t, func() {
 		mock.listeners["theme:changed"][0].callback(nil)
 	})
 
-	assert.Empty(t, received)
+	core.AssertEmpty(t, received)
 }
 
-func TestTaskOff_Good(t *testing.T) {
+func TestTaskOff_Good(t *core.T) {
 	_, c, mock := newTestService(t)
 
 	// Register via IPC then remove
 	r := taskRun(c, "events.on", TaskOn{Name: "file:saved"})
-	require.True(t, r.OK)
-	assert.Equal(t, 1, mock.listenerCount())
+	core.RequireTrue(t, r.OK)
+	core.AssertEqual(t, 1, mock.listenerCount())
 
 	r2 := taskRun(c, "events.off", TaskOff{Name: "file:saved"})
-	require.True(t, r2.OK)
-	assert.Equal(t, 0, mock.listenerCount())
+	core.RequireTrue(t, r2.OK)
+	core.AssertEqual(t, 0, mock.listenerCount())
 }
 
-func TestQueryListeners_Good(t *testing.T) {
+func TestQueryListeners_Good(t *core.T) {
 	_, c, _ := newTestService(t)
 
-	require.True(t, taskRun(c, "events.on", TaskOn{Name: "user:login"}).OK)
-	require.True(t, taskRun(c, "events.on", TaskOn{Name: "user:login"}).OK)
-	require.True(t, taskRun(c, "events.on", TaskOn{Name: "theme:changed"}).OK)
+	core.RequireTrue(t, taskRun(c, "events.on", TaskOn{Name: "user:login"}).OK)
+	core.RequireTrue(t, taskRun(c, "events.on", TaskOn{Name: "user:login"}).OK)
+	core.RequireTrue(t, taskRun(c, "events.on", TaskOn{Name: "theme:changed"}).OK)
 
 	r := c.QUERY(QueryListeners{})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 
 	infos := r.Value.([]ListenerInfo)
 	counts := make(map[string]int)
 	for _, info := range infos {
 		counts[info.EventName] = info.Count
 	}
-	assert.Equal(t, 2, counts["user:login"])
-	assert.Equal(t, 1, counts["theme:changed"])
+	core.AssertEqual(t, 2, counts["user:login"])
+	core.AssertEqual(t, 1, counts["theme:changed"])
 }
 
-func TestQueryListeners_Empty_Good(t *testing.T) {
+func TestQueryListeners_Empty_Good(t *core.T) {
 	_, c, _ := newTestService(t)
 
 	r := c.QUERY(QueryListeners{})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 
 	infos := r.Value.([]ListenerInfo)
-	assert.Empty(t, infos)
+	core.AssertEmpty(t, infos)
 }
 
-func TestOnShutdown_CancelsAll_Good(t *testing.T) {
+func TestOnShutdown_CancelsAll_Good(t *core.T) {
 	svc, _, mock := newTestService(t)
 
-	require.True(t, taskRun(svc.Core(), "events.on", TaskOn{Name: "a:b"}).OK)
-	require.True(t, taskRun(svc.Core(), "events.on", TaskOn{Name: "c:d"}).OK)
-	assert.Equal(t, 2, mock.listenerCount())
+	core.RequireTrue(t, taskRun(svc.Core(), "events.on", TaskOn{Name: "a:b"}).OK)
+	core.RequireTrue(t, taskRun(svc.Core(), "events.on", TaskOn{Name: "c:d"}).OK)
+	core.AssertEqual(t, 2, mock.listenerCount())
 
-	require.True(t, svc.OnShutdown(context.Background()).OK)
-	assert.Equal(t, 0, mock.listenerCount())
+	core.RequireTrue(t, svc.OnShutdown(context.Background()).OK)
+	core.AssertEqual(t, 0, mock.listenerCount())
 }
 
-func TestOnShutdown_IgnoresNilCancels_Good(t *testing.T) {
+func TestOnShutdown_IgnoresNilCancels_Good(t *core.T) {
 	mock := newMockPlatform()
 	mock.nilCancel = true
 	c := core.New(
 		core.WithService(Register(mock)),
 		core.WithServiceLock(),
 	)
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	core.RequireTrue(t, c.ServiceStartup(context.Background(), nil).OK)
 	svc := core.MustServiceFor[*Service](c, "events")
 
-	require.True(t, taskRun(c, "events.on", TaskOn{Name: "a:b"}).OK)
-	assert.Equal(t, 1, mock.listenerCount())
+	core.RequireTrue(t, taskRun(c, "events.on", TaskOn{Name: "a:b"}).OK)
+	core.AssertEqual(t, 1, mock.listenerCount())
 
-	require.NotPanics(t, func() {
-		assert.True(t, svc.OnShutdown(context.Background()).OK)
+	core.AssertNotPanics(t, func() {
+		core.AssertTrue(t, svc.OnShutdown(context.Background()).OK)
 	})
 }
 
-func TestActionEventFired_BroadcastOnSimulate_Good(t *testing.T) {
+func TestActionEventFired_BroadcastOnSimulate_Good(t *core.T) {
 	_, c, mock := newTestService(t)
 
 	var receivedEvents []CustomEvent
@@ -288,107 +286,107 @@ func TestActionEventFired_BroadcastOnSimulate_Good(t *testing.T) {
 		return core.Result{OK: true}
 	})
 
-	require.True(t, taskRun(c, "events.on", TaskOn{Name: "data:ready"}).OK)
+	core.RequireTrue(t, taskRun(c, "events.on", TaskOn{Name: "data:ready"}).OK)
 
 	mock.simulateEvent("data:ready", map[string]any{"rows": 42})
 
-	require.Len(t, receivedEvents, 1)
-	assert.Equal(t, "data:ready", receivedEvents[0].Name)
+	core.AssertLen(t, receivedEvents, 1)
+	core.AssertEqual(t, "data:ready", receivedEvents[0].Name)
 }
 
 // --- Bad path tests ---
 
-func TestTaskOn_EmptyName_Bad(t *testing.T) {
+func TestTaskOn_EmptyName_Bad(t *core.T) {
 	_, c, _ := newTestService(t)
 
 	r := taskRun(c, "events.on", TaskOn{Name: ""})
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
-func TestTaskEmit_UnknownEvent_Bad(t *testing.T) {
+func TestTaskEmit_UnknownEvent_Bad(t *core.T) {
 	// Emitting an event with no listeners is valid — returns not-cancelled.
 	_, c, mock := newTestService(t)
 
 	r := taskRun(c, "events.emit", TaskEmit{Name: "no:listeners"})
-	require.True(t, r.OK)
-	assert.Equal(t, false, r.Value)
-	assert.Len(t, mock.emitted, 1) // still recorded as emitted
+	core.RequireTrue(t, r.OK)
+	core.AssertEqual(t, false, r.Value)
+	core.AssertLen(t, mock.emitted, 1) // still recorded as emitted
 }
 
-func TestTaskEmit_EmptyName_Bad(t *testing.T) {
+func TestTaskEmit_EmptyName_Bad(t *core.T) {
 	_, c, _ := newTestService(t)
 
 	r := taskRun(c, "events.emit", TaskEmit{Name: ""})
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
-func TestQueryListeners_NoService_Bad(t *testing.T) {
+func TestQueryListeners_NoService_Bad(t *core.T) {
 	// No events service registered — query is not handled.
 	c := core.New(core.WithServiceLock())
 
 	r := c.QUERY(QueryListeners{})
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
-func TestTaskEmit_NoService_Bad(t *testing.T) {
+func TestTaskEmit_NoService_Bad(t *core.T) {
 	c := core.New(core.WithServiceLock())
 
 	r := c.Action("events.emit").Run(context.Background(), core.NewOptions())
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
-func TestTaskEmit_PlatformUnavailable_Bad(t *testing.T) {
+func TestTaskEmit_PlatformUnavailable_Bad(t *core.T) {
 	c := core.New(
 		core.WithService(Register(nil)),
 		core.WithServiceLock(),
 	)
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	core.RequireTrue(t, c.ServiceStartup(context.Background(), nil).OK)
 	svc := core.MustServiceFor[*Service](c, "events")
 
 	r := taskRun(c, "events.emit", TaskEmit{Name: "user:login"})
-	require.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 	err, ok := r.Value.(error)
-	require.True(t, ok)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "event platform unavailable")
+	core.RequireTrue(t, ok)
+	core.AssertError(t, err)
+	core.AssertContains(t, err.Error(), "event platform unavailable")
 
 	r = taskRun(c, "events.on", TaskOn{Name: "user:login"})
-	require.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 	err, ok = r.Value.(error)
-	require.True(t, ok)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "event platform unavailable")
+	core.RequireTrue(t, ok)
+	core.AssertError(t, err)
+	core.AssertContains(t, err.Error(), "event platform unavailable")
 
 	r = taskRun(c, "events.off", TaskOff{Name: "user:login"})
-	require.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 	err, ok = r.Value.(error)
-	require.True(t, ok)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "event platform unavailable")
+	core.RequireTrue(t, ok)
+	core.AssertError(t, err)
+	core.AssertContains(t, err.Error(), "event platform unavailable")
 
-	require.NotPanics(t, func() {
-		assert.True(t, svc.OnShutdown(context.Background()).OK)
+	core.AssertNotPanics(t, func() {
+		core.AssertTrue(t, svc.OnShutdown(context.Background()).OK)
 	})
 }
 
 // --- Ugly path tests ---
 
-func TestTaskOff_NeverRegistered_Ugly(t *testing.T) {
+func TestTaskOff_NeverRegistered_Ugly(t *core.T) {
 	// Off on a name that was never registered is a no-op — must not panic.
 	_, c, _ := newTestService(t)
 
 	r := taskRun(c, "events.off", TaskOff{Name: "nonexistent:event"})
-	assert.True(t, r.OK)
+	core.AssertTrue(t, r.OK)
 }
 
-func TestTaskOff_EmptyName_Bad(t *testing.T) {
+func TestTaskOff_EmptyName_Bad(t *core.T) {
 	_, c, _ := newTestService(t)
 
 	r := taskRun(c, "events.off", TaskOff{Name: ""})
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
-func TestTaskOn_MultipleListeners_Ugly(t *testing.T) {
+func TestTaskOn_MultipleListeners_Ugly(t *core.T) {
 	// Multiple IPC listeners for the same event each receive ActionEventFired.
 	_, c, mock := newTestService(t)
 
@@ -412,10 +410,10 @@ func TestTaskOn_MultipleListeners_Ugly(t *testing.T) {
 	mu.Lock()
 	count := fireCount
 	mu.Unlock()
-	assert.Equal(t, 3, count)
+	core.AssertEqual(t, 3, count)
 }
 
-func TestTaskOff_ThenEmit_Ugly(t *testing.T) {
+func TestTaskOff_ThenEmit_Ugly(t *core.T) {
 	// After Off, simulating the event must not trigger any IPC actions.
 	_, c, mock := newTestService(t)
 
@@ -431,10 +429,10 @@ func TestTaskOff_ThenEmit_Ugly(t *testing.T) {
 	taskRun(c, "events.off", TaskOff{Name: "transient"})
 
 	mock.simulateEvent("transient", "late-data")
-	assert.False(t, received)
+	core.AssertFalse(t, received)
 }
 
-func TestQueryListeners_AfterOff_Ugly(t *testing.T) {
+func TestQueryListeners_AfterOff_Ugly(t *core.T) {
 	// After Off, the event name must not appear in QueryListeners results.
 	_, c, _ := newTestService(t)
 
@@ -445,6 +443,6 @@ func TestQueryListeners_AfterOff_Ugly(t *testing.T) {
 	infos := r.Value.([]ListenerInfo)
 
 	for _, info := range infos {
-		assert.NotEqual(t, "ephemeral", info.EventName)
+		core.AssertNotEqual(t, "ephemeral", info.EventName)
 	}
 }

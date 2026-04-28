@@ -7,7 +7,7 @@ import (
 	"os" // Note: AX-6 — os.Getenv intrinsic, core.Env(...) preferred where reading config
 	"path/filepath"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	coreerr "dappco.re/go/log"
 	"gopkg.in/yaml.v3"
 )

@@ -5,25 +5,22 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/sha256"
+	core "dappco.re/go"
 	"encoding/base64"
 	"encoding/hex"
+	"gopkg.in/yaml.v3"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
 )
 
-func signedManifest(t *testing.T, manifest Manifest) Manifest {
+func signedManifest(t *core.T, manifest Manifest) Manifest {
 	t.Helper()
 
 	pub, priv, err := ed25519.GenerateKey(rand.Reader)
-	require.NoError(t, err)
+	core.RequireNoError(t, err)
 
 	payload := manifest.Name + "\n" + manifest.Version + "\n" + manifest.Repository + "\n" + manifest.Ref
 	signature := ed25519.Sign(priv, []byte(payload))
@@ -35,7 +32,7 @@ func signedManifest(t *testing.T, manifest Manifest) Manifest {
 	return manifest
 }
 
-func TestMarketplace_FetchManifest_Good(t *testing.T) {
+func TestMarketplace_FetchManifest_Good(t *core.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		_, _ = w.Write([]byte("name: core-ui\nversion: 1.2.3\nref: main\n"))
 	}))
@@ -43,14 +40,14 @@ func TestMarketplace_FetchManifest_Good(t *testing.T) {
 
 	installer := Installer{HTTPClient: server.Client()}
 	manifest, err := installer.FetchManifest(context.Background(), server.URL)
-	require.NoError(t, err)
-	assert.Equal(t, "core-ui", manifest.Name)
-	assert.Equal(t, "1.2.3", manifest.Version)
-	assert.Equal(t, server.URL, manifest.Repository)
-	assert.Equal(t, "main", manifest.Ref)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, "core-ui", manifest.Name)
+	core.AssertEqual(t, "1.2.3", manifest.Version)
+	core.AssertEqual(t, server.URL, manifest.Repository)
+	core.AssertEqual(t, "main", manifest.Ref)
 }
 
-func TestMarketplace_FetchManifest_Bad(t *testing.T) {
+func TestMarketplace_FetchManifest_Bad(t *core.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte("boom"))
@@ -59,12 +56,12 @@ func TestMarketplace_FetchManifest_Bad(t *testing.T) {
 
 	installer := Installer{HTTPClient: server.Client()}
 	_, err := installer.FetchManifest(context.Background(), server.URL)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "manifest fetch failed")
+	core.AssertError(t, err)
+	core.AssertContains(t, err.Error(), "manifest fetch failed")
 }
 
-func TestMarketplace_FetchManifest_Ugly(t *testing.T) {
-	t.Run("invalid yaml", func(t *testing.T) {
+func TestMarketplace_FetchManifest_Ugly(t *core.T) {
+	t.Run("invalid yaml", func(t *core.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			_, _ = w.Write([]byte(": not-yaml"))
 		}))
@@ -72,10 +69,10 @@ func TestMarketplace_FetchManifest_Ugly(t *testing.T) {
 
 		installer := Installer{HTTPClient: server.Client()}
 		_, err := installer.FetchManifest(context.Background(), server.URL)
-		require.Error(t, err)
+		core.AssertError(t, err)
 	})
 
-	t.Run("size limit", func(t *testing.T) {
+	t.Run("size limit", func(t *core.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			_, _ = w.Write([]byte("name: " + strings.Repeat("x", maxManifestBytes)))
 		}))
@@ -83,12 +80,12 @@ func TestMarketplace_FetchManifest_Ugly(t *testing.T) {
 
 		installer := Installer{HTTPClient: server.Client()}
 		_, err := installer.FetchManifest(context.Background(), server.URL)
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "exceeds")
+		core.AssertError(t, err)
+		core.AssertContains(t, err.Error(), "exceeds")
 	})
 }
 
-func TestMarketplace_List_Bad(t *testing.T) {
+func TestMarketplace_List_Bad(t *core.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusBadGateway)
 		_, _ = w.Write([]byte("boom"))
@@ -97,11 +94,11 @@ func TestMarketplace_List_Bad(t *testing.T) {
 
 	installer := Installer{HTTPClient: server.Client()}
 	_, err := installer.List(context.Background(), server.URL)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "marketplace list failed")
+	core.AssertError(t, err)
+	core.AssertContains(t, err.Error(), "marketplace list failed")
 }
 
-func TestMarketplace_List_Ugly(t *testing.T) {
+func TestMarketplace_List_Ugly(t *core.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		_, _ = w.Write([]byte(strings.Repeat("a", maxManifestBytes+1)))
 	}))
@@ -109,11 +106,11 @@ func TestMarketplace_List_Ugly(t *testing.T) {
 
 	installer := Installer{HTTPClient: server.Client()}
 	_, err := installer.List(context.Background(), server.URL)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "exceeds")
+	core.AssertError(t, err)
+	core.AssertContains(t, err.Error(), "exceeds")
 }
 
-func TestMarketplace_VerifyManifest_Good(t *testing.T) {
+func TestMarketplace_VerifyManifest_Good(t *core.T) {
 	manifest := signedManifest(t, Manifest{
 		Name:       "core-ui",
 		Version:    "1.2.3",
@@ -121,10 +118,10 @@ func TestMarketplace_VerifyManifest_Good(t *testing.T) {
 		Ref:        "main",
 	})
 
-	require.NoError(t, VerifyManifest(manifest))
+	core.RequireNoError(t, VerifyManifest(manifest))
 }
 
-func TestMarketplace_VerifyManifest_Bad(t *testing.T) {
+func TestMarketplace_VerifyManifest_Bad(t *core.T) {
 	manifest := signedManifest(t, Manifest{
 		Name:       "core-ui",
 		Version:    "1.2.3",
@@ -134,11 +131,11 @@ func TestMarketplace_VerifyManifest_Bad(t *testing.T) {
 	manifest.Ref = "dev"
 
 	err := VerifyManifest(manifest)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "manifest signature verification failed")
+	core.AssertError(t, err)
+	core.AssertContains(t, err.Error(), "manifest signature verification failed")
 }
 
-func TestMarketplace_VerifyManifest_Ugly(t *testing.T) {
+func TestMarketplace_VerifyManifest_Ugly(t *core.T) {
 	manifest := Manifest{
 		Name:       "core-ui",
 		Version:    "1.2.3",
@@ -151,10 +148,10 @@ func TestMarketplace_VerifyManifest_Ugly(t *testing.T) {
 		},
 	}
 
-	require.Error(t, VerifyManifest(manifest))
+	core.AssertError(t, VerifyManifest(manifest))
 }
 
-func TestMarketplace_VerifyManifest_RequiresSignature(t *testing.T) {
+func TestMarketplace_VerifyManifest_RequiresSignature(t *core.T) {
 	manifest := Manifest{
 		Name:       "core-ui",
 		Version:    "1.2.3",
@@ -162,16 +159,16 @@ func TestMarketplace_VerifyManifest_RequiresSignature(t *testing.T) {
 		Ref:        "main",
 	}
 
-	require.Error(t, VerifyManifest(manifest))
+	core.AssertError(t, VerifyManifest(manifest))
 }
 
-func TestMarketplace_Install_Good(t *testing.T) {
+func TestMarketplace_Install_Good(t *core.T) {
 	scriptDir := t.TempDir()
 	logFile := filepath.Join(scriptDir, "git.log")
 	targetRoot := t.TempDir()
 	scriptPath := filepath.Join(scriptDir, "git")
 	script := "#!/bin/sh\nprintf '%s\\n' \"$@\" > " + shellQuote(logFile) + "\nlast=''\nfor arg in \"$@\"; do last=\"$arg\"; done\nmkdir -p \"$last\"\nexit 0\n"
-	require.NoError(t, os.WriteFile(scriptPath, []byte(script), 0o755))
+	core.RequireNoError(t, os.WriteFile(scriptPath, []byte(script), 0o755))
 
 	installer := Installer{
 		GitBinary:  scriptPath,
@@ -184,33 +181,33 @@ func TestMarketplace_Install_Good(t *testing.T) {
 		Repository: "https://example.com/core-ui.git",
 		Ref:        "main",
 	}))
-	require.NoError(t, err)
+	core.RequireNoError(t, err)
 	resolvedRoot, err := filepath.EvalSymlinks(targetRoot)
-	require.NoError(t, err)
-	assert.Equal(t, filepath.Join(resolvedRoot, "core-ui"), targetDir)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, filepath.Join(resolvedRoot, "core-ui"), targetDir)
 	_, err = os.Stat(targetDir)
-	require.NoError(t, err)
+	core.RequireNoError(t, err)
 
 	contents, err := os.ReadFile(logFile)
-	require.NoError(t, err)
-	assert.Contains(t, string(contents), "clone")
-	assert.Contains(t, string(contents), "--branch")
-	assert.Contains(t, string(contents), "main")
-	assert.Contains(t, string(contents), "--")
+	core.RequireNoError(t, err)
+	core.AssertContains(t, string(contents), "clone")
+	core.AssertContains(t, string(contents), "--branch")
+	core.AssertContains(t, string(contents), "main")
+	core.AssertContains(t, string(contents), "--")
 
 	installedManifest, err := os.ReadFile(filepath.Join(targetDir, ".core", "marketplace.yaml"))
-	require.NoError(t, err)
-	assert.Contains(t, string(installedManifest), "name: Core UI")
+	core.RequireNoError(t, err)
+	core.AssertContains(t, string(installedManifest), "name: Core UI")
 }
 
-func TestMarketplace_Install_Bad(t *testing.T) {
+func TestMarketplace_Install_Bad(t *core.T) {
 	installer := Installer{InstallDir: ""}
 	_, err := installer.Install(context.Background(), Manifest{Name: "core-ui"})
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "install dir is required")
+	core.AssertError(t, err)
+	core.AssertContains(t, err.Error(), "install dir is required")
 }
 
-func TestMarketplace_Install_RejectsTraversalName(t *testing.T) {
+func TestMarketplace_Install_RejectsTraversalName(t *core.T) {
 	installer := Installer{InstallDir: t.TempDir()}
 	_, err := installer.Install(context.Background(), signedManifest(t, Manifest{
 		Name:       "../../escape",
@@ -218,11 +215,11 @@ func TestMarketplace_Install_RejectsTraversalName(t *testing.T) {
 		Repository: "https://example.com/core-ui.git",
 		Ref:        "main",
 	}))
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "path separators")
+	core.AssertError(t, err)
+	core.AssertContains(t, err.Error(), "path separators")
 }
 
-func TestMarketplace_Install_RejectsDashPrefixedRepository(t *testing.T) {
+func TestMarketplace_Install_RejectsDashPrefixedRepository(t *core.T) {
 	installer := Installer{InstallDir: t.TempDir()}
 	_, err := installer.Install(context.Background(), signedManifest(t, Manifest{
 		Name:       "core-ui",
@@ -230,11 +227,11 @@ func TestMarketplace_Install_RejectsDashPrefixedRepository(t *testing.T) {
 		Repository: "--upload-pack=sh",
 		Ref:        "main",
 	}))
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "repository must not begin with a dash")
+	core.AssertError(t, err)
+	core.AssertContains(t, err.Error(), "repository must not begin with a dash")
 }
 
-func TestMarketplace_Install_RejectsDashPrefixedRef(t *testing.T) {
+func TestMarketplace_Install_RejectsDashPrefixedRef(t *core.T) {
 	installer := Installer{InstallDir: t.TempDir()}
 	_, err := installer.Install(context.Background(), signedManifest(t, Manifest{
 		Name:       "core-ui",
@@ -242,14 +239,14 @@ func TestMarketplace_Install_RejectsDashPrefixedRef(t *testing.T) {
 		Repository: "https://example.com/core-ui.git",
 		Ref:        "--upload-pack=sh",
 	}))
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "ref must not begin with a dash")
+	core.AssertError(t, err)
+	core.AssertContains(t, err.Error(), "ref must not begin with a dash")
 }
 
-func TestMarketplace_Install_Ugly(t *testing.T) {
+func TestMarketplace_Install_Ugly(t *core.T) {
 	scriptDir := t.TempDir()
 	scriptPath := filepath.Join(scriptDir, "git")
-	require.NoError(t, os.WriteFile(scriptPath, []byte("#!/bin/sh\nprintf '%s\\n' 'fatal: https://token:secret@example.com/repo.git' >&2\nexit 1\n"), 0o755))
+	core.RequireNoError(t, os.WriteFile(scriptPath, []byte("#!/bin/sh\nprintf '%s\\n' 'fatal: https://token:secret@example.com/repo.git' >&2\nexit 1\n"), 0o755))
 
 	installer := Installer{
 		GitBinary:  scriptPath,
@@ -260,18 +257,18 @@ func TestMarketplace_Install_Ugly(t *testing.T) {
 		Name:       "core-ui",
 		Repository: "https://example.com/core-ui.git",
 	}))
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "git clone failed")
-	assert.NotContains(t, err.Error(), "secret")
-	assert.NotContains(t, err.Error(), "token:")
+	core.AssertError(t, err)
+	core.AssertContains(t, err.Error(), "git clone failed")
+	core.AssertNotContains(t, err.Error(), "secret")
+	core.AssertNotContains(t, err.Error(), "token:")
 }
 
-func TestMarketplace_Install_CleansUpOnCloneFailure(t *testing.T) {
+func TestMarketplace_Install_CleansUpOnCloneFailure(t *core.T) {
 	scriptDir := t.TempDir()
 	scriptPath := filepath.Join(scriptDir, "git")
 	targetRoot := t.TempDir()
 	script := "#!/bin/sh\nlast=''\nfor arg in \"$@\"; do last=\"$arg\"; done\nmkdir -p \"$last\"\ntouch \"$last/partial\"\nexit 1\n"
-	require.NoError(t, os.WriteFile(scriptPath, []byte(script), 0o755))
+	core.RequireNoError(t, os.WriteFile(scriptPath, []byte(script), 0o755))
 
 	installer := Installer{
 		GitBinary:  scriptPath,
@@ -285,15 +282,15 @@ func TestMarketplace_Install_CleansUpOnCloneFailure(t *testing.T) {
 		Ref:        "main",
 	})
 	_, err := installer.Install(context.Background(), manifest)
-	require.Error(t, err)
+	core.AssertError(t, err)
 
 	targetDir := filepath.Join(targetRoot, "core-ui")
 	_, statErr := os.Stat(targetDir)
-	assert.Error(t, statErr)
-	assert.True(t, os.IsNotExist(statErr))
+	core.AssertError(t, statErr)
+	core.AssertTrue(t, os.IsNotExist(statErr))
 }
 
-func TestMarketplace_Verify_Good(t *testing.T) {
+func TestMarketplace_Verify_Good(t *core.T) {
 	manifest := signedManifest(t, Manifest{
 		Name:       "core-ui",
 		Version:    "1.2.3",
@@ -302,19 +299,19 @@ func TestMarketplace_Verify_Good(t *testing.T) {
 	})
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		data, err := yaml.Marshal(manifest)
-		require.NoError(t, err)
+		core.RequireNoError(t, err)
 		_, _ = w.Write(data)
 	}))
 	t.Cleanup(server.Close)
 
 	installer := Installer{HTTPClient: server.Client()}
 	verified, err := installer.Verify(context.Background(), server.URL)
-	require.NoError(t, err)
-	assert.Equal(t, manifest.Name, verified.Name)
-	assert.Equal(t, manifest.Ref, verified.Ref)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, manifest.Name, verified.Name)
+	core.AssertEqual(t, manifest.Ref, verified.Ref)
 }
 
-func TestMarketplace_List_Good(t *testing.T) {
+func TestMarketplace_List_Good(t *core.T) {
 	manifests := []Manifest{
 		{Name: "core-ui", Version: "1.2.3"},
 		{Name: "core-chat", Version: "0.9.0"},
@@ -326,11 +323,11 @@ func TestMarketplace_List_Good(t *testing.T) {
 
 	installer := Installer{HTTPClient: server.Client()}
 	listed, err := installer.List(context.Background(), server.URL)
-	require.NoError(t, err)
-	assert.Equal(t, manifests, listed)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, manifests, listed)
 }
 
-func TestMarketplace_DigestManifest_Good(t *testing.T) {
+func TestMarketplace_DigestManifest_Good(t *core.T) {
 	manifest := Manifest{
 		Name:       "core-ui",
 		Version:    "1.2.3",
@@ -341,143 +338,150 @@ func TestMarketplace_DigestManifest_Good(t *testing.T) {
 	got := DigestManifest(manifest)
 	expected := sha256.Sum256([]byte(manifest.Name + ":" + manifest.Version + ":" + manifest.Repository + ":" + manifest.Ref))
 
-	assert.Equal(t, hex.EncodeToString(expected[:]), got)
+	core.AssertEqual(t, hex.EncodeToString(expected[:]), got)
 }
 
-func TestMarketplace_DigestManifest_Bad(t *testing.T) {
+func TestMarketplace_DigestManifest_Bad(t *core.T) {
 	base := Manifest{Name: "core-ui", Version: "1.2.3", Repository: "https://example.com/core-ui.git", Ref: "main"}
 	changed := base
 	changed.Ref = "dev"
 
-	assert.NotEqual(t, DigestManifest(base), DigestManifest(changed))
+	core.AssertNotEqual(t, DigestManifest(base), DigestManifest(changed))
 }
 
-func TestMarketplace_DigestManifest_Ugly(t *testing.T) {
+func TestMarketplace_DigestManifest_Ugly(t *core.T) {
 	got := DigestManifest(Manifest{})
 
-	assert.Len(t, got, 64)
-	assert.NotEmpty(t, got)
+	core.AssertLen(t, got, 64)
+	core.AssertNotEmpty(t, got)
 }
 
-func TestMarketplace_safeName_EmptyFallbackUsesInputDigest(t *testing.T) {
+func TestMarketplace_safeName_EmptyFallbackUsesInputDigest(t *core.T) {
 	slashes := safeName("////")
 	ats := safeName("@@@")
 
-	assert.Equal(t, "module-0ea28b45", slashes)
-	assert.Equal(t, "module-2ec847d8", ats)
-	assert.NotEqual(t, slashes, ats)
+	core.AssertEqual(t, "module-0ea28b45", slashes)
+	core.AssertEqual(t, "module-2ec847d8", ats)
+	core.AssertNotEqual(t, slashes, ats)
 	assertSafeModuleName(t, slashes)
 	assertSafeModuleName(t, ats)
-	assert.Equal(t, "valid-name", safeName("valid-name"))
+	core.AssertEqual(t, "valid-name", safeName("valid-name"))
 }
 
-func TestMarketplace_validateManifestName_Good(t *testing.T) {
-	require.NoError(t, validateManifestName("core-ui"))
+func TestMarketplace_validateManifestName_Good(t *core.T) {
+	core.RequireNoError(t, validateManifestName("core-ui"))
+	observedType := core.Sprintf("%T", validateManifestName("core-ui"))
+	core.AssertNotEmpty(t, observedType)
 }
 
-func TestMarketplace_validateManifestName_Bad(t *testing.T) {
+func TestMarketplace_validateManifestName_Bad(t *core.T) {
 	err := validateManifestName("")
 
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "required")
+	core.AssertError(t, err)
+	core.AssertContains(t, err.Error(), "required")
 }
 
-func TestMarketplace_validateManifestName_Ugly(t *testing.T) {
+func TestMarketplace_validateManifestName_Ugly(t *core.T) {
 	err := validateManifestName("..")
 
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "path traversal")
+	core.AssertError(t, err)
+	core.AssertContains(t, err.Error(), "path traversal")
 }
 
-func TestMarketplace_validateCloneArg_Good(t *testing.T) {
-	require.NoError(t, validateCloneArg("repository", "https://example.com/core-ui.git"))
+func TestMarketplace_validateCloneArg_Good(t *core.T) {
+	core.RequireNoError(t, validateCloneArg("repository", "https://example.com/core-ui.git"))
+	observedType := core.Sprintf("%T", validateCloneArg("repository", "https://example.com/core-ui.git"))
+	core.AssertNotEmpty(t, observedType)
 }
 
-func TestMarketplace_validateCloneArg_Bad(t *testing.T) {
+func TestMarketplace_validateCloneArg_Bad(t *core.T) {
 	err := validateCloneArg("repository", "--upload-pack=sh")
 
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "dash")
+	core.AssertError(t, err)
+	core.AssertContains(t, err.Error(), "dash")
 }
 
-func TestMarketplace_validateCloneArg_Ugly(t *testing.T) {
+func TestMarketplace_validateCloneArg_Ugly(t *core.T) {
 	err := validateCloneArg("repository", "https://example.com/core-ui.git\n--depth 1")
 
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "invalid control characters")
+	core.AssertError(t, err)
+	core.AssertContains(t, err.Error(), "invalid control characters")
 }
 
-func TestMarketplace_validateRepositorySource_Good(t *testing.T) {
-	require.NoError(t, validateRepositorySource("https://example.com/core-ui.git"))
-	require.NoError(t, validateRepositorySource("git@example.com:core-ui.git"))
+func TestMarketplace_validateRepositorySource_Good(t *core.T) {
+	core.RequireNoError(t, validateRepositorySource("https://example.com/core-ui.git"))
+	core.RequireNoError(t, validateRepositorySource("git@example.com:core-ui.git"))
+	core.AssertNotEmpty(t, core.Sprintf("%T", validateRepositorySource("https://example.com/core-ui.git")))
 }
 
-func TestMarketplace_validateRepositorySource_Bad(t *testing.T) {
+func TestMarketplace_validateRepositorySource_Bad(t *core.T) {
 	err := validateRepositorySource("ext::sh -c id")
 
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "remote helper")
+	core.AssertError(t, err)
+	core.AssertContains(t, err.Error(), "remote helper")
 }
 
-func TestMarketplace_validateRepositorySource_Ugly(t *testing.T) {
+func TestMarketplace_validateRepositorySource_Ugly(t *core.T) {
 	err := validateRepositorySource("file:///tmp/core-ui.git")
 
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "not allowed")
+	core.AssertError(t, err)
+	core.AssertContains(t, err.Error(), "not allowed")
 }
 
-func TestMarketplace_decodeManifestList_Good(t *testing.T) {
+func TestMarketplace_decodeManifestList_Good(t *core.T) {
 	manifests, err := decodeManifestList([]byte(`[{"name":"core-ui","version":"1.2.3"},{"name":"core-chat","version":"0.9.0"}]`))
 
-	require.NoError(t, err)
-	require.Len(t, manifests, 2)
-	assert.Equal(t, "core-ui", manifests[0].Name)
-	assert.Equal(t, "core-chat", manifests[1].Name)
+	core.RequireNoError(t, err)
+	core.AssertLen(t, manifests, 2)
+	core.AssertEqual(t, "core-ui", manifests[0].Name)
+	core.AssertEqual(t, "core-chat", manifests[1].Name)
 }
 
-func TestMarketplace_decodeManifestList_Bad(t *testing.T) {
+func TestMarketplace_decodeManifestList_Bad(t *core.T) {
 	manifests, err := decodeManifestList([]byte("   "))
 
-	require.NoError(t, err)
-	assert.Nil(t, manifests)
+	core.RequireNoError(t, err)
+	core.AssertNil(t, manifests)
 }
 
-func TestMarketplace_decodeManifestList_Ugly(t *testing.T) {
+func TestMarketplace_decodeManifestList_Ugly(t *core.T) {
 	_, err := decodeManifestList([]byte(": not-yaml"))
 
-	require.Error(t, err)
+	core.AssertError(t, err)
+	core.AssertNotEmpty(t, core.Sprintf("%T", err))
 }
 
-func TestMarketplace_sanitizeCommandOutput_Good(t *testing.T) {
+func TestMarketplace_sanitizeCommandOutput_Good(t *core.T) {
 	got := sanitizeCommandOutput([]byte("fatal: https://token:secret@example.com/repo.git"))
 
-	assert.Contains(t, got, "[redacted]@")
-	assert.NotContains(t, got, "secret")
-	assert.NotContains(t, got, "token:")
+	core.AssertContains(t, got, "[redacted]@")
+	core.AssertNotContains(t, got, "secret")
+	core.AssertNotContains(t, got, "token:")
 }
 
-func TestMarketplace_sanitizeCommandOutput_Bad(t *testing.T) {
-	assert.Equal(t, "command produced no output", sanitizeCommandOutput(nil))
-	assert.Equal(t, "command produced no output", sanitizeCommandOutput([]byte("   \n")))
+func TestMarketplace_sanitizeCommandOutput_Bad(t *core.T) {
+	core.AssertEqual(t, "command produced no output", sanitizeCommandOutput(nil))
+	core.AssertEqual(t, "command produced no output", sanitizeCommandOutput([]byte("   \n")))
+	core.AssertNotEmpty(t, core.Sprintf("%T", sanitizeCommandOutput(nil)))
 }
 
-func TestMarketplace_sanitizeCommandOutput_Ugly(t *testing.T) {
+func TestMarketplace_sanitizeCommandOutput_Ugly(t *core.T) {
 	got := sanitizeCommandOutput([]byte(strings.Repeat("a", 1024)))
 
-	assert.Len(t, got, 515)
-	assert.True(t, strings.HasSuffix(got, "..."))
+	core.AssertLen(t, got, 515)
+	core.AssertTrue(t, strings.HasSuffix(got, "..."))
 }
 
 func shellQuote(value string) string {
 	return "'" + strings.ReplaceAll(value, "'", "'\\''") + "'"
 }
 
-func assertSafeModuleName(t *testing.T, value string) {
+func assertSafeModuleName(t *core.T, value string) {
 	t.Helper()
 
-	require.NotEmpty(t, value)
-	assert.LessOrEqual(t, len(value), 32)
+	core.RequireNotEmpty(t, value)
+	core.AssertLessOrEqual(t, len(value), 32)
 	for _, r := range value {
-		assert.Truef(t, (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-', "unsafe character %q in %q", r, value)
+		core.AssertTrue(t, (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-', core.Sprintf("unsafe character %q in %q", r, value))
 	}
 }

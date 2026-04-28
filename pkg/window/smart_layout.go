@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/screen"
 	coreerr "dappco.re/go/log"
 )

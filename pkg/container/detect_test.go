@@ -1,16 +1,14 @@
 package container
 
 import (
+	core "dappco.re/go"
 	"errors"
 	"path/filepath"
-	"testing"
 
 	coreio "dappco.re/go/io"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-func TestDetectWithEnvironment_PrefersAppleContainersOnMacOS26(t *testing.T) {
+func TestDetectWithEnvironment_PrefersAppleContainersOnMacOS26(t *core.T) {
 	runtime := DetectWithEnvironment(DetectEnvironment{
 		GOOS:           "darwin",
 		ProductVersion: "26.0",
@@ -22,10 +20,10 @@ func TestDetectWithEnvironment_PrefersAppleContainersOnMacOS26(t *testing.T) {
 		},
 	})
 
-	assert.Equal(t, RuntimeApple, runtime)
+	core.AssertEqual(t, RuntimeApple, runtime)
 }
 
-func TestDetectWithEnvironment_FallsBackToDockerWhenAppleUnavailable(t *testing.T) {
+func TestDetectWithEnvironment_FallsBackToDockerWhenAppleUnavailable(t *core.T) {
 	runtime := DetectWithEnvironment(DetectEnvironment{
 		GOOS:           "darwin",
 		ProductVersion: "26.1",
@@ -37,10 +35,10 @@ func TestDetectWithEnvironment_FallsBackToDockerWhenAppleUnavailable(t *testing.
 		},
 	})
 
-	assert.Equal(t, RuntimeDocker, runtime)
+	core.AssertEqual(t, RuntimeDocker, runtime)
 }
 
-func TestDetectWithEnvironment_UsesDockerOnNonMacHosts(t *testing.T) {
+func TestDetectWithEnvironment_UsesDockerOnNonMacHosts(t *core.T) {
 	runtime := DetectWithEnvironment(DetectEnvironment{
 		GOOS:           "linux",
 		ProductVersion: "",
@@ -52,10 +50,10 @@ func TestDetectWithEnvironment_UsesDockerOnNonMacHosts(t *testing.T) {
 		},
 	})
 
-	assert.Equal(t, RuntimeDocker, runtime)
+	core.AssertEqual(t, RuntimeDocker, runtime)
 }
 
-func TestDetectWithEnvironment_UsesPodmanWhenDockerMissing(t *testing.T) {
+func TestDetectWithEnvironment_UsesPodmanWhenDockerMissing(t *core.T) {
 	runtime := DetectWithEnvironment(DetectEnvironment{
 		GOOS:           "linux",
 		ProductVersion: "",
@@ -67,10 +65,10 @@ func TestDetectWithEnvironment_UsesPodmanWhenDockerMissing(t *testing.T) {
 		},
 	})
 
-	assert.Equal(t, RuntimePodman, runtime)
+	core.AssertEqual(t, RuntimePodman, runtime)
 }
 
-func TestDetectWithEnvironment_ReturnsNoneWhenNoRuntimeIsAvailable(t *testing.T) {
+func TestDetectWithEnvironment_ReturnsNoneWhenNoRuntimeIsAvailable(t *core.T) {
 	runtime := DetectWithEnvironment(DetectEnvironment{
 		GOOS:           "linux",
 		ProductVersion: "",
@@ -79,16 +77,16 @@ func TestDetectWithEnvironment_ReturnsNoneWhenNoRuntimeIsAvailable(t *testing.T)
 		},
 	})
 
-	assert.Equal(t, RuntimeNone, runtime)
+	core.AssertEqual(t, RuntimeNone, runtime)
 }
 
-func TestMajorVersion(t *testing.T) {
-	assert.Equal(t, 26, majorVersion("26.0"))
-	assert.Equal(t, 0, majorVersion("bogus"))
-	assert.Equal(t, 0, majorVersion(""))
+func TestMajorVersion(t *core.T) {
+	core.AssertEqual(t, 26, majorVersion("26.0"))
+	core.AssertEqual(t, 0, majorVersion("bogus"))
+	core.AssertEqual(t, 0, majorVersion(""))
 }
 
-func TestDetect_Good(t *testing.T) {
+func TestDetect_Good(t *core.T) {
 	binDir := t.TempDir()
 	containerPath := writeExecutable(t, binDir, "container", "#!/bin/sh\nexit 0\n")
 
@@ -103,30 +101,30 @@ func TestDetect_Good(t *testing.T) {
 		},
 	})
 
-	assert.Equal(t, RuntimeApple, runtime)
+	core.AssertEqual(t, RuntimeApple, runtime)
 }
 
-func TestDetect_Bad(t *testing.T) {
+func TestDetect_Bad(t *core.T) {
 	binDir := t.TempDir()
 	writeExecutable(t, binDir, "sw_vers", "#!/bin/sh\nprintf '25.0\\n'\n")
 	writeExecutable(t, binDir, "docker", "#!/bin/sh\nexit 0\n")
 	t.Setenv("PATH", binDir)
 
-	assert.Equal(t, RuntimeDocker, Detect())
+	core.AssertEqual(t, RuntimeDocker, Detect())
 }
 
-func TestDetect_Ugly(t *testing.T) {
+func TestDetect_Ugly(t *core.T) {
 	binDir := t.TempDir()
 	writeExecutable(t, binDir, "sw_vers", "#!/bin/sh\nprintf 'not-a-version\\n'\n")
 	t.Setenv("PATH", binDir)
 
-	assert.Equal(t, RuntimeNone, Detect())
+	core.AssertEqual(t, RuntimeNone, Detect())
 }
 
-func writeExecutable(t *testing.T, dir, name, script string) string {
+func writeExecutable(t *core.T, dir, name, script string) string {
 	t.Helper()
 
 	path := filepath.Join(dir, name)
-	require.NoError(t, coreio.Local.WriteMode(path, script, 0o755))
+	core.RequireNoError(t, coreio.Local.WriteMode(path, script, 0o755))
 	return path
 }

@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/events"
 	"dappco.re/go/gui/pkg/window"
 	"github.com/gorilla/websocket"
@@ -293,7 +293,9 @@ func (em *WSEventManager) HandleWebSocket(w http.ResponseWriter, r *http.Request
 	em.mu.Lock()
 	if em.closed {
 		em.mu.Unlock()
-		_ = conn.Close()
+		if err := conn.Close(); err != nil {
+			return
+		}
 		return
 	}
 	em.clients[conn] = &clientState{
@@ -316,7 +318,9 @@ func (em *WSEventManager) prepareConnection(conn *websocket.Conn) {
 	}
 	conn.SetReadLimit(64 * 1024)
 	if em.readTimeout > 0 {
-		_ = conn.SetReadDeadline(time.Now().Add(em.readTimeout))
+		if err := conn.SetReadDeadline(time.Now().Add(em.readTimeout)); err != nil {
+			return
+		}
 		conn.SetPongHandler(func(string) error {
 			return conn.SetReadDeadline(time.Now().Add(em.readTimeout))
 		})
@@ -374,7 +378,9 @@ func (em *WSEventManager) handleMessages(conn *websocket.Conn, done chan<- struc
 
 	for {
 		if em.readTimeout > 0 {
-			_ = conn.SetReadDeadline(time.Now().Add(em.readTimeout))
+			if err := conn.SetReadDeadline(time.Now().Add(em.readTimeout)); err != nil {
+				return
+			}
 		}
 		_, message, err := conn.ReadMessage()
 		if err != nil {
@@ -415,12 +421,18 @@ func (em *WSEventManager) closeWithPolicyViolation(conn *websocket.Conn, reason 
 	}
 	state.writeMu.Lock()
 	defer state.writeMu.Unlock()
-	_ = conn.WriteJSON(map[string]any{
+	if err := conn.WriteJSON(map[string]any{
 		"error":  reason,
 		"status": websocket.ClosePolicyViolation,
-	})
-	_ = conn.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.ClosePolicyViolation, reason), time.Now().Add(2*time.Second))
-	_ = conn.Close()
+	}); err != nil {
+		return
+	}
+	if err := conn.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.ClosePolicyViolation, reason), time.Now().Add(2*time.Second)); err != nil {
+		return
+	}
+	if err := conn.Close(); err != nil {
+		return
+	}
 }
 
 // subscribe adds a subscription for a client.
@@ -519,7 +531,9 @@ func (em *WSEventManager) writeClientMessage(state *clientState, conn *websocket
 	state.writeMu.Lock()
 	defer state.writeMu.Unlock()
 	conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-	_ = conn.WriteMessage(websocket.TextMessage, data)
+	if err := conn.WriteMessage(websocket.TextMessage, data); err != nil {
+		return
+	}
 }
 
 // removeClient removes a client and its subscriptions.
@@ -619,7 +633,9 @@ func (em *WSEventManager) Close() {
 	em.mu.Unlock()
 
 	for _, conn := range conns {
-		_ = conn.Close()
+		if err := conn.Close(); err != nil {
+			return
+		}
 	}
 }
 

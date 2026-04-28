@@ -1,16 +1,13 @@
 package systray
 
-import "testing"
-
 import (
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	core "dappco.re/go"
 )
 
-func TestMockPlatform_NewTray_Good(t *testing.T) {
+func TestMockPlatform_NewTray_Good(t *core.T) {
 	p := NewMockPlatform()
 	tray := p.NewTray()
-	require.NotNil(t, tray)
+	core.AssertNotNil(t, tray)
 
 	mockTray := tray.(*exportedMockTray)
 	tray.SetIcon([]byte{1, 2, 3})
@@ -20,26 +17,26 @@ func TestMockPlatform_NewTray_Good(t *testing.T) {
 	tray.SetMenu(p.NewMenu())
 	tray.AttachWindow(windowHandleStub{name: "panel"})
 
-	assert.Equal(t, []byte{1, 2, 3}, mockTray.icon)
-	assert.Equal(t, []byte{4, 5, 6}, mockTray.templateIcon)
-	assert.Equal(t, "Core", mockTray.tooltip)
-	assert.Equal(t, "Ready", mockTray.label)
-	assert.NotNil(t, mockTray)
+	core.AssertEqual(t, []byte{1, 2, 3}, mockTray.icon)
+	core.AssertEqual(t, []byte{4, 5, 6}, mockTray.templateIcon)
+	core.AssertEqual(t, "Core", mockTray.tooltip)
+	core.AssertEqual(t, "Ready", mockTray.label)
+	core.AssertNotNil(t, mockTray)
 }
 
-func TestMockPlatform_NewMenu_Bad(t *testing.T) {
+func TestMockPlatform_NewMenu_Bad(t *core.T) {
 	p := NewMockPlatform()
 	menu := p.NewMenu()
-	require.NotNil(t, menu)
+	core.AssertNotNil(t, menu)
 	_, ok := menu.(*exportedMockMenu)
-	assert.True(t, ok)
+	core.AssertTrue(t, ok)
 }
 
-func TestMockPlatform_NewTray_Ugly(t *testing.T) {
+func TestMockPlatform_NewTray_Ugly(t *core.T) {
 	p := NewMockPlatform()
 	tray := p.NewTray().(*exportedMockTray)
-	assert.NotNil(t, tray)
-	assert.NoError(t, tray.ShowMessage("title", "message"))
+	core.AssertNotNil(t, tray)
+	core.AssertNoError(t, tray.ShowMessage("title", "message"))
 }
 
 type windowHandleStub struct {

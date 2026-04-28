@@ -1,68 +1,65 @@
 package application
 
 import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	core "dappco.re/go"
 )
 
-func TestBrowserWindow_NewBrowserWindow_Good(t *testing.T) {
+func TestBrowserWindow_NewBrowserWindow_Good(t *core.T) {
 	window := NewBrowserWindow(7, "client-abc")
 
-	require.NotNil(t, window)
-	assert.Equal(t, uint(7), window.ID())
-	assert.Equal(t, "browser-7", window.Name())
-	assert.Equal(t, "client-abc", window.ClientID())
-	assert.True(t, window.IsVisible())
-	assert.False(t, window.IsFullscreen())
-	assert.False(t, window.IsMaximised())
-	assert.False(t, window.IsMinimised())
-	assert.False(t, window.IsFocused())
-	assert.False(t, window.IsIgnoreMouseEvents())
-	assert.False(t, window.Resizable())
-	assert.Equal(t, 1.0, window.GetZoom())
+	core.AssertNotNil(t, window)
+	core.AssertEqual(t, uint(7), window.ID())
+	core.AssertEqual(t, "browser-7", window.Name())
+	core.AssertEqual(t, "client-abc", window.ClientID())
+	core.AssertTrue(t, window.IsVisible())
+	core.AssertFalse(t, window.IsFullscreen())
+	core.AssertFalse(t, window.IsMaximised())
+	core.AssertFalse(t, window.IsMinimised())
+	core.AssertFalse(t, window.IsFocused())
+	core.AssertFalse(t, window.IsIgnoreMouseEvents())
+	core.AssertFalse(t, window.Resizable())
+	core.AssertEqual(t, 1.0, window.GetZoom())
 	screen, err := window.GetScreen()
-	require.NoError(t, err)
-	require.NotNil(t, screen)
-	assert.Equal(t, Screen{}, *screen)
-	assert.Equal(t, &LRTB{}, window.GetBorderSizes())
-	assert.Nil(t, window.NativeWindow())
-	assert.True(t, window.shouldUnconditionallyClose())
+	core.RequireNoError(t, err)
+	core.AssertNotNil(t, screen)
+	core.AssertEqual(t, Screen{}, *screen)
+	core.AssertEqual(t, &LRTB{}, window.GetBorderSizes())
+	core.AssertNil(t, window.NativeWindow())
+	core.AssertTrue(t, window.shouldUnconditionallyClose())
 }
 
-func TestBrowserWindow_NewBrowserWindow_Bad(t *testing.T) {
+func TestBrowserWindow_NewBrowserWindow_Bad(t *core.T) {
 	window := NewBrowserWindow(0, "")
 
-	assert.Equal(t, uint(0), window.ID())
-	assert.Equal(t, "browser-0", window.Name())
-	assert.Empty(t, window.ClientID())
-	assert.True(t, window.IsVisible())
+	core.AssertEqual(t, uint(0), window.ID())
+	core.AssertEqual(t, "browser-0", window.Name())
+	core.AssertEmpty(t, window.ClientID())
+	core.AssertTrue(t, window.IsVisible())
 }
 
-func TestBrowserWindow_NewBrowserWindow_Ugly(t *testing.T) {
+func TestBrowserWindow_NewBrowserWindow_Ugly(t *core.T) {
 	window := NewBrowserWindow(99, "client")
 
-	assert.Same(t, window, window.Show())
-	assert.True(t, window.IsVisible())
-	assert.Same(t, window, window.Hide())
-	assert.False(t, window.IsVisible())
-	assert.Same(t, window, window.Fullscreen())
-	assert.Same(t, window, window.Maximise())
-	assert.Same(t, window, window.Minimise())
-	assert.Same(t, window, window.SetAlwaysOnTop(true))
-	assert.Same(t, window, window.SetBackgroundColour(NewRGBA(1, 2, 3, 4)))
-	assert.Same(t, window, window.SetFrameless(true))
-	assert.Same(t, window, window.SetHTML("<b>hi</b>"))
-	assert.Same(t, window, window.SetMinSize(10, 20))
-	assert.Same(t, window, window.SetMaxSize(30, 40))
-	assert.Same(t, window, window.SetRelativePosition(1, 2))
-	assert.Same(t, window, window.SetResizable(true))
-	assert.Same(t, window, window.SetIgnoreMouseEvents(true))
-	assert.Same(t, window, window.SetSize(100, 200))
-	assert.Same(t, window, window.SetTitle("Title"))
-	assert.Same(t, window, window.SetURL("https://example.com"))
-	assert.Same(t, window, window.SetZoom(1.5))
-	assert.Same(t, window, window.ZoomReset())
-	assert.NoError(t, window.Print())
+	core.AssertSame(t, window, window.Show())
+	core.AssertTrue(t, window.IsVisible())
+	core.AssertSame(t, window, window.Hide())
+	core.AssertFalse(t, window.IsVisible())
+	core.AssertSame(t, window, window.Fullscreen())
+	core.AssertSame(t, window, window.Maximise())
+	core.AssertSame(t, window, window.Minimise())
+	core.AssertSame(t, window, window.SetAlwaysOnTop(true))
+	core.AssertSame(t, window, window.SetBackgroundColour(NewRGBA(1, 2, 3, 4)))
+	core.AssertSame(t, window, window.SetFrameless(true))
+	core.AssertSame(t, window, window.SetHTML("<b>hi</b>"))
+	core.AssertSame(t, window, window.SetMinSize(10, 20))
+	core.AssertSame(t, window, window.SetMaxSize(30, 40))
+	core.AssertSame(t, window, window.SetRelativePosition(1, 2))
+	core.AssertSame(t, window, window.SetResizable(true))
+	core.AssertSame(t, window, window.SetIgnoreMouseEvents(true))
+	core.AssertSame(t, window, window.SetSize(100, 200))
+	core.AssertSame(t, window, window.SetTitle("Title"))
+	core.AssertSame(t, window, window.SetURL("https://example.com"))
+	core.AssertSame(t, window, window.SetZoom(1.5))
+	core.AssertSame(t, window, window.ZoomReset())
+	core.AssertNoError(t, window.Print())
 }

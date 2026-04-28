@@ -3,7 +3,7 @@ package display
 import (
 	"context"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/p2p"
 )
 

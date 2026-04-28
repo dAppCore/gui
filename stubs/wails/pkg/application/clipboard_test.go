@@ -1,84 +1,81 @@
 package application
 
 import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	core "dappco.re/go"
 )
 
-func TestClipboard_SetText_Good(t *testing.T) {
+func TestClipboard_SetText_Good(t *core.T) {
 	clipboard := &Clipboard{}
 
 	ok := clipboard.SetText("hello")
 
-	assert.True(t, ok)
+	core.AssertTrue(t, ok)
 	text, present := clipboard.Text()
-	assert.True(t, present)
-	assert.Equal(t, "hello", text)
+	core.AssertTrue(t, present)
+	core.AssertEqual(t, "hello", text)
 }
 
-func TestClipboard_SetText_Bad(t *testing.T) {
+func TestClipboard_SetText_Bad(t *core.T) {
 	clipboard := &Clipboard{}
 
 	ok := clipboard.SetText("")
 
-	assert.True(t, ok)
+	core.AssertTrue(t, ok)
 	text, present := clipboard.Text()
-	assert.True(t, present)
-	assert.Empty(t, text)
+	core.AssertTrue(t, present)
+	core.AssertEmpty(t, text)
 }
 
-func TestClipboard_SetText_Ugly(t *testing.T) {
+func TestClipboard_SetText_Ugly(t *core.T) {
 	clipboard := &Clipboard{}
 
 	ok := clipboard.SetText("line1\nline2")
 
-	assert.True(t, ok)
+	core.AssertTrue(t, ok)
 	text, present := clipboard.Text()
-	require.True(t, present)
-	assert.Equal(t, "line1\nline2", text)
+	core.RequireTrue(t, present)
+	core.AssertEqual(t, "line1\nline2", text)
 }
 
-func TestClipboardManager_Text_Good(t *testing.T) {
+func TestClipboardManager_Text_Good(t *core.T) {
 	manager := &ClipboardManager{}
 
 	ok := manager.SetText("copied")
 
-	assert.True(t, ok)
+	core.AssertTrue(t, ok)
 	text, present := manager.Text()
-	assert.True(t, present)
-	assert.Equal(t, "copied", text)
+	core.AssertTrue(t, present)
+	core.AssertEqual(t, "copied", text)
 }
 
-func TestClipboardManager_Text_Bad(t *testing.T) {
+func TestClipboardManager_Text_Bad(t *core.T) {
 	manager := &ClipboardManager{}
 
 	text, present := manager.Text()
 
-	assert.False(t, present)
-	assert.Empty(t, text)
+	core.AssertFalse(t, present)
+	core.AssertEmpty(t, text)
 }
 
-func TestClipboardManager_Text_Ugly(t *testing.T) {
+func TestClipboardManager_Text_Ugly(t *core.T) {
 	manager := &ClipboardManager{}
 	raw := "zero\x00byte"
 
 	ok := manager.SetText(raw)
 
-	assert.True(t, ok)
+	core.AssertTrue(t, ok)
 	text, present := manager.Text()
-	assert.True(t, present)
-	assert.Equal(t, raw, text)
+	core.AssertTrue(t, present)
+	core.AssertEqual(t, raw, text)
 }
 
-func TestClipboardManager_NilReceiver_IsSafe(t *testing.T) {
+func TestClipboardManager_NilReceiver_IsSafe(t *core.T) {
 	var manager *ClipboardManager
 
-	assert.NotPanics(t, func() {
-		assert.False(t, manager.SetText("hello"))
+	core.AssertNotPanics(t, func() {
+		core.AssertFalse(t, manager.SetText("hello"))
 		text, present := manager.Text()
-		assert.Empty(t, text)
-		assert.False(t, present)
+		core.AssertEmpty(t, text)
+		core.AssertFalse(t, present)
 	})
 }

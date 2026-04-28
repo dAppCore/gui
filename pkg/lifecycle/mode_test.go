@@ -1,11 +1,11 @@
 package lifecycle
 
 import (
+	core "dappco.re/go"
 	"os"
-	"testing"
 )
 
-func TestMode_DetectMode_Good(t *testing.T) {
+func TestMode_DetectMode_Good(t *core.T) {
 	unsetEnv(t, appModeEnv)
 	t.Setenv(ciEnv, "")
 
@@ -15,7 +15,7 @@ func TestMode_DetectMode_Good(t *testing.T) {
 	}
 }
 
-func TestMode_DetectMode_Bad(t *testing.T) {
+func TestMode_DetectMode_Bad(t *core.T) {
 	t.Setenv(appModeEnv, "bogus")
 	t.Setenv(ciEnv, "")
 
@@ -25,7 +25,7 @@ func TestMode_DetectMode_Bad(t *testing.T) {
 	}
 }
 
-func TestMode_DetectMode_Ugly(t *testing.T) {
+func TestMode_DetectMode_Ugly(t *core.T) {
 	t.Setenv(appModeEnv, "")
 	t.Setenv(ciEnv, "true")
 
@@ -35,7 +35,7 @@ func TestMode_DetectMode_Ugly(t *testing.T) {
 	}
 }
 
-func unsetEnv(t *testing.T, key string) {
+func unsetEnv(t *core.T, key string) {
 	t.Helper()
 
 	value, ok := os.LookupEnv(key)

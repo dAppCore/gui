@@ -1,60 +1,57 @@
 package application
 
 import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	core "dappco.re/go"
 )
 
-func TestScreen_Rect_Good(t *testing.T) {
+func TestScreen_Rect_Good(t *core.T) {
 	rect := Rect{X: 10, Y: 20, Width: 300, Height: 200}
 
-	assert.Equal(t, Point{X: 10, Y: 20}, rect.Origin())
-	assert.Equal(t, Point{X: 310, Y: 220}, rect.Corner())
-	assert.False(t, rect.IsEmpty())
-	assert.True(t, rect.Contains(Point{X: 10, Y: 20}))
-	assert.False(t, rect.Contains(Point{X: 310, Y: 220}))
-	assert.Equal(t, Size{Width: 300, Height: 200}, rect.RectSize())
+	core.AssertEqual(t, Point{X: 10, Y: 20}, rect.Origin())
+	core.AssertEqual(t, Point{X: 310, Y: 220}, rect.Corner())
+	core.AssertFalse(t, rect.IsEmpty())
+	core.AssertTrue(t, rect.Contains(Point{X: 10, Y: 20}))
+	core.AssertFalse(t, rect.Contains(Point{X: 310, Y: 220}))
+	core.AssertEqual(t, Size{Width: 300, Height: 200}, rect.RectSize())
 }
 
-func TestScreen_Rect_Bad(t *testing.T) {
+func TestScreen_Rect_Bad(t *core.T) {
 	rect := Rect{}
 
-	assert.True(t, rect.IsEmpty())
-	assert.False(t, rect.Contains(Point{}))
+	core.AssertTrue(t, rect.IsEmpty())
+	core.AssertFalse(t, rect.Contains(Point{}))
 }
 
-func TestScreen_Rect_Ugly(t *testing.T) {
+func TestScreen_Rect_Ugly(t *core.T) {
 	rect := Rect{X: -10, Y: -5, Width: 10, Height: 5}
 
-	assert.False(t, rect.IsEmpty())
-	assert.True(t, rect.Contains(Point{X: -10, Y: -5}))
+	core.AssertFalse(t, rect.IsEmpty())
+	core.AssertTrue(t, rect.Contains(Point{X: -10, Y: -5}))
 }
 
-func TestScreenManager_SetScreens_Good(t *testing.T) {
+func TestScreenManager_SetScreens_Good(t *core.T) {
 	manager := &ScreenManager{}
 	primary := &Screen{ID: "1", IsPrimary: true}
 	secondary := &Screen{ID: "2"}
 
 	manager.SetScreens([]*Screen{primary, secondary})
 
-	require.Same(t, primary, manager.GetPrimary())
-	require.Same(t, primary, manager.GetCurrent())
-	assert.Equal(t, []*Screen{primary, secondary}, manager.GetAll())
+	core.AssertSame(t, primary, manager.GetPrimary())
+	core.AssertSame(t, primary, manager.GetCurrent())
+	core.AssertEqual(t, []*Screen{primary, secondary}, manager.GetAll())
 }
 
-func TestScreenManager_SetScreens_Bad(t *testing.T) {
+func TestScreenManager_SetScreens_Bad(t *core.T) {
 	manager := &ScreenManager{}
 
 	manager.SetScreens(nil)
 
-	assert.Nil(t, manager.GetPrimary())
-	assert.Nil(t, manager.GetCurrent())
-	assert.Empty(t, manager.GetAll())
+	core.AssertNil(t, manager.GetPrimary())
+	core.AssertNil(t, manager.GetCurrent())
+	core.AssertEmpty(t, manager.GetAll())
 }
 
-func TestScreenManager_SetScreens_Ugly(t *testing.T) {
+func TestScreenManager_SetScreens_Ugly(t *core.T) {
 	manager := &ScreenManager{}
 	primary := &Screen{ID: "1", IsPrimary: true}
 	current := &Screen{ID: "current"}
@@ -62,11 +59,11 @@ func TestScreenManager_SetScreens_Ugly(t *testing.T) {
 	manager.SetCurrent(current)
 	manager.SetScreens([]*Screen{primary})
 
-	require.Same(t, primary, manager.GetPrimary())
-	require.Same(t, current, manager.GetCurrent())
+	core.AssertSame(t, primary, manager.GetPrimary())
+	core.AssertSame(t, current, manager.GetCurrent())
 }
 
-func TestScreenManager_SetScreens_CopiesInput(t *testing.T) {
+func TestScreenManager_SetScreens_CopiesInput(t *core.T) {
 	manager := &ScreenManager{}
 	screens := []*Screen{
 		{ID: "1", IsPrimary: true},
@@ -76,7 +73,7 @@ func TestScreenManager_SetScreens_CopiesInput(t *testing.T) {
 	manager.SetScreens(screens)
 	screens[0] = &Screen{ID: "mutated"}
 
-	require.Len(t, manager.GetAll(), 2)
-	require.Equal(t, "1", manager.GetPrimary().ID)
-	require.Equal(t, "1", manager.GetAll()[0].ID)
+	core.AssertLen(t, manager.GetAll(), 2)
+	core.AssertEqual(t, "1", manager.GetPrimary().ID)
+	core.AssertEqual(t, "1", manager.GetAll()[0].ID)
 }

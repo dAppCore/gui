@@ -108,10 +108,14 @@ func (d *TCPDriver) Publish(ctx context.Context, envelope Envelope) error {
 		}
 		if _, err := conn.Write(append(payload, '\n')); err != nil {
 			publishErr = errors.Join(publishErr, err)
-			_ = conn.Close()
+			if closeErr := conn.Close(); closeErr != nil {
+				publishErr = errors.Join(publishErr, closeErr)
+			}
 			continue
 		}
-		_ = conn.Close()
+		if closeErr := conn.Close(); closeErr != nil {
+			publishErr = errors.Join(publishErr, closeErr)
+		}
 	}
 	return publishErr
 }

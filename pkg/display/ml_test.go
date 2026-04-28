@@ -2,14 +2,12 @@ package display
 
 import (
 	"context"
-	"testing"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/chat"
-	"github.com/stretchr/testify/assert"
 )
 
-func TestML_ModelState_Good(t *testing.T) {
+func TestML_ModelState_Good(t *core.T) {
 	t.Setenv("CORE_ML_API_URL", "https://ml.example.test/api/")
 	svc, c := newTestDisplayService(t)
 	c.Action("gui.chat.models", func(_ context.Context, _ core.Options) core.Result {
@@ -23,25 +21,25 @@ func TestML_ModelState_Good(t *testing.T) {
 	})
 
 	state := svc.modelState()
-	assert.Equal(t, "https://ml.example.test/api", state.APIURL)
-	assert.Equal(t, 1, len(state.Loaded))
-	assert.Equal(t, int64(2048), state.VRAMBytes)
-	assert.Equal(t, "vulkan", state.Backend)
-	assert.Equal(t, "https://ml.example.test/api/v1/chat/completions", state.InferenceURL)
+	core.AssertEqual(t, "https://ml.example.test/api", state.APIURL)
+	core.AssertEqual(t, 1, len(state.Loaded))
+	core.AssertEqual(t, int64(2048), state.VRAMBytes)
+	core.AssertEqual(t, "vulkan", state.Backend)
+	core.AssertEqual(t, "https://ml.example.test/api/v1/chat/completions", state.InferenceURL)
 }
 
-func TestML_ModelState_Bad(t *testing.T) {
+func TestML_ModelState_Bad(t *core.T) {
 	t.Setenv("CORE_ML_API_URL", "")
 	svc, _ := newTestDisplayService(t)
 
 	state := svc.modelState()
-	assert.Equal(t, "http://localhost:8090", state.APIURL)
-	assert.Empty(t, state.Loaded)
-	assert.Equal(t, int64(0), state.VRAMBytes)
-	assert.Equal(t, "local", state.Backend)
+	core.AssertEqual(t, "http://localhost:8090", state.APIURL)
+	core.AssertEmpty(t, state.Loaded)
+	core.AssertEqual(t, int64(0), state.VRAMBytes)
+	core.AssertEqual(t, "local", state.Backend)
 }
 
-func TestML_ModelState_Ugly(t *testing.T) {
+func TestML_ModelState_Ugly(t *core.T) {
 	svc, c := newTestDisplayService(t)
 	c.Action("gui.chat.models", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{
@@ -54,8 +52,8 @@ func TestML_ModelState_Ugly(t *testing.T) {
 	})
 
 	state := svc.modelState()
-	assert.Equal(t, int64(0), state.VRAMBytes)
-	assert.Equal(t, "local", state.Backend)
-	assert.Equal(t, "\"line\\nquote\\\"slash\\\\\"", quoteJS("line\nquote\"slash\\"))
-	assert.Equal(t, int64(0), estimateVRAM(state.Available))
+	core.AssertEqual(t, int64(0), state.VRAMBytes)
+	core.AssertEqual(t, "local", state.Backend)
+	core.AssertEqual(t, "\"line\\nquote\\\"slash\\\\\"", quoteJS("line\nquote\"slash\\"))
+	core.AssertEqual(t, int64(0), estimateVRAM(state.Available))
 }

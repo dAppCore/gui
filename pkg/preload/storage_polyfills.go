@@ -3,7 +3,7 @@ package preload
 import (
 	"strings"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 )
 
 func renderStoragePolyfills(pageURL string, canPersist bool) string {

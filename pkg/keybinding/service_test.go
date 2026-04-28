@@ -4,11 +4,8 @@ package keybinding
 import (
 	"context"
 	"sync"
-	"testing"
 
-	core "dappco.re/go/core"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	core "dappco.re/go"
 )
 
 // mockPlatform records Add/Remove calls and allows triggering shortcuts.
@@ -68,13 +65,13 @@ func (m *mockPlatform) trigger(accelerator string) {
 	}
 }
 
-func newTestKeybindingService(t *testing.T, mp *mockPlatform) (*Service, *core.Core) {
+func newTestKeybindingService(t *core.T, mp *mockPlatform) (*Service, *core.Core) {
 	t.Helper()
 	c := core.New(
 		core.WithService(Register(mp)),
 		core.WithServiceLock(),
 	)
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	core.RequireTrue(t, c.ServiceStartup(context.Background(), nil).OK)
 	svc := core.MustServiceFor[*Service](c, "keybinding")
 	return svc, c
 }
@@ -85,27 +82,27 @@ func taskRun(c *core.Core, name string, task any) core.Result {
 	))
 }
 
-func TestRegister_Good(t *testing.T) {
+func TestRegister_Good(t *core.T) {
 	mp := newMockPlatform()
 	svc, _ := newTestKeybindingService(t, mp)
-	assert.NotNil(t, svc)
-	assert.NotNil(t, svc.platform)
+	core.AssertNotNil(t, svc)
+	core.AssertNotNil(t, svc.platform)
 }
 
-func TestTaskAdd_Good(t *testing.T) {
+func TestTaskAdd_Good(t *core.T) {
 	mp := newMockPlatform()
 	_, c := newTestKeybindingService(t, mp)
 
 	r := taskRun(c, "keybinding.add", TaskAdd{
 		Accelerator: "Ctrl+S", Description: "Save",
 	})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 
 	// Verify binding registered on platform
-	assert.Contains(t, mp.GetAll(), "Ctrl+S")
+	core.AssertContains(t, mp.GetAll(), "Ctrl+S")
 }
 
-func TestTaskAdd_Bad_Duplicate(t *testing.T) {
+func TestTaskAdd_Bad_Duplicate(t *core.T) {
 	mp := newMockPlatform()
 	_, c := newTestKeybindingService(t, mp)
 
@@ -113,32 +110,32 @@ func TestTaskAdd_Bad_Duplicate(t *testing.T) {
 
 	// Second add with same accelerator should fail
 	r := taskRun(c, "keybinding.add", TaskAdd{Accelerator: "Ctrl+S", Description: "Save Again"})
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 	err, _ := r.Value.(error)
-	assert.ErrorIs(t, err, ErrorAlreadyRegistered)
+	core.AssertErrorIs(t, err, ErrorAlreadyRegistered)
 }
 
-func TestTaskRemove_Good(t *testing.T) {
+func TestTaskRemove_Good(t *core.T) {
 	mp := newMockPlatform()
 	_, c := newTestKeybindingService(t, mp)
 
 	taskRun(c, "keybinding.add", TaskAdd{Accelerator: "Ctrl+S", Description: "Save"})
 	r := taskRun(c, "keybinding.remove", TaskRemove{Accelerator: "Ctrl+S"})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 
 	// Verify removed from platform
-	assert.NotContains(t, mp.GetAll(), "Ctrl+S")
+	core.AssertNotContains(t, mp.GetAll(), "Ctrl+S")
 }
 
-func TestTaskRemove_Bad_NotFound(t *testing.T) {
+func TestTaskRemove_Bad_NotFound(t *core.T) {
 	mp := newMockPlatform()
 	_, c := newTestKeybindingService(t, mp)
 
 	r := taskRun(c, "keybinding.remove", TaskRemove{Accelerator: "Ctrl+X"})
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
-func TestQueryList_Good(t *testing.T) {
+func TestQueryList_Good(t *core.T) {
 	mp := newMockPlatform()
 	_, c := newTestKeybindingService(t, mp)
 
@@ -146,22 +143,22 @@ func TestQueryList_Good(t *testing.T) {
 	taskRun(c, "keybinding.add", TaskAdd{Accelerator: "Ctrl+Z", Description: "Undo"})
 
 	r := c.QUERY(QueryList{})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 	list := r.Value.([]BindingInfo)
-	assert.Len(t, list, 2)
+	core.AssertLen(t, list, 2)
 }
 
-func TestQueryList_Good_Empty(t *testing.T) {
+func TestQueryList_Good_Empty(t *core.T) {
 	mp := newMockPlatform()
 	_, c := newTestKeybindingService(t, mp)
 
 	r := c.QUERY(QueryList{})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 	list := r.Value.([]BindingInfo)
-	assert.Len(t, list, 0)
+	core.AssertLen(t, list, 0)
 }
 
-func TestTaskAdd_Good_TriggerBroadcast(t *testing.T) {
+func TestTaskAdd_Good_TriggerBroadcast(t *core.T) {
 	mp := newMockPlatform()
 	_, c := newTestKeybindingService(t, mp)
 
@@ -183,11 +180,11 @@ func TestTaskAdd_Good_TriggerBroadcast(t *testing.T) {
 	mp.trigger("Ctrl+S")
 
 	mu.Lock()
-	assert.Equal(t, "Ctrl+S", triggered.Accelerator)
+	core.AssertEqual(t, "Ctrl+S", triggered.Accelerator)
 	mu.Unlock()
 }
 
-func TestTaskAdd_Good_RebindAfterRemove(t *testing.T) {
+func TestTaskAdd_Good_RebindAfterRemove(t *core.T) {
 	mp := newMockPlatform()
 	_, c := newTestKeybindingService(t, mp)
 
@@ -196,24 +193,24 @@ func TestTaskAdd_Good_RebindAfterRemove(t *testing.T) {
 
 	// Should succeed after remove
 	r := taskRun(c, "keybinding.add", TaskAdd{Accelerator: "Ctrl+S", Description: "Save v2"})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 
 	// Verify new description
 	r2 := c.QUERY(QueryList{})
 	list := r2.Value.([]BindingInfo)
-	assert.Len(t, list, 1)
-	assert.Equal(t, "Save v2", list[0].Description)
+	core.AssertLen(t, list, 1)
+	core.AssertEqual(t, "Save v2", list[0].Description)
 }
 
-func TestQueryList_Bad_NoService(t *testing.T) {
+func TestQueryList_Bad_NoService(t *core.T) {
 	c := core.New(core.WithServiceLock())
 	r := c.QUERY(QueryList{})
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
 // --- TaskProcess tests ---
 
-func TestTaskProcess_Good(t *testing.T) {
+func TestTaskProcess_Good(t *core.T) {
 	mp := newMockPlatform()
 	_, c := newTestKeybindingService(t, mp)
 
@@ -231,24 +228,24 @@ func TestTaskProcess_Good(t *testing.T) {
 	})
 
 	r := taskRun(c, "keybinding.process", TaskProcess{Accelerator: "Ctrl+P"})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 
 	mu.Lock()
-	assert.Equal(t, "Ctrl+P", triggered.Accelerator)
+	core.AssertEqual(t, "Ctrl+P", triggered.Accelerator)
 	mu.Unlock()
 }
 
-func TestTaskProcess_Bad_NotRegistered(t *testing.T) {
+func TestTaskProcess_Bad_NotRegistered(t *core.T) {
 	mp := newMockPlatform()
 	_, c := newTestKeybindingService(t, mp)
 
 	r := taskRun(c, "keybinding.process", TaskProcess{Accelerator: "Ctrl+P"})
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 	err, _ := r.Value.(error)
-	assert.ErrorIs(t, err, ErrorNotRegistered)
+	core.AssertErrorIs(t, err, ErrorNotRegistered)
 }
 
-func TestTaskProcess_Ugly_RemovedBinding(t *testing.T) {
+func TestTaskProcess_Ugly_RemovedBinding(t *core.T) {
 	mp := newMockPlatform()
 	_, c := newTestKeybindingService(t, mp)
 
@@ -257,26 +254,26 @@ func TestTaskProcess_Ugly_RemovedBinding(t *testing.T) {
 
 	// After remove, process should fail with ErrorNotRegistered
 	r := taskRun(c, "keybinding.process", TaskProcess{Accelerator: "Ctrl+P"})
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 	err, _ := r.Value.(error)
-	assert.ErrorIs(t, err, ErrorNotRegistered)
+	core.AssertErrorIs(t, err, ErrorNotRegistered)
 }
 
 // --- TaskRemove ErrorNotRegistered sentinel tests ---
 
-func TestTaskRemove_Bad_ErrorSentinel(t *testing.T) {
+func TestTaskRemove_Bad_ErrorSentinel(t *core.T) {
 	mp := newMockPlatform()
 	_, c := newTestKeybindingService(t, mp)
 
 	r := taskRun(c, "keybinding.remove", TaskRemove{Accelerator: "Ctrl+X"})
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 	err, _ := r.Value.(error)
-	assert.ErrorIs(t, err, ErrorNotRegistered)
+	core.AssertErrorIs(t, err, ErrorNotRegistered)
 }
 
 // --- QueryList Ugly: concurrent adds ---
 
-func TestQueryList_Ugly_ConcurrentAdds(t *testing.T) {
+func TestQueryList_Ugly_ConcurrentAdds(t *core.T) {
 	mp := newMockPlatform()
 	_, c := newTestKeybindingService(t, mp)
 
@@ -292,7 +289,7 @@ func TestQueryList_Ugly_ConcurrentAdds(t *testing.T) {
 	wg.Wait()
 
 	r := c.QUERY(QueryList{})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 	list := r.Value.([]BindingInfo)
-	assert.Len(t, list, len(accelerators))
+	core.AssertLen(t, list, len(accelerators))
 }

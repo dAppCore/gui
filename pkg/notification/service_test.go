@@ -3,12 +3,9 @@ package notification
 
 import (
 	"context"
-	core "dappco.re/go/core"
-	"testing"
+	core "dappco.re/go"
 
 	"dappco.re/go/gui/pkg/dialog"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 type mockPlatform struct {
@@ -58,14 +55,14 @@ func (m *mockDialogPlatform) MessageDialog(opts dialog.MessageDialogOptions) (st
 	return "OK", nil
 }
 
-func newTestService(t *testing.T) (*mockPlatform, *core.Core) {
+func newTestService(t *core.T) (*mockPlatform, *core.Core) {
 	t.Helper()
 	mock := &mockPlatform{permGranted: true}
 	c := core.New(
 		core.WithService(Register(mock)),
 		core.WithServiceLock(),
 	)
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	core.RequireTrue(t, c.ServiceStartup(context.Background(), nil).OK)
 	return mock, c
 }
 
@@ -75,23 +72,23 @@ func taskRun(c *core.Core, name string, task any) core.Result {
 	))
 }
 
-func TestRegister_Good(t *testing.T) {
+func TestRegister_Good(t *core.T) {
 	_, c := newTestService(t)
 	svc := core.MustServiceFor[*Service](c, "notification")
-	assert.NotNil(t, svc)
+	core.AssertNotNil(t, svc)
 }
 
-func TestTaskSend_Good(t *testing.T) {
+func TestTaskSend_Good(t *core.T) {
 	mock, c := newTestService(t)
 	r := taskRun(c, "notification.send", TaskSend{
 		Options: NotificationOptions{Title: "Test", Message: "Hello"},
 	})
-	require.True(t, r.OK)
-	assert.True(t, mock.sendCalled)
-	assert.Equal(t, "Test", mock.lastOpts.Title)
+	core.RequireTrue(t, r.OK)
+	core.AssertTrue(t, mock.sendCalled)
+	core.AssertEqual(t, "Test", mock.lastOpts.Title)
 }
 
-func TestTaskSend_Fallback_Good(t *testing.T) {
+func TestTaskSend_Fallback_Good(t *core.T) {
 	// Platform fails -> falls back to dialog via IPC
 	mockNotify := &mockPlatform{sendErr: core.NewError("no permission")}
 	mockDlg := &mockDialogPlatform{}
@@ -100,63 +97,63 @@ func TestTaskSend_Fallback_Good(t *testing.T) {
 		core.WithService(Register(mockNotify)),
 		core.WithServiceLock(),
 	)
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	core.RequireTrue(t, c.ServiceStartup(context.Background(), nil).OK)
 
 	r := taskRun(c, "notification.send", TaskSend{
 		Options: NotificationOptions{Title: "Warn", Message: "Oops", Severity: SeverityWarning},
 	})
-	assert.True(t, r.OK) // fallback succeeds even though platform failed
-	assert.True(t, mockDlg.messageCalled)
-	assert.Equal(t, dialog.DialogWarning, mockDlg.lastMsgOpts.Type)
+	core.AssertTrue(t, r.OK) // fallback succeeds even though platform failed
+	core.AssertTrue(t, mockDlg.messageCalled)
+	core.AssertEqual(t, dialog.DialogWarning, mockDlg.lastMsgOpts.Type)
 }
 
-func TestQueryPermission_Good(t *testing.T) {
+func TestQueryPermission_Good(t *core.T) {
 	_, c := newTestService(t)
 	r := c.QUERY(QueryPermission{})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 	status := r.Value.(PermissionStatus)
-	assert.True(t, status.Granted)
+	core.AssertTrue(t, status.Granted)
 }
 
-func TestTaskRequestPermission_Good(t *testing.T) {
+func TestTaskRequestPermission_Good(t *core.T) {
 	_, c := newTestService(t)
 	r := c.Action("notification.requestPermission").Run(context.Background(), core.NewOptions())
-	require.True(t, r.OK)
-	assert.Equal(t, true, r.Value)
+	core.RequireTrue(t, r.OK)
+	core.AssertEqual(t, true, r.Value)
 }
 
-func TestTaskSend_Bad(t *testing.T) {
+func TestTaskSend_Bad(t *core.T) {
 	c := core.New(core.WithServiceLock())
 	r := c.Action("notification.send").Run(context.Background(), core.NewOptions())
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
 // --- TaskRevokePermission ---
 
-func TestTaskRevokePermission_Good(t *testing.T) {
+func TestTaskRevokePermission_Good(t *core.T) {
 	mock, c := newTestService(t)
 	r := c.Action("notification.revokePermission").Run(context.Background(), core.NewOptions())
-	require.True(t, r.OK)
-	assert.True(t, mock.revokeCalled)
+	core.RequireTrue(t, r.OK)
+	core.AssertTrue(t, mock.revokeCalled)
 }
 
-func TestTaskRevokePermission_Bad(t *testing.T) {
+func TestTaskRevokePermission_Bad(t *core.T) {
 	mock, c := newTestService(t)
 	mock.revokeErr = core.NewError("cannot revoke")
 	r := c.Action("notification.revokePermission").Run(context.Background(), core.NewOptions())
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
-func TestTaskRevokePermission_Ugly(t *testing.T) {
+func TestTaskRevokePermission_Ugly(t *core.T) {
 	// No service registered — action is not registered
 	c := core.New(core.WithServiceLock())
 	r := c.Action("notification.revokePermission").Run(context.Background(), core.NewOptions())
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
 // --- TaskRegisterCategory ---
 
-func TestTaskRegisterCategory_Good(t *testing.T) {
+func TestTaskRegisterCategory_Good(t *core.T) {
 	_, c := newTestService(t)
 	category := NotificationCategory{
 		ID: "message",
@@ -166,40 +163,40 @@ func TestTaskRegisterCategory_Good(t *testing.T) {
 		},
 	}
 	r := taskRun(c, "notification.registerCategory", TaskRegisterCategory{Category: category})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 
 	svc := core.MustServiceFor[*Service](c, "notification")
 	stored, ok := svc.categories["message"]
-	require.True(t, ok)
-	assert.Equal(t, 2, len(stored.Actions))
-	assert.Equal(t, "reply", stored.Actions[0].ID)
-	assert.True(t, stored.Actions[1].Destructive)
+	core.RequireTrue(t, ok)
+	core.AssertEqual(t, 2, len(stored.Actions))
+	core.AssertEqual(t, "reply", stored.Actions[0].ID)
+	core.AssertTrue(t, stored.Actions[1].Destructive)
 }
 
-func TestTaskRegisterCategory_Bad(t *testing.T) {
+func TestTaskRegisterCategory_Bad(t *core.T) {
 	// No service registered — action is not registered
 	c := core.New(core.WithServiceLock())
 	r := taskRun(c, "notification.registerCategory", TaskRegisterCategory{Category: NotificationCategory{ID: "x"}})
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
-func TestTaskRegisterCategory_Ugly(t *testing.T) {
+func TestTaskRegisterCategory_Ugly(t *core.T) {
 	// Re-registering a category replaces the previous one
 	_, c := newTestService(t)
 	first := NotificationCategory{ID: "chat", Actions: []NotificationAction{{ID: "a", Title: "A"}}}
 	second := NotificationCategory{ID: "chat", Actions: []NotificationAction{{ID: "b", Title: "B"}, {ID: "c", Title: "C"}}}
 
-	require.True(t, taskRun(c, "notification.registerCategory", TaskRegisterCategory{Category: first}).OK)
-	require.True(t, taskRun(c, "notification.registerCategory", TaskRegisterCategory{Category: second}).OK)
+	core.RequireTrue(t, taskRun(c, "notification.registerCategory", TaskRegisterCategory{Category: first}).OK)
+	core.RequireTrue(t, taskRun(c, "notification.registerCategory", TaskRegisterCategory{Category: second}).OK)
 
 	svc := core.MustServiceFor[*Service](c, "notification")
-	assert.Equal(t, 2, len(svc.categories["chat"].Actions))
-	assert.Equal(t, "b", svc.categories["chat"].Actions[0].ID)
+	core.AssertEqual(t, 2, len(svc.categories["chat"].Actions))
+	core.AssertEqual(t, "b", svc.categories["chat"].Actions[0].ID)
 }
 
 // --- NotificationOptions with Actions ---
 
-func TestTaskSend_WithActions_Good(t *testing.T) {
+func TestTaskSend_WithActions_Good(t *core.T) {
 	mock, c := newTestService(t)
 	options := NotificationOptions{
 		Title:      "Team Chat",
@@ -211,14 +208,14 @@ func TestTaskSend_WithActions_Good(t *testing.T) {
 		},
 	}
 	r := taskRun(c, "notification.send", TaskSend{Options: options})
-	require.True(t, r.OK)
-	assert.Equal(t, "message", mock.lastOpts.CategoryID)
-	assert.Equal(t, 2, len(mock.lastOpts.Actions))
+	core.RequireTrue(t, r.OK)
+	core.AssertEqual(t, "message", mock.lastOpts.CategoryID)
+	core.AssertEqual(t, 2, len(mock.lastOpts.Actions))
 }
 
-func TestTaskSend_RegisteredCategoryActions_Good(t *testing.T) {
+func TestTaskSend_RegisteredCategoryActions_Good(t *core.T) {
 	mock, c := newTestService(t)
-	require.True(t, taskRun(c, "notification.registerCategory", TaskRegisterCategory{
+	core.RequireTrue(t, taskRun(c, "notification.registerCategory", TaskRegisterCategory{
 		Category: NotificationCategory{
 			ID: "message",
 			Actions: []NotificationAction{
@@ -235,44 +232,44 @@ func TestTaskSend_RegisteredCategoryActions_Good(t *testing.T) {
 			CategoryID: "message",
 		},
 	})
-	require.True(t, r.OK)
-	assert.Equal(t, 2, len(mock.lastOpts.Actions))
-	assert.Equal(t, "reply", mock.lastOpts.Actions[0].ID)
+	core.RequireTrue(t, r.OK)
+	core.AssertEqual(t, 2, len(mock.lastOpts.Actions))
+	core.AssertEqual(t, "reply", mock.lastOpts.Actions[0].ID)
 }
 
-func TestTaskClear_Good_Specific(t *testing.T) {
+func TestTaskClear_Good_Specific(t *core.T) {
 	mock, c := newTestService(t)
-	require.True(t, taskRun(c, "notification.send", TaskSend{
+	core.RequireTrue(t, taskRun(c, "notification.send", TaskSend{
 		Options: NotificationOptions{ID: "n1", Title: "One", Message: "Hello"},
 	}).OK)
 
 	r := taskRun(c, "notification.clear", TaskClear{ID: "n1"})
-	require.True(t, r.OK)
-	assert.True(t, mock.clearCalled)
-	assert.Equal(t, "n1", mock.clearID)
+	core.RequireTrue(t, r.OK)
+	core.AssertTrue(t, mock.clearCalled)
+	core.AssertEqual(t, "n1", mock.clearID)
 }
 
-func TestTaskClear_Good_All(t *testing.T) {
+func TestTaskClear_Good_All(t *core.T) {
 	mock, c := newTestService(t)
-	require.True(t, taskRun(c, "notification.send", TaskSend{
+	core.RequireTrue(t, taskRun(c, "notification.send", TaskSend{
 		Options: NotificationOptions{ID: "n1", Title: "One", Message: "Hello"},
 	}).OK)
-	require.True(t, taskRun(c, "notification.send", TaskSend{
+	core.RequireTrue(t, taskRun(c, "notification.send", TaskSend{
 		Options: NotificationOptions{ID: "n2", Title: "Two", Message: "World"},
 	}).OK)
 
 	r := taskRun(c, "notification.clear", TaskClear{})
-	require.True(t, r.OK)
-	assert.True(t, mock.clearCalled)
-	assert.Equal(t, "", mock.clearID)
+	core.RequireTrue(t, r.OK)
+	core.AssertTrue(t, mock.clearCalled)
+	core.AssertEqual(t, "", mock.clearID)
 
 	svc := core.MustServiceFor[*Service](c, "notification")
-	assert.Empty(t, svc.active)
+	core.AssertEmpty(t, svc.active)
 }
 
 // --- ActionNotificationActionTriggered ---
 
-func TestActionNotificationActionTriggered_Good(t *testing.T) {
+func TestActionNotificationActionTriggered_Good(t *core.T) {
 	// ActionNotificationActionTriggered is broadcast by external code; confirm it can be received
 	_, c := newTestService(t)
 	var received *ActionNotificationActionTriggered
@@ -283,12 +280,12 @@ func TestActionNotificationActionTriggered_Good(t *testing.T) {
 		return core.Result{OK: true}
 	})
 	_ = c.ACTION(ActionNotificationActionTriggered{NotificationID: "n1", ActionID: "reply"})
-	require.NotNil(t, received)
-	assert.Equal(t, "n1", received.NotificationID)
-	assert.Equal(t, "reply", received.ActionID)
+	core.AssertNotNil(t, received)
+	core.AssertEqual(t, "n1", received.NotificationID)
+	core.AssertEqual(t, "reply", received.ActionID)
 }
 
-func TestActionNotificationDismissed_Good(t *testing.T) {
+func TestActionNotificationDismissed_Good(t *core.T) {
 	_, c := newTestService(t)
 	var received *ActionNotificationDismissed
 	c.RegisterAction(func(_ *core.Core, msg core.Message) core.Result {
@@ -298,25 +295,25 @@ func TestActionNotificationDismissed_Good(t *testing.T) {
 		return core.Result{OK: true}
 	})
 	_ = c.ACTION(ActionNotificationDismissed{ID: "n2"})
-	require.NotNil(t, received)
-	assert.Equal(t, "n2", received.ID)
+	core.AssertNotNil(t, received)
+	core.AssertEqual(t, "n2", received.ID)
 }
 
-func TestQueryPermission_Bad(t *testing.T) {
+func TestQueryPermission_Bad(t *core.T) {
 	// No service — QUERY returns handled=false
 	c := core.New(core.WithServiceLock())
 	r := c.QUERY(QueryPermission{})
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
-func TestQueryPermission_Ugly(t *testing.T) {
+func TestQueryPermission_Ugly(t *core.T) {
 	// Platform returns error — QUERY returns OK=false (framework does not propagate Value for failed queries)
 	mock := &mockPlatform{permErr: core.NewError("platform error")}
 	c := core.New(
 		core.WithService(Register(mock)),
 		core.WithServiceLock(),
 	)
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	core.RequireTrue(t, c.ServiceStartup(context.Background(), nil).OK)
 	r := c.QUERY(QueryPermission{})
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }

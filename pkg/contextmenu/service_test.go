@@ -4,11 +4,8 @@ package contextmenu
 import (
 	"context"
 	"sync"
-	"testing"
 
-	core "dappco.re/go/core"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	core "dappco.re/go"
 )
 
 // mockPlatform records Add/Remove calls and allows simulating clicks.
@@ -101,13 +98,13 @@ func (m *mockPlatform) simulateClick(menuName, actionID, data string) {
 	}
 }
 
-func newTestContextMenuService(t *testing.T, mp Platform) (*Service, *core.Core) {
+func newTestContextMenuService(t *core.T, mp Platform) (*Service, *core.Core) {
 	t.Helper()
 	c := core.New(
 		core.WithService(Register(mp)),
 		core.WithServiceLock(),
 	)
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	core.RequireTrue(t, c.ServiceStartup(context.Background(), nil).OK)
 	svc := core.MustServiceFor[*Service](c, "contextmenu")
 	return svc, c
 }
@@ -119,14 +116,14 @@ func taskRun(c *core.Core, name string, task any) core.Result {
 	))
 }
 
-func TestRegister_Good(t *testing.T) {
+func TestRegister_Good(t *core.T) {
 	mp := newMockPlatform()
 	svc, _ := newTestContextMenuService(t, mp)
-	assert.NotNil(t, svc)
-	assert.NotNil(t, svc.platform)
+	core.AssertNotNil(t, svc)
+	core.AssertNotNil(t, svc.platform)
 }
 
-func TestNilPlatform_Good_MutationAndShutdownAreSafe(t *testing.T) {
+func TestNilPlatform_Good_MutationAndShutdownAreSafe(t *core.T) {
 	_, c := newTestContextMenuService(t, nil)
 
 	cases := []struct {
@@ -142,16 +139,16 @@ func TestNilPlatform_Good_MutationAndShutdownAreSafe(t *testing.T) {
 
 	for _, tc := range cases {
 		r := taskRun(c, tc.action, tc.task)
-		assert.False(t, r.OK, tc.name)
+		core.AssertFalse(t, r.OK, tc.name)
 		err, _ := r.Value.(error)
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "platform backend unavailable")
+		core.AssertError(t, err)
+		core.AssertContains(t, err.Error(), "platform backend unavailable")
 	}
 
-	assert.True(t, c.ServiceShutdown(t.Context()).OK)
+	core.AssertTrue(t, c.ServiceShutdown(t.Context()).OK)
 }
 
-func TestTaskAdd_Good(t *testing.T) {
+func TestTaskAdd_Good(t *core.T) {
 	mp := newMockPlatform()
 	_, c := newTestContextMenuService(t, mp)
 
@@ -165,14 +162,14 @@ func TestTaskAdd_Good(t *testing.T) {
 			},
 		},
 	})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 
 	// Verify menu registered on platform
 	_, ok := mp.Get("file-menu")
-	assert.True(t, ok)
+	core.AssertTrue(t, ok)
 }
 
-func TestTaskAdd_Good_ReplaceExisting(t *testing.T) {
+func TestTaskAdd_Good_ReplaceExisting(t *core.T) {
 	mp := newMockPlatform()
 	_, c := newTestContextMenuService(t, mp)
 
@@ -187,17 +184,17 @@ func TestTaskAdd_Good_ReplaceExisting(t *testing.T) {
 		Name: "ctx",
 		Menu: ContextMenuDef{Name: "ctx", Items: []MenuItemDef{{Label: "B", ActionID: "b"}}},
 	})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 
 	// Verify registry has new menu
 	qr := c.QUERY(QueryGet{Name: "ctx"})
-	require.True(t, qr.OK)
+	core.RequireTrue(t, qr.OK)
 	def := qr.Value.(*ContextMenuDef)
-	require.Len(t, def.Items, 1)
-	assert.Equal(t, "B", def.Items[0].Label)
+	core.AssertLen(t, def.Items, 1)
+	core.AssertEqual(t, "B", def.Items[0].Label)
 }
 
-func TestTaskRemove_Good(t *testing.T) {
+func TestTaskRemove_Good(t *core.T) {
 	mp := newMockPlatform()
 	_, c := newTestContextMenuService(t, mp)
 
@@ -207,24 +204,24 @@ func TestTaskRemove_Good(t *testing.T) {
 		Menu: ContextMenuDef{Name: "test"},
 	})
 	r := taskRun(c, "contextmenu.remove", TaskRemove{Name: "test"})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 
 	// Verify removed from registry
 	qr := c.QUERY(QueryGet{Name: "test"})
-	assert.Nil(t, qr.Value)
+	core.AssertNil(t, qr.Value)
 }
 
-func TestTaskRemove_Bad_NotFound(t *testing.T) {
+func TestTaskRemove_Bad_NotFound(t *core.T) {
 	mp := newMockPlatform()
 	_, c := newTestContextMenuService(t, mp)
 
 	r := taskRun(c, "contextmenu.remove", TaskRemove{Name: "nonexistent"})
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 	err, _ := r.Value.(error)
-	assert.ErrorIs(t, err, ErrorMenuNotFound)
+	core.AssertErrorIs(t, err, ErrorMenuNotFound)
 }
 
-func TestQueryGet_Good(t *testing.T) {
+func TestQueryGet_Good(t *core.T) {
 	mp := newMockPlatform()
 	_, c := newTestContextMenuService(t, mp)
 
@@ -237,22 +234,22 @@ func TestQueryGet_Good(t *testing.T) {
 	})
 
 	r := c.QUERY(QueryGet{Name: "my-menu"})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 	def := r.Value.(*ContextMenuDef)
-	assert.Equal(t, "my-menu", def.Name)
-	assert.Len(t, def.Items, 1)
+	core.AssertEqual(t, "my-menu", def.Name)
+	core.AssertLen(t, def.Items, 1)
 }
 
-func TestQueryGet_Good_NotFound(t *testing.T) {
+func TestQueryGet_Good_NotFound(t *core.T) {
 	mp := newMockPlatform()
 	_, c := newTestContextMenuService(t, mp)
 
 	r := c.QUERY(QueryGet{Name: "missing"})
-	require.True(t, r.OK)
-	assert.Nil(t, r.Value)
+	core.RequireTrue(t, r.OK)
+	core.AssertNil(t, r.Value)
 }
 
-func TestQueryList_Good(t *testing.T) {
+func TestQueryList_Good(t *core.T) {
 	mp := newMockPlatform()
 	_, c := newTestContextMenuService(t, mp)
 
@@ -260,22 +257,22 @@ func TestQueryList_Good(t *testing.T) {
 	_ = taskRun(c, "contextmenu.add", TaskAdd{Name: "b", Menu: ContextMenuDef{Name: "b"}})
 
 	r := c.QUERY(QueryList{})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 	list := r.Value.(map[string]ContextMenuDef)
-	assert.Len(t, list, 2)
+	core.AssertLen(t, list, 2)
 }
 
-func TestQueryList_Good_Empty(t *testing.T) {
+func TestQueryList_Good_Empty(t *core.T) {
 	mp := newMockPlatform()
 	_, c := newTestContextMenuService(t, mp)
 
 	r := c.QUERY(QueryList{})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 	list := r.Value.(map[string]ContextMenuDef)
-	assert.Len(t, list, 0)
+	core.AssertLen(t, list, 0)
 }
 
-func TestTaskAdd_Good_ClickBroadcast(t *testing.T) {
+func TestTaskAdd_Good_ClickBroadcast(t *core.T) {
 	mp := newMockPlatform()
 	_, c := newTestContextMenuService(t, mp)
 
@@ -305,13 +302,13 @@ func TestTaskAdd_Good_ClickBroadcast(t *testing.T) {
 	mp.simulateClick("file-menu", "open", "file-123")
 
 	mu.Lock()
-	assert.Equal(t, "file-menu", clicked.MenuName)
-	assert.Equal(t, "open", clicked.ActionID)
-	assert.Equal(t, "file-123", clicked.Data)
+	core.AssertEqual(t, "file-menu", clicked.MenuName)
+	core.AssertEqual(t, "open", clicked.ActionID)
+	core.AssertEqual(t, "file-123", clicked.Data)
 	mu.Unlock()
 }
 
-func TestTaskAdd_Ugly_PlatformAddFailureRollsBackExistingMenu(t *testing.T) {
+func TestTaskAdd_Ugly_PlatformAddFailureRollsBackExistingMenu(t *core.T) {
 	mp := newFlakyAddPlatform()
 	_, c := newTestContextMenuService(t, mp)
 
@@ -328,20 +325,20 @@ func TestTaskAdd_Ugly_PlatformAddFailureRollsBackExistingMenu(t *testing.T) {
 		Name: "file-menu",
 		Menu: ContextMenuDef{Name: "file-menu", Items: []MenuItemDef{{Label: "Delete", ActionID: "delete"}}},
 	})
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 
 	qr := c.QUERY(QueryGet{Name: "file-menu"})
-	require.True(t, qr.OK)
+	core.RequireTrue(t, qr.OK)
 	def := qr.Value.(*ContextMenuDef)
-	require.Len(t, def.Items, 1)
-	assert.Equal(t, "Open", def.Items[0].Label)
+	core.AssertLen(t, def.Items, 1)
+	core.AssertEqual(t, "Open", def.Items[0].Label)
 	platformMenu, ok := mp.Get("file-menu")
-	require.True(t, ok)
-	require.Len(t, platformMenu.Items, 1)
-	assert.Equal(t, "Open", platformMenu.Items[0].Label)
+	core.RequireTrue(t, ok)
+	core.AssertLen(t, platformMenu.Items, 1)
+	core.AssertEqual(t, "Open", platformMenu.Items[0].Label)
 }
 
-func TestTaskAdd_Good_SubmenuItems(t *testing.T) {
+func TestTaskAdd_Good_SubmenuItems(t *core.T) {
 	mp := newMockPlatform()
 	_, c := newTestContextMenuService(t, mp)
 
@@ -359,23 +356,23 @@ func TestTaskAdd_Good_SubmenuItems(t *testing.T) {
 			},
 		},
 	})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 
 	qr := c.QUERY(QueryGet{Name: "nested"})
 	def := qr.Value.(*ContextMenuDef)
-	assert.Len(t, def.Items, 3)
-	assert.Len(t, def.Items[0].Items, 2) // submenu children
+	core.AssertLen(t, def.Items, 3)
+	core.AssertLen(t, def.Items[0].Items, 2) // submenu children
 }
 
-func TestQueryList_Bad_NoService(t *testing.T) {
+func TestQueryList_Bad_NoService(t *core.T) {
 	c := core.New(core.WithServiceLock())
 	r := c.QUERY(QueryList{})
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
 // --- TaskUpdate ---
 
-func TestTaskUpdate_Good(t *testing.T) {
+func TestTaskUpdate_Good(t *core.T) {
 	// Update replaces items on an existing menu
 	mp := newMockPlatform()
 	_, c := newTestContextMenuService(t, mp)
@@ -392,15 +389,15 @@ func TestTaskUpdate_Good(t *testing.T) {
 			{Label: "Copy", ActionID: "copy"},
 		}},
 	})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 
 	qr := c.QUERY(QueryGet{Name: "edit-menu"})
 	def := qr.Value.(*ContextMenuDef)
-	assert.Len(t, def.Items, 2)
-	assert.Equal(t, "Copy", def.Items[1].Label)
+	core.AssertLen(t, def.Items, 2)
+	core.AssertEqual(t, "Copy", def.Items[1].Label)
 }
 
-func TestTaskUpdate_Bad_NotFound(t *testing.T) {
+func TestTaskUpdate_Bad_NotFound(t *core.T) {
 	// Update on a non-existent menu returns ErrorMenuNotFound
 	mp := newMockPlatform()
 	_, c := newTestContextMenuService(t, mp)
@@ -409,12 +406,12 @@ func TestTaskUpdate_Bad_NotFound(t *testing.T) {
 		Name: "ghost",
 		Menu: ContextMenuDef{Name: "ghost"},
 	})
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 	err, _ := r.Value.(error)
-	assert.ErrorIs(t, err, ErrorMenuNotFound)
+	core.AssertErrorIs(t, err, ErrorMenuNotFound)
 }
 
-func TestTaskUpdate_Ugly_PlatformRemoveError(t *testing.T) {
+func TestTaskUpdate_Ugly_PlatformRemoveError(t *core.T) {
 	// Platform Remove fails mid-update — error is propagated
 	mp := newMockPlatform()
 	_, c := newTestContextMenuService(t, mp)
@@ -432,10 +429,10 @@ func TestTaskUpdate_Ugly_PlatformRemoveError(t *testing.T) {
 		Name: "tricky",
 		Menu: ContextMenuDef{Name: "tricky", Items: []MenuItemDef{{Label: "X", ActionID: "x"}}},
 	})
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
-func TestTaskUpdate_Ugly_PlatformAddFailureRollsBackExistingMenu(t *testing.T) {
+func TestTaskUpdate_Ugly_PlatformAddFailureRollsBackExistingMenu(t *core.T) {
 	mp := newFlakyAddPlatform()
 	_, c := newTestContextMenuService(t, mp)
 
@@ -452,22 +449,22 @@ func TestTaskUpdate_Ugly_PlatformAddFailureRollsBackExistingMenu(t *testing.T) {
 		Name: "edit-menu",
 		Menu: ContextMenuDef{Name: "edit-menu", Items: []MenuItemDef{{Label: "Copy", ActionID: "copy"}}},
 	})
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 
 	qr := c.QUERY(QueryGet{Name: "edit-menu"})
-	require.True(t, qr.OK)
+	core.RequireTrue(t, qr.OK)
 	def := qr.Value.(*ContextMenuDef)
-	require.Len(t, def.Items, 1)
-	assert.Equal(t, "Cut", def.Items[0].Label)
+	core.AssertLen(t, def.Items, 1)
+	core.AssertEqual(t, "Cut", def.Items[0].Label)
 	platformMenu, ok := mp.Get("edit-menu")
-	require.True(t, ok)
-	require.Len(t, platformMenu.Items, 1)
-	assert.Equal(t, "Cut", platformMenu.Items[0].Label)
+	core.RequireTrue(t, ok)
+	core.AssertLen(t, platformMenu.Items, 1)
+	core.AssertEqual(t, "Cut", platformMenu.Items[0].Label)
 }
 
 // --- TaskDestroy ---
 
-func TestTaskDestroy_Good(t *testing.T) {
+func TestTaskDestroy_Good(t *core.T) {
 	// Destroy removes the menu and releases platform resources
 	mp := newMockPlatform()
 	_, c := newTestContextMenuService(t, mp)
@@ -475,27 +472,27 @@ func TestTaskDestroy_Good(t *testing.T) {
 	_ = taskRun(c, "contextmenu.add", TaskAdd{Name: "doomed", Menu: ContextMenuDef{Name: "doomed"}})
 
 	r := taskRun(c, "contextmenu.destroy", TaskDestroy{Name: "doomed"})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 
 	qr := c.QUERY(QueryGet{Name: "doomed"})
-	assert.Nil(t, qr.Value)
+	core.AssertNil(t, qr.Value)
 
 	_, ok := mp.Get("doomed")
-	assert.False(t, ok)
+	core.AssertFalse(t, ok)
 }
 
-func TestTaskDestroy_Bad_NotFound(t *testing.T) {
+func TestTaskDestroy_Bad_NotFound(t *core.T) {
 	// Destroy on a non-existent menu returns ErrorMenuNotFound
 	mp := newMockPlatform()
 	_, c := newTestContextMenuService(t, mp)
 
 	r := taskRun(c, "contextmenu.destroy", TaskDestroy{Name: "nonexistent"})
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 	err, _ := r.Value.(error)
-	assert.ErrorIs(t, err, ErrorMenuNotFound)
+	core.AssertErrorIs(t, err, ErrorMenuNotFound)
 }
 
-func TestTaskDestroy_Ugly_PlatformError(t *testing.T) {
+func TestTaskDestroy_Ugly_PlatformError(t *core.T) {
 	// Platform Remove fails — error is propagated but service remains consistent
 	mp := newMockPlatform()
 	_, c := newTestContextMenuService(t, mp)
@@ -507,12 +504,12 @@ func TestTaskDestroy_Ugly_PlatformError(t *testing.T) {
 	mp.mu.Unlock()
 
 	r := taskRun(c, "contextmenu.destroy", TaskDestroy{Name: "frail"})
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
 // --- QueryGetAll ---
 
-func TestQueryGetAll_Good(t *testing.T) {
+func TestQueryGetAll_Good(t *core.T) {
 	// QueryGetAll returns all registered menus (equivalent to QueryList)
 	mp := newMockPlatform()
 	_, c := newTestContextMenuService(t, mp)
@@ -521,34 +518,34 @@ func TestQueryGetAll_Good(t *testing.T) {
 	_ = taskRun(c, "contextmenu.add", TaskAdd{Name: "y", Menu: ContextMenuDef{Name: "y"}})
 
 	r := c.QUERY(QueryGetAll{})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 	all := r.Value.(map[string]ContextMenuDef)
-	assert.Len(t, all, 2)
-	assert.Contains(t, all, "x")
-	assert.Contains(t, all, "y")
+	core.AssertLen(t, all, 2)
+	core.AssertContains(t, all, "x")
+	core.AssertContains(t, all, "y")
 }
 
-func TestQueryGetAll_Bad_Empty(t *testing.T) {
+func TestQueryGetAll_Bad_Empty(t *core.T) {
 	// QueryGetAll on an empty registry returns an empty map
 	mp := newMockPlatform()
 	_, c := newTestContextMenuService(t, mp)
 
 	r := c.QUERY(QueryGetAll{})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 	all := r.Value.(map[string]ContextMenuDef)
-	assert.Len(t, all, 0)
+	core.AssertLen(t, all, 0)
 }
 
-func TestQueryGetAll_Ugly_NoService(t *testing.T) {
+func TestQueryGetAll_Ugly_NoService(t *core.T) {
 	// No contextmenu service — query is unhandled
 	c := core.New(core.WithServiceLock())
 	r := c.QUERY(QueryGetAll{})
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
 // --- OnShutdown ---
 
-func TestOnShutdown_Good_CleansUpMenus(t *testing.T) {
+func TestOnShutdown_Good_CleansUpMenus(t *core.T) {
 	// OnShutdown removes all registered menus from the platform
 	mp := newMockPlatform()
 	_, c := newTestContextMenuService(t, mp)
@@ -556,20 +553,20 @@ func TestOnShutdown_Good_CleansUpMenus(t *testing.T) {
 	_ = taskRun(c, "contextmenu.add", TaskAdd{Name: "alpha", Menu: ContextMenuDef{Name: "alpha"}})
 	_ = taskRun(c, "contextmenu.add", TaskAdd{Name: "beta", Menu: ContextMenuDef{Name: "beta"}})
 
-	require.True(t, c.ServiceShutdown(t.Context()).OK)
+	core.RequireTrue(t, c.ServiceShutdown(t.Context()).OK)
 
-	assert.Len(t, mp.menus, 0)
+	core.AssertLen(t, mp.menus, 0)
 }
 
-func TestOnShutdown_Bad_NothingRegistered(t *testing.T) {
+func TestOnShutdown_Bad_NothingRegistered(t *core.T) {
 	// OnShutdown with no menus — no-op, no error
 	mp := newMockPlatform()
 	_, c := newTestContextMenuService(t, mp)
 
-	assert.True(t, c.ServiceShutdown(t.Context()).OK)
+	core.AssertTrue(t, c.ServiceShutdown(t.Context()).OK)
 }
 
-func TestOnShutdown_Ugly_PlatformRemoveErrors(t *testing.T) {
+func TestOnShutdown_Ugly_PlatformRemoveErrors(t *core.T) {
 	// Platform Remove errors during shutdown are silently swallowed
 	mp := newMockPlatform()
 	_, c := newTestContextMenuService(t, mp)
@@ -581,5 +578,5 @@ func TestOnShutdown_Ugly_PlatformRemoveErrors(t *testing.T) {
 	mp.mu.Unlock()
 
 	// Shutdown must not return an error even if platform Remove fails
-	assert.True(t, c.ServiceShutdown(t.Context()).OK)
+	core.AssertTrue(t, c.ServiceShutdown(t.Context()).OK)
 }

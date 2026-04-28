@@ -1,53 +1,53 @@
 package application
 
 import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
+	core "dappco.re/go"
 )
 
-func TestEnvironmentManager_IsDarkMode_Good(t *testing.T) {
+func TestEnvironmentManager_IsDarkMode_Good(t *core.T) {
 	manager := &EnvironmentManager{}
 	manager.SetDarkMode(true)
 
-	assert.True(t, manager.IsDarkMode())
+	core.AssertTrue(t, manager.IsDarkMode())
 }
 
-func TestEnvironmentManager_IsDarkMode_Bad(t *testing.T) {
+func TestEnvironmentManager_IsDarkMode_Bad(t *core.T) {
 	manager := &EnvironmentManager{}
 
-	assert.False(t, manager.IsDarkMode())
+	core.AssertFalse(t, manager.IsDarkMode())
+	core.AssertNotEmpty(t, core.Sprintf("%T", manager))
 }
 
-func TestEnvironmentManager_IsDarkMode_Ugly(t *testing.T) {
+func TestEnvironmentManager_IsDarkMode_Ugly(t *core.T) {
 	manager := &EnvironmentManager{}
 	manager.SetDarkMode(true)
 	manager.SetDarkMode(false)
 
-	assert.False(t, manager.IsDarkMode())
+	core.AssertFalse(t, manager.IsDarkMode())
 }
 
-func TestEnvironmentManager_GetAccentColor_Good(t *testing.T) {
+func TestEnvironmentManager_GetAccentColor_Good(t *core.T) {
 	manager := &EnvironmentManager{}
 	manager.SetAccentColour("rgb(1,2,3)")
 
-	assert.Equal(t, "rgb(1,2,3)", manager.GetAccentColor())
+	core.AssertEqual(t, "rgb(1,2,3)", manager.GetAccentColor())
 }
 
-func TestEnvironmentManager_GetAccentColor_Bad(t *testing.T) {
+func TestEnvironmentManager_GetAccentColor_Bad(t *core.T) {
 	manager := &EnvironmentManager{}
 
-	assert.Equal(t, "rgb(0,122,255)", manager.GetAccentColor())
+	core.AssertEqual(t, "rgb(0,122,255)", manager.GetAccentColor())
+	core.AssertNotEmpty(t, core.Sprintf("%T", manager))
 }
 
-func TestEnvironmentManager_GetAccentColor_Ugly(t *testing.T) {
+func TestEnvironmentManager_GetAccentColor_Ugly(t *core.T) {
 	manager := &EnvironmentManager{}
 	manager.SetAccentColour("")
 
-	assert.Equal(t, "rgb(0,122,255)", manager.GetAccentColor())
+	core.AssertEqual(t, "rgb(0,122,255)", manager.GetAccentColor())
 }
 
-func TestEnvironmentManager_Info_Good(t *testing.T) {
+func TestEnvironmentManager_Info_Good(t *core.T) {
 	manager := &EnvironmentManager{}
 	manager.SetDarkMode(true)
 	manager.SetAccentColour("rgb(1,2,3)")
@@ -57,26 +57,26 @@ func TestEnvironmentManager_Info_Good(t *testing.T) {
 
 	got := manager.Info()
 
-	assert.Equal(t, "linux", got.OS)
-	assert.Equal(t, "amd64", got.Arch)
-	assert.True(t, got.Debug)
-	assert.True(t, got.IsDarkMode)
-	assert.Equal(t, "rgb(1,2,3)", got.AccentColour)
+	core.AssertEqual(t, "linux", got.OS)
+	core.AssertEqual(t, "amd64", got.Arch)
+	core.AssertTrue(t, got.Debug)
+	core.AssertTrue(t, got.IsDarkMode)
+	core.AssertEqual(t, "rgb(1,2,3)", got.AccentColour)
 }
 
-func TestEnvironmentManager_Info_Bad(t *testing.T) {
+func TestEnvironmentManager_Info_Bad(t *core.T) {
 	manager := &EnvironmentManager{}
 
 	got := manager.Info()
 
-	assert.Empty(t, got.OS)
-	assert.Empty(t, got.Arch)
-	assert.False(t, got.Debug)
-	assert.False(t, got.IsDarkMode)
-	assert.Empty(t, got.AccentColour)
+	core.AssertEmpty(t, got.OS)
+	core.AssertEmpty(t, got.Arch)
+	core.AssertFalse(t, got.Debug)
+	core.AssertFalse(t, got.IsDarkMode)
+	core.AssertEmpty(t, got.AccentColour)
 }
 
-func TestEnvironmentManager_Info_Ugly(t *testing.T) {
+func TestEnvironmentManager_Info_Ugly(t *core.T) {
 	manager := &EnvironmentManager{}
 	manager.operatingSystem = "plan9"
 	manager.architecture = "riscv64"
@@ -85,8 +85,8 @@ func TestEnvironmentManager_Info_Ugly(t *testing.T) {
 
 	got := manager.Info()
 
-	assert.Equal(t, "plan9", got.OS)
-	assert.Equal(t, "riscv64", got.Arch)
-	assert.True(t, got.Debug)
-	assert.True(t, got.IsDarkMode)
+	core.AssertEqual(t, "plan9", got.OS)
+	core.AssertEqual(t, "riscv64", got.Arch)
+	core.AssertTrue(t, got.Debug)
+	core.AssertTrue(t, got.IsDarkMode)
 }

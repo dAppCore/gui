@@ -3,7 +3,8 @@ package dock
 import (
 	"context"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
+	"dappco.re/go/gui/pkg/internal/coreutil"
 )
 
 type Options struct{}
@@ -19,14 +20,14 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		if err := s.platform.ShowIcon(); err != nil {
 			return core.Result{Value: err, OK: false}
 		}
-		_ = s.Core().ACTION(ActionVisibilityChanged{Visible: true})
+		coreutil.DispatchAction(s.Core(), "dock.showIcon", ActionVisibilityChanged{Visible: true})
 		return core.Result{OK: true}
 	})
 	s.Core().Action("dock.hideIcon", func(_ context.Context, _ core.Options) core.Result {
 		if err := s.platform.HideIcon(); err != nil {
 			return core.Result{Value: err, OK: false}
 		}
-		_ = s.Core().ACTION(ActionVisibilityChanged{Visible: false})
+		coreutil.DispatchAction(s.Core(), "dock.hideIcon", ActionVisibilityChanged{Visible: false})
 		return core.Result{OK: true}
 	})
 	s.Core().Action("dock.setBadge", func(_ context.Context, opts core.Options) core.Result {
@@ -46,7 +47,7 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		if err := s.platform.SetProgressBar(t.Progress); err != nil {
 			return core.Result{Value: err, OK: false}
 		}
-		_ = s.Core().ACTION(ActionProgressChanged{Progress: t.Progress})
+		coreutil.DispatchAction(s.Core(), "dock.setProgressBar", ActionProgressChanged{Progress: t.Progress})
 		return core.Result{OK: true}
 	})
 	s.Core().Action("dock.bounce", func(_ context.Context, opts core.Options) core.Result {
@@ -55,7 +56,7 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
-		_ = s.Core().ACTION(ActionBounceStarted{RequestID: requestID, BounceType: t.BounceType})
+		coreutil.DispatchAction(s.Core(), "dock.bounce", ActionBounceStarted{RequestID: requestID, BounceType: t.BounceType})
 		return core.Result{Value: requestID, OK: true}
 	})
 	s.Core().Action("dock.stopBounce", func(_ context.Context, opts core.Options) core.Result {

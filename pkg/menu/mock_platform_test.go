@@ -1,40 +1,37 @@
 package menu
 
 import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	core "dappco.re/go"
 )
 
-func TestMockPlatform_NewMenu_Good(t *testing.T) {
+func TestMockPlatform_NewMenu_Good(t *core.T) {
 	p := NewMockPlatform()
 	menu := p.NewMenu()
 
-	require.NotNil(t, menu)
+	core.AssertNotNil(t, menu)
 	root, ok := menu.(*exportedMockPlatformMenu)
-	require.True(t, ok)
+	core.RequireTrue(t, ok)
 
 	item := root.Add("Open")
-	require.NotNil(t, item)
+	core.AssertNotNil(t, item)
 	item.SetAccelerator("Cmd+O").SetTooltip("open").SetChecked(true).SetEnabled(false).OnClick(func() {})
 	root.AddSeparator()
 	sub := root.AddSubmenu("More")
 	sub.AddRole(RoleHelpMenu)
 
-	assert.NotNil(t, root)
-	assert.NotNil(t, sub)
+	core.AssertNotNil(t, root)
+	core.AssertNotNil(t, sub)
 }
 
-func TestMockPlatform_SetApplicationMenu_Bad(t *testing.T) {
+func TestMockPlatform_SetApplicationMenu_Bad(t *core.T) {
 	p := NewMockPlatform()
 	menu := p.NewMenu()
 	p.SetApplicationMenu(menu)
 
-	assert.NotNil(t, menu)
+	core.AssertNotNil(t, menu)
 }
 
-func TestMockPlatform_NewMenu_Ugly(t *testing.T) {
+func TestMockPlatform_NewMenu_Ugly(t *core.T) {
 	p := NewMockPlatform()
 	root := p.NewMenu().(*exportedMockPlatformMenu)
 	root.AddRole(RoleAppMenu)
@@ -43,5 +40,5 @@ func TestMockPlatform_NewMenu_Ugly(t *testing.T) {
 	root.AddRole(RoleViewMenu)
 	root.AddRole(RoleWindowMenu)
 	root.AddRole(RoleHelpMenu)
-	assert.NotNil(t, root)
+	core.AssertNotNil(t, root)
 }

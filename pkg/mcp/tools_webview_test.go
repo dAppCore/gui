@@ -3,16 +3,13 @@ package mcp
 import (
 	"context"
 	"errors"
-	"testing"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/webview"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-func newWebviewToolsTestSubsystem(t *testing.T, handler func(name string, opts core.Options) core.Result) *Subsystem {
+func newWebviewToolsTestSubsystem(t *core.T, handler func(name string, opts core.Options) core.Result) *Subsystem {
 	t.Helper()
 
 	c := core.New(core.WithServiceLock())
@@ -31,16 +28,16 @@ func newWebviewToolsTestSubsystem(t *testing.T, handler func(name string, opts c
 	return New(c)
 }
 
-func TestToolsWebview_webviewDevTools_Good(t *testing.T) {
+func TestToolsWebview_webviewDevTools_Good(t *core.T) {
 	var calls []string
 
 	sub := newWebviewToolsTestSubsystem(t, func(name string, opts core.Options) core.Result {
 		calls = append(calls, name)
 		switch task := opts.Get("task").Value.(type) {
 		case webview.TaskDevToolsOpen:
-			assert.Equal(t, "main", task.Window)
+			core.AssertEqual(t, "main", task.Window)
 		case webview.TaskDevToolsClose:
-			assert.Equal(t, "main", task.Window)
+			core.AssertEqual(t, "main", task.Window)
 		default:
 			t.Fatalf("unexpected task type %T", task)
 		}
@@ -51,39 +48,39 @@ func TestToolsWebview_webviewDevTools_Good(t *testing.T) {
 	sub.registerWebviewTools(server)
 
 	result, err := sub.CallTool(context.Background(), "webview_devtools_open", map[string]any{"window": "main"})
-	require.NoError(t, err)
-	assert.Contains(t, result, "\"success\":true")
+	core.RequireNoError(t, err)
+	core.AssertContains(t, result, "\"success\":true")
 
 	result, err = sub.CallTool(context.Background(), "webview_devtools_close", map[string]any{"window": "main"})
-	require.NoError(t, err)
-	assert.Contains(t, result, "\"success\":true")
-	assert.Equal(t, []string{"webview.devtoolsOpen", "webview.devtoolsClose"}, calls)
+	core.RequireNoError(t, err)
+	core.AssertContains(t, result, "\"success\":true")
+	core.AssertEqual(t, []string{"webview.devtoolsOpen", "webview.devtoolsClose"}, calls)
 }
 
-func TestToolsWebview_webviewDevToolsOpen_Bad(t *testing.T) {
+func TestToolsWebview_webviewDevToolsOpen_Bad(t *core.T) {
 	sub := newWebviewToolsTestSubsystem(t, func(name string, opts core.Options) core.Result {
 		task, ok := opts.Get("task").Value.(webview.TaskDevToolsOpen)
-		require.True(t, ok)
-		assert.Equal(t, "main", task.Window)
-		assert.Equal(t, "webview.devtoolsOpen", name)
+		core.RequireTrue(t, ok)
+		core.AssertEqual(t, "main", task.Window)
+		core.AssertEqual(t, "webview.devtoolsOpen", name)
 		return core.Result{Value: errors.New("devtools unavailable"), OK: false}
 	})
 
 	_, _, err := sub.webviewDevToolsOpen(context.Background(), nil, WebviewDevToolsOpenInput{Window: "main"})
-	require.Error(t, err)
-	assert.Equal(t, "devtools unavailable", err.Error())
+	core.AssertError(t, err)
+	core.AssertEqual(t, "devtools unavailable", err.Error())
 }
 
-func TestToolsWebview_webviewDevToolsClose_Ugly(t *testing.T) {
+func TestToolsWebview_webviewDevToolsClose_Ugly(t *core.T) {
 	sub := newWebviewToolsTestSubsystem(t, func(name string, opts core.Options) core.Result {
 		task, ok := opts.Get("task").Value.(webview.TaskDevToolsClose)
-		require.True(t, ok)
-		assert.Equal(t, "main", task.Window)
-		assert.Equal(t, "webview.devtoolsClose", name)
+		core.RequireTrue(t, ok)
+		core.AssertEqual(t, "main", task.Window)
+		core.AssertEqual(t, "webview.devtoolsClose", name)
 		return core.Result{Value: "suppressed failure", OK: false}
 	})
 
 	_, out, err := sub.webviewDevToolsClose(context.Background(), nil, WebviewDevToolsCloseInput{Window: "main"})
-	require.NoError(t, err)
-	assert.False(t, out.Success)
+	core.RequireNoError(t, err)
+	core.AssertFalse(t, out.Success)
 }

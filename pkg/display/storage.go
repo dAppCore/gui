@@ -7,7 +7,7 @@ import (
 	"sync" // Note: AX-6 — sync.RWMutex for registry guard, no core wrapper in pinned core module
 	"time"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	coreerr "dappco.re/go/log"
 	gostore "dappco.re/go/store"
 )

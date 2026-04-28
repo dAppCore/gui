@@ -1,15 +1,12 @@
 package chat
 
 import (
+	core "dappco.re/go"
 	"strings"
-	"testing"
 	"time"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-func TestStreamRenderer_Good_ParsesThinkingContentAndToolCalls(t *testing.T) {
+func TestStreamRenderer_Good_ParsesThinkingContentAndToolCalls(t *core.T) {
 	stream := strings.Join([]string{
 		`data: {"id":"chatcmpl-1","choices":[{"delta":{"thinking":"Let me think"}}]}`,
 		"",
@@ -24,16 +21,16 @@ func TestStreamRenderer_Good_ParsesThinkingContentAndToolCalls(t *testing.T) {
 	}, "\n")
 
 	renderer := NewStreamRenderer(StreamCallbacks{})
-	require.NoError(t, renderer.Render(strings.NewReader(stream)))
+	core.RequireNoError(t, renderer.Render(strings.NewReader(stream)))
 
 	message := renderer.Message("msg-1", "lemer", testTime())
-	require.NotNil(t, message.Thinking)
-	assert.Equal(t, "Hello", message.Content)
-	assert.Equal(t, "Let me think", message.Thinking.Content)
-	require.Len(t, message.ToolCalls, 1)
-	assert.Equal(t, "layout_suggest", message.ToolCalls[0].Name)
-	assert.Equal(t, 2.0, message.ToolCalls[0].Arguments["window_count"])
-	assert.Equal(t, "tool_calls", message.FinishReason)
+	core.AssertNotNil(t, message.Thinking)
+	core.AssertEqual(t, "Hello", message.Content)
+	core.AssertEqual(t, "Let me think", message.Thinking.Content)
+	core.AssertLen(t, message.ToolCalls, 1)
+	core.AssertEqual(t, "layout_suggest", message.ToolCalls[0].Name)
+	core.AssertEqual(t, 2.0, message.ToolCalls[0].Arguments["window_count"])
+	core.AssertEqual(t, "tool_calls", message.FinishReason)
 }
 
 func testTime() time.Time {

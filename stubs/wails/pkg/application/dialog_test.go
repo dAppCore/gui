@@ -1,13 +1,10 @@
 package application
 
 import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	core "dappco.re/go"
 )
 
-func TestDialog_OpenFileDialogStruct_Good(t *testing.T) {
+func TestDialog_OpenFileDialogStruct_Good(t *core.T) {
 	dialog := newOpenFileDialog()
 	dialog.SetOptions(&OpenFileDialogOptions{
 		Title:                   "Pick",
@@ -22,25 +19,25 @@ func TestDialog_OpenFileDialogStruct_Good(t *testing.T) {
 	dialog.SetSelectedFiles([]string{"/tmp/a.txt", "/tmp/b.txt"})
 	got, err := dialog.PromptForSingleSelection()
 
-	require.NoError(t, err)
-	assert.Equal(t, "/tmp/a.txt", got)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, "/tmp/a.txt", got)
 	paths, err := dialog.PromptForMultipleSelection()
-	require.NoError(t, err)
-	assert.Equal(t, []string{"/tmp/a.txt", "/tmp/b.txt"}, paths)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, []string{"/tmp/a.txt", "/tmp/b.txt"}, paths)
 }
 
-func TestDialog_OpenFileDialogStruct_Bad(t *testing.T) {
+func TestDialog_OpenFileDialogStruct_Bad(t *core.T) {
 	dialog := newOpenFileDialog()
 	dialog.SetOptions(nil)
 
 	got, err := dialog.PromptForSingleSelection()
 
-	require.NoError(t, err)
-	assert.Empty(t, got)
-	assert.True(t, dialog.canChooseFiles)
+	core.RequireNoError(t, err)
+	core.AssertEmpty(t, got)
+	core.AssertTrue(t, dialog.canChooseFiles)
 }
 
-func TestDialog_OpenFileDialogStruct_Ugly(t *testing.T) {
+func TestDialog_OpenFileDialogStruct_Ugly(t *core.T) {
 	dialog := newOpenFileDialog()
 	selected := []string{"/tmp/input.txt"}
 	dialog.SetSelectedFiles(selected)
@@ -48,11 +45,11 @@ func TestDialog_OpenFileDialogStruct_Ugly(t *testing.T) {
 
 	paths, err := dialog.PromptForMultipleSelection()
 
-	require.NoError(t, err)
-	assert.Equal(t, []string{"/tmp/input.txt"}, paths)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, []string{"/tmp/input.txt"}, paths)
 }
 
-func TestDialog_SaveFileDialogStruct_Good(t *testing.T) {
+func TestDialog_SaveFileDialogStruct_Good(t *core.T) {
 	dialog := newSaveFileDialog()
 	dialog.SetOptions(&SaveFileDialogOptions{
 		Title:           "Export",
@@ -65,21 +62,21 @@ func TestDialog_SaveFileDialogStruct_Good(t *testing.T) {
 
 	got, err := dialog.PromptForSingleSelection()
 
-	require.NoError(t, err)
-	assert.Equal(t, "/tmp/report.csv", got)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, "/tmp/report.csv", got)
 }
 
-func TestDialog_SaveFileDialogStruct_Bad(t *testing.T) {
+func TestDialog_SaveFileDialogStruct_Bad(t *core.T) {
 	dialog := newSaveFileDialog()
 	dialog.SetOptions(nil)
 
 	got, err := dialog.PromptForSingleSelection()
 
-	require.NoError(t, err)
-	assert.Empty(t, got)
+	core.RequireNoError(t, err)
+	core.AssertEmpty(t, got)
 }
 
-func TestDialog_SaveFileDialogStruct_Ugly(t *testing.T) {
+func TestDialog_SaveFileDialogStruct_Ugly(t *core.T) {
 	dialog := newSaveFileDialog()
 	selected := "/tmp/a.csv"
 	dialog.SetSelectedPath(selected)
@@ -87,11 +84,11 @@ func TestDialog_SaveFileDialogStruct_Ugly(t *testing.T) {
 
 	got, err := dialog.PromptForSingleSelection()
 
-	require.NoError(t, err)
-	assert.Equal(t, "/tmp/a.csv", got)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, "/tmp/a.csv", got)
 }
 
-func TestDialog_MessageDialog_Good(t *testing.T) {
+func TestDialog_MessageDialog_Good(t *core.T) {
 	dialog := newMessageDialog(QuestionDialogType)
 	dialog.SetTitle("Confirm").
 		SetMessage("Proceed?").
@@ -103,63 +100,63 @@ func TestDialog_MessageDialog_Good(t *testing.T) {
 
 	got, err := dialog.Show()
 
-	require.NoError(t, err)
-	assert.Equal(t, "Yes", got)
-	assert.Equal(t, QuestionDialogType, dialog.dialogType)
-	assert.Equal(t, "Confirm", dialog.title)
-	assert.Equal(t, "Proceed?", dialog.message)
-	require.Len(t, dialog.buttons, 2)
-	assert.True(t, dialog.buttons[0].IsDefault)
-	assert.True(t, dialog.buttons[1].IsCancel)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, "Yes", got)
+	core.AssertEqual(t, QuestionDialogType, dialog.dialogType)
+	core.AssertEqual(t, "Confirm", dialog.title)
+	core.AssertEqual(t, "Proceed?", dialog.message)
+	core.AssertLen(t, dialog.buttons, 2)
+	core.AssertTrue(t, dialog.buttons[0].IsDefault)
+	core.AssertTrue(t, dialog.buttons[1].IsCancel)
 }
 
-func TestDialog_MessageDialog_Bad(t *testing.T) {
+func TestDialog_MessageDialog_Bad(t *core.T) {
 	dialog := newMessageDialog(InfoDialogType)
 
 	got, err := dialog.Show()
 
-	require.NoError(t, err)
-	assert.Empty(t, got)
-	assert.Equal(t, InfoDialogType, dialog.dialogType)
+	core.RequireNoError(t, err)
+	core.AssertEmpty(t, got)
+	core.AssertEqual(t, InfoDialogType, dialog.dialogType)
 }
 
-func TestDialog_MessageDialog_Ugly(t *testing.T) {
+func TestDialog_MessageDialog_Ugly(t *core.T) {
 	dialog := newMessageDialog(ErrorDialogType)
 	dialog.AddButton("Retry").AddButton("Retry")
 	dialog.SetDefaultButton("Retry")
 	dialog.SetCancelButton("Retry")
 
-	require.Len(t, dialog.buttons, 2)
-	assert.True(t, dialog.buttons[0].IsDefault)
-	assert.True(t, dialog.buttons[0].IsCancel)
-	assert.True(t, dialog.buttons[1].IsDefault)
-	assert.True(t, dialog.buttons[1].IsCancel)
+	core.AssertLen(t, dialog.buttons, 2)
+	core.AssertTrue(t, dialog.buttons[0].IsDefault)
+	core.AssertTrue(t, dialog.buttons[0].IsCancel)
+	core.AssertTrue(t, dialog.buttons[1].IsDefault)
+	core.AssertTrue(t, dialog.buttons[1].IsCancel)
 }
 
-func TestDialog_DialogManager_Good(t *testing.T) {
+func TestDialog_DialogManager_Good(t *core.T) {
 	manager := &DialogManager{}
 
-	assert.Equal(t, InfoDialogType, manager.Info().dialogType)
-	assert.Equal(t, QuestionDialogType, manager.Question().dialogType)
-	assert.Equal(t, WarningDialogType, manager.Warning().dialogType)
-	assert.Equal(t, ErrorDialogType, manager.Error().dialogType)
-	assert.NotNil(t, manager.OpenFile())
-	assert.NotNil(t, manager.SaveFile())
+	core.AssertEqual(t, InfoDialogType, manager.Info().dialogType)
+	core.AssertEqual(t, QuestionDialogType, manager.Question().dialogType)
+	core.AssertEqual(t, WarningDialogType, manager.Warning().dialogType)
+	core.AssertEqual(t, ErrorDialogType, manager.Error().dialogType)
+	core.AssertNotNil(t, manager.OpenFile())
+	core.AssertNotNil(t, manager.SaveFile())
 }
 
-func TestDialog_DialogManager_Bad(t *testing.T) {
+func TestDialog_DialogManager_Bad(t *core.T) {
 	manager := &DialogManager{}
 
-	assert.NotNil(t, manager.OpenFileWithOptions(nil))
-	assert.NotNil(t, manager.SaveFileWithOptions(nil))
+	core.AssertNotNil(t, manager.OpenFileWithOptions(nil))
+	core.AssertNotNil(t, manager.SaveFileWithOptions(nil))
 }
 
-func TestDialog_DialogManager_Ugly(t *testing.T) {
+func TestDialog_DialogManager_Ugly(t *core.T) {
 	manager := &DialogManager{}
 
 	open := manager.OpenFileWithOptions(&OpenFileDialogOptions{AllowsMultipleSelection: true})
 	save := manager.SaveFileWithOptions(&SaveFileDialogOptions{Filename: "out.csv"})
 
-	assert.True(t, open.multipleAllowed)
-	assert.Equal(t, "out.csv", save.filename)
+	core.AssertTrue(t, open.multipleAllowed)
+	core.AssertEqual(t, "out.csv", save.filename)
 }

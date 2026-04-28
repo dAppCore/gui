@@ -7,7 +7,8 @@ import (
 	"strings"
 	"sync"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
+	"dappco.re/go/gui/pkg/internal/coreutil"
 	coreerr "dappco.re/go/log"
 )
 
@@ -82,7 +83,7 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		if s.hasThemeOverride() {
 			return
 		}
-		_ = s.Core().ACTION(ActionThemeChanged{IsDark: isDark})
+		coreutil.DispatchAction(s.Core(), "environment.themeChanged", ActionThemeChanged{IsDark: isDark})
 	})
 	return core.Result{OK: true}
 }
@@ -147,7 +148,7 @@ func (s *Service) setThemeOverride(theme string) (bool, error) {
 
 	after := s.currentTheme()
 	if before != after {
-		_ = s.Core().ACTION(ActionThemeChanged{IsDark: after})
+		coreutil.DispatchAction(s.Core(), "environment.setThemeOverride", ActionThemeChanged{IsDark: after})
 	}
 	return after, nil
 }

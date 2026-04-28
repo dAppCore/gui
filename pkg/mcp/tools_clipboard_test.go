@@ -3,15 +3,12 @@ package mcp
 import (
 	"context"
 	"errors"
-	"testing"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/clipboard"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-func newClipboardToolsTestSubsystem(t *testing.T, query func(core.Query) core.Result) *Subsystem {
+func newClipboardToolsTestSubsystem(t *core.T, query func(core.Query) core.Result) *Subsystem {
 	t.Helper()
 	c := core.New(core.WithServiceLock())
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
@@ -23,7 +20,7 @@ func newClipboardToolsTestSubsystem(t *testing.T, query func(core.Query) core.Re
 	return New(c)
 }
 
-func TestToolsClipboard_clipboardRead_Good(t *testing.T) {
+func TestToolsClipboard_clipboardRead_Good(t *core.T) {
 	sub := newClipboardToolsTestSubsystem(t, func(q core.Query) core.Result {
 		if _, ok := q.(clipboard.QueryText); ok {
 			return core.Result{
@@ -38,11 +35,11 @@ func TestToolsClipboard_clipboardRead_Good(t *testing.T) {
 	})
 
 	_, out, err := sub.clipboardRead(context.Background(), nil, ClipboardReadInput{})
-	require.NoError(t, err)
-	assert.Equal(t, "hello", out.Content)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, "hello", out.Content)
 }
 
-func TestToolsClipboard_clipboardRead_Bad(t *testing.T) {
+func TestToolsClipboard_clipboardRead_Bad(t *core.T) {
 	sub := newClipboardToolsTestSubsystem(t, func(q core.Query) core.Result {
 		if _, ok := q.(clipboard.QueryText); ok {
 			return core.Result{OK: false, Value: "clipboard backend unavailable"}
@@ -51,11 +48,11 @@ func TestToolsClipboard_clipboardRead_Bad(t *testing.T) {
 	})
 
 	_, _, err := sub.clipboardRead(context.Background(), nil, ClipboardReadInput{})
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "clipboard query failed")
+	core.AssertError(t, err)
+	core.AssertContains(t, err.Error(), "clipboard query failed")
 }
 
-func TestToolsClipboard_clipboardRead_Ugly(t *testing.T) {
+func TestToolsClipboard_clipboardRead_Ugly(t *core.T) {
 	sub := newClipboardToolsTestSubsystem(t, func(q core.Query) core.Result {
 		if _, ok := q.(clipboard.QueryText); ok {
 			return core.Result{OK: true, Value: errors.New("unexpected payload")}
@@ -64,6 +61,6 @@ func TestToolsClipboard_clipboardRead_Ugly(t *testing.T) {
 	})
 
 	_, _, err := sub.clipboardRead(context.Background(), nil, ClipboardReadInput{})
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "unexpected result type")
+	core.AssertError(t, err)
+	core.AssertContains(t, err.Error(), "unexpected result type")
 }

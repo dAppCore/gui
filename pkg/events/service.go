@@ -7,7 +7,8 @@ import (
 	"strings"
 	"sync"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
+	"dappco.re/go/gui/pkg/internal/coreutil"
 	coreerr "dappco.re/go/log"
 )
 
@@ -52,7 +53,7 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 			if event == nil {
 				return
 			}
-			_ = s.Core().ACTION(ActionEventFired{Event: *event})
+			coreutil.DispatchAction(s.Core(), "events.on", ActionEventFired{Event: *event})
 		})
 		s.mu.Lock()
 		if cancel != nil {

@@ -1,13 +1,10 @@
 package application
 
 import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	core "dappco.re/go"
 )
 
-func TestContextMenuManager_Add_Good(t *testing.T) {
+func TestContextMenuManager_Add_Good(t *core.T) {
 	manager := &ContextMenuManager{}
 	menu := manager.New()
 	menu.Add("Open")
@@ -15,22 +12,22 @@ func TestContextMenuManager_Add_Good(t *testing.T) {
 	manager.Add("files", menu)
 
 	got, ok := manager.Get("files")
-	require.True(t, ok)
-	require.Same(t, menu, got)
-	assert.Len(t, manager.GetAll(), 1)
+	core.RequireTrue(t, ok)
+	core.AssertSame(t, menu, got)
+	core.AssertLen(t, manager.GetAll(), 1)
 }
 
-func TestContextMenuManager_Add_Bad(t *testing.T) {
+func TestContextMenuManager_Add_Bad(t *core.T) {
 	manager := &ContextMenuManager{}
 
 	manager.Add("empty", nil)
 
 	got, ok := manager.Get("empty")
-	assert.True(t, ok)
-	assert.Nil(t, got)
+	core.AssertTrue(t, ok)
+	core.AssertNil(t, got)
 }
 
-func TestContextMenuManager_Add_Ugly(t *testing.T) {
+func TestContextMenuManager_Add_Ugly(t *core.T) {
 	manager := &ContextMenuManager{}
 	first := manager.New()
 	second := manager.New()
@@ -39,12 +36,12 @@ func TestContextMenuManager_Add_Ugly(t *testing.T) {
 	manager.Add("dup", second)
 
 	got, ok := manager.Get("dup")
-	require.True(t, ok)
-	require.Same(t, second, got)
-	assert.Len(t, manager.GetAll(), 1)
+	core.RequireTrue(t, ok)
+	core.AssertSame(t, second, got)
+	core.AssertLen(t, manager.GetAll(), 1)
 }
 
-func TestContextMenuManager_Remove_Good(t *testing.T) {
+func TestContextMenuManager_Remove_Good(t *core.T) {
 	manager := &ContextMenuManager{}
 	menu := manager.New()
 	manager.Add("files", menu)
@@ -52,21 +49,21 @@ func TestContextMenuManager_Remove_Good(t *testing.T) {
 	manager.Remove("files")
 
 	_, ok := manager.Get("files")
-	assert.False(t, ok)
-	assert.Empty(t, manager.GetAll())
+	core.AssertFalse(t, ok)
+	core.AssertEmpty(t, manager.GetAll())
 }
 
-func TestContextMenuManager_Remove_Bad(t *testing.T) {
+func TestContextMenuManager_Remove_Bad(t *core.T) {
 	manager := &ContextMenuManager{}
 
 	manager.Remove("missing")
 
-	assert.Empty(t, manager.GetAll())
+	core.AssertEmpty(t, manager.GetAll())
 }
 
-func TestContextMenuManager_Remove_Ugly(t *testing.T) {
+func TestContextMenuManager_Remove_Ugly(t *core.T) {
 	manager := &ContextMenuManager{}
 	manager.Remove("")
 
-	assert.Empty(t, manager.GetAll())
+	core.AssertEmpty(t, manager.GetAll())
 }

@@ -4,9 +4,8 @@ package mcp
 import (
 	"context"
 	"sync"
-	"testing"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/browser"
 	"dappco.re/go/gui/pkg/clipboard"
 	"dappco.re/go/gui/pkg/dialog"
@@ -16,31 +15,29 @@ import (
 	"dappco.re/go/gui/pkg/webview"
 	"dappco.re/go/gui/pkg/window"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-func TestSubsystem_Good_Name(t *testing.T) {
+func TestSubsystem_Good_Name(t *core.T) {
 	c := core.New(core.WithServiceLock())
 	sub := New(c)
-	assert.Equal(t, "display", sub.Name())
+	core.AssertEqual(t, "display", sub.Name())
 }
 
-func TestSubsystem_Good_RegisterTools(t *testing.T) {
+func TestSubsystem_Good_RegisterTools(t *core.T) {
 	c := core.New(core.WithServiceLock())
 	sub := New(c)
 	// RegisterTools should not panic with a real mcp.Server
 	server := mcp.NewServer(&mcp.Implementation{Name: "test", Version: "0.1.0"}, nil)
-	assert.NotPanics(t, func() { sub.RegisterTools(server) })
-	assert.NotEmpty(t, sub.Manifest())
-	assert.Contains(t, sub.ManifestText(), "layout_suggest")
-	assert.Contains(t, sub.ManifestText(), "window_title_set")
-	assert.Contains(t, sub.ManifestText(), "focus_set")
-	assert.Contains(t, sub.ManifestText(), "dialog_message")
-	assert.Contains(t, sub.ManifestText(), "event_info")
-	assert.Contains(t, sub.ManifestText(), "screen_work_area")
-	assert.Contains(t, sub.ManifestText(), "dock_info")
-	assert.Contains(t, sub.ManifestText(), "dock_bounce")
+	core.AssertNotPanics(t, func() { sub.RegisterTools(server) })
+	core.AssertNotEmpty(t, sub.Manifest())
+	core.AssertContains(t, sub.ManifestText(), "layout_suggest")
+	core.AssertContains(t, sub.ManifestText(), "window_title_set")
+	core.AssertContains(t, sub.ManifestText(), "focus_set")
+	core.AssertContains(t, sub.ManifestText(), "dialog_message")
+	core.AssertContains(t, sub.ManifestText(), "event_info")
+	core.AssertContains(t, sub.ManifestText(), "screen_work_area")
+	core.AssertContains(t, sub.ManifestText(), "dock_info")
+	core.AssertContains(t, sub.ManifestText(), "dock_bounce")
 }
 
 // Integration test: verify the IPC round-trip that MCP tool handlers use.
@@ -53,29 +50,29 @@ type mockClipPlatform struct {
 func (m *mockClipPlatform) Text() (string, bool)  { return m.text, m.ok }
 func (m *mockClipPlatform) SetText(t string) bool { m.text = t; m.ok = t != ""; return true }
 
-func TestMCP_Good_ClipboardRoundTrip(t *testing.T) {
+func TestMCP_Good_ClipboardRoundTrip(t *core.T) {
 	c := core.New(
 		core.WithService(clipboard.Register(&mockClipPlatform{text: "hello", ok: true})),
 		core.WithServiceLock(),
 	)
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	core.RequireTrue(t, c.ServiceStartup(context.Background(), nil).OK)
 
 	// Verify the IPC path that clipboard_read tool handler uses
 	r := c.QUERY(clipboard.QueryText{})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 	content, ok := r.Value.(clipboard.ClipboardContent)
-	require.True(t, ok, "expected ClipboardContent type")
-	assert.Equal(t, "hello", content.Text)
+	core.RequireTrue(t, ok, "expected ClipboardContent type")
+	core.AssertEqual(t, "hello", content.Text)
 }
 
-func TestMCP_Bad_NoServices(t *testing.T) {
+func TestMCP_Bad_NoServices(t *core.T) {
 	c := core.New(core.WithServiceLock())
 	// Without any services, QUERY should return OK=false
 	r := c.QUERY(clipboard.QueryText{})
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
-func TestSubsystem_Bad_CallTool_MenuGetQueryFailure(t *testing.T) {
+func TestSubsystem_Bad_CallTool_MenuGetQueryFailure(t *core.T) {
 	c := core.New(core.WithServiceLock())
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
 		if _, ok := q.(menu.QueryGetAppMenu); ok {
@@ -89,11 +86,11 @@ func TestSubsystem_Bad_CallTool_MenuGetQueryFailure(t *testing.T) {
 	sub.RegisterTools(server)
 
 	_, err := sub.CallTool(context.Background(), "menu_get", nil)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "menu query failed")
+	core.AssertError(t, err)
+	core.AssertContains(t, err.Error(), "menu query failed")
 }
 
-func TestSubsystem_Bad_CallTool_MenuSetActionFailure(t *testing.T) {
+func TestSubsystem_Bad_CallTool_MenuSetActionFailure(t *core.T) {
 	c := core.New(core.WithServiceLock())
 	c.Action("menu.setAppMenu", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: "menu update failed", OK: false}
@@ -104,11 +101,11 @@ func TestSubsystem_Bad_CallTool_MenuSetActionFailure(t *testing.T) {
 	sub.RegisterTools(server)
 
 	_, err := sub.CallTool(context.Background(), "menu_set", map[string]any{"items": []any{}})
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "menu.setAppMenu failed")
+	core.AssertError(t, err)
+	core.AssertContains(t, err.Error(), "menu.setAppMenu failed")
 }
 
-func TestSubsystem_Bad_CallTool_ScreenListMalformedQuery(t *testing.T) {
+func TestSubsystem_Bad_CallTool_ScreenListMalformedQuery(t *core.T) {
 	c := core.New(core.WithServiceLock())
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
 		if _, ok := q.(screen.QueryAll); ok {
@@ -122,8 +119,8 @@ func TestSubsystem_Bad_CallTool_ScreenListMalformedQuery(t *testing.T) {
 	sub.RegisterTools(server)
 
 	_, err := sub.CallTool(context.Background(), "screen_list", nil)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "screen query failed")
+	core.AssertError(t, err)
+	core.AssertContains(t, err.Error(), "screen query failed")
 }
 
 type manifestScreenPlatform struct{}
@@ -150,21 +147,21 @@ func (p manifestScreenPlatform) GetCurrent() *screen.Screen {
 	return p.GetPrimary()
 }
 
-func TestSubsystem_Good_CallTool_LayoutSuggest(t *testing.T) {
+func TestSubsystem_Good_CallTool_LayoutSuggest(t *core.T) {
 	c := core.New(
 		core.WithService(screen.Register(manifestScreenPlatform{})),
 		core.WithService(window.Register(window.NewMockPlatform())),
 		core.WithServiceLock(),
 	)
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	core.RequireTrue(t, c.ServiceStartup(context.Background(), nil).OK)
 
 	sub := New(c)
 	server := mcp.NewServer(&mcp.Implementation{Name: "test", Version: "0.1.0"}, nil)
 	sub.RegisterTools(server)
 
 	result, err := sub.CallTool(context.Background(), "layout_suggest", map[string]any{"window_count": 2})
-	require.NoError(t, err)
-	assert.Contains(t, result, "left-right")
+	core.RequireNoError(t, err)
+	core.AssertContains(t, result, "left-right")
 }
 
 func (m *manifestBrowserPlatform) OpenURL(url string) error {
@@ -177,25 +174,25 @@ func (m *manifestBrowserPlatform) OpenFile(path string) error {
 	return nil
 }
 
-func TestSubsystem_Good_CallTool_BrowserOpenFile(t *testing.T) {
+func TestSubsystem_Good_CallTool_BrowserOpenFile(t *core.T) {
 	browserPlatform := &manifestBrowserPlatform{}
 	c := core.New(
 		core.WithService(browser.Register(browserPlatform)),
 		core.WithServiceLock(),
 	)
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	core.RequireTrue(t, c.ServiceStartup(context.Background(), nil).OK)
 
 	sub := New(c)
 	server := mcp.NewServer(&mcp.Implementation{Name: "test", Version: "0.1.0"}, nil)
 	sub.RegisterTools(server)
 
 	result, err := sub.CallTool(context.Background(), "browser_open_file", map[string]any{"path": "/tmp/readme.txt"})
-	require.NoError(t, err)
-	assert.Contains(t, result, "success")
-	assert.Equal(t, "/tmp/readme.txt", browserPlatform.lastPath)
+	core.RequireNoError(t, err)
+	core.AssertContains(t, result, "success")
+	core.AssertEqual(t, "/tmp/readme.txt", browserPlatform.lastPath)
 }
 
-func TestSubsystem_Good_CallTool_SchemeResolve(t *testing.T) {
+func TestSubsystem_Good_CallTool_SchemeResolve(t *core.T) {
 	c := core.New(
 		core.WithServiceLock(),
 	)
@@ -210,16 +207,16 @@ func TestSubsystem_Good_CallTool_SchemeResolve(t *testing.T) {
 			OK: true,
 		}
 	})
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	core.RequireTrue(t, c.ServiceStartup(context.Background(), nil).OK)
 
 	sub := New(c)
 	server := mcp.NewServer(&mcp.Implementation{Name: "test", Version: "0.1.0"}, nil)
 	sub.RegisterTools(server)
 
 	result, err := sub.CallTool(context.Background(), "scheme_resolve", map[string]any{"url": "core://store?q=theme"})
-	require.NoError(t, err)
-	assert.Contains(t, result, "core://store")
-	assert.Contains(t, result, "\"route\":\"store\"")
+	core.RequireNoError(t, err)
+	core.AssertContains(t, result, "core://store")
+	core.AssertContains(t, result, "\"route\":\"store\"")
 }
 
 type aliasDialogPlatform struct {
@@ -271,7 +268,7 @@ func (m *aliasEventsPlatform) Reset() {
 	m.mu.Unlock()
 }
 
-func TestSubsystem_Good_CallTool_RFCAliases(t *testing.T) {
+func TestSubsystem_Good_CallTool_RFCAliases(t *core.T) {
 	windowPlatform := window.NewMockPlatform()
 	dialogPlatform := &aliasDialogPlatform{}
 	eventsPlatform := &aliasEventsPlatform{}
@@ -304,7 +301,7 @@ func TestSubsystem_Good_CallTool_RFCAliases(t *testing.T) {
 		promptScript = task.Script
 		return core.Result{Value: "typed-value", OK: true}
 	})
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	core.RequireTrue(t, c.ServiceStartup(context.Background(), nil).OK)
 
 	sub := New(c)
 	server := mcp.NewServer(&mcp.Implementation{Name: "test", Version: "0.1.0"}, nil)
@@ -313,63 +310,63 @@ func TestSubsystem_Good_CallTool_RFCAliases(t *testing.T) {
 	_, err := sub.CallTool(context.Background(), "window_create", map[string]any{
 		"name": "main", "title": "Original", "x": 10, "y": 20, "width": 300, "height": 200,
 	})
-	require.NoError(t, err)
+	core.RequireNoError(t, err)
 
 	_, err = sub.CallTool(context.Background(), "window_title_set", map[string]any{
 		"name": "main", "title": "Updated",
 	})
-	require.NoError(t, err)
+	core.RequireNoError(t, err)
 
 	titleResult, err := sub.CallTool(context.Background(), "window_title_get", map[string]any{"name": "main"})
-	require.NoError(t, err)
-	assert.Contains(t, titleResult, "Updated")
+	core.RequireNoError(t, err)
+	core.AssertContains(t, titleResult, "Updated")
 
 	_, err = sub.CallTool(context.Background(), "focus_set", map[string]any{"name": "main"})
-	require.NoError(t, err)
+	core.RequireNoError(t, err)
 
 	focusedResult, err := sub.CallTool(context.Background(), "window_focused", map[string]any{})
-	require.NoError(t, err)
-	assert.Contains(t, focusedResult, "main")
+	core.RequireNoError(t, err)
+	core.AssertContains(t, focusedResult, "main")
 
 	_, err = sub.CallTool(context.Background(), "window_bounds", map[string]any{
 		"name": "main", "x": 25, "y": 35, "width": 640, "height": 480,
 	})
-	require.NoError(t, err)
+	core.RequireNoError(t, err)
 
 	windowResult, err := sub.CallTool(context.Background(), "window_get", map[string]any{"name": "main"})
-	require.NoError(t, err)
-	assert.Contains(t, windowResult, "\"width\":640")
-	assert.Contains(t, windowResult, "\"height\":480")
+	core.RequireNoError(t, err)
+	core.AssertContains(t, windowResult, "\"width\":640")
+	core.AssertContains(t, windowResult, "\"height\":480")
 
 	screenResult, err := sub.CallTool(context.Background(), "screen_work_area", map[string]any{})
-	require.NoError(t, err)
-	assert.Contains(t, screenResult, "\"width\":2000")
+	core.RequireNoError(t, err)
+	core.AssertContains(t, screenResult, "\"width\":2000")
 
 	dialogResult, err := sub.CallTool(context.Background(), "dialog_message", map[string]any{
 		"type": "warning", "title": "Heads up", "message": "Check this",
 	})
-	require.NoError(t, err)
-	assert.Equal(t, dialog.DialogWarning, dialogPlatform.last.Type)
-	assert.Contains(t, dialogResult, "OK")
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, dialog.DialogWarning, dialogPlatform.last.Type)
+	core.AssertContains(t, dialogResult, "OK")
 
 	promptResult, err := sub.CallTool(context.Background(), "dialog_prompt", map[string]any{
 		"title":        "Rename",
 		"message":      "Enter a new label",
 		"defaultValue": "draft",
 	})
-	require.NoError(t, err)
-	assert.Contains(t, promptResult, "typed-value")
-	assert.Equal(t, "main", promptWindow)
-	assert.Contains(t, promptScript, "window.prompt")
+	core.RequireNoError(t, err)
+	core.AssertContains(t, promptResult, "typed-value")
+	core.AssertEqual(t, "main", promptWindow)
+	core.AssertContains(t, promptScript, "window.prompt")
 
 	subscribeResult, err := sub.CallTool(context.Background(), "event_subscribe", map[string]any{"name": "theme:changed"})
-	require.NoError(t, err)
-	assert.Contains(t, subscribeResult, "success")
+	core.RequireNoError(t, err)
+	core.AssertContains(t, subscribeResult, "success")
 
 	eventInfoResult, err := sub.CallTool(context.Background(), "event_info", map[string]any{})
-	require.NoError(t, err)
-	assert.Contains(t, eventInfoResult, "\"connectedClients\":2")
+	core.RequireNoError(t, err)
+	core.AssertContains(t, eventInfoResult, "\"connectedClients\":2")
 
 	_, err = sub.CallTool(context.Background(), "event_unsubscribe", map[string]any{"name": "theme:changed"})
-	require.NoError(t, err)
+	core.RequireNoError(t, err)
 }

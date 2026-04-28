@@ -1,32 +1,30 @@
 package deno
 
 import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
+	core "dappco.re/go"
 )
 
-func TestSidecar_New_Good(t *testing.T) {
+func TestSidecar_New_Good(t *core.T) {
 	manager := New(Options{})
 
 	status := manager.Status()
-	assert.Equal(t, "deno", status.Binary)
-	assert.False(t, status.Running)
-	assert.Zero(t, status.PID)
+	core.AssertEqual(t, "deno", status.Binary)
+	core.AssertFalse(t, status.Running)
+	core.AssertEmpty(t, status.PID)
 }
 
-func TestSidecar_New_Bad(t *testing.T) {
+func TestSidecar_New_Bad(t *core.T) {
 	manager := New(Options{Binary: "/usr/local/bin/deno-custom", Args: []string{"fmt"}})
 
 	status := manager.Status()
-	assert.Equal(t, "/usr/local/bin/deno-custom", status.Binary)
-	assert.False(t, status.Running)
+	core.AssertEqual(t, "/usr/local/bin/deno-custom", status.Binary)
+	core.AssertFalse(t, status.Running)
 }
 
-func TestSidecar_New_Ugly(t *testing.T) {
+func TestSidecar_New_Ugly(t *core.T) {
 	manager := New(Options{Binary: "   "})
 
 	status := manager.Status()
-	assert.Equal(t, "deno", status.Binary)
-	assert.False(t, status.Running)
+	core.AssertEqual(t, "deno", status.Binary)
+	core.AssertFalse(t, status.Running)
 }

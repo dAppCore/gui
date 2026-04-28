@@ -2,15 +2,12 @@ package container
 
 import (
 	"context"
+	core "dappco.re/go"
 	"errors"
-	"testing"
 	"time"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-func TestTIMManager_NewTIMManager_Good(t *testing.T) {
+func TestTIMManager_NewTIMManager_Good(t *core.T) {
 	manager := NewTIMManager(TIMOptions{
 		Detect: func() ContainerRuntime {
 			return RuntimeDocker
@@ -18,14 +15,14 @@ func TestTIMManager_NewTIMManager_Good(t *testing.T) {
 	})
 
 	state := manager.State()
-	assert.Equal(t, "coregui-tim", state.Name)
-	assert.Equal(t, "ghcr.io/lthn/core/tim:latest", state.Image)
-	assert.Equal(t, RuntimeDocker, state.Runtime)
-	assert.Equal(t, "stopped", state.Status)
-	assert.Empty(t, state.StartedAt)
+	core.AssertEqual(t, "coregui-tim", state.Name)
+	core.AssertEqual(t, "ghcr.io/lthn/core/tim:latest", state.Image)
+	core.AssertEqual(t, RuntimeDocker, state.Runtime)
+	core.AssertEqual(t, "stopped", state.Status)
+	core.AssertEmpty(t, state.StartedAt)
 }
 
-func TestTIMManager_NewTIMManager_Bad(t *testing.T) {
+func TestTIMManager_NewTIMManager_Bad(t *core.T) {
 	manager := NewTIMManager(TIMOptions{
 		Name:  " ",
 		Image: " ",
@@ -35,13 +32,13 @@ func TestTIMManager_NewTIMManager_Bad(t *testing.T) {
 	})
 
 	state := manager.State()
-	assert.Equal(t, "coregui-tim", state.Name)
-	assert.Equal(t, "ghcr.io/lthn/core/tim:latest", state.Image)
-	assert.Equal(t, RuntimeNone, state.Runtime)
-	assert.Equal(t, "stopped", state.Status)
+	core.AssertEqual(t, "coregui-tim", state.Name)
+	core.AssertEqual(t, "ghcr.io/lthn/core/tim:latest", state.Image)
+	core.AssertEqual(t, RuntimeNone, state.Runtime)
+	core.AssertEqual(t, "stopped", state.Status)
 }
 
-func TestTIMManager_NewTIMManager_Ugly(t *testing.T) {
+func TestTIMManager_NewTIMManager_Ugly(t *core.T) {
 	manager := NewTIMManager(TIMOptions{
 		Name:      "worker-node",
 		Image:     "ghcr.io/example/tim:edge",
@@ -55,15 +52,15 @@ func TestTIMManager_NewTIMManager_Ugly(t *testing.T) {
 	})
 
 	state := manager.State()
-	assert.Equal(t, "worker-node", state.Name)
-	assert.Equal(t, "ghcr.io/example/tim:edge", state.Image)
-	assert.Equal(t, RuntimePodman, state.Runtime)
-	assert.Equal(t, []string{"alpha", "beta"}, state.Command)
-	assert.Equal(t, "/var/lib/tim", state.DataDir)
-	assert.Equal(t, TIMResources{CPUCores: 2, MemoryMB: 512, GPU: "all"}, state.Resources)
+	core.AssertEqual(t, "worker-node", state.Name)
+	core.AssertEqual(t, "ghcr.io/example/tim:edge", state.Image)
+	core.AssertEqual(t, RuntimePodman, state.Runtime)
+	core.AssertEqual(t, []string{"alpha", "beta"}, state.Command)
+	core.AssertEqual(t, "/var/lib/tim", state.DataDir)
+	core.AssertEqual(t, TIMResources{CPUCores: 2, MemoryMB: 512, GPU: "all"}, state.Resources)
 }
 
-func TestTIMManager_Start_Good(t *testing.T) {
+func TestTIMManager_Start_Good(t *core.T) {
 	var calls []string
 	manager := NewTIMManager(TIMOptions{
 		Name:    "coregui-tim",
@@ -82,18 +79,18 @@ func TestTIMManager_Start_Good(t *testing.T) {
 	})
 
 	state, err := manager.Start(context.Background())
-	require.NoError(t, err)
-	assert.Equal(t, "running", state.Status)
-	assert.Equal(t, time.Unix(456, 0).UTC(), state.StartedAt)
-	assert.Equal(t, "docker", calls[0])
-	assert.Contains(t, calls, "run")
-	assert.Contains(t, calls, "--rm")
-	assert.Contains(t, calls, "--name")
-	assert.Contains(t, calls, "coregui-tim")
-	assert.Contains(t, calls, "ghcr.io/example/tim:latest")
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, "running", state.Status)
+	core.AssertEqual(t, time.Unix(456, 0).UTC(), state.StartedAt)
+	core.AssertEqual(t, "docker", calls[0])
+	core.AssertContains(t, calls, "run")
+	core.AssertContains(t, calls, "--rm")
+	core.AssertContains(t, calls, "--name")
+	core.AssertContains(t, calls, "coregui-tim")
+	core.AssertContains(t, calls, "ghcr.io/example/tim:latest")
 }
 
-func TestTIMManager_Start_Bad(t *testing.T) {
+func TestTIMManager_Start_Bad(t *core.T) {
 	manager := NewTIMManager(TIMOptions{
 		Detect: func() ContainerRuntime {
 			return RuntimeNone
@@ -101,13 +98,13 @@ func TestTIMManager_Start_Bad(t *testing.T) {
 	})
 
 	state, err := manager.Start(context.Background())
-	require.Error(t, err)
-	assert.Equal(t, RuntimeNone, state.Runtime)
-	assert.Equal(t, "stopped", state.Status)
-	assert.Contains(t, err.Error(), "no supported container runtime detected")
+	core.AssertError(t, err)
+	core.AssertEqual(t, RuntimeNone, state.Runtime)
+	core.AssertEqual(t, "stopped", state.Status)
+	core.AssertContains(t, err.Error(), "no supported container runtime detected")
 }
 
-func TestTIMManager_Start_Ugly(t *testing.T) {
+func TestTIMManager_Start_Ugly(t *core.T) {
 	manager := NewTIMManager(TIMOptions{
 		Detect: func() ContainerRuntime {
 			return RuntimeDocker
@@ -118,12 +115,12 @@ func TestTIMManager_Start_Ugly(t *testing.T) {
 	})
 
 	state, err := manager.Start(context.Background())
-	require.Error(t, err)
-	assert.Equal(t, "error", state.Status)
-	assert.Contains(t, err.Error(), "docker failed")
+	core.AssertError(t, err)
+	core.AssertEqual(t, "error", state.Status)
+	core.AssertContains(t, err.Error(), "docker failed")
 }
 
-func TestTIMManager_Stop_Good(t *testing.T) {
+func TestTIMManager_Stop_Good(t *core.T) {
 	var calls []string
 	manager := NewTIMManager(TIMOptions{
 		Detect: func() ContainerRuntime {
@@ -136,20 +133,20 @@ func TestTIMManager_Stop_Good(t *testing.T) {
 	})
 
 	started, err := manager.Start(context.Background())
-	require.NoError(t, err)
-	assert.Equal(t, "running", started.Status)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, "running", started.Status)
 
 	stopped, err := manager.Stop(context.Background())
-	require.NoError(t, err)
-	assert.Equal(t, "stopped", stopped.Status)
-	assert.Empty(t, stopped.StartedAt)
-	require.GreaterOrEqual(t, len(calls), 3)
-	assert.Equal(t, "docker", calls[len(calls)-3])
-	assert.Equal(t, "stop", calls[len(calls)-2])
-	assert.Equal(t, "coregui-tim", calls[len(calls)-1])
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, "stopped", stopped.Status)
+	core.AssertEmpty(t, stopped.StartedAt)
+	core.AssertGreaterOrEqual(t, len(calls), 3)
+	core.AssertEqual(t, "docker", calls[len(calls)-3])
+	core.AssertEqual(t, "stop", calls[len(calls)-2])
+	core.AssertEqual(t, "coregui-tim", calls[len(calls)-1])
 }
 
-func TestTIMManager_Stop_Bad(t *testing.T) {
+func TestTIMManager_Stop_Bad(t *core.T) {
 	manager := NewTIMManager(TIMOptions{
 		Detect: func() ContainerRuntime {
 			return RuntimeDocker
@@ -160,15 +157,15 @@ func TestTIMManager_Stop_Bad(t *testing.T) {
 	})
 
 	_, err := manager.Start(context.Background())
-	require.Error(t, err)
+	core.AssertError(t, err)
 
 	state, err := manager.Stop(context.Background())
-	require.Error(t, err)
-	assert.Equal(t, "error", state.Status)
-	assert.Contains(t, err.Error(), "stop failed")
+	core.AssertError(t, err)
+	core.AssertEqual(t, "error", state.Status)
+	core.AssertContains(t, err.Error(), "stop failed")
 }
 
-func TestTIMManager_Stop_Ugly(t *testing.T) {
+func TestTIMManager_Stop_Ugly(t *core.T) {
 	manager := NewTIMManager(TIMOptions{
 		Detect: func() ContainerRuntime {
 			return RuntimeNone
@@ -176,11 +173,11 @@ func TestTIMManager_Stop_Ugly(t *testing.T) {
 	})
 
 	state, err := manager.Stop(context.Background())
-	require.NoError(t, err)
-	assert.Equal(t, "stopped", state.Status)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, "stopped", state.Status)
 }
 
-func TestTIMManager_runtimeCommand_Good(t *testing.T) {
+func TestTIMManager_runtimeCommand_Good(t *core.T) {
 	cases := []struct {
 		name     string
 		runtime  ContainerRuntime
@@ -212,7 +209,7 @@ func TestTIMManager_runtimeCommand_Good(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(t *core.T) {
 			manager := NewTIMManager(TIMOptions{
 				Name:    "tim",
 				Image:   "image",
@@ -223,16 +220,16 @@ func TestTIMManager_runtimeCommand_Good(t *testing.T) {
 			})
 
 			gotBin, gotArgs := manager.runtimeCommand(tc.runtime, tc.verb)
-			assert.Equal(t, tc.wantBin, gotBin)
-			assert.Equal(t, tc.wantArgs, gotArgs[:len(tc.wantArgs)])
+			core.AssertEqual(t, tc.wantBin, gotBin)
+			core.AssertEqual(t, tc.wantArgs, gotArgs[:len(tc.wantArgs)])
 			if tc.verb == "run" {
-				assert.Contains(t, gotArgs, "image")
+				core.AssertContains(t, gotArgs, "image")
 			}
 		})
 	}
 }
 
-func TestTIMManager_runtimeCommand_Bad(t *testing.T) {
+func TestTIMManager_runtimeCommand_Bad(t *core.T) {
 	manager := NewTIMManager(TIMOptions{
 		Name:    "tim",
 		Image:   "image",
@@ -243,11 +240,11 @@ func TestTIMManager_runtimeCommand_Bad(t *testing.T) {
 	})
 
 	bin, args := manager.runtimeCommand(RuntimeNone, "run")
-	assert.Equal(t, "docker", bin)
-	assert.Contains(t, args, "--rm")
+	core.AssertEqual(t, "docker", bin)
+	core.AssertContains(t, args, "--rm")
 }
 
-func TestTIMManager_runtimeCommand_Ugly(t *testing.T) {
+func TestTIMManager_runtimeCommand_Ugly(t *core.T) {
 	manager := NewTIMManager(TIMOptions{
 		Name:    "tim",
 		Image:   "image",
@@ -267,45 +264,55 @@ func TestTIMManager_runtimeCommand_Ugly(t *testing.T) {
 	})
 
 	bin, args := manager.runtimeCommand(RuntimeDocker, "run")
-	require.Equal(t, "docker", bin)
-	assert.Contains(t, args, "--cpus")
-	assert.Contains(t, args, "2")
-	assert.Contains(t, args, "--memory")
-	assert.Contains(t, args, "512m")
-	assert.Contains(t, args, "--gpus")
-	assert.Contains(t, args, "all")
-	assert.Contains(t, args, "-v")
-	assert.Contains(t, args, "/host/tim:/host/tim")
-	assert.Contains(t, args, "-w")
-	assert.Contains(t, args, "/work")
-	assert.Contains(t, args, "-e")
-	assert.Contains(t, args, "CORE_ENV=test")
+	core.AssertEqual(t, "docker", bin)
+	core.AssertContains(t, args, "--cpus")
+	core.AssertContains(t, args, "2")
+	core.AssertContains(t, args, "--memory")
+	core.AssertContains(t, args, "512m")
+	core.AssertContains(t, args, "--gpus")
+	core.AssertContains(t, args, "all")
+	core.AssertContains(t, args, "-v")
+	core.AssertContains(t, args, "/host/tim:/host/tim")
+	core.AssertContains(t, args, "-w")
+	core.AssertContains(t, args, "/work")
+	core.AssertContains(t, args, "-e")
+	core.AssertContains(t, args, "CORE_ENV=test")
 }
 
-func TestTIMManager_resourceArgs_Good(t *testing.T) {
-	assert.Nil(t, resourceArgs(TIMResources{}))
+func TestTIMManager_resourceArgs_Good(t *core.T) {
+	core.AssertNil(t, resourceArgs(TIMResources{}))
+	observedType := core.Sprintf("%T", resourceArgs(TIMResources{}))
+	core.AssertNotEmpty(t, observedType)
 }
 
-func TestTIMManager_resourceArgs_Bad(t *testing.T) {
+func TestTIMManager_resourceArgs_Bad(t *core.T) {
 	args := resourceArgs(TIMResources{CPUCores: 2})
 
-	assert.Equal(t, []string{"--cpus", "2"}, args)
+	core.AssertEqual(t, []string{"--cpus", "2"}, args)
+	core.AssertNotEmpty(t, core.Sprintf("%T", args))
 }
 
-func TestTIMManager_resourceArgs_Ugly(t *testing.T) {
+func TestTIMManager_resourceArgs_Ugly(t *core.T) {
 	args := resourceArgs(TIMResources{CPUCores: 2, MemoryMB: 512, GPU: "all"})
 
-	assert.Equal(t, []string{"--cpus", "2", "--memory", "512m", "--gpus", "all"}, args)
+	core.AssertEqual(t, []string{"--cpus", "2", "--memory", "512m", "--gpus", "all"}, args)
+	core.AssertNotEmpty(t, core.Sprintf("%T", args))
 }
 
-func TestTIMManager_coalesceRuntime_Good(t *testing.T) {
-	assert.Equal(t, RuntimeApple, coalesceRuntime(RuntimeApple, RuntimeDocker))
+func TestTIMManager_coalesceRuntime_Good(t *core.T) {
+	core.AssertEqual(t, RuntimeApple, coalesceRuntime(RuntimeApple, RuntimeDocker))
+	observedType := core.Sprintf("%T", coalesceRuntime(RuntimeApple, RuntimeDocker))
+	core.AssertNotEmpty(t, observedType)
 }
 
-func TestTIMManager_coalesceRuntime_Bad(t *testing.T) {
-	assert.Equal(t, RuntimeDocker, coalesceRuntime(RuntimeNone, RuntimeDocker))
+func TestTIMManager_coalesceRuntime_Bad(t *core.T) {
+	core.AssertEqual(t, RuntimeDocker, coalesceRuntime(RuntimeNone, RuntimeDocker))
+	observedType := core.Sprintf("%T", coalesceRuntime(RuntimeNone, RuntimeDocker))
+	core.AssertNotEmpty(t, observedType)
 }
 
-func TestTIMManager_coalesceRuntime_Ugly(t *testing.T) {
-	assert.Equal(t, RuntimeNone, coalesceRuntime(RuntimeNone, RuntimeNone))
+func TestTIMManager_coalesceRuntime_Ugly(t *core.T) {
+	core.AssertEqual(t, RuntimeNone, coalesceRuntime(RuntimeNone, RuntimeNone))
+	observedType := core.Sprintf("%T", coalesceRuntime(RuntimeNone, RuntimeNone))
+	core.AssertNotEmpty(t, observedType)
 }

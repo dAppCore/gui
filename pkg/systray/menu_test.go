@@ -1,10 +1,7 @@
 package systray
 
 import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	core "dappco.re/go"
 )
 
 type recordingTrayPlatform struct {
@@ -71,10 +68,10 @@ func (i *recordingTrayMenuItem) SetChecked(checked bool) { i.checked = checked }
 func (i *recordingTrayMenuItem) SetEnabled(enabled bool) { i.enabled = enabled }
 func (i *recordingTrayMenuItem) OnClick(fn func())       { i.onClick = fn }
 
-func TestManager_SetMenu_Good(t *testing.T) {
+func TestManager_SetMenu_Good(t *core.T) {
 	platform := &recordingTrayPlatform{}
 	mgr := NewManager(platform)
-	require.NoError(t, mgr.Setup("Core", "Core"))
+	core.RequireNoError(t, mgr.Setup("Core", "Core"))
 
 	clicked := 0
 	items := []TrayMenuItem{
@@ -87,44 +84,44 @@ func TestManager_SetMenu_Good(t *testing.T) {
 	mgr.RegisterCallback("open", func() { clicked++ })
 	mgr.RegisterCallback("nested", func() { clicked += 10 })
 
-	require.NoError(t, mgr.SetMenu(items))
-	require.NotNil(t, platform.menu)
-	require.NotNil(t, platform.tray)
+	core.RequireNoError(t, mgr.SetMenu(items))
+	core.AssertNotNil(t, platform.menu)
+	core.AssertNotNil(t, platform.tray)
 
-	assert.Equal(t, "Core", platform.tray.tooltip)
-	assert.Equal(t, "Core", platform.tray.label)
-	assert.Len(t, platform.menu.items, 5)
-	assert.Equal(t, "Open", platform.menu.items[0].label)
-	assert.Equal(t, "---", platform.menu.items[1].label)
-	assert.Equal(t, "More", platform.menu.items[2].label)
-	assert.False(t, platform.menu.items[3].enabled)
-	assert.True(t, platform.menu.items[4].checked)
+	core.AssertEqual(t, "Core", platform.tray.tooltip)
+	core.AssertEqual(t, "Core", platform.tray.label)
+	core.AssertLen(t, platform.menu.items, 5)
+	core.AssertEqual(t, "Open", platform.menu.items[0].label)
+	core.AssertEqual(t, "---", platform.menu.items[1].label)
+	core.AssertEqual(t, "More", platform.menu.items[2].label)
+	core.AssertFalse(t, platform.menu.items[3].enabled)
+	core.AssertTrue(t, platform.menu.items[4].checked)
 
-	require.NotNil(t, platform.menu.items[0].onClick)
+	core.AssertNotNil(t, platform.menu.items[0].onClick)
 	platform.menu.items[0].onClick()
-	require.Len(t, platform.menu.subs, 1)
-	require.NotNil(t, platform.menu.subs[0].items[0].onClick)
+	core.AssertLen(t, platform.menu.subs, 1)
+	core.AssertNotNil(t, platform.menu.subs[0].items[0].onClick)
 	platform.menu.subs[0].items[0].onClick()
 
-	assert.Equal(t, 11, clicked)
-	assert.Len(t, mgr.GetInfo()["menuItems"].([]TrayMenuItem), 5)
+	core.AssertEqual(t, 11, clicked)
+	core.AssertLen(t, mgr.GetInfo()["menuItems"].([]TrayMenuItem), 5)
 }
 
-func TestManager_SetMenu_Bad(t *testing.T) {
+func TestManager_SetMenu_Bad(t *core.T) {
 	mgr := NewManager(&recordingTrayPlatform{})
 	err := mgr.SetMenu([]TrayMenuItem{{Label: "Quit"}})
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "tray not initialised")
+	core.AssertError(t, err)
+	core.AssertContains(t, err.Error(), "tray not initialised")
 }
 
-func TestManager_GetCallback_Ugly(t *testing.T) {
+func TestManager_GetCallback_Ugly(t *core.T) {
 	mgr := NewManager(&recordingTrayPlatform{})
 	mgr.RegisterCallback("quit", func() {})
 	cb, ok := mgr.GetCallback("quit")
-	require.True(t, ok)
-	assert.NotNil(t, cb)
+	core.RequireTrue(t, ok)
+	core.AssertNotNil(t, cb)
 
 	mgr.UnregisterCallback("quit")
 	_, ok = mgr.GetCallback("quit")
-	assert.False(t, ok)
+	core.AssertFalse(t, ok)
 }

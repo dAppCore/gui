@@ -4,6 +4,7 @@ package mcp
 import (
 	"context"
 
+	"dappco.re/go/gui/pkg/internal/coreutil"
 	"dappco.re/go/gui/pkg/lifecycle"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -17,7 +18,7 @@ type AppQuitOutput struct {
 
 func (s *Subsystem) appQuit(_ context.Context, _ *mcp.CallToolRequest, _ AppQuitInput) (*mcp.CallToolResult, AppQuitOutput, error) {
 	// Broadcast the will-terminate action which triggers application shutdown
-	_ = s.core.ACTION(lifecycle.ActionWillTerminate{})
+	coreutil.DispatchAction(s.core, "mcp.appQuit", lifecycle.ActionWillTerminate{})
 	return nil, AppQuitOutput{Success: true}, nil
 }
 

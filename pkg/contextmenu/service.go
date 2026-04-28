@@ -5,7 +5,8 @@ import (
 	"context"
 	"sync"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
+	"dappco.re/go/gui/pkg/internal/coreutil"
 	coreerr "dappco.re/go/log"
 )
 
@@ -71,7 +72,9 @@ func (s *Service) OnShutdown(_ context.Context) core.Result {
 		return core.Result{OK: true}
 	}
 	for name := range s.registeredMenus {
-		_ = s.platform.Remove(name)
+		if err := s.platform.Remove(name); err != nil {
+			continue
+		}
 	}
 	s.registeredMenus = make(map[string]ContextMenuDef)
 	return core.Result{OK: true}
@@ -215,7 +218,7 @@ func (s *Service) tryRestoreMenu(name string, menu ContextMenuDef) {
 
 func (s *Service) menuCallback() func(string, string, string) {
 	return func(menuName, actionID, data string) {
-		_ = s.Core().ACTION(ActionItemClicked{
+		coreutil.DispatchAction(s.Core(), "contextmenu.itemClicked", ActionItemClicked{
 			MenuName: menuName,
 			ActionID: actionID,
 			Data:     data,

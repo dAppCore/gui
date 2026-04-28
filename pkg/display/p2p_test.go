@@ -3,16 +3,13 @@ package display
 import (
 	"context"
 	"sync"
-	"testing"
 	"time"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/p2p"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-func newDisplayP2PTestService(t *testing.T) (*Service, *p2p.Service, *core.Core, <-chan Event) {
+func newDisplayP2PTestService(t *core.T) (*Service, *p2p.Service, *core.Core, <-chan Event) {
 	t.Helper()
 
 	var p2pSvc *p2p.Service
@@ -21,8 +18,8 @@ func newDisplayP2PTestService(t *testing.T) (*Service, *p2p.Service, *core.Core,
 		p2pSvc = p2p.NewServiceWithDriver(c, p2p.Options{NodeID: "node-1"}, driver)
 		return core.Result{Value: p2pSvc, OK: true}
 	})
-	require.NotNil(t, displaySvc)
-	require.NotNil(t, p2pSvc)
+	core.AssertNotNil(t, displaySvc)
+	core.AssertNotNil(t, p2pSvc)
 	return displaySvc, p2pSvc, c, eventBuffer
 }
 
@@ -72,7 +69,7 @@ func (d *immediateP2PDriver) Subscribe(_ context.Context, topic string, handler 
 	return nil
 }
 
-func TestDisplayP2P_attachP2PBridge_Good(t *testing.T) {
+func TestDisplayP2P_attachP2PBridge_Good(t *core.T) {
 	_, p2pSvc, _, eventBuffer := newDisplayP2PTestService(t)
 
 	err := p2pSvc.Publish(context.Background(), p2p.Envelope{
@@ -81,22 +78,22 @@ func TestDisplayP2P_attachP2PBridge_Good(t *testing.T) {
 		SenderID: "peer-1",
 		Payload:  map[string]any{"hello": "world"},
 	})
-	require.NoError(t, err)
+	core.RequireNoError(t, err)
 
 	select {
 	case event := <-eventBuffer:
-		assert.Equal(t, EventCustomEvent, event.Type)
-		require.NotNil(t, event.Data)
-		assert.Equal(t, "p2p", event.Data["source"])
-		assert.Equal(t, "route-1", event.Data["route"])
-		assert.Equal(t, "peer-1", event.Data["sender_id"])
-		assert.Equal(t, map[string]any{"hello": "world"}, event.Data["payload"])
+		core.AssertEqual(t, EventCustomEvent, event.Type)
+		core.AssertNotNil(t, event.Data)
+		core.AssertEqual(t, "p2p", event.Data["source"])
+		core.AssertEqual(t, "route-1", event.Data["route"])
+		core.AssertEqual(t, "peer-1", event.Data["sender_id"])
+		core.AssertEqual(t, map[string]any{"hello": "world"}, event.Data["payload"])
 	case <-time.After(time.Second):
 		t.Fatal("timed out waiting for bridged event")
 	}
 }
 
-func TestDisplayP2P_OnStartup_InitializesEventManagerBeforeBridge(t *testing.T) {
+func TestDisplayP2P_OnStartup_InitializesEventManagerBeforeBridge(t *core.T) {
 	const route = "route-startup"
 
 	driver := &immediateP2PDriver{
@@ -114,37 +111,37 @@ func TestDisplayP2P_OnStartup_InitializesEventManagerBeforeBridge(t *testing.T) 
 
 	select {
 	case event := <-eventBuffer:
-		assert.Equal(t, EventCustomEvent, event.Type)
-		require.NotNil(t, event.Data)
-		assert.Equal(t, "p2p", event.Data["source"])
-		assert.Equal(t, route, event.Data["route"])
-		assert.Equal(t, "peer-startup", event.Data["sender_id"])
-		assert.Equal(t, map[string]any{"hello": "world"}, event.Data["payload"])
+		core.AssertEqual(t, EventCustomEvent, event.Type)
+		core.AssertNotNil(t, event.Data)
+		core.AssertEqual(t, "p2p", event.Data["source"])
+		core.AssertEqual(t, route, event.Data["route"])
+		core.AssertEqual(t, "peer-startup", event.Data["sender_id"])
+		core.AssertEqual(t, map[string]any{"hello": "world"}, event.Data["payload"])
 	case <-time.After(time.Second):
 		t.Fatal("timed out waiting for bridged startup event")
 	}
 }
 
-func TestDisplayP2P_attachP2PBridge_Bad(t *testing.T) {
+func TestDisplayP2P_attachP2PBridge_Bad(t *core.T) {
 	c := core.New(core.WithServiceLock())
 	svc, err := New()
-	require.NoError(t, err)
+	core.RequireNoError(t, err)
 	svc.ServiceRuntime = core.NewServiceRuntime(c, Options{})
 
-	require.NotPanics(t, func() {
+	core.AssertNotPanics(t, func() {
 		svc.attachP2PBridge()
 	})
 }
 
-func TestDisplayP2P_attachP2PBridge_Ugly(t *testing.T) {
+func TestDisplayP2P_attachP2PBridge_Ugly(t *core.T) {
 	displaySvc, p2pSvc, _, _ := newDisplayP2PTestService(t)
 	displaySvc.events = nil
 
-	require.NotPanics(t, func() {
+	core.AssertNotPanics(t, func() {
 		err := p2pSvc.Publish(context.Background(), p2p.Envelope{
 			Topic:    "display",
 			SenderID: "peer-2",
 		})
-		require.NoError(t, err)
+		core.RequireNoError(t, err)
 	})
 }

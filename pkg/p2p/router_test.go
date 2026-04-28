@@ -2,12 +2,9 @@ package p2p
 
 import (
 	"context"
+	core "dappco.re/go"
 	"errors"
-	"testing"
 	"time"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 type fakeDriver struct {
@@ -34,70 +31,70 @@ func (d *fakeDriver) Subscribe(_ context.Context, topic string, handler func(Env
 	return nil
 }
 
-func TestRouter_Publish_Good(t *testing.T) {
+func TestRouter_Publish_Good(t *core.T) {
 	driver := &fakeDriver{}
 	router := New(driver)
 
 	err := router.Publish(context.Background(), Envelope{Topic: "updates", SenderID: "peer-1"})
-	require.NoError(t, err)
-	require.Len(t, driver.published, 1)
-	assert.Equal(t, "updates", driver.published[0].Topic)
-	assert.Equal(t, "peer-1", driver.published[0].SenderID)
-	assert.WithinDuration(t, time.Now(), driver.published[0].ReceivedAt, time.Second)
+	core.RequireNoError(t, err)
+	core.AssertLen(t, driver.published, 1)
+	core.AssertEqual(t, "updates", driver.published[0].Topic)
+	core.AssertEqual(t, "peer-1", driver.published[0].SenderID)
+	core.AssertLessOrEqual(t, time.Since(driver.published[0].ReceivedAt), time.Second)
 }
 
-func TestRouter_Publish_Bad(t *testing.T) {
+func TestRouter_Publish_Bad(t *core.T) {
 	router := New(nil)
 
 	err := router.Publish(context.Background(), Envelope{Topic: "updates"})
-	require.NoError(t, err)
+	core.RequireNoError(t, err)
 }
 
-func TestRouter_Publish_Ugly(t *testing.T) {
+func TestRouter_Publish_Ugly(t *core.T) {
 	driver := &fakeDriver{publishErr: errors.New("publish failed")}
 	router := New(driver)
 
 	err := router.Publish(context.Background(), Envelope{Topic: "updates"})
-	require.Error(t, err)
-	assert.Equal(t, "publish failed", err.Error())
+	core.AssertError(t, err)
+	core.AssertEqual(t, "publish failed", err.Error())
 }
 
-func TestRouter_Subscribe_Good(t *testing.T) {
+func TestRouter_Subscribe_Good(t *core.T) {
 	driver := &fakeDriver{}
 	router := New(driver)
 
 	calls := 0
 	err := router.Subscribe(context.Background(), "timeline", func(envelope Envelope) {
 		calls++
-		assert.Equal(t, "peer-1", envelope.SenderID)
+		core.AssertEqual(t, "peer-1", envelope.SenderID)
 	})
-	require.NoError(t, err)
-	assert.Equal(t, 1, calls)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, 1, calls)
 
 	peers := router.Peers()
-	require.Len(t, peers, 1)
-	assert.Equal(t, "peer-1", peers[0].ID)
-	assert.Equal(t, "timeline", peers[0].Topic)
-	assert.True(t, peers[0].Connected)
+	core.AssertLen(t, peers, 1)
+	core.AssertEqual(t, "peer-1", peers[0].ID)
+	core.AssertEqual(t, "timeline", peers[0].Topic)
+	core.AssertTrue(t, peers[0].Connected)
 }
 
-func TestRouter_Subscribe_Bad(t *testing.T) {
+func TestRouter_Subscribe_Bad(t *core.T) {
 	router := New(nil)
 
 	calls := 0
 	err := router.Subscribe(context.Background(), "timeline", func(Envelope) {
 		calls++
 	})
-	require.NoError(t, err)
-	assert.Zero(t, calls)
-	assert.Empty(t, router.Peers())
+	core.RequireNoError(t, err)
+	core.AssertEmpty(t, calls)
+	core.AssertEmpty(t, router.Peers())
 }
 
-func TestRouter_Subscribe_Ugly(t *testing.T) {
+func TestRouter_Subscribe_Ugly(t *core.T) {
 	driver := &fakeDriver{subscribeErr: errors.New("subscribe failed")}
 	router := New(driver)
 
 	err := router.Subscribe(context.Background(), "timeline", func(Envelope) {})
-	require.Error(t, err)
-	assert.Equal(t, "subscribe failed", err.Error())
+	core.AssertError(t, err)
+	core.AssertEqual(t, "subscribe failed", err.Error())
 }

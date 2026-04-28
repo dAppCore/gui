@@ -2,12 +2,9 @@ package display
 
 import (
 	"sync"
-	"testing"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/contextmenu"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 type wsContextMenuPlatform struct {
@@ -55,13 +52,13 @@ func (m *wsContextMenuPlatform) GetAll() map[string]contextmenu.ContextMenuDef {
 	return out
 }
 
-func newDisplayWithContextMenu(t *testing.T, platform *wsContextMenuPlatform) (*Service, *core.Core) {
+func newDisplayWithContextMenu(t *core.T, platform *wsContextMenuPlatform) (*Service, *core.Core) {
 	t.Helper()
 	c := newTestCore(t, contextmenu.Register(platform))
 	return core.MustServiceFor[*Service](c, "display"), c
 }
 
-func TestDisplay_handleWSMessage_ContextMenuAdd_MissingMenu(t *testing.T) {
+func TestDisplay_handleWSMessage_ContextMenuAdd_MissingMenu(t *core.T) {
 	platform := newWSContextMenuPlatform()
 	svc, _ := newDisplayWithContextMenu(t, platform)
 
@@ -72,10 +69,10 @@ func TestDisplay_handleWSMessage_ContextMenuAdd_MissingMenu(t *testing.T) {
 		},
 	})
 
-	require.False(t, result.OK)
+	core.AssertFalse(t, result.OK)
 	err, ok := result.Value.(error)
-	require.True(t, ok)
-	assert.Contains(t, err.Error(), `missing required field "menu"`)
+	core.RequireTrue(t, ok)
+	core.AssertContains(t, err.Error(), `missing required field "menu"`)
 	_, ok = platform.Get("menu")
-	assert.False(t, ok)
+	core.AssertFalse(t, ok)
 }

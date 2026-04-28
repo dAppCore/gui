@@ -31,7 +31,9 @@ func DetectMode() AppMode {
 				return ""
 			}
 			var value string
-			_ = cfg.Get(key, &value)
+			if err := cfg.Get(key, &value); err != nil {
+				return ""
+			}
 			return value
 		},
 	})

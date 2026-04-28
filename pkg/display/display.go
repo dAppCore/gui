@@ -8,8 +8,8 @@ import (
 	"runtime"
 	"sync"
 
+	core "dappco.re/go"
 	"dappco.re/go/config"
-	core "dappco.re/go/core"
 	coreerr "dappco.re/go/log"
 
 	"dappco.re/go/gui/pkg/chat"
@@ -21,6 +21,7 @@ import (
 	"dappco.re/go/gui/pkg/dock"
 	"dappco.re/go/gui/pkg/environment"
 	"dappco.re/go/gui/pkg/events"
+	"dappco.re/go/gui/pkg/internal/coreutil"
 	"dappco.re/go/gui/pkg/keybinding"
 	"dappco.re/go/gui/pkg/lifecycle"
 	"dappco.re/go/gui/pkg/menu"
@@ -1137,17 +1138,17 @@ func (s *Service) handleTrayAction(actionID string) {
 		// Show all windows
 		infos := s.ListWindowInfos()
 		for _, info := range infos {
-			_ = c.Action("window.focus").Run(ctx, core.NewOptions(
+			coreutil.ObserveResult(c, "display.handleTrayAction", "window focus failed", c.Action("window.focus").Run(ctx, core.NewOptions(
 				core.Option{Key: "task", Value: window.TaskFocus{Name: info.Name}},
-			))
+			)))
 		}
 	case "close-desktop":
 		// Hide all tracked windows so the tray action behaves like a real desktop "close" without quitting.
 		infos := s.ListWindowInfos()
 		for _, info := range infos {
-			_ = c.Action("window.setVisibility").Run(ctx, core.NewOptions(
+			coreutil.ObserveResult(c, "display.handleTrayAction", "window visibility update failed", c.Action("window.setVisibility").Run(ctx, core.NewOptions(
 				core.Option{Key: "task", Value: window.TaskSetVisibility{Name: info.Name, Visible: false}},
-			))
+			)))
 		}
 	case "env-info":
 		// Query environment info via IPC and show as dialog
@@ -1156,14 +1157,14 @@ func (s *Service) handleTrayAction(actionID string) {
 			info, _ := r.Value.(environment.EnvironmentInfo)
 			details := "OS: " + info.OS + "\nArch: " + info.Arch + "\nPlatform: " +
 				info.Platform.Name + " " + info.Platform.Version
-			_ = c.Action("dialog.message").Run(ctx, core.NewOptions(
+			coreutil.ObserveResult(c, "display.handleTrayAction", "environment dialog failed", c.Action("dialog.message").Run(ctx, core.NewOptions(
 				core.Option{Key: "task", Value: dialog.TaskMessageDialog{
 					Options: dialog.MessageDialogOptions{
 						Type: dialog.DialogInfo, Title: "Environment",
 						Message: details, Buttons: []string{"OK"},
 					},
 				}},
-			))
+			)))
 		}
 	case "quit":
 		if s.app != nil {
@@ -1227,7 +1228,9 @@ func (s *Service) persistSection(key string, value map[string]any) error {
 	if s.configFile == nil {
 		return nil
 	}
-	_ = s.configFile.Set(key, value)
+	if err := s.configFile.Set(key, value); err != nil {
+		return err
+	}
 	if err := s.configFile.Commit(); err != nil {
 		return err
 	}
@@ -1832,9 +1835,9 @@ func (s *Service) buildMenu() {
 		items = items[1:] // skip AppMenu
 	}
 
-	_ = s.Core().Action("menu.setAppMenu").Run(context.Background(), core.NewOptions(
+	coreutil.ObserveResult(s.Core(), "display.setupApplicationMenu", "app menu setup failed", s.Core().Action("menu.setAppMenu").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: menu.TaskSetAppMenu{Items: items}},
-	))
+	)))
 }
 
 // pointerTo returns a pointer to value.
@@ -1858,9 +1861,9 @@ func (s *Service) handleOpenDevTools() {
 	if windowName == "" {
 		return
 	}
-	_ = s.Core().Action("webview.devtoolsOpen").Run(context.Background(), core.NewOptions(
+	coreutil.ObserveResult(s.Core(), "display.handleOpenDevTools", "devtools open failed", s.Core().Action("webview.devtoolsOpen").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: webview.TaskDevToolsOpen{Window: windowName}},
-	))
+	)))
 }
 
 func (s *Service) handleCloseDevTools() {
@@ -1868,13 +1871,13 @@ func (s *Service) handleCloseDevTools() {
 	if windowName == "" {
 		return
 	}
-	_ = s.Core().Action("webview.devtoolsClose").Run(context.Background(), core.NewOptions(
+	coreutil.ObserveResult(s.Core(), "display.handleCloseDevTools", "devtools close failed", s.Core().Action("webview.devtoolsClose").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: webview.TaskDevToolsClose{Window: windowName}},
-	))
+	)))
 }
 
 func (s *Service) handleNewWorkspace() {
-	_ = s.Core().Action("window.open").Run(context.Background(), core.NewOptions(
+	coreutil.ObserveResult(s.Core(), "display.handleNewWorkspace", "workspace window open failed", s.Core().Action("window.open").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskOpenWindow{
 			Window: &window.Window{
 				Name:   "workspace-new",
@@ -1884,7 +1887,7 @@ func (s *Service) handleNewWorkspace() {
 				Height: 400,
 			},
 		}},
-	))
+	)))
 }
 
 func (s *Service) handleListWorkspaces() {
@@ -1896,11 +1899,14 @@ func (s *Service) handleListWorkspaces() {
 	if !ok {
 		return
 	}
-	_ = lister.ListWorkspaces()
+	workspaces := lister.ListWorkspaces()
+	if len(workspaces) == 0 {
+		return
+	}
 }
 
 func (s *Service) handleNewFile() {
-	_ = s.Core().Action("window.open").Run(context.Background(), core.NewOptions(
+	coreutil.ObserveResult(s.Core(), "display.handleNewFile", "editor window open failed", s.Core().Action("window.open").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskOpenWindow{
 			Window: &window.Window{
 				Name:   "editor",
@@ -1910,7 +1916,7 @@ func (s *Service) handleNewFile() {
 				Height: 800,
 			},
 		}},
-	))
+	)))
 }
 
 func (s *Service) handleOpenFile() {
@@ -1930,7 +1936,7 @@ func (s *Service) handleOpenFile() {
 		return
 	}
 	fileURL := "/#/developer/editor?file=" + url.QueryEscape(paths[0])
-	_ = s.Core().Action("window.open").Run(context.Background(), core.NewOptions(
+	coreutil.ObserveResult(s.Core(), "display.handleOpenFile", "editor file window open failed", s.Core().Action("window.open").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskOpenWindow{
 			Window: &window.Window{
 				Name:   "editor",
@@ -1940,12 +1946,14 @@ func (s *Service) handleOpenFile() {
 				Height: 800,
 			},
 		}},
-	))
+	)))
 }
 
-func (s *Service) handleSaveFile() { _ = s.Core().ACTION(ActionIDECommand{Command: "save"}) }
+func (s *Service) handleSaveFile() {
+	coreutil.DispatchAction(s.Core(), "display.handleSaveFile", ActionIDECommand{Command: "save"})
+}
 func (s *Service) handleOpenEditor() {
-	_ = s.Core().Action("window.open").Run(context.Background(), core.NewOptions(
+	coreutil.ObserveResult(s.Core(), "display.handleOpenEditor", "editor window open failed", s.Core().Action("window.open").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskOpenWindow{
 			Window: &window.Window{
 				Name:   "editor",
@@ -1955,11 +1963,11 @@ func (s *Service) handleOpenEditor() {
 				Height: 800,
 			},
 		}},
-	))
+	)))
 }
 
 func (s *Service) handleOpenTerminal() {
-	_ = s.Core().Action("window.open").Run(context.Background(), core.NewOptions(
+	coreutil.ObserveResult(s.Core(), "display.handleOpenTerminal", "terminal window open failed", s.Core().Action("window.open").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskOpenWindow{
 			Window: &window.Window{
 				Name:   "terminal",
@@ -1969,15 +1977,19 @@ func (s *Service) handleOpenTerminal() {
 				Height: 500,
 			},
 		}},
-	))
+	)))
 }
-func (s *Service) handleRun()   { _ = s.Core().ACTION(ActionIDECommand{Command: "run"}) }
-func (s *Service) handleBuild() { _ = s.Core().ACTION(ActionIDECommand{Command: "build"}) }
+func (s *Service) handleRun() {
+	coreutil.DispatchAction(s.Core(), "display.handleRun", ActionIDECommand{Command: "run"})
+}
+func (s *Service) handleBuild() {
+	coreutil.DispatchAction(s.Core(), "display.handleBuild", ActionIDECommand{Command: "build"})
+}
 
 // --- Tray (setup delegated via IPC) ---
 
 func (s *Service) setupTray() {
-	_ = s.Core().Action("systray.setMenu").Run(context.Background(), core.NewOptions(
+	coreutil.ObserveResult(s.Core(), "display.setupTray", "tray setup failed", s.Core().Action("systray.setMenu").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: systray.TaskSetTrayMenu{Items: []systray.TrayMenuItem{
 			{Label: "Open Desktop", ActionID: "open-desktop"},
 			{Label: "Close Desktop", ActionID: "close-desktop"},
@@ -1986,5 +1998,5 @@ func (s *Service) setupTray() {
 			{Type: "separator"},
 			{Label: "Quit", ActionID: "quit"},
 		}}},
-	))
+	)))
 }

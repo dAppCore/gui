@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/url"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 )
 
 func ExampleNewCoreSchemeHandler() {

@@ -7,7 +7,7 @@ import (
 	"sort"    // Note: AX-6 — slice sorting is structural; core has no sort wrapper
 	"time"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/chat"
 	"dappco.re/go/gui/pkg/internal/textutil"
 	coreerr "dappco.re/go/log"

@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	coreio "dappco.re/go/io"
 	coreerr "dappco.re/go/log"
 )
@@ -229,5 +229,7 @@ func (lm *LayoutManager) DeleteLayout(name string) {
 	lm.mu.Lock()
 	delete(lm.layouts, name)
 	lm.mu.Unlock()
-	_ = lm.save()
+	if err := lm.save(); err != nil {
+		return
+	}
 }

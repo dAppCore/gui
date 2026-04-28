@@ -6,20 +6,17 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"testing"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/deno"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-func captureStderr(t *testing.T, fn func()) string {
+func captureStderr(t *core.T, fn func()) string {
 	t.Helper()
 
 	original := os.Stderr
 	reader, writer, err := os.Pipe()
-	require.NoError(t, err)
+	core.RequireNoError(t, err)
 	defer func() {
 		os.Stderr = original
 		_ = reader.Close()
@@ -29,37 +26,42 @@ func captureStderr(t *testing.T, fn func()) string {
 	os.Stderr = writer
 	fn()
 	os.Stderr = original
-	require.NoError(t, writer.Close())
+	core.RequireNoError(t, writer.Close())
 
 	var output bytes.Buffer
 	_, err = output.ReadFrom(reader)
-	require.NoError(t, err)
+	core.RequireNoError(t, err)
 	return output.String()
 }
 
-func TestSidecar_SplitCommandArgs_Good(t *testing.T) {
-	assert.Equal(t, []string{"--import-map", "map.json", "--watch"}, splitCommandArgs("--import-map map.json --watch"))
+func TestSidecar_SplitCommandArgs_Good(t *core.T) {
+	core.AssertEqual(t, []string{"--import-map", "map.json", "--watch"}, splitCommandArgs("--import-map map.json --watch"))
+	observedType := core.Sprintf("%T", splitCommandArgs("--import-map map.json --watch"))
+	core.AssertNotEmpty(t, observedType)
 }
 
-func TestSidecar_SplitCommandArgs_Bad(t *testing.T) {
-	assert.Nil(t, splitCommandArgs(""))
-	assert.Nil(t, splitCommandArgs("   "))
+func TestSidecar_SplitCommandArgs_Bad(t *core.T) {
+	core.AssertNil(t, splitCommandArgs(""))
+	core.AssertNil(t, splitCommandArgs("   "))
+	core.AssertNotEmpty(t, core.Sprintf("%T", splitCommandArgs("")))
 }
 
-func TestSidecar_SplitCommandArgs_Ugly(t *testing.T) {
-	assert.Equal(t, []string{"--flag", "--another", "value"}, splitCommandArgs("\t--flag\n--another   value\t"))
+func TestSidecar_SplitCommandArgs_Ugly(t *core.T) {
+	core.AssertEqual(t, []string{"--flag", "--another", "value"}, splitCommandArgs("\t--flag\n--another   value\t"))
+	observedType := core.Sprintf("%T", splitCommandArgs("\t--flag\n--another   value\t"))
+	core.AssertNotEmpty(t, observedType)
 }
 
-func TestSidecar_ValidateArgs_Good(t *testing.T) {
+func TestSidecar_ValidateArgs_Good(t *core.T) {
 	output := captureStderr(t, func() {
-		assert.NoError(t, validateSidecarArgs(splitCommandArgs(""), nil))
-		assert.NoError(t, validateSidecarArgs(splitCommandArgs("   "), nil))
+		core.AssertNoError(t, validateSidecarArgs(splitCommandArgs(""), nil))
+		core.AssertNoError(t, validateSidecarArgs(splitCommandArgs("   "), nil))
 	})
 
-	assert.Empty(t, strings.TrimSpace(output))
+	core.AssertEmpty(t, strings.TrimSpace(output))
 }
 
-func TestSidecar_LaunchOptions_Good_EmptyEnv(t *testing.T) {
+func TestSidecar_LaunchOptions_Good_EmptyEnv(t *core.T) {
 	t.Setenv("CORE_DENO_ARGS", "")
 	t.Setenv("CORE_DENO_BINARY", "")
 	t.Setenv("CORE_DENO_DIR", "")
@@ -68,24 +70,24 @@ func TestSidecar_LaunchOptions_Good_EmptyEnv(t *testing.T) {
 	output := captureStderr(t, func() {
 		var err error
 		options, err = sidecarLaunchOptions(nil)
-		require.NoError(t, err)
+		core.RequireNoError(t, err)
 	})
 
-	assert.Nil(t, options.Args)
-	assert.Empty(t, options.Binary)
-	assert.Empty(t, options.Dir)
-	assert.Empty(t, strings.TrimSpace(output))
+	core.AssertNil(t, options.Args)
+	core.AssertEmpty(t, options.Binary)
+	core.AssertEmpty(t, options.Dir)
+	core.AssertEmpty(t, strings.TrimSpace(output))
 }
 
-func TestSidecar_ValidateArgs_Good_Unstable(t *testing.T) {
+func TestSidecar_ValidateArgs_Good_Unstable(t *core.T) {
 	output := captureStderr(t, func() {
-		assert.NoError(t, validateSidecarArgs(splitCommandArgs("--unstable"), nil))
+		core.AssertNoError(t, validateSidecarArgs(splitCommandArgs("--unstable"), nil))
 	})
 
-	assert.Empty(t, strings.TrimSpace(output))
+	core.AssertEmpty(t, strings.TrimSpace(output))
 }
 
-func TestSidecar_ValidateArgs_Bad_PermissionFlags(t *testing.T) {
+func TestSidecar_ValidateArgs_Bad_PermissionFlags(t *core.T) {
 	tests := []struct {
 		name string
 		args string
@@ -97,57 +99,57 @@ func TestSidecar_ValidateArgs_Bad_PermissionFlags(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(t *core.T) {
 			t.Setenv("CORE_DENO_ALLOW_PERMISSIONS", "")
 
 			err := validateSidecarArgs(splitCommandArgs(tt.args), nil)
 
-			require.Error(t, err)
-			assert.Contains(t, err.Error(), tt.flag)
-			assert.Contains(t, err.Error(), "deno sandbox is being weakened")
+			core.AssertError(t, err)
+			core.AssertContains(t, err.Error(), tt.flag)
+			core.AssertContains(t, err.Error(), "deno sandbox is being weakened")
 		})
 	}
 }
 
-func TestSidecar_ValidateArgs_Good_OverrideWarns(t *testing.T) {
+func TestSidecar_ValidateArgs_Good_OverrideWarns(t *core.T) {
 	t.Setenv("CORE_DENO_ALLOW_PERMISSIONS", "true")
 
 	output := captureStderr(t, func() {
-		assert.NoError(t, validateSidecarArgs(splitCommandArgs("run --allow-all attacker.ts"), nil))
+		core.AssertNoError(t, validateSidecarArgs(splitCommandArgs("run --allow-all attacker.ts"), nil))
 	})
 
-	assert.Contains(t, output, "CORE_DENO_ARGS contains permission flag --allow-all")
-	assert.Contains(t, output, "deno sandbox is being weakened")
+	core.AssertContains(t, output, "CORE_DENO_ARGS contains permission flag --allow-all")
+	core.AssertContains(t, output, "deno sandbox is being weakened")
 }
 
-func TestSidecar_StartAction_Bad_RefusesPermissionArgs(t *testing.T) {
+func TestSidecar_StartAction_Bad_RefusesPermissionArgs(t *core.T) {
 	t.Setenv("CORE_DENO_ARGS", "run --allow-all attacker.ts")
 
 	svc, c := newTestDisplayService(t)
 	result := c.Action("display.sidecar.start").Run(context.Background(), core.Options{})
 
-	require.False(t, result.OK)
+	core.AssertFalse(t, result.OK)
 	err, ok := result.Value.(error)
-	require.True(t, ok)
-	assert.Contains(t, err.Error(), "--allow-all")
-	assert.Nil(t, svc.sidecar)
+	core.RequireTrue(t, ok)
+	core.AssertContains(t, err.Error(), "--allow-all")
+	core.AssertNil(t, svc.sidecar)
 }
 
-func TestSidecar_ValidateBinary_Good(t *testing.T) {
+func TestSidecar_ValidateBinary_Good(t *core.T) {
 	binary := filepath.Join(t.TempDir(), "deno")
-	require.NoError(t, os.WriteFile(binary, []byte("#!/bin/sh\n"), 0o755))
+	core.RequireNoError(t, os.WriteFile(binary, []byte("#!/bin/sh\n"), 0o755))
 	expected, err := filepath.EvalSymlinks(binary)
-	require.NoError(t, err)
+	core.RequireNoError(t, err)
 
 	actual, err := validateSidecarBinary(binary)
 
-	require.NoError(t, err)
-	assert.Equal(t, expected, actual)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, expected, actual)
 }
 
-func TestSidecar_ValidateBinary_Bad(t *testing.T) {
+func TestSidecar_ValidateBinary_Bad(t *core.T) {
 	customBinary := filepath.Join(t.TempDir(), "deno-custom")
-	require.NoError(t, os.WriteFile(customBinary, []byte("#!/bin/sh\n"), 0o755))
+	core.RequireNoError(t, os.WriteFile(customBinary, []byte("#!/bin/sh\n"), 0o755))
 
 	tests := []struct {
 		name  string
@@ -160,32 +162,32 @@ func TestSidecar_ValidateBinary_Bad(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(t *core.T) {
 			_, err := validateSidecarBinary(tt.value)
 
-			require.Error(t, err)
-			assert.Contains(t, err.Error(), tt.want)
+			core.AssertError(t, err)
+			core.AssertContains(t, err.Error(), tt.want)
 		})
 	}
 }
 
-func TestSidecar_ValidateDir_Good(t *testing.T) {
+func TestSidecar_ValidateDir_Good(t *core.T) {
 	dir := canonicalTempDir(t)
 
 	actual, err := validateSidecarDir(dir)
 
-	require.NoError(t, err)
-	assert.Equal(t, dir, actual)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, dir, actual)
 }
 
-func TestSidecar_ValidateDir_Bad(t *testing.T) {
+func TestSidecar_ValidateDir_Bad(t *core.T) {
 	base := canonicalTempDir(t)
 	child := filepath.Join(base, "child")
-	require.NoError(t, os.Mkdir(child, 0o755))
+	core.RequireNoError(t, os.Mkdir(child, 0o755))
 	file := filepath.Join(base, "not-a-dir")
-	require.NoError(t, os.WriteFile(file, []byte("x"), 0o644))
+	core.RequireNoError(t, os.WriteFile(file, []byte("x"), 0o644))
 	target := filepath.Join(base, "target")
-	require.NoError(t, os.Mkdir(target, 0o755))
+	core.RequireNoError(t, os.Mkdir(target, 0o755))
 	link := filepath.Join(base, "link")
 	if err := os.Symlink(target, link); err != nil {
 		t.Skipf("symlink creation unavailable: %v", err)
@@ -202,24 +204,24 @@ func TestSidecar_ValidateDir_Bad(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(t *core.T) {
 			_, err := validateSidecarDir(tt.value)
 
-			require.Error(t, err)
-			assert.Contains(t, err.Error(), tt.want)
+			core.AssertError(t, err)
+			core.AssertContains(t, err.Error(), tt.want)
 		})
 	}
 }
 
-func canonicalTempDir(t *testing.T) string {
+func canonicalTempDir(t *core.T) string {
 	t.Helper()
 
 	dir, err := filepath.EvalSymlinks(t.TempDir())
-	require.NoError(t, err)
+	core.RequireNoError(t, err)
 	return dir
 }
 
-func TestSidecar_EnsureSidecar_Good(t *testing.T) {
+func TestSidecar_EnsureSidecar_Good(t *core.T) {
 	t.Setenv("CORE_DENO_BINARY", "/usr/local/bin/deno-custom")
 	t.Setenv("CORE_DENO_DIR", "/tmp/core-deno")
 	t.Setenv("CORE_DENO_ARGS", "--import-map map.json")
@@ -227,22 +229,22 @@ func TestSidecar_EnsureSidecar_Good(t *testing.T) {
 	svc := &Service{}
 	manager := svc.ensureSidecar()
 
-	require.NotNil(t, manager)
+	core.AssertNotNil(t, manager)
 	status := manager.Status()
-	assert.Equal(t, "/usr/local/bin/deno-custom", status.Binary)
-	assert.False(t, status.Running)
+	core.AssertEqual(t, "/usr/local/bin/deno-custom", status.Binary)
+	core.AssertFalse(t, status.Running)
 }
 
-func TestSidecar_EnsureSidecar_Bad(t *testing.T) {
+func TestSidecar_EnsureSidecar_Bad(t *core.T) {
 	svc := &Service{sidecar: deno.New(deno.Options{Binary: "custom-deno"})}
 
 	manager := svc.ensureSidecar()
 
-	require.Same(t, svc.sidecar, manager)
-	assert.Equal(t, "custom-deno", manager.Status().Binary)
+	core.AssertSame(t, svc.sidecar, manager)
+	core.AssertEqual(t, "custom-deno", manager.Status().Binary)
 }
 
-func TestSidecar_EnsureSidecar_Ugly(t *testing.T) {
+func TestSidecar_EnsureSidecar_Ugly(t *core.T) {
 	t.Setenv("CORE_DENO_BINARY", "   ")
 	t.Setenv("CORE_DENO_DIR", "")
 	t.Setenv("CORE_DENO_ARGS", "   ")
@@ -250,11 +252,11 @@ func TestSidecar_EnsureSidecar_Ugly(t *testing.T) {
 	svc := &Service{}
 	manager := svc.ensureSidecar()
 
-	require.NotNil(t, manager)
-	assert.Equal(t, "deno", manager.Status().Binary)
+	core.AssertNotNil(t, manager)
+	core.AssertEqual(t, "deno", manager.Status().Binary)
 }
 
-func TestSidecar_RegisterActions_StartFailureClearsSidecar(t *testing.T) {
+func TestSidecar_RegisterActions_StartFailureClearsSidecar(t *core.T) {
 	t.Setenv("CORE_DENO_ENABLE", "1")
 	t.Setenv("CORE_DENO_BINARY", "/definitely/not/a/real/deno")
 
@@ -263,18 +265,18 @@ func TestSidecar_RegisterActions_StartFailureClearsSidecar(t *testing.T) {
 
 	svc.registerSidecarActions()
 
-	assert.Nil(t, svc.sidecar)
+	core.AssertNil(t, svc.sidecar)
 }
 
-func TestSidecar_StatusAction_Good(t *testing.T) {
+func TestSidecar_StatusAction_Good(t *core.T) {
 	t.Setenv("CORE_DENO_BINARY", "/opt/core/deno")
 
 	_, c := newTestDisplayService(t)
 	result := c.Action("display.sidecar.status").Run(context.Background(), core.Options{})
 
-	require.True(t, result.OK)
+	core.RequireTrue(t, result.OK)
 	status, ok := result.Value.(deno.Status)
-	require.True(t, ok)
-	assert.Equal(t, "/opt/core/deno", status.Binary)
-	assert.False(t, status.Running)
+	core.RequireTrue(t, ok)
+	core.AssertEqual(t, "/opt/core/deno", status.Binary)
+	core.AssertFalse(t, status.Running)
 }

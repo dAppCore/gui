@@ -1,89 +1,92 @@
 package webview
 
 import (
+	core "dappco.re/go"
 	"encoding/json"
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-func TestDiagnostics_ComputedStyleScript_Good(t *testing.T) {
+func TestDiagnostics_ComputedStyleScript_Good(t *core.T) {
 	script := ComputedStyleScript("#app")
 
-	require.Contains(t, script, "document.querySelector")
-	assert.Contains(t, script, "window.getComputedStyle(el)")
-	assert.Contains(t, script, mustJSON("#app"))
+	core.AssertContains(t, script, "document.querySelector")
+	core.AssertContains(t, script, "window.getComputedStyle(el)")
+	core.AssertContains(t, script, mustJSON("#app"))
 }
 
-func TestDiagnostics_ComputedStyleScript_Bad(t *testing.T) {
+func TestDiagnostics_ComputedStyleScript_Bad(t *core.T) {
 	script := ComputedStyleScript("")
 
-	assert.Contains(t, script, `document.querySelector("")`)
-	assert.Contains(t, script, "return null;")
+	core.AssertContains(t, script, `document.querySelector("")`)
+	core.AssertContains(t, script, "return null;")
 }
 
-func TestDiagnostics_ComputedStyleScript_Ugly(t *testing.T) {
+func TestDiagnostics_ComputedStyleScript_Ugly(t *core.T) {
 	selector := "#app\"\n\t"
 	script := ComputedStyleScript(selector)
 
-	assert.Contains(t, script, mustJSON(selector))
+	core.AssertContains(t, script, mustJSON(selector))
 }
 
-func TestDiagnostics_HighlightScript_Good(t *testing.T) {
+func TestDiagnostics_HighlightScript_Good(t *core.T) {
 	script := HighlightScript(".card", "#00ff00")
 
-	assert.Contains(t, script, mustJSON(".card"))
-	assert.Contains(t, script, mustJSON("#00ff00"))
-	assert.Contains(t, script, `outline = "3px solid " +`)
+	core.AssertContains(t, script, mustJSON(".card"))
+	core.AssertContains(t, script, mustJSON("#00ff00"))
+	core.AssertContains(t, script, `outline = "3px solid " +`)
 }
 
-func TestDiagnostics_HighlightScript_Bad(t *testing.T) {
+func TestDiagnostics_HighlightScript_Bad(t *core.T) {
 	script := HighlightScript(".card", "")
 
-	assert.Contains(t, script, `3px solid `)
-	assert.Contains(t, script, mustJSON("#ff9800"))
+	core.AssertContains(t, script, `3px solid `)
+	core.AssertContains(t, script, mustJSON("#ff9800"))
 }
 
-func TestDiagnostics_HighlightScript_Ugly(t *testing.T) {
+func TestDiagnostics_HighlightScript_Ugly(t *core.T) {
 	selector := `#card" + alert(1) + "`
 	script := HighlightScript(selector, "#123456")
 
-	assert.Contains(t, script, mustJSON(selector))
-	assert.Contains(t, script, mustJSON("#123456"))
+	core.AssertContains(t, script, mustJSON(selector))
+	core.AssertContains(t, script, mustJSON("#123456"))
 }
 
-func TestDiagnostics_NetworkLogScript_Good(t *testing.T) {
+func TestDiagnostics_NetworkLogScript_Good(t *core.T) {
 	script := NetworkLogScript(5)
 
-	assert.Contains(t, script, "slice(-5)")
-	assert.Contains(t, script, `window.__coreNetworkLog`)
+	core.AssertContains(t, script, "slice(-5)")
+	core.AssertContains(t, script, `window.__coreNetworkLog`)
 }
 
-func TestDiagnostics_NetworkLogScript_Bad(t *testing.T) {
+func TestDiagnostics_NetworkLogScript_Bad(t *core.T) {
 	script := NetworkLogScript(0)
 
-	assert.Contains(t, script, `performance.getEntriesByType("resource")`)
-	assert.NotContains(t, script, "slice(-")
+	core.AssertContains(t, script, `performance.getEntriesByType("resource")`)
+	core.AssertNotContains(t, script, "slice(-")
 }
 
-func TestDiagnostics_NetworkLogScript_Ugly(t *testing.T) {
+func TestDiagnostics_NetworkLogScript_Ugly(t *core.T) {
 	script := NetworkLogScript(-7)
 
-	assert.Contains(t, script, `performance.getEntriesByType("resource")`)
-	assert.NotContains(t, script, "slice(-")
+	core.AssertContains(t, script, `performance.getEntriesByType("resource")`)
+	core.AssertNotContains(t, script, "slice(-")
 }
 
-func TestDiagnostics_normalizeWhitespace_Good(t *testing.T) {
-	assert.Equal(t, "hello world", normalizeWhitespace("  hello world  "))
+func TestDiagnostics_normalizeWhitespace_Good(t *core.T) {
+	core.AssertEqual(t, "hello world", normalizeWhitespace("  hello world  "))
+	observedType := core.Sprintf("%T", normalizeWhitespace("  hello world  "))
+	core.AssertNotEmpty(t, observedType)
 }
 
-func TestDiagnostics_normalizeWhitespace_Bad(t *testing.T) {
-	assert.Empty(t, normalizeWhitespace(""))
+func TestDiagnostics_normalizeWhitespace_Bad(t *core.T) {
+	core.AssertEmpty(t, normalizeWhitespace(""))
+	observedType := core.Sprintf("%T", normalizeWhitespace(""))
+	core.AssertNotEmpty(t, observedType)
 }
 
-func TestDiagnostics_normalizeWhitespace_Ugly(t *testing.T) {
-	assert.Empty(t, normalizeWhitespace("\n\t   "))
+func TestDiagnostics_normalizeWhitespace_Ugly(t *core.T) {
+	core.AssertEmpty(t, normalizeWhitespace("\n\t   "))
+	observedType := core.Sprintf("%T", normalizeWhitespace("\n\t   "))
+	core.AssertNotEmpty(t, observedType)
 }
 
 func mustJSON(v any) string {

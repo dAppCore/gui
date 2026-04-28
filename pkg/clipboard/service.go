@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/base64"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	coreerr "dappco.re/go/log"
 )
 
@@ -60,7 +60,9 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 			}
 			if !s.platform.SetText("") {
 				if hadImage {
-					_ = imgPlatform.SetImage(oldImage)
+					if !imgPlatform.SetImage(oldImage) {
+						return core.Result{Value: false, OK: true}
+					}
 				}
 				return core.Result{Value: false, OK: true}
 			}
@@ -68,7 +70,9 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		}
 		success := s.platform.SetText("")
 		if !success && hadText {
-			_ = s.platform.SetText(oldText)
+			if !s.platform.SetText(oldText) {
+				return core.Result{Value: false, OK: true}
+			}
 		}
 		return core.Result{Value: success, OK: true}
 	}

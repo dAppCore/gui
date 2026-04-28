@@ -16,7 +16,8 @@ import (
 	"sync"
 	"time"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
+	"dappco.re/go/gui/pkg/internal/coreutil"
 	guimcp "dappco.re/go/gui/pkg/mcp"
 	"dappco.re/go/inference"
 	coreio "dappco.re/go/io"
@@ -559,7 +560,9 @@ func (s *Service) loadSettings() ChatSettings {
 	if err != nil {
 		return settings
 	}
-	_ = core.JSONUnmarshalString(payload, &settings)
+	if r := core.JSONUnmarshalString(payload, &settings); !r.OK {
+		return DefaultSettings()
+	}
 	return settings
 }
 
@@ -1210,7 +1213,7 @@ func (s *Service) withInlineToolCall(conversationID string, message ChatMessage)
 
 	call, ok, err := parseInlineToolCall(message.Content)
 	if err != nil {
-		_ = s.Core().LogWarn(err, "chat.tool_call", "malformed inline tool_call ignored")
+		coreutil.LogWarn(s.Core(), err, "chat.tool_call", "malformed inline tool_call ignored")
 		return message
 	}
 	if !ok {
@@ -1383,7 +1386,7 @@ func (s *Service) emit(message any) {
 	if message == nil {
 		return
 	}
-	_ = s.Core().ACTION(message)
+	coreutil.DispatchAction(s.Core(), "chat.emit", message)
 }
 
 func (s *Service) discoverModels() []ModelEntry {
@@ -1707,7 +1710,7 @@ func quantBitsFromName(name string) int {
 
 func directorySize(root string) int64 {
 	var total int64
-	_ = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+	if err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil || info == nil || info.IsDir() {
 			return nil
 		}
@@ -1715,6 +1718,8 @@ func directorySize(root string) int64 {
 			total += info.Size()
 		}
 		return nil
-	})
+	}); err != nil {
+		return total
+	}
 	return total
 }

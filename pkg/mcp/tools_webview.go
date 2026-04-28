@@ -10,7 +10,7 @@ import (
 	"image/png"
 	"math"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/webview"
 	"dappco.re/go/gui/pkg/window"
 	coreerr "dappco.re/go/log"

@@ -1,23 +1,20 @@
 package menu
 
 import (
-	"reflect"
-	"testing"
-	"unsafe"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	core "dappco.re/go"
 	"github.com/wailsapp/wails/v3/pkg/application"
+	"reflect"
+	"unsafe"
 )
 
-func TestWailsPlatform_NewMenu_Good(t *testing.T) {
+func TestWailsPlatform_NewMenu_Good(t *core.T) {
 	app := &application.App{}
 	platform := NewWailsPlatform(app)
 
 	menu := platform.NewMenu()
-	require.NotNil(t, menu)
+	core.AssertNotNil(t, menu)
 	root, ok := menu.(*wailsMenu)
-	require.True(t, ok)
+	core.RequireTrue(t, ok)
 
 	clicked := false
 	item := root.Add("Open").(*wailsMenuItem)
@@ -36,45 +33,45 @@ func TestWailsPlatform_NewMenu_Good(t *testing.T) {
 	platform.SetApplicationMenu(root)
 
 	menuField := reflect.ValueOf(&app.Menu).Elem().FieldByName("applicationMenu")
-	require.True(t, menuField.IsValid())
-	assert.Equal(t, reflect.ValueOf(root.menu).Pointer(), menuField.Pointer())
+	core.RequireTrue(t, menuField.IsValid())
+	core.AssertEqual(t, reflect.ValueOf(root.menu).Pointer(), menuField.Pointer())
 
 	onClickField := reflect.ValueOf(item.item).Elem().FieldByName("onClick")
-	require.True(t, onClickField.IsValid())
+	core.RequireTrue(t, onClickField.IsValid())
 	onClick := reflect.NewAt(onClickField.Type(), unsafe.Pointer(onClickField.UnsafeAddr())).Elem().Interface().(func(*application.Context))
 	onClick(&application.Context{})
-	assert.True(t, clicked)
+	core.AssertTrue(t, clicked)
 
-	assert.Equal(t, "Open", root.menu.Items[0].Label)
-	assert.Equal(t, "Cmd+O", root.menu.Items[0].Accelerator)
-	assert.Equal(t, "open", root.menu.Items[0].Tooltip)
-	assert.True(t, root.menu.Items[0].Checked)
-	assert.False(t, root.menu.Items[0].Enabled)
-	assert.Len(t, sub.menu.Items, 6)
+	core.AssertEqual(t, "Open", root.menu.Items[0].Label)
+	core.AssertEqual(t, "Cmd+O", root.menu.Items[0].Accelerator)
+	core.AssertEqual(t, "open", root.menu.Items[0].Tooltip)
+	core.AssertTrue(t, root.menu.Items[0].Checked)
+	core.AssertFalse(t, root.menu.Items[0].Enabled)
+	core.AssertLen(t, sub.menu.Items, 6)
 }
 
-func TestWailsPlatform_SetApplicationMenu_Bad(t *testing.T) {
+func TestWailsPlatform_SetApplicationMenu_Bad(t *core.T) {
 	app := &application.App{}
 	platform := NewWailsPlatform(app)
 	platform.SetApplicationMenu(newMockPlatform().NewMenu())
 
 	menuField := reflect.ValueOf(&app.Menu).Elem().FieldByName("applicationMenu")
-	require.True(t, menuField.IsValid())
-	assert.True(t, menuField.IsNil())
+	core.RequireTrue(t, menuField.IsValid())
+	core.AssertTrue(t, menuField.IsNil())
 }
 
-func TestWailsPlatform_SetApplicationMenu_NilReceiver_Good(t *testing.T) {
+func TestWailsPlatform_SetApplicationMenu_NilReceiver_Good(t *core.T) {
 	var platform *WailsPlatform
-	assert.NotPanics(t, func() {
+	core.AssertNotPanics(t, func() {
 		platform.SetApplicationMenu(newMockPlatform().NewMenu())
 	})
 }
 
-func TestWailsPlatform_NewMenu_Ugly(t *testing.T) {
+func TestWailsPlatform_NewMenu_Ugly(t *core.T) {
 	app := &application.App{}
 	platform := NewWailsPlatform(app)
 	menu := platform.NewMenu().(*wailsMenu)
 
 	menu.AddRole(MenuRole(99))
-	assert.NotNil(t, menu)
+	core.AssertNotNil(t, menu)
 }

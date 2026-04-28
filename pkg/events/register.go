@@ -1,7 +1,7 @@
 // pkg/events/register.go
 package events
 
-import core "dappco.re/go/core"
+import core "dappco.re/go"
 
 // Register binds the events service to a Core instance.
 //
