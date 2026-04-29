@@ -500,7 +500,6 @@ func TestWindow_Window_ToPlatformOptions_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_Window_ToPlatformOptions_Bad(t *core.T) {
@@ -513,7 +512,6 @@ func TestWindow_Window_ToPlatformOptions_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_Window_ToPlatformOptions_Ugly(t *core.T) {
@@ -526,7 +524,6 @@ func TestWindow_Window_ToPlatformOptions_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_NewManager_Good(t *core.T) {
@@ -538,7 +535,6 @@ func TestWindow_NewManager_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_NewManager_Bad(t *core.T) {
@@ -550,7 +546,6 @@ func TestWindow_NewManager_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_NewManager_Ugly(t *core.T) {
@@ -562,7 +557,6 @@ func TestWindow_NewManager_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_NewManagerWithDir_Good(t *core.T) {
@@ -574,7 +568,6 @@ func TestWindow_NewManagerWithDir_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_NewManagerWithDir_Bad(t *core.T) {
@@ -586,7 +579,6 @@ func TestWindow_NewManagerWithDir_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_NewManagerWithDir_Ugly(t *core.T) {
@@ -598,7 +590,6 @@ func TestWindow_NewManagerWithDir_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_Manager_SetDefaultWidth_Good(t *core.T) {
@@ -611,7 +602,6 @@ func TestWindow_Manager_SetDefaultWidth_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_Manager_SetDefaultWidth_Bad(t *core.T) {
@@ -624,7 +614,6 @@ func TestWindow_Manager_SetDefaultWidth_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_Manager_SetDefaultWidth_Ugly(t *core.T) {
@@ -637,7 +626,6 @@ func TestWindow_Manager_SetDefaultWidth_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_Manager_SetDefaultHeight_Good(t *core.T) {
@@ -650,7 +638,6 @@ func TestWindow_Manager_SetDefaultHeight_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_Manager_SetDefaultHeight_Bad(t *core.T) {
@@ -663,7 +650,6 @@ func TestWindow_Manager_SetDefaultHeight_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_Manager_SetDefaultHeight_Ugly(t *core.T) {
@@ -676,7 +662,6 @@ func TestWindow_Manager_SetDefaultHeight_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_Manager_Open_Good(t *core.T) {
@@ -689,7 +674,6 @@ func TestWindow_Manager_Open_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_Manager_Open_Bad(t *core.T) {
@@ -702,7 +686,6 @@ func TestWindow_Manager_Open_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_Manager_Open_Ugly(t *core.T) {
@@ -715,7 +698,6 @@ func TestWindow_Manager_Open_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_Manager_Create_Good(t *core.T) {
@@ -728,7 +710,6 @@ func TestWindow_Manager_Create_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_Manager_Create_Bad(t *core.T) {
@@ -741,7 +722,6 @@ func TestWindow_Manager_Create_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_Manager_Create_Ugly(t *core.T) {
@@ -754,7 +734,6 @@ func TestWindow_Manager_Create_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_Manager_Get_Good(t *core.T) {
@@ -767,7 +746,6 @@ func TestWindow_Manager_Get_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_Manager_Get_Bad(t *core.T) {
@@ -780,7 +758,6 @@ func TestWindow_Manager_Get_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_Manager_Get_Ugly(t *core.T) {
@@ -793,7 +770,6 @@ func TestWindow_Manager_Get_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_Manager_List_Good(t *core.T) {
@@ -806,7 +782,6 @@ func TestWindow_Manager_List_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_Manager_List_Bad(t *core.T) {
@@ -819,7 +794,6 @@ func TestWindow_Manager_List_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_Manager_List_Ugly(t *core.T) {
@@ -832,7 +806,6 @@ func TestWindow_Manager_List_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_Manager_Remove_Good(t *core.T) {
@@ -845,7 +818,6 @@ func TestWindow_Manager_Remove_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_Manager_Remove_Bad(t *core.T) {
@@ -858,7 +830,6 @@ func TestWindow_Manager_Remove_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_Manager_Remove_Ugly(t *core.T) {
@@ -871,7 +842,6 @@ func TestWindow_Manager_Remove_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_Manager_Platform_Good(t *core.T) {
@@ -884,7 +854,6 @@ func TestWindow_Manager_Platform_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_Manager_Platform_Bad(t *core.T) {
@@ -897,7 +866,6 @@ func TestWindow_Manager_Platform_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_Manager_Platform_Ugly(t *core.T) {
@@ -910,7 +878,6 @@ func TestWindow_Manager_Platform_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_Manager_State_Good(t *core.T) {
@@ -923,7 +890,6 @@ func TestWindow_Manager_State_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_Manager_State_Bad(t *core.T) {
@@ -936,7 +902,6 @@ func TestWindow_Manager_State_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_Manager_State_Ugly(t *core.T) {
@@ -949,7 +914,6 @@ func TestWindow_Manager_State_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_Manager_Layout_Good(t *core.T) {
@@ -962,7 +926,6 @@ func TestWindow_Manager_Layout_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_Manager_Layout_Bad(t *core.T) {
@@ -975,7 +938,6 @@ func TestWindow_Manager_Layout_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindow_Manager_Layout_Ugly(t *core.T) {
@@ -988,5 +950,4 @@ func TestWindow_Manager_Layout_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

@@ -381,7 +381,6 @@ func TestTim_NewTIMManager_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTim_NewTIMManager_Bad(t *core.T) {
@@ -393,7 +392,6 @@ func TestTim_NewTIMManager_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTim_NewTIMManager_Ugly(t *core.T) {
@@ -405,7 +403,6 @@ func TestTim_NewTIMManager_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTim_TIMManager_State_Good(t *core.T) {
@@ -418,7 +415,6 @@ func TestTim_TIMManager_State_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTim_TIMManager_State_Bad(t *core.T) {
@@ -431,7 +427,6 @@ func TestTim_TIMManager_State_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTim_TIMManager_State_Ugly(t *core.T) {
@@ -444,7 +439,6 @@ func TestTim_TIMManager_State_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTim_TIMManager_Start_Good(t *core.T) {
@@ -457,7 +451,6 @@ func TestTim_TIMManager_Start_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTim_TIMManager_Start_Bad(t *core.T) {
@@ -470,7 +463,6 @@ func TestTim_TIMManager_Start_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTim_TIMManager_Start_Ugly(t *core.T) {
@@ -483,7 +475,6 @@ func TestTim_TIMManager_Start_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTim_TIMManager_Stop_Good(t *core.T) {
@@ -496,7 +487,6 @@ func TestTim_TIMManager_Stop_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTim_TIMManager_Stop_Bad(t *core.T) {
@@ -509,7 +499,6 @@ func TestTim_TIMManager_Stop_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTim_TIMManager_Stop_Ugly(t *core.T) {
@@ -522,5 +511,4 @@ func TestTim_TIMManager_Stop_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

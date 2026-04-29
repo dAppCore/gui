@@ -139,7 +139,6 @@ func TestDetect_Detect_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestDetect_Detect_Bad(t *core.T) {
@@ -151,7 +150,6 @@ func TestDetect_Detect_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestDetect_Detect_Ugly(t *core.T) {
@@ -163,7 +161,6 @@ func TestDetect_Detect_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestDetect_DetectWithEnvironment_Good(t *core.T) {
@@ -175,7 +172,6 @@ func TestDetect_DetectWithEnvironment_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestDetect_DetectWithEnvironment_Bad(t *core.T) {
@@ -187,7 +183,6 @@ func TestDetect_DetectWithEnvironment_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestDetect_DetectWithEnvironment_Ugly(t *core.T) {
@@ -199,5 +194,4 @@ func TestDetect_DetectWithEnvironment_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

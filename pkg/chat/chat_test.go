@@ -47,7 +47,6 @@ func TestChat_NewStreamRenderer_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestChat_NewStreamRenderer_Bad(t *core.T) {
@@ -59,7 +58,6 @@ func TestChat_NewStreamRenderer_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestChat_NewStreamRenderer_Ugly(t *core.T) {
@@ -71,7 +69,6 @@ func TestChat_NewStreamRenderer_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestChat_StreamRenderer_Render_Good(t *core.T) {
@@ -84,7 +81,6 @@ func TestChat_StreamRenderer_Render_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestChat_StreamRenderer_Render_Bad(t *core.T) {
@@ -97,7 +93,6 @@ func TestChat_StreamRenderer_Render_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestChat_StreamRenderer_Render_Ugly(t *core.T) {
@@ -110,7 +105,6 @@ func TestChat_StreamRenderer_Render_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestChat_StreamRenderer_ToolCalls_Good(t *core.T) {
@@ -123,7 +117,6 @@ func TestChat_StreamRenderer_ToolCalls_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestChat_StreamRenderer_ToolCalls_Bad(t *core.T) {
@@ -136,7 +129,6 @@ func TestChat_StreamRenderer_ToolCalls_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestChat_StreamRenderer_ToolCalls_Ugly(t *core.T) {
@@ -149,7 +141,6 @@ func TestChat_StreamRenderer_ToolCalls_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestChat_StreamRenderer_Thinking_Good(t *core.T) {
@@ -162,7 +153,6 @@ func TestChat_StreamRenderer_Thinking_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestChat_StreamRenderer_Thinking_Bad(t *core.T) {
@@ -175,7 +165,6 @@ func TestChat_StreamRenderer_Thinking_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestChat_StreamRenderer_Thinking_Ugly(t *core.T) {
@@ -188,7 +177,6 @@ func TestChat_StreamRenderer_Thinking_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestChat_StreamRenderer_Message_Good(t *core.T) {
@@ -201,7 +189,6 @@ func TestChat_StreamRenderer_Message_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestChat_StreamRenderer_Message_Bad(t *core.T) {
@@ -214,7 +201,6 @@ func TestChat_StreamRenderer_Message_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestChat_StreamRenderer_Message_Ugly(t *core.T) {
@@ -227,5 +213,4 @@ func TestChat_StreamRenderer_Message_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

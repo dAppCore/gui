@@ -129,7 +129,6 @@ func TestEnvironment_EnvironmentManager_SetDarkMode_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEnvironment_EnvironmentManager_SetDarkMode_Bad(t *core.T) {
@@ -142,7 +141,6 @@ func TestEnvironment_EnvironmentManager_SetDarkMode_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEnvironment_EnvironmentManager_SetDarkMode_Ugly(t *core.T) {
@@ -155,7 +153,6 @@ func TestEnvironment_EnvironmentManager_SetDarkMode_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEnvironment_EnvironmentManager_IsDarkMode_Good(t *core.T) {
@@ -168,7 +165,6 @@ func TestEnvironment_EnvironmentManager_IsDarkMode_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEnvironment_EnvironmentManager_IsDarkMode_Bad(t *core.T) {
@@ -181,7 +177,6 @@ func TestEnvironment_EnvironmentManager_IsDarkMode_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEnvironment_EnvironmentManager_IsDarkMode_Ugly(t *core.T) {
@@ -194,7 +189,6 @@ func TestEnvironment_EnvironmentManager_IsDarkMode_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEnvironment_EnvironmentManager_SetAccentColour_Good(t *core.T) {
@@ -207,7 +201,6 @@ func TestEnvironment_EnvironmentManager_SetAccentColour_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEnvironment_EnvironmentManager_SetAccentColour_Bad(t *core.T) {
@@ -220,7 +213,6 @@ func TestEnvironment_EnvironmentManager_SetAccentColour_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEnvironment_EnvironmentManager_SetAccentColour_Ugly(t *core.T) {
@@ -233,7 +225,6 @@ func TestEnvironment_EnvironmentManager_SetAccentColour_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEnvironment_EnvironmentManager_GetAccentColor_Good(t *core.T) {
@@ -246,7 +237,6 @@ func TestEnvironment_EnvironmentManager_GetAccentColor_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEnvironment_EnvironmentManager_GetAccentColor_Bad(t *core.T) {
@@ -259,7 +249,6 @@ func TestEnvironment_EnvironmentManager_GetAccentColor_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEnvironment_EnvironmentManager_GetAccentColor_Ugly(t *core.T) {
@@ -272,7 +261,6 @@ func TestEnvironment_EnvironmentManager_GetAccentColor_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEnvironment_EnvironmentManager_Info_Good(t *core.T) {
@@ -285,7 +273,6 @@ func TestEnvironment_EnvironmentManager_Info_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEnvironment_EnvironmentManager_Info_Bad(t *core.T) {
@@ -298,7 +285,6 @@ func TestEnvironment_EnvironmentManager_Info_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEnvironment_EnvironmentManager_Info_Ugly(t *core.T) {
@@ -311,7 +297,6 @@ func TestEnvironment_EnvironmentManager_Info_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEnvironment_EnvironmentManager_OpenFileManager_Good(t *core.T) {
@@ -324,7 +309,6 @@ func TestEnvironment_EnvironmentManager_OpenFileManager_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEnvironment_EnvironmentManager_OpenFileManager_Bad(t *core.T) {
@@ -337,7 +321,6 @@ func TestEnvironment_EnvironmentManager_OpenFileManager_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEnvironment_EnvironmentManager_OpenFileManager_Ugly(t *core.T) {
@@ -350,7 +333,6 @@ func TestEnvironment_EnvironmentManager_OpenFileManager_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEnvironment_EnvironmentManager_HasFocusFollowsMouse_Good(t *core.T) {
@@ -363,7 +345,6 @@ func TestEnvironment_EnvironmentManager_HasFocusFollowsMouse_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEnvironment_EnvironmentManager_HasFocusFollowsMouse_Bad(t *core.T) {
@@ -376,7 +357,6 @@ func TestEnvironment_EnvironmentManager_HasFocusFollowsMouse_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEnvironment_EnvironmentManager_HasFocusFollowsMouse_Ugly(t *core.T) {
@@ -389,5 +369,4 @@ func TestEnvironment_EnvironmentManager_HasFocusFollowsMouse_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

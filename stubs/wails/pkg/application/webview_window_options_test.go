@@ -111,7 +111,6 @@ func TestWebviewWindowOptions_NewRGB_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWebviewWindowOptions_NewRGB_Bad(t *core.T) {
@@ -123,7 +122,6 @@ func TestWebviewWindowOptions_NewRGB_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWebviewWindowOptions_NewRGB_Ugly(t *core.T) {
@@ -135,7 +133,6 @@ func TestWebviewWindowOptions_NewRGB_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWebviewWindowOptions_NewRGBPtr_Good(t *core.T) {
@@ -147,7 +144,6 @@ func TestWebviewWindowOptions_NewRGBPtr_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWebviewWindowOptions_NewRGBPtr_Bad(t *core.T) {
@@ -159,7 +155,6 @@ func TestWebviewWindowOptions_NewRGBPtr_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWebviewWindowOptions_NewRGBPtr_Ugly(t *core.T) {
@@ -171,5 +166,4 @@ func TestWebviewWindowOptions_NewRGBPtr_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

@@ -364,7 +364,6 @@ func TestScheme_MiddlewareHandler_ServeHTTP_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestScheme_MiddlewareHandler_ServeHTTP_Bad(t *core.T) {
@@ -377,7 +376,6 @@ func TestScheme_MiddlewareHandler_ServeHTTP_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestScheme_MiddlewareHandler_ServeHTTP_Ugly(t *core.T) {
@@ -390,7 +388,6 @@ func TestScheme_MiddlewareHandler_ServeHTTP_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestScheme_Service_HandleScheme_Good(t *core.T) {
@@ -403,7 +400,6 @@ func TestScheme_Service_HandleScheme_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestScheme_Service_HandleScheme_Bad(t *core.T) {
@@ -416,7 +412,6 @@ func TestScheme_Service_HandleScheme_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestScheme_Service_HandleScheme_Ugly(t *core.T) {
@@ -429,7 +424,6 @@ func TestScheme_Service_HandleScheme_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestScheme_Service_ResolveScheme_Good(t *core.T) {
@@ -442,7 +436,6 @@ func TestScheme_Service_ResolveScheme_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestScheme_Service_ResolveScheme_Bad(t *core.T) {
@@ -455,7 +448,6 @@ func TestScheme_Service_ResolveScheme_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestScheme_Service_ResolveScheme_Ugly(t *core.T) {
@@ -468,7 +460,6 @@ func TestScheme_Service_ResolveScheme_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestScheme_Service_ResolveSchemeRequest_Good(t *core.T) {
@@ -481,7 +472,6 @@ func TestScheme_Service_ResolveSchemeRequest_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestScheme_Service_ResolveSchemeRequest_Bad(t *core.T) {
@@ -494,7 +484,6 @@ func TestScheme_Service_ResolveSchemeRequest_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestScheme_Service_ResolveSchemeRequest_Ugly(t *core.T) {
@@ -507,7 +496,6 @@ func TestScheme_Service_ResolveSchemeRequest_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestScheme_Service_AssetMiddleware_Good(t *core.T) {
@@ -520,7 +508,6 @@ func TestScheme_Service_AssetMiddleware_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestScheme_Service_AssetMiddleware_Bad(t *core.T) {
@@ -533,7 +520,6 @@ func TestScheme_Service_AssetMiddleware_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestScheme_Service_AssetMiddleware_Ugly(t *core.T) {
@@ -546,7 +532,6 @@ func TestScheme_Service_AssetMiddleware_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 // AX7 generated source-matching smoke coverage.

@@ -232,7 +232,6 @@ func TestService_Service_OnStartup_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestService_Service_OnStartup_Bad(t *core.T) {
@@ -245,7 +244,6 @@ func TestService_Service_OnStartup_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestService_Service_OnStartup_Ugly(t *core.T) {
@@ -258,7 +256,6 @@ func TestService_Service_OnStartup_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestService_Service_HandleIPCEvents_Good(t *core.T) {
@@ -271,7 +268,6 @@ func TestService_Service_HandleIPCEvents_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestService_Service_HandleIPCEvents_Bad(t *core.T) {
@@ -284,7 +280,6 @@ func TestService_Service_HandleIPCEvents_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestService_Service_HandleIPCEvents_Ugly(t *core.T) {
@@ -297,5 +292,4 @@ func TestService_Service_HandleIPCEvents_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

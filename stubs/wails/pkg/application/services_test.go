@@ -65,7 +65,6 @@ func TestServices_NewServiceWithOptions_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestServices_NewServiceWithOptions_Bad(t *core.T) {
@@ -77,7 +76,6 @@ func TestServices_NewServiceWithOptions_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestServices_NewServiceWithOptions_Ugly(t *core.T) {
@@ -89,7 +87,6 @@ func TestServices_NewServiceWithOptions_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestServices_Service_Instance_Good(t *core.T) {
@@ -102,7 +99,6 @@ func TestServices_Service_Instance_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestServices_Service_Instance_Bad(t *core.T) {
@@ -115,7 +111,6 @@ func TestServices_Service_Instance_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestServices_Service_Instance_Ugly(t *core.T) {
@@ -128,7 +123,6 @@ func TestServices_Service_Instance_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestServices_Service_Options_Good(t *core.T) {
@@ -141,7 +135,6 @@ func TestServices_Service_Options_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestServices_Service_Options_Bad(t *core.T) {
@@ -154,7 +147,6 @@ func TestServices_Service_Options_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestServices_Service_Options_Ugly(t *core.T) {
@@ -167,7 +159,6 @@ func TestServices_Service_Options_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestServices_NewService_Bad(t *core.T) {
@@ -179,5 +170,4 @@ func TestServices_NewService_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

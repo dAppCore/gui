@@ -97,7 +97,6 @@ func TestContextMenu_ContextMenuManager_New_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestContextMenu_ContextMenuManager_New_Bad(t *core.T) {
@@ -110,7 +109,6 @@ func TestContextMenu_ContextMenuManager_New_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestContextMenu_ContextMenuManager_New_Ugly(t *core.T) {
@@ -123,7 +121,6 @@ func TestContextMenu_ContextMenuManager_New_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestContextMenu_ContextMenuManager_Add_Good(t *core.T) {
@@ -136,7 +133,6 @@ func TestContextMenu_ContextMenuManager_Add_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestContextMenu_ContextMenuManager_Add_Bad(t *core.T) {
@@ -149,7 +145,6 @@ func TestContextMenu_ContextMenuManager_Add_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestContextMenu_ContextMenuManager_Add_Ugly(t *core.T) {
@@ -162,7 +157,6 @@ func TestContextMenu_ContextMenuManager_Add_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestContextMenu_ContextMenuManager_Remove_Good(t *core.T) {
@@ -175,7 +169,6 @@ func TestContextMenu_ContextMenuManager_Remove_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestContextMenu_ContextMenuManager_Remove_Bad(t *core.T) {
@@ -188,7 +181,6 @@ func TestContextMenu_ContextMenuManager_Remove_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestContextMenu_ContextMenuManager_Remove_Ugly(t *core.T) {
@@ -201,7 +193,6 @@ func TestContextMenu_ContextMenuManager_Remove_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestContextMenu_ContextMenuManager_Get_Good(t *core.T) {
@@ -214,7 +205,6 @@ func TestContextMenu_ContextMenuManager_Get_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestContextMenu_ContextMenuManager_Get_Bad(t *core.T) {
@@ -227,7 +217,6 @@ func TestContextMenu_ContextMenuManager_Get_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestContextMenu_ContextMenuManager_Get_Ugly(t *core.T) {
@@ -240,7 +229,6 @@ func TestContextMenu_ContextMenuManager_Get_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestContextMenu_ContextMenuManager_GetAll_Good(t *core.T) {
@@ -253,7 +241,6 @@ func TestContextMenu_ContextMenuManager_GetAll_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestContextMenu_ContextMenuManager_GetAll_Bad(t *core.T) {
@@ -266,7 +253,6 @@ func TestContextMenu_ContextMenuManager_GetAll_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestContextMenu_ContextMenuManager_GetAll_Ugly(t *core.T) {
@@ -279,5 +265,4 @@ func TestContextMenu_ContextMenuManager_GetAll_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

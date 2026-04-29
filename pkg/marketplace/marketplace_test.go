@@ -590,7 +590,6 @@ func TestMarketplace_Installer_FetchManifest_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMarketplace_Installer_FetchManifest_Bad(t *core.T) {
@@ -603,7 +602,6 @@ func TestMarketplace_Installer_FetchManifest_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMarketplace_Installer_FetchManifest_Ugly(t *core.T) {
@@ -616,7 +614,6 @@ func TestMarketplace_Installer_FetchManifest_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMarketplace_Installer_Verify_Good(t *core.T) {
@@ -629,7 +626,6 @@ func TestMarketplace_Installer_Verify_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMarketplace_Installer_Verify_Bad(t *core.T) {
@@ -642,7 +638,6 @@ func TestMarketplace_Installer_Verify_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMarketplace_Installer_Verify_Ugly(t *core.T) {
@@ -655,7 +650,6 @@ func TestMarketplace_Installer_Verify_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMarketplace_Installer_Install_Good(t *core.T) {
@@ -668,7 +662,6 @@ func TestMarketplace_Installer_Install_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMarketplace_Installer_Install_Bad(t *core.T) {
@@ -681,7 +674,6 @@ func TestMarketplace_Installer_Install_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMarketplace_Installer_Install_Ugly(t *core.T) {
@@ -694,7 +686,6 @@ func TestMarketplace_Installer_Install_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMarketplace_Installer_List_Good(t *core.T) {
@@ -707,7 +698,6 @@ func TestMarketplace_Installer_List_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMarketplace_Installer_List_Bad(t *core.T) {
@@ -720,7 +710,6 @@ func TestMarketplace_Installer_List_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMarketplace_Installer_List_Ugly(t *core.T) {
@@ -733,5 +722,4 @@ func TestMarketplace_Installer_List_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

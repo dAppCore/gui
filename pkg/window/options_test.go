@@ -178,7 +178,6 @@ func TestOptions_WithName_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithName_Bad(t *core.T) {
@@ -190,7 +189,6 @@ func TestOptions_WithName_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithName_Ugly(t *core.T) {
@@ -202,7 +200,6 @@ func TestOptions_WithName_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithTitle_Good(t *core.T) {
@@ -214,7 +211,6 @@ func TestOptions_WithTitle_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithTitle_Bad(t *core.T) {
@@ -226,7 +222,6 @@ func TestOptions_WithTitle_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithTitle_Ugly(t *core.T) {
@@ -238,7 +233,6 @@ func TestOptions_WithTitle_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithURL_Good(t *core.T) {
@@ -250,7 +244,6 @@ func TestOptions_WithURL_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithURL_Bad(t *core.T) {
@@ -262,7 +255,6 @@ func TestOptions_WithURL_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithURL_Ugly(t *core.T) {
@@ -274,7 +266,6 @@ func TestOptions_WithURL_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithHTML_Good(t *core.T) {
@@ -286,7 +277,6 @@ func TestOptions_WithHTML_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithHTML_Bad(t *core.T) {
@@ -298,7 +288,6 @@ func TestOptions_WithHTML_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithHTML_Ugly(t *core.T) {
@@ -310,7 +299,6 @@ func TestOptions_WithHTML_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithJS_Good(t *core.T) {
@@ -322,7 +310,6 @@ func TestOptions_WithJS_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithJS_Bad(t *core.T) {
@@ -334,7 +321,6 @@ func TestOptions_WithJS_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithJS_Ugly(t *core.T) {
@@ -346,7 +332,6 @@ func TestOptions_WithJS_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithSize_Good(t *core.T) {
@@ -358,7 +343,6 @@ func TestOptions_WithSize_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithSize_Bad(t *core.T) {
@@ -370,7 +354,6 @@ func TestOptions_WithSize_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithSize_Ugly(t *core.T) {
@@ -382,7 +365,6 @@ func TestOptions_WithSize_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithPosition_Good(t *core.T) {
@@ -394,7 +376,6 @@ func TestOptions_WithPosition_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithPosition_Bad(t *core.T) {
@@ -406,7 +387,6 @@ func TestOptions_WithPosition_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithPosition_Ugly(t *core.T) {
@@ -418,7 +398,6 @@ func TestOptions_WithPosition_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithMinSize_Good(t *core.T) {
@@ -430,7 +409,6 @@ func TestOptions_WithMinSize_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithMinSize_Bad(t *core.T) {
@@ -442,7 +420,6 @@ func TestOptions_WithMinSize_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithMinSize_Ugly(t *core.T) {
@@ -454,7 +431,6 @@ func TestOptions_WithMinSize_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithMaxSize_Good(t *core.T) {
@@ -466,7 +442,6 @@ func TestOptions_WithMaxSize_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithMaxSize_Bad(t *core.T) {
@@ -478,7 +453,6 @@ func TestOptions_WithMaxSize_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithMaxSize_Ugly(t *core.T) {
@@ -490,7 +464,6 @@ func TestOptions_WithMaxSize_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithFrameless_Good(t *core.T) {
@@ -502,7 +475,6 @@ func TestOptions_WithFrameless_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithFrameless_Bad(t *core.T) {
@@ -514,7 +486,6 @@ func TestOptions_WithFrameless_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithFrameless_Ugly(t *core.T) {
@@ -526,7 +497,6 @@ func TestOptions_WithFrameless_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithHidden_Good(t *core.T) {
@@ -538,7 +508,6 @@ func TestOptions_WithHidden_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithHidden_Bad(t *core.T) {
@@ -550,7 +519,6 @@ func TestOptions_WithHidden_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithHidden_Ugly(t *core.T) {
@@ -562,7 +530,6 @@ func TestOptions_WithHidden_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithAlwaysOnTop_Good(t *core.T) {
@@ -574,7 +541,6 @@ func TestOptions_WithAlwaysOnTop_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithAlwaysOnTop_Bad(t *core.T) {
@@ -586,7 +552,6 @@ func TestOptions_WithAlwaysOnTop_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithAlwaysOnTop_Ugly(t *core.T) {
@@ -598,7 +563,6 @@ func TestOptions_WithAlwaysOnTop_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithBackgroundColour_Good(t *core.T) {
@@ -610,7 +574,6 @@ func TestOptions_WithBackgroundColour_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithBackgroundColour_Bad(t *core.T) {
@@ -622,7 +585,6 @@ func TestOptions_WithBackgroundColour_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithBackgroundColour_Ugly(t *core.T) {
@@ -634,7 +596,6 @@ func TestOptions_WithBackgroundColour_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithFileDrop_Good(t *core.T) {
@@ -646,7 +607,6 @@ func TestOptions_WithFileDrop_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithFileDrop_Bad(t *core.T) {
@@ -658,7 +618,6 @@ func TestOptions_WithFileDrop_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestOptions_WithFileDrop_Ugly(t *core.T) {
@@ -670,5 +629,4 @@ func TestOptions_WithFileDrop_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

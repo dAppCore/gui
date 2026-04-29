@@ -143,7 +143,6 @@ func TestDiagnostics_PerformanceScript_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestDiagnostics_PerformanceScript_Bad(t *core.T) {
@@ -155,7 +154,6 @@ func TestDiagnostics_PerformanceScript_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestDiagnostics_PerformanceScript_Ugly(t *core.T) {
@@ -167,7 +165,6 @@ func TestDiagnostics_PerformanceScript_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestDiagnostics_ResourcesScript_Good(t *core.T) {
@@ -179,7 +176,6 @@ func TestDiagnostics_ResourcesScript_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestDiagnostics_ResourcesScript_Bad(t *core.T) {
@@ -191,7 +187,6 @@ func TestDiagnostics_ResourcesScript_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestDiagnostics_ResourcesScript_Ugly(t *core.T) {
@@ -203,7 +198,6 @@ func TestDiagnostics_ResourcesScript_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestDiagnostics_NetworkInitScript_Good(t *core.T) {
@@ -215,7 +209,6 @@ func TestDiagnostics_NetworkInitScript_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestDiagnostics_NetworkInitScript_Bad(t *core.T) {
@@ -227,7 +220,6 @@ func TestDiagnostics_NetworkInitScript_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestDiagnostics_NetworkInitScript_Ugly(t *core.T) {
@@ -239,7 +231,6 @@ func TestDiagnostics_NetworkInitScript_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestDiagnostics_NetworkClearScript_Good(t *core.T) {
@@ -251,7 +242,6 @@ func TestDiagnostics_NetworkClearScript_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestDiagnostics_NetworkClearScript_Bad(t *core.T) {
@@ -263,7 +253,6 @@ func TestDiagnostics_NetworkClearScript_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestDiagnostics_NetworkClearScript_Ugly(t *core.T) {
@@ -275,5 +264,4 @@ func TestDiagnostics_NetworkClearScript_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

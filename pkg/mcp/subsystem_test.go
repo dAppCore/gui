@@ -152,7 +152,6 @@ func TestSubsystem_New_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSubsystem_New_Bad(t *core.T) {
@@ -164,7 +163,6 @@ func TestSubsystem_New_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSubsystem_New_Ugly(t *core.T) {
@@ -176,7 +174,6 @@ func TestSubsystem_New_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSubsystem_Subsystem_Name_Good(t *core.T) {
@@ -189,7 +186,6 @@ func TestSubsystem_Subsystem_Name_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSubsystem_Subsystem_Name_Bad(t *core.T) {
@@ -202,7 +198,6 @@ func TestSubsystem_Subsystem_Name_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSubsystem_Subsystem_Name_Ugly(t *core.T) {
@@ -215,7 +210,6 @@ func TestSubsystem_Subsystem_Name_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSubsystem_Subsystem_RegisterTools_Good(t *core.T) {
@@ -228,7 +222,6 @@ func TestSubsystem_Subsystem_RegisterTools_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSubsystem_Subsystem_RegisterTools_Bad(t *core.T) {
@@ -241,7 +234,6 @@ func TestSubsystem_Subsystem_RegisterTools_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSubsystem_Subsystem_RegisterTools_Ugly(t *core.T) {
@@ -254,7 +246,6 @@ func TestSubsystem_Subsystem_RegisterTools_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSubsystem_Subsystem_Manifest_Good(t *core.T) {
@@ -267,7 +258,6 @@ func TestSubsystem_Subsystem_Manifest_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSubsystem_Subsystem_Manifest_Bad(t *core.T) {
@@ -280,7 +270,6 @@ func TestSubsystem_Subsystem_Manifest_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSubsystem_Subsystem_Manifest_Ugly(t *core.T) {
@@ -293,7 +282,6 @@ func TestSubsystem_Subsystem_Manifest_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSubsystem_Subsystem_ManifestText_Good(t *core.T) {
@@ -306,7 +294,6 @@ func TestSubsystem_Subsystem_ManifestText_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSubsystem_Subsystem_ManifestText_Bad(t *core.T) {
@@ -319,7 +306,6 @@ func TestSubsystem_Subsystem_ManifestText_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSubsystem_Subsystem_ManifestText_Ugly(t *core.T) {
@@ -332,7 +318,6 @@ func TestSubsystem_Subsystem_ManifestText_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSubsystem_Subsystem_CallTool_Good(t *core.T) {
@@ -345,7 +330,6 @@ func TestSubsystem_Subsystem_CallTool_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSubsystem_Subsystem_CallTool_Bad(t *core.T) {
@@ -358,7 +342,6 @@ func TestSubsystem_Subsystem_CallTool_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSubsystem_Subsystem_CallTool_Ugly(t *core.T) {
@@ -371,5 +354,4 @@ func TestSubsystem_Subsystem_CallTool_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

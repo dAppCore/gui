@@ -202,7 +202,6 @@ func TestBackground_NewBackgroundRegistry_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestBackground_NewBackgroundRegistry_Bad(t *core.T) {
@@ -214,7 +213,6 @@ func TestBackground_NewBackgroundRegistry_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestBackground_NewBackgroundRegistry_Ugly(t *core.T) {
@@ -226,7 +224,6 @@ func TestBackground_NewBackgroundRegistry_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestBackground_BackgroundRegistry_RegisterServiceWorker_Good(t *core.T) {
@@ -239,7 +236,6 @@ func TestBackground_BackgroundRegistry_RegisterServiceWorker_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestBackground_BackgroundRegistry_RegisterServiceWorker_Bad(t *core.T) {
@@ -252,7 +248,6 @@ func TestBackground_BackgroundRegistry_RegisterServiceWorker_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestBackground_BackgroundRegistry_RegisterServiceWorker_Ugly(t *core.T) {
@@ -265,7 +260,6 @@ func TestBackground_BackgroundRegistry_RegisterServiceWorker_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestBackground_BackgroundRegistry_AddFetch_Good(t *core.T) {
@@ -278,7 +272,6 @@ func TestBackground_BackgroundRegistry_AddFetch_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestBackground_BackgroundRegistry_AddFetch_Bad(t *core.T) {
@@ -291,7 +284,6 @@ func TestBackground_BackgroundRegistry_AddFetch_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestBackground_BackgroundRegistry_AddFetch_Ugly(t *core.T) {
@@ -304,7 +296,6 @@ func TestBackground_BackgroundRegistry_AddFetch_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestBackground_BackgroundRegistry_AddSync_Good(t *core.T) {
@@ -317,7 +308,6 @@ func TestBackground_BackgroundRegistry_AddSync_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestBackground_BackgroundRegistry_AddSync_Bad(t *core.T) {
@@ -330,7 +320,6 @@ func TestBackground_BackgroundRegistry_AddSync_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestBackground_BackgroundRegistry_AddSync_Ugly(t *core.T) {
@@ -343,7 +332,6 @@ func TestBackground_BackgroundRegistry_AddSync_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestBackground_BackgroundRegistry_AddPush_Good(t *core.T) {
@@ -356,7 +344,6 @@ func TestBackground_BackgroundRegistry_AddPush_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestBackground_BackgroundRegistry_AddPush_Bad(t *core.T) {
@@ -369,7 +356,6 @@ func TestBackground_BackgroundRegistry_AddPush_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestBackground_BackgroundRegistry_AddPush_Ugly(t *core.T) {
@@ -382,7 +368,6 @@ func TestBackground_BackgroundRegistry_AddPush_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestBackground_BackgroundRegistry_SyncRegistrationsCount_Good(t *core.T) {
@@ -395,7 +380,6 @@ func TestBackground_BackgroundRegistry_SyncRegistrationsCount_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestBackground_BackgroundRegistry_SyncRegistrationsCount_Bad(t *core.T) {
@@ -408,7 +392,6 @@ func TestBackground_BackgroundRegistry_SyncRegistrationsCount_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestBackground_BackgroundRegistry_SyncRegistrationsCount_Ugly(t *core.T) {
@@ -421,7 +404,6 @@ func TestBackground_BackgroundRegistry_SyncRegistrationsCount_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestBackground_BackgroundRegistry_PushSubscriptionsCount_Good(t *core.T) {
@@ -434,7 +416,6 @@ func TestBackground_BackgroundRegistry_PushSubscriptionsCount_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestBackground_BackgroundRegistry_PushSubscriptionsCount_Bad(t *core.T) {
@@ -447,7 +428,6 @@ func TestBackground_BackgroundRegistry_PushSubscriptionsCount_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestBackground_BackgroundRegistry_PushSubscriptionsCount_Ugly(t *core.T) {
@@ -460,7 +440,6 @@ func TestBackground_BackgroundRegistry_PushSubscriptionsCount_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestBackground_BackgroundRegistry_SetPaymentInstrument_Good(t *core.T) {
@@ -473,7 +452,6 @@ func TestBackground_BackgroundRegistry_SetPaymentInstrument_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestBackground_BackgroundRegistry_SetPaymentInstrument_Bad(t *core.T) {
@@ -486,7 +464,6 @@ func TestBackground_BackgroundRegistry_SetPaymentInstrument_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestBackground_BackgroundRegistry_SetPaymentInstrument_Ugly(t *core.T) {
@@ -499,5 +476,4 @@ func TestBackground_BackgroundRegistry_SetPaymentInstrument_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

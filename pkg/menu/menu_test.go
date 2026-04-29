@@ -171,7 +171,6 @@ func TestMenu_NewManager_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenu_NewManager_Bad(t *core.T) {
@@ -183,7 +182,6 @@ func TestMenu_NewManager_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenu_NewManager_Ugly(t *core.T) {
@@ -195,7 +193,6 @@ func TestMenu_NewManager_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenu_Manager_Build_Good(t *core.T) {
@@ -208,7 +205,6 @@ func TestMenu_Manager_Build_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenu_Manager_Build_Bad(t *core.T) {
@@ -221,7 +217,6 @@ func TestMenu_Manager_Build_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenu_Manager_Build_Ugly(t *core.T) {
@@ -234,7 +229,6 @@ func TestMenu_Manager_Build_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenu_Manager_SetApplicationMenu_Good(t *core.T) {
@@ -247,7 +241,6 @@ func TestMenu_Manager_SetApplicationMenu_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenu_Manager_SetApplicationMenu_Bad(t *core.T) {
@@ -260,7 +253,6 @@ func TestMenu_Manager_SetApplicationMenu_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenu_Manager_SetApplicationMenu_Ugly(t *core.T) {
@@ -273,7 +265,6 @@ func TestMenu_Manager_SetApplicationMenu_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenu_Manager_Platform_Good(t *core.T) {
@@ -286,7 +277,6 @@ func TestMenu_Manager_Platform_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenu_Manager_Platform_Bad(t *core.T) {
@@ -299,7 +289,6 @@ func TestMenu_Manager_Platform_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenu_Manager_Platform_Ugly(t *core.T) {
@@ -312,5 +301,4 @@ func TestMenu_Manager_Platform_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

@@ -98,7 +98,6 @@ func TestWails_NewWailsPlatform_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWails_NewWailsPlatform_Bad(t *core.T) {
@@ -110,7 +109,6 @@ func TestWails_NewWailsPlatform_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWails_NewWailsPlatform_Ugly(t *core.T) {
@@ -122,7 +120,6 @@ func TestWails_NewWailsPlatform_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWails_WailsPlatform_NewMenu_Good(t *core.T) {
@@ -135,7 +132,6 @@ func TestWails_WailsPlatform_NewMenu_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWails_WailsPlatform_NewMenu_Bad(t *core.T) {
@@ -148,7 +144,6 @@ func TestWails_WailsPlatform_NewMenu_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWails_WailsPlatform_NewMenu_Ugly(t *core.T) {
@@ -161,7 +156,6 @@ func TestWails_WailsPlatform_NewMenu_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWails_WailsPlatform_SetApplicationMenu_Good(t *core.T) {
@@ -174,7 +168,6 @@ func TestWails_WailsPlatform_SetApplicationMenu_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWails_WailsPlatform_SetApplicationMenu_Bad(t *core.T) {
@@ -187,7 +180,6 @@ func TestWails_WailsPlatform_SetApplicationMenu_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWails_WailsPlatform_SetApplicationMenu_Ugly(t *core.T) {
@@ -200,7 +192,6 @@ func TestWails_WailsPlatform_SetApplicationMenu_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 type Menu = wailsMenu
@@ -215,7 +206,6 @@ func TestWails_Menu_Add_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWails_Menu_Add_Bad(t *core.T) {
@@ -228,7 +218,6 @@ func TestWails_Menu_Add_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWails_Menu_Add_Ugly(t *core.T) {
@@ -241,7 +230,6 @@ func TestWails_Menu_Add_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWails_Menu_AddSeparator_Good(t *core.T) {
@@ -254,7 +242,6 @@ func TestWails_Menu_AddSeparator_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWails_Menu_AddSeparator_Bad(t *core.T) {
@@ -267,7 +254,6 @@ func TestWails_Menu_AddSeparator_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWails_Menu_AddSeparator_Ugly(t *core.T) {
@@ -280,7 +266,6 @@ func TestWails_Menu_AddSeparator_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWails_Menu_AddSubmenu_Good(t *core.T) {
@@ -293,7 +278,6 @@ func TestWails_Menu_AddSubmenu_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWails_Menu_AddSubmenu_Bad(t *core.T) {
@@ -306,7 +290,6 @@ func TestWails_Menu_AddSubmenu_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWails_Menu_AddSubmenu_Ugly(t *core.T) {
@@ -319,7 +302,6 @@ func TestWails_Menu_AddSubmenu_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWails_Menu_AddRole_Good(t *core.T) {
@@ -332,7 +314,6 @@ func TestWails_Menu_AddRole_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWails_Menu_AddRole_Bad(t *core.T) {
@@ -345,7 +326,6 @@ func TestWails_Menu_AddRole_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWails_Menu_AddRole_Ugly(t *core.T) {
@@ -358,7 +338,6 @@ func TestWails_Menu_AddRole_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWails_MenuItem_SetAccelerator_Good(t *core.T) {
@@ -371,7 +350,6 @@ func TestWails_MenuItem_SetAccelerator_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWails_MenuItem_SetAccelerator_Bad(t *core.T) {
@@ -384,7 +362,6 @@ func TestWails_MenuItem_SetAccelerator_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWails_MenuItem_SetAccelerator_Ugly(t *core.T) {
@@ -397,7 +374,6 @@ func TestWails_MenuItem_SetAccelerator_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWails_MenuItem_SetTooltip_Good(t *core.T) {
@@ -410,7 +386,6 @@ func TestWails_MenuItem_SetTooltip_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWails_MenuItem_SetTooltip_Bad(t *core.T) {
@@ -423,7 +398,6 @@ func TestWails_MenuItem_SetTooltip_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWails_MenuItem_SetTooltip_Ugly(t *core.T) {
@@ -436,7 +410,6 @@ func TestWails_MenuItem_SetTooltip_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWails_MenuItem_SetChecked_Good(t *core.T) {
@@ -449,7 +422,6 @@ func TestWails_MenuItem_SetChecked_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWails_MenuItem_SetChecked_Bad(t *core.T) {
@@ -462,7 +434,6 @@ func TestWails_MenuItem_SetChecked_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWails_MenuItem_SetChecked_Ugly(t *core.T) {
@@ -475,7 +446,6 @@ func TestWails_MenuItem_SetChecked_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWails_MenuItem_SetEnabled_Good(t *core.T) {
@@ -488,7 +458,6 @@ func TestWails_MenuItem_SetEnabled_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWails_MenuItem_SetEnabled_Bad(t *core.T) {
@@ -501,7 +470,6 @@ func TestWails_MenuItem_SetEnabled_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWails_MenuItem_SetEnabled_Ugly(t *core.T) {
@@ -514,7 +482,6 @@ func TestWails_MenuItem_SetEnabled_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWails_MenuItem_OnClick_Good(t *core.T) {
@@ -527,7 +494,6 @@ func TestWails_MenuItem_OnClick_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWails_MenuItem_OnClick_Bad(t *core.T) {
@@ -540,7 +506,6 @@ func TestWails_MenuItem_OnClick_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWails_MenuItem_OnClick_Ugly(t *core.T) {
@@ -553,7 +518,6 @@ func TestWails_MenuItem_OnClick_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 // AX7 generated source-matching smoke coverage.

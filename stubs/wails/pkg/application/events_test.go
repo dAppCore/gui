@@ -214,7 +214,6 @@ func TestEvents_ApplicationEvent_Context_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_ApplicationEvent_Context_Bad(t *core.T) {
@@ -227,7 +226,6 @@ func TestEvents_ApplicationEvent_Context_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_ApplicationEvent_Context_Ugly(t *core.T) {
@@ -240,7 +238,6 @@ func TestEvents_ApplicationEvent_Context_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_ApplicationEvent_Cancel_Good(t *core.T) {
@@ -253,7 +250,6 @@ func TestEvents_ApplicationEvent_Cancel_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_ApplicationEvent_Cancel_Bad(t *core.T) {
@@ -266,7 +262,6 @@ func TestEvents_ApplicationEvent_Cancel_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_ApplicationEvent_Cancel_Ugly(t *core.T) {
@@ -279,7 +274,6 @@ func TestEvents_ApplicationEvent_Cancel_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_ApplicationEvent_IsCancelled_Good(t *core.T) {
@@ -292,7 +286,6 @@ func TestEvents_ApplicationEvent_IsCancelled_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_ApplicationEvent_IsCancelled_Bad(t *core.T) {
@@ -305,7 +298,6 @@ func TestEvents_ApplicationEvent_IsCancelled_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_ApplicationEvent_IsCancelled_Ugly(t *core.T) {
@@ -318,7 +310,6 @@ func TestEvents_ApplicationEvent_IsCancelled_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_CustomEvent_Cancel_Good(t *core.T) {
@@ -331,7 +322,6 @@ func TestEvents_CustomEvent_Cancel_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_CustomEvent_Cancel_Bad(t *core.T) {
@@ -344,7 +334,6 @@ func TestEvents_CustomEvent_Cancel_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_CustomEvent_Cancel_Ugly(t *core.T) {
@@ -357,7 +346,6 @@ func TestEvents_CustomEvent_Cancel_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_CustomEvent_IsCancelled_Good(t *core.T) {
@@ -370,7 +358,6 @@ func TestEvents_CustomEvent_IsCancelled_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_CustomEvent_IsCancelled_Bad(t *core.T) {
@@ -383,7 +370,6 @@ func TestEvents_CustomEvent_IsCancelled_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_CustomEvent_IsCancelled_Ugly(t *core.T) {
@@ -396,7 +382,6 @@ func TestEvents_CustomEvent_IsCancelled_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_EventManager_On_Good(t *core.T) {
@@ -409,7 +394,6 @@ func TestEvents_EventManager_On_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_EventManager_On_Bad(t *core.T) {
@@ -422,7 +406,6 @@ func TestEvents_EventManager_On_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_EventManager_On_Ugly(t *core.T) {
@@ -435,7 +418,6 @@ func TestEvents_EventManager_On_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_EventManager_Off_Good(t *core.T) {
@@ -448,7 +430,6 @@ func TestEvents_EventManager_Off_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_EventManager_Off_Bad(t *core.T) {
@@ -461,7 +442,6 @@ func TestEvents_EventManager_Off_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_EventManager_Off_Ugly(t *core.T) {
@@ -474,7 +454,6 @@ func TestEvents_EventManager_Off_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_EventManager_OnMultiple_Good(t *core.T) {
@@ -487,7 +466,6 @@ func TestEvents_EventManager_OnMultiple_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_EventManager_OnMultiple_Bad(t *core.T) {
@@ -500,7 +478,6 @@ func TestEvents_EventManager_OnMultiple_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_EventManager_OnMultiple_Ugly(t *core.T) {
@@ -513,5 +490,4 @@ func TestEvents_EventManager_OnMultiple_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

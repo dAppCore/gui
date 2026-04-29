@@ -145,7 +145,6 @@ func TestTray_NewManager_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTray_NewManager_Bad(t *core.T) {
@@ -157,7 +156,6 @@ func TestTray_NewManager_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTray_NewManager_Ugly(t *core.T) {
@@ -169,7 +167,6 @@ func TestTray_NewManager_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTray_Manager_Setup_Good(t *core.T) {
@@ -182,7 +179,6 @@ func TestTray_Manager_Setup_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTray_Manager_Setup_Bad(t *core.T) {
@@ -195,7 +191,6 @@ func TestTray_Manager_Setup_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTray_Manager_Setup_Ugly(t *core.T) {
@@ -208,7 +203,6 @@ func TestTray_Manager_Setup_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTray_Manager_SetIcon_Good(t *core.T) {
@@ -221,7 +215,6 @@ func TestTray_Manager_SetIcon_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTray_Manager_SetIcon_Bad(t *core.T) {
@@ -234,7 +227,6 @@ func TestTray_Manager_SetIcon_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTray_Manager_SetIcon_Ugly(t *core.T) {
@@ -247,7 +239,6 @@ func TestTray_Manager_SetIcon_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTray_Manager_SetTemplateIcon_Good(t *core.T) {
@@ -260,7 +251,6 @@ func TestTray_Manager_SetTemplateIcon_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTray_Manager_SetTemplateIcon_Bad(t *core.T) {
@@ -273,7 +263,6 @@ func TestTray_Manager_SetTemplateIcon_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTray_Manager_SetTemplateIcon_Ugly(t *core.T) {
@@ -286,7 +275,6 @@ func TestTray_Manager_SetTemplateIcon_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTray_Manager_SetTooltip_Good(t *core.T) {
@@ -299,7 +287,6 @@ func TestTray_Manager_SetTooltip_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTray_Manager_SetTooltip_Bad(t *core.T) {
@@ -312,7 +299,6 @@ func TestTray_Manager_SetTooltip_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTray_Manager_SetTooltip_Ugly(t *core.T) {
@@ -325,7 +311,6 @@ func TestTray_Manager_SetTooltip_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTray_Manager_SetLabel_Good(t *core.T) {
@@ -338,7 +323,6 @@ func TestTray_Manager_SetLabel_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTray_Manager_SetLabel_Bad(t *core.T) {
@@ -351,7 +335,6 @@ func TestTray_Manager_SetLabel_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTray_Manager_SetLabel_Ugly(t *core.T) {
@@ -364,7 +347,6 @@ func TestTray_Manager_SetLabel_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTray_Manager_AttachWindow_Good(t *core.T) {
@@ -377,7 +359,6 @@ func TestTray_Manager_AttachWindow_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTray_Manager_AttachWindow_Bad(t *core.T) {
@@ -390,7 +371,6 @@ func TestTray_Manager_AttachWindow_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTray_Manager_AttachWindow_Ugly(t *core.T) {
@@ -403,7 +383,6 @@ func TestTray_Manager_AttachWindow_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTray_Manager_ShowMessage_Good(t *core.T) {
@@ -416,7 +395,6 @@ func TestTray_Manager_ShowMessage_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTray_Manager_ShowMessage_Bad(t *core.T) {
@@ -429,7 +407,6 @@ func TestTray_Manager_ShowMessage_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTray_Manager_ShowMessage_Ugly(t *core.T) {
@@ -442,7 +419,6 @@ func TestTray_Manager_ShowMessage_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTray_Manager_ShowPanel_Good(t *core.T) {
@@ -455,7 +431,6 @@ func TestTray_Manager_ShowPanel_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTray_Manager_ShowPanel_Bad(t *core.T) {
@@ -468,7 +443,6 @@ func TestTray_Manager_ShowPanel_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTray_Manager_ShowPanel_Ugly(t *core.T) {
@@ -481,7 +455,6 @@ func TestTray_Manager_ShowPanel_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTray_Manager_HidePanel_Good(t *core.T) {
@@ -494,7 +467,6 @@ func TestTray_Manager_HidePanel_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTray_Manager_HidePanel_Bad(t *core.T) {
@@ -507,7 +479,6 @@ func TestTray_Manager_HidePanel_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTray_Manager_HidePanel_Ugly(t *core.T) {
@@ -520,7 +491,6 @@ func TestTray_Manager_HidePanel_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTray_Manager_Tray_Good(t *core.T) {
@@ -533,7 +503,6 @@ func TestTray_Manager_Tray_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTray_Manager_Tray_Bad(t *core.T) {
@@ -546,7 +515,6 @@ func TestTray_Manager_Tray_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTray_Manager_Tray_Ugly(t *core.T) {
@@ -559,7 +527,6 @@ func TestTray_Manager_Tray_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTray_Manager_IsActive_Good(t *core.T) {
@@ -572,7 +539,6 @@ func TestTray_Manager_IsActive_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTray_Manager_IsActive_Bad(t *core.T) {
@@ -585,7 +551,6 @@ func TestTray_Manager_IsActive_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTray_Manager_IsActive_Ugly(t *core.T) {
@@ -598,5 +563,4 @@ func TestTray_Manager_IsActive_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

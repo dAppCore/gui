@@ -96,7 +96,6 @@ func TestBrowserManager_BrowserManager_OpenURL_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestBrowserManager_BrowserManager_OpenURL_Bad(t *core.T) {
@@ -109,7 +108,6 @@ func TestBrowserManager_BrowserManager_OpenURL_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestBrowserManager_BrowserManager_OpenURL_Ugly(t *core.T) {
@@ -122,7 +120,6 @@ func TestBrowserManager_BrowserManager_OpenURL_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestBrowserManager_BrowserManager_OpenFile_Good(t *core.T) {
@@ -135,7 +132,6 @@ func TestBrowserManager_BrowserManager_OpenFile_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestBrowserManager_BrowserManager_OpenFile_Bad(t *core.T) {
@@ -148,7 +144,6 @@ func TestBrowserManager_BrowserManager_OpenFile_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestBrowserManager_BrowserManager_OpenFile_Ugly(t *core.T) {
@@ -161,5 +156,4 @@ func TestBrowserManager_BrowserManager_OpenFile_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

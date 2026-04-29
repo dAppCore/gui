@@ -95,7 +95,6 @@ func TestWindowManagerExpanded_WindowManager_Get_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindowManagerExpanded_WindowManager_Get_Bad(t *core.T) {
@@ -108,7 +107,6 @@ func TestWindowManagerExpanded_WindowManager_Get_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindowManagerExpanded_WindowManager_Get_Ugly(t *core.T) {
@@ -121,7 +119,6 @@ func TestWindowManagerExpanded_WindowManager_Get_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindowManagerExpanded_WindowManager_GetByID_Good(t *core.T) {
@@ -134,7 +131,6 @@ func TestWindowManagerExpanded_WindowManager_GetByID_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindowManagerExpanded_WindowManager_GetByID_Bad(t *core.T) {
@@ -147,7 +143,6 @@ func TestWindowManagerExpanded_WindowManager_GetByID_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestWindowManagerExpanded_WindowManager_GetByID_Ugly(t *core.T) {
@@ -160,5 +155,4 @@ func TestWindowManagerExpanded_WindowManager_GetByID_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

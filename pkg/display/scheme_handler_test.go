@@ -164,7 +164,6 @@ func TestSchemeHandler_NewCoreSchemeHandler_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSchemeHandler_NewCoreSchemeHandler_Bad(t *core.T) {
@@ -176,7 +175,6 @@ func TestSchemeHandler_NewCoreSchemeHandler_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSchemeHandler_NewCoreSchemeHandler_Ugly(t *core.T) {
@@ -188,7 +186,6 @@ func TestSchemeHandler_NewCoreSchemeHandler_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSchemeHandler_Service_SchemeHandler_Good(t *core.T) {
@@ -201,7 +198,6 @@ func TestSchemeHandler_Service_SchemeHandler_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSchemeHandler_Service_SchemeHandler_Bad(t *core.T) {
@@ -214,7 +210,6 @@ func TestSchemeHandler_Service_SchemeHandler_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSchemeHandler_Service_SchemeHandler_Ugly(t *core.T) {
@@ -227,7 +222,6 @@ func TestSchemeHandler_Service_SchemeHandler_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSchemeHandler_SchemeHandler_Handle_Good(t *core.T) {
@@ -240,7 +234,6 @@ func TestSchemeHandler_SchemeHandler_Handle_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSchemeHandler_SchemeHandler_Handle_Bad(t *core.T) {
@@ -253,7 +246,6 @@ func TestSchemeHandler_SchemeHandler_Handle_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSchemeHandler_SchemeHandler_Handle_Ugly(t *core.T) {
@@ -266,5 +258,4 @@ func TestSchemeHandler_SchemeHandler_Handle_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

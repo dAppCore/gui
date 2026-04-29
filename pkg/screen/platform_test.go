@@ -124,7 +124,6 @@ func TestPlatform_Rect_Origin_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPlatform_Rect_Origin_Bad(t *core.T) {
@@ -137,7 +136,6 @@ func TestPlatform_Rect_Origin_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPlatform_Rect_Origin_Ugly(t *core.T) {
@@ -150,7 +148,6 @@ func TestPlatform_Rect_Origin_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPlatform_Rect_Corner_Good(t *core.T) {
@@ -163,7 +160,6 @@ func TestPlatform_Rect_Corner_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPlatform_Rect_Corner_Bad(t *core.T) {
@@ -176,7 +172,6 @@ func TestPlatform_Rect_Corner_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPlatform_Rect_Corner_Ugly(t *core.T) {
@@ -189,7 +184,6 @@ func TestPlatform_Rect_Corner_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPlatform_Rect_InsideCorner_Good(t *core.T) {
@@ -202,7 +196,6 @@ func TestPlatform_Rect_InsideCorner_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPlatform_Rect_InsideCorner_Bad(t *core.T) {
@@ -215,7 +208,6 @@ func TestPlatform_Rect_InsideCorner_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPlatform_Rect_InsideCorner_Ugly(t *core.T) {
@@ -228,7 +220,6 @@ func TestPlatform_Rect_InsideCorner_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPlatform_Rect_IsEmpty_Good(t *core.T) {
@@ -241,7 +232,6 @@ func TestPlatform_Rect_IsEmpty_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPlatform_Rect_IsEmpty_Bad(t *core.T) {
@@ -254,7 +244,6 @@ func TestPlatform_Rect_IsEmpty_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPlatform_Rect_IsEmpty_Ugly(t *core.T) {
@@ -267,7 +256,6 @@ func TestPlatform_Rect_IsEmpty_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPlatform_Rect_Contains_Good(t *core.T) {
@@ -280,7 +268,6 @@ func TestPlatform_Rect_Contains_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPlatform_Rect_Contains_Bad(t *core.T) {
@@ -293,7 +280,6 @@ func TestPlatform_Rect_Contains_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPlatform_Rect_Contains_Ugly(t *core.T) {
@@ -306,7 +292,6 @@ func TestPlatform_Rect_Contains_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPlatform_Rect_RectSize_Good(t *core.T) {
@@ -319,7 +304,6 @@ func TestPlatform_Rect_RectSize_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPlatform_Rect_RectSize_Bad(t *core.T) {
@@ -332,7 +316,6 @@ func TestPlatform_Rect_RectSize_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPlatform_Rect_RectSize_Ugly(t *core.T) {
@@ -345,7 +328,6 @@ func TestPlatform_Rect_RectSize_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPlatform_Rect_Intersect_Good(t *core.T) {
@@ -358,7 +340,6 @@ func TestPlatform_Rect_Intersect_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPlatform_Rect_Intersect_Bad(t *core.T) {
@@ -371,7 +352,6 @@ func TestPlatform_Rect_Intersect_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPlatform_Rect_Intersect_Ugly(t *core.T) {
@@ -384,7 +364,6 @@ func TestPlatform_Rect_Intersect_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPlatform_NewPlacement_Good(t *core.T) {
@@ -396,7 +375,6 @@ func TestPlatform_NewPlacement_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPlatform_NewPlacement_Bad(t *core.T) {
@@ -408,7 +386,6 @@ func TestPlatform_NewPlacement_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPlatform_NewPlacement_Ugly(t *core.T) {
@@ -420,7 +397,6 @@ func TestPlatform_NewPlacement_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPlatform_ScreenPlacement_Apply_Good(t *core.T) {
@@ -433,7 +409,6 @@ func TestPlatform_ScreenPlacement_Apply_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPlatform_ScreenPlacement_Apply_Bad(t *core.T) {
@@ -446,7 +421,6 @@ func TestPlatform_ScreenPlacement_Apply_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPlatform_ScreenPlacement_Apply_Ugly(t *core.T) {
@@ -459,5 +433,4 @@ func TestPlatform_ScreenPlacement_Apply_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

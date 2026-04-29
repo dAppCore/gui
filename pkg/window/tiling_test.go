@@ -180,7 +180,6 @@ func TestTiling_TileMode_String_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTiling_TileMode_String_Bad(t *core.T) {
@@ -193,7 +192,6 @@ func TestTiling_TileMode_String_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTiling_TileMode_String_Ugly(t *core.T) {
@@ -206,7 +204,6 @@ func TestTiling_TileMode_String_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTiling_WorkflowLayout_String_Good(t *core.T) {
@@ -219,7 +216,6 @@ func TestTiling_WorkflowLayout_String_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTiling_WorkflowLayout_String_Bad(t *core.T) {
@@ -232,7 +228,6 @@ func TestTiling_WorkflowLayout_String_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTiling_WorkflowLayout_String_Ugly(t *core.T) {
@@ -245,7 +240,6 @@ func TestTiling_WorkflowLayout_String_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTiling_BesideEditor_Good(t *core.T) {
@@ -257,7 +251,6 @@ func TestTiling_BesideEditor_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTiling_BesideEditor_Bad(t *core.T) {
@@ -269,7 +262,6 @@ func TestTiling_BesideEditor_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTiling_BesideEditor_Ugly(t *core.T) {
@@ -281,7 +273,6 @@ func TestTiling_BesideEditor_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTiling_SuggestLayout_Good(t *core.T) {
@@ -293,7 +284,6 @@ func TestTiling_SuggestLayout_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTiling_SuggestLayout_Bad(t *core.T) {
@@ -305,7 +295,6 @@ func TestTiling_SuggestLayout_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTiling_SuggestLayout_Ugly(t *core.T) {
@@ -317,7 +306,6 @@ func TestTiling_SuggestLayout_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTiling_FindEmptySpace_Good(t *core.T) {
@@ -329,7 +317,6 @@ func TestTiling_FindEmptySpace_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTiling_FindEmptySpace_Bad(t *core.T) {
@@ -341,7 +328,6 @@ func TestTiling_FindEmptySpace_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTiling_FindEmptySpace_Ugly(t *core.T) {
@@ -353,7 +339,6 @@ func TestTiling_FindEmptySpace_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTiling_ArrangePair_Good(t *core.T) {
@@ -365,7 +350,6 @@ func TestTiling_ArrangePair_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTiling_ArrangePair_Bad(t *core.T) {
@@ -377,7 +361,6 @@ func TestTiling_ArrangePair_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTiling_ArrangePair_Ugly(t *core.T) {
@@ -389,7 +372,6 @@ func TestTiling_ArrangePair_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTiling_Manager_TileWindows_Good(t *core.T) {
@@ -402,7 +384,6 @@ func TestTiling_Manager_TileWindows_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTiling_Manager_TileWindows_Bad(t *core.T) {
@@ -415,7 +396,6 @@ func TestTiling_Manager_TileWindows_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTiling_Manager_TileWindows_Ugly(t *core.T) {
@@ -428,7 +408,6 @@ func TestTiling_Manager_TileWindows_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTiling_Manager_SnapWindow_Good(t *core.T) {
@@ -441,7 +420,6 @@ func TestTiling_Manager_SnapWindow_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTiling_Manager_SnapWindow_Bad(t *core.T) {
@@ -454,7 +432,6 @@ func TestTiling_Manager_SnapWindow_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTiling_Manager_SnapWindow_Ugly(t *core.T) {
@@ -467,7 +444,6 @@ func TestTiling_Manager_SnapWindow_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTiling_Manager_StackWindows_Good(t *core.T) {
@@ -480,7 +456,6 @@ func TestTiling_Manager_StackWindows_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTiling_Manager_StackWindows_Bad(t *core.T) {
@@ -493,7 +468,6 @@ func TestTiling_Manager_StackWindows_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTiling_Manager_StackWindows_Ugly(t *core.T) {
@@ -506,7 +480,6 @@ func TestTiling_Manager_StackWindows_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTiling_Manager_ApplyWorkflow_Good(t *core.T) {
@@ -519,7 +492,6 @@ func TestTiling_Manager_ApplyWorkflow_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTiling_Manager_ApplyWorkflow_Bad(t *core.T) {
@@ -532,7 +504,6 @@ func TestTiling_Manager_ApplyWorkflow_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTiling_Manager_ApplyWorkflow_Ugly(t *core.T) {
@@ -545,5 +516,4 @@ func TestTiling_Manager_ApplyWorkflow_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

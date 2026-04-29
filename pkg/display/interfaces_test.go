@@ -51,7 +51,6 @@ func TestInterfaces_App_Logger_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestInterfaces_App_Logger_Bad(t *core.T) {
@@ -64,7 +63,6 @@ func TestInterfaces_App_Logger_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestInterfaces_App_Logger_Ugly(t *core.T) {
@@ -77,7 +75,6 @@ func TestInterfaces_App_Logger_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestInterfaces_App_Quit_Good(t *core.T) {
@@ -90,7 +87,6 @@ func TestInterfaces_App_Quit_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestInterfaces_App_Quit_Bad(t *core.T) {
@@ -103,7 +99,6 @@ func TestInterfaces_App_Quit_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestInterfaces_App_Quit_Ugly(t *core.T) {
@@ -116,5 +111,4 @@ func TestInterfaces_App_Quit_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

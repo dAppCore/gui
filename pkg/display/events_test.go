@@ -538,7 +538,6 @@ func TestEvents_NewWSEventManager_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_NewWSEventManager_Bad(t *core.T) {
@@ -550,7 +549,6 @@ func TestEvents_NewWSEventManager_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_NewWSEventManager_Ugly(t *core.T) {
@@ -562,7 +560,6 @@ func TestEvents_NewWSEventManager_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_WSEventManager_HandleWebSocket_Good(t *core.T) {
@@ -575,7 +572,6 @@ func TestEvents_WSEventManager_HandleWebSocket_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_WSEventManager_HandleWebSocket_Bad(t *core.T) {
@@ -588,7 +584,6 @@ func TestEvents_WSEventManager_HandleWebSocket_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_WSEventManager_HandleWebSocket_Ugly(t *core.T) {
@@ -601,7 +596,6 @@ func TestEvents_WSEventManager_HandleWebSocket_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_WSEventManager_Emit_Good(t *core.T) {
@@ -614,7 +608,6 @@ func TestEvents_WSEventManager_Emit_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_WSEventManager_Emit_Bad(t *core.T) {
@@ -627,7 +620,6 @@ func TestEvents_WSEventManager_Emit_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_WSEventManager_Emit_Ugly(t *core.T) {
@@ -640,7 +632,6 @@ func TestEvents_WSEventManager_Emit_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_WSEventManager_EmitWindowEvent_Good(t *core.T) {
@@ -653,7 +644,6 @@ func TestEvents_WSEventManager_EmitWindowEvent_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_WSEventManager_EmitWindowEvent_Bad(t *core.T) {
@@ -666,7 +656,6 @@ func TestEvents_WSEventManager_EmitWindowEvent_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_WSEventManager_EmitWindowEvent_Ugly(t *core.T) {
@@ -679,7 +668,6 @@ func TestEvents_WSEventManager_EmitWindowEvent_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_WSEventManager_ConnectedClients_Good(t *core.T) {
@@ -692,7 +680,6 @@ func TestEvents_WSEventManager_ConnectedClients_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_WSEventManager_ConnectedClients_Bad(t *core.T) {
@@ -705,7 +692,6 @@ func TestEvents_WSEventManager_ConnectedClients_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_WSEventManager_ConnectedClients_Ugly(t *core.T) {
@@ -718,7 +704,6 @@ func TestEvents_WSEventManager_ConnectedClients_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_WSEventManager_Info_Good(t *core.T) {
@@ -731,7 +716,6 @@ func TestEvents_WSEventManager_Info_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_WSEventManager_Info_Bad(t *core.T) {
@@ -744,7 +728,6 @@ func TestEvents_WSEventManager_Info_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_WSEventManager_Info_Ugly(t *core.T) {
@@ -757,7 +740,6 @@ func TestEvents_WSEventManager_Info_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_WSEventManager_Close_Good(t *core.T) {
@@ -770,7 +752,6 @@ func TestEvents_WSEventManager_Close_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_WSEventManager_Close_Bad(t *core.T) {
@@ -783,7 +764,6 @@ func TestEvents_WSEventManager_Close_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_WSEventManager_Close_Ugly(t *core.T) {
@@ -796,7 +776,6 @@ func TestEvents_WSEventManager_Close_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_WSEventManager_AttachWindowListeners_Good(t *core.T) {
@@ -809,7 +788,6 @@ func TestEvents_WSEventManager_AttachWindowListeners_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_WSEventManager_AttachWindowListeners_Bad(t *core.T) {
@@ -822,7 +800,6 @@ func TestEvents_WSEventManager_AttachWindowListeners_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestEvents_WSEventManager_AttachWindowListeners_Ugly(t *core.T) {
@@ -835,5 +812,4 @@ func TestEvents_WSEventManager_AttachWindowListeners_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

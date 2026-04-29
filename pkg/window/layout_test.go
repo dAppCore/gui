@@ -95,7 +95,6 @@ func TestLayout_NewLayoutManager_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestLayout_NewLayoutManager_Bad(t *core.T) {
@@ -107,7 +106,6 @@ func TestLayout_NewLayoutManager_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestLayout_NewLayoutManager_Ugly(t *core.T) {
@@ -119,7 +117,6 @@ func TestLayout_NewLayoutManager_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestLayout_NewLayoutManagerWithDir_Good(t *core.T) {
@@ -131,7 +128,6 @@ func TestLayout_NewLayoutManagerWithDir_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestLayout_NewLayoutManagerWithDir_Bad(t *core.T) {
@@ -143,7 +139,6 @@ func TestLayout_NewLayoutManagerWithDir_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestLayout_NewLayoutManagerWithDir_Ugly(t *core.T) {
@@ -155,7 +150,6 @@ func TestLayout_NewLayoutManagerWithDir_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestLayout_NewLayoutManagerWithPath_Good(t *core.T) {
@@ -167,7 +161,6 @@ func TestLayout_NewLayoutManagerWithPath_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestLayout_NewLayoutManagerWithPath_Bad(t *core.T) {
@@ -179,7 +172,6 @@ func TestLayout_NewLayoutManagerWithPath_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestLayout_NewLayoutManagerWithPath_Ugly(t *core.T) {
@@ -191,7 +183,6 @@ func TestLayout_NewLayoutManagerWithPath_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestLayout_LayoutManager_SetPath_Good(t *core.T) {
@@ -204,7 +195,6 @@ func TestLayout_LayoutManager_SetPath_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestLayout_LayoutManager_SetPath_Bad(t *core.T) {
@@ -217,7 +207,6 @@ func TestLayout_LayoutManager_SetPath_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestLayout_LayoutManager_SetPath_Ugly(t *core.T) {
@@ -230,7 +219,6 @@ func TestLayout_LayoutManager_SetPath_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestLayout_LayoutManager_SaveLayout_Good(t *core.T) {
@@ -243,7 +231,6 @@ func TestLayout_LayoutManager_SaveLayout_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestLayout_LayoutManager_SaveLayout_Bad(t *core.T) {
@@ -256,7 +243,6 @@ func TestLayout_LayoutManager_SaveLayout_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestLayout_LayoutManager_SaveLayout_Ugly(t *core.T) {
@@ -269,7 +255,6 @@ func TestLayout_LayoutManager_SaveLayout_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestLayout_LayoutManager_GetLayout_Good(t *core.T) {
@@ -282,7 +267,6 @@ func TestLayout_LayoutManager_GetLayout_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestLayout_LayoutManager_GetLayout_Bad(t *core.T) {
@@ -295,7 +279,6 @@ func TestLayout_LayoutManager_GetLayout_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestLayout_LayoutManager_GetLayout_Ugly(t *core.T) {
@@ -308,7 +291,6 @@ func TestLayout_LayoutManager_GetLayout_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestLayout_LayoutManager_ListLayouts_Good(t *core.T) {
@@ -321,7 +303,6 @@ func TestLayout_LayoutManager_ListLayouts_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestLayout_LayoutManager_ListLayouts_Bad(t *core.T) {
@@ -334,7 +315,6 @@ func TestLayout_LayoutManager_ListLayouts_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestLayout_LayoutManager_ListLayouts_Ugly(t *core.T) {
@@ -347,7 +327,6 @@ func TestLayout_LayoutManager_ListLayouts_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestLayout_LayoutManager_DeleteLayout_Good(t *core.T) {
@@ -360,7 +339,6 @@ func TestLayout_LayoutManager_DeleteLayout_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestLayout_LayoutManager_DeleteLayout_Bad(t *core.T) {
@@ -373,7 +351,6 @@ func TestLayout_LayoutManager_DeleteLayout_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestLayout_LayoutManager_DeleteLayout_Ugly(t *core.T) {
@@ -386,5 +363,4 @@ func TestLayout_LayoutManager_DeleteLayout_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

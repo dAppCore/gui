@@ -63,7 +63,6 @@ func TestMenuitem_NewMenuItem_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenuitem_NewMenuItem_Bad(t *core.T) {
@@ -75,7 +74,6 @@ func TestMenuitem_NewMenuItem_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenuitem_NewMenuItem_Ugly(t *core.T) {
@@ -87,7 +85,6 @@ func TestMenuitem_NewMenuItem_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenuitem_NewMenuItemSeparator_Good(t *core.T) {
@@ -99,7 +96,6 @@ func TestMenuitem_NewMenuItemSeparator_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenuitem_NewMenuItemSeparator_Bad(t *core.T) {
@@ -111,7 +107,6 @@ func TestMenuitem_NewMenuItemSeparator_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenuitem_NewMenuItemSeparator_Ugly(t *core.T) {
@@ -123,7 +118,6 @@ func TestMenuitem_NewMenuItemSeparator_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenuitem_NewMenuItemCheckbox_Good(t *core.T) {
@@ -135,7 +129,6 @@ func TestMenuitem_NewMenuItemCheckbox_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenuitem_NewMenuItemCheckbox_Bad(t *core.T) {
@@ -147,7 +140,6 @@ func TestMenuitem_NewMenuItemCheckbox_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenuitem_NewMenuItemCheckbox_Ugly(t *core.T) {
@@ -159,7 +151,6 @@ func TestMenuitem_NewMenuItemCheckbox_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenuitem_NewMenuItemRadio_Good(t *core.T) {
@@ -171,7 +162,6 @@ func TestMenuitem_NewMenuItemRadio_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenuitem_NewMenuItemRadio_Bad(t *core.T) {
@@ -183,7 +173,6 @@ func TestMenuitem_NewMenuItemRadio_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenuitem_NewMenuItemRadio_Ugly(t *core.T) {
@@ -195,7 +184,6 @@ func TestMenuitem_NewMenuItemRadio_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenuitem_NewSubMenuItem_Good(t *core.T) {
@@ -207,7 +195,6 @@ func TestMenuitem_NewSubMenuItem_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenuitem_NewSubMenuItem_Bad(t *core.T) {
@@ -219,7 +206,6 @@ func TestMenuitem_NewSubMenuItem_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenuitem_NewSubMenuItem_Ugly(t *core.T) {
@@ -231,7 +217,6 @@ func TestMenuitem_NewSubMenuItem_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenuitem_NewRole_Good(t *core.T) {
@@ -243,7 +228,6 @@ func TestMenuitem_NewRole_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenuitem_NewRole_Bad(t *core.T) {
@@ -255,7 +239,6 @@ func TestMenuitem_NewRole_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenuitem_NewRole_Ugly(t *core.T) {
@@ -267,7 +250,6 @@ func TestMenuitem_NewRole_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenuitem_NewServicesMenu_Good(t *core.T) {
@@ -279,7 +261,6 @@ func TestMenuitem_NewServicesMenu_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenuitem_NewServicesMenu_Bad(t *core.T) {
@@ -291,7 +272,6 @@ func TestMenuitem_NewServicesMenu_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenuitem_NewServicesMenu_Ugly(t *core.T) {
@@ -303,7 +283,6 @@ func TestMenuitem_NewServicesMenu_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenuitem_MenuItem_GetAccelerator_Good(t *core.T) {
@@ -316,7 +295,6 @@ func TestMenuitem_MenuItem_GetAccelerator_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenuitem_MenuItem_GetAccelerator_Bad(t *core.T) {
@@ -329,7 +307,6 @@ func TestMenuitem_MenuItem_GetAccelerator_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenuitem_MenuItem_GetAccelerator_Ugly(t *core.T) {
@@ -342,7 +319,6 @@ func TestMenuitem_MenuItem_GetAccelerator_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenuitem_MenuItem_GetSubmenu_Good(t *core.T) {
@@ -355,7 +331,6 @@ func TestMenuitem_MenuItem_GetSubmenu_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenuitem_MenuItem_GetSubmenu_Bad(t *core.T) {
@@ -368,7 +343,6 @@ func TestMenuitem_MenuItem_GetSubmenu_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMenuitem_MenuItem_GetSubmenu_Ugly(t *core.T) {
@@ -381,5 +355,4 @@ func TestMenuitem_MenuItem_GetSubmenu_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

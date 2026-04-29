@@ -241,7 +241,6 @@ func TestState_NewStateManager_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_NewStateManager_Bad(t *core.T) {
@@ -253,7 +252,6 @@ func TestState_NewStateManager_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_NewStateManager_Ugly(t *core.T) {
@@ -265,7 +263,6 @@ func TestState_NewStateManager_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_NewStateManagerWithDir_Good(t *core.T) {
@@ -277,7 +274,6 @@ func TestState_NewStateManagerWithDir_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_NewStateManagerWithDir_Bad(t *core.T) {
@@ -289,7 +285,6 @@ func TestState_NewStateManagerWithDir_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_NewStateManagerWithDir_Ugly(t *core.T) {
@@ -301,7 +296,6 @@ func TestState_NewStateManagerWithDir_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_NewStateManagerWithPath_Good(t *core.T) {
@@ -313,7 +307,6 @@ func TestState_NewStateManagerWithPath_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_NewStateManagerWithPath_Bad(t *core.T) {
@@ -325,7 +318,6 @@ func TestState_NewStateManagerWithPath_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_NewStateManagerWithPath_Ugly(t *core.T) {
@@ -337,7 +329,6 @@ func TestState_NewStateManagerWithPath_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_StateManager_SetPath_Good(t *core.T) {
@@ -350,7 +341,6 @@ func TestState_StateManager_SetPath_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_StateManager_SetPath_Bad(t *core.T) {
@@ -363,7 +353,6 @@ func TestState_StateManager_SetPath_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_StateManager_SetPath_Ugly(t *core.T) {
@@ -376,7 +365,6 @@ func TestState_StateManager_SetPath_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_StateManager_GetState_Good(t *core.T) {
@@ -389,7 +377,6 @@ func TestState_StateManager_GetState_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_StateManager_GetState_Bad(t *core.T) {
@@ -402,7 +389,6 @@ func TestState_StateManager_GetState_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_StateManager_GetState_Ugly(t *core.T) {
@@ -415,7 +401,6 @@ func TestState_StateManager_GetState_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_StateManager_SetState_Good(t *core.T) {
@@ -428,7 +413,6 @@ func TestState_StateManager_SetState_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_StateManager_SetState_Bad(t *core.T) {
@@ -441,7 +425,6 @@ func TestState_StateManager_SetState_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_StateManager_SetState_Ugly(t *core.T) {
@@ -454,7 +437,6 @@ func TestState_StateManager_SetState_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_StateManager_UpdatePosition_Good(t *core.T) {
@@ -467,7 +449,6 @@ func TestState_StateManager_UpdatePosition_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_StateManager_UpdatePosition_Bad(t *core.T) {
@@ -480,7 +461,6 @@ func TestState_StateManager_UpdatePosition_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_StateManager_UpdatePosition_Ugly(t *core.T) {
@@ -493,7 +473,6 @@ func TestState_StateManager_UpdatePosition_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_StateManager_UpdateSize_Good(t *core.T) {
@@ -506,7 +485,6 @@ func TestState_StateManager_UpdateSize_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_StateManager_UpdateSize_Bad(t *core.T) {
@@ -519,7 +497,6 @@ func TestState_StateManager_UpdateSize_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_StateManager_UpdateSize_Ugly(t *core.T) {
@@ -532,7 +509,6 @@ func TestState_StateManager_UpdateSize_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_StateManager_UpdateMaximized_Good(t *core.T) {
@@ -545,7 +521,6 @@ func TestState_StateManager_UpdateMaximized_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_StateManager_UpdateMaximized_Bad(t *core.T) {
@@ -558,7 +533,6 @@ func TestState_StateManager_UpdateMaximized_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_StateManager_UpdateMaximized_Ugly(t *core.T) {
@@ -571,7 +545,6 @@ func TestState_StateManager_UpdateMaximized_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_StateManager_CaptureState_Good(t *core.T) {
@@ -584,7 +557,6 @@ func TestState_StateManager_CaptureState_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_StateManager_CaptureState_Bad(t *core.T) {
@@ -597,7 +569,6 @@ func TestState_StateManager_CaptureState_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_StateManager_CaptureState_Ugly(t *core.T) {
@@ -610,7 +581,6 @@ func TestState_StateManager_CaptureState_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_StateManager_ApplyState_Good(t *core.T) {
@@ -623,7 +593,6 @@ func TestState_StateManager_ApplyState_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_StateManager_ApplyState_Bad(t *core.T) {
@@ -636,7 +605,6 @@ func TestState_StateManager_ApplyState_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_StateManager_ApplyState_Ugly(t *core.T) {
@@ -649,7 +617,6 @@ func TestState_StateManager_ApplyState_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_StateManager_ListStates_Good(t *core.T) {
@@ -662,7 +629,6 @@ func TestState_StateManager_ListStates_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_StateManager_ListStates_Bad(t *core.T) {
@@ -675,7 +641,6 @@ func TestState_StateManager_ListStates_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_StateManager_ListStates_Ugly(t *core.T) {
@@ -688,7 +653,6 @@ func TestState_StateManager_ListStates_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_StateManager_Clear_Good(t *core.T) {
@@ -701,7 +665,6 @@ func TestState_StateManager_Clear_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_StateManager_Clear_Bad(t *core.T) {
@@ -714,7 +677,6 @@ func TestState_StateManager_Clear_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_StateManager_Clear_Ugly(t *core.T) {
@@ -727,7 +689,6 @@ func TestState_StateManager_Clear_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_StateManager_ForceSync_Good(t *core.T) {
@@ -740,7 +701,6 @@ func TestState_StateManager_ForceSync_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_StateManager_ForceSync_Bad(t *core.T) {
@@ -753,7 +713,6 @@ func TestState_StateManager_ForceSync_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestState_StateManager_ForceSync_Ugly(t *core.T) {
@@ -766,5 +725,4 @@ func TestState_StateManager_ForceSync_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

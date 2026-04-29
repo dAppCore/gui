@@ -90,7 +90,6 @@ func TestTcp_NewTCPDriver_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTcp_NewTCPDriver_Bad(t *core.T) {
@@ -102,7 +101,6 @@ func TestTcp_NewTCPDriver_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTcp_NewTCPDriver_Ugly(t *core.T) {
@@ -114,7 +112,6 @@ func TestTcp_NewTCPDriver_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTcp_TCPDriver_ListenAddr_Good(t *core.T) {
@@ -127,7 +124,6 @@ func TestTcp_TCPDriver_ListenAddr_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTcp_TCPDriver_ListenAddr_Bad(t *core.T) {
@@ -140,7 +136,6 @@ func TestTcp_TCPDriver_ListenAddr_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTcp_TCPDriver_ListenAddr_Ugly(t *core.T) {
@@ -153,7 +148,6 @@ func TestTcp_TCPDriver_ListenAddr_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTcp_TCPDriver_Subscribe_Good(t *core.T) {
@@ -166,7 +160,6 @@ func TestTcp_TCPDriver_Subscribe_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTcp_TCPDriver_Subscribe_Bad(t *core.T) {
@@ -179,7 +172,6 @@ func TestTcp_TCPDriver_Subscribe_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTcp_TCPDriver_Subscribe_Ugly(t *core.T) {
@@ -192,7 +184,6 @@ func TestTcp_TCPDriver_Subscribe_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTcp_TCPDriver_Publish_Good(t *core.T) {
@@ -205,7 +196,6 @@ func TestTcp_TCPDriver_Publish_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTcp_TCPDriver_Publish_Bad(t *core.T) {
@@ -218,7 +208,6 @@ func TestTcp_TCPDriver_Publish_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTcp_TCPDriver_Publish_Ugly(t *core.T) {
@@ -231,7 +220,6 @@ func TestTcp_TCPDriver_Publish_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTcp_TCPDriver_Close_Good(t *core.T) {
@@ -244,7 +232,6 @@ func TestTcp_TCPDriver_Close_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTcp_TCPDriver_Close_Bad(t *core.T) {
@@ -257,7 +244,6 @@ func TestTcp_TCPDriver_Close_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestTcp_TCPDriver_Close_Ugly(t *core.T) {
@@ -270,5 +256,4 @@ func TestTcp_TCPDriver_Close_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

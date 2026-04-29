@@ -344,7 +344,6 @@ func TestPreload_Service_InjectPreload_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPreload_Service_InjectPreload_Bad(t *core.T) {
@@ -357,7 +356,6 @@ func TestPreload_Service_InjectPreload_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPreload_Service_InjectPreload_Ugly(t *core.T) {
@@ -370,7 +368,6 @@ func TestPreload_Service_InjectPreload_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPreload_Service_BuildPreloadScript_Good(t *core.T) {
@@ -383,7 +380,6 @@ func TestPreload_Service_BuildPreloadScript_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPreload_Service_BuildPreloadScript_Bad(t *core.T) {
@@ -396,7 +392,6 @@ func TestPreload_Service_BuildPreloadScript_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPreload_Service_BuildPreloadScript_Ugly(t *core.T) {
@@ -409,7 +404,6 @@ func TestPreload_Service_BuildPreloadScript_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPreload_Service_BuildPreloadScriptWithTrustedOriginPolicy_Good(t *core.T) {
@@ -422,7 +416,6 @@ func TestPreload_Service_BuildPreloadScriptWithTrustedOriginPolicy_Good(t *core.
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPreload_Service_BuildPreloadScriptWithTrustedOriginPolicy_Bad(t *core.T) {
@@ -435,7 +428,6 @@ func TestPreload_Service_BuildPreloadScriptWithTrustedOriginPolicy_Bad(t *core.T
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPreload_Service_BuildPreloadScriptWithTrustedOriginPolicy_Ugly(t *core.T) {
@@ -448,7 +440,6 @@ func TestPreload_Service_BuildPreloadScriptWithTrustedOriginPolicy_Ugly(t *core.
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPreload_NewTrustedOriginPolicy_Good(t *core.T) {
@@ -460,7 +451,6 @@ func TestPreload_NewTrustedOriginPolicy_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPreload_NewTrustedOriginPolicy_Bad(t *core.T) {
@@ -472,7 +462,6 @@ func TestPreload_NewTrustedOriginPolicy_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPreload_NewTrustedOriginPolicy_Ugly(t *core.T) {
@@ -484,7 +473,6 @@ func TestPreload_NewTrustedOriginPolicy_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPreload_NewTrustedOriginPolicyWithActions_Good(t *core.T) {
@@ -496,7 +484,6 @@ func TestPreload_NewTrustedOriginPolicyWithActions_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPreload_NewTrustedOriginPolicyWithActions_Bad(t *core.T) {
@@ -508,7 +495,6 @@ func TestPreload_NewTrustedOriginPolicyWithActions_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPreload_NewTrustedOriginPolicyWithActions_Ugly(t *core.T) {
@@ -520,7 +506,6 @@ func TestPreload_NewTrustedOriginPolicyWithActions_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPreload_DefaultTrustedOriginPolicy_Good(t *core.T) {
@@ -532,7 +517,6 @@ func TestPreload_DefaultTrustedOriginPolicy_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPreload_DefaultTrustedOriginPolicy_Bad(t *core.T) {
@@ -544,7 +528,6 @@ func TestPreload_DefaultTrustedOriginPolicy_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPreload_DefaultTrustedOriginPolicy_Ugly(t *core.T) {
@@ -556,7 +539,6 @@ func TestPreload_DefaultTrustedOriginPolicy_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPreload_TrustedOriginPolicy_AllowsURL_Good(t *core.T) {
@@ -569,7 +551,6 @@ func TestPreload_TrustedOriginPolicy_AllowsURL_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPreload_TrustedOriginPolicy_AllowsURL_Bad(t *core.T) {
@@ -582,7 +563,6 @@ func TestPreload_TrustedOriginPolicy_AllowsURL_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPreload_TrustedOriginPolicy_AllowsURL_Ugly(t *core.T) {
@@ -595,7 +575,6 @@ func TestPreload_TrustedOriginPolicy_AllowsURL_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPreload_TrustedOriginPolicy_Allows_Good(t *core.T) {
@@ -608,7 +587,6 @@ func TestPreload_TrustedOriginPolicy_Allows_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPreload_TrustedOriginPolicy_Allows_Bad(t *core.T) {
@@ -621,7 +599,6 @@ func TestPreload_TrustedOriginPolicy_Allows_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPreload_TrustedOriginPolicy_Allows_Ugly(t *core.T) {
@@ -634,7 +611,6 @@ func TestPreload_TrustedOriginPolicy_Allows_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPreload_TrustedOriginPolicy_AllowsActionURL_Good(t *core.T) {
@@ -647,7 +623,6 @@ func TestPreload_TrustedOriginPolicy_AllowsActionURL_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPreload_TrustedOriginPolicy_AllowsActionURL_Bad(t *core.T) {
@@ -660,7 +635,6 @@ func TestPreload_TrustedOriginPolicy_AllowsActionURL_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPreload_TrustedOriginPolicy_AllowsActionURL_Ugly(t *core.T) {
@@ -673,7 +647,6 @@ func TestPreload_TrustedOriginPolicy_AllowsActionURL_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPreload_TrustedOriginPolicy_AllowsAction_Good(t *core.T) {
@@ -686,7 +659,6 @@ func TestPreload_TrustedOriginPolicy_AllowsAction_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPreload_TrustedOriginPolicy_AllowsAction_Bad(t *core.T) {
@@ -699,7 +671,6 @@ func TestPreload_TrustedOriginPolicy_AllowsAction_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPreload_TrustedOriginPolicy_AllowsAction_Ugly(t *core.T) {
@@ -712,7 +683,6 @@ func TestPreload_TrustedOriginPolicy_AllowsAction_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPreload_TrustedOriginPolicy_AllowedActionsForURL_Good(t *core.T) {
@@ -725,7 +695,6 @@ func TestPreload_TrustedOriginPolicy_AllowedActionsForURL_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPreload_TrustedOriginPolicy_AllowedActionsForURL_Bad(t *core.T) {
@@ -738,7 +707,6 @@ func TestPreload_TrustedOriginPolicy_AllowedActionsForURL_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPreload_TrustedOriginPolicy_AllowedActionsForURL_Ugly(t *core.T) {
@@ -751,7 +719,6 @@ func TestPreload_TrustedOriginPolicy_AllowedActionsForURL_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPreload_TrustedOriginPolicy_AllowedActions_Good(t *core.T) {
@@ -764,7 +731,6 @@ func TestPreload_TrustedOriginPolicy_AllowedActions_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPreload_TrustedOriginPolicy_AllowedActions_Bad(t *core.T) {
@@ -777,7 +743,6 @@ func TestPreload_TrustedOriginPolicy_AllowedActions_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestPreload_TrustedOriginPolicy_AllowedActions_Ugly(t *core.T) {
@@ -790,5 +755,4 @@ func TestPreload_TrustedOriginPolicy_AllowedActions_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

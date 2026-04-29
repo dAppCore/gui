@@ -49,7 +49,6 @@ func TestSidecar_Manager_Start_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSidecar_Manager_Start_Bad(t *core.T) {
@@ -62,7 +61,6 @@ func TestSidecar_Manager_Start_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSidecar_Manager_Start_Ugly(t *core.T) {
@@ -75,7 +73,6 @@ func TestSidecar_Manager_Start_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSidecar_Manager_Stop_Good(t *core.T) {
@@ -88,7 +85,6 @@ func TestSidecar_Manager_Stop_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSidecar_Manager_Stop_Bad(t *core.T) {
@@ -101,7 +97,6 @@ func TestSidecar_Manager_Stop_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSidecar_Manager_Stop_Ugly(t *core.T) {
@@ -114,7 +109,6 @@ func TestSidecar_Manager_Stop_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSidecar_Manager_Status_Good(t *core.T) {
@@ -127,7 +121,6 @@ func TestSidecar_Manager_Status_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSidecar_Manager_Status_Bad(t *core.T) {
@@ -140,7 +133,6 @@ func TestSidecar_Manager_Status_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSidecar_Manager_Status_Ugly(t *core.T) {
@@ -153,7 +145,6 @@ func TestSidecar_Manager_Status_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSidecar_Manager_OnEvent_Good(t *core.T) {
@@ -166,7 +157,6 @@ func TestSidecar_Manager_OnEvent_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSidecar_Manager_OnEvent_Bad(t *core.T) {
@@ -179,7 +169,6 @@ func TestSidecar_Manager_OnEvent_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSidecar_Manager_OnEvent_Ugly(t *core.T) {
@@ -192,7 +181,6 @@ func TestSidecar_Manager_OnEvent_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSidecar_Manager_Eval_Good(t *core.T) {
@@ -205,7 +193,6 @@ func TestSidecar_Manager_Eval_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSidecar_Manager_Eval_Bad(t *core.T) {
@@ -218,7 +205,6 @@ func TestSidecar_Manager_Eval_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSidecar_Manager_Eval_Ugly(t *core.T) {
@@ -231,7 +217,6 @@ func TestSidecar_Manager_Eval_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSidecar_Manager_Emit_Good(t *core.T) {
@@ -244,7 +229,6 @@ func TestSidecar_Manager_Emit_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSidecar_Manager_Emit_Bad(t *core.T) {
@@ -257,7 +241,6 @@ func TestSidecar_Manager_Emit_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestSidecar_Manager_Emit_Ugly(t *core.T) {
@@ -270,5 +253,4 @@ func TestSidecar_Manager_Emit_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

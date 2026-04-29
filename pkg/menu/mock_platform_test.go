@@ -62,7 +62,6 @@ func TestMockPlatform_NewMockPlatform_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMockPlatform_NewMockPlatform_Bad(t *core.T) {
@@ -74,7 +73,6 @@ func TestMockPlatform_NewMockPlatform_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMockPlatform_NewMockPlatform_Ugly(t *core.T) {
@@ -86,7 +84,6 @@ func TestMockPlatform_NewMockPlatform_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMockPlatform_MockPlatform_NewMenu_Good(t *core.T) {
@@ -99,7 +96,6 @@ func TestMockPlatform_MockPlatform_NewMenu_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMockPlatform_MockPlatform_NewMenu_Bad(t *core.T) {
@@ -112,7 +108,6 @@ func TestMockPlatform_MockPlatform_NewMenu_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMockPlatform_MockPlatform_NewMenu_Ugly(t *core.T) {
@@ -125,7 +120,6 @@ func TestMockPlatform_MockPlatform_NewMenu_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMockPlatform_MockPlatform_SetApplicationMenu_Good(t *core.T) {
@@ -138,7 +132,6 @@ func TestMockPlatform_MockPlatform_SetApplicationMenu_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMockPlatform_MockPlatform_SetApplicationMenu_Bad(t *core.T) {
@@ -151,7 +144,6 @@ func TestMockPlatform_MockPlatform_SetApplicationMenu_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMockPlatform_MockPlatform_SetApplicationMenu_Ugly(t *core.T) {
@@ -164,7 +156,6 @@ func TestMockPlatform_MockPlatform_SetApplicationMenu_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 type MockPlatformMenu = exportedMockPlatformMenu
@@ -179,7 +170,6 @@ func TestMockPlatform_MockPlatformMenu_Add_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMockPlatform_MockPlatformMenu_Add_Bad(t *core.T) {
@@ -192,7 +182,6 @@ func TestMockPlatform_MockPlatformMenu_Add_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMockPlatform_MockPlatformMenu_Add_Ugly(t *core.T) {
@@ -205,7 +194,6 @@ func TestMockPlatform_MockPlatformMenu_Add_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMockPlatform_MockPlatformMenu_AddSeparator_Good(t *core.T) {
@@ -218,7 +206,6 @@ func TestMockPlatform_MockPlatformMenu_AddSeparator_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMockPlatform_MockPlatformMenu_AddSeparator_Bad(t *core.T) {
@@ -231,7 +218,6 @@ func TestMockPlatform_MockPlatformMenu_AddSeparator_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMockPlatform_MockPlatformMenu_AddSeparator_Ugly(t *core.T) {
@@ -244,7 +230,6 @@ func TestMockPlatform_MockPlatformMenu_AddSeparator_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMockPlatform_MockPlatformMenu_AddSubmenu_Good(t *core.T) {
@@ -257,7 +242,6 @@ func TestMockPlatform_MockPlatformMenu_AddSubmenu_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMockPlatform_MockPlatformMenu_AddSubmenu_Bad(t *core.T) {
@@ -270,7 +254,6 @@ func TestMockPlatform_MockPlatformMenu_AddSubmenu_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMockPlatform_MockPlatformMenu_AddSubmenu_Ugly(t *core.T) {
@@ -283,7 +266,6 @@ func TestMockPlatform_MockPlatformMenu_AddSubmenu_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMockPlatform_MockPlatformMenu_AddRole_Good(t *core.T) {
@@ -296,7 +278,6 @@ func TestMockPlatform_MockPlatformMenu_AddRole_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMockPlatform_MockPlatformMenu_AddRole_Bad(t *core.T) {
@@ -309,7 +290,6 @@ func TestMockPlatform_MockPlatformMenu_AddRole_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMockPlatform_MockPlatformMenu_AddRole_Ugly(t *core.T) {
@@ -322,7 +302,6 @@ func TestMockPlatform_MockPlatformMenu_AddRole_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 type MockPlatformMenuItem = exportedMockPlatformMenuItem
@@ -337,7 +316,6 @@ func TestMockPlatform_MockPlatformMenuItem_SetAccelerator_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMockPlatform_MockPlatformMenuItem_SetAccelerator_Bad(t *core.T) {
@@ -350,7 +328,6 @@ func TestMockPlatform_MockPlatformMenuItem_SetAccelerator_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMockPlatform_MockPlatformMenuItem_SetAccelerator_Ugly(t *core.T) {
@@ -363,7 +340,6 @@ func TestMockPlatform_MockPlatformMenuItem_SetAccelerator_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMockPlatform_MockPlatformMenuItem_SetTooltip_Good(t *core.T) {
@@ -376,7 +352,6 @@ func TestMockPlatform_MockPlatformMenuItem_SetTooltip_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMockPlatform_MockPlatformMenuItem_SetTooltip_Bad(t *core.T) {
@@ -389,7 +364,6 @@ func TestMockPlatform_MockPlatformMenuItem_SetTooltip_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMockPlatform_MockPlatformMenuItem_SetTooltip_Ugly(t *core.T) {
@@ -402,7 +376,6 @@ func TestMockPlatform_MockPlatformMenuItem_SetTooltip_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMockPlatform_MockPlatformMenuItem_SetChecked_Good(t *core.T) {
@@ -415,7 +388,6 @@ func TestMockPlatform_MockPlatformMenuItem_SetChecked_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMockPlatform_MockPlatformMenuItem_SetChecked_Bad(t *core.T) {
@@ -428,7 +400,6 @@ func TestMockPlatform_MockPlatformMenuItem_SetChecked_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMockPlatform_MockPlatformMenuItem_SetChecked_Ugly(t *core.T) {
@@ -441,7 +412,6 @@ func TestMockPlatform_MockPlatformMenuItem_SetChecked_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMockPlatform_MockPlatformMenuItem_SetEnabled_Good(t *core.T) {
@@ -454,7 +424,6 @@ func TestMockPlatform_MockPlatformMenuItem_SetEnabled_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMockPlatform_MockPlatformMenuItem_SetEnabled_Bad(t *core.T) {
@@ -467,7 +436,6 @@ func TestMockPlatform_MockPlatformMenuItem_SetEnabled_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMockPlatform_MockPlatformMenuItem_SetEnabled_Ugly(t *core.T) {
@@ -480,7 +448,6 @@ func TestMockPlatform_MockPlatformMenuItem_SetEnabled_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMockPlatform_MockPlatformMenuItem_OnClick_Good(t *core.T) {
@@ -493,7 +460,6 @@ func TestMockPlatform_MockPlatformMenuItem_OnClick_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMockPlatform_MockPlatformMenuItem_OnClick_Bad(t *core.T) {
@@ -506,7 +472,6 @@ func TestMockPlatform_MockPlatformMenuItem_OnClick_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMockPlatform_MockPlatformMenuItem_OnClick_Ugly(t *core.T) {
@@ -519,7 +484,6 @@ func TestMockPlatform_MockPlatformMenuItem_OnClick_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 // AX7 generated source-matching smoke coverage.

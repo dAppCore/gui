@@ -115,7 +115,6 @@ func TestKeybinding_KeyBindingManager_Add_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestKeybinding_KeyBindingManager_Add_Bad(t *core.T) {
@@ -128,7 +127,6 @@ func TestKeybinding_KeyBindingManager_Add_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestKeybinding_KeyBindingManager_Add_Ugly(t *core.T) {
@@ -141,7 +139,6 @@ func TestKeybinding_KeyBindingManager_Add_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestKeybinding_KeyBindingManager_Remove_Good(t *core.T) {
@@ -154,7 +151,6 @@ func TestKeybinding_KeyBindingManager_Remove_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestKeybinding_KeyBindingManager_Remove_Bad(t *core.T) {
@@ -167,7 +163,6 @@ func TestKeybinding_KeyBindingManager_Remove_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestKeybinding_KeyBindingManager_Remove_Ugly(t *core.T) {
@@ -180,7 +175,6 @@ func TestKeybinding_KeyBindingManager_Remove_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestKeybinding_KeyBindingManager_Process_Good(t *core.T) {
@@ -193,7 +187,6 @@ func TestKeybinding_KeyBindingManager_Process_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestKeybinding_KeyBindingManager_Process_Bad(t *core.T) {
@@ -206,7 +199,6 @@ func TestKeybinding_KeyBindingManager_Process_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestKeybinding_KeyBindingManager_Process_Ugly(t *core.T) {
@@ -219,7 +211,6 @@ func TestKeybinding_KeyBindingManager_Process_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestKeybinding_KeyBindingManager_GetAll_Good(t *core.T) {
@@ -232,7 +223,6 @@ func TestKeybinding_KeyBindingManager_GetAll_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestKeybinding_KeyBindingManager_GetAll_Bad(t *core.T) {
@@ -245,7 +235,6 @@ func TestKeybinding_KeyBindingManager_GetAll_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestKeybinding_KeyBindingManager_GetAll_Ugly(t *core.T) {
@@ -258,5 +247,4 @@ func TestKeybinding_KeyBindingManager_GetAll_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

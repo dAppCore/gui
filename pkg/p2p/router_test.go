@@ -127,7 +127,6 @@ func TestRouter_New_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestRouter_New_Bad(t *core.T) {
@@ -139,7 +138,6 @@ func TestRouter_New_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestRouter_New_Ugly(t *core.T) {
@@ -151,7 +149,6 @@ func TestRouter_New_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestRouter_Router_Subscribe_Good(t *core.T) {
@@ -164,7 +161,6 @@ func TestRouter_Router_Subscribe_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestRouter_Router_Subscribe_Bad(t *core.T) {
@@ -177,7 +173,6 @@ func TestRouter_Router_Subscribe_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestRouter_Router_Subscribe_Ugly(t *core.T) {
@@ -190,7 +185,6 @@ func TestRouter_Router_Subscribe_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestRouter_Router_Publish_Good(t *core.T) {
@@ -203,7 +197,6 @@ func TestRouter_Router_Publish_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestRouter_Router_Publish_Bad(t *core.T) {
@@ -216,7 +209,6 @@ func TestRouter_Router_Publish_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestRouter_Router_Publish_Ugly(t *core.T) {
@@ -229,7 +221,6 @@ func TestRouter_Router_Publish_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestRouter_Router_Peers_Good(t *core.T) {
@@ -242,7 +233,6 @@ func TestRouter_Router_Peers_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestRouter_Router_Peers_Bad(t *core.T) {
@@ -255,7 +245,6 @@ func TestRouter_Router_Peers_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestRouter_Router_Peers_Ugly(t *core.T) {
@@ -268,5 +257,4 @@ func TestRouter_Router_Peers_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

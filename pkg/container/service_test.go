@@ -327,7 +327,6 @@ func TestService_OptionsFromEnvValidated_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestService_OptionsFromEnvValidated_Bad(t *core.T) {
@@ -339,7 +338,6 @@ func TestService_OptionsFromEnvValidated_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestService_OptionsFromEnvValidated_Ugly(t *core.T) {
@@ -351,7 +349,6 @@ func TestService_OptionsFromEnvValidated_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestService_Service_OnStartup_Good(t *core.T) {
@@ -364,7 +361,6 @@ func TestService_Service_OnStartup_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestService_Service_OnStartup_Bad(t *core.T) {
@@ -377,7 +373,6 @@ func TestService_Service_OnStartup_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestService_Service_OnStartup_Ugly(t *core.T) {
@@ -390,7 +385,6 @@ func TestService_Service_OnStartup_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestService_TIMOptions_Validate_Good(t *core.T) {
@@ -403,7 +397,6 @@ func TestService_TIMOptions_Validate_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestService_TIMOptions_Validate_Bad(t *core.T) {
@@ -416,7 +409,6 @@ func TestService_TIMOptions_Validate_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestService_TIMOptions_Validate_Ugly(t *core.T) {
@@ -429,7 +421,6 @@ func TestService_TIMOptions_Validate_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestService_Service_State_Good(t *core.T) {
@@ -442,7 +433,6 @@ func TestService_Service_State_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestService_Service_State_Bad(t *core.T) {
@@ -455,7 +445,6 @@ func TestService_Service_State_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestService_Service_State_Ugly(t *core.T) {
@@ -468,7 +457,6 @@ func TestService_Service_State_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestService_NewService_Good(t *core.T) {
@@ -480,7 +468,6 @@ func TestService_NewService_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestService_NewService_Bad(t *core.T) {
@@ -492,7 +479,6 @@ func TestService_NewService_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestService_NewService_Ugly(t *core.T) {
@@ -504,7 +490,6 @@ func TestService_NewService_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestService_OptionsFromEnv_Good(t *core.T) {
@@ -516,7 +501,6 @@ func TestService_OptionsFromEnv_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestService_OptionsFromEnv_Bad(t *core.T) {
@@ -528,7 +512,6 @@ func TestService_OptionsFromEnv_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestService_OptionsFromEnv_Ugly(t *core.T) {
@@ -540,5 +523,4 @@ func TestService_OptionsFromEnv_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

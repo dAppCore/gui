@@ -190,7 +190,6 @@ func TestToolHandler_NewToolCallHandler_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestToolHandler_NewToolCallHandler_Bad(t *core.T) {
@@ -202,7 +201,6 @@ func TestToolHandler_NewToolCallHandler_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestToolHandler_NewToolCallHandler_Ugly(t *core.T) {
@@ -214,7 +212,6 @@ func TestToolHandler_NewToolCallHandler_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestToolHandler_ToolCallHandler_OnToolCall_Good(t *core.T) {
@@ -227,7 +224,6 @@ func TestToolHandler_ToolCallHandler_OnToolCall_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestToolHandler_ToolCallHandler_OnToolCall_Bad(t *core.T) {
@@ -240,7 +236,6 @@ func TestToolHandler_ToolCallHandler_OnToolCall_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestToolHandler_ToolCallHandler_OnToolCall_Ugly(t *core.T) {
@@ -253,7 +248,6 @@ func TestToolHandler_ToolCallHandler_OnToolCall_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestToolHandler_ToolCallHandler_BuildToolManifest_Good(t *core.T) {
@@ -266,7 +260,6 @@ func TestToolHandler_ToolCallHandler_BuildToolManifest_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestToolHandler_ToolCallHandler_BuildToolManifest_Bad(t *core.T) {
@@ -279,7 +272,6 @@ func TestToolHandler_ToolCallHandler_BuildToolManifest_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestToolHandler_ToolCallHandler_BuildToolManifest_Ugly(t *core.T) {
@@ -292,7 +284,6 @@ func TestToolHandler_ToolCallHandler_BuildToolManifest_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestToolHandler_ToolExecutor_Manifest_Good(t *core.T) {
@@ -305,7 +296,6 @@ func TestToolHandler_ToolExecutor_Manifest_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestToolHandler_ToolExecutor_Manifest_Bad(t *core.T) {
@@ -318,7 +308,6 @@ func TestToolHandler_ToolExecutor_Manifest_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestToolHandler_ToolExecutor_Manifest_Ugly(t *core.T) {
@@ -331,7 +320,6 @@ func TestToolHandler_ToolExecutor_Manifest_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestToolHandler_ToolExecutor_ManifestText_Good(t *core.T) {
@@ -344,7 +332,6 @@ func TestToolHandler_ToolExecutor_ManifestText_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestToolHandler_ToolExecutor_ManifestText_Bad(t *core.T) {
@@ -357,7 +344,6 @@ func TestToolHandler_ToolExecutor_ManifestText_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestToolHandler_ToolExecutor_ManifestText_Ugly(t *core.T) {
@@ -370,7 +356,6 @@ func TestToolHandler_ToolExecutor_ManifestText_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestToolHandler_ToolExecutor_CallTool_Good(t *core.T) {
@@ -383,7 +368,6 @@ func TestToolHandler_ToolExecutor_CallTool_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestToolHandler_ToolExecutor_CallTool_Bad(t *core.T) {
@@ -396,7 +380,6 @@ func TestToolHandler_ToolExecutor_CallTool_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestToolHandler_ToolExecutor_CallTool_Ugly(t *core.T) {
@@ -409,5 +392,4 @@ func TestToolHandler_ToolExecutor_CallTool_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

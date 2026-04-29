@@ -93,7 +93,6 @@ func TestMode_DetectModeWithEnvironment_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMode_DetectModeWithEnvironment_Bad(t *core.T) {
@@ -105,7 +104,6 @@ func TestMode_DetectModeWithEnvironment_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestMode_DetectModeWithEnvironment_Ugly(t *core.T) {
@@ -117,5 +115,4 @@ func TestMode_DetectModeWithEnvironment_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

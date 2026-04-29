@@ -1226,7 +1226,6 @@ func TestApi_Service_GetScreens_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_GetScreens_Bad(t *core.T) {
@@ -1239,7 +1238,6 @@ func TestApi_Service_GetScreens_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_GetScreens_Ugly(t *core.T) {
@@ -1252,7 +1250,6 @@ func TestApi_Service_GetScreens_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_GetScreen_Good(t *core.T) {
@@ -1265,7 +1262,6 @@ func TestApi_Service_GetScreen_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_GetScreen_Bad(t *core.T) {
@@ -1278,7 +1274,6 @@ func TestApi_Service_GetScreen_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_GetScreen_Ugly(t *core.T) {
@@ -1291,7 +1286,6 @@ func TestApi_Service_GetScreen_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_GetPrimaryScreen_Good(t *core.T) {
@@ -1304,7 +1298,6 @@ func TestApi_Service_GetPrimaryScreen_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_GetPrimaryScreen_Bad(t *core.T) {
@@ -1317,7 +1310,6 @@ func TestApi_Service_GetPrimaryScreen_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_GetPrimaryScreen_Ugly(t *core.T) {
@@ -1330,7 +1322,6 @@ func TestApi_Service_GetPrimaryScreen_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_GetScreenAtPoint_Good(t *core.T) {
@@ -1343,7 +1334,6 @@ func TestApi_Service_GetScreenAtPoint_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_GetScreenAtPoint_Bad(t *core.T) {
@@ -1356,7 +1346,6 @@ func TestApi_Service_GetScreenAtPoint_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_GetScreenAtPoint_Ugly(t *core.T) {
@@ -1369,7 +1358,6 @@ func TestApi_Service_GetScreenAtPoint_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_GetScreenForWindow_Good(t *core.T) {
@@ -1382,7 +1370,6 @@ func TestApi_Service_GetScreenForWindow_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_GetScreenForWindow_Bad(t *core.T) {
@@ -1395,7 +1382,6 @@ func TestApi_Service_GetScreenForWindow_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_GetScreenForWindow_Ugly(t *core.T) {
@@ -1408,7 +1394,6 @@ func TestApi_Service_GetScreenForWindow_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_GetWorkAreas_Good(t *core.T) {
@@ -1421,7 +1406,6 @@ func TestApi_Service_GetWorkAreas_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_GetWorkAreas_Bad(t *core.T) {
@@ -1434,7 +1418,6 @@ func TestApi_Service_GetWorkAreas_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_GetWorkAreas_Ugly(t *core.T) {
@@ -1447,7 +1430,6 @@ func TestApi_Service_GetWorkAreas_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_OpenSingleFileDialog_Good(t *core.T) {
@@ -1460,7 +1442,6 @@ func TestApi_Service_OpenSingleFileDialog_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_OpenSingleFileDialog_Bad(t *core.T) {
@@ -1473,7 +1454,6 @@ func TestApi_Service_OpenSingleFileDialog_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_OpenSingleFileDialog_Ugly(t *core.T) {
@@ -1486,7 +1466,6 @@ func TestApi_Service_OpenSingleFileDialog_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_OpenFileDialog_Good(t *core.T) {
@@ -1499,7 +1478,6 @@ func TestApi_Service_OpenFileDialog_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_OpenFileDialog_Bad(t *core.T) {
@@ -1512,7 +1490,6 @@ func TestApi_Service_OpenFileDialog_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_OpenFileDialog_Ugly(t *core.T) {
@@ -1525,7 +1502,6 @@ func TestApi_Service_OpenFileDialog_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_SaveFileDialog_Good(t *core.T) {
@@ -1538,7 +1514,6 @@ func TestApi_Service_SaveFileDialog_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_SaveFileDialog_Bad(t *core.T) {
@@ -1551,7 +1526,6 @@ func TestApi_Service_SaveFileDialog_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_SaveFileDialog_Ugly(t *core.T) {
@@ -1564,7 +1538,6 @@ func TestApi_Service_SaveFileDialog_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_OpenDirectoryDialog_Good(t *core.T) {
@@ -1577,7 +1550,6 @@ func TestApi_Service_OpenDirectoryDialog_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_OpenDirectoryDialog_Bad(t *core.T) {
@@ -1590,7 +1562,6 @@ func TestApi_Service_OpenDirectoryDialog_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_OpenDirectoryDialog_Ugly(t *core.T) {
@@ -1603,7 +1574,6 @@ func TestApi_Service_OpenDirectoryDialog_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_ConfirmDialog_Good(t *core.T) {
@@ -1616,7 +1586,6 @@ func TestApi_Service_ConfirmDialog_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_ConfirmDialog_Bad(t *core.T) {
@@ -1629,7 +1598,6 @@ func TestApi_Service_ConfirmDialog_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_ConfirmDialog_Ugly(t *core.T) {
@@ -1642,7 +1610,6 @@ func TestApi_Service_ConfirmDialog_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_PromptDialog_Good(t *core.T) {
@@ -1655,7 +1622,6 @@ func TestApi_Service_PromptDialog_Good(t *core.T) {
 		return core.Sprintf("%T,%T,%T", got0, got1, got2)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_PromptDialog_Bad(t *core.T) {
@@ -1668,7 +1634,6 @@ func TestApi_Service_PromptDialog_Bad(t *core.T) {
 		return core.Sprintf("%T,%T,%T", got0, got1, got2)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_PromptDialog_Ugly(t *core.T) {
@@ -1681,7 +1646,6 @@ func TestApi_Service_PromptDialog_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T,%T", got0, got1, got2)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_SetTrayIcon_Good(t *core.T) {
@@ -1694,7 +1658,6 @@ func TestApi_Service_SetTrayIcon_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_SetTrayIcon_Bad(t *core.T) {
@@ -1707,7 +1670,6 @@ func TestApi_Service_SetTrayIcon_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_SetTrayIcon_Ugly(t *core.T) {
@@ -1720,7 +1682,6 @@ func TestApi_Service_SetTrayIcon_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_SetTrayTooltip_Good(t *core.T) {
@@ -1733,7 +1694,6 @@ func TestApi_Service_SetTrayTooltip_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_SetTrayTooltip_Bad(t *core.T) {
@@ -1746,7 +1706,6 @@ func TestApi_Service_SetTrayTooltip_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_SetTrayTooltip_Ugly(t *core.T) {
@@ -1759,7 +1718,6 @@ func TestApi_Service_SetTrayTooltip_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_SetTrayLabel_Good(t *core.T) {
@@ -1772,7 +1730,6 @@ func TestApi_Service_SetTrayLabel_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_SetTrayLabel_Bad(t *core.T) {
@@ -1785,7 +1742,6 @@ func TestApi_Service_SetTrayLabel_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_SetTrayLabel_Ugly(t *core.T) {
@@ -1798,7 +1754,6 @@ func TestApi_Service_SetTrayLabel_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_SetTrayMenu_Good(t *core.T) {
@@ -1811,7 +1766,6 @@ func TestApi_Service_SetTrayMenu_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_SetTrayMenu_Bad(t *core.T) {
@@ -1824,7 +1778,6 @@ func TestApi_Service_SetTrayMenu_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_SetTrayMenu_Ugly(t *core.T) {
@@ -1837,7 +1790,6 @@ func TestApi_Service_SetTrayMenu_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_GetTrayInfo_Good(t *core.T) {
@@ -1850,7 +1802,6 @@ func TestApi_Service_GetTrayInfo_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_GetTrayInfo_Bad(t *core.T) {
@@ -1863,7 +1814,6 @@ func TestApi_Service_GetTrayInfo_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_GetTrayInfo_Ugly(t *core.T) {
@@ -1876,7 +1826,6 @@ func TestApi_Service_GetTrayInfo_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_ShowTrayMessage_Good(t *core.T) {
@@ -1889,7 +1838,6 @@ func TestApi_Service_ShowTrayMessage_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_ShowTrayMessage_Bad(t *core.T) {
@@ -1902,7 +1850,6 @@ func TestApi_Service_ShowTrayMessage_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_ShowTrayMessage_Ugly(t *core.T) {
@@ -1915,7 +1862,6 @@ func TestApi_Service_ShowTrayMessage_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_ReadClipboard_Good(t *core.T) {
@@ -1928,7 +1874,6 @@ func TestApi_Service_ReadClipboard_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_ReadClipboard_Bad(t *core.T) {
@@ -1941,7 +1886,6 @@ func TestApi_Service_ReadClipboard_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_ReadClipboard_Ugly(t *core.T) {
@@ -1954,7 +1898,6 @@ func TestApi_Service_ReadClipboard_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_WriteClipboard_Good(t *core.T) {
@@ -1967,7 +1910,6 @@ func TestApi_Service_WriteClipboard_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_WriteClipboard_Bad(t *core.T) {
@@ -1980,7 +1922,6 @@ func TestApi_Service_WriteClipboard_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_WriteClipboard_Ugly(t *core.T) {
@@ -1993,7 +1934,6 @@ func TestApi_Service_WriteClipboard_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_HasClipboard_Good(t *core.T) {
@@ -2006,7 +1946,6 @@ func TestApi_Service_HasClipboard_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_HasClipboard_Bad(t *core.T) {
@@ -2019,7 +1958,6 @@ func TestApi_Service_HasClipboard_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_HasClipboard_Ugly(t *core.T) {
@@ -2032,7 +1970,6 @@ func TestApi_Service_HasClipboard_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_ClearClipboard_Good(t *core.T) {
@@ -2045,7 +1982,6 @@ func TestApi_Service_ClearClipboard_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_ClearClipboard_Bad(t *core.T) {
@@ -2058,7 +1994,6 @@ func TestApi_Service_ClearClipboard_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_ClearClipboard_Ugly(t *core.T) {
@@ -2071,7 +2006,6 @@ func TestApi_Service_ClearClipboard_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_ReadClipboardImage_Good(t *core.T) {
@@ -2084,7 +2018,6 @@ func TestApi_Service_ReadClipboardImage_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_ReadClipboardImage_Bad(t *core.T) {
@@ -2097,7 +2030,6 @@ func TestApi_Service_ReadClipboardImage_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_ReadClipboardImage_Ugly(t *core.T) {
@@ -2110,7 +2042,6 @@ func TestApi_Service_ReadClipboardImage_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_WriteClipboardImage_Good(t *core.T) {
@@ -2123,7 +2054,6 @@ func TestApi_Service_WriteClipboardImage_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_WriteClipboardImage_Bad(t *core.T) {
@@ -2136,7 +2066,6 @@ func TestApi_Service_WriteClipboardImage_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_WriteClipboardImage_Ugly(t *core.T) {
@@ -2149,7 +2078,6 @@ func TestApi_Service_WriteClipboardImage_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_ShowNotification_Good(t *core.T) {
@@ -2162,7 +2090,6 @@ func TestApi_Service_ShowNotification_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_ShowNotification_Bad(t *core.T) {
@@ -2175,7 +2102,6 @@ func TestApi_Service_ShowNotification_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_ShowNotification_Ugly(t *core.T) {
@@ -2188,7 +2114,6 @@ func TestApi_Service_ShowNotification_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_ShowInfoNotification_Good(t *core.T) {
@@ -2201,7 +2126,6 @@ func TestApi_Service_ShowInfoNotification_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_ShowInfoNotification_Bad(t *core.T) {
@@ -2214,7 +2138,6 @@ func TestApi_Service_ShowInfoNotification_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_ShowInfoNotification_Ugly(t *core.T) {
@@ -2227,7 +2150,6 @@ func TestApi_Service_ShowInfoNotification_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_ShowWarningNotification_Good(t *core.T) {
@@ -2240,7 +2162,6 @@ func TestApi_Service_ShowWarningNotification_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_ShowWarningNotification_Bad(t *core.T) {
@@ -2253,7 +2174,6 @@ func TestApi_Service_ShowWarningNotification_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_ShowWarningNotification_Ugly(t *core.T) {
@@ -2266,7 +2186,6 @@ func TestApi_Service_ShowWarningNotification_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_ShowErrorNotification_Good(t *core.T) {
@@ -2279,7 +2198,6 @@ func TestApi_Service_ShowErrorNotification_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_ShowErrorNotification_Bad(t *core.T) {
@@ -2292,7 +2210,6 @@ func TestApi_Service_ShowErrorNotification_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_ShowErrorNotification_Ugly(t *core.T) {
@@ -2305,7 +2222,6 @@ func TestApi_Service_ShowErrorNotification_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_RequestNotificationPermission_Good(t *core.T) {
@@ -2318,7 +2234,6 @@ func TestApi_Service_RequestNotificationPermission_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_RequestNotificationPermission_Bad(t *core.T) {
@@ -2331,7 +2246,6 @@ func TestApi_Service_RequestNotificationPermission_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_RequestNotificationPermission_Ugly(t *core.T) {
@@ -2344,7 +2258,6 @@ func TestApi_Service_RequestNotificationPermission_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_CheckNotificationPermission_Good(t *core.T) {
@@ -2357,7 +2270,6 @@ func TestApi_Service_CheckNotificationPermission_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_CheckNotificationPermission_Bad(t *core.T) {
@@ -2370,7 +2282,6 @@ func TestApi_Service_CheckNotificationPermission_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_CheckNotificationPermission_Ugly(t *core.T) {
@@ -2383,7 +2294,6 @@ func TestApi_Service_CheckNotificationPermission_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_ClearNotifications_Good(t *core.T) {
@@ -2396,7 +2306,6 @@ func TestApi_Service_ClearNotifications_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_ClearNotifications_Bad(t *core.T) {
@@ -2409,7 +2318,6 @@ func TestApi_Service_ClearNotifications_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_ClearNotifications_Ugly(t *core.T) {
@@ -2422,7 +2330,6 @@ func TestApi_Service_ClearNotifications_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_SetTheme_Good(t *core.T) {
@@ -2435,7 +2342,6 @@ func TestApi_Service_SetTheme_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_SetTheme_Bad(t *core.T) {
@@ -2448,7 +2354,6 @@ func TestApi_Service_SetTheme_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_SetTheme_Ugly(t *core.T) {
@@ -2461,7 +2366,6 @@ func TestApi_Service_SetTheme_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_GetTheme_Good(t *core.T) {
@@ -2474,7 +2378,6 @@ func TestApi_Service_GetTheme_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_GetTheme_Bad(t *core.T) {
@@ -2487,7 +2390,6 @@ func TestApi_Service_GetTheme_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_GetTheme_Ugly(t *core.T) {
@@ -2500,7 +2402,6 @@ func TestApi_Service_GetTheme_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_GetSystemTheme_Good(t *core.T) {
@@ -2513,7 +2414,6 @@ func TestApi_Service_GetSystemTheme_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_GetSystemTheme_Bad(t *core.T) {
@@ -2526,7 +2426,6 @@ func TestApi_Service_GetSystemTheme_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApi_Service_GetSystemTheme_Ugly(t *core.T) {
@@ -2539,5 +2438,4 @@ func TestApi_Service_GetSystemTheme_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

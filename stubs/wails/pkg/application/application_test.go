@@ -622,7 +622,6 @@ func TestApplication_Logger_Info_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_Logger_Info_Bad(t *core.T) {
@@ -635,7 +634,6 @@ func TestApplication_Logger_Info_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_Logger_Info_Ugly(t *core.T) {
@@ -648,7 +646,6 @@ func TestApplication_Logger_Info_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_MenuItem_SetAccelerator_Good(t *core.T) {
@@ -661,7 +658,6 @@ func TestApplication_MenuItem_SetAccelerator_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_MenuItem_SetAccelerator_Bad(t *core.T) {
@@ -674,7 +670,6 @@ func TestApplication_MenuItem_SetAccelerator_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_MenuItem_SetAccelerator_Ugly(t *core.T) {
@@ -687,7 +682,6 @@ func TestApplication_MenuItem_SetAccelerator_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_MenuItem_SetTooltip_Good(t *core.T) {
@@ -700,7 +694,6 @@ func TestApplication_MenuItem_SetTooltip_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_MenuItem_SetTooltip_Bad(t *core.T) {
@@ -713,7 +706,6 @@ func TestApplication_MenuItem_SetTooltip_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_MenuItem_SetTooltip_Ugly(t *core.T) {
@@ -726,7 +718,6 @@ func TestApplication_MenuItem_SetTooltip_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_MenuItem_SetChecked_Good(t *core.T) {
@@ -739,7 +730,6 @@ func TestApplication_MenuItem_SetChecked_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_MenuItem_SetChecked_Bad(t *core.T) {
@@ -752,7 +742,6 @@ func TestApplication_MenuItem_SetChecked_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_MenuItem_SetChecked_Ugly(t *core.T) {
@@ -765,7 +754,6 @@ func TestApplication_MenuItem_SetChecked_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_MenuItem_SetEnabled_Good(t *core.T) {
@@ -778,7 +766,6 @@ func TestApplication_MenuItem_SetEnabled_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_MenuItem_SetEnabled_Bad(t *core.T) {
@@ -791,7 +778,6 @@ func TestApplication_MenuItem_SetEnabled_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_MenuItem_SetEnabled_Ugly(t *core.T) {
@@ -804,7 +790,6 @@ func TestApplication_MenuItem_SetEnabled_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_NewMenu_Good(t *core.T) {
@@ -816,7 +801,6 @@ func TestApplication_NewMenu_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_NewMenu_Bad(t *core.T) {
@@ -828,7 +812,6 @@ func TestApplication_NewMenu_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_NewMenu_Ugly(t *core.T) {
@@ -840,7 +823,6 @@ func TestApplication_NewMenu_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_Menu_Add_Good(t *core.T) {
@@ -853,7 +835,6 @@ func TestApplication_Menu_Add_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_Menu_Add_Bad(t *core.T) {
@@ -866,7 +847,6 @@ func TestApplication_Menu_Add_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_Menu_Add_Ugly(t *core.T) {
@@ -879,7 +859,6 @@ func TestApplication_Menu_Add_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_Menu_AddSeparator_Good(t *core.T) {
@@ -892,7 +871,6 @@ func TestApplication_Menu_AddSeparator_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_Menu_AddSeparator_Bad(t *core.T) {
@@ -905,7 +883,6 @@ func TestApplication_Menu_AddSeparator_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_Menu_AddSeparator_Ugly(t *core.T) {
@@ -918,7 +895,6 @@ func TestApplication_Menu_AddSeparator_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_Menu_AddSubmenu_Good(t *core.T) {
@@ -931,7 +907,6 @@ func TestApplication_Menu_AddSubmenu_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_Menu_AddSubmenu_Bad(t *core.T) {
@@ -944,7 +919,6 @@ func TestApplication_Menu_AddSubmenu_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_Menu_AddSubmenu_Ugly(t *core.T) {
@@ -957,7 +931,6 @@ func TestApplication_Menu_AddSubmenu_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_Menu_AddRole_Good(t *core.T) {
@@ -970,7 +943,6 @@ func TestApplication_Menu_AddRole_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_Menu_AddRole_Bad(t *core.T) {
@@ -983,7 +955,6 @@ func TestApplication_Menu_AddRole_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_Menu_AddRole_Ugly(t *core.T) {
@@ -996,7 +967,6 @@ func TestApplication_Menu_AddRole_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_SystemTray_SetIcon_Good(t *core.T) {
@@ -1009,7 +979,6 @@ func TestApplication_SystemTray_SetIcon_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_SystemTray_SetIcon_Bad(t *core.T) {
@@ -1022,7 +991,6 @@ func TestApplication_SystemTray_SetIcon_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_SystemTray_SetIcon_Ugly(t *core.T) {
@@ -1035,7 +1003,6 @@ func TestApplication_SystemTray_SetIcon_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_SystemTray_SetTemplateIcon_Good(t *core.T) {
@@ -1048,7 +1015,6 @@ func TestApplication_SystemTray_SetTemplateIcon_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_SystemTray_SetTemplateIcon_Bad(t *core.T) {
@@ -1061,7 +1027,6 @@ func TestApplication_SystemTray_SetTemplateIcon_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_SystemTray_SetTemplateIcon_Ugly(t *core.T) {
@@ -1074,7 +1039,6 @@ func TestApplication_SystemTray_SetTemplateIcon_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_SystemTray_SetTooltip_Good(t *core.T) {
@@ -1087,7 +1051,6 @@ func TestApplication_SystemTray_SetTooltip_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_SystemTray_SetTooltip_Bad(t *core.T) {
@@ -1100,7 +1063,6 @@ func TestApplication_SystemTray_SetTooltip_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_SystemTray_SetTooltip_Ugly(t *core.T) {
@@ -1113,7 +1075,6 @@ func TestApplication_SystemTray_SetTooltip_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_SystemTray_SetLabel_Good(t *core.T) {
@@ -1126,7 +1087,6 @@ func TestApplication_SystemTray_SetLabel_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_SystemTray_SetLabel_Bad(t *core.T) {
@@ -1139,7 +1099,6 @@ func TestApplication_SystemTray_SetLabel_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_SystemTray_SetLabel_Ugly(t *core.T) {
@@ -1152,7 +1111,6 @@ func TestApplication_SystemTray_SetLabel_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_SystemTray_SetMenu_Good(t *core.T) {
@@ -1165,7 +1123,6 @@ func TestApplication_SystemTray_SetMenu_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_SystemTray_SetMenu_Bad(t *core.T) {
@@ -1178,7 +1135,6 @@ func TestApplication_SystemTray_SetMenu_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_SystemTray_SetMenu_Ugly(t *core.T) {
@@ -1191,7 +1147,6 @@ func TestApplication_SystemTray_SetMenu_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_SystemTray_AttachWindow_Good(t *core.T) {
@@ -1204,7 +1159,6 @@ func TestApplication_SystemTray_AttachWindow_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_SystemTray_AttachWindow_Bad(t *core.T) {
@@ -1217,7 +1171,6 @@ func TestApplication_SystemTray_AttachWindow_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_SystemTray_AttachWindow_Ugly(t *core.T) {
@@ -1230,7 +1183,6 @@ func TestApplication_SystemTray_AttachWindow_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_SystemTrayManager_New_Good(t *core.T) {
@@ -1243,7 +1195,6 @@ func TestApplication_SystemTrayManager_New_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_SystemTrayManager_New_Bad(t *core.T) {
@@ -1256,7 +1207,6 @@ func TestApplication_SystemTrayManager_New_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_SystemTrayManager_New_Ugly(t *core.T) {
@@ -1269,7 +1219,6 @@ func TestApplication_SystemTrayManager_New_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WindowEventContext_DroppedFiles_Good(t *core.T) {
@@ -1282,7 +1231,6 @@ func TestApplication_WindowEventContext_DroppedFiles_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WindowEventContext_DroppedFiles_Bad(t *core.T) {
@@ -1295,7 +1243,6 @@ func TestApplication_WindowEventContext_DroppedFiles_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WindowEventContext_DroppedFiles_Ugly(t *core.T) {
@@ -1308,7 +1255,6 @@ func TestApplication_WindowEventContext_DroppedFiles_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WindowEventContext_DropTargetDetails_Good(t *core.T) {
@@ -1321,7 +1267,6 @@ func TestApplication_WindowEventContext_DropTargetDetails_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WindowEventContext_DropTargetDetails_Bad(t *core.T) {
@@ -1334,7 +1279,6 @@ func TestApplication_WindowEventContext_DropTargetDetails_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WindowEventContext_DropTargetDetails_Ugly(t *core.T) {
@@ -1347,7 +1291,6 @@ func TestApplication_WindowEventContext_DropTargetDetails_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WindowEvent_Context_Good(t *core.T) {
@@ -1360,7 +1303,6 @@ func TestApplication_WindowEvent_Context_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WindowEvent_Context_Bad(t *core.T) {
@@ -1373,7 +1315,6 @@ func TestApplication_WindowEvent_Context_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WindowEvent_Context_Ugly(t *core.T) {
@@ -1386,7 +1327,6 @@ func TestApplication_WindowEvent_Context_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Name_Good(t *core.T) {
@@ -1399,7 +1339,6 @@ func TestApplication_WebviewWindow_Name_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Name_Bad(t *core.T) {
@@ -1412,7 +1351,6 @@ func TestApplication_WebviewWindow_Name_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Name_Ugly(t *core.T) {
@@ -1425,7 +1363,6 @@ func TestApplication_WebviewWindow_Name_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Title_Good(t *core.T) {
@@ -1438,7 +1375,6 @@ func TestApplication_WebviewWindow_Title_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Title_Bad(t *core.T) {
@@ -1451,7 +1387,6 @@ func TestApplication_WebviewWindow_Title_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Title_Ugly(t *core.T) {
@@ -1464,7 +1399,6 @@ func TestApplication_WebviewWindow_Title_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Position_Good(t *core.T) {
@@ -1477,7 +1411,6 @@ func TestApplication_WebviewWindow_Position_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Position_Bad(t *core.T) {
@@ -1490,7 +1423,6 @@ func TestApplication_WebviewWindow_Position_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Position_Ugly(t *core.T) {
@@ -1503,7 +1435,6 @@ func TestApplication_WebviewWindow_Position_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Size_Good(t *core.T) {
@@ -1516,7 +1447,6 @@ func TestApplication_WebviewWindow_Size_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Size_Bad(t *core.T) {
@@ -1529,7 +1459,6 @@ func TestApplication_WebviewWindow_Size_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Size_Ugly(t *core.T) {
@@ -1542,7 +1471,6 @@ func TestApplication_WebviewWindow_Size_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_IsMaximised_Good(t *core.T) {
@@ -1555,7 +1483,6 @@ func TestApplication_WebviewWindow_IsMaximised_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_IsMaximised_Bad(t *core.T) {
@@ -1568,7 +1495,6 @@ func TestApplication_WebviewWindow_IsMaximised_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_IsMaximised_Ugly(t *core.T) {
@@ -1581,7 +1507,6 @@ func TestApplication_WebviewWindow_IsMaximised_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_IsFocused_Good(t *core.T) {
@@ -1594,7 +1519,6 @@ func TestApplication_WebviewWindow_IsFocused_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_IsFocused_Bad(t *core.T) {
@@ -1607,7 +1531,6 @@ func TestApplication_WebviewWindow_IsFocused_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_IsFocused_Ugly(t *core.T) {
@@ -1620,7 +1543,6 @@ func TestApplication_WebviewWindow_IsFocused_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetTitle_Good(t *core.T) {
@@ -1633,7 +1555,6 @@ func TestApplication_WebviewWindow_SetTitle_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetTitle_Bad(t *core.T) {
@@ -1646,7 +1567,6 @@ func TestApplication_WebviewWindow_SetTitle_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetTitle_Ugly(t *core.T) {
@@ -1659,7 +1579,6 @@ func TestApplication_WebviewWindow_SetTitle_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetPosition_Good(t *core.T) {
@@ -1672,7 +1591,6 @@ func TestApplication_WebviewWindow_SetPosition_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetPosition_Bad(t *core.T) {
@@ -1685,7 +1603,6 @@ func TestApplication_WebviewWindow_SetPosition_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetPosition_Ugly(t *core.T) {
@@ -1698,7 +1615,6 @@ func TestApplication_WebviewWindow_SetPosition_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetSize_Good(t *core.T) {
@@ -1711,7 +1627,6 @@ func TestApplication_WebviewWindow_SetSize_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetSize_Bad(t *core.T) {
@@ -1724,7 +1639,6 @@ func TestApplication_WebviewWindow_SetSize_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetSize_Ugly(t *core.T) {
@@ -1737,7 +1651,6 @@ func TestApplication_WebviewWindow_SetSize_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetBackgroundColour_Good(t *core.T) {
@@ -1750,7 +1663,6 @@ func TestApplication_WebviewWindow_SetBackgroundColour_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetBackgroundColour_Bad(t *core.T) {
@@ -1763,7 +1675,6 @@ func TestApplication_WebviewWindow_SetBackgroundColour_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetBackgroundColour_Ugly(t *core.T) {
@@ -1776,7 +1687,6 @@ func TestApplication_WebviewWindow_SetBackgroundColour_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetAlwaysOnTop_Good(t *core.T) {
@@ -1789,7 +1699,6 @@ func TestApplication_WebviewWindow_SetAlwaysOnTop_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetAlwaysOnTop_Bad(t *core.T) {
@@ -1802,7 +1711,6 @@ func TestApplication_WebviewWindow_SetAlwaysOnTop_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetAlwaysOnTop_Ugly(t *core.T) {
@@ -1815,7 +1723,6 @@ func TestApplication_WebviewWindow_SetAlwaysOnTop_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetOpacity_Good(t *core.T) {
@@ -1828,7 +1735,6 @@ func TestApplication_WebviewWindow_SetOpacity_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetOpacity_Bad(t *core.T) {
@@ -1841,7 +1747,6 @@ func TestApplication_WebviewWindow_SetOpacity_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetOpacity_Ugly(t *core.T) {
@@ -1854,7 +1759,6 @@ func TestApplication_WebviewWindow_SetOpacity_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Maximise_Good(t *core.T) {
@@ -1867,7 +1771,6 @@ func TestApplication_WebviewWindow_Maximise_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Maximise_Bad(t *core.T) {
@@ -1880,7 +1783,6 @@ func TestApplication_WebviewWindow_Maximise_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Maximise_Ugly(t *core.T) {
@@ -1893,7 +1795,6 @@ func TestApplication_WebviewWindow_Maximise_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Restore_Good(t *core.T) {
@@ -1906,7 +1807,6 @@ func TestApplication_WebviewWindow_Restore_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Restore_Bad(t *core.T) {
@@ -1919,7 +1819,6 @@ func TestApplication_WebviewWindow_Restore_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Restore_Ugly(t *core.T) {
@@ -1932,7 +1831,6 @@ func TestApplication_WebviewWindow_Restore_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Minimise_Good(t *core.T) {
@@ -1945,7 +1843,6 @@ func TestApplication_WebviewWindow_Minimise_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Minimise_Bad(t *core.T) {
@@ -1958,7 +1855,6 @@ func TestApplication_WebviewWindow_Minimise_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Minimise_Ugly(t *core.T) {
@@ -1971,7 +1867,6 @@ func TestApplication_WebviewWindow_Minimise_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Focus_Good(t *core.T) {
@@ -1984,7 +1879,6 @@ func TestApplication_WebviewWindow_Focus_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Focus_Bad(t *core.T) {
@@ -1997,7 +1891,6 @@ func TestApplication_WebviewWindow_Focus_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Focus_Ugly(t *core.T) {
@@ -2010,7 +1903,6 @@ func TestApplication_WebviewWindow_Focus_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Close_Good(t *core.T) {
@@ -2023,7 +1915,6 @@ func TestApplication_WebviewWindow_Close_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Close_Bad(t *core.T) {
@@ -2036,7 +1927,6 @@ func TestApplication_WebviewWindow_Close_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Close_Ugly(t *core.T) {
@@ -2049,7 +1939,6 @@ func TestApplication_WebviewWindow_Close_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Show_Good(t *core.T) {
@@ -2062,7 +1951,6 @@ func TestApplication_WebviewWindow_Show_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Show_Bad(t *core.T) {
@@ -2075,7 +1963,6 @@ func TestApplication_WebviewWindow_Show_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Show_Ugly(t *core.T) {
@@ -2088,7 +1975,6 @@ func TestApplication_WebviewWindow_Show_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Hide_Good(t *core.T) {
@@ -2101,7 +1987,6 @@ func TestApplication_WebviewWindow_Hide_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Hide_Bad(t *core.T) {
@@ -2114,7 +1999,6 @@ func TestApplication_WebviewWindow_Hide_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Hide_Ugly(t *core.T) {
@@ -2127,7 +2011,6 @@ func TestApplication_WebviewWindow_Hide_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Fullscreen_Good(t *core.T) {
@@ -2140,7 +2023,6 @@ func TestApplication_WebviewWindow_Fullscreen_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Fullscreen_Bad(t *core.T) {
@@ -2153,7 +2035,6 @@ func TestApplication_WebviewWindow_Fullscreen_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Fullscreen_Ugly(t *core.T) {
@@ -2166,7 +2047,6 @@ func TestApplication_WebviewWindow_Fullscreen_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_UnFullscreen_Good(t *core.T) {
@@ -2179,7 +2059,6 @@ func TestApplication_WebviewWindow_UnFullscreen_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_UnFullscreen_Bad(t *core.T) {
@@ -2192,7 +2071,6 @@ func TestApplication_WebviewWindow_UnFullscreen_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_UnFullscreen_Ugly(t *core.T) {
@@ -2205,7 +2083,6 @@ func TestApplication_WebviewWindow_UnFullscreen_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_OnWindowEvent_Good(t *core.T) {
@@ -2218,7 +2095,6 @@ func TestApplication_WebviewWindow_OnWindowEvent_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_OnWindowEvent_Bad(t *core.T) {
@@ -2231,7 +2107,6 @@ func TestApplication_WebviewWindow_OnWindowEvent_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_OnWindowEvent_Ugly(t *core.T) {
@@ -2244,7 +2119,6 @@ func TestApplication_WebviewWindow_OnWindowEvent_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_ID_Good(t *core.T) {
@@ -2257,7 +2131,6 @@ func TestApplication_WebviewWindow_ID_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_ID_Bad(t *core.T) {
@@ -2270,7 +2143,6 @@ func TestApplication_WebviewWindow_ID_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_ID_Ugly(t *core.T) {
@@ -2283,7 +2155,6 @@ func TestApplication_WebviewWindow_ID_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_ClientID_Good(t *core.T) {
@@ -2296,7 +2167,6 @@ func TestApplication_WebviewWindow_ClientID_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_ClientID_Bad(t *core.T) {
@@ -2309,7 +2179,6 @@ func TestApplication_WebviewWindow_ClientID_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_ClientID_Ugly(t *core.T) {
@@ -2322,7 +2191,6 @@ func TestApplication_WebviewWindow_ClientID_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Width_Good(t *core.T) {
@@ -2335,7 +2203,6 @@ func TestApplication_WebviewWindow_Width_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Width_Bad(t *core.T) {
@@ -2348,7 +2215,6 @@ func TestApplication_WebviewWindow_Width_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Width_Ugly(t *core.T) {
@@ -2361,7 +2227,6 @@ func TestApplication_WebviewWindow_Width_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Height_Good(t *core.T) {
@@ -2374,7 +2239,6 @@ func TestApplication_WebviewWindow_Height_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Height_Bad(t *core.T) {
@@ -2387,7 +2251,6 @@ func TestApplication_WebviewWindow_Height_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Height_Ugly(t *core.T) {
@@ -2400,7 +2263,6 @@ func TestApplication_WebviewWindow_Height_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_IsVisible_Good(t *core.T) {
@@ -2413,7 +2275,6 @@ func TestApplication_WebviewWindow_IsVisible_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_IsVisible_Bad(t *core.T) {
@@ -2426,7 +2287,6 @@ func TestApplication_WebviewWindow_IsVisible_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_IsVisible_Ugly(t *core.T) {
@@ -2439,7 +2299,6 @@ func TestApplication_WebviewWindow_IsVisible_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_IsFullscreen_Good(t *core.T) {
@@ -2452,7 +2311,6 @@ func TestApplication_WebviewWindow_IsFullscreen_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_IsFullscreen_Bad(t *core.T) {
@@ -2465,7 +2323,6 @@ func TestApplication_WebviewWindow_IsFullscreen_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_IsFullscreen_Ugly(t *core.T) {
@@ -2478,7 +2335,6 @@ func TestApplication_WebviewWindow_IsFullscreen_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_IsMinimised_Good(t *core.T) {
@@ -2491,7 +2347,6 @@ func TestApplication_WebviewWindow_IsMinimised_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_IsMinimised_Bad(t *core.T) {
@@ -2504,7 +2359,6 @@ func TestApplication_WebviewWindow_IsMinimised_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_IsMinimised_Ugly(t *core.T) {
@@ -2517,7 +2371,6 @@ func TestApplication_WebviewWindow_IsMinimised_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_IsIgnoreMouseEvents_Good(t *core.T) {
@@ -2530,7 +2383,6 @@ func TestApplication_WebviewWindow_IsIgnoreMouseEvents_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_IsIgnoreMouseEvents_Bad(t *core.T) {
@@ -2543,7 +2395,6 @@ func TestApplication_WebviewWindow_IsIgnoreMouseEvents_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_IsIgnoreMouseEvents_Ugly(t *core.T) {
@@ -2556,7 +2407,6 @@ func TestApplication_WebviewWindow_IsIgnoreMouseEvents_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Resizable_Good(t *core.T) {
@@ -2569,7 +2419,6 @@ func TestApplication_WebviewWindow_Resizable_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Resizable_Bad(t *core.T) {
@@ -2582,7 +2431,6 @@ func TestApplication_WebviewWindow_Resizable_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Resizable_Ugly(t *core.T) {
@@ -2595,7 +2443,6 @@ func TestApplication_WebviewWindow_Resizable_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Bounds_Good(t *core.T) {
@@ -2608,7 +2455,6 @@ func TestApplication_WebviewWindow_Bounds_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Bounds_Bad(t *core.T) {
@@ -2621,7 +2467,6 @@ func TestApplication_WebviewWindow_Bounds_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Bounds_Ugly(t *core.T) {
@@ -2634,7 +2479,6 @@ func TestApplication_WebviewWindow_Bounds_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetBounds_Good(t *core.T) {
@@ -2647,7 +2491,6 @@ func TestApplication_WebviewWindow_SetBounds_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetBounds_Bad(t *core.T) {
@@ -2660,7 +2503,6 @@ func TestApplication_WebviewWindow_SetBounds_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetBounds_Ugly(t *core.T) {
@@ -2673,7 +2515,6 @@ func TestApplication_WebviewWindow_SetBounds_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_RelativePosition_Good(t *core.T) {
@@ -2686,7 +2527,6 @@ func TestApplication_WebviewWindow_RelativePosition_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_RelativePosition_Bad(t *core.T) {
@@ -2699,7 +2539,6 @@ func TestApplication_WebviewWindow_RelativePosition_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_RelativePosition_Ugly(t *core.T) {
@@ -2712,7 +2551,6 @@ func TestApplication_WebviewWindow_RelativePosition_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetRelativePosition_Good(t *core.T) {
@@ -2725,7 +2563,6 @@ func TestApplication_WebviewWindow_SetRelativePosition_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetRelativePosition_Bad(t *core.T) {
@@ -2738,7 +2575,6 @@ func TestApplication_WebviewWindow_SetRelativePosition_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetRelativePosition_Ugly(t *core.T) {
@@ -2751,7 +2587,6 @@ func TestApplication_WebviewWindow_SetRelativePosition_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetMinSize_Good(t *core.T) {
@@ -2764,7 +2599,6 @@ func TestApplication_WebviewWindow_SetMinSize_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetMinSize_Bad(t *core.T) {
@@ -2777,7 +2611,6 @@ func TestApplication_WebviewWindow_SetMinSize_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetMinSize_Ugly(t *core.T) {
@@ -2790,7 +2623,6 @@ func TestApplication_WebviewWindow_SetMinSize_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetMaxSize_Good(t *core.T) {
@@ -2803,7 +2635,6 @@ func TestApplication_WebviewWindow_SetMaxSize_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetMaxSize_Bad(t *core.T) {
@@ -2816,7 +2647,6 @@ func TestApplication_WebviewWindow_SetMaxSize_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetMaxSize_Ugly(t *core.T) {
@@ -2829,7 +2659,6 @@ func TestApplication_WebviewWindow_SetMaxSize_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Center_Good(t *core.T) {
@@ -2842,7 +2671,6 @@ func TestApplication_WebviewWindow_Center_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Center_Bad(t *core.T) {
@@ -2855,7 +2683,6 @@ func TestApplication_WebviewWindow_Center_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Center_Ugly(t *core.T) {
@@ -2868,7 +2695,6 @@ func TestApplication_WebviewWindow_Center_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetURL_Good(t *core.T) {
@@ -2881,7 +2707,6 @@ func TestApplication_WebviewWindow_SetURL_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetURL_Bad(t *core.T) {
@@ -2894,7 +2719,6 @@ func TestApplication_WebviewWindow_SetURL_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetURL_Ugly(t *core.T) {
@@ -2907,7 +2731,6 @@ func TestApplication_WebviewWindow_SetURL_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetHTML_Good(t *core.T) {
@@ -2920,7 +2743,6 @@ func TestApplication_WebviewWindow_SetHTML_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetHTML_Bad(t *core.T) {
@@ -2933,7 +2755,6 @@ func TestApplication_WebviewWindow_SetHTML_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetHTML_Ugly(t *core.T) {
@@ -2946,7 +2767,6 @@ func TestApplication_WebviewWindow_SetHTML_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetFrameless_Good(t *core.T) {
@@ -2959,7 +2779,6 @@ func TestApplication_WebviewWindow_SetFrameless_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetFrameless_Bad(t *core.T) {
@@ -2972,7 +2791,6 @@ func TestApplication_WebviewWindow_SetFrameless_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetFrameless_Ugly(t *core.T) {
@@ -2985,7 +2803,6 @@ func TestApplication_WebviewWindow_SetFrameless_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetResizable_Good(t *core.T) {
@@ -2998,7 +2815,6 @@ func TestApplication_WebviewWindow_SetResizable_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetResizable_Bad(t *core.T) {
@@ -3011,7 +2827,6 @@ func TestApplication_WebviewWindow_SetResizable_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetResizable_Ugly(t *core.T) {
@@ -3024,7 +2839,6 @@ func TestApplication_WebviewWindow_SetResizable_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetIgnoreMouseEvents_Good(t *core.T) {
@@ -3037,7 +2851,6 @@ func TestApplication_WebviewWindow_SetIgnoreMouseEvents_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetIgnoreMouseEvents_Bad(t *core.T) {
@@ -3050,7 +2863,6 @@ func TestApplication_WebviewWindow_SetIgnoreMouseEvents_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetIgnoreMouseEvents_Ugly(t *core.T) {
@@ -3063,7 +2875,6 @@ func TestApplication_WebviewWindow_SetIgnoreMouseEvents_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetMinimiseButtonState_Good(t *core.T) {
@@ -3076,7 +2887,6 @@ func TestApplication_WebviewWindow_SetMinimiseButtonState_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetMinimiseButtonState_Bad(t *core.T) {
@@ -3089,7 +2899,6 @@ func TestApplication_WebviewWindow_SetMinimiseButtonState_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetMinimiseButtonState_Ugly(t *core.T) {
@@ -3102,7 +2911,6 @@ func TestApplication_WebviewWindow_SetMinimiseButtonState_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetMaximiseButtonState_Good(t *core.T) {
@@ -3115,7 +2923,6 @@ func TestApplication_WebviewWindow_SetMaximiseButtonState_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetMaximiseButtonState_Bad(t *core.T) {
@@ -3128,7 +2935,6 @@ func TestApplication_WebviewWindow_SetMaximiseButtonState_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetMaximiseButtonState_Ugly(t *core.T) {
@@ -3141,7 +2947,6 @@ func TestApplication_WebviewWindow_SetMaximiseButtonState_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetCloseButtonState_Good(t *core.T) {
@@ -3154,7 +2959,6 @@ func TestApplication_WebviewWindow_SetCloseButtonState_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetCloseButtonState_Bad(t *core.T) {
@@ -3167,7 +2971,6 @@ func TestApplication_WebviewWindow_SetCloseButtonState_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetCloseButtonState_Ugly(t *core.T) {
@@ -3180,7 +2983,6 @@ func TestApplication_WebviewWindow_SetCloseButtonState_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetEnabled_Good(t *core.T) {
@@ -3193,7 +2995,6 @@ func TestApplication_WebviewWindow_SetEnabled_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetEnabled_Bad(t *core.T) {
@@ -3206,7 +3007,6 @@ func TestApplication_WebviewWindow_SetEnabled_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetEnabled_Ugly(t *core.T) {
@@ -3219,7 +3019,6 @@ func TestApplication_WebviewWindow_SetEnabled_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetContentProtection_Good(t *core.T) {
@@ -3232,7 +3031,6 @@ func TestApplication_WebviewWindow_SetContentProtection_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetContentProtection_Bad(t *core.T) {
@@ -3245,7 +3043,6 @@ func TestApplication_WebviewWindow_SetContentProtection_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetContentProtection_Ugly(t *core.T) {
@@ -3258,7 +3055,6 @@ func TestApplication_WebviewWindow_SetContentProtection_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetMenu_Good(t *core.T) {
@@ -3271,7 +3067,6 @@ func TestApplication_WebviewWindow_SetMenu_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetMenu_Bad(t *core.T) {
@@ -3284,7 +3079,6 @@ func TestApplication_WebviewWindow_SetMenu_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetMenu_Ugly(t *core.T) {
@@ -3297,7 +3091,6 @@ func TestApplication_WebviewWindow_SetMenu_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_ShowMenuBar_Good(t *core.T) {
@@ -3310,7 +3103,6 @@ func TestApplication_WebviewWindow_ShowMenuBar_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_ShowMenuBar_Bad(t *core.T) {
@@ -3323,7 +3115,6 @@ func TestApplication_WebviewWindow_ShowMenuBar_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_ShowMenuBar_Ugly(t *core.T) {
@@ -3336,7 +3127,6 @@ func TestApplication_WebviewWindow_ShowMenuBar_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_HideMenuBar_Good(t *core.T) {
@@ -3349,7 +3139,6 @@ func TestApplication_WebviewWindow_HideMenuBar_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_HideMenuBar_Bad(t *core.T) {
@@ -3362,7 +3151,6 @@ func TestApplication_WebviewWindow_HideMenuBar_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_HideMenuBar_Ugly(t *core.T) {
@@ -3375,7 +3163,6 @@ func TestApplication_WebviewWindow_HideMenuBar_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_ToggleMenuBar_Good(t *core.T) {
@@ -3388,7 +3175,6 @@ func TestApplication_WebviewWindow_ToggleMenuBar_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_ToggleMenuBar_Bad(t *core.T) {
@@ -3401,7 +3187,6 @@ func TestApplication_WebviewWindow_ToggleMenuBar_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_ToggleMenuBar_Ugly(t *core.T) {
@@ -3414,7 +3199,6 @@ func TestApplication_WebviewWindow_ToggleMenuBar_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_ToggleFrameless_Good(t *core.T) {
@@ -3427,7 +3211,6 @@ func TestApplication_WebviewWindow_ToggleFrameless_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_ToggleFrameless_Bad(t *core.T) {
@@ -3440,7 +3223,6 @@ func TestApplication_WebviewWindow_ToggleFrameless_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_ToggleFrameless_Ugly(t *core.T) {
@@ -3453,7 +3235,6 @@ func TestApplication_WebviewWindow_ToggleFrameless_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_ExecJS_Good(t *core.T) {
@@ -3466,7 +3247,6 @@ func TestApplication_WebviewWindow_ExecJS_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_ExecJS_Bad(t *core.T) {
@@ -3479,7 +3259,6 @@ func TestApplication_WebviewWindow_ExecJS_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_ExecJS_Ugly(t *core.T) {
@@ -3492,7 +3271,6 @@ func TestApplication_WebviewWindow_ExecJS_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Reload_Good(t *core.T) {
@@ -3505,7 +3283,6 @@ func TestApplication_WebviewWindow_Reload_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Reload_Bad(t *core.T) {
@@ -3518,7 +3295,6 @@ func TestApplication_WebviewWindow_Reload_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Reload_Ugly(t *core.T) {
@@ -3531,7 +3307,6 @@ func TestApplication_WebviewWindow_Reload_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_ForceReload_Good(t *core.T) {
@@ -3544,7 +3319,6 @@ func TestApplication_WebviewWindow_ForceReload_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_ForceReload_Bad(t *core.T) {
@@ -3557,7 +3331,6 @@ func TestApplication_WebviewWindow_ForceReload_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_ForceReload_Ugly(t *core.T) {
@@ -3570,7 +3343,6 @@ func TestApplication_WebviewWindow_ForceReload_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_OpenDevTools_Good(t *core.T) {
@@ -3583,7 +3355,6 @@ func TestApplication_WebviewWindow_OpenDevTools_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_OpenDevTools_Bad(t *core.T) {
@@ -3596,7 +3367,6 @@ func TestApplication_WebviewWindow_OpenDevTools_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_OpenDevTools_Ugly(t *core.T) {
@@ -3609,7 +3379,6 @@ func TestApplication_WebviewWindow_OpenDevTools_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_OpenContextMenu_Good(t *core.T) {
@@ -3622,7 +3391,6 @@ func TestApplication_WebviewWindow_OpenContextMenu_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_OpenContextMenu_Bad(t *core.T) {
@@ -3635,7 +3403,6 @@ func TestApplication_WebviewWindow_OpenContextMenu_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_OpenContextMenu_Ugly(t *core.T) {
@@ -3648,7 +3415,6 @@ func TestApplication_WebviewWindow_OpenContextMenu_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Zoom_Good(t *core.T) {
@@ -3661,7 +3427,6 @@ func TestApplication_WebviewWindow_Zoom_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Zoom_Bad(t *core.T) {
@@ -3674,7 +3439,6 @@ func TestApplication_WebviewWindow_Zoom_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Zoom_Ugly(t *core.T) {
@@ -3687,7 +3451,6 @@ func TestApplication_WebviewWindow_Zoom_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_ZoomIn_Good(t *core.T) {
@@ -3700,7 +3463,6 @@ func TestApplication_WebviewWindow_ZoomIn_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_ZoomIn_Bad(t *core.T) {
@@ -3713,7 +3475,6 @@ func TestApplication_WebviewWindow_ZoomIn_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_ZoomIn_Ugly(t *core.T) {
@@ -3726,7 +3487,6 @@ func TestApplication_WebviewWindow_ZoomIn_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_ZoomOut_Good(t *core.T) {
@@ -3739,7 +3499,6 @@ func TestApplication_WebviewWindow_ZoomOut_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_ZoomOut_Bad(t *core.T) {
@@ -3752,7 +3511,6 @@ func TestApplication_WebviewWindow_ZoomOut_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_ZoomOut_Ugly(t *core.T) {
@@ -3765,7 +3523,6 @@ func TestApplication_WebviewWindow_ZoomOut_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_ZoomReset_Good(t *core.T) {
@@ -3778,7 +3535,6 @@ func TestApplication_WebviewWindow_ZoomReset_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_ZoomReset_Bad(t *core.T) {
@@ -3791,7 +3547,6 @@ func TestApplication_WebviewWindow_ZoomReset_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_ZoomReset_Ugly(t *core.T) {
@@ -3804,7 +3559,6 @@ func TestApplication_WebviewWindow_ZoomReset_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_GetZoom_Good(t *core.T) {
@@ -3817,7 +3571,6 @@ func TestApplication_WebviewWindow_GetZoom_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_GetZoom_Bad(t *core.T) {
@@ -3830,7 +3583,6 @@ func TestApplication_WebviewWindow_GetZoom_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_GetZoom_Ugly(t *core.T) {
@@ -3843,7 +3595,6 @@ func TestApplication_WebviewWindow_GetZoom_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_GetOpacity_Good(t *core.T) {
@@ -3856,7 +3607,6 @@ func TestApplication_WebviewWindow_GetOpacity_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_GetOpacity_Bad(t *core.T) {
@@ -3869,7 +3619,6 @@ func TestApplication_WebviewWindow_GetOpacity_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_GetOpacity_Ugly(t *core.T) {
@@ -3882,7 +3631,6 @@ func TestApplication_WebviewWindow_GetOpacity_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetZoom_Good(t *core.T) {
@@ -3895,7 +3643,6 @@ func TestApplication_WebviewWindow_SetZoom_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetZoom_Bad(t *core.T) {
@@ -3908,7 +3655,6 @@ func TestApplication_WebviewWindow_SetZoom_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SetZoom_Ugly(t *core.T) {
@@ -3921,7 +3667,6 @@ func TestApplication_WebviewWindow_SetZoom_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_RegisterHook_Good(t *core.T) {
@@ -3934,7 +3679,6 @@ func TestApplication_WebviewWindow_RegisterHook_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_RegisterHook_Bad(t *core.T) {
@@ -3947,7 +3691,6 @@ func TestApplication_WebviewWindow_RegisterHook_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_RegisterHook_Ugly(t *core.T) {
@@ -3960,7 +3703,6 @@ func TestApplication_WebviewWindow_RegisterHook_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_EmitEvent_Good(t *core.T) {
@@ -3973,7 +3715,6 @@ func TestApplication_WebviewWindow_EmitEvent_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_EmitEvent_Bad(t *core.T) {
@@ -3986,7 +3727,6 @@ func TestApplication_WebviewWindow_EmitEvent_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_EmitEvent_Ugly(t *core.T) {
@@ -3999,7 +3739,6 @@ func TestApplication_WebviewWindow_EmitEvent_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_DispatchWailsEvent_Good(t *core.T) {
@@ -4012,7 +3751,6 @@ func TestApplication_WebviewWindow_DispatchWailsEvent_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_DispatchWailsEvent_Bad(t *core.T) {
@@ -4025,7 +3763,6 @@ func TestApplication_WebviewWindow_DispatchWailsEvent_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_DispatchWailsEvent_Ugly(t *core.T) {
@@ -4038,7 +3775,6 @@ func TestApplication_WebviewWindow_DispatchWailsEvent_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_GetScreen_Good(t *core.T) {
@@ -4051,7 +3787,6 @@ func TestApplication_WebviewWindow_GetScreen_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_GetScreen_Bad(t *core.T) {
@@ -4064,7 +3799,6 @@ func TestApplication_WebviewWindow_GetScreen_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_GetScreen_Ugly(t *core.T) {
@@ -4077,7 +3811,6 @@ func TestApplication_WebviewWindow_GetScreen_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_GetBorderSizes_Good(t *core.T) {
@@ -4090,7 +3823,6 @@ func TestApplication_WebviewWindow_GetBorderSizes_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_GetBorderSizes_Bad(t *core.T) {
@@ -4103,7 +3835,6 @@ func TestApplication_WebviewWindow_GetBorderSizes_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_GetBorderSizes_Ugly(t *core.T) {
@@ -4116,7 +3847,6 @@ func TestApplication_WebviewWindow_GetBorderSizes_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_EnableSizeConstraints_Good(t *core.T) {
@@ -4129,7 +3859,6 @@ func TestApplication_WebviewWindow_EnableSizeConstraints_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_EnableSizeConstraints_Bad(t *core.T) {
@@ -4142,7 +3871,6 @@ func TestApplication_WebviewWindow_EnableSizeConstraints_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_EnableSizeConstraints_Ugly(t *core.T) {
@@ -4155,7 +3883,6 @@ func TestApplication_WebviewWindow_EnableSizeConstraints_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_DisableSizeConstraints_Good(t *core.T) {
@@ -4168,7 +3895,6 @@ func TestApplication_WebviewWindow_DisableSizeConstraints_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_DisableSizeConstraints_Bad(t *core.T) {
@@ -4181,7 +3907,6 @@ func TestApplication_WebviewWindow_DisableSizeConstraints_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_DisableSizeConstraints_Ugly(t *core.T) {
@@ -4194,7 +3919,6 @@ func TestApplication_WebviewWindow_DisableSizeConstraints_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_AttachModal_Good(t *core.T) {
@@ -4207,7 +3931,6 @@ func TestApplication_WebviewWindow_AttachModal_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_AttachModal_Bad(t *core.T) {
@@ -4220,7 +3943,6 @@ func TestApplication_WebviewWindow_AttachModal_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_AttachModal_Ugly(t *core.T) {
@@ -4233,7 +3955,6 @@ func TestApplication_WebviewWindow_AttachModal_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Flash_Good(t *core.T) {
@@ -4246,7 +3967,6 @@ func TestApplication_WebviewWindow_Flash_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Flash_Bad(t *core.T) {
@@ -4259,7 +3979,6 @@ func TestApplication_WebviewWindow_Flash_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Flash_Ugly(t *core.T) {
@@ -4272,7 +3991,6 @@ func TestApplication_WebviewWindow_Flash_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Print_Good(t *core.T) {
@@ -4285,7 +4003,6 @@ func TestApplication_WebviewWindow_Print_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Print_Bad(t *core.T) {
@@ -4298,7 +4015,6 @@ func TestApplication_WebviewWindow_Print_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Print_Ugly(t *core.T) {
@@ -4311,7 +4027,6 @@ func TestApplication_WebviewWindow_Print_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Error_Good(t *core.T) {
@@ -4324,7 +4039,6 @@ func TestApplication_WebviewWindow_Error_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Error_Bad(t *core.T) {
@@ -4337,7 +4051,6 @@ func TestApplication_WebviewWindow_Error_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Error_Ugly(t *core.T) {
@@ -4350,7 +4063,6 @@ func TestApplication_WebviewWindow_Error_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Info_Good(t *core.T) {
@@ -4363,7 +4075,6 @@ func TestApplication_WebviewWindow_Info_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Info_Bad(t *core.T) {
@@ -4376,7 +4087,6 @@ func TestApplication_WebviewWindow_Info_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Info_Ugly(t *core.T) {
@@ -4389,7 +4099,6 @@ func TestApplication_WebviewWindow_Info_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_NativeWindow_Good(t *core.T) {
@@ -4402,7 +4111,6 @@ func TestApplication_WebviewWindow_NativeWindow_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_NativeWindow_Bad(t *core.T) {
@@ -4415,7 +4123,6 @@ func TestApplication_WebviewWindow_NativeWindow_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_NativeWindow_Ugly(t *core.T) {
@@ -4428,7 +4135,6 @@ func TestApplication_WebviewWindow_NativeWindow_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Run_Good(t *core.T) {
@@ -4441,7 +4147,6 @@ func TestApplication_WebviewWindow_Run_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Run_Bad(t *core.T) {
@@ -4454,7 +4159,6 @@ func TestApplication_WebviewWindow_Run_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_Run_Ugly(t *core.T) {
@@ -4467,7 +4171,6 @@ func TestApplication_WebviewWindow_Run_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_UnMaximise_Good(t *core.T) {
@@ -4480,7 +4183,6 @@ func TestApplication_WebviewWindow_UnMaximise_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_UnMaximise_Bad(t *core.T) {
@@ -4493,7 +4195,6 @@ func TestApplication_WebviewWindow_UnMaximise_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_UnMaximise_Ugly(t *core.T) {
@@ -4506,7 +4207,6 @@ func TestApplication_WebviewWindow_UnMaximise_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_UnMinimise_Good(t *core.T) {
@@ -4519,7 +4219,6 @@ func TestApplication_WebviewWindow_UnMinimise_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_UnMinimise_Bad(t *core.T) {
@@ -4532,7 +4231,6 @@ func TestApplication_WebviewWindow_UnMinimise_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_UnMinimise_Ugly(t *core.T) {
@@ -4545,7 +4243,6 @@ func TestApplication_WebviewWindow_UnMinimise_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_ToggleFullscreen_Good(t *core.T) {
@@ -4558,7 +4255,6 @@ func TestApplication_WebviewWindow_ToggleFullscreen_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_ToggleFullscreen_Bad(t *core.T) {
@@ -4571,7 +4267,6 @@ func TestApplication_WebviewWindow_ToggleFullscreen_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_ToggleFullscreen_Ugly(t *core.T) {
@@ -4584,7 +4279,6 @@ func TestApplication_WebviewWindow_ToggleFullscreen_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_ToggleMaximise_Good(t *core.T) {
@@ -4597,7 +4291,6 @@ func TestApplication_WebviewWindow_ToggleMaximise_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_ToggleMaximise_Bad(t *core.T) {
@@ -4610,7 +4303,6 @@ func TestApplication_WebviewWindow_ToggleMaximise_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_ToggleMaximise_Ugly(t *core.T) {
@@ -4623,7 +4315,6 @@ func TestApplication_WebviewWindow_ToggleMaximise_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SnapAssist_Good(t *core.T) {
@@ -4636,7 +4327,6 @@ func TestApplication_WebviewWindow_SnapAssist_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SnapAssist_Bad(t *core.T) {
@@ -4649,7 +4339,6 @@ func TestApplication_WebviewWindow_SnapAssist_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_SnapAssist_Ugly(t *core.T) {
@@ -4662,7 +4351,6 @@ func TestApplication_WebviewWindow_SnapAssist_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_InitiateFrontendDropProcessing_Good(t *core.T) {
@@ -4675,7 +4363,6 @@ func TestApplication_WebviewWindow_InitiateFrontendDropProcessing_Good(t *core.T
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_InitiateFrontendDropProcessing_Bad(t *core.T) {
@@ -4688,7 +4375,6 @@ func TestApplication_WebviewWindow_InitiateFrontendDropProcessing_Bad(t *core.T)
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_InitiateFrontendDropProcessing_Ugly(t *core.T) {
@@ -4701,7 +4387,6 @@ func TestApplication_WebviewWindow_InitiateFrontendDropProcessing_Ugly(t *core.T
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_HandleMessage_Good(t *core.T) {
@@ -4714,7 +4399,6 @@ func TestApplication_WebviewWindow_HandleMessage_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_HandleMessage_Bad(t *core.T) {
@@ -4727,7 +4411,6 @@ func TestApplication_WebviewWindow_HandleMessage_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_HandleMessage_Ugly(t *core.T) {
@@ -4740,7 +4423,6 @@ func TestApplication_WebviewWindow_HandleMessage_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_HandleWindowEvent_Good(t *core.T) {
@@ -4753,7 +4435,6 @@ func TestApplication_WebviewWindow_HandleWindowEvent_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_HandleWindowEvent_Bad(t *core.T) {
@@ -4766,7 +4447,6 @@ func TestApplication_WebviewWindow_HandleWindowEvent_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_HandleWindowEvent_Ugly(t *core.T) {
@@ -4779,7 +4459,6 @@ func TestApplication_WebviewWindow_HandleWindowEvent_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_HandleKeyEvent_Good(t *core.T) {
@@ -4792,7 +4471,6 @@ func TestApplication_WebviewWindow_HandleKeyEvent_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_HandleKeyEvent_Bad(t *core.T) {
@@ -4805,7 +4483,6 @@ func TestApplication_WebviewWindow_HandleKeyEvent_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WebviewWindow_HandleKeyEvent_Ugly(t *core.T) {
@@ -4818,7 +4495,6 @@ func TestApplication_WebviewWindow_HandleKeyEvent_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WindowManager_NewWithOptions_Good(t *core.T) {
@@ -4831,7 +4507,6 @@ func TestApplication_WindowManager_NewWithOptions_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WindowManager_NewWithOptions_Bad(t *core.T) {
@@ -4844,7 +4519,6 @@ func TestApplication_WindowManager_NewWithOptions_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WindowManager_NewWithOptions_Ugly(t *core.T) {
@@ -4857,7 +4531,6 @@ func TestApplication_WindowManager_NewWithOptions_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WindowManager_GetAll_Good(t *core.T) {
@@ -4870,7 +4543,6 @@ func TestApplication_WindowManager_GetAll_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WindowManager_GetAll_Bad(t *core.T) {
@@ -4883,7 +4555,6 @@ func TestApplication_WindowManager_GetAll_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_WindowManager_GetAll_Ugly(t *core.T) {
@@ -4896,7 +4567,6 @@ func TestApplication_WindowManager_GetAll_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_App_Quit_Good(t *core.T) {
@@ -4909,7 +4579,6 @@ func TestApplication_App_Quit_Good(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_App_Quit_Bad(t *core.T) {
@@ -4922,7 +4591,6 @@ func TestApplication_App_Quit_Bad(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_App_Quit_Ugly(t *core.T) {
@@ -4935,7 +4603,6 @@ func TestApplication_App_Quit_Ugly(t *core.T) {
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_App_NewMenu_Good(t *core.T) {
@@ -4948,7 +4615,6 @@ func TestApplication_App_NewMenu_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_App_NewMenu_Bad(t *core.T) {
@@ -4961,7 +4627,6 @@ func TestApplication_App_NewMenu_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestApplication_App_NewMenu_Ugly(t *core.T) {
@@ -4974,5 +4639,4 @@ func TestApplication_App_NewMenu_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

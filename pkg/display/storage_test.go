@@ -238,7 +238,6 @@ func TestStorage_NewStorageRegistry_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestStorage_NewStorageRegistry_Bad(t *core.T) {
@@ -250,7 +249,6 @@ func TestStorage_NewStorageRegistry_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestStorage_NewStorageRegistry_Ugly(t *core.T) {
@@ -262,7 +260,6 @@ func TestStorage_NewStorageRegistry_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestStorage_StorageRegistry_Set_Good(t *core.T) {
@@ -275,7 +272,6 @@ func TestStorage_StorageRegistry_Set_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestStorage_StorageRegistry_Set_Bad(t *core.T) {
@@ -288,7 +284,6 @@ func TestStorage_StorageRegistry_Set_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestStorage_StorageRegistry_Set_Ugly(t *core.T) {
@@ -301,7 +296,6 @@ func TestStorage_StorageRegistry_Set_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestStorage_StorageRegistry_Delete_Good(t *core.T) {
@@ -314,7 +308,6 @@ func TestStorage_StorageRegistry_Delete_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestStorage_StorageRegistry_Delete_Bad(t *core.T) {
@@ -327,7 +320,6 @@ func TestStorage_StorageRegistry_Delete_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestStorage_StorageRegistry_Delete_Ugly(t *core.T) {
@@ -340,7 +332,6 @@ func TestStorage_StorageRegistry_Delete_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestStorage_StorageRegistry_Get_Good(t *core.T) {
@@ -353,7 +344,6 @@ func TestStorage_StorageRegistry_Get_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestStorage_StorageRegistry_Get_Bad(t *core.T) {
@@ -366,7 +356,6 @@ func TestStorage_StorageRegistry_Get_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestStorage_StorageRegistry_Get_Ugly(t *core.T) {
@@ -379,7 +368,6 @@ func TestStorage_StorageRegistry_Get_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestStorage_StorageRegistry_Search_Good(t *core.T) {
@@ -392,7 +380,6 @@ func TestStorage_StorageRegistry_Search_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestStorage_StorageRegistry_Search_Bad(t *core.T) {
@@ -405,7 +392,6 @@ func TestStorage_StorageRegistry_Search_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestStorage_StorageRegistry_Search_Ugly(t *core.T) {
@@ -418,7 +404,6 @@ func TestStorage_StorageRegistry_Search_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestStorage_StorageRegistry_Snapshot_Good(t *core.T) {
@@ -431,7 +416,6 @@ func TestStorage_StorageRegistry_Snapshot_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestStorage_StorageRegistry_Snapshot_Bad(t *core.T) {
@@ -444,7 +428,6 @@ func TestStorage_StorageRegistry_Snapshot_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestStorage_StorageRegistry_Snapshot_Ugly(t *core.T) {
@@ -457,7 +440,6 @@ func TestStorage_StorageRegistry_Snapshot_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestStorage_StorageRegistry_Close_Good(t *core.T) {
@@ -470,7 +452,6 @@ func TestStorage_StorageRegistry_Close_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestStorage_StorageRegistry_Close_Bad(t *core.T) {
@@ -483,7 +464,6 @@ func TestStorage_StorageRegistry_Close_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestStorage_StorageRegistry_Close_Ugly(t *core.T) {
@@ -496,5 +476,4 @@ func TestStorage_StorageRegistry_Close_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

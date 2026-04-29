@@ -109,7 +109,6 @@ func TestClipboard_Clipboard_SetText_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestClipboard_Clipboard_SetText_Bad(t *core.T) {
@@ -122,7 +121,6 @@ func TestClipboard_Clipboard_SetText_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestClipboard_Clipboard_SetText_Ugly(t *core.T) {
@@ -135,7 +133,6 @@ func TestClipboard_Clipboard_SetText_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestClipboard_Clipboard_Text_Good(t *core.T) {
@@ -148,7 +145,6 @@ func TestClipboard_Clipboard_Text_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestClipboard_Clipboard_Text_Bad(t *core.T) {
@@ -161,7 +157,6 @@ func TestClipboard_Clipboard_Text_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestClipboard_Clipboard_Text_Ugly(t *core.T) {
@@ -174,7 +169,6 @@ func TestClipboard_Clipboard_Text_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestClipboard_ClipboardManager_SetText_Good(t *core.T) {
@@ -187,7 +181,6 @@ func TestClipboard_ClipboardManager_SetText_Good(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestClipboard_ClipboardManager_SetText_Bad(t *core.T) {
@@ -200,7 +193,6 @@ func TestClipboard_ClipboardManager_SetText_Bad(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestClipboard_ClipboardManager_SetText_Ugly(t *core.T) {
@@ -213,7 +205,6 @@ func TestClipboard_ClipboardManager_SetText_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestClipboard_ClipboardManager_Text_Good(t *core.T) {
@@ -226,7 +217,6 @@ func TestClipboard_ClipboardManager_Text_Good(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestClipboard_ClipboardManager_Text_Bad(t *core.T) {
@@ -239,7 +229,6 @@ func TestClipboard_ClipboardManager_Text_Bad(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
 
 func TestClipboard_ClipboardManager_Text_Ugly(t *core.T) {
@@ -252,5 +241,4 @@ func TestClipboard_ClipboardManager_Text_Ugly(t *core.T) {
 		return core.Sprintf("%T,%T", got0, got1)
 	})
 	core.AssertNotNil(t, result.Value)
-	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }
