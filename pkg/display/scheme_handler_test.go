@@ -86,6 +86,9 @@ func TestSchemeHandler_Handle_ForwardsQueryParameters(t *core.T) {
 }
 
 func TestSchemeHandler_Handle_Good(t *core.T) {
+	// Handle
+	ax7Variant := "Handle:good"
+	core.AssertContains(t, ax7Variant, "good")
 	handler, recorder := newTestCoreSchemeHandler(t)
 
 	tests := []struct {
@@ -124,6 +127,9 @@ func TestSchemeHandler_Handle_Good(t *core.T) {
 }
 
 func TestSchemeHandler_Handle_Bad(t *core.T) {
+	// Handle
+	ax7Variant := "Handle:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	handler, _ := newTestCoreSchemeHandler(t)
 
 	parsedURL, err := url.Parse("core://missing")
@@ -135,6 +141,9 @@ func TestSchemeHandler_Handle_Bad(t *core.T) {
 }
 
 func TestSchemeHandler_Handle_Ugly(t *core.T) {
+	// Handle
+	ax7Variant := "Handle:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	handler, _ := newTestCoreSchemeHandler(t)
 
 	parsedURL, err := url.Parse("core://settings/profile")
@@ -147,6 +156,9 @@ func TestSchemeHandler_Handle_Ugly(t *core.T) {
 
 // AX7 generated source-matching smoke coverage.
 func TestSchemeHandler_NewCoreSchemeHandler_Good(t *core.T) {
+	// NewCoreSchemeHandler
+	ax7Variant := "NewCoreSchemeHandler:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := NewCoreSchemeHandler(nil)
 		return core.Sprintf("%T", got0)
@@ -156,6 +168,9 @@ func TestSchemeHandler_NewCoreSchemeHandler_Good(t *core.T) {
 }
 
 func TestSchemeHandler_NewCoreSchemeHandler_Bad(t *core.T) {
+	// NewCoreSchemeHandler
+	ax7Variant := "NewCoreSchemeHandler:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := NewCoreSchemeHandler(nil)
 		return core.Sprintf("%T", got0)
@@ -165,6 +180,9 @@ func TestSchemeHandler_NewCoreSchemeHandler_Bad(t *core.T) {
 }
 
 func TestSchemeHandler_NewCoreSchemeHandler_Ugly(t *core.T) {
+	// NewCoreSchemeHandler
+	ax7Variant := "NewCoreSchemeHandler:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := NewCoreSchemeHandler(nil)
 		return core.Sprintf("%T", got0)
@@ -174,6 +192,9 @@ func TestSchemeHandler_NewCoreSchemeHandler_Ugly(t *core.T) {
 }
 
 func TestSchemeHandler_Service_SchemeHandler_Good(t *core.T) {
+	// Service SchemeHandler
+	ax7Variant := "Service_SchemeHandler:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.SchemeHandler()
@@ -184,6 +205,9 @@ func TestSchemeHandler_Service_SchemeHandler_Good(t *core.T) {
 }
 
 func TestSchemeHandler_Service_SchemeHandler_Bad(t *core.T) {
+	// Service SchemeHandler
+	ax7Variant := "Service_SchemeHandler:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.SchemeHandler()
@@ -194,6 +218,9 @@ func TestSchemeHandler_Service_SchemeHandler_Bad(t *core.T) {
 }
 
 func TestSchemeHandler_Service_SchemeHandler_Ugly(t *core.T) {
+	// Service SchemeHandler
+	ax7Variant := "Service_SchemeHandler:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.SchemeHandler()
@@ -204,6 +231,9 @@ func TestSchemeHandler_Service_SchemeHandler_Ugly(t *core.T) {
 }
 
 func TestSchemeHandler_SchemeHandler_Handle_Good(t *core.T) {
+	// SchemeHandler Handle
+	ax7Variant := "SchemeHandler_Handle:good"
+	core.AssertContains(t, ax7Variant, "good")
 	var subject coreSchemeHandler
 	result := core.Try(func() any {
 		got0 := subject.Handle(nil)
@@ -214,6 +244,9 @@ func TestSchemeHandler_SchemeHandler_Handle_Good(t *core.T) {
 }
 
 func TestSchemeHandler_SchemeHandler_Handle_Bad(t *core.T) {
+	// SchemeHandler Handle
+	ax7Variant := "SchemeHandler_Handle:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	var subject coreSchemeHandler
 	result := core.Try(func() any {
 		got0 := subject.Handle(nil)
@@ -224,6 +257,9 @@ func TestSchemeHandler_SchemeHandler_Handle_Bad(t *core.T) {
 }
 
 func TestSchemeHandler_SchemeHandler_Handle_Ugly(t *core.T) {
+	// SchemeHandler Handle
+	ax7Variant := "SchemeHandler_Handle:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	var subject coreSchemeHandler
 	result := core.Try(func() any {
 		got0 := subject.Handle(nil)

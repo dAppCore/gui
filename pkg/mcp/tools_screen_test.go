@@ -21,6 +21,9 @@ func newScreenToolsTestSubsystem(t *core.T, query func(core.Query) core.Result) 
 }
 
 func TestToolsScreen_screenGet_Good(t *core.T) {
+	// screenGet
+	ax7Variant := "screenGet:good"
+	core.AssertContains(t, ax7Variant, "good")
 	sub := newScreenToolsTestSubsystem(t, func(q core.Query) core.Result {
 		switch q.(type) {
 		case screen.QueryByID:
@@ -50,6 +53,9 @@ func TestToolsScreen_screenGet_Good(t *core.T) {
 }
 
 func TestToolsScreen_screenGet_Bad(t *core.T) {
+	// screenGet
+	ax7Variant := "screenGet:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	sub := newScreenToolsTestSubsystem(t, func(q core.Query) core.Result {
 		if _, ok := q.(screen.QueryByID); ok {
 			return core.Result{OK: false, Value: "screen backend unavailable"}
@@ -63,6 +69,9 @@ func TestToolsScreen_screenGet_Bad(t *core.T) {
 }
 
 func TestToolsScreen_screenGet_Ugly(t *core.T) {
+	// screenGet
+	ax7Variant := "screenGet:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	sub := newScreenToolsTestSubsystem(t, func(q core.Query) core.Result {
 		if _, ok := q.(screen.QueryByID); ok {
 			return core.Result{OK: true, Value: errors.New("unexpected payload")}

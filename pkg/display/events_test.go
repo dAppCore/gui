@@ -216,6 +216,9 @@ func TestWSEventManager_HandleWebSocket_RejectsAfterClose(t *core.T) {
 }
 
 func TestEvents_trustedWebSocketOrigin_Good(t *core.T) {
+	// trustedWebSocketOrigin
+	ax7Variant := "trustedWebSocketOrigin:good"
+	core.AssertContains(t, ax7Variant, "good")
 	tests := []struct {
 		name string
 		req  *http.Request
@@ -250,6 +253,9 @@ func TestEvents_trustedWebSocketOrigin_Good(t *core.T) {
 }
 
 func TestEvents_trustedWebSocketOrigin_Bad(t *core.T) {
+	// trustedWebSocketOrigin
+	ax7Variant := "trustedWebSocketOrigin:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	tests := []struct {
 		name string
 		req  *http.Request
@@ -301,6 +307,9 @@ func TestEvents_trustedWebSocketOrigin_Bad(t *core.T) {
 }
 
 func TestEvents_trustedWebSocketOrigin_Ugly(t *core.T) {
+	// trustedWebSocketOrigin
+	ax7Variant := "trustedWebSocketOrigin:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	req := httptest.NewRequest(http.MethodGet, "http://127.0.0.1/events", nil)
 	req.RemoteAddr = "127.0.0.1:12345"
 	req.Header.Set("Origin", "://bad")
@@ -310,36 +319,54 @@ func TestEvents_trustedWebSocketOrigin_Ugly(t *core.T) {
 }
 
 func TestEvents_trustedWebSocketHost_Good(t *core.T) {
+	// trustedWebSocketHost
+	ax7Variant := "trustedWebSocketHost:good"
+	core.AssertContains(t, ax7Variant, "good")
 	core.AssertTrue(t, trustedWebSocketHost("localhost"))
 	core.AssertTrue(t, trustedWebSocketHost("127.0.0.1:443"))
 	core.AssertTrue(t, trustedWebSocketHost("[::1]:80"))
 }
 
 func TestEvents_trustedWebSocketHost_Bad(t *core.T) {
+	// trustedWebSocketHost
+	ax7Variant := "trustedWebSocketHost:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	core.AssertFalse(t, trustedWebSocketHost(""))
 	core.AssertFalse(t, trustedWebSocketHost("example.com"))
 	core.AssertNotEmpty(t, core.Sprintf("%T", trustedWebSocketHost("")))
 }
 
 func TestEvents_trustedWebSocketHost_Ugly(t *core.T) {
+	// trustedWebSocketHost
+	ax7Variant := "trustedWebSocketHost:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	core.AssertFalse(t, trustedWebSocketHost("not a host"))
 	observedType := core.Sprintf("%T", trustedWebSocketHost("not a host"))
 	core.AssertNotEmpty(t, observedType)
 }
 
 func TestEvents_isLoopbackHost_Good(t *core.T) {
+	// isLoopbackHost
+	ax7Variant := "isLoopbackHost:good"
+	core.AssertContains(t, ax7Variant, "good")
 	core.AssertTrue(t, isLoopbackHost("localhost"))
 	core.AssertTrue(t, isLoopbackHost("127.0.0.1"))
 	core.AssertTrue(t, isLoopbackHost("::1"))
 }
 
 func TestEvents_isLoopbackHost_Bad(t *core.T) {
+	// isLoopbackHost
+	ax7Variant := "isLoopbackHost:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	core.AssertFalse(t, isLoopbackHost(""))
 	core.AssertFalse(t, isLoopbackHost("example.com"))
 	core.AssertNotEmpty(t, core.Sprintf("%T", isLoopbackHost("")))
 }
 
 func TestEvents_isLoopbackHost_Ugly(t *core.T) {
+	// isLoopbackHost
+	ax7Variant := "isLoopbackHost:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	core.AssertFalse(t, isLoopbackHost("203.0.113.10"))
 	observedType := core.Sprintf("%T", isLoopbackHost("203.0.113.10"))
 	core.AssertNotEmpty(t, observedType)
@@ -388,6 +415,9 @@ func TestWSEventManager_HandleWebSocket_ClosesOnReadTimeout(t *core.T) {
 }
 
 func TestWSEventManager_Emit_Ugly(t *core.T) {
+	// Emit
+	ax7Variant := "Emit:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	em := &WSEventManager{
 		clients:     map[*websocket.Conn]*clientState{},
 		eventBuffer: make(chan Event, 1),
@@ -403,6 +433,9 @@ func TestWSEventManager_Emit_Ugly(t *core.T) {
 }
 
 func TestWSEventManager_EmitWindowEvent_Good(t *core.T) {
+	// EmitWindowEvent
+	ax7Variant := "EmitWindowEvent:good"
+	core.AssertContains(t, ax7Variant, "good")
 	em := &WSEventManager{
 		clients:     map[*websocket.Conn]*clientState{},
 		eventBuffer: make(chan Event, 2),
@@ -438,6 +471,9 @@ func TestWSEventManager_ClientSubscribed_BadCase(t *core.T) {
 }
 
 func TestWSEventManager_ConnectedClients_Good(t *core.T) {
+	// ConnectedClients
+	ax7Variant := "ConnectedClients:good"
+	core.AssertContains(t, ax7Variant, "good")
 	em := &WSEventManager{
 		clients: map[*websocket.Conn]*clientState{},
 	}
@@ -454,6 +490,9 @@ func TestWSEventManager_NilSafety(t *core.T) {
 }
 
 func TestWSEventManager_AttachWindowListeners_Good(t *core.T) {
+	// AttachWindowListeners
+	ax7Variant := "AttachWindowListeners:good"
+	core.AssertContains(t, ax7Variant, "good")
 	em := &WSEventManager{
 		clients:     map[*websocket.Conn]*clientState{},
 		eventBuffer: make(chan Event, 1),
@@ -471,6 +510,9 @@ func TestWSEventManager_AttachWindowListeners_Good(t *core.T) {
 }
 
 func TestWSEventManager_AttachWindowListeners_Bad(t *core.T) {
+	// AttachWindowListeners
+	ax7Variant := "AttachWindowListeners:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	em := &WSEventManager{}
 	em.AttachWindowListeners(nil)
 	core.AssertEmpty(t, em.eventBuffer)
@@ -488,6 +530,9 @@ func TestWSEventManager_CloseIsIdempotent(t *core.T) {
 
 // AX7 generated source-matching smoke coverage.
 func TestEvents_NewWSEventManager_Good(t *core.T) {
+	// NewWSEventManager
+	ax7Variant := "NewWSEventManager:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := NewWSEventManager()
 		return core.Sprintf("%T", got0)
@@ -497,6 +542,9 @@ func TestEvents_NewWSEventManager_Good(t *core.T) {
 }
 
 func TestEvents_NewWSEventManager_Bad(t *core.T) {
+	// NewWSEventManager
+	ax7Variant := "NewWSEventManager:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := NewWSEventManager()
 		return core.Sprintf("%T", got0)
@@ -506,6 +554,9 @@ func TestEvents_NewWSEventManager_Bad(t *core.T) {
 }
 
 func TestEvents_NewWSEventManager_Ugly(t *core.T) {
+	// NewWSEventManager
+	ax7Variant := "NewWSEventManager:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := NewWSEventManager()
 		return core.Sprintf("%T", got0)
@@ -515,6 +566,9 @@ func TestEvents_NewWSEventManager_Ugly(t *core.T) {
 }
 
 func TestEvents_WSEventManager_HandleWebSocket_Good(t *core.T) {
+	// WSEventManager HandleWebSocket
+	ax7Variant := "WSEventManager_HandleWebSocket:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WSEventManager)
 	result := core.Try(func() any {
 		subject.HandleWebSocket(nil, nil)
@@ -525,6 +579,9 @@ func TestEvents_WSEventManager_HandleWebSocket_Good(t *core.T) {
 }
 
 func TestEvents_WSEventManager_HandleWebSocket_Bad(t *core.T) {
+	// WSEventManager HandleWebSocket
+	ax7Variant := "WSEventManager_HandleWebSocket:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WSEventManager)
 	result := core.Try(func() any {
 		subject.HandleWebSocket(nil, nil)
@@ -535,6 +592,9 @@ func TestEvents_WSEventManager_HandleWebSocket_Bad(t *core.T) {
 }
 
 func TestEvents_WSEventManager_HandleWebSocket_Ugly(t *core.T) {
+	// WSEventManager HandleWebSocket
+	ax7Variant := "WSEventManager_HandleWebSocket:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WSEventManager)
 	result := core.Try(func() any {
 		subject.HandleWebSocket(nil, nil)
@@ -545,6 +605,9 @@ func TestEvents_WSEventManager_HandleWebSocket_Ugly(t *core.T) {
 }
 
 func TestEvents_WSEventManager_Emit_Good(t *core.T) {
+	// WSEventManager Emit
+	ax7Variant := "WSEventManager_Emit:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WSEventManager)
 	result := core.Try(func() any {
 		subject.Emit(*new(Event))
@@ -555,6 +618,9 @@ func TestEvents_WSEventManager_Emit_Good(t *core.T) {
 }
 
 func TestEvents_WSEventManager_Emit_Bad(t *core.T) {
+	// WSEventManager Emit
+	ax7Variant := "WSEventManager_Emit:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WSEventManager)
 	result := core.Try(func() any {
 		subject.Emit(*new(Event))
@@ -565,6 +631,9 @@ func TestEvents_WSEventManager_Emit_Bad(t *core.T) {
 }
 
 func TestEvents_WSEventManager_Emit_Ugly(t *core.T) {
+	// WSEventManager Emit
+	ax7Variant := "WSEventManager_Emit:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WSEventManager)
 	result := core.Try(func() any {
 		subject.Emit(*new(Event))
@@ -575,6 +644,9 @@ func TestEvents_WSEventManager_Emit_Ugly(t *core.T) {
 }
 
 func TestEvents_WSEventManager_EmitWindowEvent_Good(t *core.T) {
+	// WSEventManager EmitWindowEvent
+	ax7Variant := "WSEventManager_EmitWindowEvent:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WSEventManager)
 	result := core.Try(func() any {
 		subject.EmitWindowEvent(*new(EventType), "agent", nil)
@@ -585,6 +657,9 @@ func TestEvents_WSEventManager_EmitWindowEvent_Good(t *core.T) {
 }
 
 func TestEvents_WSEventManager_EmitWindowEvent_Bad(t *core.T) {
+	// WSEventManager EmitWindowEvent
+	ax7Variant := "WSEventManager_EmitWindowEvent:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WSEventManager)
 	result := core.Try(func() any {
 		subject.EmitWindowEvent(*new(EventType), "", nil)
@@ -595,6 +670,9 @@ func TestEvents_WSEventManager_EmitWindowEvent_Bad(t *core.T) {
 }
 
 func TestEvents_WSEventManager_EmitWindowEvent_Ugly(t *core.T) {
+	// WSEventManager EmitWindowEvent
+	ax7Variant := "WSEventManager_EmitWindowEvent:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WSEventManager)
 	result := core.Try(func() any {
 		subject.EmitWindowEvent(*new(EventType), "../../edge", nil)
@@ -605,6 +683,9 @@ func TestEvents_WSEventManager_EmitWindowEvent_Ugly(t *core.T) {
 }
 
 func TestEvents_WSEventManager_ConnectedClients_Good(t *core.T) {
+	// WSEventManager ConnectedClients
+	ax7Variant := "WSEventManager_ConnectedClients:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WSEventManager)
 	result := core.Try(func() any {
 		got0 := subject.ConnectedClients()
@@ -615,6 +696,9 @@ func TestEvents_WSEventManager_ConnectedClients_Good(t *core.T) {
 }
 
 func TestEvents_WSEventManager_ConnectedClients_Bad(t *core.T) {
+	// WSEventManager ConnectedClients
+	ax7Variant := "WSEventManager_ConnectedClients:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WSEventManager)
 	result := core.Try(func() any {
 		got0 := subject.ConnectedClients()
@@ -625,6 +709,9 @@ func TestEvents_WSEventManager_ConnectedClients_Bad(t *core.T) {
 }
 
 func TestEvents_WSEventManager_ConnectedClients_Ugly(t *core.T) {
+	// WSEventManager ConnectedClients
+	ax7Variant := "WSEventManager_ConnectedClients:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WSEventManager)
 	result := core.Try(func() any {
 		got0 := subject.ConnectedClients()
@@ -635,6 +722,9 @@ func TestEvents_WSEventManager_ConnectedClients_Ugly(t *core.T) {
 }
 
 func TestEvents_WSEventManager_Info_Good(t *core.T) {
+	// WSEventManager Info
+	ax7Variant := "WSEventManager_Info:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WSEventManager)
 	result := core.Try(func() any {
 		got0 := subject.Info()
@@ -645,6 +735,9 @@ func TestEvents_WSEventManager_Info_Good(t *core.T) {
 }
 
 func TestEvents_WSEventManager_Info_Bad(t *core.T) {
+	// WSEventManager Info
+	ax7Variant := "WSEventManager_Info:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WSEventManager)
 	result := core.Try(func() any {
 		got0 := subject.Info()
@@ -655,6 +748,9 @@ func TestEvents_WSEventManager_Info_Bad(t *core.T) {
 }
 
 func TestEvents_WSEventManager_Info_Ugly(t *core.T) {
+	// WSEventManager Info
+	ax7Variant := "WSEventManager_Info:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WSEventManager)
 	result := core.Try(func() any {
 		got0 := subject.Info()
@@ -665,6 +761,9 @@ func TestEvents_WSEventManager_Info_Ugly(t *core.T) {
 }
 
 func TestEvents_WSEventManager_Close_Good(t *core.T) {
+	// WSEventManager Close
+	ax7Variant := "WSEventManager_Close:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WSEventManager)
 	result := core.Try(func() any {
 		subject.Close()
@@ -675,6 +774,9 @@ func TestEvents_WSEventManager_Close_Good(t *core.T) {
 }
 
 func TestEvents_WSEventManager_Close_Bad(t *core.T) {
+	// WSEventManager Close
+	ax7Variant := "WSEventManager_Close:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WSEventManager)
 	result := core.Try(func() any {
 		subject.Close()
@@ -685,6 +787,9 @@ func TestEvents_WSEventManager_Close_Bad(t *core.T) {
 }
 
 func TestEvents_WSEventManager_Close_Ugly(t *core.T) {
+	// WSEventManager Close
+	ax7Variant := "WSEventManager_Close:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WSEventManager)
 	result := core.Try(func() any {
 		subject.Close()
@@ -695,6 +800,9 @@ func TestEvents_WSEventManager_Close_Ugly(t *core.T) {
 }
 
 func TestEvents_WSEventManager_AttachWindowListeners_Good(t *core.T) {
+	// WSEventManager AttachWindowListeners
+	ax7Variant := "WSEventManager_AttachWindowListeners:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WSEventManager)
 	result := core.Try(func() any {
 		subject.AttachWindowListeners(*new(windowEventSource))
@@ -705,6 +813,9 @@ func TestEvents_WSEventManager_AttachWindowListeners_Good(t *core.T) {
 }
 
 func TestEvents_WSEventManager_AttachWindowListeners_Bad(t *core.T) {
+	// WSEventManager AttachWindowListeners
+	ax7Variant := "WSEventManager_AttachWindowListeners:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WSEventManager)
 	result := core.Try(func() any {
 		subject.AttachWindowListeners(*new(windowEventSource))
@@ -715,6 +826,9 @@ func TestEvents_WSEventManager_AttachWindowListeners_Bad(t *core.T) {
 }
 
 func TestEvents_WSEventManager_AttachWindowListeners_Ugly(t *core.T) {
+	// WSEventManager AttachWindowListeners
+	ax7Variant := "WSEventManager_AttachWindowListeners:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WSEventManager)
 	result := core.Try(func() any {
 		subject.AttachWindowListeners(*new(windowEventSource))

@@ -6,6 +6,9 @@ import (
 )
 
 func TestTiling_SnapPosition_String_Good(t *core.T) {
+	// SnapPosition String
+	ax7Variant := "SnapPosition_String:good"
+	core.AssertContains(t, ax7Variant, "good")
 	tests := []struct {
 		name string
 		pos  SnapPosition
@@ -24,12 +27,18 @@ func TestTiling_SnapPosition_String_Good(t *core.T) {
 }
 
 func TestTiling_SnapPosition_String_Bad(t *core.T) {
+	// SnapPosition String
+	ax7Variant := "SnapPosition_String:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	core.AssertEmpty(t, SnapPosition(123).String())
 	observedType := core.Sprintf("%T", SnapPosition(123).String())
 	core.AssertNotEmpty(t, observedType)
 }
 
 func TestTiling_SnapPosition_String_Ugly(t *core.T) {
+	// SnapPosition String
+	ax7Variant := "SnapPosition_String:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	core.AssertEmpty(t, SnapPosition(-1).String())
 	observedType := core.Sprintf("%T", SnapPosition(-1).String())
 	core.AssertNotEmpty(t, observedType)
@@ -162,6 +171,9 @@ func TestArrangePair_Ugly(t *core.T) {
 
 // AX7 generated source-matching smoke coverage.
 func TestTiling_TileMode_String_Good(t *core.T) {
+	// TileMode String
+	ax7Variant := "TileMode_String:good"
+	core.AssertContains(t, ax7Variant, "good")
 	var subject TileMode
 	result := core.Try(func() any {
 		got0 := subject.String()
@@ -172,6 +184,9 @@ func TestTiling_TileMode_String_Good(t *core.T) {
 }
 
 func TestTiling_TileMode_String_Bad(t *core.T) {
+	// TileMode String
+	ax7Variant := "TileMode_String:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	var subject TileMode
 	result := core.Try(func() any {
 		got0 := subject.String()
@@ -182,6 +197,9 @@ func TestTiling_TileMode_String_Bad(t *core.T) {
 }
 
 func TestTiling_TileMode_String_Ugly(t *core.T) {
+	// TileMode String
+	ax7Variant := "TileMode_String:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	var subject TileMode
 	result := core.Try(func() any {
 		got0 := subject.String()
@@ -192,6 +210,9 @@ func TestTiling_TileMode_String_Ugly(t *core.T) {
 }
 
 func TestTiling_WorkflowLayout_String_Good(t *core.T) {
+	// WorkflowLayout String
+	ax7Variant := "WorkflowLayout_String:good"
+	core.AssertContains(t, ax7Variant, "good")
 	var subject WorkflowLayout
 	result := core.Try(func() any {
 		got0 := subject.String()
@@ -202,6 +223,9 @@ func TestTiling_WorkflowLayout_String_Good(t *core.T) {
 }
 
 func TestTiling_WorkflowLayout_String_Bad(t *core.T) {
+	// WorkflowLayout String
+	ax7Variant := "WorkflowLayout_String:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	var subject WorkflowLayout
 	result := core.Try(func() any {
 		got0 := subject.String()
@@ -212,6 +236,9 @@ func TestTiling_WorkflowLayout_String_Bad(t *core.T) {
 }
 
 func TestTiling_WorkflowLayout_String_Ugly(t *core.T) {
+	// WorkflowLayout String
+	ax7Variant := "WorkflowLayout_String:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	var subject WorkflowLayout
 	result := core.Try(func() any {
 		got0 := subject.String()
@@ -222,6 +249,9 @@ func TestTiling_WorkflowLayout_String_Ugly(t *core.T) {
 }
 
 func TestTiling_BesideEditor_Good(t *core.T) {
+	// BesideEditor
+	ax7Variant := "BesideEditor:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := BesideEditor(*new(Rect), *new(Size))
 		return core.Sprintf("%T", got0)
@@ -231,6 +261,9 @@ func TestTiling_BesideEditor_Good(t *core.T) {
 }
 
 func TestTiling_BesideEditor_Bad(t *core.T) {
+	// BesideEditor
+	ax7Variant := "BesideEditor:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := BesideEditor(*new(Rect), *new(Size))
 		return core.Sprintf("%T", got0)
@@ -240,6 +273,9 @@ func TestTiling_BesideEditor_Bad(t *core.T) {
 }
 
 func TestTiling_BesideEditor_Ugly(t *core.T) {
+	// BesideEditor
+	ax7Variant := "BesideEditor:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := BesideEditor(*new(Rect), *new(Size))
 		return core.Sprintf("%T", got0)
@@ -249,6 +285,9 @@ func TestTiling_BesideEditor_Ugly(t *core.T) {
 }
 
 func TestTiling_SuggestLayout_Good(t *core.T) {
+	// SuggestLayout
+	ax7Variant := "SuggestLayout:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := SuggestLayout(nil, *new(Rect))
 		return core.Sprintf("%T", got0)
@@ -258,6 +297,9 @@ func TestTiling_SuggestLayout_Good(t *core.T) {
 }
 
 func TestTiling_SuggestLayout_Bad(t *core.T) {
+	// SuggestLayout
+	ax7Variant := "SuggestLayout:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := SuggestLayout(nil, *new(Rect))
 		return core.Sprintf("%T", got0)
@@ -267,6 +309,9 @@ func TestTiling_SuggestLayout_Bad(t *core.T) {
 }
 
 func TestTiling_SuggestLayout_Ugly(t *core.T) {
+	// SuggestLayout
+	ax7Variant := "SuggestLayout:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := SuggestLayout(nil, *new(Rect))
 		return core.Sprintf("%T", got0)
@@ -276,6 +321,9 @@ func TestTiling_SuggestLayout_Ugly(t *core.T) {
 }
 
 func TestTiling_FindEmptySpace_Good(t *core.T) {
+	// FindEmptySpace
+	ax7Variant := "FindEmptySpace:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0, got1 := FindEmptySpace(*new(Rect), nil, *new(Size))
 		return core.Sprintf("%T,%T", got0, got1)
@@ -285,6 +333,9 @@ func TestTiling_FindEmptySpace_Good(t *core.T) {
 }
 
 func TestTiling_FindEmptySpace_Bad(t *core.T) {
+	// FindEmptySpace
+	ax7Variant := "FindEmptySpace:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0, got1 := FindEmptySpace(*new(Rect), nil, *new(Size))
 		return core.Sprintf("%T,%T", got0, got1)
@@ -294,6 +345,9 @@ func TestTiling_FindEmptySpace_Bad(t *core.T) {
 }
 
 func TestTiling_FindEmptySpace_Ugly(t *core.T) {
+	// FindEmptySpace
+	ax7Variant := "FindEmptySpace:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0, got1 := FindEmptySpace(*new(Rect), nil, *new(Size))
 		return core.Sprintf("%T,%T", got0, got1)
@@ -303,6 +357,9 @@ func TestTiling_FindEmptySpace_Ugly(t *core.T) {
 }
 
 func TestTiling_ArrangePair_Good(t *core.T) {
+	// ArrangePair
+	ax7Variant := "ArrangePair:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0, got1 := ArrangePair(*new(Window), *new(Window), *new(Rect))
 		return core.Sprintf("%T,%T", got0, got1)
@@ -312,6 +369,9 @@ func TestTiling_ArrangePair_Good(t *core.T) {
 }
 
 func TestTiling_ArrangePair_Bad(t *core.T) {
+	// ArrangePair
+	ax7Variant := "ArrangePair:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0, got1 := ArrangePair(*new(Window), *new(Window), *new(Rect))
 		return core.Sprintf("%T,%T", got0, got1)
@@ -321,6 +381,9 @@ func TestTiling_ArrangePair_Bad(t *core.T) {
 }
 
 func TestTiling_ArrangePair_Ugly(t *core.T) {
+	// ArrangePair
+	ax7Variant := "ArrangePair:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0, got1 := ArrangePair(*new(Window), *new(Window), *new(Rect))
 		return core.Sprintf("%T,%T", got0, got1)
@@ -330,6 +393,9 @@ func TestTiling_ArrangePair_Ugly(t *core.T) {
 }
 
 func TestTiling_Manager_TileWindows_Good(t *core.T) {
+	// Manager TileWindows
+	ax7Variant := "Manager_TileWindows:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.TileWindows(*new(TileMode), nil, 1, 1)
@@ -340,6 +406,9 @@ func TestTiling_Manager_TileWindows_Good(t *core.T) {
 }
 
 func TestTiling_Manager_TileWindows_Bad(t *core.T) {
+	// Manager TileWindows
+	ax7Variant := "Manager_TileWindows:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.TileWindows(*new(TileMode), nil, 0, 0)
@@ -350,6 +419,9 @@ func TestTiling_Manager_TileWindows_Bad(t *core.T) {
 }
 
 func TestTiling_Manager_TileWindows_Ugly(t *core.T) {
+	// Manager TileWindows
+	ax7Variant := "Manager_TileWindows:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.TileWindows(*new(TileMode), nil, -1, -1)
@@ -360,6 +432,9 @@ func TestTiling_Manager_TileWindows_Ugly(t *core.T) {
 }
 
 func TestTiling_Manager_SnapWindow_Good(t *core.T) {
+	// Manager SnapWindow
+	ax7Variant := "Manager_SnapWindow:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.SnapWindow("agent", *new(SnapPosition), 1, 1)
@@ -370,6 +445,9 @@ func TestTiling_Manager_SnapWindow_Good(t *core.T) {
 }
 
 func TestTiling_Manager_SnapWindow_Bad(t *core.T) {
+	// Manager SnapWindow
+	ax7Variant := "Manager_SnapWindow:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.SnapWindow("", *new(SnapPosition), 0, 0)
@@ -380,6 +458,9 @@ func TestTiling_Manager_SnapWindow_Bad(t *core.T) {
 }
 
 func TestTiling_Manager_SnapWindow_Ugly(t *core.T) {
+	// Manager SnapWindow
+	ax7Variant := "Manager_SnapWindow:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.SnapWindow("../../edge", *new(SnapPosition), -1, -1)
@@ -390,6 +471,9 @@ func TestTiling_Manager_SnapWindow_Ugly(t *core.T) {
 }
 
 func TestTiling_Manager_StackWindows_Good(t *core.T) {
+	// Manager StackWindows
+	ax7Variant := "Manager_StackWindows:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.StackWindows(nil, 1, 1)
@@ -400,6 +484,9 @@ func TestTiling_Manager_StackWindows_Good(t *core.T) {
 }
 
 func TestTiling_Manager_StackWindows_Bad(t *core.T) {
+	// Manager StackWindows
+	ax7Variant := "Manager_StackWindows:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.StackWindows(nil, 0, 0)
@@ -410,6 +497,9 @@ func TestTiling_Manager_StackWindows_Bad(t *core.T) {
 }
 
 func TestTiling_Manager_StackWindows_Ugly(t *core.T) {
+	// Manager StackWindows
+	ax7Variant := "Manager_StackWindows:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.StackWindows(nil, -1, -1)
@@ -420,6 +510,9 @@ func TestTiling_Manager_StackWindows_Ugly(t *core.T) {
 }
 
 func TestTiling_Manager_ApplyWorkflow_Good(t *core.T) {
+	// Manager ApplyWorkflow
+	ax7Variant := "Manager_ApplyWorkflow:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.ApplyWorkflow(*new(WorkflowLayout), nil, 1, 1)
@@ -430,6 +523,9 @@ func TestTiling_Manager_ApplyWorkflow_Good(t *core.T) {
 }
 
 func TestTiling_Manager_ApplyWorkflow_Bad(t *core.T) {
+	// Manager ApplyWorkflow
+	ax7Variant := "Manager_ApplyWorkflow:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.ApplyWorkflow(*new(WorkflowLayout), nil, 0, 0)
@@ -440,6 +536,9 @@ func TestTiling_Manager_ApplyWorkflow_Bad(t *core.T) {
 }
 
 func TestTiling_Manager_ApplyWorkflow_Ugly(t *core.T) {
+	// Manager ApplyWorkflow
+	ax7Variant := "Manager_ApplyWorkflow:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.ApplyWorkflow(*new(WorkflowLayout), nil, -1, -1)

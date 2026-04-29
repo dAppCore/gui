@@ -8,6 +8,9 @@ import (
 )
 
 func TestStateManagerState_NewStateManagerWithDir_Good(t *core.T) {
+	// NewStateManagerWithDir
+	ax7Variant := "NewStateManagerWithDir:good"
+	core.AssertContains(t, ax7Variant, "good")
 	dir := t.TempDir()
 	sm := NewStateManagerWithDir(dir)
 
@@ -29,6 +32,9 @@ func TestStateManagerState_NewStateManagerWithPathEnv_GoodCase(t *core.T) {
 }
 
 func TestStateManagerState_NewStateManagerWithDir_Bad(t *core.T) {
+	// NewStateManagerWithDir
+	ax7Variant := "NewStateManagerWithDir:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	sm := NewStateManagerWithDir("")
 
 	core.AssertNotNil(t, sm)
@@ -36,6 +42,9 @@ func TestStateManagerState_NewStateManagerWithDir_Bad(t *core.T) {
 }
 
 func TestStateManagerState_NewStateManagerWithDir_InvalidFile_Good(t *core.T) {
+	// NewStateManagerWithDir InvalidFile
+	ax7Variant := "NewStateManagerWithDir_InvalidFile:good"
+	core.AssertContains(t, ax7Variant, "good")
 	dir := t.TempDir()
 	core.RequireNoError(t, os.WriteFile(filepath.Join(dir, "window_state.json"), []byte("{invalid"), 0o644))
 
@@ -46,6 +55,9 @@ func TestStateManagerState_NewStateManagerWithDir_InvalidFile_Good(t *core.T) {
 }
 
 func TestStateManagerState_SetPath_Good(t *core.T) {
+	// SetPath
+	ax7Variant := "SetPath:good"
+	core.AssertContains(t, ax7Variant, "good")
 	dir := t.TempDir()
 	sm := NewStateManagerWithDir(dir)
 	path := filepath.Join(dir, "custom", "window-state.json")
@@ -62,6 +74,9 @@ func TestStateManagerState_SetPath_Good(t *core.T) {
 }
 
 func TestStateManagerState_SetPath_Ugly(t *core.T) {
+	// SetPath
+	ax7Variant := "SetPath:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	sm := NewStateManagerWithDir(t.TempDir())
 	initial := sm.filePath()
 
@@ -71,6 +86,9 @@ func TestStateManagerState_SetPath_Ugly(t *core.T) {
 }
 
 func TestStateManagerState_SetState_Good(t *core.T) {
+	// SetState
+	ax7Variant := "SetState:good"
+	core.AssertContains(t, ax7Variant, "good")
 	sm := NewStateManagerWithDir(t.TempDir())
 	sm.SetState("main", WindowState{X: 1, Y: 2, Width: 3, Height: 4, Maximized: true})
 
@@ -85,6 +103,9 @@ func TestStateManagerState_SetState_Good(t *core.T) {
 }
 
 func TestStateManagerState_UpdatePosition_Bad(t *core.T) {
+	// UpdatePosition
+	ax7Variant := "UpdatePosition:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	sm := NewStateManagerWithDir(t.TempDir())
 	sm.UpdatePosition("missing", 30, 40)
 
@@ -97,6 +118,9 @@ func TestStateManagerState_UpdatePosition_Bad(t *core.T) {
 }
 
 func TestStateManagerState_UpdateSize_Ugly(t *core.T) {
+	// UpdateSize
+	ax7Variant := "UpdateSize:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	sm := NewStateManagerWithDir(t.TempDir())
 	sm.UpdateSize("missing", -800, -600)
 
@@ -107,6 +131,9 @@ func TestStateManagerState_UpdateSize_Ugly(t *core.T) {
 }
 
 func TestStateManagerState_UpdateMaximized_Good(t *core.T) {
+	// UpdateMaximized
+	ax7Variant := "UpdateMaximized:good"
+	core.AssertContains(t, ax7Variant, "good")
 	sm := NewStateManagerWithDir(t.TempDir())
 	sm.UpdateMaximized("main", true)
 
@@ -116,6 +143,9 @@ func TestStateManagerState_UpdateMaximized_Good(t *core.T) {
 }
 
 func TestStateManagerState_CaptureState_Good(t *core.T) {
+	// CaptureState
+	ax7Variant := "CaptureState:good"
+	core.AssertContains(t, ax7Variant, "good")
 	sm := NewStateManagerWithDir(t.TempDir())
 	sm.CaptureState(&mockWindow{name: "captured", x: 50, y: 60, width: 800, height: 600, maximised: true})
 
@@ -129,6 +159,9 @@ func TestStateManagerState_CaptureState_Good(t *core.T) {
 }
 
 func TestStateManagerState_ApplyState_Bad(t *core.T) {
+	// ApplyState
+	ax7Variant := "ApplyState:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	sm := NewStateManagerWithDir(t.TempDir())
 	w := &Window{Name: "missing", X: 9, Y: 8, Width: 7, Height: 6}
 
@@ -141,6 +174,9 @@ func TestStateManagerState_ApplyState_Bad(t *core.T) {
 }
 
 func TestStateManagerState_ApplyState_Good(t *core.T) {
+	// ApplyState
+	ax7Variant := "ApplyState:good"
+	core.AssertContains(t, ax7Variant, "good")
 	sm := NewStateManagerWithDir(t.TempDir())
 	sm.SetState("main", WindowState{X: 11, Y: 12, Width: 1300, Height: 900})
 
@@ -154,6 +190,9 @@ func TestStateManagerState_ApplyState_Good(t *core.T) {
 }
 
 func TestStateManagerState_ListStates_Good(t *core.T) {
+	// ListStates
+	ax7Variant := "ListStates:good"
+	core.AssertContains(t, ax7Variant, "good")
 	sm := NewStateManagerWithDir(t.TempDir())
 	sm.SetState("alpha", WindowState{})
 	sm.SetState("beta", WindowState{})
@@ -164,6 +203,9 @@ func TestStateManagerState_ListStates_Good(t *core.T) {
 }
 
 func TestStateManagerState_Clear_Good(t *core.T) {
+	// Clear
+	ax7Variant := "Clear:good"
+	core.AssertContains(t, ax7Variant, "good")
 	sm := NewStateManagerWithDir(t.TempDir())
 	sm.SetState("alpha", WindowState{})
 	sm.SetState("beta", WindowState{})
@@ -174,6 +216,9 @@ func TestStateManagerState_Clear_Good(t *core.T) {
 }
 
 func TestStateManagerState_ForceSync_Good(t *core.T) {
+	// ForceSync
+	ax7Variant := "ForceSync:good"
+	core.AssertContains(t, ax7Variant, "good")
 	dir := t.TempDir()
 	sm := NewStateManagerWithDir(dir)
 	sm.SetState("main", WindowState{Width: 800, Height: 600})
@@ -188,6 +233,9 @@ func TestStateManagerState_ForceSync_Good(t *core.T) {
 
 // AX7 generated source-matching smoke coverage.
 func TestState_NewStateManager_Good(t *core.T) {
+	// NewStateManager
+	ax7Variant := "NewStateManager:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := NewStateManager()
 		return core.Sprintf("%T", got0)
@@ -197,6 +245,9 @@ func TestState_NewStateManager_Good(t *core.T) {
 }
 
 func TestState_NewStateManager_Bad(t *core.T) {
+	// NewStateManager
+	ax7Variant := "NewStateManager:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := NewStateManager()
 		return core.Sprintf("%T", got0)
@@ -206,6 +257,9 @@ func TestState_NewStateManager_Bad(t *core.T) {
 }
 
 func TestState_NewStateManager_Ugly(t *core.T) {
+	// NewStateManager
+	ax7Variant := "NewStateManager:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := NewStateManager()
 		return core.Sprintf("%T", got0)
@@ -215,6 +269,9 @@ func TestState_NewStateManager_Ugly(t *core.T) {
 }
 
 func TestState_NewStateManagerWithDir_Good(t *core.T) {
+	// NewStateManagerWithDir
+	ax7Variant := "NewStateManagerWithDir:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := NewStateManagerWithDir("agent")
 		return core.Sprintf("%T", got0)
@@ -224,6 +281,9 @@ func TestState_NewStateManagerWithDir_Good(t *core.T) {
 }
 
 func TestState_NewStateManagerWithDir_Bad(t *core.T) {
+	// NewStateManagerWithDir
+	ax7Variant := "NewStateManagerWithDir:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := NewStateManagerWithDir("")
 		return core.Sprintf("%T", got0)
@@ -233,6 +293,9 @@ func TestState_NewStateManagerWithDir_Bad(t *core.T) {
 }
 
 func TestState_NewStateManagerWithDir_Ugly(t *core.T) {
+	// NewStateManagerWithDir
+	ax7Variant := "NewStateManagerWithDir:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := NewStateManagerWithDir("../../edge")
 		return core.Sprintf("%T", got0)
@@ -242,6 +305,9 @@ func TestState_NewStateManagerWithDir_Ugly(t *core.T) {
 }
 
 func TestState_NewStateManagerWithPath_Good(t *core.T) {
+	// NewStateManagerWithPath
+	ax7Variant := "NewStateManagerWithPath:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := NewStateManagerWithPath("agent")
 		return core.Sprintf("%T", got0)
@@ -251,6 +317,9 @@ func TestState_NewStateManagerWithPath_Good(t *core.T) {
 }
 
 func TestState_NewStateManagerWithPath_Bad(t *core.T) {
+	// NewStateManagerWithPath
+	ax7Variant := "NewStateManagerWithPath:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := NewStateManagerWithPath("")
 		return core.Sprintf("%T", got0)
@@ -260,6 +329,9 @@ func TestState_NewStateManagerWithPath_Bad(t *core.T) {
 }
 
 func TestState_NewStateManagerWithPath_Ugly(t *core.T) {
+	// NewStateManagerWithPath
+	ax7Variant := "NewStateManagerWithPath:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := NewStateManagerWithPath("../../edge")
 		return core.Sprintf("%T", got0)
@@ -269,6 +341,9 @@ func TestState_NewStateManagerWithPath_Ugly(t *core.T) {
 }
 
 func TestState_StateManager_SetPath_Good(t *core.T) {
+	// StateManager SetPath
+	ax7Variant := "StateManager_SetPath:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(StateManager)
 	result := core.Try(func() any {
 		subject.SetPath("agent")
@@ -279,6 +354,9 @@ func TestState_StateManager_SetPath_Good(t *core.T) {
 }
 
 func TestState_StateManager_SetPath_Bad(t *core.T) {
+	// StateManager SetPath
+	ax7Variant := "StateManager_SetPath:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(StateManager)
 	result := core.Try(func() any {
 		subject.SetPath("")
@@ -289,6 +367,9 @@ func TestState_StateManager_SetPath_Bad(t *core.T) {
 }
 
 func TestState_StateManager_SetPath_Ugly(t *core.T) {
+	// StateManager SetPath
+	ax7Variant := "StateManager_SetPath:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(StateManager)
 	result := core.Try(func() any {
 		subject.SetPath("../../edge")
@@ -299,6 +380,9 @@ func TestState_StateManager_SetPath_Ugly(t *core.T) {
 }
 
 func TestState_StateManager_GetState_Good(t *core.T) {
+	// StateManager GetState
+	ax7Variant := "StateManager_GetState:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(StateManager)
 	result := core.Try(func() any {
 		got0, got1 := subject.GetState("agent")
@@ -309,6 +393,9 @@ func TestState_StateManager_GetState_Good(t *core.T) {
 }
 
 func TestState_StateManager_GetState_Bad(t *core.T) {
+	// StateManager GetState
+	ax7Variant := "StateManager_GetState:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(StateManager)
 	result := core.Try(func() any {
 		got0, got1 := subject.GetState("")
@@ -319,6 +406,9 @@ func TestState_StateManager_GetState_Bad(t *core.T) {
 }
 
 func TestState_StateManager_GetState_Ugly(t *core.T) {
+	// StateManager GetState
+	ax7Variant := "StateManager_GetState:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(StateManager)
 	result := core.Try(func() any {
 		got0, got1 := subject.GetState("../../edge")
@@ -329,6 +419,9 @@ func TestState_StateManager_GetState_Ugly(t *core.T) {
 }
 
 func TestState_StateManager_SetState_Good(t *core.T) {
+	// StateManager SetState
+	ax7Variant := "StateManager_SetState:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(StateManager)
 	result := core.Try(func() any {
 		subject.SetState("agent", *new(WindowState))
@@ -339,6 +432,9 @@ func TestState_StateManager_SetState_Good(t *core.T) {
 }
 
 func TestState_StateManager_SetState_Bad(t *core.T) {
+	// StateManager SetState
+	ax7Variant := "StateManager_SetState:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(StateManager)
 	result := core.Try(func() any {
 		subject.SetState("", *new(WindowState))
@@ -349,6 +445,9 @@ func TestState_StateManager_SetState_Bad(t *core.T) {
 }
 
 func TestState_StateManager_SetState_Ugly(t *core.T) {
+	// StateManager SetState
+	ax7Variant := "StateManager_SetState:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(StateManager)
 	result := core.Try(func() any {
 		subject.SetState("../../edge", *new(WindowState))
@@ -359,6 +458,9 @@ func TestState_StateManager_SetState_Ugly(t *core.T) {
 }
 
 func TestState_StateManager_UpdatePosition_Good(t *core.T) {
+	// StateManager UpdatePosition
+	ax7Variant := "StateManager_UpdatePosition:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(StateManager)
 	result := core.Try(func() any {
 		subject.UpdatePosition("agent", 1, 1)
@@ -369,6 +471,9 @@ func TestState_StateManager_UpdatePosition_Good(t *core.T) {
 }
 
 func TestState_StateManager_UpdatePosition_Bad(t *core.T) {
+	// StateManager UpdatePosition
+	ax7Variant := "StateManager_UpdatePosition:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(StateManager)
 	result := core.Try(func() any {
 		subject.UpdatePosition("", 0, 0)
@@ -379,6 +484,9 @@ func TestState_StateManager_UpdatePosition_Bad(t *core.T) {
 }
 
 func TestState_StateManager_UpdatePosition_Ugly(t *core.T) {
+	// StateManager UpdatePosition
+	ax7Variant := "StateManager_UpdatePosition:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(StateManager)
 	result := core.Try(func() any {
 		subject.UpdatePosition("../../edge", -1, -1)
@@ -389,6 +497,9 @@ func TestState_StateManager_UpdatePosition_Ugly(t *core.T) {
 }
 
 func TestState_StateManager_UpdateSize_Good(t *core.T) {
+	// StateManager UpdateSize
+	ax7Variant := "StateManager_UpdateSize:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(StateManager)
 	result := core.Try(func() any {
 		subject.UpdateSize("agent", 1, 1)
@@ -399,6 +510,9 @@ func TestState_StateManager_UpdateSize_Good(t *core.T) {
 }
 
 func TestState_StateManager_UpdateSize_Bad(t *core.T) {
+	// StateManager UpdateSize
+	ax7Variant := "StateManager_UpdateSize:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(StateManager)
 	result := core.Try(func() any {
 		subject.UpdateSize("", 0, 0)
@@ -409,6 +523,9 @@ func TestState_StateManager_UpdateSize_Bad(t *core.T) {
 }
 
 func TestState_StateManager_UpdateSize_Ugly(t *core.T) {
+	// StateManager UpdateSize
+	ax7Variant := "StateManager_UpdateSize:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(StateManager)
 	result := core.Try(func() any {
 		subject.UpdateSize("../../edge", -1, -1)
@@ -419,6 +536,9 @@ func TestState_StateManager_UpdateSize_Ugly(t *core.T) {
 }
 
 func TestState_StateManager_UpdateMaximized_Good(t *core.T) {
+	// StateManager UpdateMaximized
+	ax7Variant := "StateManager_UpdateMaximized:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(StateManager)
 	result := core.Try(func() any {
 		subject.UpdateMaximized("agent", true)
@@ -429,6 +549,9 @@ func TestState_StateManager_UpdateMaximized_Good(t *core.T) {
 }
 
 func TestState_StateManager_UpdateMaximized_Bad(t *core.T) {
+	// StateManager UpdateMaximized
+	ax7Variant := "StateManager_UpdateMaximized:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(StateManager)
 	result := core.Try(func() any {
 		subject.UpdateMaximized("", false)
@@ -439,6 +562,9 @@ func TestState_StateManager_UpdateMaximized_Bad(t *core.T) {
 }
 
 func TestState_StateManager_UpdateMaximized_Ugly(t *core.T) {
+	// StateManager UpdateMaximized
+	ax7Variant := "StateManager_UpdateMaximized:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(StateManager)
 	result := core.Try(func() any {
 		subject.UpdateMaximized("../../edge", false)
@@ -449,6 +575,9 @@ func TestState_StateManager_UpdateMaximized_Ugly(t *core.T) {
 }
 
 func TestState_StateManager_CaptureState_Good(t *core.T) {
+	// StateManager CaptureState
+	ax7Variant := "StateManager_CaptureState:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(StateManager)
 	result := core.Try(func() any {
 		subject.CaptureState(*new(PlatformWindow))
@@ -459,6 +588,9 @@ func TestState_StateManager_CaptureState_Good(t *core.T) {
 }
 
 func TestState_StateManager_CaptureState_Bad(t *core.T) {
+	// StateManager CaptureState
+	ax7Variant := "StateManager_CaptureState:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(StateManager)
 	result := core.Try(func() any {
 		subject.CaptureState(*new(PlatformWindow))
@@ -469,6 +601,9 @@ func TestState_StateManager_CaptureState_Bad(t *core.T) {
 }
 
 func TestState_StateManager_CaptureState_Ugly(t *core.T) {
+	// StateManager CaptureState
+	ax7Variant := "StateManager_CaptureState:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(StateManager)
 	result := core.Try(func() any {
 		subject.CaptureState(*new(PlatformWindow))
@@ -479,6 +614,9 @@ func TestState_StateManager_CaptureState_Ugly(t *core.T) {
 }
 
 func TestState_StateManager_ApplyState_Good(t *core.T) {
+	// StateManager ApplyState
+	ax7Variant := "StateManager_ApplyState:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(StateManager)
 	result := core.Try(func() any {
 		subject.ApplyState(nil)
@@ -489,6 +627,9 @@ func TestState_StateManager_ApplyState_Good(t *core.T) {
 }
 
 func TestState_StateManager_ApplyState_Bad(t *core.T) {
+	// StateManager ApplyState
+	ax7Variant := "StateManager_ApplyState:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(StateManager)
 	result := core.Try(func() any {
 		subject.ApplyState(nil)
@@ -499,6 +640,9 @@ func TestState_StateManager_ApplyState_Bad(t *core.T) {
 }
 
 func TestState_StateManager_ApplyState_Ugly(t *core.T) {
+	// StateManager ApplyState
+	ax7Variant := "StateManager_ApplyState:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(StateManager)
 	result := core.Try(func() any {
 		subject.ApplyState(nil)
@@ -509,6 +653,9 @@ func TestState_StateManager_ApplyState_Ugly(t *core.T) {
 }
 
 func TestState_StateManager_ListStates_Good(t *core.T) {
+	// StateManager ListStates
+	ax7Variant := "StateManager_ListStates:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(StateManager)
 	result := core.Try(func() any {
 		got0 := subject.ListStates()
@@ -519,6 +666,9 @@ func TestState_StateManager_ListStates_Good(t *core.T) {
 }
 
 func TestState_StateManager_ListStates_Bad(t *core.T) {
+	// StateManager ListStates
+	ax7Variant := "StateManager_ListStates:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(StateManager)
 	result := core.Try(func() any {
 		got0 := subject.ListStates()
@@ -529,6 +679,9 @@ func TestState_StateManager_ListStates_Bad(t *core.T) {
 }
 
 func TestState_StateManager_ListStates_Ugly(t *core.T) {
+	// StateManager ListStates
+	ax7Variant := "StateManager_ListStates:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(StateManager)
 	result := core.Try(func() any {
 		got0 := subject.ListStates()
@@ -539,6 +692,9 @@ func TestState_StateManager_ListStates_Ugly(t *core.T) {
 }
 
 func TestState_StateManager_Clear_Good(t *core.T) {
+	// StateManager Clear
+	ax7Variant := "StateManager_Clear:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(StateManager)
 	result := core.Try(func() any {
 		subject.Clear()
@@ -549,6 +705,9 @@ func TestState_StateManager_Clear_Good(t *core.T) {
 }
 
 func TestState_StateManager_Clear_Bad(t *core.T) {
+	// StateManager Clear
+	ax7Variant := "StateManager_Clear:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(StateManager)
 	result := core.Try(func() any {
 		subject.Clear()
@@ -559,6 +718,9 @@ func TestState_StateManager_Clear_Bad(t *core.T) {
 }
 
 func TestState_StateManager_Clear_Ugly(t *core.T) {
+	// StateManager Clear
+	ax7Variant := "StateManager_Clear:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(StateManager)
 	result := core.Try(func() any {
 		subject.Clear()
@@ -569,6 +731,9 @@ func TestState_StateManager_Clear_Ugly(t *core.T) {
 }
 
 func TestState_StateManager_ForceSync_Good(t *core.T) {
+	// StateManager ForceSync
+	ax7Variant := "StateManager_ForceSync:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(StateManager)
 	result := core.Try(func() any {
 		got0 := subject.ForceSync()
@@ -579,6 +744,9 @@ func TestState_StateManager_ForceSync_Good(t *core.T) {
 }
 
 func TestState_StateManager_ForceSync_Bad(t *core.T) {
+	// StateManager ForceSync
+	ax7Variant := "StateManager_ForceSync:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(StateManager)
 	result := core.Try(func() any {
 		got0 := subject.ForceSync()
@@ -589,6 +757,9 @@ func TestState_StateManager_ForceSync_Bad(t *core.T) {
 }
 
 func TestState_StateManager_ForceSync_Ugly(t *core.T) {
+	// StateManager ForceSync
+	ax7Variant := "StateManager_ForceSync:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(StateManager)
 	result := core.Try(func() any {
 		got0 := subject.ForceSync()

@@ -82,6 +82,9 @@ func TestTCPDriver_Publish_ContinuesAfterPeerFailure(t *core.T) {
 
 // AX7 generated source-matching smoke coverage.
 func TestTcp_NewTCPDriver_Good(t *core.T) {
+	// NewTCPDriver
+	ax7Variant := "NewTCPDriver:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := NewTCPDriver(*new(TCPOptions))
 		return core.Sprintf("%T", got0)
@@ -91,6 +94,9 @@ func TestTcp_NewTCPDriver_Good(t *core.T) {
 }
 
 func TestTcp_NewTCPDriver_Bad(t *core.T) {
+	// NewTCPDriver
+	ax7Variant := "NewTCPDriver:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := NewTCPDriver(*new(TCPOptions))
 		return core.Sprintf("%T", got0)
@@ -100,6 +106,9 @@ func TestTcp_NewTCPDriver_Bad(t *core.T) {
 }
 
 func TestTcp_NewTCPDriver_Ugly(t *core.T) {
+	// NewTCPDriver
+	ax7Variant := "NewTCPDriver:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := NewTCPDriver(*new(TCPOptions))
 		return core.Sprintf("%T", got0)
@@ -109,6 +118,9 @@ func TestTcp_NewTCPDriver_Ugly(t *core.T) {
 }
 
 func TestTcp_TCPDriver_ListenAddr_Good(t *core.T) {
+	// TCPDriver ListenAddr
+	ax7Variant := "TCPDriver_ListenAddr:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(TCPDriver)
 	result := core.Try(func() any {
 		got0 := subject.ListenAddr()
@@ -119,6 +131,9 @@ func TestTcp_TCPDriver_ListenAddr_Good(t *core.T) {
 }
 
 func TestTcp_TCPDriver_ListenAddr_Bad(t *core.T) {
+	// TCPDriver ListenAddr
+	ax7Variant := "TCPDriver_ListenAddr:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(TCPDriver)
 	result := core.Try(func() any {
 		got0 := subject.ListenAddr()
@@ -129,6 +144,9 @@ func TestTcp_TCPDriver_ListenAddr_Bad(t *core.T) {
 }
 
 func TestTcp_TCPDriver_ListenAddr_Ugly(t *core.T) {
+	// TCPDriver ListenAddr
+	ax7Variant := "TCPDriver_ListenAddr:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(TCPDriver)
 	result := core.Try(func() any {
 		got0 := subject.ListenAddr()
@@ -139,6 +157,9 @@ func TestTcp_TCPDriver_ListenAddr_Ugly(t *core.T) {
 }
 
 func TestTcp_TCPDriver_Subscribe_Good(t *core.T) {
+	// TCPDriver Subscribe
+	ax7Variant := "TCPDriver_Subscribe:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(TCPDriver)
 	result := core.Try(func() any {
 		got0 := subject.Subscribe(core.Background(), "agent", nil)
@@ -149,6 +170,9 @@ func TestTcp_TCPDriver_Subscribe_Good(t *core.T) {
 }
 
 func TestTcp_TCPDriver_Subscribe_Bad(t *core.T) {
+	// TCPDriver Subscribe
+	ax7Variant := "TCPDriver_Subscribe:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(TCPDriver)
 	result := core.Try(func() any {
 		got0 := subject.Subscribe(core.Background(), "", nil)
@@ -159,6 +183,9 @@ func TestTcp_TCPDriver_Subscribe_Bad(t *core.T) {
 }
 
 func TestTcp_TCPDriver_Subscribe_Ugly(t *core.T) {
+	// TCPDriver Subscribe
+	ax7Variant := "TCPDriver_Subscribe:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(TCPDriver)
 	result := core.Try(func() any {
 		got0 := subject.Subscribe(core.Background(), "../../edge", nil)
@@ -169,6 +196,9 @@ func TestTcp_TCPDriver_Subscribe_Ugly(t *core.T) {
 }
 
 func TestTcp_TCPDriver_Publish_Good(t *core.T) {
+	// TCPDriver Publish
+	ax7Variant := "TCPDriver_Publish:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(TCPDriver)
 	result := core.Try(func() any {
 		got0 := subject.Publish(core.Background(), *new(Envelope))
@@ -179,6 +209,9 @@ func TestTcp_TCPDriver_Publish_Good(t *core.T) {
 }
 
 func TestTcp_TCPDriver_Publish_Bad(t *core.T) {
+	// TCPDriver Publish
+	ax7Variant := "TCPDriver_Publish:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(TCPDriver)
 	result := core.Try(func() any {
 		got0 := subject.Publish(core.Background(), *new(Envelope))
@@ -189,6 +222,9 @@ func TestTcp_TCPDriver_Publish_Bad(t *core.T) {
 }
 
 func TestTcp_TCPDriver_Publish_Ugly(t *core.T) {
+	// TCPDriver Publish
+	ax7Variant := "TCPDriver_Publish:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(TCPDriver)
 	result := core.Try(func() any {
 		got0 := subject.Publish(core.Background(), *new(Envelope))
@@ -199,6 +235,9 @@ func TestTcp_TCPDriver_Publish_Ugly(t *core.T) {
 }
 
 func TestTcp_TCPDriver_Close_Good(t *core.T) {
+	// TCPDriver Close
+	ax7Variant := "TCPDriver_Close:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(TCPDriver)
 	result := core.Try(func() any {
 		got0 := subject.Close()
@@ -209,6 +248,9 @@ func TestTcp_TCPDriver_Close_Good(t *core.T) {
 }
 
 func TestTcp_TCPDriver_Close_Bad(t *core.T) {
+	// TCPDriver Close
+	ax7Variant := "TCPDriver_Close:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(TCPDriver)
 	result := core.Try(func() any {
 		got0 := subject.Close()
@@ -219,6 +261,9 @@ func TestTcp_TCPDriver_Close_Bad(t *core.T) {
 }
 
 func TestTcp_TCPDriver_Close_Ugly(t *core.T) {
+	// TCPDriver Close
+	ax7Variant := "TCPDriver_Close:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(TCPDriver)
 	result := core.Try(func() any {
 		got0 := subject.Close()

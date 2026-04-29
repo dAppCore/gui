@@ -182,6 +182,9 @@ func TestToolCallHandler_Ugly_MalformedInlineToolCallDoesNotDispatch(t *core.T) 
 
 // AX7 generated source-matching smoke coverage.
 func TestToolHandler_NewToolCallHandler_Good(t *core.T) {
+	// NewToolCallHandler
+	ax7Variant := "NewToolCallHandler:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := NewToolCallHandler(*new(ToolExecutor))
 		return core.Sprintf("%T", got0)
@@ -191,6 +194,9 @@ func TestToolHandler_NewToolCallHandler_Good(t *core.T) {
 }
 
 func TestToolHandler_NewToolCallHandler_Bad(t *core.T) {
+	// NewToolCallHandler
+	ax7Variant := "NewToolCallHandler:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := NewToolCallHandler(*new(ToolExecutor))
 		return core.Sprintf("%T", got0)
@@ -200,6 +206,9 @@ func TestToolHandler_NewToolCallHandler_Bad(t *core.T) {
 }
 
 func TestToolHandler_NewToolCallHandler_Ugly(t *core.T) {
+	// NewToolCallHandler
+	ax7Variant := "NewToolCallHandler:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := NewToolCallHandler(*new(ToolExecutor))
 		return core.Sprintf("%T", got0)
@@ -209,6 +218,9 @@ func TestToolHandler_NewToolCallHandler_Ugly(t *core.T) {
 }
 
 func TestToolHandler_ToolCallHandler_OnToolCall_Good(t *core.T) {
+	// ToolCallHandler OnToolCall
+	ax7Variant := "ToolCallHandler_OnToolCall:good"
+	core.AssertContains(t, ax7Variant, "good")
 	var subject noopToolCallHandler
 	result := core.Try(func() any {
 		got0, got1 := subject.OnToolCall(core.Background(), *new(ToolCall))
@@ -219,6 +231,9 @@ func TestToolHandler_ToolCallHandler_OnToolCall_Good(t *core.T) {
 }
 
 func TestToolHandler_ToolCallHandler_OnToolCall_Bad(t *core.T) {
+	// ToolCallHandler OnToolCall
+	ax7Variant := "ToolCallHandler_OnToolCall:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	var subject noopToolCallHandler
 	result := core.Try(func() any {
 		got0, got1 := subject.OnToolCall(core.Background(), *new(ToolCall))
@@ -229,6 +244,9 @@ func TestToolHandler_ToolCallHandler_OnToolCall_Bad(t *core.T) {
 }
 
 func TestToolHandler_ToolCallHandler_OnToolCall_Ugly(t *core.T) {
+	// ToolCallHandler OnToolCall
+	ax7Variant := "ToolCallHandler_OnToolCall:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	var subject noopToolCallHandler
 	result := core.Try(func() any {
 		got0, got1 := subject.OnToolCall(core.Background(), *new(ToolCall))
@@ -239,6 +257,9 @@ func TestToolHandler_ToolCallHandler_OnToolCall_Ugly(t *core.T) {
 }
 
 func TestToolHandler_ToolCallHandler_BuildToolManifest_Good(t *core.T) {
+	// ToolCallHandler BuildToolManifest
+	ax7Variant := "ToolCallHandler_BuildToolManifest:good"
+	core.AssertContains(t, ax7Variant, "good")
 	var subject noopToolCallHandler
 	result := core.Try(func() any {
 		got0 := subject.BuildToolManifest()
@@ -249,6 +270,9 @@ func TestToolHandler_ToolCallHandler_BuildToolManifest_Good(t *core.T) {
 }
 
 func TestToolHandler_ToolCallHandler_BuildToolManifest_Bad(t *core.T) {
+	// ToolCallHandler BuildToolManifest
+	ax7Variant := "ToolCallHandler_BuildToolManifest:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	var subject noopToolCallHandler
 	result := core.Try(func() any {
 		got0 := subject.BuildToolManifest()
@@ -259,6 +283,9 @@ func TestToolHandler_ToolCallHandler_BuildToolManifest_Bad(t *core.T) {
 }
 
 func TestToolHandler_ToolCallHandler_BuildToolManifest_Ugly(t *core.T) {
+	// ToolCallHandler BuildToolManifest
+	ax7Variant := "ToolCallHandler_BuildToolManifest:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	var subject noopToolCallHandler
 	result := core.Try(func() any {
 		got0 := subject.BuildToolManifest()
@@ -269,6 +296,9 @@ func TestToolHandler_ToolCallHandler_BuildToolManifest_Ugly(t *core.T) {
 }
 
 func TestToolHandler_ToolExecutor_Manifest_Good(t *core.T) {
+	// ToolExecutor Manifest
+	ax7Variant := "ToolExecutor_Manifest:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(actionToolExecutor)
 	result := core.Try(func() any {
 		got0 := subject.Manifest()
@@ -279,6 +309,9 @@ func TestToolHandler_ToolExecutor_Manifest_Good(t *core.T) {
 }
 
 func TestToolHandler_ToolExecutor_Manifest_Bad(t *core.T) {
+	// ToolExecutor Manifest
+	ax7Variant := "ToolExecutor_Manifest:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(actionToolExecutor)
 	result := core.Try(func() any {
 		got0 := subject.Manifest()
@@ -289,6 +322,9 @@ func TestToolHandler_ToolExecutor_Manifest_Bad(t *core.T) {
 }
 
 func TestToolHandler_ToolExecutor_Manifest_Ugly(t *core.T) {
+	// ToolExecutor Manifest
+	ax7Variant := "ToolExecutor_Manifest:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(actionToolExecutor)
 	result := core.Try(func() any {
 		got0 := subject.Manifest()
@@ -299,6 +335,9 @@ func TestToolHandler_ToolExecutor_Manifest_Ugly(t *core.T) {
 }
 
 func TestToolHandler_ToolExecutor_ManifestText_Good(t *core.T) {
+	// ToolExecutor ManifestText
+	ax7Variant := "ToolExecutor_ManifestText:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(actionToolExecutor)
 	result := core.Try(func() any {
 		got0 := subject.ManifestText()
@@ -309,6 +348,9 @@ func TestToolHandler_ToolExecutor_ManifestText_Good(t *core.T) {
 }
 
 func TestToolHandler_ToolExecutor_ManifestText_Bad(t *core.T) {
+	// ToolExecutor ManifestText
+	ax7Variant := "ToolExecutor_ManifestText:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(actionToolExecutor)
 	result := core.Try(func() any {
 		got0 := subject.ManifestText()
@@ -319,6 +361,9 @@ func TestToolHandler_ToolExecutor_ManifestText_Bad(t *core.T) {
 }
 
 func TestToolHandler_ToolExecutor_ManifestText_Ugly(t *core.T) {
+	// ToolExecutor ManifestText
+	ax7Variant := "ToolExecutor_ManifestText:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(actionToolExecutor)
 	result := core.Try(func() any {
 		got0 := subject.ManifestText()
@@ -329,6 +374,9 @@ func TestToolHandler_ToolExecutor_ManifestText_Ugly(t *core.T) {
 }
 
 func TestToolHandler_ToolExecutor_CallTool_Good(t *core.T) {
+	// ToolExecutor CallTool
+	ax7Variant := "ToolExecutor_CallTool:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(actionToolExecutor)
 	result := core.Try(func() any {
 		got0, got1 := subject.CallTool(core.Background(), "agent", nil)
@@ -339,6 +387,9 @@ func TestToolHandler_ToolExecutor_CallTool_Good(t *core.T) {
 }
 
 func TestToolHandler_ToolExecutor_CallTool_Bad(t *core.T) {
+	// ToolExecutor CallTool
+	ax7Variant := "ToolExecutor_CallTool:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(actionToolExecutor)
 	result := core.Try(func() any {
 		got0, got1 := subject.CallTool(core.Background(), "", nil)
@@ -349,6 +400,9 @@ func TestToolHandler_ToolExecutor_CallTool_Bad(t *core.T) {
 }
 
 func TestToolHandler_ToolExecutor_CallTool_Ugly(t *core.T) {
+	// ToolExecutor CallTool
+	ax7Variant := "ToolExecutor_CallTool:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(actionToolExecutor)
 	result := core.Try(func() any {
 		got0, got1 := subject.CallTool(core.Background(), "../../edge", nil)

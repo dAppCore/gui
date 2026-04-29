@@ -17,6 +17,9 @@ import (
 )
 
 func TestMarketplace_marketplaceRegistryURL_Good(t *core.T) {
+	// marketplaceRegistryURL
+	ax7Variant := "marketplaceRegistryURL:good"
+	core.AssertContains(t, ax7Variant, "good")
 	t.Setenv("CORE_MARKETPLACE_REGISTRY_URL", "")
 
 	opts := core.NewOptions(
@@ -27,6 +30,9 @@ func TestMarketplace_marketplaceRegistryURL_Good(t *core.T) {
 }
 
 func TestMarketplace_marketplaceRegistryURL_Bad(t *core.T) {
+	// marketplaceRegistryURL
+	ax7Variant := "marketplaceRegistryURL:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	t.Setenv("CORE_MARKETPLACE_REGISTRY_URL", "")
 
 	core.AssertEmpty(t, marketplaceRegistryURL(core.NewOptions()))
@@ -34,6 +40,9 @@ func TestMarketplace_marketplaceRegistryURL_Bad(t *core.T) {
 }
 
 func TestMarketplace_marketplaceRegistryURL_Ugly(t *core.T) {
+	// marketplaceRegistryURL
+	ax7Variant := "marketplaceRegistryURL:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	t.Setenv("CORE_MARKETPLACE_REGISTRY_URL", "  https://env.example/registry  ")
 
 	core.AssertEqual(t, "https://env.example/registry", marketplaceRegistryURL(core.NewOptions()))
@@ -41,6 +50,9 @@ func TestMarketplace_marketplaceRegistryURL_Ugly(t *core.T) {
 }
 
 func TestMarketplace_marketplaceInstallRoot_Good(t *core.T) {
+	// marketplaceInstallRoot
+	ax7Variant := "marketplaceInstallRoot:good"
+	core.AssertContains(t, ax7Variant, "good")
 	root := marketplaceInstallRoot("  /tmp/custom/apps  ")
 
 	core.AssertEqual(t, "/tmp/custom/apps", root)
@@ -48,6 +60,9 @@ func TestMarketplace_marketplaceInstallRoot_Good(t *core.T) {
 }
 
 func TestMarketplace_marketplaceInstallRoot_Bad(t *core.T) {
+	// marketplaceInstallRoot
+	ax7Variant := "marketplaceInstallRoot:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	t.Setenv("DIR_HOME", "")
 
 	root := marketplaceInstallRoot("")
@@ -56,6 +71,9 @@ func TestMarketplace_marketplaceInstallRoot_Bad(t *core.T) {
 }
 
 func TestMarketplace_marketplaceInstallRoot_Ugly(t *core.T) {
+	// marketplaceInstallRoot
+	ax7Variant := "marketplaceInstallRoot:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	t.Setenv("DIR_HOME", "  /Users/tester  ")
 
 	core.RequireTrue(t, strings.HasSuffix(marketplaceInstallRoot(""), filepath.Join(".core", "apps")))

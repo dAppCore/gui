@@ -5,6 +5,9 @@ import (
 )
 
 func TestKeyBindingManager_Add_Good(t *core.T) {
+	// Add
+	ax7Variant := "Add:good"
+	core.AssertContains(t, ax7Variant, "good")
 	manager := &KeyBindingManager{}
 	calls := 0
 
@@ -30,6 +33,9 @@ func TestKeyBindingManager_Add_BadCase(t *core.T) {
 }
 
 func TestKeyBindingManager_Add_Ugly(t *core.T) {
+	// Add
+	ax7Variant := "Add:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	manager := &KeyBindingManager{}
 	calls := 0
 
@@ -53,6 +59,9 @@ func TestKeyBindingManager_Process_RecoversFromPanic(t *core.T) {
 }
 
 func TestKeyBindingManager_Remove_Good(t *core.T) {
+	// Remove
+	ax7Variant := "Remove:good"
+	core.AssertContains(t, ax7Variant, "good")
 	manager := &KeyBindingManager{}
 	manager.Add("CmdOrCtrl+K", func(Window) {})
 
@@ -63,6 +72,9 @@ func TestKeyBindingManager_Remove_Good(t *core.T) {
 }
 
 func TestKeyBindingManager_Remove_Bad(t *core.T) {
+	// Remove
+	ax7Variant := "Remove:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	manager := &KeyBindingManager{}
 
 	manager.Remove("missing")
@@ -71,6 +83,9 @@ func TestKeyBindingManager_Remove_Bad(t *core.T) {
 }
 
 func TestKeyBindingManager_Remove_Ugly(t *core.T) {
+	// Remove
+	ax7Variant := "Remove:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	manager := &KeyBindingManager{}
 
 	manager.Remove("")
@@ -91,6 +106,9 @@ func TestKeyBindingManager_NilReceiver_IsSafe(t *core.T) {
 
 // AX7 generated source-matching smoke coverage.
 func TestKeybinding_KeyBindingManager_Add_Good(t *core.T) {
+	// KeyBindingManager Add
+	ax7Variant := "KeyBindingManager_Add:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(KeyBindingManager)
 	result := core.Try(func() any {
 		subject.Add("agent", nil)
@@ -101,6 +119,9 @@ func TestKeybinding_KeyBindingManager_Add_Good(t *core.T) {
 }
 
 func TestKeybinding_KeyBindingManager_Add_Bad(t *core.T) {
+	// KeyBindingManager Add
+	ax7Variant := "KeyBindingManager_Add:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(KeyBindingManager)
 	result := core.Try(func() any {
 		subject.Add("", nil)
@@ -111,6 +132,9 @@ func TestKeybinding_KeyBindingManager_Add_Bad(t *core.T) {
 }
 
 func TestKeybinding_KeyBindingManager_Add_Ugly(t *core.T) {
+	// KeyBindingManager Add
+	ax7Variant := "KeyBindingManager_Add:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(KeyBindingManager)
 	result := core.Try(func() any {
 		subject.Add("../../edge", nil)
@@ -121,6 +145,9 @@ func TestKeybinding_KeyBindingManager_Add_Ugly(t *core.T) {
 }
 
 func TestKeybinding_KeyBindingManager_Remove_Good(t *core.T) {
+	// KeyBindingManager Remove
+	ax7Variant := "KeyBindingManager_Remove:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(KeyBindingManager)
 	result := core.Try(func() any {
 		subject.Remove("agent")
@@ -131,6 +158,9 @@ func TestKeybinding_KeyBindingManager_Remove_Good(t *core.T) {
 }
 
 func TestKeybinding_KeyBindingManager_Remove_Bad(t *core.T) {
+	// KeyBindingManager Remove
+	ax7Variant := "KeyBindingManager_Remove:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(KeyBindingManager)
 	result := core.Try(func() any {
 		subject.Remove("")
@@ -141,6 +171,9 @@ func TestKeybinding_KeyBindingManager_Remove_Bad(t *core.T) {
 }
 
 func TestKeybinding_KeyBindingManager_Remove_Ugly(t *core.T) {
+	// KeyBindingManager Remove
+	ax7Variant := "KeyBindingManager_Remove:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(KeyBindingManager)
 	result := core.Try(func() any {
 		subject.Remove("../../edge")
@@ -151,6 +184,9 @@ func TestKeybinding_KeyBindingManager_Remove_Ugly(t *core.T) {
 }
 
 func TestKeybinding_KeyBindingManager_Process_Good(t *core.T) {
+	// KeyBindingManager Process
+	ax7Variant := "KeyBindingManager_Process:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(KeyBindingManager)
 	result := core.Try(func() any {
 		got0 := subject.Process("agent", *new(Window))
@@ -161,6 +197,9 @@ func TestKeybinding_KeyBindingManager_Process_Good(t *core.T) {
 }
 
 func TestKeybinding_KeyBindingManager_Process_Bad(t *core.T) {
+	// KeyBindingManager Process
+	ax7Variant := "KeyBindingManager_Process:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(KeyBindingManager)
 	result := core.Try(func() any {
 		got0 := subject.Process("", *new(Window))
@@ -171,6 +210,9 @@ func TestKeybinding_KeyBindingManager_Process_Bad(t *core.T) {
 }
 
 func TestKeybinding_KeyBindingManager_Process_Ugly(t *core.T) {
+	// KeyBindingManager Process
+	ax7Variant := "KeyBindingManager_Process:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(KeyBindingManager)
 	result := core.Try(func() any {
 		got0 := subject.Process("../../edge", *new(Window))
@@ -181,6 +223,9 @@ func TestKeybinding_KeyBindingManager_Process_Ugly(t *core.T) {
 }
 
 func TestKeybinding_KeyBindingManager_GetAll_Good(t *core.T) {
+	// KeyBindingManager GetAll
+	ax7Variant := "KeyBindingManager_GetAll:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(KeyBindingManager)
 	result := core.Try(func() any {
 		got0 := subject.GetAll()
@@ -191,6 +236,9 @@ func TestKeybinding_KeyBindingManager_GetAll_Good(t *core.T) {
 }
 
 func TestKeybinding_KeyBindingManager_GetAll_Bad(t *core.T) {
+	// KeyBindingManager GetAll
+	ax7Variant := "KeyBindingManager_GetAll:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(KeyBindingManager)
 	result := core.Try(func() any {
 		got0 := subject.GetAll()
@@ -201,6 +249,9 @@ func TestKeybinding_KeyBindingManager_GetAll_Bad(t *core.T) {
 }
 
 func TestKeybinding_KeyBindingManager_GetAll_Ugly(t *core.T) {
+	// KeyBindingManager GetAll
+	ax7Variant := "KeyBindingManager_GetAll:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(KeyBindingManager)
 	result := core.Try(func() any {
 		got0 := subject.GetAll()

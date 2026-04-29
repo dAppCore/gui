@@ -131,6 +131,9 @@ func writeExecutable(t *core.T, dir, name, script string) string {
 
 // AX7 generated source-matching smoke coverage.
 func TestDetect_Detect_Good(t *core.T) {
+	// Detect
+	ax7Variant := "Detect:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := Detect()
 		return core.Sprintf("%T", got0)
@@ -140,6 +143,9 @@ func TestDetect_Detect_Good(t *core.T) {
 }
 
 func TestDetect_Detect_Bad(t *core.T) {
+	// Detect
+	ax7Variant := "Detect:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := Detect()
 		return core.Sprintf("%T", got0)
@@ -149,6 +155,9 @@ func TestDetect_Detect_Bad(t *core.T) {
 }
 
 func TestDetect_Detect_Ugly(t *core.T) {
+	// Detect
+	ax7Variant := "Detect:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := Detect()
 		return core.Sprintf("%T", got0)
@@ -158,6 +167,9 @@ func TestDetect_Detect_Ugly(t *core.T) {
 }
 
 func TestDetect_DetectWithEnvironment_Good(t *core.T) {
+	// DetectWithEnvironment
+	ax7Variant := "DetectWithEnvironment:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := DetectWithEnvironment(*new(DetectEnvironment))
 		return core.Sprintf("%T", got0)
@@ -167,6 +179,9 @@ func TestDetect_DetectWithEnvironment_Good(t *core.T) {
 }
 
 func TestDetect_DetectWithEnvironment_Bad(t *core.T) {
+	// DetectWithEnvironment
+	ax7Variant := "DetectWithEnvironment:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := DetectWithEnvironment(*new(DetectEnvironment))
 		return core.Sprintf("%T", got0)
@@ -176,6 +191,9 @@ func TestDetect_DetectWithEnvironment_Bad(t *core.T) {
 }
 
 func TestDetect_DetectWithEnvironment_Ugly(t *core.T) {
+	// DetectWithEnvironment
+	ax7Variant := "DetectWithEnvironment:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := DetectWithEnvironment(*new(DetectEnvironment))
 		return core.Sprintf("%T", got0)

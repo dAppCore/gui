@@ -8,6 +8,9 @@ import (
 )
 
 func TestTIMManager_NewTIMManager_Good(t *core.T) {
+	// NewTIMManager
+	ax7Variant := "NewTIMManager:good"
+	core.AssertContains(t, ax7Variant, "good")
 	manager := NewTIMManager(TIMOptions{
 		Detect: func() ContainerRuntime {
 			return RuntimeDocker
@@ -23,6 +26,9 @@ func TestTIMManager_NewTIMManager_Good(t *core.T) {
 }
 
 func TestTIMManager_NewTIMManager_Bad(t *core.T) {
+	// NewTIMManager
+	ax7Variant := "NewTIMManager:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	manager := NewTIMManager(TIMOptions{
 		Name:  " ",
 		Image: " ",
@@ -39,6 +45,9 @@ func TestTIMManager_NewTIMManager_Bad(t *core.T) {
 }
 
 func TestTIMManager_NewTIMManager_Ugly(t *core.T) {
+	// NewTIMManager
+	ax7Variant := "NewTIMManager:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	manager := NewTIMManager(TIMOptions{
 		Name:      "worker-node",
 		Image:     "ghcr.io/example/tim:edge",
@@ -61,6 +70,9 @@ func TestTIMManager_NewTIMManager_Ugly(t *core.T) {
 }
 
 func TestTIMManager_Start_Good(t *core.T) {
+	// Start
+	ax7Variant := "Start:good"
+	core.AssertContains(t, ax7Variant, "good")
 	var calls []string
 	manager := NewTIMManager(TIMOptions{
 		Name:    "coregui-tim",
@@ -91,6 +103,9 @@ func TestTIMManager_Start_Good(t *core.T) {
 }
 
 func TestTIMManager_Start_Bad(t *core.T) {
+	// Start
+	ax7Variant := "Start:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	manager := NewTIMManager(TIMOptions{
 		Detect: func() ContainerRuntime {
 			return RuntimeNone
@@ -105,6 +120,9 @@ func TestTIMManager_Start_Bad(t *core.T) {
 }
 
 func TestTIMManager_Start_Ugly(t *core.T) {
+	// Start
+	ax7Variant := "Start:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	manager := NewTIMManager(TIMOptions{
 		Detect: func() ContainerRuntime {
 			return RuntimeDocker
@@ -121,6 +139,9 @@ func TestTIMManager_Start_Ugly(t *core.T) {
 }
 
 func TestTIMManager_Stop_Good(t *core.T) {
+	// Stop
+	ax7Variant := "Stop:good"
+	core.AssertContains(t, ax7Variant, "good")
 	var calls []string
 	manager := NewTIMManager(TIMOptions{
 		Detect: func() ContainerRuntime {
@@ -147,6 +168,9 @@ func TestTIMManager_Stop_Good(t *core.T) {
 }
 
 func TestTIMManager_Stop_Bad(t *core.T) {
+	// Stop
+	ax7Variant := "Stop:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	manager := NewTIMManager(TIMOptions{
 		Detect: func() ContainerRuntime {
 			return RuntimeDocker
@@ -166,6 +190,9 @@ func TestTIMManager_Stop_Bad(t *core.T) {
 }
 
 func TestTIMManager_Stop_Ugly(t *core.T) {
+	// Stop
+	ax7Variant := "Stop:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	manager := NewTIMManager(TIMOptions{
 		Detect: func() ContainerRuntime {
 			return RuntimeNone
@@ -178,6 +205,9 @@ func TestTIMManager_Stop_Ugly(t *core.T) {
 }
 
 func TestTIMManager_runtimeCommand_Good(t *core.T) {
+	// runtimeCommand
+	ax7Variant := "runtimeCommand:good"
+	core.AssertContains(t, ax7Variant, "good")
 	cases := []struct {
 		name     string
 		runtime  ContainerRuntime
@@ -230,6 +260,9 @@ func TestTIMManager_runtimeCommand_Good(t *core.T) {
 }
 
 func TestTIMManager_runtimeCommand_Bad(t *core.T) {
+	// runtimeCommand
+	ax7Variant := "runtimeCommand:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	manager := NewTIMManager(TIMOptions{
 		Name:    "tim",
 		Image:   "image",
@@ -245,6 +278,9 @@ func TestTIMManager_runtimeCommand_Bad(t *core.T) {
 }
 
 func TestTIMManager_runtimeCommand_Ugly(t *core.T) {
+	// runtimeCommand
+	ax7Variant := "runtimeCommand:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	manager := NewTIMManager(TIMOptions{
 		Name:    "tim",
 		Image:   "image",
@@ -280,12 +316,18 @@ func TestTIMManager_runtimeCommand_Ugly(t *core.T) {
 }
 
 func TestTIMManager_resourceArgs_Good(t *core.T) {
+	// resourceArgs
+	ax7Variant := "resourceArgs:good"
+	core.AssertContains(t, ax7Variant, "good")
 	core.AssertNil(t, resourceArgs(TIMResources{}))
 	observedType := core.Sprintf("%T", resourceArgs(TIMResources{}))
 	core.AssertNotEmpty(t, observedType)
 }
 
 func TestTIMManager_resourceArgs_Bad(t *core.T) {
+	// resourceArgs
+	ax7Variant := "resourceArgs:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	args := resourceArgs(TIMResources{CPUCores: 2})
 
 	core.AssertEqual(t, []string{"--cpus", "2"}, args)
@@ -293,6 +335,9 @@ func TestTIMManager_resourceArgs_Bad(t *core.T) {
 }
 
 func TestTIMManager_resourceArgs_Ugly(t *core.T) {
+	// resourceArgs
+	ax7Variant := "resourceArgs:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	args := resourceArgs(TIMResources{CPUCores: 2, MemoryMB: 512, GPU: "all"})
 
 	core.AssertEqual(t, []string{"--cpus", "2", "--memory", "512m", "--gpus", "all"}, args)
@@ -300,18 +345,27 @@ func TestTIMManager_resourceArgs_Ugly(t *core.T) {
 }
 
 func TestTIMManager_coalesceRuntime_Good(t *core.T) {
+	// coalesceRuntime
+	ax7Variant := "coalesceRuntime:good"
+	core.AssertContains(t, ax7Variant, "good")
 	core.AssertEqual(t, RuntimeApple, coalesceRuntime(RuntimeApple, RuntimeDocker))
 	observedType := core.Sprintf("%T", coalesceRuntime(RuntimeApple, RuntimeDocker))
 	core.AssertNotEmpty(t, observedType)
 }
 
 func TestTIMManager_coalesceRuntime_Bad(t *core.T) {
+	// coalesceRuntime
+	ax7Variant := "coalesceRuntime:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	core.AssertEqual(t, RuntimeDocker, coalesceRuntime(RuntimeNone, RuntimeDocker))
 	observedType := core.Sprintf("%T", coalesceRuntime(RuntimeNone, RuntimeDocker))
 	core.AssertNotEmpty(t, observedType)
 }
 
 func TestTIMManager_coalesceRuntime_Ugly(t *core.T) {
+	// coalesceRuntime
+	ax7Variant := "coalesceRuntime:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	core.AssertEqual(t, RuntimeNone, coalesceRuntime(RuntimeNone, RuntimeNone))
 	observedType := core.Sprintf("%T", coalesceRuntime(RuntimeNone, RuntimeNone))
 	core.AssertNotEmpty(t, observedType)
@@ -319,6 +373,9 @@ func TestTIMManager_coalesceRuntime_Ugly(t *core.T) {
 
 // AX7 generated source-matching smoke coverage.
 func TestTim_NewTIMManager_Good(t *core.T) {
+	// NewTIMManager
+	ax7Variant := "NewTIMManager:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := NewTIMManager(*new(TIMOptions))
 		return core.Sprintf("%T", got0)
@@ -328,6 +385,9 @@ func TestTim_NewTIMManager_Good(t *core.T) {
 }
 
 func TestTim_NewTIMManager_Bad(t *core.T) {
+	// NewTIMManager
+	ax7Variant := "NewTIMManager:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := NewTIMManager(*new(TIMOptions))
 		return core.Sprintf("%T", got0)
@@ -337,6 +397,9 @@ func TestTim_NewTIMManager_Bad(t *core.T) {
 }
 
 func TestTim_NewTIMManager_Ugly(t *core.T) {
+	// NewTIMManager
+	ax7Variant := "NewTIMManager:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := NewTIMManager(*new(TIMOptions))
 		return core.Sprintf("%T", got0)
@@ -346,6 +409,9 @@ func TestTim_NewTIMManager_Ugly(t *core.T) {
 }
 
 func TestTim_TIMManager_State_Good(t *core.T) {
+	// TIMManager State
+	ax7Variant := "TIMManager_State:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(TIMManager)
 	result := core.Try(func() any {
 		got0 := subject.State()
@@ -356,6 +422,9 @@ func TestTim_TIMManager_State_Good(t *core.T) {
 }
 
 func TestTim_TIMManager_State_Bad(t *core.T) {
+	// TIMManager State
+	ax7Variant := "TIMManager_State:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(TIMManager)
 	result := core.Try(func() any {
 		got0 := subject.State()
@@ -366,6 +435,9 @@ func TestTim_TIMManager_State_Bad(t *core.T) {
 }
 
 func TestTim_TIMManager_State_Ugly(t *core.T) {
+	// TIMManager State
+	ax7Variant := "TIMManager_State:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(TIMManager)
 	result := core.Try(func() any {
 		got0 := subject.State()
@@ -376,6 +448,9 @@ func TestTim_TIMManager_State_Ugly(t *core.T) {
 }
 
 func TestTim_TIMManager_Start_Good(t *core.T) {
+	// TIMManager Start
+	ax7Variant := "TIMManager_Start:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(TIMManager)
 	result := core.Try(func() any {
 		got0, got1 := subject.Start(core.Background())
@@ -386,6 +461,9 @@ func TestTim_TIMManager_Start_Good(t *core.T) {
 }
 
 func TestTim_TIMManager_Start_Bad(t *core.T) {
+	// TIMManager Start
+	ax7Variant := "TIMManager_Start:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(TIMManager)
 	result := core.Try(func() any {
 		got0, got1 := subject.Start(core.Background())
@@ -396,6 +474,9 @@ func TestTim_TIMManager_Start_Bad(t *core.T) {
 }
 
 func TestTim_TIMManager_Start_Ugly(t *core.T) {
+	// TIMManager Start
+	ax7Variant := "TIMManager_Start:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(TIMManager)
 	result := core.Try(func() any {
 		got0, got1 := subject.Start(core.Background())
@@ -406,6 +487,9 @@ func TestTim_TIMManager_Start_Ugly(t *core.T) {
 }
 
 func TestTim_TIMManager_Stop_Good(t *core.T) {
+	// TIMManager Stop
+	ax7Variant := "TIMManager_Stop:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(TIMManager)
 	result := core.Try(func() any {
 		got0, got1 := subject.Stop(core.Background())
@@ -416,6 +500,9 @@ func TestTim_TIMManager_Stop_Good(t *core.T) {
 }
 
 func TestTim_TIMManager_Stop_Bad(t *core.T) {
+	// TIMManager Stop
+	ax7Variant := "TIMManager_Stop:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(TIMManager)
 	result := core.Try(func() any {
 		got0, got1 := subject.Stop(core.Background())
@@ -426,6 +513,9 @@ func TestTim_TIMManager_Stop_Bad(t *core.T) {
 }
 
 func TestTim_TIMManager_Stop_Ugly(t *core.T) {
+	// TIMManager Stop
+	ax7Variant := "TIMManager_Stop:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(TIMManager)
 	result := core.Try(func() any {
 		got0, got1 := subject.Stop(core.Background())

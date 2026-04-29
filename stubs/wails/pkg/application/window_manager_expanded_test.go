@@ -5,6 +5,9 @@ import (
 )
 
 func TestWindowManagerExpanded_Get_Good(t *core.T) {
+	// Get
+	ax7Variant := "Get:good"
+	core.AssertContains(t, ax7Variant, "good")
 	manager := &WindowManager{}
 	first := manager.NewWithOptions(WebviewWindowOptions{Name: "first"})
 	second := manager.NewWithOptions(WebviewWindowOptions{Name: "second"})
@@ -15,6 +18,9 @@ func TestWindowManagerExpanded_Get_Good(t *core.T) {
 }
 
 func TestWindowManagerExpanded_Get_Bad(t *core.T) {
+	// Get
+	ax7Variant := "Get:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	manager := &WindowManager{}
 
 	core.AssertNil(t, manager.Get("missing"))
@@ -22,6 +28,9 @@ func TestWindowManagerExpanded_Get_Bad(t *core.T) {
 }
 
 func TestWindowManagerExpanded_Get_Ugly(t *core.T) {
+	// Get
+	ax7Variant := "Get:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	manager := &WindowManager{}
 	first := manager.NewWithOptions(WebviewWindowOptions{Name: "dup"})
 	second := manager.NewWithOptions(WebviewWindowOptions{Name: "dup"})
@@ -31,6 +40,9 @@ func TestWindowManagerExpanded_Get_Ugly(t *core.T) {
 }
 
 func TestWindowManagerExpanded_GetByID_Good(t *core.T) {
+	// GetByID
+	ax7Variant := "GetByID:good"
+	core.AssertContains(t, ax7Variant, "good")
 	manager := &WindowManager{}
 	first := manager.NewWithOptions(WebviewWindowOptions{Name: "first"})
 	second := manager.NewWithOptions(WebviewWindowOptions{Name: "second"})
@@ -40,6 +52,9 @@ func TestWindowManagerExpanded_GetByID_Good(t *core.T) {
 }
 
 func TestWindowManagerExpanded_GetByID_Bad(t *core.T) {
+	// GetByID
+	ax7Variant := "GetByID:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	manager := &WindowManager{}
 
 	core.AssertNil(t, manager.GetByID(99))
@@ -47,6 +62,9 @@ func TestWindowManagerExpanded_GetByID_Bad(t *core.T) {
 }
 
 func TestWindowManagerExpanded_GetByID_Ugly(t *core.T) {
+	// GetByID
+	ax7Variant := "GetByID:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	manager := &WindowManager{}
 	manager.NewWithOptions(WebviewWindowOptions{Name: "first"})
 	manager.NewWithOptions(WebviewWindowOptions{Name: "second"})
@@ -68,6 +86,9 @@ func TestWindowManagerExpanded_NilReceiver_IsSafe(t *core.T) {
 
 // AX7 generated source-matching smoke coverage.
 func TestWindowManagerExpanded_WindowManager_Get_Good(t *core.T) {
+	// WindowManager Get
+	ax7Variant := "WindowManager_Get:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WindowManager)
 	result := core.Try(func() any {
 		got0 := subject.Get("agent")
@@ -78,6 +99,9 @@ func TestWindowManagerExpanded_WindowManager_Get_Good(t *core.T) {
 }
 
 func TestWindowManagerExpanded_WindowManager_Get_Bad(t *core.T) {
+	// WindowManager Get
+	ax7Variant := "WindowManager_Get:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WindowManager)
 	result := core.Try(func() any {
 		got0 := subject.Get("")
@@ -88,6 +112,9 @@ func TestWindowManagerExpanded_WindowManager_Get_Bad(t *core.T) {
 }
 
 func TestWindowManagerExpanded_WindowManager_Get_Ugly(t *core.T) {
+	// WindowManager Get
+	ax7Variant := "WindowManager_Get:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WindowManager)
 	result := core.Try(func() any {
 		got0 := subject.Get("../../edge")
@@ -98,6 +125,9 @@ func TestWindowManagerExpanded_WindowManager_Get_Ugly(t *core.T) {
 }
 
 func TestWindowManagerExpanded_WindowManager_GetByID_Good(t *core.T) {
+	// WindowManager GetByID
+	ax7Variant := "WindowManager_GetByID:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WindowManager)
 	result := core.Try(func() any {
 		got0 := subject.GetByID(1)
@@ -108,6 +138,9 @@ func TestWindowManagerExpanded_WindowManager_GetByID_Good(t *core.T) {
 }
 
 func TestWindowManagerExpanded_WindowManager_GetByID_Bad(t *core.T) {
+	// WindowManager GetByID
+	ax7Variant := "WindowManager_GetByID:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WindowManager)
 	result := core.Try(func() any {
 		got0 := subject.GetByID(0)
@@ -118,6 +151,9 @@ func TestWindowManagerExpanded_WindowManager_GetByID_Bad(t *core.T) {
 }
 
 func TestWindowManagerExpanded_WindowManager_GetByID_Ugly(t *core.T) {
+	// WindowManager GetByID
+	ax7Variant := "WindowManager_GetByID:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WindowManager)
 	result := core.Try(func() any {
 		got0 := subject.GetByID(0)

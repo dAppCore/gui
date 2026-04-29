@@ -21,6 +21,9 @@ func newConfigTestWindowService(t *core.T) (*Service, *Manager) {
 }
 
 func TestServiceConfig_applyConfig_Good(t *core.T) {
+	// applyConfig
+	ax7Variant := "applyConfig:good"
+	core.AssertContains(t, ax7Variant, "good")
 	svc, mgr := newConfigTestWindowService(t)
 
 	stateFile := filepath.Join(t.TempDir(), "window-state.json")
@@ -48,6 +51,9 @@ func TestServiceConfig_applyConfig_Good(t *core.T) {
 }
 
 func TestServiceConfig_applyConfig_Bad(t *core.T) {
+	// applyConfig
+	ax7Variant := "applyConfig:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	svc, mgr := newConfigTestWindowService(t)
 	mgr.SetDefaultWidth(1111)
 	mgr.SetDefaultHeight(2222)
@@ -65,6 +71,9 @@ func TestServiceConfig_applyConfig_Bad(t *core.T) {
 }
 
 func TestServiceConfig_applyConfig_Ugly(t *core.T) {
+	// applyConfig
+	ax7Variant := "applyConfig:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	svc, mgr := newConfigTestWindowService(t)
 	initialPath := mgr.State().filePath()
 

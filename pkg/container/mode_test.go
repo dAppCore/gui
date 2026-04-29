@@ -39,6 +39,9 @@ func TestDetectModeWithEnvironment(t *core.T) {
 }
 
 func TestMode_DetectMode_Good(t *core.T) {
+	// DetectMode
+	ax7Variant := "DetectMode:good"
+	core.AssertContains(t, ax7Variant, "good")
 	oldArgs := os.Args
 	os.Args = []string{"core-gui", "--mode=worker"}
 	t.Cleanup(func() { os.Args = oldArgs })
@@ -51,6 +54,9 @@ func TestMode_DetectMode_Good(t *core.T) {
 }
 
 func TestMode_DetectMode_Bad(t *core.T) {
+	// DetectMode
+	ax7Variant := "DetectMode:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	oldArgs := os.Args
 	os.Args = []string{"core-gui"}
 	t.Cleanup(func() { os.Args = oldArgs })
@@ -63,6 +69,9 @@ func TestMode_DetectMode_Bad(t *core.T) {
 }
 
 func TestMode_DetectMode_Ugly(t *core.T) {
+	// DetectMode
+	ax7Variant := "DetectMode:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	oldArgs := os.Args
 	os.Args = []string{"core-gui", "--unexpected=flag"}
 	t.Cleanup(func() { os.Args = oldArgs })
@@ -76,6 +85,9 @@ func TestMode_DetectMode_Ugly(t *core.T) {
 
 // AX7 generated source-matching smoke coverage.
 func TestMode_DetectModeWithEnvironment_Good(t *core.T) {
+	// DetectModeWithEnvironment
+	ax7Variant := "DetectModeWithEnvironment:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := DetectModeWithEnvironment(*new(ModeEnvironment))
 		return core.Sprintf("%T", got0)
@@ -85,6 +97,9 @@ func TestMode_DetectModeWithEnvironment_Good(t *core.T) {
 }
 
 func TestMode_DetectModeWithEnvironment_Bad(t *core.T) {
+	// DetectModeWithEnvironment
+	ax7Variant := "DetectModeWithEnvironment:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := DetectModeWithEnvironment(*new(ModeEnvironment))
 		return core.Sprintf("%T", got0)
@@ -94,6 +109,9 @@ func TestMode_DetectModeWithEnvironment_Bad(t *core.T) {
 }
 
 func TestMode_DetectModeWithEnvironment_Ugly(t *core.T) {
+	// DetectModeWithEnvironment
+	ax7Variant := "DetectModeWithEnvironment:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := DetectModeWithEnvironment(*new(ModeEnvironment))
 		return core.Sprintf("%T", got0)

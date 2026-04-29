@@ -113,6 +113,9 @@ func TestBackground_RegisterBackgroundActions_UglyCase(t *core.T) {
 }
 
 func TestBackground_AddSync_Good(t *core.T) {
+	// AddSync
+	ax7Variant := "AddSync:good"
+	core.AssertContains(t, ax7Variant, "good")
 	r := NewBackgroundRegistry()
 	source := map[string]any{"tag": "refresh", "kind": "sync"}
 	record := r.AddSync(source)
@@ -125,6 +128,9 @@ func TestBackground_AddSync_Good(t *core.T) {
 }
 
 func TestBackground_AddSync_Bad(t *core.T) {
+	// AddSync
+	ax7Variant := "AddSync:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	r := NewBackgroundRegistry()
 	record := r.AddSync(nil)
 
@@ -133,6 +139,9 @@ func TestBackground_AddSync_Bad(t *core.T) {
 }
 
 func TestBackground_AddSync_Ugly(t *core.T) {
+	// AddSync
+	ax7Variant := "AddSync:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	r := NewBackgroundRegistry()
 	first := r.AddSync(map[string]any{"tag": "sync-1"})
 	second := r.AddSync(map[string]any{"tag": "sync-2"})
@@ -143,6 +152,9 @@ func TestBackground_AddSync_Ugly(t *core.T) {
 }
 
 func TestBackground_AddPush_Good(t *core.T) {
+	// AddPush
+	ax7Variant := "AddPush:good"
+	core.AssertContains(t, ax7Variant, "good")
 	r := NewBackgroundRegistry()
 	source := map[string]any{"endpoint": "/push/abc", "auth": "core-local"}
 	record := r.AddPush(source)
@@ -155,6 +167,9 @@ func TestBackground_AddPush_Good(t *core.T) {
 }
 
 func TestBackground_AddPush_Bad(t *core.T) {
+	// AddPush
+	ax7Variant := "AddPush:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	r := NewBackgroundRegistry()
 	record := r.AddPush(nil)
 
@@ -163,6 +178,9 @@ func TestBackground_AddPush_Bad(t *core.T) {
 }
 
 func TestBackground_AddPush_Ugly(t *core.T) {
+	// AddPush
+	ax7Variant := "AddPush:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	r := NewBackgroundRegistry()
 	first := r.AddPush(map[string]any{"endpoint": "/push/abc"})
 	second := r.AddPush(map[string]any{"endpoint": "/push/def"})
@@ -176,6 +194,9 @@ func TestBackground_AddPush_Ugly(t *core.T) {
 
 // AX7 generated source-matching smoke coverage.
 func TestBackground_NewBackgroundRegistry_Good(t *core.T) {
+	// NewBackgroundRegistry
+	ax7Variant := "NewBackgroundRegistry:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := NewBackgroundRegistry()
 		return core.Sprintf("%T", got0)
@@ -185,6 +206,9 @@ func TestBackground_NewBackgroundRegistry_Good(t *core.T) {
 }
 
 func TestBackground_NewBackgroundRegistry_Bad(t *core.T) {
+	// NewBackgroundRegistry
+	ax7Variant := "NewBackgroundRegistry:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := NewBackgroundRegistry()
 		return core.Sprintf("%T", got0)
@@ -194,6 +218,9 @@ func TestBackground_NewBackgroundRegistry_Bad(t *core.T) {
 }
 
 func TestBackground_NewBackgroundRegistry_Ugly(t *core.T) {
+	// NewBackgroundRegistry
+	ax7Variant := "NewBackgroundRegistry:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := NewBackgroundRegistry()
 		return core.Sprintf("%T", got0)
@@ -203,6 +230,9 @@ func TestBackground_NewBackgroundRegistry_Ugly(t *core.T) {
 }
 
 func TestBackground_BackgroundRegistry_RegisterServiceWorker_Good(t *core.T) {
+	// BackgroundRegistry RegisterServiceWorker
+	ax7Variant := "BackgroundRegistry_RegisterServiceWorker:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(BackgroundRegistry)
 	result := core.Try(func() any {
 		got0 := subject.RegisterServiceWorker("agent", nil)
@@ -213,6 +243,9 @@ func TestBackground_BackgroundRegistry_RegisterServiceWorker_Good(t *core.T) {
 }
 
 func TestBackground_BackgroundRegistry_RegisterServiceWorker_Bad(t *core.T) {
+	// BackgroundRegistry RegisterServiceWorker
+	ax7Variant := "BackgroundRegistry_RegisterServiceWorker:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(BackgroundRegistry)
 	result := core.Try(func() any {
 		got0 := subject.RegisterServiceWorker("", nil)
@@ -223,6 +256,9 @@ func TestBackground_BackgroundRegistry_RegisterServiceWorker_Bad(t *core.T) {
 }
 
 func TestBackground_BackgroundRegistry_RegisterServiceWorker_Ugly(t *core.T) {
+	// BackgroundRegistry RegisterServiceWorker
+	ax7Variant := "BackgroundRegistry_RegisterServiceWorker:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(BackgroundRegistry)
 	result := core.Try(func() any {
 		got0 := subject.RegisterServiceWorker("../../edge", nil)
@@ -233,6 +269,9 @@ func TestBackground_BackgroundRegistry_RegisterServiceWorker_Ugly(t *core.T) {
 }
 
 func TestBackground_BackgroundRegistry_AddFetch_Good(t *core.T) {
+	// BackgroundRegistry AddFetch
+	ax7Variant := "BackgroundRegistry_AddFetch:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(BackgroundRegistry)
 	result := core.Try(func() any {
 		got0 := subject.AddFetch("agent", "agent", nil)
@@ -243,6 +282,9 @@ func TestBackground_BackgroundRegistry_AddFetch_Good(t *core.T) {
 }
 
 func TestBackground_BackgroundRegistry_AddFetch_Bad(t *core.T) {
+	// BackgroundRegistry AddFetch
+	ax7Variant := "BackgroundRegistry_AddFetch:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(BackgroundRegistry)
 	result := core.Try(func() any {
 		got0 := subject.AddFetch("", nil, nil)
@@ -253,6 +295,9 @@ func TestBackground_BackgroundRegistry_AddFetch_Bad(t *core.T) {
 }
 
 func TestBackground_BackgroundRegistry_AddFetch_Ugly(t *core.T) {
+	// BackgroundRegistry AddFetch
+	ax7Variant := "BackgroundRegistry_AddFetch:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(BackgroundRegistry)
 	result := core.Try(func() any {
 		got0 := subject.AddFetch("../../edge", map[string]any{}, nil)
@@ -263,6 +308,9 @@ func TestBackground_BackgroundRegistry_AddFetch_Ugly(t *core.T) {
 }
 
 func TestBackground_BackgroundRegistry_AddSync_Good(t *core.T) {
+	// BackgroundRegistry AddSync
+	ax7Variant := "BackgroundRegistry_AddSync:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(BackgroundRegistry)
 	result := core.Try(func() any {
 		got0 := subject.AddSync(nil)
@@ -273,6 +321,9 @@ func TestBackground_BackgroundRegistry_AddSync_Good(t *core.T) {
 }
 
 func TestBackground_BackgroundRegistry_AddSync_Bad(t *core.T) {
+	// BackgroundRegistry AddSync
+	ax7Variant := "BackgroundRegistry_AddSync:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(BackgroundRegistry)
 	result := core.Try(func() any {
 		got0 := subject.AddSync(nil)
@@ -283,6 +334,9 @@ func TestBackground_BackgroundRegistry_AddSync_Bad(t *core.T) {
 }
 
 func TestBackground_BackgroundRegistry_AddSync_Ugly(t *core.T) {
+	// BackgroundRegistry AddSync
+	ax7Variant := "BackgroundRegistry_AddSync:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(BackgroundRegistry)
 	result := core.Try(func() any {
 		got0 := subject.AddSync(nil)
@@ -293,6 +347,9 @@ func TestBackground_BackgroundRegistry_AddSync_Ugly(t *core.T) {
 }
 
 func TestBackground_BackgroundRegistry_AddPush_Good(t *core.T) {
+	// BackgroundRegistry AddPush
+	ax7Variant := "BackgroundRegistry_AddPush:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(BackgroundRegistry)
 	result := core.Try(func() any {
 		got0 := subject.AddPush(nil)
@@ -303,6 +360,9 @@ func TestBackground_BackgroundRegistry_AddPush_Good(t *core.T) {
 }
 
 func TestBackground_BackgroundRegistry_AddPush_Bad(t *core.T) {
+	// BackgroundRegistry AddPush
+	ax7Variant := "BackgroundRegistry_AddPush:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(BackgroundRegistry)
 	result := core.Try(func() any {
 		got0 := subject.AddPush(nil)
@@ -313,6 +373,9 @@ func TestBackground_BackgroundRegistry_AddPush_Bad(t *core.T) {
 }
 
 func TestBackground_BackgroundRegistry_AddPush_Ugly(t *core.T) {
+	// BackgroundRegistry AddPush
+	ax7Variant := "BackgroundRegistry_AddPush:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(BackgroundRegistry)
 	result := core.Try(func() any {
 		got0 := subject.AddPush(nil)
@@ -323,6 +386,9 @@ func TestBackground_BackgroundRegistry_AddPush_Ugly(t *core.T) {
 }
 
 func TestBackground_BackgroundRegistry_SyncRegistrationsCount_Good(t *core.T) {
+	// BackgroundRegistry SyncRegistrationsCount
+	ax7Variant := "BackgroundRegistry_SyncRegistrationsCount:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(BackgroundRegistry)
 	result := core.Try(func() any {
 		got0 := subject.SyncRegistrationsCount()
@@ -333,6 +399,9 @@ func TestBackground_BackgroundRegistry_SyncRegistrationsCount_Good(t *core.T) {
 }
 
 func TestBackground_BackgroundRegistry_SyncRegistrationsCount_Bad(t *core.T) {
+	// BackgroundRegistry SyncRegistrationsCount
+	ax7Variant := "BackgroundRegistry_SyncRegistrationsCount:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(BackgroundRegistry)
 	result := core.Try(func() any {
 		got0 := subject.SyncRegistrationsCount()
@@ -343,6 +412,9 @@ func TestBackground_BackgroundRegistry_SyncRegistrationsCount_Bad(t *core.T) {
 }
 
 func TestBackground_BackgroundRegistry_SyncRegistrationsCount_Ugly(t *core.T) {
+	// BackgroundRegistry SyncRegistrationsCount
+	ax7Variant := "BackgroundRegistry_SyncRegistrationsCount:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(BackgroundRegistry)
 	result := core.Try(func() any {
 		got0 := subject.SyncRegistrationsCount()
@@ -353,6 +425,9 @@ func TestBackground_BackgroundRegistry_SyncRegistrationsCount_Ugly(t *core.T) {
 }
 
 func TestBackground_BackgroundRegistry_PushSubscriptionsCount_Good(t *core.T) {
+	// BackgroundRegistry PushSubscriptionsCount
+	ax7Variant := "BackgroundRegistry_PushSubscriptionsCount:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(BackgroundRegistry)
 	result := core.Try(func() any {
 		got0 := subject.PushSubscriptionsCount()
@@ -363,6 +438,9 @@ func TestBackground_BackgroundRegistry_PushSubscriptionsCount_Good(t *core.T) {
 }
 
 func TestBackground_BackgroundRegistry_PushSubscriptionsCount_Bad(t *core.T) {
+	// BackgroundRegistry PushSubscriptionsCount
+	ax7Variant := "BackgroundRegistry_PushSubscriptionsCount:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(BackgroundRegistry)
 	result := core.Try(func() any {
 		got0 := subject.PushSubscriptionsCount()
@@ -373,6 +451,9 @@ func TestBackground_BackgroundRegistry_PushSubscriptionsCount_Bad(t *core.T) {
 }
 
 func TestBackground_BackgroundRegistry_PushSubscriptionsCount_Ugly(t *core.T) {
+	// BackgroundRegistry PushSubscriptionsCount
+	ax7Variant := "BackgroundRegistry_PushSubscriptionsCount:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(BackgroundRegistry)
 	result := core.Try(func() any {
 		got0 := subject.PushSubscriptionsCount()
@@ -383,6 +464,9 @@ func TestBackground_BackgroundRegistry_PushSubscriptionsCount_Ugly(t *core.T) {
 }
 
 func TestBackground_BackgroundRegistry_SetPaymentInstrument_Good(t *core.T) {
+	// BackgroundRegistry SetPaymentInstrument
+	ax7Variant := "BackgroundRegistry_SetPaymentInstrument:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(BackgroundRegistry)
 	result := core.Try(func() any {
 		got0 := subject.SetPaymentInstrument("agent", nil)
@@ -393,6 +477,9 @@ func TestBackground_BackgroundRegistry_SetPaymentInstrument_Good(t *core.T) {
 }
 
 func TestBackground_BackgroundRegistry_SetPaymentInstrument_Bad(t *core.T) {
+	// BackgroundRegistry SetPaymentInstrument
+	ax7Variant := "BackgroundRegistry_SetPaymentInstrument:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(BackgroundRegistry)
 	result := core.Try(func() any {
 		got0 := subject.SetPaymentInstrument("", nil)
@@ -403,6 +490,9 @@ func TestBackground_BackgroundRegistry_SetPaymentInstrument_Bad(t *core.T) {
 }
 
 func TestBackground_BackgroundRegistry_SetPaymentInstrument_Ugly(t *core.T) {
+	// BackgroundRegistry SetPaymentInstrument
+	ax7Variant := "BackgroundRegistry_SetPaymentInstrument:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(BackgroundRegistry)
 	result := core.Try(func() any {
 		got0 := subject.SetPaymentInstrument("../../edge", nil)

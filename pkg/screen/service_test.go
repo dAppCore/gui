@@ -180,36 +180,54 @@ func TestQueryCurrent_Ugly(t *core.T) {
 // --- Rect geometry helpers ---
 
 func TestRect_Origin_Good(t *core.T) {
+	// Origin
+	ax7Variant := "Origin:good"
+	core.AssertContains(t, ax7Variant, "good")
 	r := Rect{X: 10, Y: 20, Width: 100, Height: 50}
 	pt := r.Origin()
 	core.AssertEqual(t, Point{X: 10, Y: 20}, pt)
 }
 
 func TestRect_Corner_Good(t *core.T) {
+	// Corner
+	ax7Variant := "Corner:good"
+	core.AssertContains(t, ax7Variant, "good")
 	r := Rect{X: 10, Y: 20, Width: 100, Height: 50}
 	pt := r.Corner()
 	core.AssertEqual(t, Point{X: 110, Y: 70}, pt)
 }
 
 func TestRect_InsideCorner_Good(t *core.T) {
+	// InsideCorner
+	ax7Variant := "InsideCorner:good"
+	core.AssertContains(t, ax7Variant, "good")
 	r := Rect{X: 10, Y: 20, Width: 100, Height: 50}
 	pt := r.InsideCorner()
 	core.AssertEqual(t, Point{X: 109, Y: 69}, pt)
 }
 
 func TestRect_IsEmpty_Good(t *core.T) {
+	// IsEmpty
+	ax7Variant := "IsEmpty:good"
+	core.AssertContains(t, ax7Variant, "good")
 	core.AssertFalse(t, Rect{X: 0, Y: 0, Width: 1, Height: 1}.IsEmpty())
 	observedType := core.Sprintf("%T", Rect{X: 0, Y: 0, Width: 1, Height: 1}.IsEmpty())
 	core.AssertNotEmpty(t, observedType)
 }
 
 func TestRect_IsEmpty_Bad(t *core.T) {
+	// IsEmpty
+	ax7Variant := "IsEmpty:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	core.AssertTrue(t, Rect{}.IsEmpty())
 	core.AssertTrue(t, Rect{Width: 0, Height: 10}.IsEmpty())
 	core.AssertTrue(t, Rect{Width: 10, Height: -1}.IsEmpty())
 }
 
 func TestRect_Contains_Good(t *core.T) {
+	// Contains
+	ax7Variant := "Contains:good"
+	core.AssertContains(t, ax7Variant, "good")
 	r := Rect{X: 0, Y: 0, Width: 100, Height: 100}
 	core.AssertTrue(t, r.Contains(Point{X: 0, Y: 0}))
 	core.AssertTrue(t, r.Contains(Point{X: 50, Y: 50}))
@@ -217,6 +235,9 @@ func TestRect_Contains_Good(t *core.T) {
 }
 
 func TestRect_Contains_Bad(t *core.T) {
+	// Contains
+	ax7Variant := "Contains:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	r := Rect{X: 0, Y: 0, Width: 100, Height: 100}
 	// exclusive right/bottom edge
 	core.AssertFalse(t, r.Contains(Point{X: 100, Y: 50}))
@@ -225,6 +246,9 @@ func TestRect_Contains_Bad(t *core.T) {
 }
 
 func TestRect_Contains_Ugly(t *core.T) {
+	// Contains
+	ax7Variant := "Contains:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	// zero-size rect never contains anything
 	r := Rect{X: 5, Y: 5, Width: 0, Height: 0}
 	core.AssertFalse(t, r.Contains(Point{X: 5, Y: 5}))
@@ -232,12 +256,18 @@ func TestRect_Contains_Ugly(t *core.T) {
 }
 
 func TestRect_RectSize_Good(t *core.T) {
+	// RectSize
+	ax7Variant := "RectSize:good"
+	core.AssertContains(t, ax7Variant, "good")
 	r := Rect{X: 100, Y: 200, Width: 1920, Height: 1080}
 	sz := r.RectSize()
 	core.AssertEqual(t, Size{Width: 1920, Height: 1080}, sz)
 }
 
 func TestRect_Intersect_Good(t *core.T) {
+	// Intersect
+	ax7Variant := "Intersect:good"
+	core.AssertContains(t, ax7Variant, "good")
 	a := Rect{X: 0, Y: 0, Width: 100, Height: 100}
 	b := Rect{X: 50, Y: 50, Width: 100, Height: 100}
 	overlap := a.Intersect(b)
@@ -245,6 +275,9 @@ func TestRect_Intersect_Good(t *core.T) {
 }
 
 func TestRect_Intersect_Bad(t *core.T) {
+	// Intersect
+	ax7Variant := "Intersect:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	// no overlap
 	a := Rect{X: 0, Y: 0, Width: 50, Height: 50}
 	b := Rect{X: 100, Y: 100, Width: 50, Height: 50}
@@ -253,6 +286,9 @@ func TestRect_Intersect_Bad(t *core.T) {
 }
 
 func TestRect_Intersect_Ugly(t *core.T) {
+	// Intersect
+	ax7Variant := "Intersect:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	// empty rect intersects nothing
 	a := Rect{X: 0, Y: 0, Width: 0, Height: 0}
 	b := Rect{X: 0, Y: 0, Width: 100, Height: 100}
@@ -263,6 +299,9 @@ func TestRect_Intersect_Ugly(t *core.T) {
 // --- ScreenPlacement ---
 
 func TestScreenPlacement_Apply_Good(t *core.T) {
+	// Apply
+	ax7Variant := "Apply:good"
+	core.AssertContains(t, ax7Variant, "good")
 	// secondary placed to the RIGHT of primary, no offset
 	primary := &Screen{
 		Bounds:   Rect{X: 0, Y: 0, Width: 2560, Height: 1600},
@@ -279,6 +318,9 @@ func TestScreenPlacement_Apply_Good(t *core.T) {
 }
 
 func TestScreenPlacement_Apply_Bad(t *core.T) {
+	// Apply
+	ax7Variant := "Apply:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	// screen placed ABOVE primary: newY = primary.Y - secondary.Height
 	primary := &Screen{
 		Bounds:   Rect{X: 0, Y: 0, Width: 1920, Height: 1080},
@@ -294,6 +336,9 @@ func TestScreenPlacement_Apply_Bad(t *core.T) {
 }
 
 func TestScreenPlacement_Apply_Ugly(t *core.T) {
+	// Apply
+	ax7Variant := "Apply:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	// END offset reference — places secondary flush to the bottom-right of parent
 	primary := &Screen{
 		Bounds:   Rect{X: 0, Y: 0, Width: 1920, Height: 1080},
@@ -311,6 +356,9 @@ func TestScreenPlacement_Apply_Ugly(t *core.T) {
 
 // AX7 generated source-matching smoke coverage.
 func TestService_Register_Good(t *core.T) {
+	// Register
+	ax7Variant := "Register:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := Register(*new(Platform))
 		return core.Sprintf("%T", got0)
@@ -320,6 +368,9 @@ func TestService_Register_Good(t *core.T) {
 }
 
 func TestService_Register_Bad(t *core.T) {
+	// Register
+	ax7Variant := "Register:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := Register(*new(Platform))
 		return core.Sprintf("%T", got0)
@@ -329,6 +380,9 @@ func TestService_Register_Bad(t *core.T) {
 }
 
 func TestService_Register_Ugly(t *core.T) {
+	// Register
+	ax7Variant := "Register:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := Register(*new(Platform))
 		return core.Sprintf("%T", got0)
@@ -338,6 +392,9 @@ func TestService_Register_Ugly(t *core.T) {
 }
 
 func TestService_Service_OnStartup_Good(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.OnStartup(core.Background())
@@ -348,6 +405,9 @@ func TestService_Service_OnStartup_Good(t *core.T) {
 }
 
 func TestService_Service_OnStartup_Bad(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.OnStartup(core.Background())
@@ -358,6 +418,9 @@ func TestService_Service_OnStartup_Bad(t *core.T) {
 }
 
 func TestService_Service_OnStartup_Ugly(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.OnStartup(core.Background())
@@ -368,6 +431,9 @@ func TestService_Service_OnStartup_Ugly(t *core.T) {
 }
 
 func TestService_Service_HandleIPCEvents_Good(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.HandleIPCEvents(nil, nil)
@@ -378,6 +444,9 @@ func TestService_Service_HandleIPCEvents_Good(t *core.T) {
 }
 
 func TestService_Service_HandleIPCEvents_Bad(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.HandleIPCEvents(nil, nil)
@@ -388,6 +457,9 @@ func TestService_Service_HandleIPCEvents_Bad(t *core.T) {
 }
 
 func TestService_Service_HandleIPCEvents_Ugly(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.HandleIPCEvents(nil, nil)

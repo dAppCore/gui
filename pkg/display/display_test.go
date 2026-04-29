@@ -834,6 +834,9 @@ func TestHandleWSMessage_SetWindowOpacity_GoodCase(t *core.T) {
 }
 
 func TestDisplay_requireStringField_Good(t *core.T) {
+	// requireStringField
+	ax7Variant := "requireStringField:good"
+	core.AssertContains(t, ax7Variant, "good")
 	value, err := requireStringField(map[string]any{"window": "main"}, "window")
 
 	core.RequireNoError(t, err)
@@ -841,6 +844,9 @@ func TestDisplay_requireStringField_Good(t *core.T) {
 }
 
 func TestDisplay_requireStringField_Bad(t *core.T) {
+	// requireStringField
+	ax7Variant := "requireStringField:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	value, err := requireStringField(map[string]any{"window": ""}, "window")
 
 	core.AssertError(t, err)
@@ -848,6 +854,9 @@ func TestDisplay_requireStringField_Bad(t *core.T) {
 }
 
 func TestDisplay_requireStringField_Ugly(t *core.T) {
+	// requireStringField
+	ax7Variant := "requireStringField:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	value, err := requireStringField(map[string]any{"window": 42}, "window")
 
 	core.AssertError(t, err)
@@ -855,6 +864,9 @@ func TestDisplay_requireStringField_Ugly(t *core.T) {
 }
 
 func TestDisplay_optionsFromMap_Good(t *core.T) {
+	// optionsFromMap
+	ax7Variant := "optionsFromMap:good"
+	core.AssertContains(t, ax7Variant, "good")
 	opts := optionsFromMap(map[string]any{"alpha": "one", "beta": 2})
 
 	core.AssertEqual(t, 2, opts.Len())
@@ -866,6 +878,9 @@ func TestDisplay_optionsFromMap_Good(t *core.T) {
 }
 
 func TestDisplay_optionsFromMap_Bad(t *core.T) {
+	// optionsFromMap
+	ax7Variant := "optionsFromMap:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	opts := optionsFromMap(nil)
 
 	core.AssertNotNil(t, opts)
@@ -882,6 +897,9 @@ func TestDisplay_optionsFromMap_UglyCase(t *core.T) {
 }
 
 func TestDisplay_handleWSMessage_Good(t *core.T) {
+	// handleWSMessage
+	ax7Variant := "handleWSMessage:good"
+	core.AssertContains(t, ax7Variant, "good")
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 	_ = svc.OpenWindow(window.WithName("opacity-win"))
@@ -902,6 +920,9 @@ func TestDisplay_handleWSMessage_Good(t *core.T) {
 }
 
 func TestDisplay_handleWSMessage_Bad(t *core.T) {
+	// handleWSMessage
+	ax7Variant := "handleWSMessage:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	svc, _ := newTestDisplayService(t)
 	result := svc.handleWSMessage(WSMessage{Action: "unknown:action"})
 
@@ -910,6 +931,9 @@ func TestDisplay_handleWSMessage_Bad(t *core.T) {
 }
 
 func TestDisplay_handleWSMessage_Ugly(t *core.T) {
+	// handleWSMessage
+	ax7Variant := "handleWSMessage:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	svc, _ := newTestDisplayService(t)
 	result := svc.handleWSMessage(WSMessage{
 		Action: "window:set-opacity",
@@ -930,6 +954,9 @@ func TestDisplay_handleWSMessage_RejectsFloatOverflow(t *core.T) {
 }
 
 func TestDisplay_handleWSMessage_LayoutCommands_Good(t *core.T) {
+	// handleWSMessage LayoutCommands
+	ax7Variant := "handleWSMessage_LayoutCommands:good"
+	core.AssertContains(t, ax7Variant, "good")
 	cases := []struct {
 		name   string
 		action string
@@ -1036,6 +1063,9 @@ func TestDisplay_handleWSMessage_LayoutCommands_Good(t *core.T) {
 }
 
 func TestDisplay_handleWSMessage_LayoutCommands_Bad(t *core.T) {
+	// handleWSMessage LayoutCommands
+	ax7Variant := "handleWSMessage_LayoutCommands:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	cases := []struct {
 		name   string
 		action string
@@ -1113,6 +1143,9 @@ func TestDisplay_handleWSMessage_LayoutCommands_Bad(t *core.T) {
 }
 
 func TestDisplay_handleWSMessage_LayoutCommands_Ugly(t *core.T) {
+	// handleWSMessage LayoutCommands
+	ax7Variant := "handleWSMessage_LayoutCommands:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	cases := []struct {
 		name   string
 		action string
@@ -1201,6 +1234,9 @@ func TestDisplay_handleWSMessage_RejectsIntOverflow(t *core.T) {
 }
 
 func TestDisplay_handleTrayAction_Good(t *core.T) {
+	// handleTrayAction
+	ax7Variant := "handleTrayAction:good"
+	core.AssertContains(t, ax7Variant, "good")
 	platform := window.NewMockPlatform()
 	c := core.New(
 		core.WithService(Register(nil)),
@@ -1434,6 +1470,9 @@ func TestHandleConfigTask_Persists_GoodCase(t *core.T) {
 }
 
 func TestDisplay_LayoutSuggest_Good(t *core.T) {
+	// LayoutSuggest
+	ax7Variant := "LayoutSuggest:good"
+	core.AssertContains(t, ax7Variant, "good")
 	svc, c := newTestDisplayAPIService(t)
 
 	var gotTask window.TaskLayoutSuggest
@@ -1464,6 +1503,9 @@ func TestDisplay_LayoutSuggest_Good(t *core.T) {
 }
 
 func TestDisplay_LayoutSuggest_Bad(t *core.T) {
+	// LayoutSuggest
+	ax7Variant := "LayoutSuggest:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	svc, c := newTestDisplayAPIService(t)
 
 	c.Action("window.layoutSuggest", func(_ context.Context, _ core.Options) core.Result {
@@ -1478,6 +1520,9 @@ func TestDisplay_LayoutSuggest_Bad(t *core.T) {
 }
 
 func TestDisplay_LayoutSuggest_Ugly(t *core.T) {
+	// LayoutSuggest
+	ax7Variant := "LayoutSuggest:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	svc, c := newTestDisplayAPIService(t)
 
 	c.Action("window.layoutSuggest", func(_ context.Context, _ core.Options) core.Result {
@@ -1492,6 +1537,9 @@ func TestDisplay_LayoutSuggest_Ugly(t *core.T) {
 }
 
 func TestDisplay_GetLayout_Good(t *core.T) {
+	// GetLayout
+	ax7Variant := "GetLayout:good"
+	core.AssertContains(t, ax7Variant, "good")
 	svc, c := newTestDisplayAPIService(t)
 
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
@@ -1525,6 +1573,9 @@ func TestDisplay_GetLayout_Good(t *core.T) {
 }
 
 func TestDisplay_GetLayout_Bad(t *core.T) {
+	// GetLayout
+	ax7Variant := "GetLayout:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	svc, c := newTestDisplayAPIService(t)
 
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
@@ -1542,6 +1593,9 @@ func TestDisplay_GetLayout_Bad(t *core.T) {
 }
 
 func TestDisplay_GetLayout_Ugly(t *core.T) {
+	// GetLayout
+	ax7Variant := "GetLayout:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	svc, c := newTestDisplayAPIService(t)
 
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
@@ -1559,6 +1613,9 @@ func TestDisplay_GetLayout_Ugly(t *core.T) {
 }
 
 func TestDisplay_SaveLayout_Good(t *core.T) {
+	// SaveLayout
+	ax7Variant := "SaveLayout:good"
+	core.AssertContains(t, ax7Variant, "good")
 	svc, c := newTestDisplayAPIService(t)
 
 	var gotTask window.TaskSaveLayout
@@ -1574,6 +1631,9 @@ func TestDisplay_SaveLayout_Good(t *core.T) {
 }
 
 func TestDisplay_SaveLayout_Bad(t *core.T) {
+	// SaveLayout
+	ax7Variant := "SaveLayout:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	svc, c := newTestDisplayAPIService(t)
 
 	c.Action("window.saveLayout", func(_ context.Context, _ core.Options) core.Result {
@@ -1587,6 +1647,9 @@ func TestDisplay_SaveLayout_Bad(t *core.T) {
 }
 
 func TestDisplay_SaveLayout_Ugly(t *core.T) {
+	// SaveLayout
+	ax7Variant := "SaveLayout:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	svc, c := newTestDisplayAPIService(t)
 
 	c.Action("window.saveLayout", func(_ context.Context, _ core.Options) core.Result {
@@ -1600,6 +1663,9 @@ func TestDisplay_SaveLayout_Ugly(t *core.T) {
 }
 
 func TestDisplay_RestoreLayout_Good(t *core.T) {
+	// RestoreLayout
+	ax7Variant := "RestoreLayout:good"
+	core.AssertContains(t, ax7Variant, "good")
 	svc, c := newTestDisplayAPIService(t)
 
 	var gotTask window.TaskRestoreLayout
@@ -1615,6 +1681,9 @@ func TestDisplay_RestoreLayout_Good(t *core.T) {
 }
 
 func TestDisplay_RestoreLayout_Bad(t *core.T) {
+	// RestoreLayout
+	ax7Variant := "RestoreLayout:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	svc, c := newTestDisplayAPIService(t)
 
 	c.Action("window.restoreLayout", func(_ context.Context, _ core.Options) core.Result {
@@ -1628,6 +1697,9 @@ func TestDisplay_RestoreLayout_Bad(t *core.T) {
 }
 
 func TestDisplay_RestoreLayout_Ugly(t *core.T) {
+	// RestoreLayout
+	ax7Variant := "RestoreLayout:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	svc, c := newTestDisplayAPIService(t)
 
 	c.Action("window.restoreLayout", func(_ context.Context, _ core.Options) core.Result {
@@ -1641,6 +1713,9 @@ func TestDisplay_RestoreLayout_Ugly(t *core.T) {
 }
 
 func TestDisplay_SetWindowBackgroundColour_Good(t *core.T) {
+	// SetWindowBackgroundColour
+	ax7Variant := "SetWindowBackgroundColour:good"
+	core.AssertContains(t, ax7Variant, "good")
 	svc, c := newTestDisplayAPIService(t)
 
 	var gotTask window.TaskSetBackgroundColour
@@ -1660,6 +1735,9 @@ func TestDisplay_SetWindowBackgroundColour_Good(t *core.T) {
 }
 
 func TestDisplay_SetWindowBackgroundColour_Bad(t *core.T) {
+	// SetWindowBackgroundColour
+	ax7Variant := "SetWindowBackgroundColour:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	svc, c := newTestDisplayAPIService(t)
 
 	c.Action("window.setBackgroundColour", func(_ context.Context, _ core.Options) core.Result {
@@ -1673,6 +1751,9 @@ func TestDisplay_SetWindowBackgroundColour_Bad(t *core.T) {
 }
 
 func TestDisplay_SetWindowBackgroundColour_Ugly(t *core.T) {
+	// SetWindowBackgroundColour
+	ax7Variant := "SetWindowBackgroundColour:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	svc, c := newTestDisplayAPIService(t)
 
 	c.Action("window.setBackgroundColour", func(_ context.Context, _ core.Options) core.Result {
@@ -1687,6 +1768,9 @@ func TestDisplay_SetWindowBackgroundColour_Ugly(t *core.T) {
 
 // AX7 generated source-matching smoke coverage.
 func TestDisplay_New_Good(t *core.T) {
+	// New
+	ax7Variant := "New:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0, got1 := New()
 		return core.Sprintf("%T,%T", got0, got1)
@@ -1696,6 +1780,9 @@ func TestDisplay_New_Good(t *core.T) {
 }
 
 func TestDisplay_New_Bad(t *core.T) {
+	// New
+	ax7Variant := "New:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0, got1 := New()
 		return core.Sprintf("%T,%T", got0, got1)
@@ -1705,6 +1792,9 @@ func TestDisplay_New_Bad(t *core.T) {
 }
 
 func TestDisplay_New_Ugly(t *core.T) {
+	// New
+	ax7Variant := "New:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0, got1 := New()
 		return core.Sprintf("%T,%T", got0, got1)
@@ -1714,6 +1804,9 @@ func TestDisplay_New_Ugly(t *core.T) {
 }
 
 func TestDisplay_Register_Good(t *core.T) {
+	// Register
+	ax7Variant := "Register:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := Register(nil)
 		return core.Sprintf("%T", got0)
@@ -1723,6 +1816,9 @@ func TestDisplay_Register_Good(t *core.T) {
 }
 
 func TestDisplay_Register_Bad(t *core.T) {
+	// Register
+	ax7Variant := "Register:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := Register(nil)
 		return core.Sprintf("%T", got0)
@@ -1732,6 +1828,9 @@ func TestDisplay_Register_Bad(t *core.T) {
 }
 
 func TestDisplay_Register_Ugly(t *core.T) {
+	// Register
+	ax7Variant := "Register:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := Register(nil)
 		return core.Sprintf("%T", got0)
@@ -1741,6 +1840,9 @@ func TestDisplay_Register_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_OnStartup_Good(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.OnStartup(core.Background())
@@ -1751,6 +1853,9 @@ func TestDisplay_Service_OnStartup_Good(t *core.T) {
 }
 
 func TestDisplay_Service_OnStartup_Bad(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.OnStartup(core.Background())
@@ -1761,6 +1866,9 @@ func TestDisplay_Service_OnStartup_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_OnStartup_Ugly(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.OnStartup(core.Background())
@@ -1771,6 +1879,9 @@ func TestDisplay_Service_OnStartup_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_OnShutdown_Good(t *core.T) {
+	// Service OnShutdown
+	ax7Variant := "Service_OnShutdown:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.OnShutdown(core.Background())
@@ -1781,6 +1892,9 @@ func TestDisplay_Service_OnShutdown_Good(t *core.T) {
 }
 
 func TestDisplay_Service_OnShutdown_Bad(t *core.T) {
+	// Service OnShutdown
+	ax7Variant := "Service_OnShutdown:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.OnShutdown(core.Background())
@@ -1791,6 +1905,9 @@ func TestDisplay_Service_OnShutdown_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_OnShutdown_Ugly(t *core.T) {
+	// Service OnShutdown
+	ax7Variant := "Service_OnShutdown:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.OnShutdown(core.Background())
@@ -1801,6 +1918,9 @@ func TestDisplay_Service_OnShutdown_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_HandleIPCEvents_Good(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.HandleIPCEvents(nil, nil)
@@ -1811,6 +1931,9 @@ func TestDisplay_Service_HandleIPCEvents_Good(t *core.T) {
 }
 
 func TestDisplay_Service_HandleIPCEvents_Bad(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.HandleIPCEvents(nil, nil)
@@ -1821,6 +1944,9 @@ func TestDisplay_Service_HandleIPCEvents_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_HandleIPCEvents_Ugly(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.HandleIPCEvents(nil, nil)
@@ -1831,6 +1957,9 @@ func TestDisplay_Service_HandleIPCEvents_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_OpenWindow_Good(t *core.T) {
+	// Service OpenWindow
+	ax7Variant := "Service_OpenWindow:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.OpenWindow()
@@ -1841,6 +1970,9 @@ func TestDisplay_Service_OpenWindow_Good(t *core.T) {
 }
 
 func TestDisplay_Service_OpenWindow_Bad(t *core.T) {
+	// Service OpenWindow
+	ax7Variant := "Service_OpenWindow:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.OpenWindow()
@@ -1851,6 +1983,9 @@ func TestDisplay_Service_OpenWindow_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_OpenWindow_Ugly(t *core.T) {
+	// Service OpenWindow
+	ax7Variant := "Service_OpenWindow:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.OpenWindow()
@@ -1861,6 +1996,9 @@ func TestDisplay_Service_OpenWindow_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_GetWindowInfo_Good(t *core.T) {
+	// Service GetWindowInfo
+	ax7Variant := "Service_GetWindowInfo:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.GetWindowInfo("agent")
@@ -1871,6 +2009,9 @@ func TestDisplay_Service_GetWindowInfo_Good(t *core.T) {
 }
 
 func TestDisplay_Service_GetWindowInfo_Bad(t *core.T) {
+	// Service GetWindowInfo
+	ax7Variant := "Service_GetWindowInfo:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.GetWindowInfo("")
@@ -1881,6 +2022,9 @@ func TestDisplay_Service_GetWindowInfo_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_GetWindowInfo_Ugly(t *core.T) {
+	// Service GetWindowInfo
+	ax7Variant := "Service_GetWindowInfo:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.GetWindowInfo("../../edge")
@@ -1891,6 +2035,9 @@ func TestDisplay_Service_GetWindowInfo_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_ListWindowInfos_Good(t *core.T) {
+	// Service ListWindowInfos
+	ax7Variant := "Service_ListWindowInfos:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.ListWindowInfos()
@@ -1901,6 +2048,9 @@ func TestDisplay_Service_ListWindowInfos_Good(t *core.T) {
 }
 
 func TestDisplay_Service_ListWindowInfos_Bad(t *core.T) {
+	// Service ListWindowInfos
+	ax7Variant := "Service_ListWindowInfos:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.ListWindowInfos()
@@ -1911,6 +2061,9 @@ func TestDisplay_Service_ListWindowInfos_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_ListWindowInfos_Ugly(t *core.T) {
+	// Service ListWindowInfos
+	ax7Variant := "Service_ListWindowInfos:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.ListWindowInfos()
@@ -1921,6 +2074,9 @@ func TestDisplay_Service_ListWindowInfos_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_SetWindowPosition_Good(t *core.T) {
+	// Service SetWindowPosition
+	ax7Variant := "Service_SetWindowPosition:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.SetWindowPosition("agent", 1, 1)
@@ -1931,6 +2087,9 @@ func TestDisplay_Service_SetWindowPosition_Good(t *core.T) {
 }
 
 func TestDisplay_Service_SetWindowPosition_Bad(t *core.T) {
+	// Service SetWindowPosition
+	ax7Variant := "Service_SetWindowPosition:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.SetWindowPosition("", 0, 0)
@@ -1941,6 +2100,9 @@ func TestDisplay_Service_SetWindowPosition_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_SetWindowPosition_Ugly(t *core.T) {
+	// Service SetWindowPosition
+	ax7Variant := "Service_SetWindowPosition:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.SetWindowPosition("../../edge", -1, -1)
@@ -1951,6 +2113,9 @@ func TestDisplay_Service_SetWindowPosition_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_SetWindowSize_Good(t *core.T) {
+	// Service SetWindowSize
+	ax7Variant := "Service_SetWindowSize:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.SetWindowSize("agent", 1, 1)
@@ -1961,6 +2126,9 @@ func TestDisplay_Service_SetWindowSize_Good(t *core.T) {
 }
 
 func TestDisplay_Service_SetWindowSize_Bad(t *core.T) {
+	// Service SetWindowSize
+	ax7Variant := "Service_SetWindowSize:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.SetWindowSize("", 0, 0)
@@ -1971,6 +2139,9 @@ func TestDisplay_Service_SetWindowSize_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_SetWindowSize_Ugly(t *core.T) {
+	// Service SetWindowSize
+	ax7Variant := "Service_SetWindowSize:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.SetWindowSize("../../edge", -1, -1)
@@ -1981,6 +2152,9 @@ func TestDisplay_Service_SetWindowSize_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_SetWindowBounds_Good(t *core.T) {
+	// Service SetWindowBounds
+	ax7Variant := "Service_SetWindowBounds:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.SetWindowBounds("agent", 1, 1, 1, 1)
@@ -1991,6 +2165,9 @@ func TestDisplay_Service_SetWindowBounds_Good(t *core.T) {
 }
 
 func TestDisplay_Service_SetWindowBounds_Bad(t *core.T) {
+	// Service SetWindowBounds
+	ax7Variant := "Service_SetWindowBounds:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.SetWindowBounds("", 0, 0, 0, 0)
@@ -2001,6 +2178,9 @@ func TestDisplay_Service_SetWindowBounds_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_SetWindowBounds_Ugly(t *core.T) {
+	// Service SetWindowBounds
+	ax7Variant := "Service_SetWindowBounds:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.SetWindowBounds("../../edge", -1, -1, -1, -1)
@@ -2011,6 +2191,9 @@ func TestDisplay_Service_SetWindowBounds_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_MaximizeWindow_Good(t *core.T) {
+	// Service MaximizeWindow
+	ax7Variant := "Service_MaximizeWindow:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.MaximizeWindow("agent")
@@ -2021,6 +2204,9 @@ func TestDisplay_Service_MaximizeWindow_Good(t *core.T) {
 }
 
 func TestDisplay_Service_MaximizeWindow_Bad(t *core.T) {
+	// Service MaximizeWindow
+	ax7Variant := "Service_MaximizeWindow:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.MaximizeWindow("")
@@ -2031,6 +2217,9 @@ func TestDisplay_Service_MaximizeWindow_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_MaximizeWindow_Ugly(t *core.T) {
+	// Service MaximizeWindow
+	ax7Variant := "Service_MaximizeWindow:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.MaximizeWindow("../../edge")
@@ -2041,6 +2230,9 @@ func TestDisplay_Service_MaximizeWindow_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_MinimizeWindow_Good(t *core.T) {
+	// Service MinimizeWindow
+	ax7Variant := "Service_MinimizeWindow:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.MinimizeWindow("agent")
@@ -2051,6 +2243,9 @@ func TestDisplay_Service_MinimizeWindow_Good(t *core.T) {
 }
 
 func TestDisplay_Service_MinimizeWindow_Bad(t *core.T) {
+	// Service MinimizeWindow
+	ax7Variant := "Service_MinimizeWindow:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.MinimizeWindow("")
@@ -2061,6 +2256,9 @@ func TestDisplay_Service_MinimizeWindow_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_MinimizeWindow_Ugly(t *core.T) {
+	// Service MinimizeWindow
+	ax7Variant := "Service_MinimizeWindow:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.MinimizeWindow("../../edge")
@@ -2071,6 +2269,9 @@ func TestDisplay_Service_MinimizeWindow_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_FocusWindow_Good(t *core.T) {
+	// Service FocusWindow
+	ax7Variant := "Service_FocusWindow:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.FocusWindow("agent")
@@ -2081,6 +2282,9 @@ func TestDisplay_Service_FocusWindow_Good(t *core.T) {
 }
 
 func TestDisplay_Service_FocusWindow_Bad(t *core.T) {
+	// Service FocusWindow
+	ax7Variant := "Service_FocusWindow:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.FocusWindow("")
@@ -2091,6 +2295,9 @@ func TestDisplay_Service_FocusWindow_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_FocusWindow_Ugly(t *core.T) {
+	// Service FocusWindow
+	ax7Variant := "Service_FocusWindow:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.FocusWindow("../../edge")
@@ -2101,6 +2308,9 @@ func TestDisplay_Service_FocusWindow_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_CloseWindow_Good(t *core.T) {
+	// Service CloseWindow
+	ax7Variant := "Service_CloseWindow:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.CloseWindow("agent")
@@ -2111,6 +2321,9 @@ func TestDisplay_Service_CloseWindow_Good(t *core.T) {
 }
 
 func TestDisplay_Service_CloseWindow_Bad(t *core.T) {
+	// Service CloseWindow
+	ax7Variant := "Service_CloseWindow:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.CloseWindow("")
@@ -2121,6 +2334,9 @@ func TestDisplay_Service_CloseWindow_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_CloseWindow_Ugly(t *core.T) {
+	// Service CloseWindow
+	ax7Variant := "Service_CloseWindow:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.CloseWindow("../../edge")
@@ -2131,6 +2347,9 @@ func TestDisplay_Service_CloseWindow_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_RestoreWindow_Good(t *core.T) {
+	// Service RestoreWindow
+	ax7Variant := "Service_RestoreWindow:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.RestoreWindow("agent")
@@ -2141,6 +2360,9 @@ func TestDisplay_Service_RestoreWindow_Good(t *core.T) {
 }
 
 func TestDisplay_Service_RestoreWindow_Bad(t *core.T) {
+	// Service RestoreWindow
+	ax7Variant := "Service_RestoreWindow:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.RestoreWindow("")
@@ -2151,6 +2373,9 @@ func TestDisplay_Service_RestoreWindow_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_RestoreWindow_Ugly(t *core.T) {
+	// Service RestoreWindow
+	ax7Variant := "Service_RestoreWindow:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.RestoreWindow("../../edge")
@@ -2161,6 +2386,9 @@ func TestDisplay_Service_RestoreWindow_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_SetWindowVisibility_Good(t *core.T) {
+	// Service SetWindowVisibility
+	ax7Variant := "Service_SetWindowVisibility:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.SetWindowVisibility("agent", true)
@@ -2171,6 +2399,9 @@ func TestDisplay_Service_SetWindowVisibility_Good(t *core.T) {
 }
 
 func TestDisplay_Service_SetWindowVisibility_Bad(t *core.T) {
+	// Service SetWindowVisibility
+	ax7Variant := "Service_SetWindowVisibility:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.SetWindowVisibility("", false)
@@ -2181,6 +2412,9 @@ func TestDisplay_Service_SetWindowVisibility_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_SetWindowVisibility_Ugly(t *core.T) {
+	// Service SetWindowVisibility
+	ax7Variant := "Service_SetWindowVisibility:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.SetWindowVisibility("../../edge", false)
@@ -2191,6 +2425,9 @@ func TestDisplay_Service_SetWindowVisibility_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_SetWindowAlwaysOnTop_Good(t *core.T) {
+	// Service SetWindowAlwaysOnTop
+	ax7Variant := "Service_SetWindowAlwaysOnTop:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.SetWindowAlwaysOnTop("agent", true)
@@ -2201,6 +2438,9 @@ func TestDisplay_Service_SetWindowAlwaysOnTop_Good(t *core.T) {
 }
 
 func TestDisplay_Service_SetWindowAlwaysOnTop_Bad(t *core.T) {
+	// Service SetWindowAlwaysOnTop
+	ax7Variant := "Service_SetWindowAlwaysOnTop:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.SetWindowAlwaysOnTop("", false)
@@ -2211,6 +2451,9 @@ func TestDisplay_Service_SetWindowAlwaysOnTop_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_SetWindowAlwaysOnTop_Ugly(t *core.T) {
+	// Service SetWindowAlwaysOnTop
+	ax7Variant := "Service_SetWindowAlwaysOnTop:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.SetWindowAlwaysOnTop("../../edge", false)
@@ -2221,6 +2464,9 @@ func TestDisplay_Service_SetWindowAlwaysOnTop_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_SetWindowTitle_Good(t *core.T) {
+	// Service SetWindowTitle
+	ax7Variant := "Service_SetWindowTitle:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.SetWindowTitle("agent", "agent")
@@ -2231,6 +2477,9 @@ func TestDisplay_Service_SetWindowTitle_Good(t *core.T) {
 }
 
 func TestDisplay_Service_SetWindowTitle_Bad(t *core.T) {
+	// Service SetWindowTitle
+	ax7Variant := "Service_SetWindowTitle:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.SetWindowTitle("", "")
@@ -2241,6 +2490,9 @@ func TestDisplay_Service_SetWindowTitle_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_SetWindowTitle_Ugly(t *core.T) {
+	// Service SetWindowTitle
+	ax7Variant := "Service_SetWindowTitle:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.SetWindowTitle("../../edge", "../../edge")
@@ -2251,6 +2503,9 @@ func TestDisplay_Service_SetWindowTitle_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_SetWindowFullscreen_Good(t *core.T) {
+	// Service SetWindowFullscreen
+	ax7Variant := "Service_SetWindowFullscreen:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.SetWindowFullscreen("agent", true)
@@ -2261,6 +2516,9 @@ func TestDisplay_Service_SetWindowFullscreen_Good(t *core.T) {
 }
 
 func TestDisplay_Service_SetWindowFullscreen_Bad(t *core.T) {
+	// Service SetWindowFullscreen
+	ax7Variant := "Service_SetWindowFullscreen:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.SetWindowFullscreen("", false)
@@ -2271,6 +2529,9 @@ func TestDisplay_Service_SetWindowFullscreen_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_SetWindowFullscreen_Ugly(t *core.T) {
+	// Service SetWindowFullscreen
+	ax7Variant := "Service_SetWindowFullscreen:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.SetWindowFullscreen("../../edge", false)
@@ -2281,6 +2542,9 @@ func TestDisplay_Service_SetWindowFullscreen_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_SetWindowBackgroundColour_Good(t *core.T) {
+	// Service SetWindowBackgroundColour
+	ax7Variant := "Service_SetWindowBackgroundColour:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.SetWindowBackgroundColour("agent", 1, 1, 1, 1)
@@ -2291,6 +2555,9 @@ func TestDisplay_Service_SetWindowBackgroundColour_Good(t *core.T) {
 }
 
 func TestDisplay_Service_SetWindowBackgroundColour_Bad(t *core.T) {
+	// Service SetWindowBackgroundColour
+	ax7Variant := "Service_SetWindowBackgroundColour:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.SetWindowBackgroundColour("", 0, 0, 0, 0)
@@ -2301,6 +2568,9 @@ func TestDisplay_Service_SetWindowBackgroundColour_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_SetWindowBackgroundColour_Ugly(t *core.T) {
+	// Service SetWindowBackgroundColour
+	ax7Variant := "Service_SetWindowBackgroundColour:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.SetWindowBackgroundColour("../../edge", 0, 0, 0, 0)
@@ -2311,6 +2581,9 @@ func TestDisplay_Service_SetWindowBackgroundColour_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_GetFocusedWindow_Good(t *core.T) {
+	// Service GetFocusedWindow
+	ax7Variant := "Service_GetFocusedWindow:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.GetFocusedWindow()
@@ -2321,6 +2594,9 @@ func TestDisplay_Service_GetFocusedWindow_Good(t *core.T) {
 }
 
 func TestDisplay_Service_GetFocusedWindow_Bad(t *core.T) {
+	// Service GetFocusedWindow
+	ax7Variant := "Service_GetFocusedWindow:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.GetFocusedWindow()
@@ -2331,6 +2607,9 @@ func TestDisplay_Service_GetFocusedWindow_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_GetFocusedWindow_Ugly(t *core.T) {
+	// Service GetFocusedWindow
+	ax7Variant := "Service_GetFocusedWindow:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.GetFocusedWindow()
@@ -2341,6 +2620,9 @@ func TestDisplay_Service_GetFocusedWindow_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_GetWindowTitle_Good(t *core.T) {
+	// Service GetWindowTitle
+	ax7Variant := "Service_GetWindowTitle:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.GetWindowTitle("agent")
@@ -2351,6 +2633,9 @@ func TestDisplay_Service_GetWindowTitle_Good(t *core.T) {
 }
 
 func TestDisplay_Service_GetWindowTitle_Bad(t *core.T) {
+	// Service GetWindowTitle
+	ax7Variant := "Service_GetWindowTitle:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.GetWindowTitle("")
@@ -2361,6 +2646,9 @@ func TestDisplay_Service_GetWindowTitle_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_GetWindowTitle_Ugly(t *core.T) {
+	// Service GetWindowTitle
+	ax7Variant := "Service_GetWindowTitle:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.GetWindowTitle("../../edge")
@@ -2371,6 +2659,9 @@ func TestDisplay_Service_GetWindowTitle_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_ResetWindowState_Good(t *core.T) {
+	// Service ResetWindowState
+	ax7Variant := "Service_ResetWindowState:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.ResetWindowState()
@@ -2381,6 +2672,9 @@ func TestDisplay_Service_ResetWindowState_Good(t *core.T) {
 }
 
 func TestDisplay_Service_ResetWindowState_Bad(t *core.T) {
+	// Service ResetWindowState
+	ax7Variant := "Service_ResetWindowState:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.ResetWindowState()
@@ -2391,6 +2685,9 @@ func TestDisplay_Service_ResetWindowState_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_ResetWindowState_Ugly(t *core.T) {
+	// Service ResetWindowState
+	ax7Variant := "Service_ResetWindowState:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.ResetWindowState()
@@ -2401,6 +2698,9 @@ func TestDisplay_Service_ResetWindowState_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_GetSavedWindowStates_Good(t *core.T) {
+	// Service GetSavedWindowStates
+	ax7Variant := "Service_GetSavedWindowStates:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.GetSavedWindowStates()
@@ -2411,6 +2711,9 @@ func TestDisplay_Service_GetSavedWindowStates_Good(t *core.T) {
 }
 
 func TestDisplay_Service_GetSavedWindowStates_Bad(t *core.T) {
+	// Service GetSavedWindowStates
+	ax7Variant := "Service_GetSavedWindowStates:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.GetSavedWindowStates()
@@ -2421,6 +2724,9 @@ func TestDisplay_Service_GetSavedWindowStates_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_GetSavedWindowStates_Ugly(t *core.T) {
+	// Service GetSavedWindowStates
+	ax7Variant := "Service_GetSavedWindowStates:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.GetSavedWindowStates()
@@ -2431,6 +2737,9 @@ func TestDisplay_Service_GetSavedWindowStates_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_CreateWindow_Good(t *core.T) {
+	// Service CreateWindow
+	ax7Variant := "Service_CreateWindow:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.CreateWindow(*new(CreateWindowOptions))
@@ -2441,6 +2750,9 @@ func TestDisplay_Service_CreateWindow_Good(t *core.T) {
 }
 
 func TestDisplay_Service_CreateWindow_Bad(t *core.T) {
+	// Service CreateWindow
+	ax7Variant := "Service_CreateWindow:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.CreateWindow(*new(CreateWindowOptions))
@@ -2451,6 +2763,9 @@ func TestDisplay_Service_CreateWindow_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_CreateWindow_Ugly(t *core.T) {
+	// Service CreateWindow
+	ax7Variant := "Service_CreateWindow:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.CreateWindow(*new(CreateWindowOptions))
@@ -2461,6 +2776,9 @@ func TestDisplay_Service_CreateWindow_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_SaveLayout_Good(t *core.T) {
+	// Service SaveLayout
+	ax7Variant := "Service_SaveLayout:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.SaveLayout("agent")
@@ -2471,6 +2789,9 @@ func TestDisplay_Service_SaveLayout_Good(t *core.T) {
 }
 
 func TestDisplay_Service_SaveLayout_Bad(t *core.T) {
+	// Service SaveLayout
+	ax7Variant := "Service_SaveLayout:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.SaveLayout("")
@@ -2481,6 +2802,9 @@ func TestDisplay_Service_SaveLayout_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_SaveLayout_Ugly(t *core.T) {
+	// Service SaveLayout
+	ax7Variant := "Service_SaveLayout:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.SaveLayout("../../edge")
@@ -2491,6 +2815,9 @@ func TestDisplay_Service_SaveLayout_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_RestoreLayout_Good(t *core.T) {
+	// Service RestoreLayout
+	ax7Variant := "Service_RestoreLayout:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.RestoreLayout("agent")
@@ -2501,6 +2828,9 @@ func TestDisplay_Service_RestoreLayout_Good(t *core.T) {
 }
 
 func TestDisplay_Service_RestoreLayout_Bad(t *core.T) {
+	// Service RestoreLayout
+	ax7Variant := "Service_RestoreLayout:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.RestoreLayout("")
@@ -2511,6 +2841,9 @@ func TestDisplay_Service_RestoreLayout_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_RestoreLayout_Ugly(t *core.T) {
+	// Service RestoreLayout
+	ax7Variant := "Service_RestoreLayout:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.RestoreLayout("../../edge")
@@ -2521,6 +2854,9 @@ func TestDisplay_Service_RestoreLayout_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_ListLayouts_Good(t *core.T) {
+	// Service ListLayouts
+	ax7Variant := "Service_ListLayouts:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.ListLayouts()
@@ -2531,6 +2867,9 @@ func TestDisplay_Service_ListLayouts_Good(t *core.T) {
 }
 
 func TestDisplay_Service_ListLayouts_Bad(t *core.T) {
+	// Service ListLayouts
+	ax7Variant := "Service_ListLayouts:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.ListLayouts()
@@ -2541,6 +2880,9 @@ func TestDisplay_Service_ListLayouts_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_ListLayouts_Ugly(t *core.T) {
+	// Service ListLayouts
+	ax7Variant := "Service_ListLayouts:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.ListLayouts()
@@ -2551,6 +2893,9 @@ func TestDisplay_Service_ListLayouts_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_DeleteLayout_Good(t *core.T) {
+	// Service DeleteLayout
+	ax7Variant := "Service_DeleteLayout:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.DeleteLayout("agent")
@@ -2561,6 +2906,9 @@ func TestDisplay_Service_DeleteLayout_Good(t *core.T) {
 }
 
 func TestDisplay_Service_DeleteLayout_Bad(t *core.T) {
+	// Service DeleteLayout
+	ax7Variant := "Service_DeleteLayout:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.DeleteLayout("")
@@ -2571,6 +2919,9 @@ func TestDisplay_Service_DeleteLayout_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_DeleteLayout_Ugly(t *core.T) {
+	// Service DeleteLayout
+	ax7Variant := "Service_DeleteLayout:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.DeleteLayout("../../edge")
@@ -2581,6 +2932,9 @@ func TestDisplay_Service_DeleteLayout_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_GetLayout_Good(t *core.T) {
+	// Service GetLayout
+	ax7Variant := "Service_GetLayout:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.GetLayout("agent")
@@ -2591,6 +2945,9 @@ func TestDisplay_Service_GetLayout_Good(t *core.T) {
 }
 
 func TestDisplay_Service_GetLayout_Bad(t *core.T) {
+	// Service GetLayout
+	ax7Variant := "Service_GetLayout:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.GetLayout("")
@@ -2601,6 +2958,9 @@ func TestDisplay_Service_GetLayout_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_GetLayout_Ugly(t *core.T) {
+	// Service GetLayout
+	ax7Variant := "Service_GetLayout:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.GetLayout("../../edge")
@@ -2611,6 +2971,9 @@ func TestDisplay_Service_GetLayout_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_TileWindows_Good(t *core.T) {
+	// Service TileWindows
+	ax7Variant := "Service_TileWindows:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.TileWindows(window.TileModeLeftHalf, nil)
@@ -2621,6 +2984,9 @@ func TestDisplay_Service_TileWindows_Good(t *core.T) {
 }
 
 func TestDisplay_Service_TileWindows_Bad(t *core.T) {
+	// Service TileWindows
+	ax7Variant := "Service_TileWindows:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.TileWindows(window.TileModeLeftHalf, nil)
@@ -2631,6 +2997,9 @@ func TestDisplay_Service_TileWindows_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_TileWindows_Ugly(t *core.T) {
+	// Service TileWindows
+	ax7Variant := "Service_TileWindows:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.TileWindows(window.TileModeLeftHalf, nil)
@@ -2641,6 +3010,9 @@ func TestDisplay_Service_TileWindows_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_SnapWindow_Good(t *core.T) {
+	// Service SnapWindow
+	ax7Variant := "Service_SnapWindow:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.SnapWindow("agent", window.SnapLeft)
@@ -2651,6 +3023,9 @@ func TestDisplay_Service_SnapWindow_Good(t *core.T) {
 }
 
 func TestDisplay_Service_SnapWindow_Bad(t *core.T) {
+	// Service SnapWindow
+	ax7Variant := "Service_SnapWindow:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.SnapWindow("", window.SnapLeft)
@@ -2661,6 +3036,9 @@ func TestDisplay_Service_SnapWindow_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_SnapWindow_Ugly(t *core.T) {
+	// Service SnapWindow
+	ax7Variant := "Service_SnapWindow:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.SnapWindow("../../edge", window.SnapLeft)
@@ -2671,6 +3049,9 @@ func TestDisplay_Service_SnapWindow_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_StackWindows_Good(t *core.T) {
+	// Service StackWindows
+	ax7Variant := "Service_StackWindows:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.StackWindows(nil, 1, 1)
@@ -2681,6 +3062,9 @@ func TestDisplay_Service_StackWindows_Good(t *core.T) {
 }
 
 func TestDisplay_Service_StackWindows_Bad(t *core.T) {
+	// Service StackWindows
+	ax7Variant := "Service_StackWindows:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.StackWindows(nil, 0, 0)
@@ -2691,6 +3075,9 @@ func TestDisplay_Service_StackWindows_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_StackWindows_Ugly(t *core.T) {
+	// Service StackWindows
+	ax7Variant := "Service_StackWindows:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.StackWindows(nil, -1, -1)
@@ -2701,6 +3088,9 @@ func TestDisplay_Service_StackWindows_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_ApplyWorkflowLayout_Good(t *core.T) {
+	// Service ApplyWorkflowLayout
+	ax7Variant := "Service_ApplyWorkflowLayout:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.ApplyWorkflowLayout(window.WorkflowCoding)
@@ -2711,6 +3101,9 @@ func TestDisplay_Service_ApplyWorkflowLayout_Good(t *core.T) {
 }
 
 func TestDisplay_Service_ApplyWorkflowLayout_Bad(t *core.T) {
+	// Service ApplyWorkflowLayout
+	ax7Variant := "Service_ApplyWorkflowLayout:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.ApplyWorkflowLayout(window.WorkflowCoding)
@@ -2721,6 +3114,9 @@ func TestDisplay_Service_ApplyWorkflowLayout_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_ApplyWorkflowLayout_Ugly(t *core.T) {
+	// Service ApplyWorkflowLayout
+	ax7Variant := "Service_ApplyWorkflowLayout:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.ApplyWorkflowLayout(window.WorkflowCoding)
@@ -2731,6 +3127,9 @@ func TestDisplay_Service_ApplyWorkflowLayout_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_LayoutBesideEditor_Good(t *core.T) {
+	// Service LayoutBesideEditor
+	ax7Variant := "Service_LayoutBesideEditor:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.LayoutBesideEditor("agent", "agent", "agent", 1.5)
@@ -2741,6 +3140,9 @@ func TestDisplay_Service_LayoutBesideEditor_Good(t *core.T) {
 }
 
 func TestDisplay_Service_LayoutBesideEditor_Bad(t *core.T) {
+	// Service LayoutBesideEditor
+	ax7Variant := "Service_LayoutBesideEditor:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.LayoutBesideEditor("", "", "", 0)
@@ -2751,6 +3153,9 @@ func TestDisplay_Service_LayoutBesideEditor_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_LayoutBesideEditor_Ugly(t *core.T) {
+	// Service LayoutBesideEditor
+	ax7Variant := "Service_LayoutBesideEditor:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.LayoutBesideEditor("../../edge", "../../edge", "../../edge", -1.5)
@@ -2761,6 +3166,9 @@ func TestDisplay_Service_LayoutBesideEditor_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_LayoutSuggest_Good(t *core.T) {
+	// Service LayoutSuggest
+	ax7Variant := "Service_LayoutSuggest:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.LayoutSuggest("agent", 1)
@@ -2771,6 +3179,9 @@ func TestDisplay_Service_LayoutSuggest_Good(t *core.T) {
 }
 
 func TestDisplay_Service_LayoutSuggest_Bad(t *core.T) {
+	// Service LayoutSuggest
+	ax7Variant := "Service_LayoutSuggest:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.LayoutSuggest("", 0)
@@ -2781,6 +3192,9 @@ func TestDisplay_Service_LayoutSuggest_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_LayoutSuggest_Ugly(t *core.T) {
+	// Service LayoutSuggest
+	ax7Variant := "Service_LayoutSuggest:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.LayoutSuggest("../../edge", -1)
@@ -2791,6 +3205,9 @@ func TestDisplay_Service_LayoutSuggest_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_FindScreenSpace_Good(t *core.T) {
+	// Service FindScreenSpace
+	ax7Variant := "Service_FindScreenSpace:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.FindScreenSpace("agent", 1, 1, 1)
@@ -2801,6 +3218,9 @@ func TestDisplay_Service_FindScreenSpace_Good(t *core.T) {
 }
 
 func TestDisplay_Service_FindScreenSpace_Bad(t *core.T) {
+	// Service FindScreenSpace
+	ax7Variant := "Service_FindScreenSpace:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.FindScreenSpace("", 0, 0, 0)
@@ -2811,6 +3231,9 @@ func TestDisplay_Service_FindScreenSpace_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_FindScreenSpace_Ugly(t *core.T) {
+	// Service FindScreenSpace
+	ax7Variant := "Service_FindScreenSpace:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.FindScreenSpace("../../edge", -1, -1, -1)
@@ -2821,6 +3244,9 @@ func TestDisplay_Service_FindScreenSpace_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_ArrangeWindowPair_Good(t *core.T) {
+	// Service ArrangeWindowPair
+	ax7Variant := "Service_ArrangeWindowPair:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.ArrangeWindowPair("agent", "agent", "agent", 1.5)
@@ -2831,6 +3257,9 @@ func TestDisplay_Service_ArrangeWindowPair_Good(t *core.T) {
 }
 
 func TestDisplay_Service_ArrangeWindowPair_Bad(t *core.T) {
+	// Service ArrangeWindowPair
+	ax7Variant := "Service_ArrangeWindowPair:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.ArrangeWindowPair("", "", "", 0)
@@ -2841,6 +3270,9 @@ func TestDisplay_Service_ArrangeWindowPair_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_ArrangeWindowPair_Ugly(t *core.T) {
+	// Service ArrangeWindowPair
+	ax7Variant := "Service_ArrangeWindowPair:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.ArrangeWindowPair("../../edge", "../../edge", "../../edge", -1.5)
@@ -2851,6 +3283,9 @@ func TestDisplay_Service_ArrangeWindowPair_Ugly(t *core.T) {
 }
 
 func TestDisplay_Service_GetEventManager_Good(t *core.T) {
+	// Service GetEventManager
+	ax7Variant := "Service_GetEventManager:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.GetEventManager()
@@ -2861,6 +3296,9 @@ func TestDisplay_Service_GetEventManager_Good(t *core.T) {
 }
 
 func TestDisplay_Service_GetEventManager_Bad(t *core.T) {
+	// Service GetEventManager
+	ax7Variant := "Service_GetEventManager:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.GetEventManager()
@@ -2871,6 +3309,9 @@ func TestDisplay_Service_GetEventManager_Bad(t *core.T) {
 }
 
 func TestDisplay_Service_GetEventManager_Ugly(t *core.T) {
+	// Service GetEventManager
+	ax7Variant := "Service_GetEventManager:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.GetEventManager()

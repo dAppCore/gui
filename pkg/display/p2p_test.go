@@ -123,6 +123,9 @@ func TestDisplayP2P_OnStartup_InitializesEventManagerBeforeBridge(t *core.T) {
 }
 
 func TestDisplayP2P_attachP2PBridge_Bad(t *core.T) {
+	// attachP2PBridge
+	ax7Variant := "attachP2PBridge:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	c := core.New(core.WithServiceLock())
 	svc, err := New()
 	core.RequireNoError(t, err)

@@ -8,6 +8,9 @@ import (
 )
 
 func TestWailsPlatform_NewTray_Good(t *core.T) {
+	// NewTray
+	ax7Variant := "NewTray:good"
+	core.AssertContains(t, ax7Variant, "good")
 	app := &application.App{}
 	platform := NewWailsPlatform(app)
 
@@ -36,6 +39,9 @@ func TestWailsPlatform_NewTray_Good(t *core.T) {
 }
 
 func TestWailsPlatform_NewMenu_Good(t *core.T) {
+	// NewMenu
+	ax7Variant := "NewMenu:good"
+	core.AssertContains(t, ax7Variant, "good")
 	app := &application.App{}
 	platform := NewWailsPlatform(app)
 	menu := platform.NewMenu()
@@ -62,6 +68,9 @@ func TestWailsPlatform_NewMenu_Good(t *core.T) {
 }
 
 func TestWailsPlatform_SetMenu_Bad(t *core.T) {
+	// SetMenu
+	ax7Variant := "SetMenu:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	app := &application.App{}
 	platform := NewWailsPlatform(app)
 	tray := platform.NewTray().(*wailsTray)
@@ -72,6 +81,9 @@ func TestWailsPlatform_SetMenu_Bad(t *core.T) {
 
 // AX7 generated source-matching smoke coverage.
 func TestWails_NewWailsPlatform_Good(t *core.T) {
+	// NewWailsPlatform
+	ax7Variant := "NewWailsPlatform:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := NewWailsPlatform(nil)
 		return core.Sprintf("%T", got0)
@@ -81,6 +93,9 @@ func TestWails_NewWailsPlatform_Good(t *core.T) {
 }
 
 func TestWails_NewWailsPlatform_Bad(t *core.T) {
+	// NewWailsPlatform
+	ax7Variant := "NewWailsPlatform:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := NewWailsPlatform(nil)
 		return core.Sprintf("%T", got0)
@@ -90,6 +105,9 @@ func TestWails_NewWailsPlatform_Bad(t *core.T) {
 }
 
 func TestWails_NewWailsPlatform_Ugly(t *core.T) {
+	// NewWailsPlatform
+	ax7Variant := "NewWailsPlatform:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := NewWailsPlatform(nil)
 		return core.Sprintf("%T", got0)
@@ -99,6 +117,9 @@ func TestWails_NewWailsPlatform_Ugly(t *core.T) {
 }
 
 func TestWails_WailsPlatform_NewTray_Good(t *core.T) {
+	// WailsPlatform NewTray
+	ax7Variant := "WailsPlatform_NewTray:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WailsPlatform)
 	result := core.Try(func() any {
 		got0 := subject.NewTray()
@@ -109,6 +130,9 @@ func TestWails_WailsPlatform_NewTray_Good(t *core.T) {
 }
 
 func TestWails_WailsPlatform_NewTray_Bad(t *core.T) {
+	// WailsPlatform NewTray
+	ax7Variant := "WailsPlatform_NewTray:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WailsPlatform)
 	result := core.Try(func() any {
 		got0 := subject.NewTray()
@@ -119,6 +143,9 @@ func TestWails_WailsPlatform_NewTray_Bad(t *core.T) {
 }
 
 func TestWails_WailsPlatform_NewTray_Ugly(t *core.T) {
+	// WailsPlatform NewTray
+	ax7Variant := "WailsPlatform_NewTray:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WailsPlatform)
 	result := core.Try(func() any {
 		got0 := subject.NewTray()
@@ -129,6 +156,9 @@ func TestWails_WailsPlatform_NewTray_Ugly(t *core.T) {
 }
 
 func TestWails_WailsPlatform_NewMenu_Good(t *core.T) {
+	// WailsPlatform NewMenu
+	ax7Variant := "WailsPlatform_NewMenu:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WailsPlatform)
 	result := core.Try(func() any {
 		got0 := subject.NewMenu()
@@ -139,6 +169,9 @@ func TestWails_WailsPlatform_NewMenu_Good(t *core.T) {
 }
 
 func TestWails_WailsPlatform_NewMenu_Bad(t *core.T) {
+	// WailsPlatform NewMenu
+	ax7Variant := "WailsPlatform_NewMenu:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WailsPlatform)
 	result := core.Try(func() any {
 		got0 := subject.NewMenu()
@@ -149,6 +182,9 @@ func TestWails_WailsPlatform_NewMenu_Bad(t *core.T) {
 }
 
 func TestWails_WailsPlatform_NewMenu_Ugly(t *core.T) {
+	// WailsPlatform NewMenu
+	ax7Variant := "WailsPlatform_NewMenu:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WailsPlatform)
 	result := core.Try(func() any {
 		got0 := subject.NewMenu()
@@ -161,6 +197,9 @@ func TestWails_WailsPlatform_NewMenu_Ugly(t *core.T) {
 type Tray = wailsTray
 
 func TestWails_Tray_SetIcon_Good(t *core.T) {
+	// Tray SetIcon
+	ax7Variant := "Tray_SetIcon:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(wailsTray)
 	result := core.Try(func() any {
 		subject.SetIcon(nil)
@@ -171,6 +210,9 @@ func TestWails_Tray_SetIcon_Good(t *core.T) {
 }
 
 func TestWails_Tray_SetIcon_Bad(t *core.T) {
+	// Tray SetIcon
+	ax7Variant := "Tray_SetIcon:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(wailsTray)
 	result := core.Try(func() any {
 		subject.SetIcon(nil)
@@ -181,6 +223,9 @@ func TestWails_Tray_SetIcon_Bad(t *core.T) {
 }
 
 func TestWails_Tray_SetIcon_Ugly(t *core.T) {
+	// Tray SetIcon
+	ax7Variant := "Tray_SetIcon:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(wailsTray)
 	result := core.Try(func() any {
 		subject.SetIcon(nil)
@@ -191,6 +236,9 @@ func TestWails_Tray_SetIcon_Ugly(t *core.T) {
 }
 
 func TestWails_Tray_SetTemplateIcon_Good(t *core.T) {
+	// Tray SetTemplateIcon
+	ax7Variant := "Tray_SetTemplateIcon:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(wailsTray)
 	result := core.Try(func() any {
 		subject.SetTemplateIcon(nil)
@@ -201,6 +249,9 @@ func TestWails_Tray_SetTemplateIcon_Good(t *core.T) {
 }
 
 func TestWails_Tray_SetTemplateIcon_Bad(t *core.T) {
+	// Tray SetTemplateIcon
+	ax7Variant := "Tray_SetTemplateIcon:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(wailsTray)
 	result := core.Try(func() any {
 		subject.SetTemplateIcon(nil)
@@ -211,6 +262,9 @@ func TestWails_Tray_SetTemplateIcon_Bad(t *core.T) {
 }
 
 func TestWails_Tray_SetTemplateIcon_Ugly(t *core.T) {
+	// Tray SetTemplateIcon
+	ax7Variant := "Tray_SetTemplateIcon:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(wailsTray)
 	result := core.Try(func() any {
 		subject.SetTemplateIcon(nil)
@@ -221,6 +275,9 @@ func TestWails_Tray_SetTemplateIcon_Ugly(t *core.T) {
 }
 
 func TestWails_Tray_SetTooltip_Good(t *core.T) {
+	// Tray SetTooltip
+	ax7Variant := "Tray_SetTooltip:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(wailsTray)
 	result := core.Try(func() any {
 		subject.SetTooltip("agent")
@@ -231,6 +288,9 @@ func TestWails_Tray_SetTooltip_Good(t *core.T) {
 }
 
 func TestWails_Tray_SetTooltip_Bad(t *core.T) {
+	// Tray SetTooltip
+	ax7Variant := "Tray_SetTooltip:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(wailsTray)
 	result := core.Try(func() any {
 		subject.SetTooltip("")
@@ -241,6 +301,9 @@ func TestWails_Tray_SetTooltip_Bad(t *core.T) {
 }
 
 func TestWails_Tray_SetTooltip_Ugly(t *core.T) {
+	// Tray SetTooltip
+	ax7Variant := "Tray_SetTooltip:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(wailsTray)
 	result := core.Try(func() any {
 		subject.SetTooltip("../../edge")
@@ -251,6 +314,9 @@ func TestWails_Tray_SetTooltip_Ugly(t *core.T) {
 }
 
 func TestWails_Tray_SetLabel_Good(t *core.T) {
+	// Tray SetLabel
+	ax7Variant := "Tray_SetLabel:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(wailsTray)
 	result := core.Try(func() any {
 		subject.SetLabel("agent")
@@ -261,6 +327,9 @@ func TestWails_Tray_SetLabel_Good(t *core.T) {
 }
 
 func TestWails_Tray_SetLabel_Bad(t *core.T) {
+	// Tray SetLabel
+	ax7Variant := "Tray_SetLabel:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(wailsTray)
 	result := core.Try(func() any {
 		subject.SetLabel("")
@@ -271,6 +340,9 @@ func TestWails_Tray_SetLabel_Bad(t *core.T) {
 }
 
 func TestWails_Tray_SetLabel_Ugly(t *core.T) {
+	// Tray SetLabel
+	ax7Variant := "Tray_SetLabel:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(wailsTray)
 	result := core.Try(func() any {
 		subject.SetLabel("../../edge")
@@ -281,6 +353,9 @@ func TestWails_Tray_SetLabel_Ugly(t *core.T) {
 }
 
 func TestWails_Tray_SetMenu_Good(t *core.T) {
+	// Tray SetMenu
+	ax7Variant := "Tray_SetMenu:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(wailsTray)
 	result := core.Try(func() any {
 		subject.SetMenu(*new(PlatformMenu))
@@ -291,6 +366,9 @@ func TestWails_Tray_SetMenu_Good(t *core.T) {
 }
 
 func TestWails_Tray_SetMenu_Bad(t *core.T) {
+	// Tray SetMenu
+	ax7Variant := "Tray_SetMenu:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(wailsTray)
 	result := core.Try(func() any {
 		subject.SetMenu(*new(PlatformMenu))
@@ -301,6 +379,9 @@ func TestWails_Tray_SetMenu_Bad(t *core.T) {
 }
 
 func TestWails_Tray_SetMenu_Ugly(t *core.T) {
+	// Tray SetMenu
+	ax7Variant := "Tray_SetMenu:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(wailsTray)
 	result := core.Try(func() any {
 		subject.SetMenu(*new(PlatformMenu))
@@ -311,6 +392,9 @@ func TestWails_Tray_SetMenu_Ugly(t *core.T) {
 }
 
 func TestWails_Tray_AttachWindow_Good(t *core.T) {
+	// Tray AttachWindow
+	ax7Variant := "Tray_AttachWindow:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(wailsTray)
 	result := core.Try(func() any {
 		subject.AttachWindow(*new(WindowHandle))
@@ -321,6 +405,9 @@ func TestWails_Tray_AttachWindow_Good(t *core.T) {
 }
 
 func TestWails_Tray_AttachWindow_Bad(t *core.T) {
+	// Tray AttachWindow
+	ax7Variant := "Tray_AttachWindow:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(wailsTray)
 	result := core.Try(func() any {
 		subject.AttachWindow(*new(WindowHandle))
@@ -331,6 +418,9 @@ func TestWails_Tray_AttachWindow_Bad(t *core.T) {
 }
 
 func TestWails_Tray_AttachWindow_Ugly(t *core.T) {
+	// Tray AttachWindow
+	ax7Variant := "Tray_AttachWindow:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(wailsTray)
 	result := core.Try(func() any {
 		subject.AttachWindow(*new(WindowHandle))
@@ -341,6 +431,9 @@ func TestWails_Tray_AttachWindow_Ugly(t *core.T) {
 }
 
 func TestWails_Tray_ShowMessage_Good(t *core.T) {
+	// Tray ShowMessage
+	ax7Variant := "Tray_ShowMessage:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(wailsTray)
 	result := core.Try(func() any {
 		got0 := subject.ShowMessage("agent", "agent")
@@ -351,6 +444,9 @@ func TestWails_Tray_ShowMessage_Good(t *core.T) {
 }
 
 func TestWails_Tray_ShowMessage_Bad(t *core.T) {
+	// Tray ShowMessage
+	ax7Variant := "Tray_ShowMessage:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(wailsTray)
 	result := core.Try(func() any {
 		got0 := subject.ShowMessage("", "")
@@ -361,6 +457,9 @@ func TestWails_Tray_ShowMessage_Bad(t *core.T) {
 }
 
 func TestWails_Tray_ShowMessage_Ugly(t *core.T) {
+	// Tray ShowMessage
+	ax7Variant := "Tray_ShowMessage:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(wailsTray)
 	result := core.Try(func() any {
 		got0 := subject.ShowMessage("../../edge", "../../edge")
@@ -373,6 +472,9 @@ func TestWails_Tray_ShowMessage_Ugly(t *core.T) {
 type TrayMenu = wailsTrayMenu
 
 func TestWails_TrayMenu_Add_Good(t *core.T) {
+	// TrayMenu Add
+	ax7Variant := "TrayMenu_Add:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(wailsTrayMenu)
 	result := core.Try(func() any {
 		got0 := subject.Add("agent")
@@ -383,6 +485,9 @@ func TestWails_TrayMenu_Add_Good(t *core.T) {
 }
 
 func TestWails_TrayMenu_Add_Bad(t *core.T) {
+	// TrayMenu Add
+	ax7Variant := "TrayMenu_Add:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(wailsTrayMenu)
 	result := core.Try(func() any {
 		got0 := subject.Add("")
@@ -393,6 +498,9 @@ func TestWails_TrayMenu_Add_Bad(t *core.T) {
 }
 
 func TestWails_TrayMenu_Add_Ugly(t *core.T) {
+	// TrayMenu Add
+	ax7Variant := "TrayMenu_Add:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(wailsTrayMenu)
 	result := core.Try(func() any {
 		got0 := subject.Add("../../edge")
@@ -403,6 +511,9 @@ func TestWails_TrayMenu_Add_Ugly(t *core.T) {
 }
 
 func TestWails_TrayMenu_AddSeparator_Good(t *core.T) {
+	// TrayMenu AddSeparator
+	ax7Variant := "TrayMenu_AddSeparator:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(wailsTrayMenu)
 	result := core.Try(func() any {
 		subject.AddSeparator()
@@ -413,6 +524,9 @@ func TestWails_TrayMenu_AddSeparator_Good(t *core.T) {
 }
 
 func TestWails_TrayMenu_AddSeparator_Bad(t *core.T) {
+	// TrayMenu AddSeparator
+	ax7Variant := "TrayMenu_AddSeparator:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(wailsTrayMenu)
 	result := core.Try(func() any {
 		subject.AddSeparator()
@@ -423,6 +537,9 @@ func TestWails_TrayMenu_AddSeparator_Bad(t *core.T) {
 }
 
 func TestWails_TrayMenu_AddSeparator_Ugly(t *core.T) {
+	// TrayMenu AddSeparator
+	ax7Variant := "TrayMenu_AddSeparator:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(wailsTrayMenu)
 	result := core.Try(func() any {
 		subject.AddSeparator()
@@ -433,6 +550,9 @@ func TestWails_TrayMenu_AddSeparator_Ugly(t *core.T) {
 }
 
 func TestWails_TrayMenu_AddSubmenu_Good(t *core.T) {
+	// TrayMenu AddSubmenu
+	ax7Variant := "TrayMenu_AddSubmenu:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(wailsTrayMenu)
 	result := core.Try(func() any {
 		got0 := subject.AddSubmenu("agent")
@@ -443,6 +563,9 @@ func TestWails_TrayMenu_AddSubmenu_Good(t *core.T) {
 }
 
 func TestWails_TrayMenu_AddSubmenu_Bad(t *core.T) {
+	// TrayMenu AddSubmenu
+	ax7Variant := "TrayMenu_AddSubmenu:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(wailsTrayMenu)
 	result := core.Try(func() any {
 		got0 := subject.AddSubmenu("")
@@ -453,6 +576,9 @@ func TestWails_TrayMenu_AddSubmenu_Bad(t *core.T) {
 }
 
 func TestWails_TrayMenu_AddSubmenu_Ugly(t *core.T) {
+	// TrayMenu AddSubmenu
+	ax7Variant := "TrayMenu_AddSubmenu:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(wailsTrayMenu)
 	result := core.Try(func() any {
 		got0 := subject.AddSubmenu("../../edge")
@@ -463,6 +589,9 @@ func TestWails_TrayMenu_AddSubmenu_Ugly(t *core.T) {
 }
 
 func TestWails_TrayMenuItem_SetTooltip_Good(t *core.T) {
+	// TrayMenuItem SetTooltip
+	ax7Variant := "TrayMenuItem_SetTooltip:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(wailsTrayMenuItem)
 	result := core.Try(func() any {
 		subject.SetTooltip("agent")
@@ -473,6 +602,9 @@ func TestWails_TrayMenuItem_SetTooltip_Good(t *core.T) {
 }
 
 func TestWails_TrayMenuItem_SetTooltip_Bad(t *core.T) {
+	// TrayMenuItem SetTooltip
+	ax7Variant := "TrayMenuItem_SetTooltip:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(wailsTrayMenuItem)
 	result := core.Try(func() any {
 		subject.SetTooltip("")
@@ -483,6 +615,9 @@ func TestWails_TrayMenuItem_SetTooltip_Bad(t *core.T) {
 }
 
 func TestWails_TrayMenuItem_SetTooltip_Ugly(t *core.T) {
+	// TrayMenuItem SetTooltip
+	ax7Variant := "TrayMenuItem_SetTooltip:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(wailsTrayMenuItem)
 	result := core.Try(func() any {
 		subject.SetTooltip("../../edge")
@@ -493,6 +628,9 @@ func TestWails_TrayMenuItem_SetTooltip_Ugly(t *core.T) {
 }
 
 func TestWails_TrayMenuItem_SetChecked_Good(t *core.T) {
+	// TrayMenuItem SetChecked
+	ax7Variant := "TrayMenuItem_SetChecked:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(wailsTrayMenuItem)
 	result := core.Try(func() any {
 		subject.SetChecked(true)
@@ -503,6 +641,9 @@ func TestWails_TrayMenuItem_SetChecked_Good(t *core.T) {
 }
 
 func TestWails_TrayMenuItem_SetChecked_Bad(t *core.T) {
+	// TrayMenuItem SetChecked
+	ax7Variant := "TrayMenuItem_SetChecked:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(wailsTrayMenuItem)
 	result := core.Try(func() any {
 		subject.SetChecked(false)
@@ -513,6 +654,9 @@ func TestWails_TrayMenuItem_SetChecked_Bad(t *core.T) {
 }
 
 func TestWails_TrayMenuItem_SetChecked_Ugly(t *core.T) {
+	// TrayMenuItem SetChecked
+	ax7Variant := "TrayMenuItem_SetChecked:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(wailsTrayMenuItem)
 	result := core.Try(func() any {
 		subject.SetChecked(false)
@@ -523,6 +667,9 @@ func TestWails_TrayMenuItem_SetChecked_Ugly(t *core.T) {
 }
 
 func TestWails_TrayMenuItem_SetEnabled_Good(t *core.T) {
+	// TrayMenuItem SetEnabled
+	ax7Variant := "TrayMenuItem_SetEnabled:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(wailsTrayMenuItem)
 	result := core.Try(func() any {
 		subject.SetEnabled(true)
@@ -533,6 +680,9 @@ func TestWails_TrayMenuItem_SetEnabled_Good(t *core.T) {
 }
 
 func TestWails_TrayMenuItem_SetEnabled_Bad(t *core.T) {
+	// TrayMenuItem SetEnabled
+	ax7Variant := "TrayMenuItem_SetEnabled:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(wailsTrayMenuItem)
 	result := core.Try(func() any {
 		subject.SetEnabled(false)
@@ -543,6 +693,9 @@ func TestWails_TrayMenuItem_SetEnabled_Bad(t *core.T) {
 }
 
 func TestWails_TrayMenuItem_SetEnabled_Ugly(t *core.T) {
+	// TrayMenuItem SetEnabled
+	ax7Variant := "TrayMenuItem_SetEnabled:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(wailsTrayMenuItem)
 	result := core.Try(func() any {
 		subject.SetEnabled(false)
@@ -553,6 +706,9 @@ func TestWails_TrayMenuItem_SetEnabled_Ugly(t *core.T) {
 }
 
 func TestWails_TrayMenuItem_OnClick_Good(t *core.T) {
+	// TrayMenuItem OnClick
+	ax7Variant := "TrayMenuItem_OnClick:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(wailsTrayMenuItem)
 	result := core.Try(func() any {
 		subject.OnClick(nil)
@@ -563,6 +719,9 @@ func TestWails_TrayMenuItem_OnClick_Good(t *core.T) {
 }
 
 func TestWails_TrayMenuItem_OnClick_Bad(t *core.T) {
+	// TrayMenuItem OnClick
+	ax7Variant := "TrayMenuItem_OnClick:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(wailsTrayMenuItem)
 	result := core.Try(func() any {
 		subject.OnClick(nil)
@@ -573,6 +732,9 @@ func TestWails_TrayMenuItem_OnClick_Bad(t *core.T) {
 }
 
 func TestWails_TrayMenuItem_OnClick_Ugly(t *core.T) {
+	// TrayMenuItem OnClick
+	ax7Variant := "TrayMenuItem_OnClick:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(wailsTrayMenuItem)
 	result := core.Try(func() any {
 		subject.OnClick(nil)

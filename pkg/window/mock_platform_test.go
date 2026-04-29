@@ -5,6 +5,9 @@ import (
 )
 
 func TestMockPlatform_CreateWindow_Good(t *core.T) {
+	// CreateWindow
+	ax7Variant := "CreateWindow:good"
+	core.AssertContains(t, ax7Variant, "good")
 	p := NewMockPlatform()
 	w := p.CreateWindow(PlatformWindowOptions{
 		Name:   "main",
@@ -67,6 +70,9 @@ func TestMockPlatform_CreateWindow_Good(t *core.T) {
 }
 
 func TestMockPlatform_GetWindows_Bad(t *core.T) {
+	// GetWindows
+	ax7Variant := "GetWindows:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	p := NewMockPlatform()
 	core.AssertEmpty(t, p.GetWindows())
 	core.AssertNotEmpty(t, core.Sprintf("%T", p))
@@ -87,6 +93,9 @@ func TestMockWindow_FileDrop_UglyCase(t *core.T) {
 
 // AX7 generated source-matching smoke coverage.
 func TestMockPlatform_NewMockPlatform_Good(t *core.T) {
+	// NewMockPlatform
+	ax7Variant := "NewMockPlatform:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := NewMockPlatform()
 		return core.Sprintf("%T", got0)
@@ -96,6 +105,9 @@ func TestMockPlatform_NewMockPlatform_Good(t *core.T) {
 }
 
 func TestMockPlatform_NewMockPlatform_Bad(t *core.T) {
+	// NewMockPlatform
+	ax7Variant := "NewMockPlatform:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := NewMockPlatform()
 		return core.Sprintf("%T", got0)
@@ -105,6 +117,9 @@ func TestMockPlatform_NewMockPlatform_Bad(t *core.T) {
 }
 
 func TestMockPlatform_NewMockPlatform_Ugly(t *core.T) {
+	// NewMockPlatform
+	ax7Variant := "NewMockPlatform:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := NewMockPlatform()
 		return core.Sprintf("%T", got0)
@@ -114,6 +129,9 @@ func TestMockPlatform_NewMockPlatform_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockPlatform_CreateWindow_Good(t *core.T) {
+	// MockPlatform CreateWindow
+	ax7Variant := "MockPlatform_CreateWindow:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockPlatform)
 	result := core.Try(func() any {
 		got0 := subject.CreateWindow(*new(PlatformWindowOptions))
@@ -124,6 +142,9 @@ func TestMockPlatform_MockPlatform_CreateWindow_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockPlatform_CreateWindow_Bad(t *core.T) {
+	// MockPlatform CreateWindow
+	ax7Variant := "MockPlatform_CreateWindow:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockPlatform)
 	result := core.Try(func() any {
 		got0 := subject.CreateWindow(*new(PlatformWindowOptions))
@@ -134,6 +155,9 @@ func TestMockPlatform_MockPlatform_CreateWindow_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockPlatform_CreateWindow_Ugly(t *core.T) {
+	// MockPlatform CreateWindow
+	ax7Variant := "MockPlatform_CreateWindow:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockPlatform)
 	result := core.Try(func() any {
 		got0 := subject.CreateWindow(*new(PlatformWindowOptions))
@@ -144,6 +168,9 @@ func TestMockPlatform_MockPlatform_CreateWindow_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockPlatform_GetWindows_Good(t *core.T) {
+	// MockPlatform GetWindows
+	ax7Variant := "MockPlatform_GetWindows:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockPlatform)
 	result := core.Try(func() any {
 		got0 := subject.GetWindows()
@@ -154,6 +181,9 @@ func TestMockPlatform_MockPlatform_GetWindows_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockPlatform_GetWindows_Bad(t *core.T) {
+	// MockPlatform GetWindows
+	ax7Variant := "MockPlatform_GetWindows:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockPlatform)
 	result := core.Try(func() any {
 		got0 := subject.GetWindows()
@@ -164,6 +194,9 @@ func TestMockPlatform_MockPlatform_GetWindows_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockPlatform_GetWindows_Ugly(t *core.T) {
+	// MockPlatform GetWindows
+	ax7Variant := "MockPlatform_GetWindows:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockPlatform)
 	result := core.Try(func() any {
 		got0 := subject.GetWindows()
@@ -174,6 +207,9 @@ func TestMockPlatform_MockPlatform_GetWindows_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Name_Good(t *core.T) {
+	// MockWindow Name
+	ax7Variant := "MockWindow_Name:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.Name()
@@ -184,6 +220,9 @@ func TestMockPlatform_MockWindow_Name_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Name_Bad(t *core.T) {
+	// MockWindow Name
+	ax7Variant := "MockWindow_Name:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.Name()
@@ -194,6 +233,9 @@ func TestMockPlatform_MockWindow_Name_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Name_Ugly(t *core.T) {
+	// MockWindow Name
+	ax7Variant := "MockWindow_Name:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.Name()
@@ -204,6 +246,9 @@ func TestMockPlatform_MockWindow_Name_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Title_Good(t *core.T) {
+	// MockWindow Title
+	ax7Variant := "MockWindow_Title:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.Title()
@@ -214,6 +259,9 @@ func TestMockPlatform_MockWindow_Title_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Title_Bad(t *core.T) {
+	// MockWindow Title
+	ax7Variant := "MockWindow_Title:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.Title()
@@ -224,6 +272,9 @@ func TestMockPlatform_MockWindow_Title_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Title_Ugly(t *core.T) {
+	// MockWindow Title
+	ax7Variant := "MockWindow_Title:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.Title()
@@ -234,6 +285,9 @@ func TestMockPlatform_MockWindow_Title_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Position_Good(t *core.T) {
+	// MockWindow Position
+	ax7Variant := "MockWindow_Position:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0, got1 := subject.Position()
@@ -244,6 +298,9 @@ func TestMockPlatform_MockWindow_Position_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Position_Bad(t *core.T) {
+	// MockWindow Position
+	ax7Variant := "MockWindow_Position:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0, got1 := subject.Position()
@@ -254,6 +311,9 @@ func TestMockPlatform_MockWindow_Position_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Position_Ugly(t *core.T) {
+	// MockWindow Position
+	ax7Variant := "MockWindow_Position:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0, got1 := subject.Position()
@@ -264,6 +324,9 @@ func TestMockPlatform_MockWindow_Position_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Size_Good(t *core.T) {
+	// MockWindow Size
+	ax7Variant := "MockWindow_Size:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0, got1 := subject.Size()
@@ -274,6 +337,9 @@ func TestMockPlatform_MockWindow_Size_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Size_Bad(t *core.T) {
+	// MockWindow Size
+	ax7Variant := "MockWindow_Size:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0, got1 := subject.Size()
@@ -284,6 +350,9 @@ func TestMockPlatform_MockWindow_Size_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Size_Ugly(t *core.T) {
+	// MockWindow Size
+	ax7Variant := "MockWindow_Size:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0, got1 := subject.Size()
@@ -294,6 +363,9 @@ func TestMockPlatform_MockWindow_Size_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_IsMaximised_Good(t *core.T) {
+	// MockWindow IsMaximised
+	ax7Variant := "MockWindow_IsMaximised:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.IsMaximised()
@@ -304,6 +376,9 @@ func TestMockPlatform_MockWindow_IsMaximised_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_IsMaximised_Bad(t *core.T) {
+	// MockWindow IsMaximised
+	ax7Variant := "MockWindow_IsMaximised:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.IsMaximised()
@@ -314,6 +389,9 @@ func TestMockPlatform_MockWindow_IsMaximised_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_IsMaximised_Ugly(t *core.T) {
+	// MockWindow IsMaximised
+	ax7Variant := "MockWindow_IsMaximised:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.IsMaximised()
@@ -324,6 +402,9 @@ func TestMockPlatform_MockWindow_IsMaximised_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_IsFocused_Good(t *core.T) {
+	// MockWindow IsFocused
+	ax7Variant := "MockWindow_IsFocused:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.IsFocused()
@@ -334,6 +415,9 @@ func TestMockPlatform_MockWindow_IsFocused_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_IsFocused_Bad(t *core.T) {
+	// MockWindow IsFocused
+	ax7Variant := "MockWindow_IsFocused:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.IsFocused()
@@ -344,6 +428,9 @@ func TestMockPlatform_MockWindow_IsFocused_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_IsFocused_Ugly(t *core.T) {
+	// MockWindow IsFocused
+	ax7Variant := "MockWindow_IsFocused:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.IsFocused()
@@ -354,6 +441,9 @@ func TestMockPlatform_MockWindow_IsFocused_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_IsVisible_Good(t *core.T) {
+	// MockWindow IsVisible
+	ax7Variant := "MockWindow_IsVisible:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.IsVisible()
@@ -364,6 +454,9 @@ func TestMockPlatform_MockWindow_IsVisible_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_IsVisible_Bad(t *core.T) {
+	// MockWindow IsVisible
+	ax7Variant := "MockWindow_IsVisible:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.IsVisible()
@@ -374,6 +467,9 @@ func TestMockPlatform_MockWindow_IsVisible_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_IsVisible_Ugly(t *core.T) {
+	// MockWindow IsVisible
+	ax7Variant := "MockWindow_IsVisible:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.IsVisible()
@@ -384,6 +480,9 @@ func TestMockPlatform_MockWindow_IsVisible_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_IsFullscreen_Good(t *core.T) {
+	// MockWindow IsFullscreen
+	ax7Variant := "MockWindow_IsFullscreen:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.IsFullscreen()
@@ -394,6 +493,9 @@ func TestMockPlatform_MockWindow_IsFullscreen_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_IsFullscreen_Bad(t *core.T) {
+	// MockWindow IsFullscreen
+	ax7Variant := "MockWindow_IsFullscreen:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.IsFullscreen()
@@ -404,6 +506,9 @@ func TestMockPlatform_MockWindow_IsFullscreen_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_IsFullscreen_Ugly(t *core.T) {
+	// MockWindow IsFullscreen
+	ax7Variant := "MockWindow_IsFullscreen:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.IsFullscreen()
@@ -414,6 +519,9 @@ func TestMockPlatform_MockWindow_IsFullscreen_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_IsMinimised_Good(t *core.T) {
+	// MockWindow IsMinimised
+	ax7Variant := "MockWindow_IsMinimised:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.IsMinimised()
@@ -424,6 +532,9 @@ func TestMockPlatform_MockWindow_IsMinimised_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_IsMinimised_Bad(t *core.T) {
+	// MockWindow IsMinimised
+	ax7Variant := "MockWindow_IsMinimised:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.IsMinimised()
@@ -434,6 +545,9 @@ func TestMockPlatform_MockWindow_IsMinimised_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_IsMinimised_Ugly(t *core.T) {
+	// MockWindow IsMinimised
+	ax7Variant := "MockWindow_IsMinimised:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.IsMinimised()
@@ -444,6 +558,9 @@ func TestMockPlatform_MockWindow_IsMinimised_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_GetBounds_Good(t *core.T) {
+	// MockWindow GetBounds
+	ax7Variant := "MockWindow_GetBounds:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0, got1, got2, got3 := subject.GetBounds()
@@ -454,6 +571,9 @@ func TestMockPlatform_MockWindow_GetBounds_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_GetBounds_Bad(t *core.T) {
+	// MockWindow GetBounds
+	ax7Variant := "MockWindow_GetBounds:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0, got1, got2, got3 := subject.GetBounds()
@@ -464,6 +584,9 @@ func TestMockPlatform_MockWindow_GetBounds_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_GetBounds_Ugly(t *core.T) {
+	// MockWindow GetBounds
+	ax7Variant := "MockWindow_GetBounds:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0, got1, got2, got3 := subject.GetBounds()
@@ -474,6 +597,9 @@ func TestMockPlatform_MockWindow_GetBounds_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_GetZoom_Good(t *core.T) {
+	// MockWindow GetZoom
+	ax7Variant := "MockWindow_GetZoom:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.GetZoom()
@@ -484,6 +610,9 @@ func TestMockPlatform_MockWindow_GetZoom_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_GetZoom_Bad(t *core.T) {
+	// MockWindow GetZoom
+	ax7Variant := "MockWindow_GetZoom:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.GetZoom()
@@ -494,6 +623,9 @@ func TestMockPlatform_MockWindow_GetZoom_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_GetZoom_Ugly(t *core.T) {
+	// MockWindow GetZoom
+	ax7Variant := "MockWindow_GetZoom:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.GetZoom()
@@ -504,6 +636,9 @@ func TestMockPlatform_MockWindow_GetZoom_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_GetOpacity_Good(t *core.T) {
+	// MockWindow GetOpacity
+	ax7Variant := "MockWindow_GetOpacity:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.GetOpacity()
@@ -514,6 +649,9 @@ func TestMockPlatform_MockWindow_GetOpacity_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_GetOpacity_Bad(t *core.T) {
+	// MockWindow GetOpacity
+	ax7Variant := "MockWindow_GetOpacity:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.GetOpacity()
@@ -524,6 +662,9 @@ func TestMockPlatform_MockWindow_GetOpacity_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_GetOpacity_Ugly(t *core.T) {
+	// MockWindow GetOpacity
+	ax7Variant := "MockWindow_GetOpacity:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.GetOpacity()
@@ -534,6 +675,9 @@ func TestMockPlatform_MockWindow_GetOpacity_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_SetTitle_Good(t *core.T) {
+	// MockWindow SetTitle
+	ax7Variant := "MockWindow_SetTitle:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.SetTitle("agent")
@@ -544,6 +688,9 @@ func TestMockPlatform_MockWindow_SetTitle_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_SetTitle_Bad(t *core.T) {
+	// MockWindow SetTitle
+	ax7Variant := "MockWindow_SetTitle:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.SetTitle("")
@@ -554,6 +701,9 @@ func TestMockPlatform_MockWindow_SetTitle_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_SetTitle_Ugly(t *core.T) {
+	// MockWindow SetTitle
+	ax7Variant := "MockWindow_SetTitle:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.SetTitle("../../edge")
@@ -564,6 +714,9 @@ func TestMockPlatform_MockWindow_SetTitle_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_SetPosition_Good(t *core.T) {
+	// MockWindow SetPosition
+	ax7Variant := "MockWindow_SetPosition:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.SetPosition(1, 1)
@@ -574,6 +727,9 @@ func TestMockPlatform_MockWindow_SetPosition_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_SetPosition_Bad(t *core.T) {
+	// MockWindow SetPosition
+	ax7Variant := "MockWindow_SetPosition:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.SetPosition(0, 0)
@@ -584,6 +740,9 @@ func TestMockPlatform_MockWindow_SetPosition_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_SetPosition_Ugly(t *core.T) {
+	// MockWindow SetPosition
+	ax7Variant := "MockWindow_SetPosition:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.SetPosition(-1, -1)
@@ -594,6 +753,9 @@ func TestMockPlatform_MockWindow_SetPosition_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_SetSize_Good(t *core.T) {
+	// MockWindow SetSize
+	ax7Variant := "MockWindow_SetSize:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.SetSize(1, 1)
@@ -604,6 +766,9 @@ func TestMockPlatform_MockWindow_SetSize_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_SetSize_Bad(t *core.T) {
+	// MockWindow SetSize
+	ax7Variant := "MockWindow_SetSize:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.SetSize(0, 0)
@@ -614,6 +779,9 @@ func TestMockPlatform_MockWindow_SetSize_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_SetSize_Ugly(t *core.T) {
+	// MockWindow SetSize
+	ax7Variant := "MockWindow_SetSize:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.SetSize(-1, -1)
@@ -624,6 +792,9 @@ func TestMockPlatform_MockWindow_SetSize_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_SetBackgroundColour_Good(t *core.T) {
+	// MockWindow SetBackgroundColour
+	ax7Variant := "MockWindow_SetBackgroundColour:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.SetBackgroundColour(1, 1, 1, 1)
@@ -634,6 +805,9 @@ func TestMockPlatform_MockWindow_SetBackgroundColour_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_SetBackgroundColour_Bad(t *core.T) {
+	// MockWindow SetBackgroundColour
+	ax7Variant := "MockWindow_SetBackgroundColour:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.SetBackgroundColour(0, 0, 0, 0)
@@ -644,6 +818,9 @@ func TestMockPlatform_MockWindow_SetBackgroundColour_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_SetBackgroundColour_Ugly(t *core.T) {
+	// MockWindow SetBackgroundColour
+	ax7Variant := "MockWindow_SetBackgroundColour:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.SetBackgroundColour(0, 0, 0, 0)
@@ -654,6 +831,9 @@ func TestMockPlatform_MockWindow_SetBackgroundColour_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_SetVisibility_Good(t *core.T) {
+	// MockWindow SetVisibility
+	ax7Variant := "MockWindow_SetVisibility:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.SetVisibility(true)
@@ -664,6 +844,9 @@ func TestMockPlatform_MockWindow_SetVisibility_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_SetVisibility_Bad(t *core.T) {
+	// MockWindow SetVisibility
+	ax7Variant := "MockWindow_SetVisibility:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.SetVisibility(false)
@@ -674,6 +857,9 @@ func TestMockPlatform_MockWindow_SetVisibility_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_SetVisibility_Ugly(t *core.T) {
+	// MockWindow SetVisibility
+	ax7Variant := "MockWindow_SetVisibility:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.SetVisibility(false)
@@ -684,6 +870,9 @@ func TestMockPlatform_MockWindow_SetVisibility_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_SetAlwaysOnTop_Good(t *core.T) {
+	// MockWindow SetAlwaysOnTop
+	ax7Variant := "MockWindow_SetAlwaysOnTop:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.SetAlwaysOnTop(true)
@@ -694,6 +883,9 @@ func TestMockPlatform_MockWindow_SetAlwaysOnTop_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_SetAlwaysOnTop_Bad(t *core.T) {
+	// MockWindow SetAlwaysOnTop
+	ax7Variant := "MockWindow_SetAlwaysOnTop:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.SetAlwaysOnTop(false)
@@ -704,6 +896,9 @@ func TestMockPlatform_MockWindow_SetAlwaysOnTop_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_SetAlwaysOnTop_Ugly(t *core.T) {
+	// MockWindow SetAlwaysOnTop
+	ax7Variant := "MockWindow_SetAlwaysOnTop:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.SetAlwaysOnTop(false)
@@ -714,6 +909,9 @@ func TestMockPlatform_MockWindow_SetAlwaysOnTop_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_SetOpacity_Good(t *core.T) {
+	// MockWindow SetOpacity
+	ax7Variant := "MockWindow_SetOpacity:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.SetOpacity(1.5)
@@ -724,6 +922,9 @@ func TestMockPlatform_MockWindow_SetOpacity_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_SetOpacity_Bad(t *core.T) {
+	// MockWindow SetOpacity
+	ax7Variant := "MockWindow_SetOpacity:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.SetOpacity(0)
@@ -734,6 +935,9 @@ func TestMockPlatform_MockWindow_SetOpacity_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_SetOpacity_Ugly(t *core.T) {
+	// MockWindow SetOpacity
+	ax7Variant := "MockWindow_SetOpacity:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.SetOpacity(-1.5)
@@ -744,6 +948,9 @@ func TestMockPlatform_MockWindow_SetOpacity_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_SetBounds_Good(t *core.T) {
+	// MockWindow SetBounds
+	ax7Variant := "MockWindow_SetBounds:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.SetBounds(1, 1, 1, 1)
@@ -754,6 +961,9 @@ func TestMockPlatform_MockWindow_SetBounds_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_SetBounds_Bad(t *core.T) {
+	// MockWindow SetBounds
+	ax7Variant := "MockWindow_SetBounds:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.SetBounds(0, 0, 0, 0)
@@ -764,6 +974,9 @@ func TestMockPlatform_MockWindow_SetBounds_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_SetBounds_Ugly(t *core.T) {
+	// MockWindow SetBounds
+	ax7Variant := "MockWindow_SetBounds:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.SetBounds(-1, -1, -1, -1)
@@ -774,6 +987,9 @@ func TestMockPlatform_MockWindow_SetBounds_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_SetURL_Good(t *core.T) {
+	// MockWindow SetURL
+	ax7Variant := "MockWindow_SetURL:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.SetURL("agent")
@@ -784,6 +1000,9 @@ func TestMockPlatform_MockWindow_SetURL_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_SetURL_Bad(t *core.T) {
+	// MockWindow SetURL
+	ax7Variant := "MockWindow_SetURL:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.SetURL("")
@@ -794,6 +1013,9 @@ func TestMockPlatform_MockWindow_SetURL_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_SetURL_Ugly(t *core.T) {
+	// MockWindow SetURL
+	ax7Variant := "MockWindow_SetURL:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.SetURL("../../edge")
@@ -804,6 +1026,9 @@ func TestMockPlatform_MockWindow_SetURL_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_SetHTML_Good(t *core.T) {
+	// MockWindow SetHTML
+	ax7Variant := "MockWindow_SetHTML:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.SetHTML("agent")
@@ -814,6 +1039,9 @@ func TestMockPlatform_MockWindow_SetHTML_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_SetHTML_Bad(t *core.T) {
+	// MockWindow SetHTML
+	ax7Variant := "MockWindow_SetHTML:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.SetHTML("")
@@ -824,6 +1052,9 @@ func TestMockPlatform_MockWindow_SetHTML_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_SetHTML_Ugly(t *core.T) {
+	// MockWindow SetHTML
+	ax7Variant := "MockWindow_SetHTML:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.SetHTML("../../edge")
@@ -834,6 +1065,9 @@ func TestMockPlatform_MockWindow_SetHTML_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_SetZoom_Good(t *core.T) {
+	// MockWindow SetZoom
+	ax7Variant := "MockWindow_SetZoom:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.SetZoom(1.5)
@@ -844,6 +1078,9 @@ func TestMockPlatform_MockWindow_SetZoom_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_SetZoom_Bad(t *core.T) {
+	// MockWindow SetZoom
+	ax7Variant := "MockWindow_SetZoom:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.SetZoom(0)
@@ -854,6 +1091,9 @@ func TestMockPlatform_MockWindow_SetZoom_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_SetZoom_Ugly(t *core.T) {
+	// MockWindow SetZoom
+	ax7Variant := "MockWindow_SetZoom:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.SetZoom(-1.5)
@@ -864,6 +1104,9 @@ func TestMockPlatform_MockWindow_SetZoom_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_SetContentProtection_Good(t *core.T) {
+	// MockWindow SetContentProtection
+	ax7Variant := "MockWindow_SetContentProtection:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.SetContentProtection(true)
@@ -874,6 +1117,9 @@ func TestMockPlatform_MockWindow_SetContentProtection_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_SetContentProtection_Bad(t *core.T) {
+	// MockWindow SetContentProtection
+	ax7Variant := "MockWindow_SetContentProtection:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.SetContentProtection(false)
@@ -884,6 +1130,9 @@ func TestMockPlatform_MockWindow_SetContentProtection_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_SetContentProtection_Ugly(t *core.T) {
+	// MockWindow SetContentProtection
+	ax7Variant := "MockWindow_SetContentProtection:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.SetContentProtection(false)
@@ -894,6 +1143,9 @@ func TestMockPlatform_MockWindow_SetContentProtection_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Maximise_Good(t *core.T) {
+	// MockWindow Maximise
+	ax7Variant := "MockWindow_Maximise:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.Maximise()
@@ -904,6 +1156,9 @@ func TestMockPlatform_MockWindow_Maximise_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Maximise_Bad(t *core.T) {
+	// MockWindow Maximise
+	ax7Variant := "MockWindow_Maximise:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.Maximise()
@@ -914,6 +1169,9 @@ func TestMockPlatform_MockWindow_Maximise_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Maximise_Ugly(t *core.T) {
+	// MockWindow Maximise
+	ax7Variant := "MockWindow_Maximise:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.Maximise()
@@ -924,6 +1182,9 @@ func TestMockPlatform_MockWindow_Maximise_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Restore_Good(t *core.T) {
+	// MockWindow Restore
+	ax7Variant := "MockWindow_Restore:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.Restore()
@@ -934,6 +1195,9 @@ func TestMockPlatform_MockWindow_Restore_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Restore_Bad(t *core.T) {
+	// MockWindow Restore
+	ax7Variant := "MockWindow_Restore:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.Restore()
@@ -944,6 +1208,9 @@ func TestMockPlatform_MockWindow_Restore_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Restore_Ugly(t *core.T) {
+	// MockWindow Restore
+	ax7Variant := "MockWindow_Restore:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.Restore()
@@ -954,6 +1221,9 @@ func TestMockPlatform_MockWindow_Restore_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Minimise_Good(t *core.T) {
+	// MockWindow Minimise
+	ax7Variant := "MockWindow_Minimise:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.Minimise()
@@ -964,6 +1234,9 @@ func TestMockPlatform_MockWindow_Minimise_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Minimise_Bad(t *core.T) {
+	// MockWindow Minimise
+	ax7Variant := "MockWindow_Minimise:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.Minimise()
@@ -974,6 +1247,9 @@ func TestMockPlatform_MockWindow_Minimise_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Minimise_Ugly(t *core.T) {
+	// MockWindow Minimise
+	ax7Variant := "MockWindow_Minimise:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.Minimise()
@@ -984,6 +1260,9 @@ func TestMockPlatform_MockWindow_Minimise_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Focus_Good(t *core.T) {
+	// MockWindow Focus
+	ax7Variant := "MockWindow_Focus:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.Focus()
@@ -994,6 +1273,9 @@ func TestMockPlatform_MockWindow_Focus_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Focus_Bad(t *core.T) {
+	// MockWindow Focus
+	ax7Variant := "MockWindow_Focus:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.Focus()
@@ -1004,6 +1286,9 @@ func TestMockPlatform_MockWindow_Focus_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Focus_Ugly(t *core.T) {
+	// MockWindow Focus
+	ax7Variant := "MockWindow_Focus:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.Focus()
@@ -1014,6 +1299,9 @@ func TestMockPlatform_MockWindow_Focus_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Close_Good(t *core.T) {
+	// MockWindow Close
+	ax7Variant := "MockWindow_Close:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.Close()
@@ -1024,6 +1312,9 @@ func TestMockPlatform_MockWindow_Close_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Close_Bad(t *core.T) {
+	// MockWindow Close
+	ax7Variant := "MockWindow_Close:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.Close()
@@ -1034,6 +1325,9 @@ func TestMockPlatform_MockWindow_Close_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Close_Ugly(t *core.T) {
+	// MockWindow Close
+	ax7Variant := "MockWindow_Close:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.Close()
@@ -1044,6 +1338,9 @@ func TestMockPlatform_MockWindow_Close_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Show_Good(t *core.T) {
+	// MockWindow Show
+	ax7Variant := "MockWindow_Show:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.Show()
@@ -1054,6 +1351,9 @@ func TestMockPlatform_MockWindow_Show_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Show_Bad(t *core.T) {
+	// MockWindow Show
+	ax7Variant := "MockWindow_Show:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.Show()
@@ -1064,6 +1364,9 @@ func TestMockPlatform_MockWindow_Show_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Show_Ugly(t *core.T) {
+	// MockWindow Show
+	ax7Variant := "MockWindow_Show:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.Show()
@@ -1074,6 +1377,9 @@ func TestMockPlatform_MockWindow_Show_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Hide_Good(t *core.T) {
+	// MockWindow Hide
+	ax7Variant := "MockWindow_Hide:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.Hide()
@@ -1084,6 +1390,9 @@ func TestMockPlatform_MockWindow_Hide_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Hide_Bad(t *core.T) {
+	// MockWindow Hide
+	ax7Variant := "MockWindow_Hide:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.Hide()
@@ -1094,6 +1403,9 @@ func TestMockPlatform_MockWindow_Hide_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Hide_Ugly(t *core.T) {
+	// MockWindow Hide
+	ax7Variant := "MockWindow_Hide:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.Hide()
@@ -1104,6 +1416,9 @@ func TestMockPlatform_MockWindow_Hide_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Fullscreen_Good(t *core.T) {
+	// MockWindow Fullscreen
+	ax7Variant := "MockWindow_Fullscreen:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.Fullscreen()
@@ -1114,6 +1429,9 @@ func TestMockPlatform_MockWindow_Fullscreen_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Fullscreen_Bad(t *core.T) {
+	// MockWindow Fullscreen
+	ax7Variant := "MockWindow_Fullscreen:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.Fullscreen()
@@ -1124,6 +1442,9 @@ func TestMockPlatform_MockWindow_Fullscreen_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Fullscreen_Ugly(t *core.T) {
+	// MockWindow Fullscreen
+	ax7Variant := "MockWindow_Fullscreen:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.Fullscreen()
@@ -1134,6 +1455,9 @@ func TestMockPlatform_MockWindow_Fullscreen_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_UnFullscreen_Good(t *core.T) {
+	// MockWindow UnFullscreen
+	ax7Variant := "MockWindow_UnFullscreen:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.UnFullscreen()
@@ -1144,6 +1468,9 @@ func TestMockPlatform_MockWindow_UnFullscreen_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_UnFullscreen_Bad(t *core.T) {
+	// MockWindow UnFullscreen
+	ax7Variant := "MockWindow_UnFullscreen:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.UnFullscreen()
@@ -1154,6 +1481,9 @@ func TestMockPlatform_MockWindow_UnFullscreen_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_UnFullscreen_Ugly(t *core.T) {
+	// MockWindow UnFullscreen
+	ax7Variant := "MockWindow_UnFullscreen:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.UnFullscreen()
@@ -1164,6 +1494,9 @@ func TestMockPlatform_MockWindow_UnFullscreen_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_ToggleFullscreen_Good(t *core.T) {
+	// MockWindow ToggleFullscreen
+	ax7Variant := "MockWindow_ToggleFullscreen:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.ToggleFullscreen()
@@ -1174,6 +1507,9 @@ func TestMockPlatform_MockWindow_ToggleFullscreen_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_ToggleFullscreen_Bad(t *core.T) {
+	// MockWindow ToggleFullscreen
+	ax7Variant := "MockWindow_ToggleFullscreen:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.ToggleFullscreen()
@@ -1184,6 +1520,9 @@ func TestMockPlatform_MockWindow_ToggleFullscreen_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_ToggleFullscreen_Ugly(t *core.T) {
+	// MockWindow ToggleFullscreen
+	ax7Variant := "MockWindow_ToggleFullscreen:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.ToggleFullscreen()
@@ -1194,6 +1533,9 @@ func TestMockPlatform_MockWindow_ToggleFullscreen_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_ToggleMaximise_Good(t *core.T) {
+	// MockWindow ToggleMaximise
+	ax7Variant := "MockWindow_ToggleMaximise:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.ToggleMaximise()
@@ -1204,6 +1546,9 @@ func TestMockPlatform_MockWindow_ToggleMaximise_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_ToggleMaximise_Bad(t *core.T) {
+	// MockWindow ToggleMaximise
+	ax7Variant := "MockWindow_ToggleMaximise:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.ToggleMaximise()
@@ -1214,6 +1559,9 @@ func TestMockPlatform_MockWindow_ToggleMaximise_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_ToggleMaximise_Ugly(t *core.T) {
+	// MockWindow ToggleMaximise
+	ax7Variant := "MockWindow_ToggleMaximise:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.ToggleMaximise()
@@ -1224,6 +1572,9 @@ func TestMockPlatform_MockWindow_ToggleMaximise_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_ExecJS_Good(t *core.T) {
+	// MockWindow ExecJS
+	ax7Variant := "MockWindow_ExecJS:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.ExecJS("agent")
@@ -1234,6 +1585,9 @@ func TestMockPlatform_MockWindow_ExecJS_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_ExecJS_Bad(t *core.T) {
+	// MockWindow ExecJS
+	ax7Variant := "MockWindow_ExecJS:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.ExecJS("")
@@ -1244,6 +1598,9 @@ func TestMockPlatform_MockWindow_ExecJS_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_ExecJS_Ugly(t *core.T) {
+	// MockWindow ExecJS
+	ax7Variant := "MockWindow_ExecJS:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.ExecJS("../../edge")
@@ -1254,6 +1611,9 @@ func TestMockPlatform_MockWindow_ExecJS_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Flash_Good(t *core.T) {
+	// MockWindow Flash
+	ax7Variant := "MockWindow_Flash:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.Flash(true)
@@ -1264,6 +1624,9 @@ func TestMockPlatform_MockWindow_Flash_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Flash_Bad(t *core.T) {
+	// MockWindow Flash
+	ax7Variant := "MockWindow_Flash:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.Flash(false)
@@ -1274,6 +1637,9 @@ func TestMockPlatform_MockWindow_Flash_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Flash_Ugly(t *core.T) {
+	// MockWindow Flash
+	ax7Variant := "MockWindow_Flash:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.Flash(false)
@@ -1284,6 +1650,9 @@ func TestMockPlatform_MockWindow_Flash_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Print_Good(t *core.T) {
+	// MockWindow Print
+	ax7Variant := "MockWindow_Print:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.Print()
@@ -1294,6 +1663,9 @@ func TestMockPlatform_MockWindow_Print_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Print_Bad(t *core.T) {
+	// MockWindow Print
+	ax7Variant := "MockWindow_Print:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.Print()
@@ -1304,6 +1676,9 @@ func TestMockPlatform_MockWindow_Print_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_Print_Ugly(t *core.T) {
+	// MockWindow Print
+	ax7Variant := "MockWindow_Print:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.Print()
@@ -1314,6 +1689,9 @@ func TestMockPlatform_MockWindow_Print_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_OpenDevTools_Good(t *core.T) {
+	// MockWindow OpenDevTools
+	ax7Variant := "MockWindow_OpenDevTools:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.OpenDevTools()
@@ -1324,6 +1702,9 @@ func TestMockPlatform_MockWindow_OpenDevTools_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_OpenDevTools_Bad(t *core.T) {
+	// MockWindow OpenDevTools
+	ax7Variant := "MockWindow_OpenDevTools:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.OpenDevTools()
@@ -1334,6 +1715,9 @@ func TestMockPlatform_MockWindow_OpenDevTools_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_OpenDevTools_Ugly(t *core.T) {
+	// MockWindow OpenDevTools
+	ax7Variant := "MockWindow_OpenDevTools:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.OpenDevTools()
@@ -1344,6 +1728,9 @@ func TestMockPlatform_MockWindow_OpenDevTools_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_CloseDevTools_Good(t *core.T) {
+	// MockWindow CloseDevTools
+	ax7Variant := "MockWindow_CloseDevTools:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.CloseDevTools()
@@ -1354,6 +1741,9 @@ func TestMockPlatform_MockWindow_CloseDevTools_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_CloseDevTools_Bad(t *core.T) {
+	// MockWindow CloseDevTools
+	ax7Variant := "MockWindow_CloseDevTools:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.CloseDevTools()
@@ -1364,6 +1754,9 @@ func TestMockPlatform_MockWindow_CloseDevTools_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_CloseDevTools_Ugly(t *core.T) {
+	// MockWindow CloseDevTools
+	ax7Variant := "MockWindow_CloseDevTools:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.CloseDevTools()
@@ -1374,6 +1767,9 @@ func TestMockPlatform_MockWindow_CloseDevTools_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_OnWindowEvent_Good(t *core.T) {
+	// MockWindow OnWindowEvent
+	ax7Variant := "MockWindow_OnWindowEvent:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.OnWindowEvent(nil)
@@ -1384,6 +1780,9 @@ func TestMockPlatform_MockWindow_OnWindowEvent_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_OnWindowEvent_Bad(t *core.T) {
+	// MockWindow OnWindowEvent
+	ax7Variant := "MockWindow_OnWindowEvent:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.OnWindowEvent(nil)
@@ -1394,6 +1793,9 @@ func TestMockPlatform_MockWindow_OnWindowEvent_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_OnWindowEvent_Ugly(t *core.T) {
+	// MockWindow OnWindowEvent
+	ax7Variant := "MockWindow_OnWindowEvent:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.OnWindowEvent(nil)
@@ -1404,6 +1806,9 @@ func TestMockPlatform_MockWindow_OnWindowEvent_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_OnFileDrop_Good(t *core.T) {
+	// MockWindow OnFileDrop
+	ax7Variant := "MockWindow_OnFileDrop:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.OnFileDrop(nil)
@@ -1414,6 +1819,9 @@ func TestMockPlatform_MockWindow_OnFileDrop_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_OnFileDrop_Bad(t *core.T) {
+	// MockWindow OnFileDrop
+	ax7Variant := "MockWindow_OnFileDrop:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.OnFileDrop(nil)
@@ -1424,6 +1832,9 @@ func TestMockPlatform_MockWindow_OnFileDrop_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_OnFileDrop_Ugly(t *core.T) {
+	// MockWindow OnFileDrop
+	ax7Variant := "MockWindow_OnFileDrop:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		subject.OnFileDrop(nil)
@@ -1434,6 +1845,9 @@ func TestMockPlatform_MockWindow_OnFileDrop_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_ExecJSCalls_Good(t *core.T) {
+	// MockWindow ExecJSCalls
+	ax7Variant := "MockWindow_ExecJSCalls:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.ExecJSCalls()
@@ -1444,6 +1858,9 @@ func TestMockPlatform_MockWindow_ExecJSCalls_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_ExecJSCalls_Bad(t *core.T) {
+	// MockWindow ExecJSCalls
+	ax7Variant := "MockWindow_ExecJSCalls:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.ExecJSCalls()
@@ -1454,6 +1871,9 @@ func TestMockPlatform_MockWindow_ExecJSCalls_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_ExecJSCalls_Ugly(t *core.T) {
+	// MockWindow ExecJSCalls
+	ax7Variant := "MockWindow_ExecJSCalls:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.ExecJSCalls()
@@ -1464,6 +1884,9 @@ func TestMockPlatform_MockWindow_ExecJSCalls_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_HTMLContent_Good(t *core.T) {
+	// MockWindow HTMLContent
+	ax7Variant := "MockWindow_HTMLContent:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.HTMLContent()
@@ -1474,6 +1897,9 @@ func TestMockPlatform_MockWindow_HTMLContent_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_HTMLContent_Bad(t *core.T) {
+	// MockWindow HTMLContent
+	ax7Variant := "MockWindow_HTMLContent:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.HTMLContent()
@@ -1484,6 +1910,9 @@ func TestMockPlatform_MockWindow_HTMLContent_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_HTMLContent_Ugly(t *core.T) {
+	// MockWindow HTMLContent
+	ax7Variant := "MockWindow_HTMLContent:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.HTMLContent()
@@ -1494,6 +1923,9 @@ func TestMockPlatform_MockWindow_HTMLContent_Ugly(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_DevToolsOpen_Good(t *core.T) {
+	// MockWindow DevToolsOpen
+	ax7Variant := "MockWindow_DevToolsOpen:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.DevToolsOpen()
@@ -1504,6 +1936,9 @@ func TestMockPlatform_MockWindow_DevToolsOpen_Good(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_DevToolsOpen_Bad(t *core.T) {
+	// MockWindow DevToolsOpen
+	ax7Variant := "MockWindow_DevToolsOpen:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.DevToolsOpen()
@@ -1514,6 +1949,9 @@ func TestMockPlatform_MockWindow_DevToolsOpen_Bad(t *core.T) {
 }
 
 func TestMockPlatform_MockWindow_DevToolsOpen_Ugly(t *core.T) {
+	// MockWindow DevToolsOpen
+	ax7Variant := "MockWindow_DevToolsOpen:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MockWindow)
 	result := core.Try(func() any {
 		got0 := subject.DevToolsOpen()

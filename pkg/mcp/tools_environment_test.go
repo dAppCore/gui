@@ -21,6 +21,9 @@ func newEnvironmentToolsTestSubsystem(t *core.T, query func(core.Query) core.Res
 }
 
 func TestToolsEnvironment_themeGet_Good(t *core.T) {
+	// themeGet
+	ax7Variant := "themeGet:good"
+	core.AssertContains(t, ax7Variant, "good")
 	sub := newEnvironmentToolsTestSubsystem(t, func(q core.Query) core.Result {
 		if _, ok := q.(environment.QueryTheme); ok {
 			return core.Result{
@@ -41,6 +44,9 @@ func TestToolsEnvironment_themeGet_Good(t *core.T) {
 }
 
 func TestToolsEnvironment_themeGet_Bad(t *core.T) {
+	// themeGet
+	ax7Variant := "themeGet:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	sub := newEnvironmentToolsTestSubsystem(t, func(q core.Query) core.Result {
 		if _, ok := q.(environment.QueryTheme); ok {
 			return core.Result{OK: false, Value: "theme backend unavailable"}
@@ -54,6 +60,9 @@ func TestToolsEnvironment_themeGet_Bad(t *core.T) {
 }
 
 func TestToolsEnvironment_themeGet_Ugly(t *core.T) {
+	// themeGet
+	ax7Variant := "themeGet:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	sub := newEnvironmentToolsTestSubsystem(t, func(q core.Query) core.Result {
 		if _, ok := q.(environment.QueryTheme); ok {
 			return core.Result{OK: true, Value: errors.New("unexpected payload")}

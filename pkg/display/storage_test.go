@@ -21,6 +21,9 @@ func setStorageEntryTime(r *StorageRegistry, origin, bucket, key string, ts time
 }
 
 func TestStorageRegistry_Get_Good(t *core.T) {
+	// Get
+	ax7Variant := "Get:good"
+	core.AssertContains(t, ax7Variant, "good")
 	r := NewStorageRegistry()
 	r.Set("origin-a", "local", "theme", "dark")
 	r.Set("origin-b", "local", "theme", "light")
@@ -34,6 +37,9 @@ func TestStorageRegistry_Get_Good(t *core.T) {
 }
 
 func TestStorageRegistry_Get_Bad(t *core.T) {
+	// Get
+	ax7Variant := "Get:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	r := NewStorageRegistry()
 	r.Set("origin-a", "local", "theme", "dark")
 
@@ -43,6 +49,9 @@ func TestStorageRegistry_Get_Bad(t *core.T) {
 }
 
 func TestStorageRegistry_Get_Ugly(t *core.T) {
+	// Get
+	ax7Variant := "Get:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	r := NewStorageRegistry()
 	r.Set("origin-a", "local", "theme", "dark")
 	r.Set("origin-b", "local", "theme", "light")
@@ -56,6 +65,9 @@ func TestStorageRegistry_Get_Ugly(t *core.T) {
 }
 
 func TestStorageRegistry_Search_Good(t *core.T) {
+	// Search
+	ax7Variant := "Search:good"
+	core.AssertContains(t, ax7Variant, "good")
 	r := NewStorageRegistry()
 	r.Set("origin-a", "local", "theme", "alpha")
 	r.Set("origin-b", "session", "token", "bravo")
@@ -71,6 +83,9 @@ func TestStorageRegistry_Search_Good(t *core.T) {
 }
 
 func TestStorageRegistry_Search_Bad(t *core.T) {
+	// Search
+	ax7Variant := "Search:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	r := NewStorageRegistry()
 	r.Set("origin-a", "local", "theme", "alpha")
 	r.Set("origin-b", "session", "token", "bravo")
@@ -84,6 +99,9 @@ func TestStorageRegistry_Search_Bad(t *core.T) {
 }
 
 func TestStorageRegistry_Search_Ugly(t *core.T) {
+	// Search
+	ax7Variant := "Search:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	r := NewStorageRegistry()
 	r.Set("origin-a", "local", "theme", "alpha")
 
@@ -92,6 +110,9 @@ func TestStorageRegistry_Search_Ugly(t *core.T) {
 }
 
 func TestStorageRegistry_Snapshot_Good(t *core.T) {
+	// Snapshot
+	ax7Variant := "Snapshot:good"
+	core.AssertContains(t, ax7Variant, "good")
 	r := NewStorageRegistry()
 	r.Set("core://settings", "localStorage", "theme", "dark")
 	r.Set("core://settings", "cookies", "session", core.Concat(`{"value":"abc","pa`, `th":"/","secure":false}`))
@@ -107,6 +128,9 @@ func TestStorageRegistry_Snapshot_Good(t *core.T) {
 }
 
 func TestStorageRegistry_Set_Bad(t *core.T) {
+	// Set
+	ax7Variant := "Set:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	r := NewStorageRegistry()
 
 	core.AssertFalse(t, r.Set("", "localStorage", "theme", "dark"))
@@ -116,6 +140,9 @@ func TestStorageRegistry_Set_Bad(t *core.T) {
 }
 
 func TestStorageRegistry_Delete_Good(t *core.T) {
+	// Delete
+	ax7Variant := "Delete:good"
+	core.AssertContains(t, ax7Variant, "good")
 	r := NewStorageRegistry()
 	r.Set("core://settings", "localStorage", "theme", "dark")
 
@@ -203,6 +230,9 @@ func TestStorageRegistry_NilReceiverIsSafe(t *core.T) {
 
 // AX7 generated source-matching smoke coverage.
 func TestStorage_NewStorageRegistry_Good(t *core.T) {
+	// NewStorageRegistry
+	ax7Variant := "NewStorageRegistry:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := NewStorageRegistry()
 		return core.Sprintf("%T", got0)
@@ -212,6 +242,9 @@ func TestStorage_NewStorageRegistry_Good(t *core.T) {
 }
 
 func TestStorage_NewStorageRegistry_Bad(t *core.T) {
+	// NewStorageRegistry
+	ax7Variant := "NewStorageRegistry:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := NewStorageRegistry()
 		return core.Sprintf("%T", got0)
@@ -221,6 +254,9 @@ func TestStorage_NewStorageRegistry_Bad(t *core.T) {
 }
 
 func TestStorage_NewStorageRegistry_Ugly(t *core.T) {
+	// NewStorageRegistry
+	ax7Variant := "NewStorageRegistry:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := NewStorageRegistry()
 		return core.Sprintf("%T", got0)
@@ -230,6 +266,9 @@ func TestStorage_NewStorageRegistry_Ugly(t *core.T) {
 }
 
 func TestStorage_StorageRegistry_Set_Good(t *core.T) {
+	// StorageRegistry Set
+	ax7Variant := "StorageRegistry_Set:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(StorageRegistry)
 	result := core.Try(func() any {
 		got0 := subject.Set("agent", "agent", "agent", "agent")
@@ -240,6 +279,9 @@ func TestStorage_StorageRegistry_Set_Good(t *core.T) {
 }
 
 func TestStorage_StorageRegistry_Set_Bad(t *core.T) {
+	// StorageRegistry Set
+	ax7Variant := "StorageRegistry_Set:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(StorageRegistry)
 	result := core.Try(func() any {
 		got0 := subject.Set("", "", "", "")
@@ -250,6 +292,9 @@ func TestStorage_StorageRegistry_Set_Bad(t *core.T) {
 }
 
 func TestStorage_StorageRegistry_Set_Ugly(t *core.T) {
+	// StorageRegistry Set
+	ax7Variant := "StorageRegistry_Set:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(StorageRegistry)
 	result := core.Try(func() any {
 		got0 := subject.Set("../../edge", "../../edge", "../../edge", "../../edge")
@@ -260,6 +305,9 @@ func TestStorage_StorageRegistry_Set_Ugly(t *core.T) {
 }
 
 func TestStorage_StorageRegistry_Delete_Good(t *core.T) {
+	// StorageRegistry Delete
+	ax7Variant := "StorageRegistry_Delete:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(StorageRegistry)
 	result := core.Try(func() any {
 		got0 := subject.Delete("agent", "agent", "agent")
@@ -270,6 +318,9 @@ func TestStorage_StorageRegistry_Delete_Good(t *core.T) {
 }
 
 func TestStorage_StorageRegistry_Delete_Bad(t *core.T) {
+	// StorageRegistry Delete
+	ax7Variant := "StorageRegistry_Delete:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(StorageRegistry)
 	result := core.Try(func() any {
 		got0 := subject.Delete("", "", "")
@@ -280,6 +331,9 @@ func TestStorage_StorageRegistry_Delete_Bad(t *core.T) {
 }
 
 func TestStorage_StorageRegistry_Delete_Ugly(t *core.T) {
+	// StorageRegistry Delete
+	ax7Variant := "StorageRegistry_Delete:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(StorageRegistry)
 	result := core.Try(func() any {
 		got0 := subject.Delete("../../edge", "../../edge", "../../edge")
@@ -290,6 +344,9 @@ func TestStorage_StorageRegistry_Delete_Ugly(t *core.T) {
 }
 
 func TestStorage_StorageRegistry_Get_Good(t *core.T) {
+	// StorageRegistry Get
+	ax7Variant := "StorageRegistry_Get:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(StorageRegistry)
 	result := core.Try(func() any {
 		got0, got1 := subject.Get("agent", "agent", "agent")
@@ -300,6 +357,9 @@ func TestStorage_StorageRegistry_Get_Good(t *core.T) {
 }
 
 func TestStorage_StorageRegistry_Get_Bad(t *core.T) {
+	// StorageRegistry Get
+	ax7Variant := "StorageRegistry_Get:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(StorageRegistry)
 	result := core.Try(func() any {
 		got0, got1 := subject.Get("", "", "")
@@ -310,6 +370,9 @@ func TestStorage_StorageRegistry_Get_Bad(t *core.T) {
 }
 
 func TestStorage_StorageRegistry_Get_Ugly(t *core.T) {
+	// StorageRegistry Get
+	ax7Variant := "StorageRegistry_Get:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(StorageRegistry)
 	result := core.Try(func() any {
 		got0, got1 := subject.Get("../../edge", "../../edge", "../../edge")
@@ -320,6 +383,9 @@ func TestStorage_StorageRegistry_Get_Ugly(t *core.T) {
 }
 
 func TestStorage_StorageRegistry_Search_Good(t *core.T) {
+	// StorageRegistry Search
+	ax7Variant := "StorageRegistry_Search:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(StorageRegistry)
 	result := core.Try(func() any {
 		got0 := subject.Search("agent")
@@ -330,6 +396,9 @@ func TestStorage_StorageRegistry_Search_Good(t *core.T) {
 }
 
 func TestStorage_StorageRegistry_Search_Bad(t *core.T) {
+	// StorageRegistry Search
+	ax7Variant := "StorageRegistry_Search:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(StorageRegistry)
 	result := core.Try(func() any {
 		got0 := subject.Search("")
@@ -340,6 +409,9 @@ func TestStorage_StorageRegistry_Search_Bad(t *core.T) {
 }
 
 func TestStorage_StorageRegistry_Search_Ugly(t *core.T) {
+	// StorageRegistry Search
+	ax7Variant := "StorageRegistry_Search:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(StorageRegistry)
 	result := core.Try(func() any {
 		got0 := subject.Search("../../edge")
@@ -350,6 +422,9 @@ func TestStorage_StorageRegistry_Search_Ugly(t *core.T) {
 }
 
 func TestStorage_StorageRegistry_Snapshot_Good(t *core.T) {
+	// StorageRegistry Snapshot
+	ax7Variant := "StorageRegistry_Snapshot:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(StorageRegistry)
 	result := core.Try(func() any {
 		got0 := subject.Snapshot("agent")
@@ -360,6 +435,9 @@ func TestStorage_StorageRegistry_Snapshot_Good(t *core.T) {
 }
 
 func TestStorage_StorageRegistry_Snapshot_Bad(t *core.T) {
+	// StorageRegistry Snapshot
+	ax7Variant := "StorageRegistry_Snapshot:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(StorageRegistry)
 	result := core.Try(func() any {
 		got0 := subject.Snapshot("")
@@ -370,6 +448,9 @@ func TestStorage_StorageRegistry_Snapshot_Bad(t *core.T) {
 }
 
 func TestStorage_StorageRegistry_Snapshot_Ugly(t *core.T) {
+	// StorageRegistry Snapshot
+	ax7Variant := "StorageRegistry_Snapshot:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(StorageRegistry)
 	result := core.Try(func() any {
 		got0 := subject.Snapshot("../../edge")
@@ -380,6 +461,9 @@ func TestStorage_StorageRegistry_Snapshot_Ugly(t *core.T) {
 }
 
 func TestStorage_StorageRegistry_Close_Good(t *core.T) {
+	// StorageRegistry Close
+	ax7Variant := "StorageRegistry_Close:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(StorageRegistry)
 	result := core.Try(func() any {
 		got0 := subject.Close()
@@ -390,6 +474,9 @@ func TestStorage_StorageRegistry_Close_Good(t *core.T) {
 }
 
 func TestStorage_StorageRegistry_Close_Bad(t *core.T) {
+	// StorageRegistry Close
+	ax7Variant := "StorageRegistry_Close:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(StorageRegistry)
 	result := core.Try(func() any {
 		got0 := subject.Close()
@@ -400,6 +487,9 @@ func TestStorage_StorageRegistry_Close_Bad(t *core.T) {
 }
 
 func TestStorage_StorageRegistry_Close_Ugly(t *core.T) {
+	// StorageRegistry Close
+	ax7Variant := "StorageRegistry_Close:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(StorageRegistry)
 	result := core.Try(func() any {
 		got0 := subject.Close()

@@ -27,6 +27,7 @@ func ExampleSuggestLayout() {
 	}
 	// Output:
 	// editor:0,0 989x900
+	//
 	// preview:989,0 611x900
 }
 

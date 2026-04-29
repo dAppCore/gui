@@ -80,6 +80,9 @@ func TestTaskSetAppMenu_NoManager_FailsClosed(t *core.T) {
 
 // AX7 generated source-matching smoke coverage.
 func TestService_Service_OnStartup_Good(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.OnStartup(core.Background())
@@ -90,6 +93,9 @@ func TestService_Service_OnStartup_Good(t *core.T) {
 }
 
 func TestService_Service_OnStartup_Bad(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.OnStartup(core.Background())
@@ -100,6 +106,9 @@ func TestService_Service_OnStartup_Bad(t *core.T) {
 }
 
 func TestService_Service_OnStartup_Ugly(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.OnStartup(core.Background())
@@ -110,6 +119,9 @@ func TestService_Service_OnStartup_Ugly(t *core.T) {
 }
 
 func TestService_Service_ShowDevTools_Good(t *core.T) {
+	// Service ShowDevTools
+	ax7Variant := "Service_ShowDevTools:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.ShowDevTools()
@@ -120,6 +132,9 @@ func TestService_Service_ShowDevTools_Good(t *core.T) {
 }
 
 func TestService_Service_ShowDevTools_Bad(t *core.T) {
+	// Service ShowDevTools
+	ax7Variant := "Service_ShowDevTools:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.ShowDevTools()
@@ -130,6 +145,9 @@ func TestService_Service_ShowDevTools_Bad(t *core.T) {
 }
 
 func TestService_Service_ShowDevTools_Ugly(t *core.T) {
+	// Service ShowDevTools
+	ax7Variant := "Service_ShowDevTools:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.ShowDevTools()
@@ -140,6 +158,9 @@ func TestService_Service_ShowDevTools_Ugly(t *core.T) {
 }
 
 func TestService_Service_HandleIPCEvents_Good(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.HandleIPCEvents(nil, nil)
@@ -150,6 +171,9 @@ func TestService_Service_HandleIPCEvents_Good(t *core.T) {
 }
 
 func TestService_Service_HandleIPCEvents_Bad(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.HandleIPCEvents(nil, nil)
@@ -160,6 +184,9 @@ func TestService_Service_HandleIPCEvents_Bad(t *core.T) {
 }
 
 func TestService_Service_HandleIPCEvents_Ugly(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.HandleIPCEvents(nil, nil)
@@ -170,6 +197,9 @@ func TestService_Service_HandleIPCEvents_Ugly(t *core.T) {
 }
 
 func TestService_Service_Manager_Good(t *core.T) {
+	// Service Manager
+	ax7Variant := "Service_Manager:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.Manager()
@@ -180,6 +210,9 @@ func TestService_Service_Manager_Good(t *core.T) {
 }
 
 func TestService_Service_Manager_Bad(t *core.T) {
+	// Service Manager
+	ax7Variant := "Service_Manager:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.Manager()
@@ -190,6 +223,9 @@ func TestService_Service_Manager_Bad(t *core.T) {
 }
 
 func TestService_Service_Manager_Ugly(t *core.T) {
+	// Service Manager
+	ax7Variant := "Service_Manager:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.Manager()

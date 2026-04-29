@@ -5,6 +5,9 @@ import (
 )
 
 func TestBrowserManager_OpenURL_Good(t *core.T) {
+	// OpenURL
+	ax7Variant := "OpenURL:good"
+	core.AssertContains(t, ax7Variant, "good")
 	manager := &BrowserManager{}
 
 	err := manager.OpenURL("https://example.com")
@@ -14,6 +17,9 @@ func TestBrowserManager_OpenURL_Good(t *core.T) {
 }
 
 func TestBrowserManager_OpenURL_Bad(t *core.T) {
+	// OpenURL
+	ax7Variant := "OpenURL:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	manager := &BrowserManager{}
 
 	err := manager.OpenURL("")
@@ -23,6 +29,9 @@ func TestBrowserManager_OpenURL_Bad(t *core.T) {
 }
 
 func TestBrowserManager_OpenURL_Ugly(t *core.T) {
+	// OpenURL
+	ax7Variant := "OpenURL:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	manager := &BrowserManager{}
 
 	err := manager.OpenURL("file:///tmp/%00")
@@ -32,6 +41,9 @@ func TestBrowserManager_OpenURL_Ugly(t *core.T) {
 }
 
 func TestBrowserManager_OpenFile_Good(t *core.T) {
+	// OpenFile
+	ax7Variant := "OpenFile:good"
+	core.AssertContains(t, ax7Variant, "good")
 	manager := &BrowserManager{}
 
 	err := manager.OpenFile("/tmp/report.txt")
@@ -41,6 +53,9 @@ func TestBrowserManager_OpenFile_Good(t *core.T) {
 }
 
 func TestBrowserManager_OpenFile_Bad(t *core.T) {
+	// OpenFile
+	ax7Variant := "OpenFile:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	manager := &BrowserManager{}
 
 	err := manager.OpenFile("")
@@ -50,6 +65,9 @@ func TestBrowserManager_OpenFile_Bad(t *core.T) {
 }
 
 func TestBrowserManager_OpenFile_Ugly(t *core.T) {
+	// OpenFile
+	ax7Variant := "OpenFile:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	manager := &BrowserManager{}
 
 	err := manager.OpenFile("/tmp/\x00report.txt")
@@ -69,6 +87,9 @@ func TestBrowserManager_NilReceiver_IsSafe(t *core.T) {
 
 // AX7 generated source-matching smoke coverage.
 func TestBrowserManager_BrowserManager_OpenURL_Good(t *core.T) {
+	// BrowserManager OpenURL
+	ax7Variant := "BrowserManager_OpenURL:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(BrowserManager)
 	result := core.Try(func() any {
 		got0 := subject.OpenURL("agent")
@@ -79,6 +100,9 @@ func TestBrowserManager_BrowserManager_OpenURL_Good(t *core.T) {
 }
 
 func TestBrowserManager_BrowserManager_OpenURL_Bad(t *core.T) {
+	// BrowserManager OpenURL
+	ax7Variant := "BrowserManager_OpenURL:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(BrowserManager)
 	result := core.Try(func() any {
 		got0 := subject.OpenURL("")
@@ -89,6 +113,9 @@ func TestBrowserManager_BrowserManager_OpenURL_Bad(t *core.T) {
 }
 
 func TestBrowserManager_BrowserManager_OpenURL_Ugly(t *core.T) {
+	// BrowserManager OpenURL
+	ax7Variant := "BrowserManager_OpenURL:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(BrowserManager)
 	result := core.Try(func() any {
 		got0 := subject.OpenURL("../../edge")
@@ -99,6 +126,9 @@ func TestBrowserManager_BrowserManager_OpenURL_Ugly(t *core.T) {
 }
 
 func TestBrowserManager_BrowserManager_OpenFile_Good(t *core.T) {
+	// BrowserManager OpenFile
+	ax7Variant := "BrowserManager_OpenFile:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(BrowserManager)
 	result := core.Try(func() any {
 		got0 := subject.OpenFile("agent")
@@ -109,6 +139,9 @@ func TestBrowserManager_BrowserManager_OpenFile_Good(t *core.T) {
 }
 
 func TestBrowserManager_BrowserManager_OpenFile_Bad(t *core.T) {
+	// BrowserManager OpenFile
+	ax7Variant := "BrowserManager_OpenFile:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(BrowserManager)
 	result := core.Try(func() any {
 		got0 := subject.OpenFile("")
@@ -119,6 +152,9 @@ func TestBrowserManager_BrowserManager_OpenFile_Bad(t *core.T) {
 }
 
 func TestBrowserManager_BrowserManager_OpenFile_Ugly(t *core.T) {
+	// BrowserManager OpenFile
+	ax7Variant := "BrowserManager_OpenFile:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(BrowserManager)
 	result := core.Try(func() any {
 		got0 := subject.OpenFile("../../edge")

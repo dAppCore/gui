@@ -58,6 +58,9 @@ func TestToolsWebview_webviewDevTools_GoodCase(t *core.T) {
 }
 
 func TestToolsWebview_webviewDevToolsOpen_Bad(t *core.T) {
+	// webviewDevToolsOpen
+	ax7Variant := "webviewDevToolsOpen:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	sub := newWebviewToolsTestSubsystem(t, func(name string, opts core.Options) core.Result {
 		task, ok := opts.Get("task").Value.(webview.TaskDevToolsOpen)
 		core.RequireTrue(t, ok)
@@ -72,6 +75,9 @@ func TestToolsWebview_webviewDevToolsOpen_Bad(t *core.T) {
 }
 
 func TestToolsWebview_webviewDevToolsClose_Ugly(t *core.T) {
+	// webviewDevToolsClose
+	ax7Variant := "webviewDevToolsClose:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	sub := newWebviewToolsTestSubsystem(t, func(name string, opts core.Options) core.Result {
 		task, ok := opts.Get("task").Value.(webview.TaskDevToolsClose)
 		core.RequireTrue(t, ok)

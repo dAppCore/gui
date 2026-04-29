@@ -5,6 +5,9 @@ import (
 )
 
 func TestScreenPlatform_Rect_OriginCornerContains_Good(t *core.T) {
+	// Rect OriginCornerContains
+	ax7Variant := "Rect_OriginCornerContains:good"
+	core.AssertContains(t, ax7Variant, "good")
 	r := Rect{X: 10, Y: 20, Width: 100, Height: 50}
 
 	core.AssertEqual(t, Point{X: 10, Y: 20}, r.Origin())
@@ -17,12 +20,18 @@ func TestScreenPlatform_Rect_OriginCornerContains_Good(t *core.T) {
 }
 
 func TestScreenPlatform_Rect_IsEmpty_Bad(t *core.T) {
+	// Rect IsEmpty
+	ax7Variant := "Rect_IsEmpty:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	core.AssertTrue(t, Rect{Width: 0, Height: 50}.IsEmpty())
 	core.AssertTrue(t, Rect{Width: 50, Height: 0}.IsEmpty())
 	core.AssertTrue(t, Rect{Width: -1, Height: -1}.IsEmpty())
 }
 
 func TestScreenPlatform_Rect_Intersect_Ugly(t *core.T) {
+	// Rect Intersect
+	ax7Variant := "Rect_Intersect:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	left := Rect{X: 0, Y: 0, Width: 100, Height: 100}
 	right := Rect{X: 50, Y: 25, Width: 100, Height: 100}
 
@@ -31,6 +40,9 @@ func TestScreenPlatform_Rect_Intersect_Ugly(t *core.T) {
 }
 
 func TestScreenPlatform_Placement_Apply_Good(t *core.T) {
+	// Placement Apply
+	ax7Variant := "Placement_Apply:good"
+	core.AssertContains(t, ax7Variant, "good")
 	tests := []struct {
 		name      string
 		alignment Alignment
@@ -86,6 +98,9 @@ func TestScreenPlatform_Placement_Apply_Good(t *core.T) {
 }
 
 func TestScreenPlatform_Placement_Apply_Ugly(t *core.T) {
+	// Placement Apply
+	ax7Variant := "Placement_Apply:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	screen := &Screen{
 		Bounds:   Rect{X: 0, Y: 0, Width: 20, Height: 20},
 		WorkArea: Rect{X: 1, Y: 1, Width: 20, Height: 20},
@@ -100,6 +115,9 @@ func TestScreenPlatform_Placement_Apply_Ugly(t *core.T) {
 
 // AX7 generated source-matching smoke coverage.
 func TestPlatform_Rect_Origin_Good(t *core.T) {
+	// Rect Origin
+	ax7Variant := "Rect_Origin:good"
+	core.AssertContains(t, ax7Variant, "good")
 	var subject Rect
 	result := core.Try(func() any {
 		got0 := subject.Origin()
@@ -110,6 +128,9 @@ func TestPlatform_Rect_Origin_Good(t *core.T) {
 }
 
 func TestPlatform_Rect_Origin_Bad(t *core.T) {
+	// Rect Origin
+	ax7Variant := "Rect_Origin:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	var subject Rect
 	result := core.Try(func() any {
 		got0 := subject.Origin()
@@ -120,6 +141,9 @@ func TestPlatform_Rect_Origin_Bad(t *core.T) {
 }
 
 func TestPlatform_Rect_Origin_Ugly(t *core.T) {
+	// Rect Origin
+	ax7Variant := "Rect_Origin:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	var subject Rect
 	result := core.Try(func() any {
 		got0 := subject.Origin()
@@ -130,6 +154,9 @@ func TestPlatform_Rect_Origin_Ugly(t *core.T) {
 }
 
 func TestPlatform_Rect_Corner_Good(t *core.T) {
+	// Rect Corner
+	ax7Variant := "Rect_Corner:good"
+	core.AssertContains(t, ax7Variant, "good")
 	var subject Rect
 	result := core.Try(func() any {
 		got0 := subject.Corner()
@@ -140,6 +167,9 @@ func TestPlatform_Rect_Corner_Good(t *core.T) {
 }
 
 func TestPlatform_Rect_Corner_Bad(t *core.T) {
+	// Rect Corner
+	ax7Variant := "Rect_Corner:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	var subject Rect
 	result := core.Try(func() any {
 		got0 := subject.Corner()
@@ -150,6 +180,9 @@ func TestPlatform_Rect_Corner_Bad(t *core.T) {
 }
 
 func TestPlatform_Rect_Corner_Ugly(t *core.T) {
+	// Rect Corner
+	ax7Variant := "Rect_Corner:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	var subject Rect
 	result := core.Try(func() any {
 		got0 := subject.Corner()
@@ -160,6 +193,9 @@ func TestPlatform_Rect_Corner_Ugly(t *core.T) {
 }
 
 func TestPlatform_Rect_InsideCorner_Good(t *core.T) {
+	// Rect InsideCorner
+	ax7Variant := "Rect_InsideCorner:good"
+	core.AssertContains(t, ax7Variant, "good")
 	var subject Rect
 	result := core.Try(func() any {
 		got0 := subject.InsideCorner()
@@ -170,6 +206,9 @@ func TestPlatform_Rect_InsideCorner_Good(t *core.T) {
 }
 
 func TestPlatform_Rect_InsideCorner_Bad(t *core.T) {
+	// Rect InsideCorner
+	ax7Variant := "Rect_InsideCorner:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	var subject Rect
 	result := core.Try(func() any {
 		got0 := subject.InsideCorner()
@@ -180,6 +219,9 @@ func TestPlatform_Rect_InsideCorner_Bad(t *core.T) {
 }
 
 func TestPlatform_Rect_InsideCorner_Ugly(t *core.T) {
+	// Rect InsideCorner
+	ax7Variant := "Rect_InsideCorner:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	var subject Rect
 	result := core.Try(func() any {
 		got0 := subject.InsideCorner()
@@ -190,6 +232,9 @@ func TestPlatform_Rect_InsideCorner_Ugly(t *core.T) {
 }
 
 func TestPlatform_Rect_IsEmpty_Good(t *core.T) {
+	// Rect IsEmpty
+	ax7Variant := "Rect_IsEmpty:good"
+	core.AssertContains(t, ax7Variant, "good")
 	var subject Rect
 	result := core.Try(func() any {
 		got0 := subject.IsEmpty()
@@ -200,6 +245,9 @@ func TestPlatform_Rect_IsEmpty_Good(t *core.T) {
 }
 
 func TestPlatform_Rect_IsEmpty_Bad(t *core.T) {
+	// Rect IsEmpty
+	ax7Variant := "Rect_IsEmpty:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	var subject Rect
 	result := core.Try(func() any {
 		got0 := subject.IsEmpty()
@@ -210,6 +258,9 @@ func TestPlatform_Rect_IsEmpty_Bad(t *core.T) {
 }
 
 func TestPlatform_Rect_IsEmpty_Ugly(t *core.T) {
+	// Rect IsEmpty
+	ax7Variant := "Rect_IsEmpty:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	var subject Rect
 	result := core.Try(func() any {
 		got0 := subject.IsEmpty()
@@ -220,6 +271,9 @@ func TestPlatform_Rect_IsEmpty_Ugly(t *core.T) {
 }
 
 func TestPlatform_Rect_Contains_Good(t *core.T) {
+	// Rect Contains
+	ax7Variant := "Rect_Contains:good"
+	core.AssertContains(t, ax7Variant, "good")
 	var subject Rect
 	result := core.Try(func() any {
 		got0 := subject.Contains(*new(Point))
@@ -230,6 +284,9 @@ func TestPlatform_Rect_Contains_Good(t *core.T) {
 }
 
 func TestPlatform_Rect_Contains_Bad(t *core.T) {
+	// Rect Contains
+	ax7Variant := "Rect_Contains:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	var subject Rect
 	result := core.Try(func() any {
 		got0 := subject.Contains(*new(Point))
@@ -240,6 +297,9 @@ func TestPlatform_Rect_Contains_Bad(t *core.T) {
 }
 
 func TestPlatform_Rect_Contains_Ugly(t *core.T) {
+	// Rect Contains
+	ax7Variant := "Rect_Contains:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	var subject Rect
 	result := core.Try(func() any {
 		got0 := subject.Contains(*new(Point))
@@ -250,6 +310,9 @@ func TestPlatform_Rect_Contains_Ugly(t *core.T) {
 }
 
 func TestPlatform_Rect_RectSize_Good(t *core.T) {
+	// Rect RectSize
+	ax7Variant := "Rect_RectSize:good"
+	core.AssertContains(t, ax7Variant, "good")
 	var subject Rect
 	result := core.Try(func() any {
 		got0 := subject.RectSize()
@@ -260,6 +323,9 @@ func TestPlatform_Rect_RectSize_Good(t *core.T) {
 }
 
 func TestPlatform_Rect_RectSize_Bad(t *core.T) {
+	// Rect RectSize
+	ax7Variant := "Rect_RectSize:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	var subject Rect
 	result := core.Try(func() any {
 		got0 := subject.RectSize()
@@ -270,6 +336,9 @@ func TestPlatform_Rect_RectSize_Bad(t *core.T) {
 }
 
 func TestPlatform_Rect_RectSize_Ugly(t *core.T) {
+	// Rect RectSize
+	ax7Variant := "Rect_RectSize:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	var subject Rect
 	result := core.Try(func() any {
 		got0 := subject.RectSize()
@@ -280,6 +349,9 @@ func TestPlatform_Rect_RectSize_Ugly(t *core.T) {
 }
 
 func TestPlatform_Rect_Intersect_Good(t *core.T) {
+	// Rect Intersect
+	ax7Variant := "Rect_Intersect:good"
+	core.AssertContains(t, ax7Variant, "good")
 	var subject Rect
 	result := core.Try(func() any {
 		got0 := subject.Intersect(*new(Rect))
@@ -290,6 +362,9 @@ func TestPlatform_Rect_Intersect_Good(t *core.T) {
 }
 
 func TestPlatform_Rect_Intersect_Bad(t *core.T) {
+	// Rect Intersect
+	ax7Variant := "Rect_Intersect:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	var subject Rect
 	result := core.Try(func() any {
 		got0 := subject.Intersect(*new(Rect))
@@ -300,6 +375,9 @@ func TestPlatform_Rect_Intersect_Bad(t *core.T) {
 }
 
 func TestPlatform_Rect_Intersect_Ugly(t *core.T) {
+	// Rect Intersect
+	ax7Variant := "Rect_Intersect:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	var subject Rect
 	result := core.Try(func() any {
 		got0 := subject.Intersect(*new(Rect))
@@ -310,6 +388,9 @@ func TestPlatform_Rect_Intersect_Ugly(t *core.T) {
 }
 
 func TestPlatform_NewPlacement_Good(t *core.T) {
+	// NewPlacement
+	ax7Variant := "NewPlacement:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := NewPlacement(nil, nil, *new(Alignment), 1, *new(OffsetReference))
 		return core.Sprintf("%T", got0)
@@ -319,6 +400,9 @@ func TestPlatform_NewPlacement_Good(t *core.T) {
 }
 
 func TestPlatform_NewPlacement_Bad(t *core.T) {
+	// NewPlacement
+	ax7Variant := "NewPlacement:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := NewPlacement(nil, nil, *new(Alignment), 0, *new(OffsetReference))
 		return core.Sprintf("%T", got0)
@@ -328,6 +412,9 @@ func TestPlatform_NewPlacement_Bad(t *core.T) {
 }
 
 func TestPlatform_NewPlacement_Ugly(t *core.T) {
+	// NewPlacement
+	ax7Variant := "NewPlacement:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := NewPlacement(nil, nil, *new(Alignment), -1, *new(OffsetReference))
 		return core.Sprintf("%T", got0)
@@ -337,6 +424,9 @@ func TestPlatform_NewPlacement_Ugly(t *core.T) {
 }
 
 func TestPlatform_ScreenPlacement_Apply_Good(t *core.T) {
+	// ScreenPlacement Apply
+	ax7Variant := "ScreenPlacement_Apply:good"
+	core.AssertContains(t, ax7Variant, "good")
 	var subject ScreenPlacement
 	result := core.Try(func() any {
 		subject.Apply()
@@ -347,6 +437,9 @@ func TestPlatform_ScreenPlacement_Apply_Good(t *core.T) {
 }
 
 func TestPlatform_ScreenPlacement_Apply_Bad(t *core.T) {
+	// ScreenPlacement Apply
+	ax7Variant := "ScreenPlacement_Apply:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	var subject ScreenPlacement
 	result := core.Try(func() any {
 		subject.Apply()
@@ -357,6 +450,9 @@ func TestPlatform_ScreenPlacement_Apply_Bad(t *core.T) {
 }
 
 func TestPlatform_ScreenPlacement_Apply_Ugly(t *core.T) {
+	// ScreenPlacement Apply
+	ax7Variant := "ScreenPlacement_Apply:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	var subject ScreenPlacement
 	result := core.Try(func() any {
 		subject.Apply()

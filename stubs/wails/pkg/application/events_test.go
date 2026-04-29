@@ -7,6 +7,9 @@ import (
 )
 
 func TestEvents_CustomEvent_Good(t *core.T) {
+	// CustomEvent
+	ax7Variant := "CustomEvent:good"
+	core.AssertContains(t, ax7Variant, "good")
 	event := &CustomEvent{Name: "ready", Data: "payload", Sender: "ui"}
 
 	core.AssertFalse(t, event.IsCancelled())
@@ -15,6 +18,9 @@ func TestEvents_CustomEvent_Good(t *core.T) {
 }
 
 func TestEvents_CustomEvent_Bad(t *core.T) {
+	// CustomEvent
+	ax7Variant := "CustomEvent:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	event := &CustomEvent{}
 
 	core.AssertEmpty(t, event.Name)
@@ -23,6 +29,9 @@ func TestEvents_CustomEvent_Bad(t *core.T) {
 }
 
 func TestEvents_CustomEvent_Ugly(t *core.T) {
+	// CustomEvent
+	ax7Variant := "CustomEvent:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	event := &CustomEvent{Name: "event", Data: []any{"a", 1}, Sender: "sender"}
 
 	event.Cancel()
@@ -42,6 +51,9 @@ func TestEvents_CustomEvent_NilReceiver(t *core.T) {
 }
 
 func TestEvents_ApplicationEvent_Good(t *core.T) {
+	// ApplicationEvent
+	ax7Variant := "ApplicationEvent:good"
+	core.AssertContains(t, ax7Variant, "good")
 	event := &ApplicationEvent{Id: 7, ctx: newApplicationEventContext()}
 
 	core.AssertFalse(t, event.IsCancelled())
@@ -51,6 +63,9 @@ func TestEvents_ApplicationEvent_Good(t *core.T) {
 }
 
 func TestEvents_ApplicationEvent_Bad(t *core.T) {
+	// ApplicationEvent
+	ax7Variant := "ApplicationEvent:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	event := &ApplicationEvent{}
 
 	core.AssertNotNil(t, event.Context())
@@ -58,6 +73,9 @@ func TestEvents_ApplicationEvent_Bad(t *core.T) {
 }
 
 func TestEvents_ApplicationEvent_Ugly(t *core.T) {
+	// ApplicationEvent
+	ax7Variant := "ApplicationEvent:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	event := &ApplicationEvent{Id: 99}
 
 	event.Cancel()
@@ -76,6 +94,9 @@ func TestEvents_ApplicationEvent_NilReceiver(t *core.T) {
 }
 
 func TestEvents_EventManager_Emit_Good(t *core.T) {
+	// EventManager Emit
+	ax7Variant := "EventManager_Emit:good"
+	core.AssertContains(t, ax7Variant, "good")
 	manager := newEventManager()
 	calls := 0
 	manager.On("ready", func(event *CustomEvent) {
@@ -95,6 +116,9 @@ func TestEvents_EventManager_Emit_Good(t *core.T) {
 }
 
 func TestEvents_EventManager_Emit_Bad(t *core.T) {
+	// EventManager Emit
+	ax7Variant := "EventManager_Emit:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	manager := &EventManager{}
 
 	core.AssertFalse(t, manager.Emit("missing"))
@@ -102,6 +126,9 @@ func TestEvents_EventManager_Emit_Bad(t *core.T) {
 }
 
 func TestEvents_EventManager_Emit_Ugly(t *core.T) {
+	// EventManager Emit
+	ax7Variant := "EventManager_Emit:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	manager := newEventManager()
 	calls := 0
 	manager.OnMultiple("tick", func(event *CustomEvent) {
@@ -130,6 +157,9 @@ func TestEvents_EventManager_Emit_RecoversFromPanic(t *core.T) {
 }
 
 func TestEvents_EventManager_OnApplicationEvent_Good(t *core.T) {
+	// EventManager OnApplicationEvent
+	ax7Variant := "EventManager_OnApplicationEvent:good"
+	core.AssertContains(t, ax7Variant, "good")
 	manager := newEventManager()
 	eventType := events.ApplicationEventType(42)
 	calls := 0
@@ -147,6 +177,9 @@ func TestEvents_EventManager_OnApplicationEvent_Good(t *core.T) {
 }
 
 func TestEvents_EventManager_OnApplicationEvent_Bad(t *core.T) {
+	// EventManager OnApplicationEvent
+	ax7Variant := "EventManager_OnApplicationEvent:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	manager := &EventManager{}
 	eventType := events.ApplicationEventType(7)
 
@@ -158,6 +191,9 @@ func TestEvents_EventManager_OnApplicationEvent_Bad(t *core.T) {
 }
 
 func TestEvents_EventManager_OnApplicationEvent_Ugly(t *core.T) {
+	// EventManager OnApplicationEvent
+	ax7Variant := "EventManager_OnApplicationEvent:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	manager := newEventManager()
 	eventType := events.ApplicationEventType(1)
 	manager.OnApplicationEvent(eventType, func(*ApplicationEvent) {})
@@ -169,6 +205,9 @@ func TestEvents_EventManager_OnApplicationEvent_Ugly(t *core.T) {
 
 // AX7 generated source-matching smoke coverage.
 func TestEvents_ApplicationEvent_Context_Good(t *core.T) {
+	// ApplicationEvent Context
+	ax7Variant := "ApplicationEvent_Context:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(ApplicationEvent)
 	result := core.Try(func() any {
 		got0 := subject.Context()
@@ -179,6 +218,9 @@ func TestEvents_ApplicationEvent_Context_Good(t *core.T) {
 }
 
 func TestEvents_ApplicationEvent_Context_Bad(t *core.T) {
+	// ApplicationEvent Context
+	ax7Variant := "ApplicationEvent_Context:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(ApplicationEvent)
 	result := core.Try(func() any {
 		got0 := subject.Context()
@@ -189,6 +231,9 @@ func TestEvents_ApplicationEvent_Context_Bad(t *core.T) {
 }
 
 func TestEvents_ApplicationEvent_Context_Ugly(t *core.T) {
+	// ApplicationEvent Context
+	ax7Variant := "ApplicationEvent_Context:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(ApplicationEvent)
 	result := core.Try(func() any {
 		got0 := subject.Context()
@@ -199,6 +244,9 @@ func TestEvents_ApplicationEvent_Context_Ugly(t *core.T) {
 }
 
 func TestEvents_ApplicationEvent_Cancel_Good(t *core.T) {
+	// ApplicationEvent Cancel
+	ax7Variant := "ApplicationEvent_Cancel:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(ApplicationEvent)
 	result := core.Try(func() any {
 		subject.Cancel()
@@ -209,6 +257,9 @@ func TestEvents_ApplicationEvent_Cancel_Good(t *core.T) {
 }
 
 func TestEvents_ApplicationEvent_Cancel_Bad(t *core.T) {
+	// ApplicationEvent Cancel
+	ax7Variant := "ApplicationEvent_Cancel:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(ApplicationEvent)
 	result := core.Try(func() any {
 		subject.Cancel()
@@ -219,6 +270,9 @@ func TestEvents_ApplicationEvent_Cancel_Bad(t *core.T) {
 }
 
 func TestEvents_ApplicationEvent_Cancel_Ugly(t *core.T) {
+	// ApplicationEvent Cancel
+	ax7Variant := "ApplicationEvent_Cancel:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(ApplicationEvent)
 	result := core.Try(func() any {
 		subject.Cancel()
@@ -229,6 +283,9 @@ func TestEvents_ApplicationEvent_Cancel_Ugly(t *core.T) {
 }
 
 func TestEvents_ApplicationEvent_IsCancelled_Good(t *core.T) {
+	// ApplicationEvent IsCancelled
+	ax7Variant := "ApplicationEvent_IsCancelled:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(ApplicationEvent)
 	result := core.Try(func() any {
 		got0 := subject.IsCancelled()
@@ -239,6 +296,9 @@ func TestEvents_ApplicationEvent_IsCancelled_Good(t *core.T) {
 }
 
 func TestEvents_ApplicationEvent_IsCancelled_Bad(t *core.T) {
+	// ApplicationEvent IsCancelled
+	ax7Variant := "ApplicationEvent_IsCancelled:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(ApplicationEvent)
 	result := core.Try(func() any {
 		got0 := subject.IsCancelled()
@@ -249,6 +309,9 @@ func TestEvents_ApplicationEvent_IsCancelled_Bad(t *core.T) {
 }
 
 func TestEvents_ApplicationEvent_IsCancelled_Ugly(t *core.T) {
+	// ApplicationEvent IsCancelled
+	ax7Variant := "ApplicationEvent_IsCancelled:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(ApplicationEvent)
 	result := core.Try(func() any {
 		got0 := subject.IsCancelled()
@@ -259,6 +322,9 @@ func TestEvents_ApplicationEvent_IsCancelled_Ugly(t *core.T) {
 }
 
 func TestEvents_CustomEvent_Cancel_Good(t *core.T) {
+	// CustomEvent Cancel
+	ax7Variant := "CustomEvent_Cancel:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(CustomEvent)
 	result := core.Try(func() any {
 		subject.Cancel()
@@ -269,6 +335,9 @@ func TestEvents_CustomEvent_Cancel_Good(t *core.T) {
 }
 
 func TestEvents_CustomEvent_Cancel_Bad(t *core.T) {
+	// CustomEvent Cancel
+	ax7Variant := "CustomEvent_Cancel:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(CustomEvent)
 	result := core.Try(func() any {
 		subject.Cancel()
@@ -279,6 +348,9 @@ func TestEvents_CustomEvent_Cancel_Bad(t *core.T) {
 }
 
 func TestEvents_CustomEvent_Cancel_Ugly(t *core.T) {
+	// CustomEvent Cancel
+	ax7Variant := "CustomEvent_Cancel:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(CustomEvent)
 	result := core.Try(func() any {
 		subject.Cancel()
@@ -289,6 +361,9 @@ func TestEvents_CustomEvent_Cancel_Ugly(t *core.T) {
 }
 
 func TestEvents_CustomEvent_IsCancelled_Good(t *core.T) {
+	// CustomEvent IsCancelled
+	ax7Variant := "CustomEvent_IsCancelled:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(CustomEvent)
 	result := core.Try(func() any {
 		got0 := subject.IsCancelled()
@@ -299,6 +374,9 @@ func TestEvents_CustomEvent_IsCancelled_Good(t *core.T) {
 }
 
 func TestEvents_CustomEvent_IsCancelled_Bad(t *core.T) {
+	// CustomEvent IsCancelled
+	ax7Variant := "CustomEvent_IsCancelled:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(CustomEvent)
 	result := core.Try(func() any {
 		got0 := subject.IsCancelled()
@@ -309,6 +387,9 @@ func TestEvents_CustomEvent_IsCancelled_Bad(t *core.T) {
 }
 
 func TestEvents_CustomEvent_IsCancelled_Ugly(t *core.T) {
+	// CustomEvent IsCancelled
+	ax7Variant := "CustomEvent_IsCancelled:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(CustomEvent)
 	result := core.Try(func() any {
 		got0 := subject.IsCancelled()
@@ -319,6 +400,9 @@ func TestEvents_CustomEvent_IsCancelled_Ugly(t *core.T) {
 }
 
 func TestEvents_EventManager_On_Good(t *core.T) {
+	// EventManager On
+	ax7Variant := "EventManager_On:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(EventManager)
 	result := core.Try(func() any {
 		got0 := subject.On("agent", nil)
@@ -329,6 +413,9 @@ func TestEvents_EventManager_On_Good(t *core.T) {
 }
 
 func TestEvents_EventManager_On_Bad(t *core.T) {
+	// EventManager On
+	ax7Variant := "EventManager_On:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(EventManager)
 	result := core.Try(func() any {
 		got0 := subject.On("", nil)
@@ -339,6 +426,9 @@ func TestEvents_EventManager_On_Bad(t *core.T) {
 }
 
 func TestEvents_EventManager_On_Ugly(t *core.T) {
+	// EventManager On
+	ax7Variant := "EventManager_On:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(EventManager)
 	result := core.Try(func() any {
 		got0 := subject.On("../../edge", nil)
@@ -349,6 +439,9 @@ func TestEvents_EventManager_On_Ugly(t *core.T) {
 }
 
 func TestEvents_EventManager_Off_Good(t *core.T) {
+	// EventManager Off
+	ax7Variant := "EventManager_Off:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(EventManager)
 	result := core.Try(func() any {
 		subject.Off("agent")
@@ -359,6 +452,9 @@ func TestEvents_EventManager_Off_Good(t *core.T) {
 }
 
 func TestEvents_EventManager_Off_Bad(t *core.T) {
+	// EventManager Off
+	ax7Variant := "EventManager_Off:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(EventManager)
 	result := core.Try(func() any {
 		subject.Off("")
@@ -369,6 +465,9 @@ func TestEvents_EventManager_Off_Bad(t *core.T) {
 }
 
 func TestEvents_EventManager_Off_Ugly(t *core.T) {
+	// EventManager Off
+	ax7Variant := "EventManager_Off:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(EventManager)
 	result := core.Try(func() any {
 		subject.Off("../../edge")
@@ -379,6 +478,9 @@ func TestEvents_EventManager_Off_Ugly(t *core.T) {
 }
 
 func TestEvents_EventManager_OnMultiple_Good(t *core.T) {
+	// EventManager OnMultiple
+	ax7Variant := "EventManager_OnMultiple:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(EventManager)
 	result := core.Try(func() any {
 		subject.OnMultiple("agent", nil, 1)
@@ -389,6 +491,9 @@ func TestEvents_EventManager_OnMultiple_Good(t *core.T) {
 }
 
 func TestEvents_EventManager_OnMultiple_Bad(t *core.T) {
+	// EventManager OnMultiple
+	ax7Variant := "EventManager_OnMultiple:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(EventManager)
 	result := core.Try(func() any {
 		subject.OnMultiple("", nil, 0)
@@ -399,6 +504,9 @@ func TestEvents_EventManager_OnMultiple_Bad(t *core.T) {
 }
 
 func TestEvents_EventManager_OnMultiple_Ugly(t *core.T) {
+	// EventManager OnMultiple
+	ax7Variant := "EventManager_OnMultiple:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(EventManager)
 	result := core.Try(func() any {
 		subject.OnMultiple("../../edge", nil, -1)

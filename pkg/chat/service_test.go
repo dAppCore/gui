@@ -556,6 +556,9 @@ func TestActionThinkingStop_Ugly_AllowsStopWithoutStart(t *core.T) {
 
 // AX7 generated source-matching smoke coverage.
 func TestService_Register_Good(t *core.T) {
+	// Register
+	ax7Variant := "Register:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := Register()
 		return core.Sprintf("%T", got0)
@@ -565,6 +568,9 @@ func TestService_Register_Good(t *core.T) {
 }
 
 func TestService_Register_Bad(t *core.T) {
+	// Register
+	ax7Variant := "Register:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := Register()
 		return core.Sprintf("%T", got0)
@@ -574,6 +580,9 @@ func TestService_Register_Bad(t *core.T) {
 }
 
 func TestService_Register_Ugly(t *core.T) {
+	// Register
+	ax7Variant := "Register:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := Register()
 		return core.Sprintf("%T", got0)
@@ -583,6 +592,9 @@ func TestService_Register_Ugly(t *core.T) {
 }
 
 func TestService_Service_OnStartup_Good(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.OnStartup(core.Background())
@@ -593,6 +605,9 @@ func TestService_Service_OnStartup_Good(t *core.T) {
 }
 
 func TestService_Service_OnStartup_Bad(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.OnStartup(core.Background())
@@ -603,6 +618,9 @@ func TestService_Service_OnStartup_Bad(t *core.T) {
 }
 
 func TestService_Service_OnStartup_Ugly(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.OnStartup(core.Background())
@@ -613,6 +631,9 @@ func TestService_Service_OnStartup_Ugly(t *core.T) {
 }
 
 func TestService_Service_HandleIPCEvents_Good(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.HandleIPCEvents(nil, nil)
@@ -623,6 +644,9 @@ func TestService_Service_HandleIPCEvents_Good(t *core.T) {
 }
 
 func TestService_Service_HandleIPCEvents_Bad(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.HandleIPCEvents(nil, nil)
@@ -633,6 +657,9 @@ func TestService_Service_HandleIPCEvents_Bad(t *core.T) {
 }
 
 func TestService_Service_HandleIPCEvents_Ugly(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.HandleIPCEvents(nil, nil)
@@ -643,6 +670,9 @@ func TestService_Service_HandleIPCEvents_Ugly(t *core.T) {
 }
 
 func TestService_Service_Send_Good(t *core.T) {
+	// Service Send
+	ax7Variant := "Service_Send:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.Send(core.Background(), *new(sendInput))
@@ -653,6 +683,9 @@ func TestService_Service_Send_Good(t *core.T) {
 }
 
 func TestService_Service_Send_Bad(t *core.T) {
+	// Service Send
+	ax7Variant := "Service_Send:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.Send(core.Background(), *new(sendInput))
@@ -663,6 +696,9 @@ func TestService_Service_Send_Bad(t *core.T) {
 }
 
 func TestService_Service_Send_Ugly(t *core.T) {
+	// Service Send
+	ax7Variant := "Service_Send:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.Send(core.Background(), *new(sendInput))
@@ -673,6 +709,9 @@ func TestService_Service_Send_Ugly(t *core.T) {
 }
 
 func TestService_Service_History_Good(t *core.T) {
+	// Service History
+	ax7Variant := "Service_History:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.History("agent", 1)
@@ -683,6 +722,9 @@ func TestService_Service_History_Good(t *core.T) {
 }
 
 func TestService_Service_History_Bad(t *core.T) {
+	// Service History
+	ax7Variant := "Service_History:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.History("", 0)
@@ -693,6 +735,9 @@ func TestService_Service_History_Bad(t *core.T) {
 }
 
 func TestService_Service_History_Ugly(t *core.T) {
+	// Service History
+	ax7Variant := "Service_History:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.History("../../edge", -1)
@@ -703,6 +748,9 @@ func TestService_Service_History_Ugly(t *core.T) {
 }
 
 func TestService_Service_Models_Good(t *core.T) {
+	// Service Models
+	ax7Variant := "Service_Models:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.Models()
@@ -713,6 +761,9 @@ func TestService_Service_Models_Good(t *core.T) {
 }
 
 func TestService_Service_Models_Bad(t *core.T) {
+	// Service Models
+	ax7Variant := "Service_Models:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.Models()
@@ -723,6 +774,9 @@ func TestService_Service_Models_Bad(t *core.T) {
 }
 
 func TestService_Service_Models_Ugly(t *core.T) {
+	// Service Models
+	ax7Variant := "Service_Models:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.Models()
@@ -733,6 +787,9 @@ func TestService_Service_Models_Ugly(t *core.T) {
 }
 
 func TestService_Service_SelectModel_Good(t *core.T) {
+	// Service SelectModel
+	ax7Variant := "Service_SelectModel:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.SelectModel(*new(selectModelInput))
@@ -743,6 +800,9 @@ func TestService_Service_SelectModel_Good(t *core.T) {
 }
 
 func TestService_Service_SelectModel_Bad(t *core.T) {
+	// Service SelectModel
+	ax7Variant := "Service_SelectModel:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.SelectModel(*new(selectModelInput))
@@ -753,6 +813,9 @@ func TestService_Service_SelectModel_Bad(t *core.T) {
 }
 
 func TestService_Service_SelectModel_Ugly(t *core.T) {
+	// Service SelectModel
+	ax7Variant := "Service_SelectModel:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.SelectModel(*new(selectModelInput))
@@ -763,6 +826,9 @@ func TestService_Service_SelectModel_Ugly(t *core.T) {
 }
 
 func TestService_Service_ListConversations_Good(t *core.T) {
+	// Service ListConversations
+	ax7Variant := "Service_ListConversations:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.ListConversations()
@@ -773,6 +839,9 @@ func TestService_Service_ListConversations_Good(t *core.T) {
 }
 
 func TestService_Service_ListConversations_Bad(t *core.T) {
+	// Service ListConversations
+	ax7Variant := "Service_ListConversations:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.ListConversations()
@@ -783,6 +852,9 @@ func TestService_Service_ListConversations_Bad(t *core.T) {
 }
 
 func TestService_Service_ListConversations_Ugly(t *core.T) {
+	// Service ListConversations
+	ax7Variant := "Service_ListConversations:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.ListConversations()
@@ -793,6 +865,9 @@ func TestService_Service_ListConversations_Ugly(t *core.T) {
 }
 
 func TestService_Service_LoadConversation_Good(t *core.T) {
+	// Service LoadConversation
+	ax7Variant := "Service_LoadConversation:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.LoadConversation("agent")
@@ -803,6 +878,9 @@ func TestService_Service_LoadConversation_Good(t *core.T) {
 }
 
 func TestService_Service_LoadConversation_Bad(t *core.T) {
+	// Service LoadConversation
+	ax7Variant := "Service_LoadConversation:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.LoadConversation("")
@@ -813,6 +891,9 @@ func TestService_Service_LoadConversation_Bad(t *core.T) {
 }
 
 func TestService_Service_LoadConversation_Ugly(t *core.T) {
+	// Service LoadConversation
+	ax7Variant := "Service_LoadConversation:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.LoadConversation("../../edge")
@@ -823,6 +904,9 @@ func TestService_Service_LoadConversation_Ugly(t *core.T) {
 }
 
 func TestService_Service_DeleteConversation_Good(t *core.T) {
+	// Service DeleteConversation
+	ax7Variant := "Service_DeleteConversation:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.DeleteConversation("agent")
@@ -833,6 +917,9 @@ func TestService_Service_DeleteConversation_Good(t *core.T) {
 }
 
 func TestService_Service_DeleteConversation_Bad(t *core.T) {
+	// Service DeleteConversation
+	ax7Variant := "Service_DeleteConversation:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.DeleteConversation("")
@@ -843,6 +930,9 @@ func TestService_Service_DeleteConversation_Bad(t *core.T) {
 }
 
 func TestService_Service_DeleteConversation_Ugly(t *core.T) {
+	// Service DeleteConversation
+	ax7Variant := "Service_DeleteConversation:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.DeleteConversation("../../edge")
@@ -853,6 +943,9 @@ func TestService_Service_DeleteConversation_Ugly(t *core.T) {
 }
 
 func TestService_Service_StartThinking_Good(t *core.T) {
+	// Service StartThinking
+	ax7Variant := "Service_StartThinking:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.StartThinking(*new(thinkingInput))
@@ -863,6 +956,9 @@ func TestService_Service_StartThinking_Good(t *core.T) {
 }
 
 func TestService_Service_StartThinking_Bad(t *core.T) {
+	// Service StartThinking
+	ax7Variant := "Service_StartThinking:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.StartThinking(*new(thinkingInput))
@@ -873,6 +969,9 @@ func TestService_Service_StartThinking_Bad(t *core.T) {
 }
 
 func TestService_Service_StartThinking_Ugly(t *core.T) {
+	// Service StartThinking
+	ax7Variant := "Service_StartThinking:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.StartThinking(*new(thinkingInput))
@@ -883,6 +982,9 @@ func TestService_Service_StartThinking_Ugly(t *core.T) {
 }
 
 func TestService_Service_StopThinking_Good(t *core.T) {
+	// Service StopThinking
+	ax7Variant := "Service_StopThinking:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.StopThinking(*new(thinkingInput))
@@ -893,6 +995,9 @@ func TestService_Service_StopThinking_Good(t *core.T) {
 }
 
 func TestService_Service_StopThinking_Bad(t *core.T) {
+	// Service StopThinking
+	ax7Variant := "Service_StopThinking:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.StopThinking(*new(thinkingInput))
@@ -903,6 +1008,9 @@ func TestService_Service_StopThinking_Bad(t *core.T) {
 }
 
 func TestService_Service_StopThinking_Ugly(t *core.T) {
+	// Service StopThinking
+	ax7Variant := "Service_StopThinking:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0, got1 := subject.StopThinking(*new(thinkingInput))

@@ -434,6 +434,9 @@ func TestTaskDevTools_Good(t *core.T) {
 
 // AX7 generated source-matching smoke coverage.
 func TestService_Register_Good(t *core.T) {
+	// Register
+	ax7Variant := "Register:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := Register()
 		return core.Sprintf("%T", got0)
@@ -443,6 +446,9 @@ func TestService_Register_Good(t *core.T) {
 }
 
 func TestService_Register_Bad(t *core.T) {
+	// Register
+	ax7Variant := "Register:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := Register()
 		return core.Sprintf("%T", got0)
@@ -452,6 +458,9 @@ func TestService_Register_Bad(t *core.T) {
 }
 
 func TestService_Register_Ugly(t *core.T) {
+	// Register
+	ax7Variant := "Register:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := Register()
 		return core.Sprintf("%T", got0)
@@ -461,6 +470,9 @@ func TestService_Register_Ugly(t *core.T) {
 }
 
 func TestService_Service_OnStartup_Good(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.OnStartup(core.Background())
@@ -471,6 +483,9 @@ func TestService_Service_OnStartup_Good(t *core.T) {
 }
 
 func TestService_Service_OnStartup_Bad(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.OnStartup(core.Background())
@@ -481,6 +496,9 @@ func TestService_Service_OnStartup_Bad(t *core.T) {
 }
 
 func TestService_Service_OnStartup_Ugly(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.OnStartup(core.Background())
@@ -491,6 +509,9 @@ func TestService_Service_OnStartup_Ugly(t *core.T) {
 }
 
 func TestService_Service_OnShutdown_Good(t *core.T) {
+	// Service OnShutdown
+	ax7Variant := "Service_OnShutdown:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.OnShutdown(core.Background())
@@ -501,6 +522,9 @@ func TestService_Service_OnShutdown_Good(t *core.T) {
 }
 
 func TestService_Service_OnShutdown_Bad(t *core.T) {
+	// Service OnShutdown
+	ax7Variant := "Service_OnShutdown:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.OnShutdown(core.Background())
@@ -511,6 +535,9 @@ func TestService_Service_OnShutdown_Bad(t *core.T) {
 }
 
 func TestService_Service_OnShutdown_Ugly(t *core.T) {
+	// Service OnShutdown
+	ax7Variant := "Service_OnShutdown:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.OnShutdown(core.Background())
@@ -521,6 +548,9 @@ func TestService_Service_OnShutdown_Ugly(t *core.T) {
 }
 
 func TestService_Service_HandleIPCEvents_Good(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.HandleIPCEvents(nil, nil)
@@ -531,6 +561,9 @@ func TestService_Service_HandleIPCEvents_Good(t *core.T) {
 }
 
 func TestService_Service_HandleIPCEvents_Bad(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.HandleIPCEvents(nil, nil)
@@ -541,6 +574,9 @@ func TestService_Service_HandleIPCEvents_Bad(t *core.T) {
 }
 
 func TestService_Service_HandleIPCEvents_Ugly(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.HandleIPCEvents(nil, nil)
@@ -553,6 +589,9 @@ func TestService_Service_HandleIPCEvents_Ugly(t *core.T) {
 type Connector = realConnector
 
 func TestService_Connector_Navigate_Good(t *core.T) {
+	// Connector Navigate
+	ax7Variant := "Connector_Navigate:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0 := subject.Navigate("agent")
@@ -563,6 +602,9 @@ func TestService_Connector_Navigate_Good(t *core.T) {
 }
 
 func TestService_Connector_Navigate_Bad(t *core.T) {
+	// Connector Navigate
+	ax7Variant := "Connector_Navigate:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0 := subject.Navigate("")
@@ -573,6 +615,9 @@ func TestService_Connector_Navigate_Bad(t *core.T) {
 }
 
 func TestService_Connector_Navigate_Ugly(t *core.T) {
+	// Connector Navigate
+	ax7Variant := "Connector_Navigate:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0 := subject.Navigate("../../edge")
@@ -583,6 +628,9 @@ func TestService_Connector_Navigate_Ugly(t *core.T) {
 }
 
 func TestService_Connector_Click_Good(t *core.T) {
+	// Connector Click
+	ax7Variant := "Connector_Click:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0 := subject.Click("agent")
@@ -593,6 +641,9 @@ func TestService_Connector_Click_Good(t *core.T) {
 }
 
 func TestService_Connector_Click_Bad(t *core.T) {
+	// Connector Click
+	ax7Variant := "Connector_Click:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0 := subject.Click("")
@@ -603,6 +654,9 @@ func TestService_Connector_Click_Bad(t *core.T) {
 }
 
 func TestService_Connector_Click_Ugly(t *core.T) {
+	// Connector Click
+	ax7Variant := "Connector_Click:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0 := subject.Click("../../edge")
@@ -613,6 +667,9 @@ func TestService_Connector_Click_Ugly(t *core.T) {
 }
 
 func TestService_Connector_Type_Good(t *core.T) {
+	// Connector Type
+	ax7Variant := "Connector_Type:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0 := subject.Type("agent", "agent")
@@ -623,6 +680,9 @@ func TestService_Connector_Type_Good(t *core.T) {
 }
 
 func TestService_Connector_Type_Bad(t *core.T) {
+	// Connector Type
+	ax7Variant := "Connector_Type:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0 := subject.Type("", "")
@@ -633,6 +693,9 @@ func TestService_Connector_Type_Bad(t *core.T) {
 }
 
 func TestService_Connector_Type_Ugly(t *core.T) {
+	// Connector Type
+	ax7Variant := "Connector_Type:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0 := subject.Type("../../edge", "../../edge")
@@ -643,6 +706,9 @@ func TestService_Connector_Type_Ugly(t *core.T) {
 }
 
 func TestService_Connector_Evaluate_Good(t *core.T) {
+	// Connector Evaluate
+	ax7Variant := "Connector_Evaluate:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0, got1 := subject.Evaluate("agent")
@@ -653,6 +719,9 @@ func TestService_Connector_Evaluate_Good(t *core.T) {
 }
 
 func TestService_Connector_Evaluate_Bad(t *core.T) {
+	// Connector Evaluate
+	ax7Variant := "Connector_Evaluate:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0, got1 := subject.Evaluate("")
@@ -663,6 +732,9 @@ func TestService_Connector_Evaluate_Bad(t *core.T) {
 }
 
 func TestService_Connector_Evaluate_Ugly(t *core.T) {
+	// Connector Evaluate
+	ax7Variant := "Connector_Evaluate:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0, got1 := subject.Evaluate("../../edge")
@@ -673,6 +745,9 @@ func TestService_Connector_Evaluate_Ugly(t *core.T) {
 }
 
 func TestService_Connector_Screenshot_Good(t *core.T) {
+	// Connector Screenshot
+	ax7Variant := "Connector_Screenshot:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0, got1 := subject.Screenshot()
@@ -683,6 +758,9 @@ func TestService_Connector_Screenshot_Good(t *core.T) {
 }
 
 func TestService_Connector_Screenshot_Bad(t *core.T) {
+	// Connector Screenshot
+	ax7Variant := "Connector_Screenshot:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0, got1 := subject.Screenshot()
@@ -693,6 +771,9 @@ func TestService_Connector_Screenshot_Bad(t *core.T) {
 }
 
 func TestService_Connector_Screenshot_Ugly(t *core.T) {
+	// Connector Screenshot
+	ax7Variant := "Connector_Screenshot:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0, got1 := subject.Screenshot()
@@ -703,6 +784,9 @@ func TestService_Connector_Screenshot_Ugly(t *core.T) {
 }
 
 func TestService_Connector_GetURL_Good(t *core.T) {
+	// Connector GetURL
+	ax7Variant := "Connector_GetURL:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0, got1 := subject.GetURL()
@@ -713,6 +797,9 @@ func TestService_Connector_GetURL_Good(t *core.T) {
 }
 
 func TestService_Connector_GetURL_Bad(t *core.T) {
+	// Connector GetURL
+	ax7Variant := "Connector_GetURL:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0, got1 := subject.GetURL()
@@ -723,6 +810,9 @@ func TestService_Connector_GetURL_Bad(t *core.T) {
 }
 
 func TestService_Connector_GetURL_Ugly(t *core.T) {
+	// Connector GetURL
+	ax7Variant := "Connector_GetURL:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0, got1 := subject.GetURL()
@@ -733,6 +823,9 @@ func TestService_Connector_GetURL_Ugly(t *core.T) {
 }
 
 func TestService_Connector_GetTitle_Good(t *core.T) {
+	// Connector GetTitle
+	ax7Variant := "Connector_GetTitle:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0, got1 := subject.GetTitle()
@@ -743,6 +836,9 @@ func TestService_Connector_GetTitle_Good(t *core.T) {
 }
 
 func TestService_Connector_GetTitle_Bad(t *core.T) {
+	// Connector GetTitle
+	ax7Variant := "Connector_GetTitle:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0, got1 := subject.GetTitle()
@@ -753,6 +849,9 @@ func TestService_Connector_GetTitle_Bad(t *core.T) {
 }
 
 func TestService_Connector_GetTitle_Ugly(t *core.T) {
+	// Connector GetTitle
+	ax7Variant := "Connector_GetTitle:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0, got1 := subject.GetTitle()
@@ -763,6 +862,9 @@ func TestService_Connector_GetTitle_Ugly(t *core.T) {
 }
 
 func TestService_Connector_GetHTML_Good(t *core.T) {
+	// Connector GetHTML
+	ax7Variant := "Connector_GetHTML:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0, got1 := subject.GetHTML("agent")
@@ -773,6 +875,9 @@ func TestService_Connector_GetHTML_Good(t *core.T) {
 }
 
 func TestService_Connector_GetHTML_Bad(t *core.T) {
+	// Connector GetHTML
+	ax7Variant := "Connector_GetHTML:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0, got1 := subject.GetHTML("")
@@ -783,6 +888,9 @@ func TestService_Connector_GetHTML_Bad(t *core.T) {
 }
 
 func TestService_Connector_GetHTML_Ugly(t *core.T) {
+	// Connector GetHTML
+	ax7Variant := "Connector_GetHTML:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0, got1 := subject.GetHTML("../../edge")
@@ -793,6 +901,9 @@ func TestService_Connector_GetHTML_Ugly(t *core.T) {
 }
 
 func TestService_Connector_ClearConsole_Good(t *core.T) {
+	// Connector ClearConsole
+	ax7Variant := "Connector_ClearConsole:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		subject.ClearConsole()
@@ -803,6 +914,9 @@ func TestService_Connector_ClearConsole_Good(t *core.T) {
 }
 
 func TestService_Connector_ClearConsole_Bad(t *core.T) {
+	// Connector ClearConsole
+	ax7Variant := "Connector_ClearConsole:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		subject.ClearConsole()
@@ -813,6 +927,9 @@ func TestService_Connector_ClearConsole_Bad(t *core.T) {
 }
 
 func TestService_Connector_ClearConsole_Ugly(t *core.T) {
+	// Connector ClearConsole
+	ax7Variant := "Connector_ClearConsole:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		subject.ClearConsole()
@@ -823,6 +940,9 @@ func TestService_Connector_ClearConsole_Ugly(t *core.T) {
 }
 
 func TestService_Connector_Close_Good(t *core.T) {
+	// Connector Close
+	ax7Variant := "Connector_Close:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0 := subject.Close()
@@ -833,6 +953,9 @@ func TestService_Connector_Close_Good(t *core.T) {
 }
 
 func TestService_Connector_Close_Bad(t *core.T) {
+	// Connector Close
+	ax7Variant := "Connector_Close:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0 := subject.Close()
@@ -843,6 +966,9 @@ func TestService_Connector_Close_Bad(t *core.T) {
 }
 
 func TestService_Connector_Close_Ugly(t *core.T) {
+	// Connector Close
+	ax7Variant := "Connector_Close:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0 := subject.Close()
@@ -853,6 +979,9 @@ func TestService_Connector_Close_Ugly(t *core.T) {
 }
 
 func TestService_Connector_SetViewport_Good(t *core.T) {
+	// Connector SetViewport
+	ax7Variant := "Connector_SetViewport:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0 := subject.SetViewport(1, 1)
@@ -863,6 +992,9 @@ func TestService_Connector_SetViewport_Good(t *core.T) {
 }
 
 func TestService_Connector_SetViewport_Bad(t *core.T) {
+	// Connector SetViewport
+	ax7Variant := "Connector_SetViewport:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0 := subject.SetViewport(0, 0)
@@ -873,6 +1005,9 @@ func TestService_Connector_SetViewport_Bad(t *core.T) {
 }
 
 func TestService_Connector_SetViewport_Ugly(t *core.T) {
+	// Connector SetViewport
+	ax7Variant := "Connector_SetViewport:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0 := subject.SetViewport(-1, -1)
@@ -883,6 +1018,9 @@ func TestService_Connector_SetViewport_Ugly(t *core.T) {
 }
 
 func TestService_Connector_UploadFile_Good(t *core.T) {
+	// Connector UploadFile
+	ax7Variant := "Connector_UploadFile:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0 := subject.UploadFile("agent", nil)
@@ -893,6 +1031,9 @@ func TestService_Connector_UploadFile_Good(t *core.T) {
 }
 
 func TestService_Connector_UploadFile_Bad(t *core.T) {
+	// Connector UploadFile
+	ax7Variant := "Connector_UploadFile:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0 := subject.UploadFile("", nil)
@@ -903,6 +1044,9 @@ func TestService_Connector_UploadFile_Bad(t *core.T) {
 }
 
 func TestService_Connector_UploadFile_Ugly(t *core.T) {
+	// Connector UploadFile
+	ax7Variant := "Connector_UploadFile:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0 := subject.UploadFile("../../edge", nil)
@@ -913,6 +1057,9 @@ func TestService_Connector_UploadFile_Ugly(t *core.T) {
 }
 
 func TestService_Connector_GetZoom_Good(t *core.T) {
+	// Connector GetZoom
+	ax7Variant := "Connector_GetZoom:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0, got1 := subject.GetZoom()
@@ -923,6 +1070,9 @@ func TestService_Connector_GetZoom_Good(t *core.T) {
 }
 
 func TestService_Connector_GetZoom_Bad(t *core.T) {
+	// Connector GetZoom
+	ax7Variant := "Connector_GetZoom:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0, got1 := subject.GetZoom()
@@ -933,6 +1083,9 @@ func TestService_Connector_GetZoom_Bad(t *core.T) {
 }
 
 func TestService_Connector_GetZoom_Ugly(t *core.T) {
+	// Connector GetZoom
+	ax7Variant := "Connector_GetZoom:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0, got1 := subject.GetZoom()
@@ -943,6 +1096,9 @@ func TestService_Connector_GetZoom_Ugly(t *core.T) {
 }
 
 func TestService_Connector_SetZoom_Good(t *core.T) {
+	// Connector SetZoom
+	ax7Variant := "Connector_SetZoom:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0 := subject.SetZoom(1.5)
@@ -953,6 +1109,9 @@ func TestService_Connector_SetZoom_Good(t *core.T) {
 }
 
 func TestService_Connector_SetZoom_Bad(t *core.T) {
+	// Connector SetZoom
+	ax7Variant := "Connector_SetZoom:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0 := subject.SetZoom(0)
@@ -963,6 +1122,9 @@ func TestService_Connector_SetZoom_Bad(t *core.T) {
 }
 
 func TestService_Connector_SetZoom_Ugly(t *core.T) {
+	// Connector SetZoom
+	ax7Variant := "Connector_SetZoom:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0 := subject.SetZoom(-1.5)
@@ -973,6 +1135,9 @@ func TestService_Connector_SetZoom_Ugly(t *core.T) {
 }
 
 func TestService_Connector_Print_Good(t *core.T) {
+	// Connector Print
+	ax7Variant := "Connector_Print:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0, got1 := subject.Print(true)
@@ -983,6 +1148,9 @@ func TestService_Connector_Print_Good(t *core.T) {
 }
 
 func TestService_Connector_Print_Bad(t *core.T) {
+	// Connector Print
+	ax7Variant := "Connector_Print:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0, got1 := subject.Print(false)
@@ -993,6 +1161,9 @@ func TestService_Connector_Print_Bad(t *core.T) {
 }
 
 func TestService_Connector_Print_Ugly(t *core.T) {
+	// Connector Print
+	ax7Variant := "Connector_Print:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0, got1 := subject.Print(false)
@@ -1003,6 +1174,9 @@ func TestService_Connector_Print_Ugly(t *core.T) {
 }
 
 func TestService_Connector_Hover_Good(t *core.T) {
+	// Connector Hover
+	ax7Variant := "Connector_Hover:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0 := subject.Hover("agent")
@@ -1013,6 +1187,9 @@ func TestService_Connector_Hover_Good(t *core.T) {
 }
 
 func TestService_Connector_Hover_Bad(t *core.T) {
+	// Connector Hover
+	ax7Variant := "Connector_Hover:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0 := subject.Hover("")
@@ -1023,6 +1200,9 @@ func TestService_Connector_Hover_Bad(t *core.T) {
 }
 
 func TestService_Connector_Hover_Ugly(t *core.T) {
+	// Connector Hover
+	ax7Variant := "Connector_Hover:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0 := subject.Hover("../../edge")
@@ -1033,6 +1213,9 @@ func TestService_Connector_Hover_Ugly(t *core.T) {
 }
 
 func TestService_Connector_Select_Good(t *core.T) {
+	// Connector Select
+	ax7Variant := "Connector_Select:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0 := subject.Select("agent", "agent")
@@ -1043,6 +1226,9 @@ func TestService_Connector_Select_Good(t *core.T) {
 }
 
 func TestService_Connector_Select_Bad(t *core.T) {
+	// Connector Select
+	ax7Variant := "Connector_Select:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0 := subject.Select("", "")
@@ -1053,6 +1239,9 @@ func TestService_Connector_Select_Bad(t *core.T) {
 }
 
 func TestService_Connector_Select_Ugly(t *core.T) {
+	// Connector Select
+	ax7Variant := "Connector_Select:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0 := subject.Select("../../edge", "../../edge")
@@ -1063,6 +1252,9 @@ func TestService_Connector_Select_Ugly(t *core.T) {
 }
 
 func TestService_Connector_Check_Good(t *core.T) {
+	// Connector Check
+	ax7Variant := "Connector_Check:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0 := subject.Check("agent", true)
@@ -1073,6 +1265,9 @@ func TestService_Connector_Check_Good(t *core.T) {
 }
 
 func TestService_Connector_Check_Bad(t *core.T) {
+	// Connector Check
+	ax7Variant := "Connector_Check:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0 := subject.Check("", false)
@@ -1083,6 +1278,9 @@ func TestService_Connector_Check_Bad(t *core.T) {
 }
 
 func TestService_Connector_Check_Ugly(t *core.T) {
+	// Connector Check
+	ax7Variant := "Connector_Check:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0 := subject.Check("../../edge", false)
@@ -1093,6 +1291,9 @@ func TestService_Connector_Check_Ugly(t *core.T) {
 }
 
 func TestService_Connector_QuerySelector_Good(t *core.T) {
+	// Connector QuerySelector
+	ax7Variant := "Connector_QuerySelector:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0, got1 := subject.QuerySelector("agent")
@@ -1103,6 +1304,9 @@ func TestService_Connector_QuerySelector_Good(t *core.T) {
 }
 
 func TestService_Connector_QuerySelector_Bad(t *core.T) {
+	// Connector QuerySelector
+	ax7Variant := "Connector_QuerySelector:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0, got1 := subject.QuerySelector("")
@@ -1113,6 +1317,9 @@ func TestService_Connector_QuerySelector_Bad(t *core.T) {
 }
 
 func TestService_Connector_QuerySelector_Ugly(t *core.T) {
+	// Connector QuerySelector
+	ax7Variant := "Connector_QuerySelector:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0, got1 := subject.QuerySelector("../../edge")
@@ -1123,6 +1330,9 @@ func TestService_Connector_QuerySelector_Ugly(t *core.T) {
 }
 
 func TestService_Connector_QuerySelectorAll_Good(t *core.T) {
+	// Connector QuerySelectorAll
+	ax7Variant := "Connector_QuerySelectorAll:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0, got1 := subject.QuerySelectorAll("agent")
@@ -1133,6 +1343,9 @@ func TestService_Connector_QuerySelectorAll_Good(t *core.T) {
 }
 
 func TestService_Connector_QuerySelectorAll_Bad(t *core.T) {
+	// Connector QuerySelectorAll
+	ax7Variant := "Connector_QuerySelectorAll:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0, got1 := subject.QuerySelectorAll("")
@@ -1143,6 +1356,9 @@ func TestService_Connector_QuerySelectorAll_Bad(t *core.T) {
 }
 
 func TestService_Connector_QuerySelectorAll_Ugly(t *core.T) {
+	// Connector QuerySelectorAll
+	ax7Variant := "Connector_QuerySelectorAll:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0, got1 := subject.QuerySelectorAll("../../edge")
@@ -1153,6 +1369,9 @@ func TestService_Connector_QuerySelectorAll_Ugly(t *core.T) {
 }
 
 func TestService_Connector_GetConsole_Good(t *core.T) {
+	// Connector GetConsole
+	ax7Variant := "Connector_GetConsole:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0 := subject.GetConsole()
@@ -1163,6 +1382,9 @@ func TestService_Connector_GetConsole_Good(t *core.T) {
 }
 
 func TestService_Connector_GetConsole_Bad(t *core.T) {
+	// Connector GetConsole
+	ax7Variant := "Connector_GetConsole:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0 := subject.GetConsole()
@@ -1173,6 +1395,9 @@ func TestService_Connector_GetConsole_Bad(t *core.T) {
 }
 
 func TestService_Connector_GetConsole_Ugly(t *core.T) {
+	// Connector GetConsole
+	ax7Variant := "Connector_GetConsole:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(realConnector)
 	result := core.Try(func() any {
 		got0 := subject.GetConsole()

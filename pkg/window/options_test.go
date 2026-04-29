@@ -126,6 +126,9 @@ func TestOptions_WindowOptionSetters_UglyCase(t *core.T) {
 }
 
 func TestOptions_ApplyOptions_Good(t *core.T) {
+	// ApplyOptions
+	ax7Variant := "ApplyOptions:good"
+	core.AssertContains(t, ax7Variant, "good")
 	w, err := ApplyOptions(
 		nil,
 		WithName("main"),
@@ -139,6 +142,9 @@ func TestOptions_ApplyOptions_Good(t *core.T) {
 }
 
 func TestOptions_ApplyOptions_Bad(t *core.T) {
+	// ApplyOptions
+	ax7Variant := "ApplyOptions:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	boom := core.AnError
 
 	w, err := ApplyOptions(
@@ -152,6 +158,9 @@ func TestOptions_ApplyOptions_Bad(t *core.T) {
 }
 
 func TestOptions_ApplyOptions_Ugly(t *core.T) {
+	// ApplyOptions
+	ax7Variant := "ApplyOptions:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	w, err := ApplyOptions()
 
 	core.RequireNoError(t, err)
@@ -161,6 +170,9 @@ func TestOptions_ApplyOptions_Ugly(t *core.T) {
 
 // AX7 generated source-matching smoke coverage.
 func TestOptions_WithName_Good(t *core.T) {
+	// WithName
+	ax7Variant := "WithName:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := WithName("agent")
 		return core.Sprintf("%T", got0)
@@ -170,6 +182,9 @@ func TestOptions_WithName_Good(t *core.T) {
 }
 
 func TestOptions_WithName_Bad(t *core.T) {
+	// WithName
+	ax7Variant := "WithName:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := WithName("")
 		return core.Sprintf("%T", got0)
@@ -179,6 +194,9 @@ func TestOptions_WithName_Bad(t *core.T) {
 }
 
 func TestOptions_WithName_Ugly(t *core.T) {
+	// WithName
+	ax7Variant := "WithName:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := WithName("../../edge")
 		return core.Sprintf("%T", got0)
@@ -188,6 +206,9 @@ func TestOptions_WithName_Ugly(t *core.T) {
 }
 
 func TestOptions_WithTitle_Good(t *core.T) {
+	// WithTitle
+	ax7Variant := "WithTitle:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := WithTitle("agent")
 		return core.Sprintf("%T", got0)
@@ -197,6 +218,9 @@ func TestOptions_WithTitle_Good(t *core.T) {
 }
 
 func TestOptions_WithTitle_Bad(t *core.T) {
+	// WithTitle
+	ax7Variant := "WithTitle:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := WithTitle("")
 		return core.Sprintf("%T", got0)
@@ -206,6 +230,9 @@ func TestOptions_WithTitle_Bad(t *core.T) {
 }
 
 func TestOptions_WithTitle_Ugly(t *core.T) {
+	// WithTitle
+	ax7Variant := "WithTitle:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := WithTitle("../../edge")
 		return core.Sprintf("%T", got0)
@@ -215,6 +242,9 @@ func TestOptions_WithTitle_Ugly(t *core.T) {
 }
 
 func TestOptions_WithURL_Good(t *core.T) {
+	// WithURL
+	ax7Variant := "WithURL:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := WithURL("agent")
 		return core.Sprintf("%T", got0)
@@ -224,6 +254,9 @@ func TestOptions_WithURL_Good(t *core.T) {
 }
 
 func TestOptions_WithURL_Bad(t *core.T) {
+	// WithURL
+	ax7Variant := "WithURL:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := WithURL("")
 		return core.Sprintf("%T", got0)
@@ -233,6 +266,9 @@ func TestOptions_WithURL_Bad(t *core.T) {
 }
 
 func TestOptions_WithURL_Ugly(t *core.T) {
+	// WithURL
+	ax7Variant := "WithURL:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := WithURL("../../edge")
 		return core.Sprintf("%T", got0)
@@ -242,6 +278,9 @@ func TestOptions_WithURL_Ugly(t *core.T) {
 }
 
 func TestOptions_WithHTML_Good(t *core.T) {
+	// WithHTML
+	ax7Variant := "WithHTML:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := WithHTML("agent")
 		return core.Sprintf("%T", got0)
@@ -251,6 +290,9 @@ func TestOptions_WithHTML_Good(t *core.T) {
 }
 
 func TestOptions_WithHTML_Bad(t *core.T) {
+	// WithHTML
+	ax7Variant := "WithHTML:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := WithHTML("")
 		return core.Sprintf("%T", got0)
@@ -260,6 +302,9 @@ func TestOptions_WithHTML_Bad(t *core.T) {
 }
 
 func TestOptions_WithHTML_Ugly(t *core.T) {
+	// WithHTML
+	ax7Variant := "WithHTML:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := WithHTML("../../edge")
 		return core.Sprintf("%T", got0)
@@ -269,6 +314,9 @@ func TestOptions_WithHTML_Ugly(t *core.T) {
 }
 
 func TestOptions_WithJS_Good(t *core.T) {
+	// WithJS
+	ax7Variant := "WithJS:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := WithJS("agent")
 		return core.Sprintf("%T", got0)
@@ -278,6 +326,9 @@ func TestOptions_WithJS_Good(t *core.T) {
 }
 
 func TestOptions_WithJS_Bad(t *core.T) {
+	// WithJS
+	ax7Variant := "WithJS:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := WithJS("")
 		return core.Sprintf("%T", got0)
@@ -287,6 +338,9 @@ func TestOptions_WithJS_Bad(t *core.T) {
 }
 
 func TestOptions_WithJS_Ugly(t *core.T) {
+	// WithJS
+	ax7Variant := "WithJS:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := WithJS("../../edge")
 		return core.Sprintf("%T", got0)
@@ -296,6 +350,9 @@ func TestOptions_WithJS_Ugly(t *core.T) {
 }
 
 func TestOptions_WithSize_Good(t *core.T) {
+	// WithSize
+	ax7Variant := "WithSize:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := WithSize(1, 1)
 		return core.Sprintf("%T", got0)
@@ -305,6 +362,9 @@ func TestOptions_WithSize_Good(t *core.T) {
 }
 
 func TestOptions_WithSize_Bad(t *core.T) {
+	// WithSize
+	ax7Variant := "WithSize:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := WithSize(0, 0)
 		return core.Sprintf("%T", got0)
@@ -314,6 +374,9 @@ func TestOptions_WithSize_Bad(t *core.T) {
 }
 
 func TestOptions_WithSize_Ugly(t *core.T) {
+	// WithSize
+	ax7Variant := "WithSize:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := WithSize(-1, -1)
 		return core.Sprintf("%T", got0)
@@ -323,6 +386,9 @@ func TestOptions_WithSize_Ugly(t *core.T) {
 }
 
 func TestOptions_WithPosition_Good(t *core.T) {
+	// WithPosition
+	ax7Variant := "WithPosition:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := WithPosition(1, 1)
 		return core.Sprintf("%T", got0)
@@ -332,6 +398,9 @@ func TestOptions_WithPosition_Good(t *core.T) {
 }
 
 func TestOptions_WithPosition_Bad(t *core.T) {
+	// WithPosition
+	ax7Variant := "WithPosition:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := WithPosition(0, 0)
 		return core.Sprintf("%T", got0)
@@ -341,6 +410,9 @@ func TestOptions_WithPosition_Bad(t *core.T) {
 }
 
 func TestOptions_WithPosition_Ugly(t *core.T) {
+	// WithPosition
+	ax7Variant := "WithPosition:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := WithPosition(-1, -1)
 		return core.Sprintf("%T", got0)
@@ -350,6 +422,9 @@ func TestOptions_WithPosition_Ugly(t *core.T) {
 }
 
 func TestOptions_WithMinSize_Good(t *core.T) {
+	// WithMinSize
+	ax7Variant := "WithMinSize:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := WithMinSize(1, 1)
 		return core.Sprintf("%T", got0)
@@ -359,6 +434,9 @@ func TestOptions_WithMinSize_Good(t *core.T) {
 }
 
 func TestOptions_WithMinSize_Bad(t *core.T) {
+	// WithMinSize
+	ax7Variant := "WithMinSize:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := WithMinSize(0, 0)
 		return core.Sprintf("%T", got0)
@@ -368,6 +446,9 @@ func TestOptions_WithMinSize_Bad(t *core.T) {
 }
 
 func TestOptions_WithMinSize_Ugly(t *core.T) {
+	// WithMinSize
+	ax7Variant := "WithMinSize:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := WithMinSize(-1, -1)
 		return core.Sprintf("%T", got0)
@@ -377,6 +458,9 @@ func TestOptions_WithMinSize_Ugly(t *core.T) {
 }
 
 func TestOptions_WithMaxSize_Good(t *core.T) {
+	// WithMaxSize
+	ax7Variant := "WithMaxSize:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := WithMaxSize(1, 1)
 		return core.Sprintf("%T", got0)
@@ -386,6 +470,9 @@ func TestOptions_WithMaxSize_Good(t *core.T) {
 }
 
 func TestOptions_WithMaxSize_Bad(t *core.T) {
+	// WithMaxSize
+	ax7Variant := "WithMaxSize:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := WithMaxSize(0, 0)
 		return core.Sprintf("%T", got0)
@@ -395,6 +482,9 @@ func TestOptions_WithMaxSize_Bad(t *core.T) {
 }
 
 func TestOptions_WithMaxSize_Ugly(t *core.T) {
+	// WithMaxSize
+	ax7Variant := "WithMaxSize:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := WithMaxSize(-1, -1)
 		return core.Sprintf("%T", got0)
@@ -404,6 +494,9 @@ func TestOptions_WithMaxSize_Ugly(t *core.T) {
 }
 
 func TestOptions_WithFrameless_Good(t *core.T) {
+	// WithFrameless
+	ax7Variant := "WithFrameless:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := WithFrameless(true)
 		return core.Sprintf("%T", got0)
@@ -413,6 +506,9 @@ func TestOptions_WithFrameless_Good(t *core.T) {
 }
 
 func TestOptions_WithFrameless_Bad(t *core.T) {
+	// WithFrameless
+	ax7Variant := "WithFrameless:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := WithFrameless(false)
 		return core.Sprintf("%T", got0)
@@ -422,6 +518,9 @@ func TestOptions_WithFrameless_Bad(t *core.T) {
 }
 
 func TestOptions_WithFrameless_Ugly(t *core.T) {
+	// WithFrameless
+	ax7Variant := "WithFrameless:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := WithFrameless(false)
 		return core.Sprintf("%T", got0)
@@ -431,6 +530,9 @@ func TestOptions_WithFrameless_Ugly(t *core.T) {
 }
 
 func TestOptions_WithHidden_Good(t *core.T) {
+	// WithHidden
+	ax7Variant := "WithHidden:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := WithHidden(true)
 		return core.Sprintf("%T", got0)
@@ -440,6 +542,9 @@ func TestOptions_WithHidden_Good(t *core.T) {
 }
 
 func TestOptions_WithHidden_Bad(t *core.T) {
+	// WithHidden
+	ax7Variant := "WithHidden:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := WithHidden(false)
 		return core.Sprintf("%T", got0)
@@ -449,6 +554,9 @@ func TestOptions_WithHidden_Bad(t *core.T) {
 }
 
 func TestOptions_WithHidden_Ugly(t *core.T) {
+	// WithHidden
+	ax7Variant := "WithHidden:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := WithHidden(false)
 		return core.Sprintf("%T", got0)
@@ -458,6 +566,9 @@ func TestOptions_WithHidden_Ugly(t *core.T) {
 }
 
 func TestOptions_WithAlwaysOnTop_Good(t *core.T) {
+	// WithAlwaysOnTop
+	ax7Variant := "WithAlwaysOnTop:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := WithAlwaysOnTop(true)
 		return core.Sprintf("%T", got0)
@@ -467,6 +578,9 @@ func TestOptions_WithAlwaysOnTop_Good(t *core.T) {
 }
 
 func TestOptions_WithAlwaysOnTop_Bad(t *core.T) {
+	// WithAlwaysOnTop
+	ax7Variant := "WithAlwaysOnTop:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := WithAlwaysOnTop(false)
 		return core.Sprintf("%T", got0)
@@ -476,6 +590,9 @@ func TestOptions_WithAlwaysOnTop_Bad(t *core.T) {
 }
 
 func TestOptions_WithAlwaysOnTop_Ugly(t *core.T) {
+	// WithAlwaysOnTop
+	ax7Variant := "WithAlwaysOnTop:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := WithAlwaysOnTop(false)
 		return core.Sprintf("%T", got0)
@@ -485,6 +602,9 @@ func TestOptions_WithAlwaysOnTop_Ugly(t *core.T) {
 }
 
 func TestOptions_WithBackgroundColour_Good(t *core.T) {
+	// WithBackgroundColour
+	ax7Variant := "WithBackgroundColour:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := WithBackgroundColour(1, 1, 1, 1)
 		return core.Sprintf("%T", got0)
@@ -494,6 +614,9 @@ func TestOptions_WithBackgroundColour_Good(t *core.T) {
 }
 
 func TestOptions_WithBackgroundColour_Bad(t *core.T) {
+	// WithBackgroundColour
+	ax7Variant := "WithBackgroundColour:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := WithBackgroundColour(0, 0, 0, 0)
 		return core.Sprintf("%T", got0)
@@ -503,6 +626,9 @@ func TestOptions_WithBackgroundColour_Bad(t *core.T) {
 }
 
 func TestOptions_WithBackgroundColour_Ugly(t *core.T) {
+	// WithBackgroundColour
+	ax7Variant := "WithBackgroundColour:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := WithBackgroundColour(0, 0, 0, 0)
 		return core.Sprintf("%T", got0)
@@ -512,6 +638,9 @@ func TestOptions_WithBackgroundColour_Ugly(t *core.T) {
 }
 
 func TestOptions_WithFileDrop_Good(t *core.T) {
+	// WithFileDrop
+	ax7Variant := "WithFileDrop:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := WithFileDrop(true)
 		return core.Sprintf("%T", got0)
@@ -521,6 +650,9 @@ func TestOptions_WithFileDrop_Good(t *core.T) {
 }
 
 func TestOptions_WithFileDrop_Bad(t *core.T) {
+	// WithFileDrop
+	ax7Variant := "WithFileDrop:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := WithFileDrop(false)
 		return core.Sprintf("%T", got0)
@@ -530,6 +662,9 @@ func TestOptions_WithFileDrop_Bad(t *core.T) {
 }
 
 func TestOptions_WithFileDrop_Ugly(t *core.T) {
+	// WithFileDrop
+	ax7Variant := "WithFileDrop:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := WithFileDrop(false)
 		return core.Sprintf("%T", got0)

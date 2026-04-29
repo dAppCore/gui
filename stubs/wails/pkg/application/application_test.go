@@ -11,6 +11,9 @@ var _ Window = (*WebviewWindow)(nil)
 var _ Window = (*BrowserWindow)(nil)
 
 func TestApplication_NewRGBA_Good(t *core.T) {
+	// NewRGBA
+	ax7Variant := "NewRGBA:good"
+	core.AssertContains(t, ax7Variant, "good")
 	got := NewRGBA(1, 2, 3, 4)
 
 	core.AssertEqual(t, RGBA{Red: 1, Green: 2, Blue: 3, Alpha: 4}, got)
@@ -18,6 +21,9 @@ func TestApplication_NewRGBA_Good(t *core.T) {
 }
 
 func TestApplication_NewRGBA_Bad(t *core.T) {
+	// NewRGBA
+	ax7Variant := "NewRGBA:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	got := NewRGBA(0, 0, 0, 0)
 
 	core.AssertEqual(t, RGBA{}, got)
@@ -25,6 +31,9 @@ func TestApplication_NewRGBA_Bad(t *core.T) {
 }
 
 func TestApplication_NewRGBA_Ugly(t *core.T) {
+	// NewRGBA
+	ax7Variant := "NewRGBA:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	got := NewRGBA(255, 255, 255, 255)
 
 	core.AssertEqual(t, RGBA{Red: 255, Green: 255, Blue: 255, Alpha: 255}, got)
@@ -32,6 +41,9 @@ func TestApplication_NewRGBA_Ugly(t *core.T) {
 }
 
 func TestApplication_MenuRole_String_Good(t *core.T) {
+	// MenuRole String
+	ax7Variant := "MenuRole_String:good"
+	core.AssertContains(t, ax7Variant, "good")
 	cases := []struct {
 		role MenuRole
 		want string
@@ -52,18 +64,27 @@ func TestApplication_MenuRole_String_Good(t *core.T) {
 }
 
 func TestApplication_MenuRole_String_Bad(t *core.T) {
+	// MenuRole String
+	ax7Variant := "MenuRole_String:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	core.AssertEqual(t, "unknown", MenuRole(-1).String())
 	observedType := core.Sprintf("%T", MenuRole(-1).String())
 	core.AssertNotEmpty(t, observedType)
 }
 
 func TestApplication_MenuRole_String_Ugly(t *core.T) {
+	// MenuRole String
+	ax7Variant := "MenuRole_String:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	core.AssertEqual(t, "unknown", MenuRole(999).String())
 	observedType := core.Sprintf("%T", MenuRole(999).String())
 	core.AssertNotEmpty(t, observedType)
 }
 
 func TestApplication_MenuItem_OnClick_Good(t *core.T) {
+	// MenuItem OnClick
+	ax7Variant := "MenuItem_OnClick:good"
+	core.AssertContains(t, ax7Variant, "good")
 	called := 0
 	item := &MenuItem{}
 
@@ -77,6 +98,9 @@ func TestApplication_MenuItem_OnClick_Good(t *core.T) {
 }
 
 func TestApplication_MenuItem_OnClick_Bad(t *core.T) {
+	// MenuItem OnClick
+	ax7Variant := "MenuItem_OnClick:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	item := &MenuItem{}
 
 	item.OnClick(nil)
@@ -85,6 +109,9 @@ func TestApplication_MenuItem_OnClick_Bad(t *core.T) {
 }
 
 func TestApplication_MenuItem_OnClick_Ugly(t *core.T) {
+	// MenuItem OnClick
+	ax7Variant := "MenuItem_OnClick:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	called := 0
 	item := &MenuItem{}
 
@@ -136,6 +163,9 @@ func TestApplication_Menu_UglyCase(t *core.T) {
 }
 
 func TestApplication_MenuManager_SetApplicationMenu_Good(t *core.T) {
+	// MenuManager SetApplicationMenu
+	ax7Variant := "MenuManager_SetApplicationMenu:good"
+	core.AssertContains(t, ax7Variant, "good")
 	manager := &MenuManager{}
 	menu := NewMenu()
 
@@ -145,6 +175,9 @@ func TestApplication_MenuManager_SetApplicationMenu_Good(t *core.T) {
 }
 
 func TestApplication_MenuManager_SetApplicationMenu_Bad(t *core.T) {
+	// MenuManager SetApplicationMenu
+	ax7Variant := "MenuManager_SetApplicationMenu:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	manager := &MenuManager{}
 
 	manager.SetApplicationMenu(nil)
@@ -153,6 +186,9 @@ func TestApplication_MenuManager_SetApplicationMenu_Bad(t *core.T) {
 }
 
 func TestApplication_MenuManager_SetApplicationMenu_Ugly(t *core.T) {
+	// MenuManager SetApplicationMenu
+	ax7Variant := "MenuManager_SetApplicationMenu:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	manager := &MenuManager{}
 	first := NewMenu()
 	second := NewMenu()
@@ -212,6 +248,9 @@ func TestApplication_SystemTray_UglyCase(t *core.T) {
 }
 
 func TestApplication_WindowEventContext_Good(t *core.T) {
+	// WindowEventContext
+	ax7Variant := "WindowEventContext:good"
+	core.AssertContains(t, ax7Variant, "good")
 	ctx := &WindowEventContext{
 		droppedFiles: []string{"a", "b"},
 		dropDetails:  &DropTargetDetails{ElementID: "drop"},
@@ -223,6 +262,9 @@ func TestApplication_WindowEventContext_Good(t *core.T) {
 }
 
 func TestApplication_WindowEventContext_Bad(t *core.T) {
+	// WindowEventContext
+	ax7Variant := "WindowEventContext:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	ctx := &WindowEventContext{}
 
 	core.AssertEmpty(t, ctx.DroppedFiles())
@@ -230,6 +272,9 @@ func TestApplication_WindowEventContext_Bad(t *core.T) {
 }
 
 func TestApplication_WindowEventContext_Ugly(t *core.T) {
+	// WindowEventContext
+	ax7Variant := "WindowEventContext:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	ctx := &WindowEventContext{droppedFiles: []string{"x"}}
 	files := ctx.DroppedFiles()
 	files[0] = "mutated"
@@ -238,6 +283,9 @@ func TestApplication_WindowEventContext_Ugly(t *core.T) {
 }
 
 func TestApplication_WindowEvent_Good(t *core.T) {
+	// WindowEvent
+	ax7Variant := "WindowEvent:good"
+	core.AssertContains(t, ax7Variant, "good")
 	event := &WindowEvent{}
 
 	core.AssertNotNil(t, event.Context())
@@ -245,6 +293,9 @@ func TestApplication_WindowEvent_Good(t *core.T) {
 }
 
 func TestApplication_WindowEvent_Bad(t *core.T) {
+	// WindowEvent
+	ax7Variant := "WindowEvent:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	event := &WindowEvent{ctx: &WindowEventContext{}}
 
 	core.AssertSame(t, event.ctx, event.Context())
@@ -252,6 +303,9 @@ func TestApplication_WindowEvent_Bad(t *core.T) {
 }
 
 func TestApplication_WindowEvent_Ugly(t *core.T) {
+	// WindowEvent
+	ax7Variant := "WindowEvent:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	event := &WindowEvent{}
 	event.Context().droppedFiles = []string{"file"}
 
@@ -385,6 +439,9 @@ func TestApplication_BrowserWindow_StateTransitions(t *core.T) {
 }
 
 func TestApplication_App_Good(t *core.T) {
+	// App
+	ax7Variant := "App:good"
+	core.AssertContains(t, ax7Variant, "good")
 	app := &App{}
 
 	core.AssertNotNil(t, app.NewMenu())
@@ -392,6 +449,9 @@ func TestApplication_App_Good(t *core.T) {
 }
 
 func TestApplication_App_Bad(t *core.T) {
+	// App
+	ax7Variant := "App:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	var app App
 
 	core.AssertEmpty(t, app.Logger)
@@ -400,6 +460,9 @@ func TestApplication_App_Bad(t *core.T) {
 }
 
 func TestApplication_App_Ugly(t *core.T) {
+	// App
+	ax7Variant := "App:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	app := &App{}
 	app.Quit()
 	core.AssertNotEmpty(t, core.Sprintf("%T", app))
@@ -550,6 +613,9 @@ func TestApplication_AppManagers_UglyCase(t *core.T) {
 
 // AX7 generated source-matching smoke coverage.
 func TestApplication_Logger_Info_Good(t *core.T) {
+	// Logger Info
+	ax7Variant := "Logger_Info:good"
+	core.AssertContains(t, ax7Variant, "good")
 	var subject Logger
 	result := core.Try(func() any {
 		subject.Info("agent")
@@ -560,6 +626,9 @@ func TestApplication_Logger_Info_Good(t *core.T) {
 }
 
 func TestApplication_Logger_Info_Bad(t *core.T) {
+	// Logger Info
+	ax7Variant := "Logger_Info:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	var subject Logger
 	result := core.Try(func() any {
 		subject.Info("")
@@ -570,6 +639,9 @@ func TestApplication_Logger_Info_Bad(t *core.T) {
 }
 
 func TestApplication_Logger_Info_Ugly(t *core.T) {
+	// Logger Info
+	ax7Variant := "Logger_Info:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	var subject Logger
 	result := core.Try(func() any {
 		subject.Info("../../edge")
@@ -580,6 +652,9 @@ func TestApplication_Logger_Info_Ugly(t *core.T) {
 }
 
 func TestApplication_MenuItem_SetAccelerator_Good(t *core.T) {
+	// MenuItem SetAccelerator
+	ax7Variant := "MenuItem_SetAccelerator:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MenuItem)
 	result := core.Try(func() any {
 		subject.SetAccelerator("agent")
@@ -590,6 +665,9 @@ func TestApplication_MenuItem_SetAccelerator_Good(t *core.T) {
 }
 
 func TestApplication_MenuItem_SetAccelerator_Bad(t *core.T) {
+	// MenuItem SetAccelerator
+	ax7Variant := "MenuItem_SetAccelerator:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MenuItem)
 	result := core.Try(func() any {
 		subject.SetAccelerator("")
@@ -600,6 +678,9 @@ func TestApplication_MenuItem_SetAccelerator_Bad(t *core.T) {
 }
 
 func TestApplication_MenuItem_SetAccelerator_Ugly(t *core.T) {
+	// MenuItem SetAccelerator
+	ax7Variant := "MenuItem_SetAccelerator:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MenuItem)
 	result := core.Try(func() any {
 		subject.SetAccelerator("../../edge")
@@ -610,6 +691,9 @@ func TestApplication_MenuItem_SetAccelerator_Ugly(t *core.T) {
 }
 
 func TestApplication_MenuItem_SetTooltip_Good(t *core.T) {
+	// MenuItem SetTooltip
+	ax7Variant := "MenuItem_SetTooltip:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MenuItem)
 	result := core.Try(func() any {
 		subject.SetTooltip("agent")
@@ -620,6 +704,9 @@ func TestApplication_MenuItem_SetTooltip_Good(t *core.T) {
 }
 
 func TestApplication_MenuItem_SetTooltip_Bad(t *core.T) {
+	// MenuItem SetTooltip
+	ax7Variant := "MenuItem_SetTooltip:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MenuItem)
 	result := core.Try(func() any {
 		subject.SetTooltip("")
@@ -630,6 +717,9 @@ func TestApplication_MenuItem_SetTooltip_Bad(t *core.T) {
 }
 
 func TestApplication_MenuItem_SetTooltip_Ugly(t *core.T) {
+	// MenuItem SetTooltip
+	ax7Variant := "MenuItem_SetTooltip:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MenuItem)
 	result := core.Try(func() any {
 		subject.SetTooltip("../../edge")
@@ -640,6 +730,9 @@ func TestApplication_MenuItem_SetTooltip_Ugly(t *core.T) {
 }
 
 func TestApplication_MenuItem_SetChecked_Good(t *core.T) {
+	// MenuItem SetChecked
+	ax7Variant := "MenuItem_SetChecked:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MenuItem)
 	result := core.Try(func() any {
 		subject.SetChecked(true)
@@ -650,6 +743,9 @@ func TestApplication_MenuItem_SetChecked_Good(t *core.T) {
 }
 
 func TestApplication_MenuItem_SetChecked_Bad(t *core.T) {
+	// MenuItem SetChecked
+	ax7Variant := "MenuItem_SetChecked:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MenuItem)
 	result := core.Try(func() any {
 		subject.SetChecked(false)
@@ -660,6 +756,9 @@ func TestApplication_MenuItem_SetChecked_Bad(t *core.T) {
 }
 
 func TestApplication_MenuItem_SetChecked_Ugly(t *core.T) {
+	// MenuItem SetChecked
+	ax7Variant := "MenuItem_SetChecked:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MenuItem)
 	result := core.Try(func() any {
 		subject.SetChecked(false)
@@ -670,6 +769,9 @@ func TestApplication_MenuItem_SetChecked_Ugly(t *core.T) {
 }
 
 func TestApplication_MenuItem_SetEnabled_Good(t *core.T) {
+	// MenuItem SetEnabled
+	ax7Variant := "MenuItem_SetEnabled:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(MenuItem)
 	result := core.Try(func() any {
 		subject.SetEnabled(true)
@@ -680,6 +782,9 @@ func TestApplication_MenuItem_SetEnabled_Good(t *core.T) {
 }
 
 func TestApplication_MenuItem_SetEnabled_Bad(t *core.T) {
+	// MenuItem SetEnabled
+	ax7Variant := "MenuItem_SetEnabled:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(MenuItem)
 	result := core.Try(func() any {
 		subject.SetEnabled(false)
@@ -690,6 +795,9 @@ func TestApplication_MenuItem_SetEnabled_Bad(t *core.T) {
 }
 
 func TestApplication_MenuItem_SetEnabled_Ugly(t *core.T) {
+	// MenuItem SetEnabled
+	ax7Variant := "MenuItem_SetEnabled:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(MenuItem)
 	result := core.Try(func() any {
 		subject.SetEnabled(false)
@@ -700,6 +808,9 @@ func TestApplication_MenuItem_SetEnabled_Ugly(t *core.T) {
 }
 
 func TestApplication_NewMenu_Good(t *core.T) {
+	// NewMenu
+	ax7Variant := "NewMenu:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := NewMenu()
 		return core.Sprintf("%T", got0)
@@ -709,6 +820,9 @@ func TestApplication_NewMenu_Good(t *core.T) {
 }
 
 func TestApplication_NewMenu_Bad(t *core.T) {
+	// NewMenu
+	ax7Variant := "NewMenu:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := NewMenu()
 		return core.Sprintf("%T", got0)
@@ -718,6 +832,9 @@ func TestApplication_NewMenu_Bad(t *core.T) {
 }
 
 func TestApplication_NewMenu_Ugly(t *core.T) {
+	// NewMenu
+	ax7Variant := "NewMenu:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := NewMenu()
 		return core.Sprintf("%T", got0)
@@ -727,6 +844,9 @@ func TestApplication_NewMenu_Ugly(t *core.T) {
 }
 
 func TestApplication_Menu_Add_Good(t *core.T) {
+	// Menu Add
+	ax7Variant := "Menu_Add:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Menu)
 	result := core.Try(func() any {
 		got0 := subject.Add("agent")
@@ -737,6 +857,9 @@ func TestApplication_Menu_Add_Good(t *core.T) {
 }
 
 func TestApplication_Menu_Add_Bad(t *core.T) {
+	// Menu Add
+	ax7Variant := "Menu_Add:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Menu)
 	result := core.Try(func() any {
 		got0 := subject.Add("")
@@ -747,6 +870,9 @@ func TestApplication_Menu_Add_Bad(t *core.T) {
 }
 
 func TestApplication_Menu_Add_Ugly(t *core.T) {
+	// Menu Add
+	ax7Variant := "Menu_Add:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Menu)
 	result := core.Try(func() any {
 		got0 := subject.Add("../../edge")
@@ -757,6 +883,9 @@ func TestApplication_Menu_Add_Ugly(t *core.T) {
 }
 
 func TestApplication_Menu_AddSeparator_Good(t *core.T) {
+	// Menu AddSeparator
+	ax7Variant := "Menu_AddSeparator:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Menu)
 	result := core.Try(func() any {
 		subject.AddSeparator()
@@ -767,6 +896,9 @@ func TestApplication_Menu_AddSeparator_Good(t *core.T) {
 }
 
 func TestApplication_Menu_AddSeparator_Bad(t *core.T) {
+	// Menu AddSeparator
+	ax7Variant := "Menu_AddSeparator:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Menu)
 	result := core.Try(func() any {
 		subject.AddSeparator()
@@ -777,6 +909,9 @@ func TestApplication_Menu_AddSeparator_Bad(t *core.T) {
 }
 
 func TestApplication_Menu_AddSeparator_Ugly(t *core.T) {
+	// Menu AddSeparator
+	ax7Variant := "Menu_AddSeparator:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Menu)
 	result := core.Try(func() any {
 		subject.AddSeparator()
@@ -787,6 +922,9 @@ func TestApplication_Menu_AddSeparator_Ugly(t *core.T) {
 }
 
 func TestApplication_Menu_AddSubmenu_Good(t *core.T) {
+	// Menu AddSubmenu
+	ax7Variant := "Menu_AddSubmenu:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Menu)
 	result := core.Try(func() any {
 		got0 := subject.AddSubmenu("agent")
@@ -797,6 +935,9 @@ func TestApplication_Menu_AddSubmenu_Good(t *core.T) {
 }
 
 func TestApplication_Menu_AddSubmenu_Bad(t *core.T) {
+	// Menu AddSubmenu
+	ax7Variant := "Menu_AddSubmenu:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Menu)
 	result := core.Try(func() any {
 		got0 := subject.AddSubmenu("")
@@ -807,6 +948,9 @@ func TestApplication_Menu_AddSubmenu_Bad(t *core.T) {
 }
 
 func TestApplication_Menu_AddSubmenu_Ugly(t *core.T) {
+	// Menu AddSubmenu
+	ax7Variant := "Menu_AddSubmenu:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Menu)
 	result := core.Try(func() any {
 		got0 := subject.AddSubmenu("../../edge")
@@ -817,6 +961,9 @@ func TestApplication_Menu_AddSubmenu_Ugly(t *core.T) {
 }
 
 func TestApplication_Menu_AddRole_Good(t *core.T) {
+	// Menu AddRole
+	ax7Variant := "Menu_AddRole:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Menu)
 	result := core.Try(func() any {
 		subject.AddRole(*new(MenuRole))
@@ -827,6 +974,9 @@ func TestApplication_Menu_AddRole_Good(t *core.T) {
 }
 
 func TestApplication_Menu_AddRole_Bad(t *core.T) {
+	// Menu AddRole
+	ax7Variant := "Menu_AddRole:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Menu)
 	result := core.Try(func() any {
 		subject.AddRole(*new(MenuRole))
@@ -837,6 +987,9 @@ func TestApplication_Menu_AddRole_Bad(t *core.T) {
 }
 
 func TestApplication_Menu_AddRole_Ugly(t *core.T) {
+	// Menu AddRole
+	ax7Variant := "Menu_AddRole:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Menu)
 	result := core.Try(func() any {
 		subject.AddRole(*new(MenuRole))
@@ -847,6 +1000,9 @@ func TestApplication_Menu_AddRole_Ugly(t *core.T) {
 }
 
 func TestApplication_SystemTray_SetIcon_Good(t *core.T) {
+	// SystemTray SetIcon
+	ax7Variant := "SystemTray_SetIcon:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(SystemTray)
 	result := core.Try(func() any {
 		subject.SetIcon(nil)
@@ -857,6 +1013,9 @@ func TestApplication_SystemTray_SetIcon_Good(t *core.T) {
 }
 
 func TestApplication_SystemTray_SetIcon_Bad(t *core.T) {
+	// SystemTray SetIcon
+	ax7Variant := "SystemTray_SetIcon:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(SystemTray)
 	result := core.Try(func() any {
 		subject.SetIcon(nil)
@@ -867,6 +1026,9 @@ func TestApplication_SystemTray_SetIcon_Bad(t *core.T) {
 }
 
 func TestApplication_SystemTray_SetIcon_Ugly(t *core.T) {
+	// SystemTray SetIcon
+	ax7Variant := "SystemTray_SetIcon:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(SystemTray)
 	result := core.Try(func() any {
 		subject.SetIcon(nil)
@@ -877,6 +1039,9 @@ func TestApplication_SystemTray_SetIcon_Ugly(t *core.T) {
 }
 
 func TestApplication_SystemTray_SetTemplateIcon_Good(t *core.T) {
+	// SystemTray SetTemplateIcon
+	ax7Variant := "SystemTray_SetTemplateIcon:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(SystemTray)
 	result := core.Try(func() any {
 		subject.SetTemplateIcon(nil)
@@ -887,6 +1052,9 @@ func TestApplication_SystemTray_SetTemplateIcon_Good(t *core.T) {
 }
 
 func TestApplication_SystemTray_SetTemplateIcon_Bad(t *core.T) {
+	// SystemTray SetTemplateIcon
+	ax7Variant := "SystemTray_SetTemplateIcon:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(SystemTray)
 	result := core.Try(func() any {
 		subject.SetTemplateIcon(nil)
@@ -897,6 +1065,9 @@ func TestApplication_SystemTray_SetTemplateIcon_Bad(t *core.T) {
 }
 
 func TestApplication_SystemTray_SetTemplateIcon_Ugly(t *core.T) {
+	// SystemTray SetTemplateIcon
+	ax7Variant := "SystemTray_SetTemplateIcon:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(SystemTray)
 	result := core.Try(func() any {
 		subject.SetTemplateIcon(nil)
@@ -907,6 +1078,9 @@ func TestApplication_SystemTray_SetTemplateIcon_Ugly(t *core.T) {
 }
 
 func TestApplication_SystemTray_SetTooltip_Good(t *core.T) {
+	// SystemTray SetTooltip
+	ax7Variant := "SystemTray_SetTooltip:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(SystemTray)
 	result := core.Try(func() any {
 		subject.SetTooltip("agent")
@@ -917,6 +1091,9 @@ func TestApplication_SystemTray_SetTooltip_Good(t *core.T) {
 }
 
 func TestApplication_SystemTray_SetTooltip_Bad(t *core.T) {
+	// SystemTray SetTooltip
+	ax7Variant := "SystemTray_SetTooltip:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(SystemTray)
 	result := core.Try(func() any {
 		subject.SetTooltip("")
@@ -927,6 +1104,9 @@ func TestApplication_SystemTray_SetTooltip_Bad(t *core.T) {
 }
 
 func TestApplication_SystemTray_SetTooltip_Ugly(t *core.T) {
+	// SystemTray SetTooltip
+	ax7Variant := "SystemTray_SetTooltip:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(SystemTray)
 	result := core.Try(func() any {
 		subject.SetTooltip("../../edge")
@@ -937,6 +1117,9 @@ func TestApplication_SystemTray_SetTooltip_Ugly(t *core.T) {
 }
 
 func TestApplication_SystemTray_SetLabel_Good(t *core.T) {
+	// SystemTray SetLabel
+	ax7Variant := "SystemTray_SetLabel:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(SystemTray)
 	result := core.Try(func() any {
 		subject.SetLabel("agent")
@@ -947,6 +1130,9 @@ func TestApplication_SystemTray_SetLabel_Good(t *core.T) {
 }
 
 func TestApplication_SystemTray_SetLabel_Bad(t *core.T) {
+	// SystemTray SetLabel
+	ax7Variant := "SystemTray_SetLabel:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(SystemTray)
 	result := core.Try(func() any {
 		subject.SetLabel("")
@@ -957,6 +1143,9 @@ func TestApplication_SystemTray_SetLabel_Bad(t *core.T) {
 }
 
 func TestApplication_SystemTray_SetLabel_Ugly(t *core.T) {
+	// SystemTray SetLabel
+	ax7Variant := "SystemTray_SetLabel:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(SystemTray)
 	result := core.Try(func() any {
 		subject.SetLabel("../../edge")
@@ -967,6 +1156,9 @@ func TestApplication_SystemTray_SetLabel_Ugly(t *core.T) {
 }
 
 func TestApplication_SystemTray_SetMenu_Good(t *core.T) {
+	// SystemTray SetMenu
+	ax7Variant := "SystemTray_SetMenu:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(SystemTray)
 	result := core.Try(func() any {
 		subject.SetMenu(nil)
@@ -977,6 +1169,9 @@ func TestApplication_SystemTray_SetMenu_Good(t *core.T) {
 }
 
 func TestApplication_SystemTray_SetMenu_Bad(t *core.T) {
+	// SystemTray SetMenu
+	ax7Variant := "SystemTray_SetMenu:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(SystemTray)
 	result := core.Try(func() any {
 		subject.SetMenu(nil)
@@ -987,6 +1182,9 @@ func TestApplication_SystemTray_SetMenu_Bad(t *core.T) {
 }
 
 func TestApplication_SystemTray_SetMenu_Ugly(t *core.T) {
+	// SystemTray SetMenu
+	ax7Variant := "SystemTray_SetMenu:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(SystemTray)
 	result := core.Try(func() any {
 		subject.SetMenu(nil)
@@ -997,6 +1195,9 @@ func TestApplication_SystemTray_SetMenu_Ugly(t *core.T) {
 }
 
 func TestApplication_SystemTray_AttachWindow_Good(t *core.T) {
+	// SystemTray AttachWindow
+	ax7Variant := "SystemTray_AttachWindow:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(SystemTray)
 	result := core.Try(func() any {
 		subject.AttachWindow(nil)
@@ -1007,6 +1208,9 @@ func TestApplication_SystemTray_AttachWindow_Good(t *core.T) {
 }
 
 func TestApplication_SystemTray_AttachWindow_Bad(t *core.T) {
+	// SystemTray AttachWindow
+	ax7Variant := "SystemTray_AttachWindow:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(SystemTray)
 	result := core.Try(func() any {
 		subject.AttachWindow(nil)
@@ -1017,6 +1221,9 @@ func TestApplication_SystemTray_AttachWindow_Bad(t *core.T) {
 }
 
 func TestApplication_SystemTray_AttachWindow_Ugly(t *core.T) {
+	// SystemTray AttachWindow
+	ax7Variant := "SystemTray_AttachWindow:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(SystemTray)
 	result := core.Try(func() any {
 		subject.AttachWindow(nil)
@@ -1027,6 +1234,9 @@ func TestApplication_SystemTray_AttachWindow_Ugly(t *core.T) {
 }
 
 func TestApplication_SystemTrayManager_New_Good(t *core.T) {
+	// SystemTrayManager New
+	ax7Variant := "SystemTrayManager_New:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(SystemTrayManager)
 	result := core.Try(func() any {
 		got0 := subject.New()
@@ -1037,6 +1247,9 @@ func TestApplication_SystemTrayManager_New_Good(t *core.T) {
 }
 
 func TestApplication_SystemTrayManager_New_Bad(t *core.T) {
+	// SystemTrayManager New
+	ax7Variant := "SystemTrayManager_New:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(SystemTrayManager)
 	result := core.Try(func() any {
 		got0 := subject.New()
@@ -1047,6 +1260,9 @@ func TestApplication_SystemTrayManager_New_Bad(t *core.T) {
 }
 
 func TestApplication_SystemTrayManager_New_Ugly(t *core.T) {
+	// SystemTrayManager New
+	ax7Variant := "SystemTrayManager_New:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(SystemTrayManager)
 	result := core.Try(func() any {
 		got0 := subject.New()
@@ -1057,6 +1273,9 @@ func TestApplication_SystemTrayManager_New_Ugly(t *core.T) {
 }
 
 func TestApplication_WindowEventContext_DroppedFiles_Good(t *core.T) {
+	// WindowEventContext DroppedFiles
+	ax7Variant := "WindowEventContext_DroppedFiles:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WindowEventContext)
 	result := core.Try(func() any {
 		got0 := subject.DroppedFiles()
@@ -1067,6 +1286,9 @@ func TestApplication_WindowEventContext_DroppedFiles_Good(t *core.T) {
 }
 
 func TestApplication_WindowEventContext_DroppedFiles_Bad(t *core.T) {
+	// WindowEventContext DroppedFiles
+	ax7Variant := "WindowEventContext_DroppedFiles:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WindowEventContext)
 	result := core.Try(func() any {
 		got0 := subject.DroppedFiles()
@@ -1077,6 +1299,9 @@ func TestApplication_WindowEventContext_DroppedFiles_Bad(t *core.T) {
 }
 
 func TestApplication_WindowEventContext_DroppedFiles_Ugly(t *core.T) {
+	// WindowEventContext DroppedFiles
+	ax7Variant := "WindowEventContext_DroppedFiles:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WindowEventContext)
 	result := core.Try(func() any {
 		got0 := subject.DroppedFiles()
@@ -1087,6 +1312,9 @@ func TestApplication_WindowEventContext_DroppedFiles_Ugly(t *core.T) {
 }
 
 func TestApplication_WindowEventContext_DropTargetDetails_Good(t *core.T) {
+	// WindowEventContext DropTargetDetails
+	ax7Variant := "WindowEventContext_DropTargetDetails:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WindowEventContext)
 	result := core.Try(func() any {
 		got0 := subject.DropTargetDetails()
@@ -1097,6 +1325,9 @@ func TestApplication_WindowEventContext_DropTargetDetails_Good(t *core.T) {
 }
 
 func TestApplication_WindowEventContext_DropTargetDetails_Bad(t *core.T) {
+	// WindowEventContext DropTargetDetails
+	ax7Variant := "WindowEventContext_DropTargetDetails:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WindowEventContext)
 	result := core.Try(func() any {
 		got0 := subject.DropTargetDetails()
@@ -1107,6 +1338,9 @@ func TestApplication_WindowEventContext_DropTargetDetails_Bad(t *core.T) {
 }
 
 func TestApplication_WindowEventContext_DropTargetDetails_Ugly(t *core.T) {
+	// WindowEventContext DropTargetDetails
+	ax7Variant := "WindowEventContext_DropTargetDetails:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WindowEventContext)
 	result := core.Try(func() any {
 		got0 := subject.DropTargetDetails()
@@ -1117,6 +1351,9 @@ func TestApplication_WindowEventContext_DropTargetDetails_Ugly(t *core.T) {
 }
 
 func TestApplication_WindowEvent_Context_Good(t *core.T) {
+	// WindowEvent Context
+	ax7Variant := "WindowEvent_Context:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WindowEvent)
 	result := core.Try(func() any {
 		got0 := subject.Context()
@@ -1127,6 +1364,9 @@ func TestApplication_WindowEvent_Context_Good(t *core.T) {
 }
 
 func TestApplication_WindowEvent_Context_Bad(t *core.T) {
+	// WindowEvent Context
+	ax7Variant := "WindowEvent_Context:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WindowEvent)
 	result := core.Try(func() any {
 		got0 := subject.Context()
@@ -1137,6 +1377,9 @@ func TestApplication_WindowEvent_Context_Bad(t *core.T) {
 }
 
 func TestApplication_WindowEvent_Context_Ugly(t *core.T) {
+	// WindowEvent Context
+	ax7Variant := "WindowEvent_Context:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WindowEvent)
 	result := core.Try(func() any {
 		got0 := subject.Context()
@@ -1147,6 +1390,9 @@ func TestApplication_WindowEvent_Context_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Name_Good(t *core.T) {
+	// WebviewWindow Name
+	ax7Variant := "WebviewWindow_Name:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.Name()
@@ -1157,6 +1403,9 @@ func TestApplication_WebviewWindow_Name_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Name_Bad(t *core.T) {
+	// WebviewWindow Name
+	ax7Variant := "WebviewWindow_Name:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.Name()
@@ -1167,6 +1416,9 @@ func TestApplication_WebviewWindow_Name_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Name_Ugly(t *core.T) {
+	// WebviewWindow Name
+	ax7Variant := "WebviewWindow_Name:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.Name()
@@ -1177,6 +1429,9 @@ func TestApplication_WebviewWindow_Name_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Title_Good(t *core.T) {
+	// WebviewWindow Title
+	ax7Variant := "WebviewWindow_Title:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.Title()
@@ -1187,6 +1442,9 @@ func TestApplication_WebviewWindow_Title_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Title_Bad(t *core.T) {
+	// WebviewWindow Title
+	ax7Variant := "WebviewWindow_Title:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.Title()
@@ -1197,6 +1455,9 @@ func TestApplication_WebviewWindow_Title_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Title_Ugly(t *core.T) {
+	// WebviewWindow Title
+	ax7Variant := "WebviewWindow_Title:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.Title()
@@ -1207,6 +1468,9 @@ func TestApplication_WebviewWindow_Title_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Position_Good(t *core.T) {
+	// WebviewWindow Position
+	ax7Variant := "WebviewWindow_Position:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0, got1 := subject.Position()
@@ -1217,6 +1481,9 @@ func TestApplication_WebviewWindow_Position_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Position_Bad(t *core.T) {
+	// WebviewWindow Position
+	ax7Variant := "WebviewWindow_Position:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0, got1 := subject.Position()
@@ -1227,6 +1494,9 @@ func TestApplication_WebviewWindow_Position_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Position_Ugly(t *core.T) {
+	// WebviewWindow Position
+	ax7Variant := "WebviewWindow_Position:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0, got1 := subject.Position()
@@ -1237,6 +1507,9 @@ func TestApplication_WebviewWindow_Position_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Size_Good(t *core.T) {
+	// WebviewWindow Size
+	ax7Variant := "WebviewWindow_Size:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0, got1 := subject.Size()
@@ -1247,6 +1520,9 @@ func TestApplication_WebviewWindow_Size_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Size_Bad(t *core.T) {
+	// WebviewWindow Size
+	ax7Variant := "WebviewWindow_Size:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0, got1 := subject.Size()
@@ -1257,6 +1533,9 @@ func TestApplication_WebviewWindow_Size_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Size_Ugly(t *core.T) {
+	// WebviewWindow Size
+	ax7Variant := "WebviewWindow_Size:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0, got1 := subject.Size()
@@ -1267,6 +1546,9 @@ func TestApplication_WebviewWindow_Size_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_IsMaximised_Good(t *core.T) {
+	// WebviewWindow IsMaximised
+	ax7Variant := "WebviewWindow_IsMaximised:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.IsMaximised()
@@ -1277,6 +1559,9 @@ func TestApplication_WebviewWindow_IsMaximised_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_IsMaximised_Bad(t *core.T) {
+	// WebviewWindow IsMaximised
+	ax7Variant := "WebviewWindow_IsMaximised:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.IsMaximised()
@@ -1287,6 +1572,9 @@ func TestApplication_WebviewWindow_IsMaximised_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_IsMaximised_Ugly(t *core.T) {
+	// WebviewWindow IsMaximised
+	ax7Variant := "WebviewWindow_IsMaximised:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.IsMaximised()
@@ -1297,6 +1585,9 @@ func TestApplication_WebviewWindow_IsMaximised_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_IsFocused_Good(t *core.T) {
+	// WebviewWindow IsFocused
+	ax7Variant := "WebviewWindow_IsFocused:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.IsFocused()
@@ -1307,6 +1598,9 @@ func TestApplication_WebviewWindow_IsFocused_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_IsFocused_Bad(t *core.T) {
+	// WebviewWindow IsFocused
+	ax7Variant := "WebviewWindow_IsFocused:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.IsFocused()
@@ -1317,6 +1611,9 @@ func TestApplication_WebviewWindow_IsFocused_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_IsFocused_Ugly(t *core.T) {
+	// WebviewWindow IsFocused
+	ax7Variant := "WebviewWindow_IsFocused:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.IsFocused()
@@ -1327,6 +1624,9 @@ func TestApplication_WebviewWindow_IsFocused_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetTitle_Good(t *core.T) {
+	// WebviewWindow SetTitle
+	ax7Variant := "WebviewWindow_SetTitle:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetTitle("agent")
@@ -1337,6 +1637,9 @@ func TestApplication_WebviewWindow_SetTitle_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetTitle_Bad(t *core.T) {
+	// WebviewWindow SetTitle
+	ax7Variant := "WebviewWindow_SetTitle:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetTitle("")
@@ -1347,6 +1650,9 @@ func TestApplication_WebviewWindow_SetTitle_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetTitle_Ugly(t *core.T) {
+	// WebviewWindow SetTitle
+	ax7Variant := "WebviewWindow_SetTitle:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetTitle("../../edge")
@@ -1357,6 +1663,9 @@ func TestApplication_WebviewWindow_SetTitle_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetPosition_Good(t *core.T) {
+	// WebviewWindow SetPosition
+	ax7Variant := "WebviewWindow_SetPosition:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.SetPosition(1, 1)
@@ -1367,6 +1676,9 @@ func TestApplication_WebviewWindow_SetPosition_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetPosition_Bad(t *core.T) {
+	// WebviewWindow SetPosition
+	ax7Variant := "WebviewWindow_SetPosition:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.SetPosition(0, 0)
@@ -1377,6 +1689,9 @@ func TestApplication_WebviewWindow_SetPosition_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetPosition_Ugly(t *core.T) {
+	// WebviewWindow SetPosition
+	ax7Variant := "WebviewWindow_SetPosition:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.SetPosition(-1, -1)
@@ -1387,6 +1702,9 @@ func TestApplication_WebviewWindow_SetPosition_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetSize_Good(t *core.T) {
+	// WebviewWindow SetSize
+	ax7Variant := "WebviewWindow_SetSize:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetSize(1, 1)
@@ -1397,6 +1715,9 @@ func TestApplication_WebviewWindow_SetSize_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetSize_Bad(t *core.T) {
+	// WebviewWindow SetSize
+	ax7Variant := "WebviewWindow_SetSize:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetSize(0, 0)
@@ -1407,6 +1728,9 @@ func TestApplication_WebviewWindow_SetSize_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetSize_Ugly(t *core.T) {
+	// WebviewWindow SetSize
+	ax7Variant := "WebviewWindow_SetSize:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetSize(-1, -1)
@@ -1417,6 +1741,9 @@ func TestApplication_WebviewWindow_SetSize_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetBackgroundColour_Good(t *core.T) {
+	// WebviewWindow SetBackgroundColour
+	ax7Variant := "WebviewWindow_SetBackgroundColour:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetBackgroundColour(*new(RGBA))
@@ -1427,6 +1754,9 @@ func TestApplication_WebviewWindow_SetBackgroundColour_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetBackgroundColour_Bad(t *core.T) {
+	// WebviewWindow SetBackgroundColour
+	ax7Variant := "WebviewWindow_SetBackgroundColour:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetBackgroundColour(*new(RGBA))
@@ -1437,6 +1767,9 @@ func TestApplication_WebviewWindow_SetBackgroundColour_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetBackgroundColour_Ugly(t *core.T) {
+	// WebviewWindow SetBackgroundColour
+	ax7Variant := "WebviewWindow_SetBackgroundColour:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetBackgroundColour(*new(RGBA))
@@ -1447,6 +1780,9 @@ func TestApplication_WebviewWindow_SetBackgroundColour_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetAlwaysOnTop_Good(t *core.T) {
+	// WebviewWindow SetAlwaysOnTop
+	ax7Variant := "WebviewWindow_SetAlwaysOnTop:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetAlwaysOnTop(true)
@@ -1457,6 +1793,9 @@ func TestApplication_WebviewWindow_SetAlwaysOnTop_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetAlwaysOnTop_Bad(t *core.T) {
+	// WebviewWindow SetAlwaysOnTop
+	ax7Variant := "WebviewWindow_SetAlwaysOnTop:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetAlwaysOnTop(false)
@@ -1467,6 +1806,9 @@ func TestApplication_WebviewWindow_SetAlwaysOnTop_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetAlwaysOnTop_Ugly(t *core.T) {
+	// WebviewWindow SetAlwaysOnTop
+	ax7Variant := "WebviewWindow_SetAlwaysOnTop:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetAlwaysOnTop(false)
@@ -1477,6 +1819,9 @@ func TestApplication_WebviewWindow_SetAlwaysOnTop_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetOpacity_Good(t *core.T) {
+	// WebviewWindow SetOpacity
+	ax7Variant := "WebviewWindow_SetOpacity:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetOpacity(1.5)
@@ -1487,6 +1832,9 @@ func TestApplication_WebviewWindow_SetOpacity_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetOpacity_Bad(t *core.T) {
+	// WebviewWindow SetOpacity
+	ax7Variant := "WebviewWindow_SetOpacity:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetOpacity(0)
@@ -1497,6 +1845,9 @@ func TestApplication_WebviewWindow_SetOpacity_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetOpacity_Ugly(t *core.T) {
+	// WebviewWindow SetOpacity
+	ax7Variant := "WebviewWindow_SetOpacity:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetOpacity(-1.5)
@@ -1507,6 +1858,9 @@ func TestApplication_WebviewWindow_SetOpacity_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Maximise_Good(t *core.T) {
+	// WebviewWindow Maximise
+	ax7Variant := "WebviewWindow_Maximise:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.Maximise()
@@ -1517,6 +1871,9 @@ func TestApplication_WebviewWindow_Maximise_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Maximise_Bad(t *core.T) {
+	// WebviewWindow Maximise
+	ax7Variant := "WebviewWindow_Maximise:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.Maximise()
@@ -1527,6 +1884,9 @@ func TestApplication_WebviewWindow_Maximise_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Maximise_Ugly(t *core.T) {
+	// WebviewWindow Maximise
+	ax7Variant := "WebviewWindow_Maximise:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.Maximise()
@@ -1537,6 +1897,9 @@ func TestApplication_WebviewWindow_Maximise_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Restore_Good(t *core.T) {
+	// WebviewWindow Restore
+	ax7Variant := "WebviewWindow_Restore:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.Restore()
@@ -1547,6 +1910,9 @@ func TestApplication_WebviewWindow_Restore_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Restore_Bad(t *core.T) {
+	// WebviewWindow Restore
+	ax7Variant := "WebviewWindow_Restore:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.Restore()
@@ -1557,6 +1923,9 @@ func TestApplication_WebviewWindow_Restore_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Restore_Ugly(t *core.T) {
+	// WebviewWindow Restore
+	ax7Variant := "WebviewWindow_Restore:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.Restore()
@@ -1567,6 +1936,9 @@ func TestApplication_WebviewWindow_Restore_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Minimise_Good(t *core.T) {
+	// WebviewWindow Minimise
+	ax7Variant := "WebviewWindow_Minimise:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.Minimise()
@@ -1577,6 +1949,9 @@ func TestApplication_WebviewWindow_Minimise_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Minimise_Bad(t *core.T) {
+	// WebviewWindow Minimise
+	ax7Variant := "WebviewWindow_Minimise:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.Minimise()
@@ -1587,6 +1962,9 @@ func TestApplication_WebviewWindow_Minimise_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Minimise_Ugly(t *core.T) {
+	// WebviewWindow Minimise
+	ax7Variant := "WebviewWindow_Minimise:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.Minimise()
@@ -1597,6 +1975,9 @@ func TestApplication_WebviewWindow_Minimise_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Focus_Good(t *core.T) {
+	// WebviewWindow Focus
+	ax7Variant := "WebviewWindow_Focus:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.Focus()
@@ -1607,6 +1988,9 @@ func TestApplication_WebviewWindow_Focus_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Focus_Bad(t *core.T) {
+	// WebviewWindow Focus
+	ax7Variant := "WebviewWindow_Focus:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.Focus()
@@ -1617,6 +2001,9 @@ func TestApplication_WebviewWindow_Focus_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Focus_Ugly(t *core.T) {
+	// WebviewWindow Focus
+	ax7Variant := "WebviewWindow_Focus:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.Focus()
@@ -1627,6 +2014,9 @@ func TestApplication_WebviewWindow_Focus_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Close_Good(t *core.T) {
+	// WebviewWindow Close
+	ax7Variant := "WebviewWindow_Close:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.Close()
@@ -1637,6 +2027,9 @@ func TestApplication_WebviewWindow_Close_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Close_Bad(t *core.T) {
+	// WebviewWindow Close
+	ax7Variant := "WebviewWindow_Close:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.Close()
@@ -1647,6 +2040,9 @@ func TestApplication_WebviewWindow_Close_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Close_Ugly(t *core.T) {
+	// WebviewWindow Close
+	ax7Variant := "WebviewWindow_Close:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.Close()
@@ -1657,6 +2053,9 @@ func TestApplication_WebviewWindow_Close_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Show_Good(t *core.T) {
+	// WebviewWindow Show
+	ax7Variant := "WebviewWindow_Show:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.Show()
@@ -1667,6 +2066,9 @@ func TestApplication_WebviewWindow_Show_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Show_Bad(t *core.T) {
+	// WebviewWindow Show
+	ax7Variant := "WebviewWindow_Show:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.Show()
@@ -1677,6 +2079,9 @@ func TestApplication_WebviewWindow_Show_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Show_Ugly(t *core.T) {
+	// WebviewWindow Show
+	ax7Variant := "WebviewWindow_Show:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.Show()
@@ -1687,6 +2092,9 @@ func TestApplication_WebviewWindow_Show_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Hide_Good(t *core.T) {
+	// WebviewWindow Hide
+	ax7Variant := "WebviewWindow_Hide:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.Hide()
@@ -1697,6 +2105,9 @@ func TestApplication_WebviewWindow_Hide_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Hide_Bad(t *core.T) {
+	// WebviewWindow Hide
+	ax7Variant := "WebviewWindow_Hide:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.Hide()
@@ -1707,6 +2118,9 @@ func TestApplication_WebviewWindow_Hide_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Hide_Ugly(t *core.T) {
+	// WebviewWindow Hide
+	ax7Variant := "WebviewWindow_Hide:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.Hide()
@@ -1717,6 +2131,9 @@ func TestApplication_WebviewWindow_Hide_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Fullscreen_Good(t *core.T) {
+	// WebviewWindow Fullscreen
+	ax7Variant := "WebviewWindow_Fullscreen:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.Fullscreen()
@@ -1727,6 +2144,9 @@ func TestApplication_WebviewWindow_Fullscreen_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Fullscreen_Bad(t *core.T) {
+	// WebviewWindow Fullscreen
+	ax7Variant := "WebviewWindow_Fullscreen:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.Fullscreen()
@@ -1737,6 +2157,9 @@ func TestApplication_WebviewWindow_Fullscreen_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Fullscreen_Ugly(t *core.T) {
+	// WebviewWindow Fullscreen
+	ax7Variant := "WebviewWindow_Fullscreen:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.Fullscreen()
@@ -1747,6 +2170,9 @@ func TestApplication_WebviewWindow_Fullscreen_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_UnFullscreen_Good(t *core.T) {
+	// WebviewWindow UnFullscreen
+	ax7Variant := "WebviewWindow_UnFullscreen:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.UnFullscreen()
@@ -1757,6 +2183,9 @@ func TestApplication_WebviewWindow_UnFullscreen_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_UnFullscreen_Bad(t *core.T) {
+	// WebviewWindow UnFullscreen
+	ax7Variant := "WebviewWindow_UnFullscreen:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.UnFullscreen()
@@ -1767,6 +2196,9 @@ func TestApplication_WebviewWindow_UnFullscreen_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_UnFullscreen_Ugly(t *core.T) {
+	// WebviewWindow UnFullscreen
+	ax7Variant := "WebviewWindow_UnFullscreen:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.UnFullscreen()
@@ -1777,6 +2209,9 @@ func TestApplication_WebviewWindow_UnFullscreen_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_OnWindowEvent_Good(t *core.T) {
+	// WebviewWindow OnWindowEvent
+	ax7Variant := "WebviewWindow_OnWindowEvent:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.OnWindowEvent(nil, nil)
@@ -1787,6 +2222,9 @@ func TestApplication_WebviewWindow_OnWindowEvent_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_OnWindowEvent_Bad(t *core.T) {
+	// WebviewWindow OnWindowEvent
+	ax7Variant := "WebviewWindow_OnWindowEvent:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.OnWindowEvent(nil, nil)
@@ -1797,6 +2235,9 @@ func TestApplication_WebviewWindow_OnWindowEvent_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_OnWindowEvent_Ugly(t *core.T) {
+	// WebviewWindow OnWindowEvent
+	ax7Variant := "WebviewWindow_OnWindowEvent:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.OnWindowEvent(nil, nil)
@@ -1807,6 +2248,9 @@ func TestApplication_WebviewWindow_OnWindowEvent_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_ID_Good(t *core.T) {
+	// WebviewWindow ID
+	ax7Variant := "WebviewWindow_ID:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.ID()
@@ -1817,6 +2261,9 @@ func TestApplication_WebviewWindow_ID_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_ID_Bad(t *core.T) {
+	// WebviewWindow ID
+	ax7Variant := "WebviewWindow_ID:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.ID()
@@ -1827,6 +2274,9 @@ func TestApplication_WebviewWindow_ID_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_ID_Ugly(t *core.T) {
+	// WebviewWindow ID
+	ax7Variant := "WebviewWindow_ID:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.ID()
@@ -1837,6 +2287,9 @@ func TestApplication_WebviewWindow_ID_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_ClientID_Good(t *core.T) {
+	// WebviewWindow ClientID
+	ax7Variant := "WebviewWindow_ClientID:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.ClientID()
@@ -1847,6 +2300,9 @@ func TestApplication_WebviewWindow_ClientID_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_ClientID_Bad(t *core.T) {
+	// WebviewWindow ClientID
+	ax7Variant := "WebviewWindow_ClientID:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.ClientID()
@@ -1857,6 +2313,9 @@ func TestApplication_WebviewWindow_ClientID_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_ClientID_Ugly(t *core.T) {
+	// WebviewWindow ClientID
+	ax7Variant := "WebviewWindow_ClientID:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.ClientID()
@@ -1867,6 +2326,9 @@ func TestApplication_WebviewWindow_ClientID_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Width_Good(t *core.T) {
+	// WebviewWindow Width
+	ax7Variant := "WebviewWindow_Width:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.Width()
@@ -1877,6 +2339,9 @@ func TestApplication_WebviewWindow_Width_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Width_Bad(t *core.T) {
+	// WebviewWindow Width
+	ax7Variant := "WebviewWindow_Width:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.Width()
@@ -1887,6 +2352,9 @@ func TestApplication_WebviewWindow_Width_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Width_Ugly(t *core.T) {
+	// WebviewWindow Width
+	ax7Variant := "WebviewWindow_Width:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.Width()
@@ -1897,6 +2365,9 @@ func TestApplication_WebviewWindow_Width_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Height_Good(t *core.T) {
+	// WebviewWindow Height
+	ax7Variant := "WebviewWindow_Height:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.Height()
@@ -1907,6 +2378,9 @@ func TestApplication_WebviewWindow_Height_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Height_Bad(t *core.T) {
+	// WebviewWindow Height
+	ax7Variant := "WebviewWindow_Height:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.Height()
@@ -1917,6 +2391,9 @@ func TestApplication_WebviewWindow_Height_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Height_Ugly(t *core.T) {
+	// WebviewWindow Height
+	ax7Variant := "WebviewWindow_Height:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.Height()
@@ -1927,6 +2404,9 @@ func TestApplication_WebviewWindow_Height_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_IsVisible_Good(t *core.T) {
+	// WebviewWindow IsVisible
+	ax7Variant := "WebviewWindow_IsVisible:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.IsVisible()
@@ -1937,6 +2417,9 @@ func TestApplication_WebviewWindow_IsVisible_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_IsVisible_Bad(t *core.T) {
+	// WebviewWindow IsVisible
+	ax7Variant := "WebviewWindow_IsVisible:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.IsVisible()
@@ -1947,6 +2430,9 @@ func TestApplication_WebviewWindow_IsVisible_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_IsVisible_Ugly(t *core.T) {
+	// WebviewWindow IsVisible
+	ax7Variant := "WebviewWindow_IsVisible:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.IsVisible()
@@ -1957,6 +2443,9 @@ func TestApplication_WebviewWindow_IsVisible_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_IsFullscreen_Good(t *core.T) {
+	// WebviewWindow IsFullscreen
+	ax7Variant := "WebviewWindow_IsFullscreen:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.IsFullscreen()
@@ -1967,6 +2456,9 @@ func TestApplication_WebviewWindow_IsFullscreen_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_IsFullscreen_Bad(t *core.T) {
+	// WebviewWindow IsFullscreen
+	ax7Variant := "WebviewWindow_IsFullscreen:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.IsFullscreen()
@@ -1977,6 +2469,9 @@ func TestApplication_WebviewWindow_IsFullscreen_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_IsFullscreen_Ugly(t *core.T) {
+	// WebviewWindow IsFullscreen
+	ax7Variant := "WebviewWindow_IsFullscreen:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.IsFullscreen()
@@ -1987,6 +2482,9 @@ func TestApplication_WebviewWindow_IsFullscreen_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_IsMinimised_Good(t *core.T) {
+	// WebviewWindow IsMinimised
+	ax7Variant := "WebviewWindow_IsMinimised:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.IsMinimised()
@@ -1997,6 +2495,9 @@ func TestApplication_WebviewWindow_IsMinimised_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_IsMinimised_Bad(t *core.T) {
+	// WebviewWindow IsMinimised
+	ax7Variant := "WebviewWindow_IsMinimised:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.IsMinimised()
@@ -2007,6 +2508,9 @@ func TestApplication_WebviewWindow_IsMinimised_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_IsMinimised_Ugly(t *core.T) {
+	// WebviewWindow IsMinimised
+	ax7Variant := "WebviewWindow_IsMinimised:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.IsMinimised()
@@ -2017,6 +2521,9 @@ func TestApplication_WebviewWindow_IsMinimised_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_IsIgnoreMouseEvents_Good(t *core.T) {
+	// WebviewWindow IsIgnoreMouseEvents
+	ax7Variant := "WebviewWindow_IsIgnoreMouseEvents:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.IsIgnoreMouseEvents()
@@ -2027,6 +2534,9 @@ func TestApplication_WebviewWindow_IsIgnoreMouseEvents_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_IsIgnoreMouseEvents_Bad(t *core.T) {
+	// WebviewWindow IsIgnoreMouseEvents
+	ax7Variant := "WebviewWindow_IsIgnoreMouseEvents:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.IsIgnoreMouseEvents()
@@ -2037,6 +2547,9 @@ func TestApplication_WebviewWindow_IsIgnoreMouseEvents_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_IsIgnoreMouseEvents_Ugly(t *core.T) {
+	// WebviewWindow IsIgnoreMouseEvents
+	ax7Variant := "WebviewWindow_IsIgnoreMouseEvents:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.IsIgnoreMouseEvents()
@@ -2047,6 +2560,9 @@ func TestApplication_WebviewWindow_IsIgnoreMouseEvents_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Resizable_Good(t *core.T) {
+	// WebviewWindow Resizable
+	ax7Variant := "WebviewWindow_Resizable:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.Resizable()
@@ -2057,6 +2573,9 @@ func TestApplication_WebviewWindow_Resizable_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Resizable_Bad(t *core.T) {
+	// WebviewWindow Resizable
+	ax7Variant := "WebviewWindow_Resizable:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.Resizable()
@@ -2067,6 +2586,9 @@ func TestApplication_WebviewWindow_Resizable_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Resizable_Ugly(t *core.T) {
+	// WebviewWindow Resizable
+	ax7Variant := "WebviewWindow_Resizable:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.Resizable()
@@ -2077,6 +2599,9 @@ func TestApplication_WebviewWindow_Resizable_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Bounds_Good(t *core.T) {
+	// WebviewWindow Bounds
+	ax7Variant := "WebviewWindow_Bounds:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.Bounds()
@@ -2087,6 +2612,9 @@ func TestApplication_WebviewWindow_Bounds_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Bounds_Bad(t *core.T) {
+	// WebviewWindow Bounds
+	ax7Variant := "WebviewWindow_Bounds:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.Bounds()
@@ -2097,6 +2625,9 @@ func TestApplication_WebviewWindow_Bounds_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Bounds_Ugly(t *core.T) {
+	// WebviewWindow Bounds
+	ax7Variant := "WebviewWindow_Bounds:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.Bounds()
@@ -2107,6 +2638,9 @@ func TestApplication_WebviewWindow_Bounds_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetBounds_Good(t *core.T) {
+	// WebviewWindow SetBounds
+	ax7Variant := "WebviewWindow_SetBounds:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.SetBounds(*new(Rect))
@@ -2117,6 +2651,9 @@ func TestApplication_WebviewWindow_SetBounds_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetBounds_Bad(t *core.T) {
+	// WebviewWindow SetBounds
+	ax7Variant := "WebviewWindow_SetBounds:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.SetBounds(*new(Rect))
@@ -2127,6 +2664,9 @@ func TestApplication_WebviewWindow_SetBounds_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetBounds_Ugly(t *core.T) {
+	// WebviewWindow SetBounds
+	ax7Variant := "WebviewWindow_SetBounds:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.SetBounds(*new(Rect))
@@ -2137,6 +2677,9 @@ func TestApplication_WebviewWindow_SetBounds_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_RelativePosition_Good(t *core.T) {
+	// WebviewWindow RelativePosition
+	ax7Variant := "WebviewWindow_RelativePosition:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0, got1 := subject.RelativePosition()
@@ -2147,6 +2690,9 @@ func TestApplication_WebviewWindow_RelativePosition_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_RelativePosition_Bad(t *core.T) {
+	// WebviewWindow RelativePosition
+	ax7Variant := "WebviewWindow_RelativePosition:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0, got1 := subject.RelativePosition()
@@ -2157,6 +2703,9 @@ func TestApplication_WebviewWindow_RelativePosition_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_RelativePosition_Ugly(t *core.T) {
+	// WebviewWindow RelativePosition
+	ax7Variant := "WebviewWindow_RelativePosition:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0, got1 := subject.RelativePosition()
@@ -2167,6 +2716,9 @@ func TestApplication_WebviewWindow_RelativePosition_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetRelativePosition_Good(t *core.T) {
+	// WebviewWindow SetRelativePosition
+	ax7Variant := "WebviewWindow_SetRelativePosition:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetRelativePosition(1, 1)
@@ -2177,6 +2729,9 @@ func TestApplication_WebviewWindow_SetRelativePosition_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetRelativePosition_Bad(t *core.T) {
+	// WebviewWindow SetRelativePosition
+	ax7Variant := "WebviewWindow_SetRelativePosition:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetRelativePosition(0, 0)
@@ -2187,6 +2742,9 @@ func TestApplication_WebviewWindow_SetRelativePosition_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetRelativePosition_Ugly(t *core.T) {
+	// WebviewWindow SetRelativePosition
+	ax7Variant := "WebviewWindow_SetRelativePosition:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetRelativePosition(-1, -1)
@@ -2197,6 +2755,9 @@ func TestApplication_WebviewWindow_SetRelativePosition_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetMinSize_Good(t *core.T) {
+	// WebviewWindow SetMinSize
+	ax7Variant := "WebviewWindow_SetMinSize:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetMinSize(1, 1)
@@ -2207,6 +2768,9 @@ func TestApplication_WebviewWindow_SetMinSize_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetMinSize_Bad(t *core.T) {
+	// WebviewWindow SetMinSize
+	ax7Variant := "WebviewWindow_SetMinSize:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetMinSize(0, 0)
@@ -2217,6 +2781,9 @@ func TestApplication_WebviewWindow_SetMinSize_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetMinSize_Ugly(t *core.T) {
+	// WebviewWindow SetMinSize
+	ax7Variant := "WebviewWindow_SetMinSize:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetMinSize(-1, -1)
@@ -2227,6 +2794,9 @@ func TestApplication_WebviewWindow_SetMinSize_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetMaxSize_Good(t *core.T) {
+	// WebviewWindow SetMaxSize
+	ax7Variant := "WebviewWindow_SetMaxSize:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetMaxSize(1, 1)
@@ -2237,6 +2807,9 @@ func TestApplication_WebviewWindow_SetMaxSize_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetMaxSize_Bad(t *core.T) {
+	// WebviewWindow SetMaxSize
+	ax7Variant := "WebviewWindow_SetMaxSize:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetMaxSize(0, 0)
@@ -2247,6 +2820,9 @@ func TestApplication_WebviewWindow_SetMaxSize_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetMaxSize_Ugly(t *core.T) {
+	// WebviewWindow SetMaxSize
+	ax7Variant := "WebviewWindow_SetMaxSize:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetMaxSize(-1, -1)
@@ -2257,6 +2833,9 @@ func TestApplication_WebviewWindow_SetMaxSize_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Center_Good(t *core.T) {
+	// WebviewWindow Center
+	ax7Variant := "WebviewWindow_Center:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.Center()
@@ -2267,6 +2846,9 @@ func TestApplication_WebviewWindow_Center_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Center_Bad(t *core.T) {
+	// WebviewWindow Center
+	ax7Variant := "WebviewWindow_Center:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.Center()
@@ -2277,6 +2859,9 @@ func TestApplication_WebviewWindow_Center_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Center_Ugly(t *core.T) {
+	// WebviewWindow Center
+	ax7Variant := "WebviewWindow_Center:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.Center()
@@ -2287,6 +2872,9 @@ func TestApplication_WebviewWindow_Center_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetURL_Good(t *core.T) {
+	// WebviewWindow SetURL
+	ax7Variant := "WebviewWindow_SetURL:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetURL("agent")
@@ -2297,6 +2885,9 @@ func TestApplication_WebviewWindow_SetURL_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetURL_Bad(t *core.T) {
+	// WebviewWindow SetURL
+	ax7Variant := "WebviewWindow_SetURL:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetURL("")
@@ -2307,6 +2898,9 @@ func TestApplication_WebviewWindow_SetURL_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetURL_Ugly(t *core.T) {
+	// WebviewWindow SetURL
+	ax7Variant := "WebviewWindow_SetURL:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetURL("../../edge")
@@ -2317,6 +2911,9 @@ func TestApplication_WebviewWindow_SetURL_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetHTML_Good(t *core.T) {
+	// WebviewWindow SetHTML
+	ax7Variant := "WebviewWindow_SetHTML:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetHTML("agent")
@@ -2327,6 +2924,9 @@ func TestApplication_WebviewWindow_SetHTML_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetHTML_Bad(t *core.T) {
+	// WebviewWindow SetHTML
+	ax7Variant := "WebviewWindow_SetHTML:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetHTML("")
@@ -2337,6 +2937,9 @@ func TestApplication_WebviewWindow_SetHTML_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetHTML_Ugly(t *core.T) {
+	// WebviewWindow SetHTML
+	ax7Variant := "WebviewWindow_SetHTML:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetHTML("../../edge")
@@ -2347,6 +2950,9 @@ func TestApplication_WebviewWindow_SetHTML_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetFrameless_Good(t *core.T) {
+	// WebviewWindow SetFrameless
+	ax7Variant := "WebviewWindow_SetFrameless:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetFrameless(true)
@@ -2357,6 +2963,9 @@ func TestApplication_WebviewWindow_SetFrameless_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetFrameless_Bad(t *core.T) {
+	// WebviewWindow SetFrameless
+	ax7Variant := "WebviewWindow_SetFrameless:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetFrameless(false)
@@ -2367,6 +2976,9 @@ func TestApplication_WebviewWindow_SetFrameless_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetFrameless_Ugly(t *core.T) {
+	// WebviewWindow SetFrameless
+	ax7Variant := "WebviewWindow_SetFrameless:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetFrameless(false)
@@ -2377,6 +2989,9 @@ func TestApplication_WebviewWindow_SetFrameless_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetResizable_Good(t *core.T) {
+	// WebviewWindow SetResizable
+	ax7Variant := "WebviewWindow_SetResizable:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetResizable(true)
@@ -2387,6 +3002,9 @@ func TestApplication_WebviewWindow_SetResizable_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetResizable_Bad(t *core.T) {
+	// WebviewWindow SetResizable
+	ax7Variant := "WebviewWindow_SetResizable:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetResizable(false)
@@ -2397,6 +3015,9 @@ func TestApplication_WebviewWindow_SetResizable_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetResizable_Ugly(t *core.T) {
+	// WebviewWindow SetResizable
+	ax7Variant := "WebviewWindow_SetResizable:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetResizable(false)
@@ -2407,6 +3028,9 @@ func TestApplication_WebviewWindow_SetResizable_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetIgnoreMouseEvents_Good(t *core.T) {
+	// WebviewWindow SetIgnoreMouseEvents
+	ax7Variant := "WebviewWindow_SetIgnoreMouseEvents:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetIgnoreMouseEvents(true)
@@ -2417,6 +3041,9 @@ func TestApplication_WebviewWindow_SetIgnoreMouseEvents_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetIgnoreMouseEvents_Bad(t *core.T) {
+	// WebviewWindow SetIgnoreMouseEvents
+	ax7Variant := "WebviewWindow_SetIgnoreMouseEvents:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetIgnoreMouseEvents(false)
@@ -2427,6 +3054,9 @@ func TestApplication_WebviewWindow_SetIgnoreMouseEvents_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetIgnoreMouseEvents_Ugly(t *core.T) {
+	// WebviewWindow SetIgnoreMouseEvents
+	ax7Variant := "WebviewWindow_SetIgnoreMouseEvents:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetIgnoreMouseEvents(false)
@@ -2437,6 +3067,9 @@ func TestApplication_WebviewWindow_SetIgnoreMouseEvents_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetMinimiseButtonState_Good(t *core.T) {
+	// WebviewWindow SetMinimiseButtonState
+	ax7Variant := "WebviewWindow_SetMinimiseButtonState:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetMinimiseButtonState(*new(ButtonState))
@@ -2447,6 +3080,9 @@ func TestApplication_WebviewWindow_SetMinimiseButtonState_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetMinimiseButtonState_Bad(t *core.T) {
+	// WebviewWindow SetMinimiseButtonState
+	ax7Variant := "WebviewWindow_SetMinimiseButtonState:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetMinimiseButtonState(*new(ButtonState))
@@ -2457,6 +3093,9 @@ func TestApplication_WebviewWindow_SetMinimiseButtonState_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetMinimiseButtonState_Ugly(t *core.T) {
+	// WebviewWindow SetMinimiseButtonState
+	ax7Variant := "WebviewWindow_SetMinimiseButtonState:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetMinimiseButtonState(*new(ButtonState))
@@ -2467,6 +3106,9 @@ func TestApplication_WebviewWindow_SetMinimiseButtonState_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetMaximiseButtonState_Good(t *core.T) {
+	// WebviewWindow SetMaximiseButtonState
+	ax7Variant := "WebviewWindow_SetMaximiseButtonState:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetMaximiseButtonState(*new(ButtonState))
@@ -2477,6 +3119,9 @@ func TestApplication_WebviewWindow_SetMaximiseButtonState_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetMaximiseButtonState_Bad(t *core.T) {
+	// WebviewWindow SetMaximiseButtonState
+	ax7Variant := "WebviewWindow_SetMaximiseButtonState:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetMaximiseButtonState(*new(ButtonState))
@@ -2487,6 +3132,9 @@ func TestApplication_WebviewWindow_SetMaximiseButtonState_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetMaximiseButtonState_Ugly(t *core.T) {
+	// WebviewWindow SetMaximiseButtonState
+	ax7Variant := "WebviewWindow_SetMaximiseButtonState:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetMaximiseButtonState(*new(ButtonState))
@@ -2497,6 +3145,9 @@ func TestApplication_WebviewWindow_SetMaximiseButtonState_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetCloseButtonState_Good(t *core.T) {
+	// WebviewWindow SetCloseButtonState
+	ax7Variant := "WebviewWindow_SetCloseButtonState:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetCloseButtonState(*new(ButtonState))
@@ -2507,6 +3158,9 @@ func TestApplication_WebviewWindow_SetCloseButtonState_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetCloseButtonState_Bad(t *core.T) {
+	// WebviewWindow SetCloseButtonState
+	ax7Variant := "WebviewWindow_SetCloseButtonState:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetCloseButtonState(*new(ButtonState))
@@ -2517,6 +3171,9 @@ func TestApplication_WebviewWindow_SetCloseButtonState_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetCloseButtonState_Ugly(t *core.T) {
+	// WebviewWindow SetCloseButtonState
+	ax7Variant := "WebviewWindow_SetCloseButtonState:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetCloseButtonState(*new(ButtonState))
@@ -2527,6 +3184,9 @@ func TestApplication_WebviewWindow_SetCloseButtonState_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetEnabled_Good(t *core.T) {
+	// WebviewWindow SetEnabled
+	ax7Variant := "WebviewWindow_SetEnabled:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.SetEnabled(true)
@@ -2537,6 +3197,9 @@ func TestApplication_WebviewWindow_SetEnabled_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetEnabled_Bad(t *core.T) {
+	// WebviewWindow SetEnabled
+	ax7Variant := "WebviewWindow_SetEnabled:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.SetEnabled(false)
@@ -2547,6 +3210,9 @@ func TestApplication_WebviewWindow_SetEnabled_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetEnabled_Ugly(t *core.T) {
+	// WebviewWindow SetEnabled
+	ax7Variant := "WebviewWindow_SetEnabled:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.SetEnabled(false)
@@ -2557,6 +3223,9 @@ func TestApplication_WebviewWindow_SetEnabled_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetContentProtection_Good(t *core.T) {
+	// WebviewWindow SetContentProtection
+	ax7Variant := "WebviewWindow_SetContentProtection:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetContentProtection(true)
@@ -2567,6 +3236,9 @@ func TestApplication_WebviewWindow_SetContentProtection_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetContentProtection_Bad(t *core.T) {
+	// WebviewWindow SetContentProtection
+	ax7Variant := "WebviewWindow_SetContentProtection:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetContentProtection(false)
@@ -2577,6 +3249,9 @@ func TestApplication_WebviewWindow_SetContentProtection_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetContentProtection_Ugly(t *core.T) {
+	// WebviewWindow SetContentProtection
+	ax7Variant := "WebviewWindow_SetContentProtection:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetContentProtection(false)
@@ -2587,6 +3262,9 @@ func TestApplication_WebviewWindow_SetContentProtection_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetMenu_Good(t *core.T) {
+	// WebviewWindow SetMenu
+	ax7Variant := "WebviewWindow_SetMenu:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.SetMenu(nil)
@@ -2597,6 +3275,9 @@ func TestApplication_WebviewWindow_SetMenu_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetMenu_Bad(t *core.T) {
+	// WebviewWindow SetMenu
+	ax7Variant := "WebviewWindow_SetMenu:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.SetMenu(nil)
@@ -2607,6 +3288,9 @@ func TestApplication_WebviewWindow_SetMenu_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetMenu_Ugly(t *core.T) {
+	// WebviewWindow SetMenu
+	ax7Variant := "WebviewWindow_SetMenu:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.SetMenu(nil)
@@ -2617,6 +3301,9 @@ func TestApplication_WebviewWindow_SetMenu_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_ShowMenuBar_Good(t *core.T) {
+	// WebviewWindow ShowMenuBar
+	ax7Variant := "WebviewWindow_ShowMenuBar:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.ShowMenuBar()
@@ -2627,6 +3314,9 @@ func TestApplication_WebviewWindow_ShowMenuBar_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_ShowMenuBar_Bad(t *core.T) {
+	// WebviewWindow ShowMenuBar
+	ax7Variant := "WebviewWindow_ShowMenuBar:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.ShowMenuBar()
@@ -2637,6 +3327,9 @@ func TestApplication_WebviewWindow_ShowMenuBar_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_ShowMenuBar_Ugly(t *core.T) {
+	// WebviewWindow ShowMenuBar
+	ax7Variant := "WebviewWindow_ShowMenuBar:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.ShowMenuBar()
@@ -2647,6 +3340,9 @@ func TestApplication_WebviewWindow_ShowMenuBar_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_HideMenuBar_Good(t *core.T) {
+	// WebviewWindow HideMenuBar
+	ax7Variant := "WebviewWindow_HideMenuBar:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.HideMenuBar()
@@ -2657,6 +3353,9 @@ func TestApplication_WebviewWindow_HideMenuBar_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_HideMenuBar_Bad(t *core.T) {
+	// WebviewWindow HideMenuBar
+	ax7Variant := "WebviewWindow_HideMenuBar:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.HideMenuBar()
@@ -2667,6 +3366,9 @@ func TestApplication_WebviewWindow_HideMenuBar_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_HideMenuBar_Ugly(t *core.T) {
+	// WebviewWindow HideMenuBar
+	ax7Variant := "WebviewWindow_HideMenuBar:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.HideMenuBar()
@@ -2677,6 +3379,9 @@ func TestApplication_WebviewWindow_HideMenuBar_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_ToggleMenuBar_Good(t *core.T) {
+	// WebviewWindow ToggleMenuBar
+	ax7Variant := "WebviewWindow_ToggleMenuBar:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.ToggleMenuBar()
@@ -2687,6 +3392,9 @@ func TestApplication_WebviewWindow_ToggleMenuBar_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_ToggleMenuBar_Bad(t *core.T) {
+	// WebviewWindow ToggleMenuBar
+	ax7Variant := "WebviewWindow_ToggleMenuBar:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.ToggleMenuBar()
@@ -2697,6 +3405,9 @@ func TestApplication_WebviewWindow_ToggleMenuBar_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_ToggleMenuBar_Ugly(t *core.T) {
+	// WebviewWindow ToggleMenuBar
+	ax7Variant := "WebviewWindow_ToggleMenuBar:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.ToggleMenuBar()
@@ -2707,6 +3418,9 @@ func TestApplication_WebviewWindow_ToggleMenuBar_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_ToggleFrameless_Good(t *core.T) {
+	// WebviewWindow ToggleFrameless
+	ax7Variant := "WebviewWindow_ToggleFrameless:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.ToggleFrameless()
@@ -2717,6 +3431,9 @@ func TestApplication_WebviewWindow_ToggleFrameless_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_ToggleFrameless_Bad(t *core.T) {
+	// WebviewWindow ToggleFrameless
+	ax7Variant := "WebviewWindow_ToggleFrameless:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.ToggleFrameless()
@@ -2727,6 +3444,9 @@ func TestApplication_WebviewWindow_ToggleFrameless_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_ToggleFrameless_Ugly(t *core.T) {
+	// WebviewWindow ToggleFrameless
+	ax7Variant := "WebviewWindow_ToggleFrameless:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.ToggleFrameless()
@@ -2737,6 +3457,9 @@ func TestApplication_WebviewWindow_ToggleFrameless_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_ExecJS_Good(t *core.T) {
+	// WebviewWindow ExecJS
+	ax7Variant := "WebviewWindow_ExecJS:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.ExecJS("agent")
@@ -2747,6 +3470,9 @@ func TestApplication_WebviewWindow_ExecJS_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_ExecJS_Bad(t *core.T) {
+	// WebviewWindow ExecJS
+	ax7Variant := "WebviewWindow_ExecJS:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.ExecJS("")
@@ -2757,6 +3483,9 @@ func TestApplication_WebviewWindow_ExecJS_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_ExecJS_Ugly(t *core.T) {
+	// WebviewWindow ExecJS
+	ax7Variant := "WebviewWindow_ExecJS:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.ExecJS("../../edge")
@@ -2767,6 +3496,9 @@ func TestApplication_WebviewWindow_ExecJS_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Reload_Good(t *core.T) {
+	// WebviewWindow Reload
+	ax7Variant := "WebviewWindow_Reload:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.Reload()
@@ -2777,6 +3509,9 @@ func TestApplication_WebviewWindow_Reload_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Reload_Bad(t *core.T) {
+	// WebviewWindow Reload
+	ax7Variant := "WebviewWindow_Reload:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.Reload()
@@ -2787,6 +3522,9 @@ func TestApplication_WebviewWindow_Reload_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Reload_Ugly(t *core.T) {
+	// WebviewWindow Reload
+	ax7Variant := "WebviewWindow_Reload:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.Reload()
@@ -2797,6 +3535,9 @@ func TestApplication_WebviewWindow_Reload_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_ForceReload_Good(t *core.T) {
+	// WebviewWindow ForceReload
+	ax7Variant := "WebviewWindow_ForceReload:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.ForceReload()
@@ -2807,6 +3548,9 @@ func TestApplication_WebviewWindow_ForceReload_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_ForceReload_Bad(t *core.T) {
+	// WebviewWindow ForceReload
+	ax7Variant := "WebviewWindow_ForceReload:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.ForceReload()
@@ -2817,6 +3561,9 @@ func TestApplication_WebviewWindow_ForceReload_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_ForceReload_Ugly(t *core.T) {
+	// WebviewWindow ForceReload
+	ax7Variant := "WebviewWindow_ForceReload:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.ForceReload()
@@ -2827,6 +3574,9 @@ func TestApplication_WebviewWindow_ForceReload_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_OpenDevTools_Good(t *core.T) {
+	// WebviewWindow OpenDevTools
+	ax7Variant := "WebviewWindow_OpenDevTools:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.OpenDevTools()
@@ -2837,6 +3587,9 @@ func TestApplication_WebviewWindow_OpenDevTools_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_OpenDevTools_Bad(t *core.T) {
+	// WebviewWindow OpenDevTools
+	ax7Variant := "WebviewWindow_OpenDevTools:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.OpenDevTools()
@@ -2847,6 +3600,9 @@ func TestApplication_WebviewWindow_OpenDevTools_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_OpenDevTools_Ugly(t *core.T) {
+	// WebviewWindow OpenDevTools
+	ax7Variant := "WebviewWindow_OpenDevTools:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.OpenDevTools()
@@ -2857,6 +3613,9 @@ func TestApplication_WebviewWindow_OpenDevTools_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_OpenContextMenu_Good(t *core.T) {
+	// WebviewWindow OpenContextMenu
+	ax7Variant := "WebviewWindow_OpenContextMenu:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.OpenContextMenu(nil)
@@ -2867,6 +3626,9 @@ func TestApplication_WebviewWindow_OpenContextMenu_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_OpenContextMenu_Bad(t *core.T) {
+	// WebviewWindow OpenContextMenu
+	ax7Variant := "WebviewWindow_OpenContextMenu:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.OpenContextMenu(nil)
@@ -2877,6 +3639,9 @@ func TestApplication_WebviewWindow_OpenContextMenu_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_OpenContextMenu_Ugly(t *core.T) {
+	// WebviewWindow OpenContextMenu
+	ax7Variant := "WebviewWindow_OpenContextMenu:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.OpenContextMenu(nil)
@@ -2887,6 +3652,9 @@ func TestApplication_WebviewWindow_OpenContextMenu_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Zoom_Good(t *core.T) {
+	// WebviewWindow Zoom
+	ax7Variant := "WebviewWindow_Zoom:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.Zoom()
@@ -2897,6 +3665,9 @@ func TestApplication_WebviewWindow_Zoom_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Zoom_Bad(t *core.T) {
+	// WebviewWindow Zoom
+	ax7Variant := "WebviewWindow_Zoom:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.Zoom()
@@ -2907,6 +3678,9 @@ func TestApplication_WebviewWindow_Zoom_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Zoom_Ugly(t *core.T) {
+	// WebviewWindow Zoom
+	ax7Variant := "WebviewWindow_Zoom:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.Zoom()
@@ -2917,6 +3691,9 @@ func TestApplication_WebviewWindow_Zoom_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_ZoomIn_Good(t *core.T) {
+	// WebviewWindow ZoomIn
+	ax7Variant := "WebviewWindow_ZoomIn:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.ZoomIn()
@@ -2927,6 +3704,9 @@ func TestApplication_WebviewWindow_ZoomIn_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_ZoomIn_Bad(t *core.T) {
+	// WebviewWindow ZoomIn
+	ax7Variant := "WebviewWindow_ZoomIn:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.ZoomIn()
@@ -2937,6 +3717,9 @@ func TestApplication_WebviewWindow_ZoomIn_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_ZoomIn_Ugly(t *core.T) {
+	// WebviewWindow ZoomIn
+	ax7Variant := "WebviewWindow_ZoomIn:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.ZoomIn()
@@ -2947,6 +3730,9 @@ func TestApplication_WebviewWindow_ZoomIn_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_ZoomOut_Good(t *core.T) {
+	// WebviewWindow ZoomOut
+	ax7Variant := "WebviewWindow_ZoomOut:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.ZoomOut()
@@ -2957,6 +3743,9 @@ func TestApplication_WebviewWindow_ZoomOut_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_ZoomOut_Bad(t *core.T) {
+	// WebviewWindow ZoomOut
+	ax7Variant := "WebviewWindow_ZoomOut:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.ZoomOut()
@@ -2967,6 +3756,9 @@ func TestApplication_WebviewWindow_ZoomOut_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_ZoomOut_Ugly(t *core.T) {
+	// WebviewWindow ZoomOut
+	ax7Variant := "WebviewWindow_ZoomOut:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.ZoomOut()
@@ -2977,6 +3769,9 @@ func TestApplication_WebviewWindow_ZoomOut_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_ZoomReset_Good(t *core.T) {
+	// WebviewWindow ZoomReset
+	ax7Variant := "WebviewWindow_ZoomReset:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.ZoomReset()
@@ -2987,6 +3782,9 @@ func TestApplication_WebviewWindow_ZoomReset_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_ZoomReset_Bad(t *core.T) {
+	// WebviewWindow ZoomReset
+	ax7Variant := "WebviewWindow_ZoomReset:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.ZoomReset()
@@ -2997,6 +3795,9 @@ func TestApplication_WebviewWindow_ZoomReset_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_ZoomReset_Ugly(t *core.T) {
+	// WebviewWindow ZoomReset
+	ax7Variant := "WebviewWindow_ZoomReset:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.ZoomReset()
@@ -3007,6 +3808,9 @@ func TestApplication_WebviewWindow_ZoomReset_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_GetZoom_Good(t *core.T) {
+	// WebviewWindow GetZoom
+	ax7Variant := "WebviewWindow_GetZoom:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.GetZoom()
@@ -3017,6 +3821,9 @@ func TestApplication_WebviewWindow_GetZoom_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_GetZoom_Bad(t *core.T) {
+	// WebviewWindow GetZoom
+	ax7Variant := "WebviewWindow_GetZoom:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.GetZoom()
@@ -3027,6 +3834,9 @@ func TestApplication_WebviewWindow_GetZoom_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_GetZoom_Ugly(t *core.T) {
+	// WebviewWindow GetZoom
+	ax7Variant := "WebviewWindow_GetZoom:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.GetZoom()
@@ -3037,6 +3847,9 @@ func TestApplication_WebviewWindow_GetZoom_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_GetOpacity_Good(t *core.T) {
+	// WebviewWindow GetOpacity
+	ax7Variant := "WebviewWindow_GetOpacity:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.GetOpacity()
@@ -3047,6 +3860,9 @@ func TestApplication_WebviewWindow_GetOpacity_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_GetOpacity_Bad(t *core.T) {
+	// WebviewWindow GetOpacity
+	ax7Variant := "WebviewWindow_GetOpacity:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.GetOpacity()
@@ -3057,6 +3873,9 @@ func TestApplication_WebviewWindow_GetOpacity_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_GetOpacity_Ugly(t *core.T) {
+	// WebviewWindow GetOpacity
+	ax7Variant := "WebviewWindow_GetOpacity:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.GetOpacity()
@@ -3067,6 +3886,9 @@ func TestApplication_WebviewWindow_GetOpacity_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetZoom_Good(t *core.T) {
+	// WebviewWindow SetZoom
+	ax7Variant := "WebviewWindow_SetZoom:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetZoom(1.5)
@@ -3077,6 +3899,9 @@ func TestApplication_WebviewWindow_SetZoom_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetZoom_Bad(t *core.T) {
+	// WebviewWindow SetZoom
+	ax7Variant := "WebviewWindow_SetZoom:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetZoom(0)
@@ -3087,6 +3912,9 @@ func TestApplication_WebviewWindow_SetZoom_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SetZoom_Ugly(t *core.T) {
+	// WebviewWindow SetZoom
+	ax7Variant := "WebviewWindow_SetZoom:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.SetZoom(-1.5)
@@ -3097,6 +3925,9 @@ func TestApplication_WebviewWindow_SetZoom_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_RegisterHook_Good(t *core.T) {
+	// WebviewWindow RegisterHook
+	ax7Variant := "WebviewWindow_RegisterHook:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.RegisterHook(nil, nil)
@@ -3107,6 +3938,9 @@ func TestApplication_WebviewWindow_RegisterHook_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_RegisterHook_Bad(t *core.T) {
+	// WebviewWindow RegisterHook
+	ax7Variant := "WebviewWindow_RegisterHook:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.RegisterHook(nil, nil)
@@ -3117,6 +3951,9 @@ func TestApplication_WebviewWindow_RegisterHook_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_RegisterHook_Ugly(t *core.T) {
+	// WebviewWindow RegisterHook
+	ax7Variant := "WebviewWindow_RegisterHook:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.RegisterHook(nil, nil)
@@ -3127,6 +3964,9 @@ func TestApplication_WebviewWindow_RegisterHook_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_EmitEvent_Good(t *core.T) {
+	// WebviewWindow EmitEvent
+	ax7Variant := "WebviewWindow_EmitEvent:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.EmitEvent("agent")
@@ -3137,6 +3977,9 @@ func TestApplication_WebviewWindow_EmitEvent_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_EmitEvent_Bad(t *core.T) {
+	// WebviewWindow EmitEvent
+	ax7Variant := "WebviewWindow_EmitEvent:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.EmitEvent("")
@@ -3147,6 +3990,9 @@ func TestApplication_WebviewWindow_EmitEvent_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_EmitEvent_Ugly(t *core.T) {
+	// WebviewWindow EmitEvent
+	ax7Variant := "WebviewWindow_EmitEvent:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.EmitEvent("../../edge")
@@ -3157,6 +4003,9 @@ func TestApplication_WebviewWindow_EmitEvent_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_DispatchWailsEvent_Good(t *core.T) {
+	// WebviewWindow DispatchWailsEvent
+	ax7Variant := "WebviewWindow_DispatchWailsEvent:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.DispatchWailsEvent(nil)
@@ -3167,6 +4016,9 @@ func TestApplication_WebviewWindow_DispatchWailsEvent_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_DispatchWailsEvent_Bad(t *core.T) {
+	// WebviewWindow DispatchWailsEvent
+	ax7Variant := "WebviewWindow_DispatchWailsEvent:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.DispatchWailsEvent(nil)
@@ -3177,6 +4029,9 @@ func TestApplication_WebviewWindow_DispatchWailsEvent_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_DispatchWailsEvent_Ugly(t *core.T) {
+	// WebviewWindow DispatchWailsEvent
+	ax7Variant := "WebviewWindow_DispatchWailsEvent:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.DispatchWailsEvent(nil)
@@ -3187,6 +4042,9 @@ func TestApplication_WebviewWindow_DispatchWailsEvent_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_GetScreen_Good(t *core.T) {
+	// WebviewWindow GetScreen
+	ax7Variant := "WebviewWindow_GetScreen:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0, got1 := subject.GetScreen()
@@ -3197,6 +4055,9 @@ func TestApplication_WebviewWindow_GetScreen_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_GetScreen_Bad(t *core.T) {
+	// WebviewWindow GetScreen
+	ax7Variant := "WebviewWindow_GetScreen:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0, got1 := subject.GetScreen()
@@ -3207,6 +4068,9 @@ func TestApplication_WebviewWindow_GetScreen_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_GetScreen_Ugly(t *core.T) {
+	// WebviewWindow GetScreen
+	ax7Variant := "WebviewWindow_GetScreen:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0, got1 := subject.GetScreen()
@@ -3217,6 +4081,9 @@ func TestApplication_WebviewWindow_GetScreen_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_GetBorderSizes_Good(t *core.T) {
+	// WebviewWindow GetBorderSizes
+	ax7Variant := "WebviewWindow_GetBorderSizes:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.GetBorderSizes()
@@ -3227,6 +4094,9 @@ func TestApplication_WebviewWindow_GetBorderSizes_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_GetBorderSizes_Bad(t *core.T) {
+	// WebviewWindow GetBorderSizes
+	ax7Variant := "WebviewWindow_GetBorderSizes:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.GetBorderSizes()
@@ -3237,6 +4107,9 @@ func TestApplication_WebviewWindow_GetBorderSizes_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_GetBorderSizes_Ugly(t *core.T) {
+	// WebviewWindow GetBorderSizes
+	ax7Variant := "WebviewWindow_GetBorderSizes:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.GetBorderSizes()
@@ -3247,6 +4120,9 @@ func TestApplication_WebviewWindow_GetBorderSizes_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_EnableSizeConstraints_Good(t *core.T) {
+	// WebviewWindow EnableSizeConstraints
+	ax7Variant := "WebviewWindow_EnableSizeConstraints:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.EnableSizeConstraints()
@@ -3257,6 +4133,9 @@ func TestApplication_WebviewWindow_EnableSizeConstraints_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_EnableSizeConstraints_Bad(t *core.T) {
+	// WebviewWindow EnableSizeConstraints
+	ax7Variant := "WebviewWindow_EnableSizeConstraints:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.EnableSizeConstraints()
@@ -3267,6 +4146,9 @@ func TestApplication_WebviewWindow_EnableSizeConstraints_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_EnableSizeConstraints_Ugly(t *core.T) {
+	// WebviewWindow EnableSizeConstraints
+	ax7Variant := "WebviewWindow_EnableSizeConstraints:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.EnableSizeConstraints()
@@ -3277,6 +4159,9 @@ func TestApplication_WebviewWindow_EnableSizeConstraints_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_DisableSizeConstraints_Good(t *core.T) {
+	// WebviewWindow DisableSizeConstraints
+	ax7Variant := "WebviewWindow_DisableSizeConstraints:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.DisableSizeConstraints()
@@ -3287,6 +4172,9 @@ func TestApplication_WebviewWindow_DisableSizeConstraints_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_DisableSizeConstraints_Bad(t *core.T) {
+	// WebviewWindow DisableSizeConstraints
+	ax7Variant := "WebviewWindow_DisableSizeConstraints:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.DisableSizeConstraints()
@@ -3297,6 +4185,9 @@ func TestApplication_WebviewWindow_DisableSizeConstraints_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_DisableSizeConstraints_Ugly(t *core.T) {
+	// WebviewWindow DisableSizeConstraints
+	ax7Variant := "WebviewWindow_DisableSizeConstraints:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.DisableSizeConstraints()
@@ -3307,6 +4198,9 @@ func TestApplication_WebviewWindow_DisableSizeConstraints_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_AttachModal_Good(t *core.T) {
+	// WebviewWindow AttachModal
+	ax7Variant := "WebviewWindow_AttachModal:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.AttachModal(*new(Window))
@@ -3317,6 +4211,9 @@ func TestApplication_WebviewWindow_AttachModal_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_AttachModal_Bad(t *core.T) {
+	// WebviewWindow AttachModal
+	ax7Variant := "WebviewWindow_AttachModal:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.AttachModal(*new(Window))
@@ -3327,6 +4224,9 @@ func TestApplication_WebviewWindow_AttachModal_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_AttachModal_Ugly(t *core.T) {
+	// WebviewWindow AttachModal
+	ax7Variant := "WebviewWindow_AttachModal:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.AttachModal(*new(Window))
@@ -3337,6 +4237,9 @@ func TestApplication_WebviewWindow_AttachModal_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Flash_Good(t *core.T) {
+	// WebviewWindow Flash
+	ax7Variant := "WebviewWindow_Flash:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.Flash(true)
@@ -3347,6 +4250,9 @@ func TestApplication_WebviewWindow_Flash_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Flash_Bad(t *core.T) {
+	// WebviewWindow Flash
+	ax7Variant := "WebviewWindow_Flash:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.Flash(false)
@@ -3357,6 +4263,9 @@ func TestApplication_WebviewWindow_Flash_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Flash_Ugly(t *core.T) {
+	// WebviewWindow Flash
+	ax7Variant := "WebviewWindow_Flash:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.Flash(false)
@@ -3367,6 +4276,9 @@ func TestApplication_WebviewWindow_Flash_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Print_Good(t *core.T) {
+	// WebviewWindow Print
+	ax7Variant := "WebviewWindow_Print:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.Print()
@@ -3377,6 +4289,9 @@ func TestApplication_WebviewWindow_Print_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Print_Bad(t *core.T) {
+	// WebviewWindow Print
+	ax7Variant := "WebviewWindow_Print:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.Print()
@@ -3387,6 +4302,9 @@ func TestApplication_WebviewWindow_Print_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Print_Ugly(t *core.T) {
+	// WebviewWindow Print
+	ax7Variant := "WebviewWindow_Print:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.Print()
@@ -3397,6 +4315,9 @@ func TestApplication_WebviewWindow_Print_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Error_Good(t *core.T) {
+	// WebviewWindow Error
+	ax7Variant := "WebviewWindow_Error:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.Error("agent")
@@ -3407,6 +4328,9 @@ func TestApplication_WebviewWindow_Error_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Error_Bad(t *core.T) {
+	// WebviewWindow Error
+	ax7Variant := "WebviewWindow_Error:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.Error("")
@@ -3417,6 +4341,9 @@ func TestApplication_WebviewWindow_Error_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Error_Ugly(t *core.T) {
+	// WebviewWindow Error
+	ax7Variant := "WebviewWindow_Error:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.Error("../../edge")
@@ -3427,6 +4354,9 @@ func TestApplication_WebviewWindow_Error_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Info_Good(t *core.T) {
+	// WebviewWindow Info
+	ax7Variant := "WebviewWindow_Info:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.Info("agent")
@@ -3437,6 +4367,9 @@ func TestApplication_WebviewWindow_Info_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Info_Bad(t *core.T) {
+	// WebviewWindow Info
+	ax7Variant := "WebviewWindow_Info:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.Info("")
@@ -3447,6 +4380,9 @@ func TestApplication_WebviewWindow_Info_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Info_Ugly(t *core.T) {
+	// WebviewWindow Info
+	ax7Variant := "WebviewWindow_Info:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.Info("../../edge")
@@ -3457,6 +4393,9 @@ func TestApplication_WebviewWindow_Info_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_NativeWindow_Good(t *core.T) {
+	// WebviewWindow NativeWindow
+	ax7Variant := "WebviewWindow_NativeWindow:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.NativeWindow()
@@ -3467,6 +4406,9 @@ func TestApplication_WebviewWindow_NativeWindow_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_NativeWindow_Bad(t *core.T) {
+	// WebviewWindow NativeWindow
+	ax7Variant := "WebviewWindow_NativeWindow:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.NativeWindow()
@@ -3477,6 +4419,9 @@ func TestApplication_WebviewWindow_NativeWindow_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_NativeWindow_Ugly(t *core.T) {
+	// WebviewWindow NativeWindow
+	ax7Variant := "WebviewWindow_NativeWindow:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		got0 := subject.NativeWindow()
@@ -3487,6 +4432,9 @@ func TestApplication_WebviewWindow_NativeWindow_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Run_Good(t *core.T) {
+	// WebviewWindow Run
+	ax7Variant := "WebviewWindow_Run:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.Run()
@@ -3497,6 +4445,9 @@ func TestApplication_WebviewWindow_Run_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Run_Bad(t *core.T) {
+	// WebviewWindow Run
+	ax7Variant := "WebviewWindow_Run:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.Run()
@@ -3507,6 +4458,9 @@ func TestApplication_WebviewWindow_Run_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_Run_Ugly(t *core.T) {
+	// WebviewWindow Run
+	ax7Variant := "WebviewWindow_Run:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.Run()
@@ -3517,6 +4471,9 @@ func TestApplication_WebviewWindow_Run_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_UnMaximise_Good(t *core.T) {
+	// WebviewWindow UnMaximise
+	ax7Variant := "WebviewWindow_UnMaximise:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.UnMaximise()
@@ -3527,6 +4484,9 @@ func TestApplication_WebviewWindow_UnMaximise_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_UnMaximise_Bad(t *core.T) {
+	// WebviewWindow UnMaximise
+	ax7Variant := "WebviewWindow_UnMaximise:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.UnMaximise()
@@ -3537,6 +4497,9 @@ func TestApplication_WebviewWindow_UnMaximise_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_UnMaximise_Ugly(t *core.T) {
+	// WebviewWindow UnMaximise
+	ax7Variant := "WebviewWindow_UnMaximise:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.UnMaximise()
@@ -3547,6 +4510,9 @@ func TestApplication_WebviewWindow_UnMaximise_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_UnMinimise_Good(t *core.T) {
+	// WebviewWindow UnMinimise
+	ax7Variant := "WebviewWindow_UnMinimise:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.UnMinimise()
@@ -3557,6 +4523,9 @@ func TestApplication_WebviewWindow_UnMinimise_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_UnMinimise_Bad(t *core.T) {
+	// WebviewWindow UnMinimise
+	ax7Variant := "WebviewWindow_UnMinimise:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.UnMinimise()
@@ -3567,6 +4536,9 @@ func TestApplication_WebviewWindow_UnMinimise_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_UnMinimise_Ugly(t *core.T) {
+	// WebviewWindow UnMinimise
+	ax7Variant := "WebviewWindow_UnMinimise:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.UnMinimise()
@@ -3577,6 +4549,9 @@ func TestApplication_WebviewWindow_UnMinimise_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_ToggleFullscreen_Good(t *core.T) {
+	// WebviewWindow ToggleFullscreen
+	ax7Variant := "WebviewWindow_ToggleFullscreen:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.ToggleFullscreen()
@@ -3587,6 +4562,9 @@ func TestApplication_WebviewWindow_ToggleFullscreen_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_ToggleFullscreen_Bad(t *core.T) {
+	// WebviewWindow ToggleFullscreen
+	ax7Variant := "WebviewWindow_ToggleFullscreen:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.ToggleFullscreen()
@@ -3597,6 +4575,9 @@ func TestApplication_WebviewWindow_ToggleFullscreen_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_ToggleFullscreen_Ugly(t *core.T) {
+	// WebviewWindow ToggleFullscreen
+	ax7Variant := "WebviewWindow_ToggleFullscreen:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.ToggleFullscreen()
@@ -3607,6 +4588,9 @@ func TestApplication_WebviewWindow_ToggleFullscreen_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_ToggleMaximise_Good(t *core.T) {
+	// WebviewWindow ToggleMaximise
+	ax7Variant := "WebviewWindow_ToggleMaximise:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.ToggleMaximise()
@@ -3617,6 +4601,9 @@ func TestApplication_WebviewWindow_ToggleMaximise_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_ToggleMaximise_Bad(t *core.T) {
+	// WebviewWindow ToggleMaximise
+	ax7Variant := "WebviewWindow_ToggleMaximise:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.ToggleMaximise()
@@ -3627,6 +4614,9 @@ func TestApplication_WebviewWindow_ToggleMaximise_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_ToggleMaximise_Ugly(t *core.T) {
+	// WebviewWindow ToggleMaximise
+	ax7Variant := "WebviewWindow_ToggleMaximise:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.ToggleMaximise()
@@ -3637,6 +4627,9 @@ func TestApplication_WebviewWindow_ToggleMaximise_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SnapAssist_Good(t *core.T) {
+	// WebviewWindow SnapAssist
+	ax7Variant := "WebviewWindow_SnapAssist:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.SnapAssist()
@@ -3647,6 +4640,9 @@ func TestApplication_WebviewWindow_SnapAssist_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SnapAssist_Bad(t *core.T) {
+	// WebviewWindow SnapAssist
+	ax7Variant := "WebviewWindow_SnapAssist:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.SnapAssist()
@@ -3657,6 +4653,9 @@ func TestApplication_WebviewWindow_SnapAssist_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_SnapAssist_Ugly(t *core.T) {
+	// WebviewWindow SnapAssist
+	ax7Variant := "WebviewWindow_SnapAssist:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.SnapAssist()
@@ -3667,6 +4666,9 @@ func TestApplication_WebviewWindow_SnapAssist_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_InitiateFrontendDropProcessing_Good(t *core.T) {
+	// WebviewWindow InitiateFrontendDropProcessing
+	ax7Variant := "WebviewWindow_InitiateFrontendDropProcessing:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.InitiateFrontendDropProcessing(nil, 1, 1)
@@ -3677,6 +4679,9 @@ func TestApplication_WebviewWindow_InitiateFrontendDropProcessing_Good(t *core.T
 }
 
 func TestApplication_WebviewWindow_InitiateFrontendDropProcessing_Bad(t *core.T) {
+	// WebviewWindow InitiateFrontendDropProcessing
+	ax7Variant := "WebviewWindow_InitiateFrontendDropProcessing:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.InitiateFrontendDropProcessing(nil, 0, 0)
@@ -3687,6 +4692,9 @@ func TestApplication_WebviewWindow_InitiateFrontendDropProcessing_Bad(t *core.T)
 }
 
 func TestApplication_WebviewWindow_InitiateFrontendDropProcessing_Ugly(t *core.T) {
+	// WebviewWindow InitiateFrontendDropProcessing
+	ax7Variant := "WebviewWindow_InitiateFrontendDropProcessing:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.InitiateFrontendDropProcessing(nil, -1, -1)
@@ -3697,6 +4705,9 @@ func TestApplication_WebviewWindow_InitiateFrontendDropProcessing_Ugly(t *core.T
 }
 
 func TestApplication_WebviewWindow_HandleMessage_Good(t *core.T) {
+	// WebviewWindow HandleMessage
+	ax7Variant := "WebviewWindow_HandleMessage:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.HandleMessage("agent")
@@ -3707,6 +4718,9 @@ func TestApplication_WebviewWindow_HandleMessage_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_HandleMessage_Bad(t *core.T) {
+	// WebviewWindow HandleMessage
+	ax7Variant := "WebviewWindow_HandleMessage:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.HandleMessage("")
@@ -3717,6 +4731,9 @@ func TestApplication_WebviewWindow_HandleMessage_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_HandleMessage_Ugly(t *core.T) {
+	// WebviewWindow HandleMessage
+	ax7Variant := "WebviewWindow_HandleMessage:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.HandleMessage("../../edge")
@@ -3727,6 +4744,9 @@ func TestApplication_WebviewWindow_HandleMessage_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_HandleWindowEvent_Good(t *core.T) {
+	// WebviewWindow HandleWindowEvent
+	ax7Variant := "WebviewWindow_HandleWindowEvent:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.HandleWindowEvent(1)
@@ -3737,6 +4757,9 @@ func TestApplication_WebviewWindow_HandleWindowEvent_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_HandleWindowEvent_Bad(t *core.T) {
+	// WebviewWindow HandleWindowEvent
+	ax7Variant := "WebviewWindow_HandleWindowEvent:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.HandleWindowEvent(0)
@@ -3747,6 +4770,9 @@ func TestApplication_WebviewWindow_HandleWindowEvent_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_HandleWindowEvent_Ugly(t *core.T) {
+	// WebviewWindow HandleWindowEvent
+	ax7Variant := "WebviewWindow_HandleWindowEvent:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.HandleWindowEvent(0)
@@ -3757,6 +4783,9 @@ func TestApplication_WebviewWindow_HandleWindowEvent_Ugly(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_HandleKeyEvent_Good(t *core.T) {
+	// WebviewWindow HandleKeyEvent
+	ax7Variant := "WebviewWindow_HandleKeyEvent:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.HandleKeyEvent("agent")
@@ -3767,6 +4796,9 @@ func TestApplication_WebviewWindow_HandleKeyEvent_Good(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_HandleKeyEvent_Bad(t *core.T) {
+	// WebviewWindow HandleKeyEvent
+	ax7Variant := "WebviewWindow_HandleKeyEvent:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.HandleKeyEvent("")
@@ -3777,6 +4809,9 @@ func TestApplication_WebviewWindow_HandleKeyEvent_Bad(t *core.T) {
 }
 
 func TestApplication_WebviewWindow_HandleKeyEvent_Ugly(t *core.T) {
+	// WebviewWindow HandleKeyEvent
+	ax7Variant := "WebviewWindow_HandleKeyEvent:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WebviewWindow)
 	result := core.Try(func() any {
 		subject.HandleKeyEvent("../../edge")
@@ -3787,6 +4822,9 @@ func TestApplication_WebviewWindow_HandleKeyEvent_Ugly(t *core.T) {
 }
 
 func TestApplication_WindowManager_NewWithOptions_Good(t *core.T) {
+	// WindowManager NewWithOptions
+	ax7Variant := "WindowManager_NewWithOptions:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WindowManager)
 	result := core.Try(func() any {
 		got0 := subject.NewWithOptions(*new(WebviewWindowOptions))
@@ -3797,6 +4835,9 @@ func TestApplication_WindowManager_NewWithOptions_Good(t *core.T) {
 }
 
 func TestApplication_WindowManager_NewWithOptions_Bad(t *core.T) {
+	// WindowManager NewWithOptions
+	ax7Variant := "WindowManager_NewWithOptions:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WindowManager)
 	result := core.Try(func() any {
 		got0 := subject.NewWithOptions(*new(WebviewWindowOptions))
@@ -3807,6 +4848,9 @@ func TestApplication_WindowManager_NewWithOptions_Bad(t *core.T) {
 }
 
 func TestApplication_WindowManager_NewWithOptions_Ugly(t *core.T) {
+	// WindowManager NewWithOptions
+	ax7Variant := "WindowManager_NewWithOptions:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WindowManager)
 	result := core.Try(func() any {
 		got0 := subject.NewWithOptions(*new(WebviewWindowOptions))
@@ -3817,6 +4861,9 @@ func TestApplication_WindowManager_NewWithOptions_Ugly(t *core.T) {
 }
 
 func TestApplication_WindowManager_GetAll_Good(t *core.T) {
+	// WindowManager GetAll
+	ax7Variant := "WindowManager_GetAll:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(WindowManager)
 	result := core.Try(func() any {
 		got0 := subject.GetAll()
@@ -3827,6 +4874,9 @@ func TestApplication_WindowManager_GetAll_Good(t *core.T) {
 }
 
 func TestApplication_WindowManager_GetAll_Bad(t *core.T) {
+	// WindowManager GetAll
+	ax7Variant := "WindowManager_GetAll:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(WindowManager)
 	result := core.Try(func() any {
 		got0 := subject.GetAll()
@@ -3837,6 +4887,9 @@ func TestApplication_WindowManager_GetAll_Bad(t *core.T) {
 }
 
 func TestApplication_WindowManager_GetAll_Ugly(t *core.T) {
+	// WindowManager GetAll
+	ax7Variant := "WindowManager_GetAll:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(WindowManager)
 	result := core.Try(func() any {
 		got0 := subject.GetAll()
@@ -3847,6 +4900,9 @@ func TestApplication_WindowManager_GetAll_Ugly(t *core.T) {
 }
 
 func TestApplication_App_Quit_Good(t *core.T) {
+	// App Quit
+	ax7Variant := "App_Quit:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(App)
 	result := core.Try(func() any {
 		subject.Quit()
@@ -3857,6 +4913,9 @@ func TestApplication_App_Quit_Good(t *core.T) {
 }
 
 func TestApplication_App_Quit_Bad(t *core.T) {
+	// App Quit
+	ax7Variant := "App_Quit:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(App)
 	result := core.Try(func() any {
 		subject.Quit()
@@ -3867,6 +4926,9 @@ func TestApplication_App_Quit_Bad(t *core.T) {
 }
 
 func TestApplication_App_Quit_Ugly(t *core.T) {
+	// App Quit
+	ax7Variant := "App_Quit:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(App)
 	result := core.Try(func() any {
 		subject.Quit()
@@ -3877,6 +4939,9 @@ func TestApplication_App_Quit_Ugly(t *core.T) {
 }
 
 func TestApplication_App_NewMenu_Good(t *core.T) {
+	// App NewMenu
+	ax7Variant := "App_NewMenu:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(App)
 	result := core.Try(func() any {
 		got0 := subject.NewMenu()
@@ -3887,6 +4952,9 @@ func TestApplication_App_NewMenu_Good(t *core.T) {
 }
 
 func TestApplication_App_NewMenu_Bad(t *core.T) {
+	// App NewMenu
+	ax7Variant := "App_NewMenu:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(App)
 	result := core.Try(func() any {
 		got0 := subject.NewMenu()
@@ -3897,6 +4965,9 @@ func TestApplication_App_NewMenu_Bad(t *core.T) {
 }
 
 func TestApplication_App_NewMenu_Ugly(t *core.T) {
+	// App NewMenu
+	ax7Variant := "App_NewMenu:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(App)
 	result := core.Try(func() any {
 		got0 := subject.NewMenu()

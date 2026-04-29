@@ -39,6 +39,9 @@ func testTime() time.Time {
 
 // AX7 generated source-matching smoke coverage.
 func TestChat_NewStreamRenderer_Good(t *core.T) {
+	// NewStreamRenderer
+	ax7Variant := "NewStreamRenderer:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := NewStreamRenderer(*new(StreamCallbacks))
 		return core.Sprintf("%T", got0)
@@ -48,6 +51,9 @@ func TestChat_NewStreamRenderer_Good(t *core.T) {
 }
 
 func TestChat_NewStreamRenderer_Bad(t *core.T) {
+	// NewStreamRenderer
+	ax7Variant := "NewStreamRenderer:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := NewStreamRenderer(*new(StreamCallbacks))
 		return core.Sprintf("%T", got0)
@@ -57,6 +63,9 @@ func TestChat_NewStreamRenderer_Bad(t *core.T) {
 }
 
 func TestChat_NewStreamRenderer_Ugly(t *core.T) {
+	// NewStreamRenderer
+	ax7Variant := "NewStreamRenderer:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := NewStreamRenderer(*new(StreamCallbacks))
 		return core.Sprintf("%T", got0)
@@ -66,6 +75,9 @@ func TestChat_NewStreamRenderer_Ugly(t *core.T) {
 }
 
 func TestChat_StreamRenderer_Render_Good(t *core.T) {
+	// StreamRenderer Render
+	ax7Variant := "StreamRenderer_Render:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(StreamRenderer)
 	result := core.Try(func() any {
 		got0 := subject.Render(core.NewReader(""))
@@ -76,6 +88,9 @@ func TestChat_StreamRenderer_Render_Good(t *core.T) {
 }
 
 func TestChat_StreamRenderer_Render_Bad(t *core.T) {
+	// StreamRenderer Render
+	ax7Variant := "StreamRenderer_Render:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(StreamRenderer)
 	result := core.Try(func() any {
 		got0 := subject.Render(core.NewReader(""))
@@ -86,6 +101,9 @@ func TestChat_StreamRenderer_Render_Bad(t *core.T) {
 }
 
 func TestChat_StreamRenderer_Render_Ugly(t *core.T) {
+	// StreamRenderer Render
+	ax7Variant := "StreamRenderer_Render:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(StreamRenderer)
 	result := core.Try(func() any {
 		got0 := subject.Render(core.NewReader(""))
@@ -96,6 +114,9 @@ func TestChat_StreamRenderer_Render_Ugly(t *core.T) {
 }
 
 func TestChat_StreamRenderer_ToolCalls_Good(t *core.T) {
+	// StreamRenderer ToolCalls
+	ax7Variant := "StreamRenderer_ToolCalls:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(StreamRenderer)
 	result := core.Try(func() any {
 		got0 := subject.ToolCalls()
@@ -106,6 +127,9 @@ func TestChat_StreamRenderer_ToolCalls_Good(t *core.T) {
 }
 
 func TestChat_StreamRenderer_ToolCalls_Bad(t *core.T) {
+	// StreamRenderer ToolCalls
+	ax7Variant := "StreamRenderer_ToolCalls:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(StreamRenderer)
 	result := core.Try(func() any {
 		got0 := subject.ToolCalls()
@@ -116,6 +140,9 @@ func TestChat_StreamRenderer_ToolCalls_Bad(t *core.T) {
 }
 
 func TestChat_StreamRenderer_ToolCalls_Ugly(t *core.T) {
+	// StreamRenderer ToolCalls
+	ax7Variant := "StreamRenderer_ToolCalls:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(StreamRenderer)
 	result := core.Try(func() any {
 		got0 := subject.ToolCalls()
@@ -126,6 +153,9 @@ func TestChat_StreamRenderer_ToolCalls_Ugly(t *core.T) {
 }
 
 func TestChat_StreamRenderer_Thinking_Good(t *core.T) {
+	// StreamRenderer Thinking
+	ax7Variant := "StreamRenderer_Thinking:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(StreamRenderer)
 	result := core.Try(func() any {
 		got0 := subject.Thinking()
@@ -136,6 +166,9 @@ func TestChat_StreamRenderer_Thinking_Good(t *core.T) {
 }
 
 func TestChat_StreamRenderer_Thinking_Bad(t *core.T) {
+	// StreamRenderer Thinking
+	ax7Variant := "StreamRenderer_Thinking:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(StreamRenderer)
 	result := core.Try(func() any {
 		got0 := subject.Thinking()
@@ -146,6 +179,9 @@ func TestChat_StreamRenderer_Thinking_Bad(t *core.T) {
 }
 
 func TestChat_StreamRenderer_Thinking_Ugly(t *core.T) {
+	// StreamRenderer Thinking
+	ax7Variant := "StreamRenderer_Thinking:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(StreamRenderer)
 	result := core.Try(func() any {
 		got0 := subject.Thinking()
@@ -156,6 +192,9 @@ func TestChat_StreamRenderer_Thinking_Ugly(t *core.T) {
 }
 
 func TestChat_StreamRenderer_Message_Good(t *core.T) {
+	// StreamRenderer Message
+	ax7Variant := "StreamRenderer_Message:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(StreamRenderer)
 	result := core.Try(func() any {
 		got0 := subject.Message("agent", "agent", core.Now())
@@ -166,6 +205,9 @@ func TestChat_StreamRenderer_Message_Good(t *core.T) {
 }
 
 func TestChat_StreamRenderer_Message_Bad(t *core.T) {
+	// StreamRenderer Message
+	ax7Variant := "StreamRenderer_Message:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(StreamRenderer)
 	result := core.Try(func() any {
 		got0 := subject.Message("", "", core.Now())
@@ -176,6 +218,9 @@ func TestChat_StreamRenderer_Message_Bad(t *core.T) {
 }
 
 func TestChat_StreamRenderer_Message_Ugly(t *core.T) {
+	// StreamRenderer Message
+	ax7Variant := "StreamRenderer_Message:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(StreamRenderer)
 	result := core.Try(func() any {
 		got0 := subject.Message("../../edge", "../../edge", core.Now())

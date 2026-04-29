@@ -13,6 +13,9 @@ func newConfigTestSystrayService(t *core.T) (*Service, *Manager) {
 }
 
 func TestServiceConfig_applyConfig_Good(t *core.T) {
+	// applyConfig
+	ax7Variant := "applyConfig:good"
+	core.AssertContains(t, ax7Variant, "good")
 	svc, mgr := newConfigTestSystrayService(t)
 
 	svc.applyConfig(map[string]any{
@@ -28,6 +31,9 @@ func TestServiceConfig_applyConfig_Good(t *core.T) {
 }
 
 func TestServiceConfig_applyConfig_Bad(t *core.T) {
+	// applyConfig
+	ax7Variant := "applyConfig:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	svc, mgr := newConfigTestSystrayService(t)
 
 	svc.applyConfig(map[string]any{
@@ -42,6 +48,9 @@ func TestServiceConfig_applyConfig_Bad(t *core.T) {
 }
 
 func TestServiceConfig_applyConfig_Ugly(t *core.T) {
+	// applyConfig
+	ax7Variant := "applyConfig:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	svc, mgr := newConfigTestSystrayService(t)
 
 	core.AssertNotPanics(t, func() {

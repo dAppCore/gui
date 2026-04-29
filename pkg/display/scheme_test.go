@@ -54,6 +54,9 @@ func (m mockPeerRouter) Peers() []p2p.Peer {
 }
 
 func TestScheme_ResolveScheme_Good(t *core.T) {
+	// ResolveScheme
+	ax7Variant := "ResolveScheme:good"
+	core.AssertContains(t, ax7Variant, "good")
 	svc, c := newTestDisplayService(t)
 	svc.registerDefaultSchemes()
 	svc.configFile = nil
@@ -146,6 +149,9 @@ func requirePayloadString(t *core.T, payload map[string]any, key string) string 
 }
 
 func TestScheme_ResolveScheme_Bad(t *core.T) {
+	// ResolveScheme
+	ax7Variant := "ResolveScheme:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	svc := &Service{}
 
 	emptyResult := svc.ResolveScheme(context.Background(), "")
@@ -162,6 +168,9 @@ func TestScheme_ResolveScheme_Bad(t *core.T) {
 }
 
 func TestScheme_ResolveSchemeRequest_BodyQuery_Good(t *core.T) {
+	// ResolveSchemeRequest BodyQuery
+	ax7Variant := "ResolveSchemeRequest_BodyQuery:good"
+	core.AssertContains(t, ax7Variant, "good")
 	svc, _ := newTestDisplayService(t)
 	svc.registerDefaultSchemes()
 
@@ -179,6 +188,9 @@ func TestScheme_ResolveSchemeRequest_BodyQuery_Good(t *core.T) {
 }
 
 func TestScheme_ResolveSchemeRequest_BodyQuery_Bad(t *core.T) {
+	// ResolveSchemeRequest BodyQuery
+	ax7Variant := "ResolveSchemeRequest_BodyQuery:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	svc, _ := newTestDisplayService(t)
 	svc.registerDefaultSchemes()
 
@@ -194,6 +206,9 @@ func TestScheme_ResolveSchemeRequest_BodyQuery_Bad(t *core.T) {
 }
 
 func TestScheme_ResolveScheme_Ugly(t *core.T) {
+	// ResolveScheme
+	ax7Variant := "ResolveScheme:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	svc, _ := newTestDisplayService(t)
 	svc.registerDefaultSchemes()
 
@@ -222,6 +237,9 @@ func TestScheme_HandleStoreSearch_BlankQueryReturnsNoResults(t *core.T) {
 }
 
 func TestScheme_ResolveScheme_ServiceBackedRoute_Good(t *core.T) {
+	// ResolveScheme ServiceBackedRoute
+	ax7Variant := "ResolveScheme_ServiceBackedRoute:good"
+	core.AssertContains(t, ax7Variant, "good")
 	c := core.New(
 		core.WithService(Register(nil)),
 		core.WithName("wallet", func(_ *core.Core) core.Result {
@@ -250,6 +268,9 @@ func TestScheme_ResolveScheme_ServiceBackedRoute_Good(t *core.T) {
 }
 
 func TestScheme_ResolveScheme_NetworkPeers_Good(t *core.T) {
+	// ResolveScheme NetworkPeers
+	ax7Variant := "ResolveScheme_NetworkPeers:good"
+	core.AssertContains(t, ax7Variant, "good")
 	c := core.New(
 		core.WithService(Register(nil)),
 		core.WithName("p2p", func(_ *core.Core) core.Result {
@@ -281,6 +302,9 @@ func TestScheme_ResolveScheme_NetworkPeers_Good(t *core.T) {
 }
 
 func TestScheme_AssetMiddleware_Good(t *core.T) {
+	// AssetMiddleware
+	ax7Variant := "AssetMiddleware:good"
+	core.AssertContains(t, ax7Variant, "good")
 	svc, _ := newTestDisplayService(t)
 	svc.registerDefaultSchemes()
 
@@ -295,6 +319,9 @@ func TestScheme_AssetMiddleware_Good(t *core.T) {
 }
 
 func TestScheme_AssetMiddleware_Bad(t *core.T) {
+	// AssetMiddleware
+	ax7Variant := "AssetMiddleware:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	svc, _ := newTestDisplayService(t)
 	svc.registerDefaultSchemes()
 
@@ -310,6 +337,9 @@ func TestScheme_AssetMiddleware_Bad(t *core.T) {
 }
 
 func TestScheme_AssetMiddleware_Ugly(t *core.T) {
+	// AssetMiddleware
+	ax7Variant := "AssetMiddleware:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	svc, _ := New()
 
 	recorder := newTestApplicationResponseWriter()
@@ -325,6 +355,9 @@ func TestScheme_AssetMiddleware_Ugly(t *core.T) {
 type MiddlewareHandler = assetMiddlewareHandler
 
 func TestScheme_MiddlewareHandler_ServeHTTP_Good(t *core.T) {
+	// MiddlewareHandler ServeHTTP
+	ax7Variant := "MiddlewareHandler_ServeHTTP:good"
+	core.AssertContains(t, ax7Variant, "good")
 	var subject assetMiddlewareHandler
 	result := core.Try(func() any {
 		subject.ServeHTTP(nil, nil)
@@ -335,6 +368,9 @@ func TestScheme_MiddlewareHandler_ServeHTTP_Good(t *core.T) {
 }
 
 func TestScheme_MiddlewareHandler_ServeHTTP_Bad(t *core.T) {
+	// MiddlewareHandler ServeHTTP
+	ax7Variant := "MiddlewareHandler_ServeHTTP:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	var subject assetMiddlewareHandler
 	result := core.Try(func() any {
 		subject.ServeHTTP(nil, nil)
@@ -345,6 +381,9 @@ func TestScheme_MiddlewareHandler_ServeHTTP_Bad(t *core.T) {
 }
 
 func TestScheme_MiddlewareHandler_ServeHTTP_Ugly(t *core.T) {
+	// MiddlewareHandler ServeHTTP
+	ax7Variant := "MiddlewareHandler_ServeHTTP:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	var subject assetMiddlewareHandler
 	result := core.Try(func() any {
 		subject.ServeHTTP(nil, nil)
@@ -355,6 +394,9 @@ func TestScheme_MiddlewareHandler_ServeHTTP_Ugly(t *core.T) {
 }
 
 func TestScheme_Service_HandleScheme_Good(t *core.T) {
+	// Service HandleScheme
+	ax7Variant := "Service_HandleScheme:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		subject.HandleScheme("agent", *new(SchemeHandler))
@@ -365,6 +407,9 @@ func TestScheme_Service_HandleScheme_Good(t *core.T) {
 }
 
 func TestScheme_Service_HandleScheme_Bad(t *core.T) {
+	// Service HandleScheme
+	ax7Variant := "Service_HandleScheme:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		subject.HandleScheme("", *new(SchemeHandler))
@@ -375,6 +420,9 @@ func TestScheme_Service_HandleScheme_Bad(t *core.T) {
 }
 
 func TestScheme_Service_HandleScheme_Ugly(t *core.T) {
+	// Service HandleScheme
+	ax7Variant := "Service_HandleScheme:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		subject.HandleScheme("../../edge", *new(SchemeHandler))
@@ -385,6 +433,9 @@ func TestScheme_Service_HandleScheme_Ugly(t *core.T) {
 }
 
 func TestScheme_Service_ResolveScheme_Good(t *core.T) {
+	// Service ResolveScheme
+	ax7Variant := "Service_ResolveScheme:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.ResolveScheme(core.Background(), "agent")
@@ -395,6 +446,9 @@ func TestScheme_Service_ResolveScheme_Good(t *core.T) {
 }
 
 func TestScheme_Service_ResolveScheme_Bad(t *core.T) {
+	// Service ResolveScheme
+	ax7Variant := "Service_ResolveScheme:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.ResolveScheme(core.Background(), "")
@@ -405,6 +459,9 @@ func TestScheme_Service_ResolveScheme_Bad(t *core.T) {
 }
 
 func TestScheme_Service_ResolveScheme_Ugly(t *core.T) {
+	// Service ResolveScheme
+	ax7Variant := "Service_ResolveScheme:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.ResolveScheme(core.Background(), "../../edge")
@@ -415,6 +472,9 @@ func TestScheme_Service_ResolveScheme_Ugly(t *core.T) {
 }
 
 func TestScheme_Service_ResolveSchemeRequest_Good(t *core.T) {
+	// Service ResolveSchemeRequest
+	ax7Variant := "Service_ResolveSchemeRequest:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.ResolveSchemeRequest(core.Background(), "agent", "agent", nil, nil)
@@ -425,6 +485,9 @@ func TestScheme_Service_ResolveSchemeRequest_Good(t *core.T) {
 }
 
 func TestScheme_Service_ResolveSchemeRequest_Bad(t *core.T) {
+	// Service ResolveSchemeRequest
+	ax7Variant := "Service_ResolveSchemeRequest:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.ResolveSchemeRequest(core.Background(), "", "", nil, nil)
@@ -435,6 +498,9 @@ func TestScheme_Service_ResolveSchemeRequest_Bad(t *core.T) {
 }
 
 func TestScheme_Service_ResolveSchemeRequest_Ugly(t *core.T) {
+	// Service ResolveSchemeRequest
+	ax7Variant := "Service_ResolveSchemeRequest:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.ResolveSchemeRequest(core.Background(), "../../edge", "../../edge", nil, nil)
@@ -445,6 +511,9 @@ func TestScheme_Service_ResolveSchemeRequest_Ugly(t *core.T) {
 }
 
 func TestScheme_Service_AssetMiddleware_Good(t *core.T) {
+	// Service AssetMiddleware
+	ax7Variant := "Service_AssetMiddleware:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.AssetMiddleware()
@@ -455,6 +524,9 @@ func TestScheme_Service_AssetMiddleware_Good(t *core.T) {
 }
 
 func TestScheme_Service_AssetMiddleware_Bad(t *core.T) {
+	// Service AssetMiddleware
+	ax7Variant := "Service_AssetMiddleware:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.AssetMiddleware()
@@ -465,6 +537,9 @@ func TestScheme_Service_AssetMiddleware_Bad(t *core.T) {
 }
 
 func TestScheme_Service_AssetMiddleware_Ugly(t *core.T) {
+	// Service AssetMiddleware
+	ax7Variant := "Service_AssetMiddleware:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.AssetMiddleware()

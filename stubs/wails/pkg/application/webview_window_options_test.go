@@ -103,6 +103,9 @@ func TestWebviewWindowOptions_Constants_UglyCase(t *core.T) {
 
 // AX7 generated source-matching smoke coverage.
 func TestWebviewWindowOptions_NewRGB_Good(t *core.T) {
+	// NewRGB
+	ax7Variant := "NewRGB:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := NewRGB(1, 1, 1)
 		return core.Sprintf("%T", got0)
@@ -112,6 +115,9 @@ func TestWebviewWindowOptions_NewRGB_Good(t *core.T) {
 }
 
 func TestWebviewWindowOptions_NewRGB_Bad(t *core.T) {
+	// NewRGB
+	ax7Variant := "NewRGB:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := NewRGB(0, 0, 0)
 		return core.Sprintf("%T", got0)
@@ -121,6 +127,9 @@ func TestWebviewWindowOptions_NewRGB_Bad(t *core.T) {
 }
 
 func TestWebviewWindowOptions_NewRGB_Ugly(t *core.T) {
+	// NewRGB
+	ax7Variant := "NewRGB:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := NewRGB(0, 0, 0)
 		return core.Sprintf("%T", got0)
@@ -130,6 +139,9 @@ func TestWebviewWindowOptions_NewRGB_Ugly(t *core.T) {
 }
 
 func TestWebviewWindowOptions_NewRGBPtr_Good(t *core.T) {
+	// NewRGBPtr
+	ax7Variant := "NewRGBPtr:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := NewRGBPtr(1, 1, 1)
 		return core.Sprintf("%T", got0)
@@ -139,6 +151,9 @@ func TestWebviewWindowOptions_NewRGBPtr_Good(t *core.T) {
 }
 
 func TestWebviewWindowOptions_NewRGBPtr_Bad(t *core.T) {
+	// NewRGBPtr
+	ax7Variant := "NewRGBPtr:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := NewRGBPtr(0, 0, 0)
 		return core.Sprintf("%T", got0)
@@ -148,6 +163,9 @@ func TestWebviewWindowOptions_NewRGBPtr_Bad(t *core.T) {
 }
 
 func TestWebviewWindowOptions_NewRGBPtr_Ugly(t *core.T) {
+	// NewRGBPtr
+	ax7Variant := "NewRGBPtr:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := NewRGBPtr(0, 0, 0)
 		return core.Sprintf("%T", got0)

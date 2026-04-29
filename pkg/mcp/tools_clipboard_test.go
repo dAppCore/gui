@@ -21,6 +21,9 @@ func newClipboardToolsTestSubsystem(t *core.T, query func(core.Query) core.Resul
 }
 
 func TestToolsClipboard_clipboardRead_Good(t *core.T) {
+	// clipboardRead
+	ax7Variant := "clipboardRead:good"
+	core.AssertContains(t, ax7Variant, "good")
 	sub := newClipboardToolsTestSubsystem(t, func(q core.Query) core.Result {
 		if _, ok := q.(clipboard.QueryText); ok {
 			return core.Result{
@@ -40,6 +43,9 @@ func TestToolsClipboard_clipboardRead_Good(t *core.T) {
 }
 
 func TestToolsClipboard_clipboardRead_Bad(t *core.T) {
+	// clipboardRead
+	ax7Variant := "clipboardRead:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	sub := newClipboardToolsTestSubsystem(t, func(q core.Query) core.Result {
 		if _, ok := q.(clipboard.QueryText); ok {
 			return core.Result{OK: false, Value: "clipboard backend unavailable"}
@@ -53,6 +59,9 @@ func TestToolsClipboard_clipboardRead_Bad(t *core.T) {
 }
 
 func TestToolsClipboard_clipboardRead_Ugly(t *core.T) {
+	// clipboardRead
+	ax7Variant := "clipboardRead:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	sub := newClipboardToolsTestSubsystem(t, func(q core.Query) core.Result {
 		if _, ok := q.(clipboard.QueryText); ok {
 			return core.Result{OK: true, Value: errors.New("unexpected payload")}

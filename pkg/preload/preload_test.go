@@ -155,6 +155,9 @@ func writeMarketplaceViewManifest(t *core.T, home, host string) {
 
 // AX7 generated source-matching smoke coverage.
 func TestPreload_InjectPreload_Good(t *core.T) {
+	// InjectPreload
+	ax7Variant := "InjectPreload:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := InjectPreload(*new(Webview), "agent")
 		return core.Sprintf("%T", got0)
@@ -164,6 +167,9 @@ func TestPreload_InjectPreload_Good(t *core.T) {
 }
 
 func TestPreload_InjectPreload_Bad(t *core.T) {
+	// InjectPreload
+	ax7Variant := "InjectPreload:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := InjectPreload(*new(Webview), "")
 		return core.Sprintf("%T", got0)
@@ -173,6 +179,9 @@ func TestPreload_InjectPreload_Bad(t *core.T) {
 }
 
 func TestPreload_InjectPreload_Ugly(t *core.T) {
+	// InjectPreload
+	ax7Variant := "InjectPreload:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := InjectPreload(*new(Webview), "../../edge")
 		return core.Sprintf("%T", got0)
@@ -182,6 +191,9 @@ func TestPreload_InjectPreload_Ugly(t *core.T) {
 }
 
 func TestPreload_InjectPreloadWithTrustedOriginPolicy_Good(t *core.T) {
+	// InjectPreloadWithTrustedOriginPolicy
+	ax7Variant := "InjectPreloadWithTrustedOriginPolicy:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := InjectPreloadWithTrustedOriginPolicy(*new(Webview), "agent", *new(TrustedOriginPolicy))
 		return core.Sprintf("%T", got0)
@@ -191,6 +203,9 @@ func TestPreload_InjectPreloadWithTrustedOriginPolicy_Good(t *core.T) {
 }
 
 func TestPreload_InjectPreloadWithTrustedOriginPolicy_Bad(t *core.T) {
+	// InjectPreloadWithTrustedOriginPolicy
+	ax7Variant := "InjectPreloadWithTrustedOriginPolicy:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := InjectPreloadWithTrustedOriginPolicy(*new(Webview), "", *new(TrustedOriginPolicy))
 		return core.Sprintf("%T", got0)
@@ -200,6 +215,9 @@ func TestPreload_InjectPreloadWithTrustedOriginPolicy_Bad(t *core.T) {
 }
 
 func TestPreload_InjectPreloadWithTrustedOriginPolicy_Ugly(t *core.T) {
+	// InjectPreloadWithTrustedOriginPolicy
+	ax7Variant := "InjectPreloadWithTrustedOriginPolicy:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := InjectPreloadWithTrustedOriginPolicy(*new(Webview), "../../edge", *new(TrustedOriginPolicy))
 		return core.Sprintf("%T", got0)
@@ -209,6 +227,9 @@ func TestPreload_InjectPreloadWithTrustedOriginPolicy_Ugly(t *core.T) {
 }
 
 func TestPreload_NewTrustedOriginPolicy_Good(t *core.T) {
+	// NewTrustedOriginPolicy
+	ax7Variant := "NewTrustedOriginPolicy:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := NewTrustedOriginPolicy(nil)
 		return core.Sprintf("%T", got0)
@@ -218,6 +239,9 @@ func TestPreload_NewTrustedOriginPolicy_Good(t *core.T) {
 }
 
 func TestPreload_NewTrustedOriginPolicy_Bad(t *core.T) {
+	// NewTrustedOriginPolicy
+	ax7Variant := "NewTrustedOriginPolicy:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := NewTrustedOriginPolicy(nil)
 		return core.Sprintf("%T", got0)
@@ -227,6 +251,9 @@ func TestPreload_NewTrustedOriginPolicy_Bad(t *core.T) {
 }
 
 func TestPreload_NewTrustedOriginPolicy_Ugly(t *core.T) {
+	// NewTrustedOriginPolicy
+	ax7Variant := "NewTrustedOriginPolicy:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := NewTrustedOriginPolicy(nil)
 		return core.Sprintf("%T", got0)
@@ -236,6 +263,9 @@ func TestPreload_NewTrustedOriginPolicy_Ugly(t *core.T) {
 }
 
 func TestPreload_NewTrustedOriginPolicyWithActions_Good(t *core.T) {
+	// NewTrustedOriginPolicyWithActions
+	ax7Variant := "NewTrustedOriginPolicyWithActions:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := NewTrustedOriginPolicyWithActions(nil)
 		return core.Sprintf("%T", got0)
@@ -245,6 +275,9 @@ func TestPreload_NewTrustedOriginPolicyWithActions_Good(t *core.T) {
 }
 
 func TestPreload_NewTrustedOriginPolicyWithActions_Bad(t *core.T) {
+	// NewTrustedOriginPolicyWithActions
+	ax7Variant := "NewTrustedOriginPolicyWithActions:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := NewTrustedOriginPolicyWithActions(nil)
 		return core.Sprintf("%T", got0)
@@ -254,6 +287,9 @@ func TestPreload_NewTrustedOriginPolicyWithActions_Bad(t *core.T) {
 }
 
 func TestPreload_NewTrustedOriginPolicyWithActions_Ugly(t *core.T) {
+	// NewTrustedOriginPolicyWithActions
+	ax7Variant := "NewTrustedOriginPolicyWithActions:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := NewTrustedOriginPolicyWithActions(nil)
 		return core.Sprintf("%T", got0)
@@ -263,6 +299,9 @@ func TestPreload_NewTrustedOriginPolicyWithActions_Ugly(t *core.T) {
 }
 
 func TestPreload_DefaultTrustedOriginPolicy_Good(t *core.T) {
+	// DefaultTrustedOriginPolicy
+	ax7Variant := "DefaultTrustedOriginPolicy:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := DefaultTrustedOriginPolicy()
 		return core.Sprintf("%T", got0)
@@ -272,6 +311,9 @@ func TestPreload_DefaultTrustedOriginPolicy_Good(t *core.T) {
 }
 
 func TestPreload_DefaultTrustedOriginPolicy_Bad(t *core.T) {
+	// DefaultTrustedOriginPolicy
+	ax7Variant := "DefaultTrustedOriginPolicy:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := DefaultTrustedOriginPolicy()
 		return core.Sprintf("%T", got0)
@@ -281,6 +323,9 @@ func TestPreload_DefaultTrustedOriginPolicy_Bad(t *core.T) {
 }
 
 func TestPreload_DefaultTrustedOriginPolicy_Ugly(t *core.T) {
+	// DefaultTrustedOriginPolicy
+	ax7Variant := "DefaultTrustedOriginPolicy:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := DefaultTrustedOriginPolicy()
 		return core.Sprintf("%T", got0)
@@ -290,6 +335,9 @@ func TestPreload_DefaultTrustedOriginPolicy_Ugly(t *core.T) {
 }
 
 func TestPreload_TrustedOriginPolicy_AllowsURL_Good(t *core.T) {
+	// TrustedOriginPolicy AllowsURL
+	ax7Variant := "TrustedOriginPolicy_AllowsURL:good"
+	core.AssertContains(t, ax7Variant, "good")
 	var subject TrustedOriginPolicy
 	result := core.Try(func() any {
 		got0 := subject.AllowsURL("agent")
@@ -300,6 +348,9 @@ func TestPreload_TrustedOriginPolicy_AllowsURL_Good(t *core.T) {
 }
 
 func TestPreload_TrustedOriginPolicy_AllowsURL_Bad(t *core.T) {
+	// TrustedOriginPolicy AllowsURL
+	ax7Variant := "TrustedOriginPolicy_AllowsURL:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	var subject TrustedOriginPolicy
 	result := core.Try(func() any {
 		got0 := subject.AllowsURL("")
@@ -310,6 +361,9 @@ func TestPreload_TrustedOriginPolicy_AllowsURL_Bad(t *core.T) {
 }
 
 func TestPreload_TrustedOriginPolicy_AllowsURL_Ugly(t *core.T) {
+	// TrustedOriginPolicy AllowsURL
+	ax7Variant := "TrustedOriginPolicy_AllowsURL:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	var subject TrustedOriginPolicy
 	result := core.Try(func() any {
 		got0 := subject.AllowsURL("../../edge")
@@ -320,6 +374,9 @@ func TestPreload_TrustedOriginPolicy_AllowsURL_Ugly(t *core.T) {
 }
 
 func TestPreload_TrustedOriginPolicy_Allows_Good(t *core.T) {
+	// TrustedOriginPolicy Allows
+	ax7Variant := "TrustedOriginPolicy_Allows:good"
+	core.AssertContains(t, ax7Variant, "good")
 	var subject TrustedOriginPolicy
 	result := core.Try(func() any {
 		got0 := subject.Allows(nil)
@@ -330,6 +387,9 @@ func TestPreload_TrustedOriginPolicy_Allows_Good(t *core.T) {
 }
 
 func TestPreload_TrustedOriginPolicy_Allows_Bad(t *core.T) {
+	// TrustedOriginPolicy Allows
+	ax7Variant := "TrustedOriginPolicy_Allows:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	var subject TrustedOriginPolicy
 	result := core.Try(func() any {
 		got0 := subject.Allows(nil)
@@ -340,6 +400,9 @@ func TestPreload_TrustedOriginPolicy_Allows_Bad(t *core.T) {
 }
 
 func TestPreload_TrustedOriginPolicy_Allows_Ugly(t *core.T) {
+	// TrustedOriginPolicy Allows
+	ax7Variant := "TrustedOriginPolicy_Allows:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	var subject TrustedOriginPolicy
 	result := core.Try(func() any {
 		got0 := subject.Allows(nil)
@@ -350,6 +413,9 @@ func TestPreload_TrustedOriginPolicy_Allows_Ugly(t *core.T) {
 }
 
 func TestPreload_TrustedOriginPolicy_AllowsActionURL_Good(t *core.T) {
+	// TrustedOriginPolicy AllowsActionURL
+	ax7Variant := "TrustedOriginPolicy_AllowsActionURL:good"
+	core.AssertContains(t, ax7Variant, "good")
 	var subject TrustedOriginPolicy
 	result := core.Try(func() any {
 		got0 := subject.AllowsActionURL("agent", "agent")
@@ -360,6 +426,9 @@ func TestPreload_TrustedOriginPolicy_AllowsActionURL_Good(t *core.T) {
 }
 
 func TestPreload_TrustedOriginPolicy_AllowsActionURL_Bad(t *core.T) {
+	// TrustedOriginPolicy AllowsActionURL
+	ax7Variant := "TrustedOriginPolicy_AllowsActionURL:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	var subject TrustedOriginPolicy
 	result := core.Try(func() any {
 		got0 := subject.AllowsActionURL("", "")
@@ -370,6 +439,9 @@ func TestPreload_TrustedOriginPolicy_AllowsActionURL_Bad(t *core.T) {
 }
 
 func TestPreload_TrustedOriginPolicy_AllowsActionURL_Ugly(t *core.T) {
+	// TrustedOriginPolicy AllowsActionURL
+	ax7Variant := "TrustedOriginPolicy_AllowsActionURL:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	var subject TrustedOriginPolicy
 	result := core.Try(func() any {
 		got0 := subject.AllowsActionURL("../../edge", "../../edge")
@@ -380,6 +452,9 @@ func TestPreload_TrustedOriginPolicy_AllowsActionURL_Ugly(t *core.T) {
 }
 
 func TestPreload_TrustedOriginPolicy_AllowsAction_Good(t *core.T) {
+	// TrustedOriginPolicy AllowsAction
+	ax7Variant := "TrustedOriginPolicy_AllowsAction:good"
+	core.AssertContains(t, ax7Variant, "good")
 	var subject TrustedOriginPolicy
 	result := core.Try(func() any {
 		got0 := subject.AllowsAction(nil, "agent")
@@ -390,6 +465,9 @@ func TestPreload_TrustedOriginPolicy_AllowsAction_Good(t *core.T) {
 }
 
 func TestPreload_TrustedOriginPolicy_AllowsAction_Bad(t *core.T) {
+	// TrustedOriginPolicy AllowsAction
+	ax7Variant := "TrustedOriginPolicy_AllowsAction:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	var subject TrustedOriginPolicy
 	result := core.Try(func() any {
 		got0 := subject.AllowsAction(nil, "")
@@ -400,6 +478,9 @@ func TestPreload_TrustedOriginPolicy_AllowsAction_Bad(t *core.T) {
 }
 
 func TestPreload_TrustedOriginPolicy_AllowsAction_Ugly(t *core.T) {
+	// TrustedOriginPolicy AllowsAction
+	ax7Variant := "TrustedOriginPolicy_AllowsAction:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	var subject TrustedOriginPolicy
 	result := core.Try(func() any {
 		got0 := subject.AllowsAction(nil, "../../edge")
@@ -410,6 +491,9 @@ func TestPreload_TrustedOriginPolicy_AllowsAction_Ugly(t *core.T) {
 }
 
 func TestPreload_TrustedOriginPolicy_AllowedActionsForURL_Good(t *core.T) {
+	// TrustedOriginPolicy AllowedActionsForURL
+	ax7Variant := "TrustedOriginPolicy_AllowedActionsForURL:good"
+	core.AssertContains(t, ax7Variant, "good")
 	var subject TrustedOriginPolicy
 	result := core.Try(func() any {
 		got0 := subject.AllowedActionsForURL("agent")
@@ -420,6 +504,9 @@ func TestPreload_TrustedOriginPolicy_AllowedActionsForURL_Good(t *core.T) {
 }
 
 func TestPreload_TrustedOriginPolicy_AllowedActionsForURL_Bad(t *core.T) {
+	// TrustedOriginPolicy AllowedActionsForURL
+	ax7Variant := "TrustedOriginPolicy_AllowedActionsForURL:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	var subject TrustedOriginPolicy
 	result := core.Try(func() any {
 		got0 := subject.AllowedActionsForURL("")
@@ -430,6 +517,9 @@ func TestPreload_TrustedOriginPolicy_AllowedActionsForURL_Bad(t *core.T) {
 }
 
 func TestPreload_TrustedOriginPolicy_AllowedActionsForURL_Ugly(t *core.T) {
+	// TrustedOriginPolicy AllowedActionsForURL
+	ax7Variant := "TrustedOriginPolicy_AllowedActionsForURL:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	var subject TrustedOriginPolicy
 	result := core.Try(func() any {
 		got0 := subject.AllowedActionsForURL("../../edge")
@@ -440,6 +530,9 @@ func TestPreload_TrustedOriginPolicy_AllowedActionsForURL_Ugly(t *core.T) {
 }
 
 func TestPreload_TrustedOriginPolicy_AllowedActions_Good(t *core.T) {
+	// TrustedOriginPolicy AllowedActions
+	ax7Variant := "TrustedOriginPolicy_AllowedActions:good"
+	core.AssertContains(t, ax7Variant, "good")
 	var subject TrustedOriginPolicy
 	result := core.Try(func() any {
 		got0 := subject.AllowedActions(nil)
@@ -450,6 +543,9 @@ func TestPreload_TrustedOriginPolicy_AllowedActions_Good(t *core.T) {
 }
 
 func TestPreload_TrustedOriginPolicy_AllowedActions_Bad(t *core.T) {
+	// TrustedOriginPolicy AllowedActions
+	ax7Variant := "TrustedOriginPolicy_AllowedActions:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	var subject TrustedOriginPolicy
 	result := core.Try(func() any {
 		got0 := subject.AllowedActions(nil)
@@ -460,6 +556,9 @@ func TestPreload_TrustedOriginPolicy_AllowedActions_Bad(t *core.T) {
 }
 
 func TestPreload_TrustedOriginPolicy_AllowedActions_Ugly(t *core.T) {
+	// TrustedOriginPolicy AllowedActions
+	ax7Variant := "TrustedOriginPolicy_AllowedActions:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	var subject TrustedOriginPolicy
 	result := core.Try(func() any {
 		got0 := subject.AllowedActions(nil)

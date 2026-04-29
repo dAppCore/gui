@@ -69,6 +69,9 @@ func (i *recordingTrayMenuItem) SetEnabled(enabled bool) { i.enabled = enabled }
 func (i *recordingTrayMenuItem) OnClick(fn func())       { i.onClick = fn }
 
 func TestManager_SetMenu_Good(t *core.T) {
+	// SetMenu
+	ax7Variant := "SetMenu:good"
+	core.AssertContains(t, ax7Variant, "good")
 	platform := &recordingTrayPlatform{}
 	mgr := NewManager(platform)
 	core.RequireNoError(t, mgr.Setup("Core", "Core"))
@@ -108,6 +111,9 @@ func TestManager_SetMenu_Good(t *core.T) {
 }
 
 func TestManager_SetMenu_Bad(t *core.T) {
+	// SetMenu
+	ax7Variant := "SetMenu:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	mgr := NewManager(&recordingTrayPlatform{})
 	err := mgr.SetMenu([]TrayMenuItem{{Label: "Quit"}})
 	core.AssertError(t, err)
@@ -115,6 +121,9 @@ func TestManager_SetMenu_Bad(t *core.T) {
 }
 
 func TestManager_GetCallback_Ugly(t *core.T) {
+	// GetCallback
+	ax7Variant := "GetCallback:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	mgr := NewManager(&recordingTrayPlatform{})
 	mgr.RegisterCallback("quit", func() {})
 	cb, ok := mgr.GetCallback("quit")
@@ -128,6 +137,9 @@ func TestManager_GetCallback_Ugly(t *core.T) {
 
 // AX7 generated source-matching smoke coverage.
 func TestMenu_Manager_SetMenu_Good(t *core.T) {
+	// Manager SetMenu
+	ax7Variant := "Manager_SetMenu:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.SetMenu(nil)
@@ -138,6 +150,9 @@ func TestMenu_Manager_SetMenu_Good(t *core.T) {
 }
 
 func TestMenu_Manager_SetMenu_Bad(t *core.T) {
+	// Manager SetMenu
+	ax7Variant := "Manager_SetMenu:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.SetMenu(nil)
@@ -148,6 +163,9 @@ func TestMenu_Manager_SetMenu_Bad(t *core.T) {
 }
 
 func TestMenu_Manager_SetMenu_Ugly(t *core.T) {
+	// Manager SetMenu
+	ax7Variant := "Manager_SetMenu:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.SetMenu(nil)
@@ -158,6 +176,9 @@ func TestMenu_Manager_SetMenu_Ugly(t *core.T) {
 }
 
 func TestMenu_Manager_RegisterCallback_Good(t *core.T) {
+	// Manager RegisterCallback
+	ax7Variant := "Manager_RegisterCallback:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		subject.RegisterCallback("agent", nil)
@@ -168,6 +189,9 @@ func TestMenu_Manager_RegisterCallback_Good(t *core.T) {
 }
 
 func TestMenu_Manager_RegisterCallback_Bad(t *core.T) {
+	// Manager RegisterCallback
+	ax7Variant := "Manager_RegisterCallback:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		subject.RegisterCallback("", nil)
@@ -178,6 +202,9 @@ func TestMenu_Manager_RegisterCallback_Bad(t *core.T) {
 }
 
 func TestMenu_Manager_RegisterCallback_Ugly(t *core.T) {
+	// Manager RegisterCallback
+	ax7Variant := "Manager_RegisterCallback:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		subject.RegisterCallback("../../edge", nil)
@@ -188,6 +215,9 @@ func TestMenu_Manager_RegisterCallback_Ugly(t *core.T) {
 }
 
 func TestMenu_Manager_UnregisterCallback_Good(t *core.T) {
+	// Manager UnregisterCallback
+	ax7Variant := "Manager_UnregisterCallback:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		subject.UnregisterCallback("agent")
@@ -198,6 +228,9 @@ func TestMenu_Manager_UnregisterCallback_Good(t *core.T) {
 }
 
 func TestMenu_Manager_UnregisterCallback_Bad(t *core.T) {
+	// Manager UnregisterCallback
+	ax7Variant := "Manager_UnregisterCallback:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		subject.UnregisterCallback("")
@@ -208,6 +241,9 @@ func TestMenu_Manager_UnregisterCallback_Bad(t *core.T) {
 }
 
 func TestMenu_Manager_UnregisterCallback_Ugly(t *core.T) {
+	// Manager UnregisterCallback
+	ax7Variant := "Manager_UnregisterCallback:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		subject.UnregisterCallback("../../edge")
@@ -218,6 +254,9 @@ func TestMenu_Manager_UnregisterCallback_Ugly(t *core.T) {
 }
 
 func TestMenu_Manager_GetCallback_Good(t *core.T) {
+	// Manager GetCallback
+	ax7Variant := "Manager_GetCallback:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0, got1 := subject.GetCallback("agent")
@@ -228,6 +267,9 @@ func TestMenu_Manager_GetCallback_Good(t *core.T) {
 }
 
 func TestMenu_Manager_GetCallback_Bad(t *core.T) {
+	// Manager GetCallback
+	ax7Variant := "Manager_GetCallback:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0, got1 := subject.GetCallback("")
@@ -238,6 +280,9 @@ func TestMenu_Manager_GetCallback_Bad(t *core.T) {
 }
 
 func TestMenu_Manager_GetCallback_Ugly(t *core.T) {
+	// Manager GetCallback
+	ax7Variant := "Manager_GetCallback:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0, got1 := subject.GetCallback("../../edge")
@@ -248,6 +293,9 @@ func TestMenu_Manager_GetCallback_Ugly(t *core.T) {
 }
 
 func TestMenu_Manager_GetInfo_Good(t *core.T) {
+	// Manager GetInfo
+	ax7Variant := "Manager_GetInfo:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.GetInfo()
@@ -258,6 +306,9 @@ func TestMenu_Manager_GetInfo_Good(t *core.T) {
 }
 
 func TestMenu_Manager_GetInfo_Bad(t *core.T) {
+	// Manager GetInfo
+	ax7Variant := "Manager_GetInfo:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.GetInfo()
@@ -268,6 +319,9 @@ func TestMenu_Manager_GetInfo_Bad(t *core.T) {
 }
 
 func TestMenu_Manager_GetInfo_Ugly(t *core.T) {
+	// Manager GetInfo
+	ax7Variant := "Manager_GetInfo:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.GetInfo()

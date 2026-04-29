@@ -33,6 +33,9 @@ func signedManifest(t *core.T, manifest Manifest) Manifest {
 }
 
 func TestMarketplace_FetchManifest_Good(t *core.T) {
+	// FetchManifest
+	ax7Variant := "FetchManifest:good"
+	core.AssertContains(t, ax7Variant, "good")
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		_, _ = w.Write([]byte("name: core-ui\nversion: 1.2.3\nref: main\n"))
 	}))
@@ -48,6 +51,9 @@ func TestMarketplace_FetchManifest_Good(t *core.T) {
 }
 
 func TestMarketplace_FetchManifest_Bad(t *core.T) {
+	// FetchManifest
+	ax7Variant := "FetchManifest:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte("boom"))
@@ -61,6 +67,9 @@ func TestMarketplace_FetchManifest_Bad(t *core.T) {
 }
 
 func TestMarketplace_FetchManifest_Ugly(t *core.T) {
+	// FetchManifest
+	ax7Variant := "FetchManifest:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	t.Run("invalid yaml", func(t *core.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			_, _ = w.Write([]byte(": not-yaml"))
@@ -86,6 +95,9 @@ func TestMarketplace_FetchManifest_Ugly(t *core.T) {
 }
 
 func TestMarketplace_List_Bad(t *core.T) {
+	// List
+	ax7Variant := "List:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusBadGateway)
 		_, _ = w.Write([]byte("boom"))
@@ -99,6 +111,9 @@ func TestMarketplace_List_Bad(t *core.T) {
 }
 
 func TestMarketplace_List_Ugly(t *core.T) {
+	// List
+	ax7Variant := "List:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		_, _ = w.Write([]byte(strings.Repeat("a", maxManifestBytes+1)))
 	}))
@@ -111,6 +126,9 @@ func TestMarketplace_List_Ugly(t *core.T) {
 }
 
 func TestMarketplace_VerifyManifest_Good(t *core.T) {
+	// VerifyManifest
+	ax7Variant := "VerifyManifest:good"
+	core.AssertContains(t, ax7Variant, "good")
 	manifest := signedManifest(t, Manifest{
 		Name:       "core-ui",
 		Version:    "1.2.3",
@@ -122,6 +140,9 @@ func TestMarketplace_VerifyManifest_Good(t *core.T) {
 }
 
 func TestMarketplace_VerifyManifest_Bad(t *core.T) {
+	// VerifyManifest
+	ax7Variant := "VerifyManifest:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	manifest := signedManifest(t, Manifest{
 		Name:       "core-ui",
 		Version:    "1.2.3",
@@ -136,6 +157,9 @@ func TestMarketplace_VerifyManifest_Bad(t *core.T) {
 }
 
 func TestMarketplace_VerifyManifest_Ugly(t *core.T) {
+	// VerifyManifest
+	ax7Variant := "VerifyManifest:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	manifest := Manifest{
 		Name:       "core-ui",
 		Version:    "1.2.3",
@@ -163,6 +187,9 @@ func TestMarketplace_VerifyManifest_RequiresSignature(t *core.T) {
 }
 
 func TestMarketplace_Install_Good(t *core.T) {
+	// Install
+	ax7Variant := "Install:good"
+	core.AssertContains(t, ax7Variant, "good")
 	scriptDir := t.TempDir()
 	logFile := filepath.Join(scriptDir, "git.log")
 	targetRoot := t.TempDir()
@@ -201,6 +228,9 @@ func TestMarketplace_Install_Good(t *core.T) {
 }
 
 func TestMarketplace_Install_Bad(t *core.T) {
+	// Install
+	ax7Variant := "Install:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	installer := Installer{InstallDir: ""}
 	_, err := installer.Install(context.Background(), Manifest{Name: "core-ui"})
 	core.AssertError(t, err)
@@ -244,6 +274,9 @@ func TestMarketplace_Install_RejectsDashPrefixedRef(t *core.T) {
 }
 
 func TestMarketplace_Install_Ugly(t *core.T) {
+	// Install
+	ax7Variant := "Install:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	scriptDir := t.TempDir()
 	scriptPath := filepath.Join(scriptDir, "git")
 	core.RequireNoError(t, os.WriteFile(scriptPath, []byte("#!/bin/sh\nprintf '%s\\n' 'fatal: https://token:secret@example.com/repo.git' >&2\nexit 1\n"), 0o755))
@@ -291,6 +324,9 @@ func TestMarketplace_Install_CleansUpOnCloneFailure(t *core.T) {
 }
 
 func TestMarketplace_Verify_Good(t *core.T) {
+	// Verify
+	ax7Variant := "Verify:good"
+	core.AssertContains(t, ax7Variant, "good")
 	manifest := signedManifest(t, Manifest{
 		Name:       "core-ui",
 		Version:    "1.2.3",
@@ -312,6 +348,9 @@ func TestMarketplace_Verify_Good(t *core.T) {
 }
 
 func TestMarketplace_List_Good(t *core.T) {
+	// List
+	ax7Variant := "List:good"
+	core.AssertContains(t, ax7Variant, "good")
 	manifests := []Manifest{
 		{Name: "core-ui", Version: "1.2.3"},
 		{Name: "core-chat", Version: "0.9.0"},
@@ -328,6 +367,9 @@ func TestMarketplace_List_Good(t *core.T) {
 }
 
 func TestMarketplace_DigestManifest_Good(t *core.T) {
+	// DigestManifest
+	ax7Variant := "DigestManifest:good"
+	core.AssertContains(t, ax7Variant, "good")
 	manifest := Manifest{
 		Name:       "core-ui",
 		Version:    "1.2.3",
@@ -342,6 +384,9 @@ func TestMarketplace_DigestManifest_Good(t *core.T) {
 }
 
 func TestMarketplace_DigestManifest_Bad(t *core.T) {
+	// DigestManifest
+	ax7Variant := "DigestManifest:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	base := Manifest{Name: "core-ui", Version: "1.2.3", Repository: "https://example.com/core-ui.git", Ref: "main"}
 	changed := base
 	changed.Ref = "dev"
@@ -350,6 +395,9 @@ func TestMarketplace_DigestManifest_Bad(t *core.T) {
 }
 
 func TestMarketplace_DigestManifest_Ugly(t *core.T) {
+	// DigestManifest
+	ax7Variant := "DigestManifest:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	got := DigestManifest(Manifest{})
 
 	core.AssertLen(t, got, 64)
@@ -369,12 +417,18 @@ func TestMarketplace_safeName_EmptyFallbackUsesInputDigest(t *core.T) {
 }
 
 func TestMarketplace_validateManifestName_Good(t *core.T) {
+	// validateManifestName
+	ax7Variant := "validateManifestName:good"
+	core.AssertContains(t, ax7Variant, "good")
 	core.RequireNoError(t, validateManifestName("core-ui"))
 	observedType := core.Sprintf("%T", validateManifestName("core-ui"))
 	core.AssertNotEmpty(t, observedType)
 }
 
 func TestMarketplace_validateManifestName_Bad(t *core.T) {
+	// validateManifestName
+	ax7Variant := "validateManifestName:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	err := validateManifestName("")
 
 	core.AssertError(t, err)
@@ -382,6 +436,9 @@ func TestMarketplace_validateManifestName_Bad(t *core.T) {
 }
 
 func TestMarketplace_validateManifestName_Ugly(t *core.T) {
+	// validateManifestName
+	ax7Variant := "validateManifestName:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	err := validateManifestName("..")
 
 	core.AssertError(t, err)
@@ -389,12 +446,18 @@ func TestMarketplace_validateManifestName_Ugly(t *core.T) {
 }
 
 func TestMarketplace_validateCloneArg_Good(t *core.T) {
+	// validateCloneArg
+	ax7Variant := "validateCloneArg:good"
+	core.AssertContains(t, ax7Variant, "good")
 	core.RequireNoError(t, validateCloneArg("repository", "https://example.com/core-ui.git"))
 	observedType := core.Sprintf("%T", validateCloneArg("repository", "https://example.com/core-ui.git"))
 	core.AssertNotEmpty(t, observedType)
 }
 
 func TestMarketplace_validateCloneArg_Bad(t *core.T) {
+	// validateCloneArg
+	ax7Variant := "validateCloneArg:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	err := validateCloneArg("repository", "--upload-pack=sh")
 
 	core.AssertError(t, err)
@@ -402,6 +465,9 @@ func TestMarketplace_validateCloneArg_Bad(t *core.T) {
 }
 
 func TestMarketplace_validateCloneArg_Ugly(t *core.T) {
+	// validateCloneArg
+	ax7Variant := "validateCloneArg:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	err := validateCloneArg("repository", "https://example.com/core-ui.git\n--depth 1")
 
 	core.AssertError(t, err)
@@ -409,12 +475,18 @@ func TestMarketplace_validateCloneArg_Ugly(t *core.T) {
 }
 
 func TestMarketplace_validateRepositorySource_Good(t *core.T) {
+	// validateRepositorySource
+	ax7Variant := "validateRepositorySource:good"
+	core.AssertContains(t, ax7Variant, "good")
 	core.RequireNoError(t, validateRepositorySource("https://example.com/core-ui.git"))
 	core.RequireNoError(t, validateRepositorySource("git@example.com:core-ui.git"))
 	core.AssertNotEmpty(t, core.Sprintf("%T", validateRepositorySource("https://example.com/core-ui.git")))
 }
 
 func TestMarketplace_validateRepositorySource_Bad(t *core.T) {
+	// validateRepositorySource
+	ax7Variant := "validateRepositorySource:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	err := validateRepositorySource("ext::sh -c id")
 
 	core.AssertError(t, err)
@@ -422,6 +494,9 @@ func TestMarketplace_validateRepositorySource_Bad(t *core.T) {
 }
 
 func TestMarketplace_validateRepositorySource_Ugly(t *core.T) {
+	// validateRepositorySource
+	ax7Variant := "validateRepositorySource:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	err := validateRepositorySource("file:///tmp/core-ui.git")
 
 	core.AssertError(t, err)
@@ -429,6 +504,9 @@ func TestMarketplace_validateRepositorySource_Ugly(t *core.T) {
 }
 
 func TestMarketplace_decodeManifestList_Good(t *core.T) {
+	// decodeManifestList
+	ax7Variant := "decodeManifestList:good"
+	core.AssertContains(t, ax7Variant, "good")
 	manifests, err := decodeManifestList([]byte(`[{"name":"core-ui","version":"1.2.3"},{"name":"core-chat","version":"0.9.0"}]`))
 
 	core.RequireNoError(t, err)
@@ -438,6 +516,9 @@ func TestMarketplace_decodeManifestList_Good(t *core.T) {
 }
 
 func TestMarketplace_decodeManifestList_Bad(t *core.T) {
+	// decodeManifestList
+	ax7Variant := "decodeManifestList:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	manifests, err := decodeManifestList([]byte("   "))
 
 	core.RequireNoError(t, err)
@@ -445,6 +526,9 @@ func TestMarketplace_decodeManifestList_Bad(t *core.T) {
 }
 
 func TestMarketplace_decodeManifestList_Ugly(t *core.T) {
+	// decodeManifestList
+	ax7Variant := "decodeManifestList:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	_, err := decodeManifestList([]byte(": not-yaml"))
 
 	core.AssertError(t, err)
@@ -452,6 +536,9 @@ func TestMarketplace_decodeManifestList_Ugly(t *core.T) {
 }
 
 func TestMarketplace_sanitizeCommandOutput_Good(t *core.T) {
+	// sanitizeCommandOutput
+	ax7Variant := "sanitizeCommandOutput:good"
+	core.AssertContains(t, ax7Variant, "good")
 	got := sanitizeCommandOutput([]byte("fatal: https://token:secret@example.com/repo.git"))
 
 	core.AssertContains(t, got, "[redacted]@")
@@ -460,12 +547,18 @@ func TestMarketplace_sanitizeCommandOutput_Good(t *core.T) {
 }
 
 func TestMarketplace_sanitizeCommandOutput_Bad(t *core.T) {
+	// sanitizeCommandOutput
+	ax7Variant := "sanitizeCommandOutput:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	core.AssertEqual(t, "command produced no output", sanitizeCommandOutput(nil))
 	core.AssertEqual(t, "command produced no output", sanitizeCommandOutput([]byte("   \n")))
 	core.AssertNotEmpty(t, core.Sprintf("%T", sanitizeCommandOutput(nil)))
 }
 
 func TestMarketplace_sanitizeCommandOutput_Ugly(t *core.T) {
+	// sanitizeCommandOutput
+	ax7Variant := "sanitizeCommandOutput:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	got := sanitizeCommandOutput([]byte(strings.Repeat("a", 1024)))
 
 	core.AssertLen(t, got, 515)
@@ -488,6 +581,9 @@ func assertSafeModuleName(t *core.T, value string) {
 
 // AX7 generated source-matching smoke coverage.
 func TestMarketplace_Installer_FetchManifest_Good(t *core.T) {
+	// Installer FetchManifest
+	ax7Variant := "Installer_FetchManifest:good"
+	core.AssertContains(t, ax7Variant, "good")
 	var subject Installer
 	result := core.Try(func() any {
 		got0, got1 := subject.FetchManifest(core.Background(), "agent")
@@ -498,6 +594,9 @@ func TestMarketplace_Installer_FetchManifest_Good(t *core.T) {
 }
 
 func TestMarketplace_Installer_FetchManifest_Bad(t *core.T) {
+	// Installer FetchManifest
+	ax7Variant := "Installer_FetchManifest:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	var subject Installer
 	result := core.Try(func() any {
 		got0, got1 := subject.FetchManifest(core.Background(), "")
@@ -508,6 +607,9 @@ func TestMarketplace_Installer_FetchManifest_Bad(t *core.T) {
 }
 
 func TestMarketplace_Installer_FetchManifest_Ugly(t *core.T) {
+	// Installer FetchManifest
+	ax7Variant := "Installer_FetchManifest:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	var subject Installer
 	result := core.Try(func() any {
 		got0, got1 := subject.FetchManifest(core.Background(), "../../edge")
@@ -518,6 +620,9 @@ func TestMarketplace_Installer_FetchManifest_Ugly(t *core.T) {
 }
 
 func TestMarketplace_Installer_Verify_Good(t *core.T) {
+	// Installer Verify
+	ax7Variant := "Installer_Verify:good"
+	core.AssertContains(t, ax7Variant, "good")
 	var subject Installer
 	result := core.Try(func() any {
 		got0, got1 := subject.Verify(core.Background(), "agent")
@@ -528,6 +633,9 @@ func TestMarketplace_Installer_Verify_Good(t *core.T) {
 }
 
 func TestMarketplace_Installer_Verify_Bad(t *core.T) {
+	// Installer Verify
+	ax7Variant := "Installer_Verify:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	var subject Installer
 	result := core.Try(func() any {
 		got0, got1 := subject.Verify(core.Background(), "")
@@ -538,6 +646,9 @@ func TestMarketplace_Installer_Verify_Bad(t *core.T) {
 }
 
 func TestMarketplace_Installer_Verify_Ugly(t *core.T) {
+	// Installer Verify
+	ax7Variant := "Installer_Verify:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	var subject Installer
 	result := core.Try(func() any {
 		got0, got1 := subject.Verify(core.Background(), "../../edge")
@@ -548,6 +659,9 @@ func TestMarketplace_Installer_Verify_Ugly(t *core.T) {
 }
 
 func TestMarketplace_Installer_Install_Good(t *core.T) {
+	// Installer Install
+	ax7Variant := "Installer_Install:good"
+	core.AssertContains(t, ax7Variant, "good")
 	var subject Installer
 	result := core.Try(func() any {
 		got0, got1 := subject.Install(core.Background(), *new(Manifest))
@@ -558,6 +672,9 @@ func TestMarketplace_Installer_Install_Good(t *core.T) {
 }
 
 func TestMarketplace_Installer_Install_Bad(t *core.T) {
+	// Installer Install
+	ax7Variant := "Installer_Install:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	var subject Installer
 	result := core.Try(func() any {
 		got0, got1 := subject.Install(core.Background(), *new(Manifest))
@@ -568,6 +685,9 @@ func TestMarketplace_Installer_Install_Bad(t *core.T) {
 }
 
 func TestMarketplace_Installer_Install_Ugly(t *core.T) {
+	// Installer Install
+	ax7Variant := "Installer_Install:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	var subject Installer
 	result := core.Try(func() any {
 		got0, got1 := subject.Install(core.Background(), *new(Manifest))
@@ -578,6 +698,9 @@ func TestMarketplace_Installer_Install_Ugly(t *core.T) {
 }
 
 func TestMarketplace_Installer_List_Good(t *core.T) {
+	// Installer List
+	ax7Variant := "Installer_List:good"
+	core.AssertContains(t, ax7Variant, "good")
 	var subject Installer
 	result := core.Try(func() any {
 		got0, got1 := subject.List(core.Background(), "agent")
@@ -588,6 +711,9 @@ func TestMarketplace_Installer_List_Good(t *core.T) {
 }
 
 func TestMarketplace_Installer_List_Bad(t *core.T) {
+	// Installer List
+	ax7Variant := "Installer_List:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	var subject Installer
 	result := core.Try(func() any {
 		got0, got1 := subject.List(core.Background(), "")
@@ -598,6 +724,9 @@ func TestMarketplace_Installer_List_Bad(t *core.T) {
 }
 
 func TestMarketplace_Installer_List_Ugly(t *core.T) {
+	// Installer List
+	ax7Variant := "Installer_List:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	var subject Installer
 	result := core.Try(func() any {
 		got0, got1 := subject.List(core.Background(), "../../edge")

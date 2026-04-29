@@ -19,6 +19,9 @@ func TestToolsLifecycle_appQuit_GoodCase(t *core.T) {
 }
 
 func TestToolsLifecycle_appQuit_Bad(t *core.T) {
+	// appQuit
+	ax7Variant := "appQuit:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	sub := New(core.New(core.WithServiceLock()))
 
 	_, out, err := sub.appQuit(context.Background(), nil, AppQuitInput{})

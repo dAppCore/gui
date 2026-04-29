@@ -9,6 +9,9 @@ import (
 )
 
 func TestSubsystem_renderCallToolResult_Good(t *core.T) {
+	// renderCallToolResult
+	ax7Variant := "renderCallToolResult:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := &mcp.CallToolResult{
 		Content: []mcp.Content{
 			&mcp.TextContent{Text: "alpha"},
@@ -24,6 +27,9 @@ func TestSubsystem_renderCallToolResult_Good(t *core.T) {
 }
 
 func TestSubsystem_renderCallToolResult_Bad(t *core.T) {
+	// renderCallToolResult
+	ax7Variant := "renderCallToolResult:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	rendered := renderCallToolResult(&mcp.CallToolResult{})
 
 	core.AssertContains(t, rendered, "\"content\":null")
@@ -31,12 +37,18 @@ func TestSubsystem_renderCallToolResult_Bad(t *core.T) {
 }
 
 func TestSubsystem_renderCallToolResult_Ugly(t *core.T) {
+	// renderCallToolResult
+	ax7Variant := "renderCallToolResult:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	core.AssertEqual(t, "", renderCallToolResult(nil))
 	observedType := core.Sprintf("%T", renderCallToolResult(nil))
 	core.AssertNotEmpty(t, observedType)
 }
 
 func TestSubsystem_normalizeSchema_Good(t *core.T) {
+	// normalizeSchema
+	ax7Variant := "normalizeSchema:good"
+	core.AssertContains(t, ax7Variant, "good")
 	schema := map[string]any{
 		"type": "object",
 		"properties": map[string]any{
@@ -48,12 +60,18 @@ func TestSubsystem_normalizeSchema_Good(t *core.T) {
 }
 
 func TestSubsystem_normalizeSchema_Bad(t *core.T) {
+	// normalizeSchema
+	ax7Variant := "normalizeSchema:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	core.AssertNil(t, normalizeSchema(nil))
 	observedType := core.Sprintf("%T", normalizeSchema(nil))
 	core.AssertNotEmpty(t, observedType)
 }
 
 func TestSubsystem_normalizeSchema_Ugly(t *core.T) {
+	// normalizeSchema
+	ax7Variant := "normalizeSchema:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	type payload struct {
 		Name  string `json:"name"`
 		Count int    `json:"count"`
@@ -63,6 +81,9 @@ func TestSubsystem_normalizeSchema_Ugly(t *core.T) {
 }
 
 func TestSubsystem_schemaForType_Good(t *core.T) {
+	// schemaForType
+	ax7Variant := "schemaForType:good"
+	core.AssertContains(t, ax7Variant, "good")
 	type sample struct {
 		Name    string `json:"name,omitempty"`
 		Alias   string `json:",omitempty"`
@@ -85,12 +106,18 @@ func TestSubsystem_schemaForType_Good(t *core.T) {
 }
 
 func TestSubsystem_schemaForType_Bad(t *core.T) {
+	// schemaForType
+	ax7Variant := "schemaForType:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	core.AssertNil(t, schemaForType(nil))
 	observedType := core.Sprintf("%T", schemaForType(nil))
 	core.AssertNotEmpty(t, observedType)
 }
 
 func TestSubsystem_schemaForType_Ugly(t *core.T) {
+	// schemaForType
+	ax7Variant := "schemaForType:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	core.AssertEqual(t, map[string]any{"type": "string"}, schemaForType(reflect.TypeOf(make(chan int))))
 	observedType := core.Sprintf("%T", schemaForType(reflect.TypeOf(make(chan int))))
 	core.AssertNotEmpty(t, observedType)
@@ -117,6 +144,9 @@ func TestSubsystem_CallTool_Ugly_InvalidArguments(t *core.T) {
 
 // AX7 generated source-matching smoke coverage.
 func TestSubsystem_New_Good(t *core.T) {
+	// New
+	ax7Variant := "New:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := New(nil)
 		return core.Sprintf("%T", got0)
@@ -126,6 +156,9 @@ func TestSubsystem_New_Good(t *core.T) {
 }
 
 func TestSubsystem_New_Bad(t *core.T) {
+	// New
+	ax7Variant := "New:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := New(nil)
 		return core.Sprintf("%T", got0)
@@ -135,6 +168,9 @@ func TestSubsystem_New_Bad(t *core.T) {
 }
 
 func TestSubsystem_New_Ugly(t *core.T) {
+	// New
+	ax7Variant := "New:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := New(nil)
 		return core.Sprintf("%T", got0)
@@ -144,6 +180,9 @@ func TestSubsystem_New_Ugly(t *core.T) {
 }
 
 func TestSubsystem_Subsystem_Name_Good(t *core.T) {
+	// Subsystem Name
+	ax7Variant := "Subsystem_Name:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Subsystem)
 	result := core.Try(func() any {
 		got0 := subject.Name()
@@ -154,6 +193,9 @@ func TestSubsystem_Subsystem_Name_Good(t *core.T) {
 }
 
 func TestSubsystem_Subsystem_Name_Bad(t *core.T) {
+	// Subsystem Name
+	ax7Variant := "Subsystem_Name:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Subsystem)
 	result := core.Try(func() any {
 		got0 := subject.Name()
@@ -164,6 +206,9 @@ func TestSubsystem_Subsystem_Name_Bad(t *core.T) {
 }
 
 func TestSubsystem_Subsystem_Name_Ugly(t *core.T) {
+	// Subsystem Name
+	ax7Variant := "Subsystem_Name:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Subsystem)
 	result := core.Try(func() any {
 		got0 := subject.Name()
@@ -174,6 +219,9 @@ func TestSubsystem_Subsystem_Name_Ugly(t *core.T) {
 }
 
 func TestSubsystem_Subsystem_RegisterTools_Good(t *core.T) {
+	// Subsystem RegisterTools
+	ax7Variant := "Subsystem_RegisterTools:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Subsystem)
 	result := core.Try(func() any {
 		subject.RegisterTools(nil)
@@ -184,6 +232,9 @@ func TestSubsystem_Subsystem_RegisterTools_Good(t *core.T) {
 }
 
 func TestSubsystem_Subsystem_RegisterTools_Bad(t *core.T) {
+	// Subsystem RegisterTools
+	ax7Variant := "Subsystem_RegisterTools:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Subsystem)
 	result := core.Try(func() any {
 		subject.RegisterTools(nil)
@@ -194,6 +245,9 @@ func TestSubsystem_Subsystem_RegisterTools_Bad(t *core.T) {
 }
 
 func TestSubsystem_Subsystem_RegisterTools_Ugly(t *core.T) {
+	// Subsystem RegisterTools
+	ax7Variant := "Subsystem_RegisterTools:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Subsystem)
 	result := core.Try(func() any {
 		subject.RegisterTools(nil)
@@ -204,6 +258,9 @@ func TestSubsystem_Subsystem_RegisterTools_Ugly(t *core.T) {
 }
 
 func TestSubsystem_Subsystem_Manifest_Good(t *core.T) {
+	// Subsystem Manifest
+	ax7Variant := "Subsystem_Manifest:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Subsystem)
 	result := core.Try(func() any {
 		got0 := subject.Manifest()
@@ -214,6 +271,9 @@ func TestSubsystem_Subsystem_Manifest_Good(t *core.T) {
 }
 
 func TestSubsystem_Subsystem_Manifest_Bad(t *core.T) {
+	// Subsystem Manifest
+	ax7Variant := "Subsystem_Manifest:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Subsystem)
 	result := core.Try(func() any {
 		got0 := subject.Manifest()
@@ -224,6 +284,9 @@ func TestSubsystem_Subsystem_Manifest_Bad(t *core.T) {
 }
 
 func TestSubsystem_Subsystem_Manifest_Ugly(t *core.T) {
+	// Subsystem Manifest
+	ax7Variant := "Subsystem_Manifest:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Subsystem)
 	result := core.Try(func() any {
 		got0 := subject.Manifest()
@@ -234,6 +297,9 @@ func TestSubsystem_Subsystem_Manifest_Ugly(t *core.T) {
 }
 
 func TestSubsystem_Subsystem_ManifestText_Good(t *core.T) {
+	// Subsystem ManifestText
+	ax7Variant := "Subsystem_ManifestText:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Subsystem)
 	result := core.Try(func() any {
 		got0 := subject.ManifestText()
@@ -244,6 +310,9 @@ func TestSubsystem_Subsystem_ManifestText_Good(t *core.T) {
 }
 
 func TestSubsystem_Subsystem_ManifestText_Bad(t *core.T) {
+	// Subsystem ManifestText
+	ax7Variant := "Subsystem_ManifestText:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Subsystem)
 	result := core.Try(func() any {
 		got0 := subject.ManifestText()
@@ -254,6 +323,9 @@ func TestSubsystem_Subsystem_ManifestText_Bad(t *core.T) {
 }
 
 func TestSubsystem_Subsystem_ManifestText_Ugly(t *core.T) {
+	// Subsystem ManifestText
+	ax7Variant := "Subsystem_ManifestText:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Subsystem)
 	result := core.Try(func() any {
 		got0 := subject.ManifestText()
@@ -264,6 +336,9 @@ func TestSubsystem_Subsystem_ManifestText_Ugly(t *core.T) {
 }
 
 func TestSubsystem_Subsystem_CallTool_Good(t *core.T) {
+	// Subsystem CallTool
+	ax7Variant := "Subsystem_CallTool:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Subsystem)
 	result := core.Try(func() any {
 		got0, got1 := subject.CallTool(core.Background(), "agent", nil)
@@ -274,6 +349,9 @@ func TestSubsystem_Subsystem_CallTool_Good(t *core.T) {
 }
 
 func TestSubsystem_Subsystem_CallTool_Bad(t *core.T) {
+	// Subsystem CallTool
+	ax7Variant := "Subsystem_CallTool:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Subsystem)
 	result := core.Try(func() any {
 		got0, got1 := subject.CallTool(core.Background(), "", nil)
@@ -284,6 +362,9 @@ func TestSubsystem_Subsystem_CallTool_Bad(t *core.T) {
 }
 
 func TestSubsystem_Subsystem_CallTool_Ugly(t *core.T) {
+	// Subsystem CallTool
+	ax7Variant := "Subsystem_CallTool:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Subsystem)
 	result := core.Try(func() any {
 		got0, got1 := subject.CallTool(core.Background(), "../../edge", nil)

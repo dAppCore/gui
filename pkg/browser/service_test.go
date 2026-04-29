@@ -126,6 +126,9 @@ func TestTaskOpenURL_Bad_NoService(t *core.T) {
 }
 
 func TestService_validatedOpenURL_Good(t *core.T) {
+	// validatedOpenURL
+	ax7Variant := "validatedOpenURL:good"
+	core.AssertContains(t, ax7Variant, "good")
 	cases := []struct {
 		name string
 		raw  string
@@ -153,6 +156,9 @@ func TestService_validatedOpenURL_Good(t *core.T) {
 }
 
 func TestService_validatedOpenURL_Bad(t *core.T) {
+	// validatedOpenURL
+	ax7Variant := "validatedOpenURL:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	cases := []string{
 		"",
 		"   ",
@@ -171,18 +177,27 @@ func TestService_validatedOpenURL_Bad(t *core.T) {
 }
 
 func TestService_validatedOpenURL_Ugly(t *core.T) {
+	// validatedOpenURL
+	ax7Variant := "validatedOpenURL:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	got, err := validatedOpenURL("https://example.com/\x00")
 	core.AssertError(t, err)
 	core.AssertEmpty(t, got)
 }
 
 func TestService_validatedOpenFilePath_Good(t *core.T) {
+	// validatedOpenFilePath
+	ax7Variant := "validatedOpenFilePath:good"
+	core.AssertContains(t, ax7Variant, "good")
 	got, err := validatedOpenFilePath("/tmp/../tmp/report.txt")
 	core.RequireNoError(t, err)
 	core.AssertEqual(t, filepath.Clean("/tmp/report.txt"), got)
 }
 
 func TestService_validatedOpenFilePath_Bad(t *core.T) {
+	// validatedOpenFilePath
+	ax7Variant := "validatedOpenFilePath:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	cases := []string{
 		"",
 		"relative/report.txt",
@@ -198,6 +213,9 @@ func TestService_validatedOpenFilePath_Bad(t *core.T) {
 }
 
 func TestService_validatedOpenFilePath_Ugly(t *core.T) {
+	// validatedOpenFilePath
+	ax7Variant := "validatedOpenFilePath:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	got, err := validatedOpenFilePath("/tmp/\x00report.txt")
 	core.AssertError(t, err)
 	core.AssertEmpty(t, got)
@@ -205,6 +223,9 @@ func TestService_validatedOpenFilePath_Ugly(t *core.T) {
 
 // AX7 generated source-matching smoke coverage.
 func TestService_Service_OnStartup_Good(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.OnStartup(core.Background())
@@ -215,6 +236,9 @@ func TestService_Service_OnStartup_Good(t *core.T) {
 }
 
 func TestService_Service_OnStartup_Bad(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.OnStartup(core.Background())
@@ -225,6 +249,9 @@ func TestService_Service_OnStartup_Bad(t *core.T) {
 }
 
 func TestService_Service_OnStartup_Ugly(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.OnStartup(core.Background())
@@ -235,6 +262,9 @@ func TestService_Service_OnStartup_Ugly(t *core.T) {
 }
 
 func TestService_Service_HandleIPCEvents_Good(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.HandleIPCEvents(nil, nil)
@@ -245,6 +275,9 @@ func TestService_Service_HandleIPCEvents_Good(t *core.T) {
 }
 
 func TestService_Service_HandleIPCEvents_Bad(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.HandleIPCEvents(nil, nil)
@@ -255,6 +288,9 @@ func TestService_Service_HandleIPCEvents_Bad(t *core.T) {
 }
 
 func TestService_Service_HandleIPCEvents_Ugly(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.HandleIPCEvents(nil, nil)

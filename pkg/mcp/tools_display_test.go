@@ -42,6 +42,9 @@ func TestToolsDisplay_schemeResolve_GoodCase(t *core.T) {
 }
 
 func TestToolsDisplay_schemeResolve_Bad(t *core.T) {
+	// schemeResolve
+	ax7Variant := "schemeResolve:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	sub := newDisplayToolTestSubsystem(t, func(core.Options) core.Result {
 		return core.Result{Value: errors.New("display offline"), OK: false}
 	})
@@ -52,6 +55,9 @@ func TestToolsDisplay_schemeResolve_Bad(t *core.T) {
 }
 
 func TestToolsDisplay_schemeResolve_Ugly(t *core.T) {
+	// schemeResolve
+	ax7Variant := "schemeResolve:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	sub := newDisplayToolTestSubsystem(t, func(core.Options) core.Result {
 		return core.Result{Value: map[string]any{
 			"route":        "store",

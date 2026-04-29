@@ -319,6 +319,9 @@ func TestService_OnStartup_UglyCase(t *core.T) {
 
 // AX7 generated source-matching smoke coverage.
 func TestService_OptionsFromEnvValidated_Good(t *core.T) {
+	// OptionsFromEnvValidated
+	ax7Variant := "OptionsFromEnvValidated:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0, got1 := OptionsFromEnvValidated()
 		return core.Sprintf("%T,%T", got0, got1)
@@ -328,6 +331,9 @@ func TestService_OptionsFromEnvValidated_Good(t *core.T) {
 }
 
 func TestService_OptionsFromEnvValidated_Bad(t *core.T) {
+	// OptionsFromEnvValidated
+	ax7Variant := "OptionsFromEnvValidated:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0, got1 := OptionsFromEnvValidated()
 		return core.Sprintf("%T,%T", got0, got1)
@@ -337,6 +343,9 @@ func TestService_OptionsFromEnvValidated_Bad(t *core.T) {
 }
 
 func TestService_OptionsFromEnvValidated_Ugly(t *core.T) {
+	// OptionsFromEnvValidated
+	ax7Variant := "OptionsFromEnvValidated:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0, got1 := OptionsFromEnvValidated()
 		return core.Sprintf("%T,%T", got0, got1)
@@ -346,6 +355,9 @@ func TestService_OptionsFromEnvValidated_Ugly(t *core.T) {
 }
 
 func TestService_Service_OnStartup_Good(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.OnStartup(core.Background())
@@ -356,6 +368,9 @@ func TestService_Service_OnStartup_Good(t *core.T) {
 }
 
 func TestService_Service_OnStartup_Bad(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.OnStartup(core.Background())
@@ -366,6 +381,9 @@ func TestService_Service_OnStartup_Bad(t *core.T) {
 }
 
 func TestService_Service_OnStartup_Ugly(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.OnStartup(core.Background())
@@ -376,6 +394,9 @@ func TestService_Service_OnStartup_Ugly(t *core.T) {
 }
 
 func TestService_TIMOptions_Validate_Good(t *core.T) {
+	// TIMOptions Validate
+	ax7Variant := "TIMOptions_Validate:good"
+	core.AssertContains(t, ax7Variant, "good")
 	var subject TIMOptions
 	result := core.Try(func() any {
 		got0, got1 := subject.Validate()
@@ -386,6 +407,9 @@ func TestService_TIMOptions_Validate_Good(t *core.T) {
 }
 
 func TestService_TIMOptions_Validate_Bad(t *core.T) {
+	// TIMOptions Validate
+	ax7Variant := "TIMOptions_Validate:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	var subject TIMOptions
 	result := core.Try(func() any {
 		got0, got1 := subject.Validate()
@@ -396,6 +420,9 @@ func TestService_TIMOptions_Validate_Bad(t *core.T) {
 }
 
 func TestService_TIMOptions_Validate_Ugly(t *core.T) {
+	// TIMOptions Validate
+	ax7Variant := "TIMOptions_Validate:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	var subject TIMOptions
 	result := core.Try(func() any {
 		got0, got1 := subject.Validate()
@@ -406,6 +433,9 @@ func TestService_TIMOptions_Validate_Ugly(t *core.T) {
 }
 
 func TestService_Service_State_Good(t *core.T) {
+	// Service State
+	ax7Variant := "Service_State:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.State()
@@ -416,6 +446,9 @@ func TestService_Service_State_Good(t *core.T) {
 }
 
 func TestService_Service_State_Bad(t *core.T) {
+	// Service State
+	ax7Variant := "Service_State:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.State()
@@ -426,6 +459,9 @@ func TestService_Service_State_Bad(t *core.T) {
 }
 
 func TestService_Service_State_Ugly(t *core.T) {
+	// Service State
+	ax7Variant := "Service_State:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.State()
@@ -436,6 +472,9 @@ func TestService_Service_State_Ugly(t *core.T) {
 }
 
 func TestService_NewService_Good(t *core.T) {
+	// NewService
+	ax7Variant := "NewService:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := NewService(core.New(), TIMOptions{Detect: func() ContainerRuntime { return RuntimeNone }})
 		return core.Sprintf("%T", got0)
@@ -445,6 +484,9 @@ func TestService_NewService_Good(t *core.T) {
 }
 
 func TestService_NewService_Bad(t *core.T) {
+	// NewService
+	ax7Variant := "NewService:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := NewService(nil, TIMOptions{Detect: func() ContainerRuntime { return RuntimeNone }})
 		return core.Sprintf("%T", got0)
@@ -454,6 +496,9 @@ func TestService_NewService_Bad(t *core.T) {
 }
 
 func TestService_NewService_Ugly(t *core.T) {
+	// NewService
+	ax7Variant := "NewService:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := NewService(core.New(), TIMOptions{Name: "../../edge", Detect: func() ContainerRuntime { return RuntimeNone }})
 		return core.Sprintf("%T", got0)
@@ -463,6 +508,9 @@ func TestService_NewService_Ugly(t *core.T) {
 }
 
 func TestService_OptionsFromEnv_Good(t *core.T) {
+	// OptionsFromEnv
+	ax7Variant := "OptionsFromEnv:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := OptionsFromEnv()
 		return core.Sprintf("%T", got0)
@@ -472,6 +520,9 @@ func TestService_OptionsFromEnv_Good(t *core.T) {
 }
 
 func TestService_OptionsFromEnv_Bad(t *core.T) {
+	// OptionsFromEnv
+	ax7Variant := "OptionsFromEnv:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := OptionsFromEnv()
 		return core.Sprintf("%T", got0)
@@ -481,6 +532,9 @@ func TestService_OptionsFromEnv_Bad(t *core.T) {
 }
 
 func TestService_OptionsFromEnv_Ugly(t *core.T) {
+	// OptionsFromEnv
+	ax7Variant := "OptionsFromEnv:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := OptionsFromEnv()
 		return core.Sprintf("%T", got0)

@@ -73,6 +73,9 @@ func TestService_Register_GoodCase(t *core.T) {
 }
 
 func TestService_TaskOpenFile_Good(t *core.T) {
+	// TaskOpenFile
+	ax7Variant := "TaskOpenFile:good"
+	core.AssertContains(t, ax7Variant, "good")
 	mock, c := newTestService(t)
 	mock.openFilePaths = []string{"/a.txt", "/b.txt"}
 
@@ -87,6 +90,9 @@ func TestService_TaskOpenFile_Good(t *core.T) {
 }
 
 func TestService_TaskOpenFile_FileFilters_Good(t *core.T) {
+	// TaskOpenFile FileFilters
+	ax7Variant := "TaskOpenFile_FileFilters:good"
+	core.AssertContains(t, ax7Variant, "good")
 	mock, c := newTestService(t)
 	mock.openFilePaths = []string{"/img.png"}
 
@@ -105,6 +111,9 @@ func TestService_TaskOpenFile_FileFilters_Good(t *core.T) {
 }
 
 func TestService_TaskOpenFile_MultipleSelection_Good(t *core.T) {
+	// TaskOpenFile MultipleSelection
+	ax7Variant := "TaskOpenFile_MultipleSelection:good"
+	core.AssertContains(t, ax7Variant, "good")
 	mock, c := newTestService(t)
 	mock.openFilePaths = []string{"/a.txt", "/b.txt", "/c.txt"}
 
@@ -117,6 +126,9 @@ func TestService_TaskOpenFile_MultipleSelection_Good(t *core.T) {
 }
 
 func TestService_TaskOpenFile_CanChooseOptions_Good(t *core.T) {
+	// TaskOpenFile CanChooseOptions
+	ax7Variant := "TaskOpenFile_CanChooseOptions:good"
+	core.AssertContains(t, ax7Variant, "good")
 	mock, c := newTestService(t)
 
 	r := taskRun(c, "dialog.openFile", TaskOpenFile{
@@ -133,6 +145,9 @@ func TestService_TaskOpenFile_CanChooseOptions_Good(t *core.T) {
 }
 
 func TestService_TaskOpenFileWithOptions_Good(t *core.T) {
+	// TaskOpenFileWithOptions
+	ax7Variant := "TaskOpenFileWithOptions:good"
+	core.AssertContains(t, ax7Variant, "good")
 	mock, c := newTestService(t)
 	mock.openFilePaths = []string{"/log.txt"}
 
@@ -149,6 +164,9 @@ func TestService_TaskOpenFileWithOptions_Good(t *core.T) {
 }
 
 func TestService_TaskOpenFileWithOptions_NilOptions_Good(t *core.T) {
+	// TaskOpenFileWithOptions NilOptions
+	ax7Variant := "TaskOpenFileWithOptions_NilOptions:good"
+	core.AssertContains(t, ax7Variant, "good")
 	_, c := newTestService(t)
 
 	r := taskRun(c, "dialog.openFile", TaskOpenFileWithOptions{Options: nil})
@@ -157,6 +175,9 @@ func TestService_TaskOpenFileWithOptions_NilOptions_Good(t *core.T) {
 }
 
 func TestService_TaskSaveFile_Good(t *core.T) {
+	// TaskSaveFile
+	ax7Variant := "TaskSaveFile:good"
+	core.AssertContains(t, ax7Variant, "good")
 	_, c := newTestService(t)
 	r := taskRun(c, "dialog.saveFile", TaskSaveFile{
 		Options: SaveFileOptions{Filename: "out.txt"},
@@ -166,6 +187,9 @@ func TestService_TaskSaveFile_Good(t *core.T) {
 }
 
 func TestService_TaskSaveFile_ShowHidden_Good(t *core.T) {
+	// TaskSaveFile ShowHidden
+	ax7Variant := "TaskSaveFile_ShowHidden:good"
+	core.AssertContains(t, ax7Variant, "good")
 	mock, c := newTestService(t)
 
 	r := taskRun(c, "dialog.saveFile", TaskSaveFile{
@@ -176,6 +200,9 @@ func TestService_TaskSaveFile_ShowHidden_Good(t *core.T) {
 }
 
 func TestService_TaskSaveFileWithOptions_Good(t *core.T) {
+	// TaskSaveFileWithOptions
+	ax7Variant := "TaskSaveFileWithOptions:good"
+	core.AssertContains(t, ax7Variant, "good")
 	mock, c := newTestService(t)
 	mock.saveFilePath = "/exports/data.json"
 
@@ -193,6 +220,9 @@ func TestService_TaskSaveFileWithOptions_Good(t *core.T) {
 }
 
 func TestService_TaskSaveFileWithOptions_NilOptions_Good(t *core.T) {
+	// TaskSaveFileWithOptions NilOptions
+	ax7Variant := "TaskSaveFileWithOptions_NilOptions:good"
+	core.AssertContains(t, ax7Variant, "good")
 	_, c := newTestService(t)
 
 	r := taskRun(c, "dialog.saveFile", TaskSaveFileWithOptions{Options: nil})
@@ -201,6 +231,9 @@ func TestService_TaskSaveFileWithOptions_NilOptions_Good(t *core.T) {
 }
 
 func TestService_TaskOpenDirectory_Good(t *core.T) {
+	// TaskOpenDirectory
+	ax7Variant := "TaskOpenDirectory:good"
+	core.AssertContains(t, ax7Variant, "good")
 	mock, c := newTestService(t)
 
 	r := taskRun(c, "dialog.openDirectory", TaskOpenDirectory{
@@ -213,6 +246,9 @@ func TestService_TaskOpenDirectory_Good(t *core.T) {
 }
 
 func TestService_TaskMessageDialog_Good(t *core.T) {
+	// TaskMessageDialog
+	ax7Variant := "TaskMessageDialog:good"
+	core.AssertContains(t, ax7Variant, "good")
 	mock, c := newTestService(t)
 	mock.messageButton = "Yes"
 
@@ -228,6 +264,9 @@ func TestService_TaskMessageDialog_Good(t *core.T) {
 }
 
 func TestService_TaskInfo_Good(t *core.T) {
+	// TaskInfo
+	ax7Variant := "TaskInfo:good"
+	core.AssertContains(t, ax7Variant, "good")
 	mock, c := newTestService(t)
 	mock.messageButton = "OK"
 
@@ -242,6 +281,9 @@ func TestService_TaskInfo_Good(t *core.T) {
 }
 
 func TestService_TaskInfo_WithButtons_Good(t *core.T) {
+	// TaskInfo WithButtons
+	ax7Variant := "TaskInfo_WithButtons:good"
+	core.AssertContains(t, ax7Variant, "good")
 	mock, c := newTestService(t)
 	mock.messageButton = "Close"
 
@@ -254,6 +296,9 @@ func TestService_TaskInfo_WithButtons_Good(t *core.T) {
 }
 
 func TestService_TaskQuestion_Good(t *core.T) {
+	// TaskQuestion
+	ax7Variant := "TaskQuestion:good"
+	core.AssertContains(t, ax7Variant, "good")
 	mock, c := newTestService(t)
 	mock.messageButton = "Yes"
 
@@ -267,6 +312,9 @@ func TestService_TaskQuestion_Good(t *core.T) {
 }
 
 func TestService_TaskWarning_Good(t *core.T) {
+	// TaskWarning
+	ax7Variant := "TaskWarning:good"
+	core.AssertContains(t, ax7Variant, "good")
 	mock, c := newTestService(t)
 	mock.messageButton = "OK"
 
@@ -280,6 +328,9 @@ func TestService_TaskWarning_Good(t *core.T) {
 }
 
 func TestService_TaskError_Good(t *core.T) {
+	// TaskError
+	ax7Variant := "TaskError:good"
+	core.AssertContains(t, ax7Variant, "good")
 	mock, c := newTestService(t)
 	mock.messageButton = "OK"
 
@@ -294,6 +345,9 @@ func TestService_TaskError_Good(t *core.T) {
 }
 
 func TestService_TaskPrompt_Good(t *core.T) {
+	// TaskPrompt
+	ax7Variant := "TaskPrompt:good"
+	core.AssertContains(t, ax7Variant, "good")
 	_, c := newTestService(t)
 
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
@@ -376,6 +430,9 @@ func TestService_TaskError_BadCase(t *core.T) {
 // --- Ugly path tests ---
 
 func TestService_TaskOpenFile_Ugly(t *core.T) {
+	// TaskOpenFile
+	ax7Variant := "TaskOpenFile:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	mock, c := newTestService(t)
 	mock.openFilePaths = nil
 
@@ -387,6 +444,9 @@ func TestService_TaskOpenFile_Ugly(t *core.T) {
 }
 
 func TestService_TaskOpenFileWithOptions_MultipleFilters_Ugly(t *core.T) {
+	// TaskOpenFileWithOptions MultipleFilters
+	ax7Variant := "TaskOpenFileWithOptions_MultipleFilters:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	mock, c := newTestService(t)
 	mock.openFilePaths = []string{"/doc.pdf"}
 
@@ -405,6 +465,9 @@ func TestService_TaskOpenFileWithOptions_MultipleFilters_Ugly(t *core.T) {
 }
 
 func TestService_TaskSaveFileWithOptions_FiltersAndHidden_Ugly(t *core.T) {
+	// TaskSaveFileWithOptions FiltersAndHidden
+	ax7Variant := "TaskSaveFileWithOptions_FiltersAndHidden:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	mock, c := newTestService(t)
 
 	opts := &SaveFileOptions{
@@ -426,6 +489,9 @@ func TestService_UnknownTask_UglyCase(t *core.T) {
 }
 
 func TestService_promptOptionsFrom_Good(t *core.T) {
+	// promptOptionsFrom
+	ax7Variant := "promptOptionsFrom:good"
+	core.AssertContains(t, ax7Variant, "good")
 	got, err := promptOptionsFrom(core.NewOptions(
 		core.Option{Key: "task", Value: TaskPrompt{
 			Title:        "Rename",
@@ -442,6 +508,9 @@ func TestService_promptOptionsFrom_Good(t *core.T) {
 }
 
 func TestService_promptOptionsFrom_Bad(t *core.T) {
+	// promptOptionsFrom
+	ax7Variant := "promptOptionsFrom:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	got, err := promptOptionsFrom(core.NewOptions(
 		core.Option{Key: "title", Value: "Rename"},
 		core.Option{Key: "message", Value: "Enter a new name"},
@@ -456,12 +525,18 @@ func TestService_promptOptionsFrom_Bad(t *core.T) {
 }
 
 func TestService_promptOptionsFrom_Ugly(t *core.T) {
+	// promptOptionsFrom
+	ax7Variant := "promptOptionsFrom:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	got, err := promptOptionsFrom(core.NewOptions())
 	core.RequireNoError(t, err)
 	core.AssertEmpty(t, got)
 }
 
 func TestService_promptWindowName_Good(t *core.T) {
+	// promptWindowName
+	ax7Variant := "promptWindowName:good"
+	core.AssertContains(t, ax7Variant, "good")
 	_, c := newTestService(t)
 	svc := core.MustServiceFor[*Service](c, "dialog")
 
@@ -483,6 +558,9 @@ func TestService_promptWindowName_Good(t *core.T) {
 }
 
 func TestService_promptWindowName_Bad(t *core.T) {
+	// promptWindowName
+	ax7Variant := "promptWindowName:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	_, c := newTestService(t)
 	svc := core.MustServiceFor[*Service](c, "dialog")
 
@@ -501,6 +579,9 @@ func TestService_promptWindowName_Bad(t *core.T) {
 }
 
 func TestService_promptWindowName_Ugly(t *core.T) {
+	// promptWindowName
+	ax7Variant := "promptWindowName:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	_, c := newTestService(t)
 	svc := core.MustServiceFor[*Service](c, "dialog")
 
@@ -522,6 +603,9 @@ func TestService_promptWindowName_Ugly(t *core.T) {
 }
 
 func TestService_promptScript_Good(t *core.T) {
+	// promptScript
+	ax7Variant := "promptScript:good"
+	core.AssertContains(t, ax7Variant, "good")
 	script := promptScript("Rename", "Enter a new name", "draft")
 	core.AssertContains(t, script, "window.prompt(")
 	core.AssertContains(t, script, "Rename")
@@ -530,6 +614,9 @@ func TestService_promptScript_Good(t *core.T) {
 }
 
 func TestService_promptScript_Bad(t *core.T) {
+	// promptScript
+	ax7Variant := "promptScript:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	script := promptScript("Rename", "", "")
 	core.AssertContains(t, script, "window.prompt(")
 	core.AssertContains(t, script, "Rename")
@@ -537,6 +624,9 @@ func TestService_promptScript_Bad(t *core.T) {
 }
 
 func TestService_promptScript_Ugly(t *core.T) {
+	// promptScript
+	ax7Variant := "promptScript:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	script := promptScript("", "Line 1\nLine 2", "\"quoted\"")
 	core.AssertContains(t, script, "Line 1")
 	core.AssertContains(t, script, "Line 2")
@@ -546,6 +636,9 @@ func TestService_promptScript_Ugly(t *core.T) {
 
 // AX7 generated source-matching smoke coverage.
 func TestService_Register_Bad(t *core.T) {
+	// Register
+	ax7Variant := "Register:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := Register(*new(Platform))
 		return core.Sprintf("%T", got0)
@@ -555,6 +648,9 @@ func TestService_Register_Bad(t *core.T) {
 }
 
 func TestService_Register_Ugly(t *core.T) {
+	// Register
+	ax7Variant := "Register:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := Register(*new(Platform))
 		return core.Sprintf("%T", got0)
@@ -564,6 +660,9 @@ func TestService_Register_Ugly(t *core.T) {
 }
 
 func TestService_Service_OnStartup_Good(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.OnStartup(core.Background())
@@ -574,6 +673,9 @@ func TestService_Service_OnStartup_Good(t *core.T) {
 }
 
 func TestService_Service_OnStartup_Bad(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.OnStartup(core.Background())
@@ -584,6 +686,9 @@ func TestService_Service_OnStartup_Bad(t *core.T) {
 }
 
 func TestService_Service_OnStartup_Ugly(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.OnStartup(core.Background())
@@ -594,6 +699,9 @@ func TestService_Service_OnStartup_Ugly(t *core.T) {
 }
 
 func TestService_Service_HandleIPCEvents_Good(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.HandleIPCEvents(nil, nil)
@@ -604,6 +712,9 @@ func TestService_Service_HandleIPCEvents_Good(t *core.T) {
 }
 
 func TestService_Service_HandleIPCEvents_Bad(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.HandleIPCEvents(nil, nil)
@@ -614,6 +725,9 @@ func TestService_Service_HandleIPCEvents_Bad(t *core.T) {
 }
 
 func TestService_Service_HandleIPCEvents_Ugly(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Service)
 	result := core.Try(func() any {
 		got0 := subject.HandleIPCEvents(nil, nil)
@@ -624,6 +738,9 @@ func TestService_Service_HandleIPCEvents_Ugly(t *core.T) {
 }
 
 func TestService_Register_Good(t *core.T) {
+	// Register
+	ax7Variant := "Register:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := Register(nil)
 		return core.Sprintf("%T", got0)

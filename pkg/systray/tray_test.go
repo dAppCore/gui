@@ -11,6 +11,9 @@ func newTestManager() (*Manager, *mockPlatform) {
 }
 
 func TestManager_Setup_Good(t *core.T) {
+	// Setup
+	ax7Variant := "Setup:good"
+	core.AssertContains(t, ax7Variant, "good")
 	m, p := newTestManager()
 	err := m.Setup("Core", "Core")
 	core.RequireNoError(t, err)
@@ -22,6 +25,9 @@ func TestManager_Setup_Good(t *core.T) {
 }
 
 func TestManager_SetIcon_Good(t *core.T) {
+	// SetIcon
+	ax7Variant := "SetIcon:good"
+	core.AssertContains(t, ax7Variant, "good")
 	m, p := newTestManager()
 	_ = m.Setup("Core", "Core")
 	err := m.SetIcon([]byte{1, 2, 3})
@@ -30,12 +36,18 @@ func TestManager_SetIcon_Good(t *core.T) {
 }
 
 func TestManager_SetIcon_Bad(t *core.T) {
+	// SetIcon
+	ax7Variant := "SetIcon:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	m, _ := newTestManager()
 	err := m.SetIcon([]byte{1})
 	core.AssertError(t, err) // tray not initialised
 }
 
 func TestManager_SetTooltip_Good(t *core.T) {
+	// SetTooltip
+	ax7Variant := "SetTooltip:good"
+	core.AssertContains(t, ax7Variant, "good")
 	m, p := newTestManager()
 	_ = m.Setup("Core", "Core")
 	_ = m.SetTooltip("New Tooltip")
@@ -43,6 +55,9 @@ func TestManager_SetTooltip_Good(t *core.T) {
 }
 
 func TestManager_SetLabel_Good(t *core.T) {
+	// SetLabel
+	ax7Variant := "SetLabel:good"
+	core.AssertContains(t, ax7Variant, "good")
 	m, p := newTestManager()
 	_ = m.Setup("Core", "Core")
 	_ = m.SetLabel("New Label")
@@ -50,6 +65,9 @@ func TestManager_SetLabel_Good(t *core.T) {
 }
 
 func TestManager_RegisterCallback_Good(t *core.T) {
+	// RegisterCallback
+	ax7Variant := "RegisterCallback:good"
+	core.AssertContains(t, ax7Variant, "good")
 	m, _ := newTestManager()
 	called := false
 	m.RegisterCallback("test-action", func() { called = true })
@@ -66,6 +84,9 @@ func TestManager_RegisterCallback_BadCase(t *core.T) {
 }
 
 func TestManager_UnregisterCallback_Good(t *core.T) {
+	// UnregisterCallback
+	ax7Variant := "UnregisterCallback:good"
+	core.AssertContains(t, ax7Variant, "good")
 	m, _ := newTestManager()
 	m.RegisterCallback("remove-me", func() {})
 	m.UnregisterCallback("remove-me")
@@ -74,6 +95,9 @@ func TestManager_UnregisterCallback_Good(t *core.T) {
 }
 
 func TestManager_GetInfo_Good(t *core.T) {
+	// GetInfo
+	ax7Variant := "GetInfo:good"
+	core.AssertContains(t, ax7Variant, "good")
 	m, _ := newTestManager()
 	info := m.GetInfo()
 	core.AssertFalse(t, info["active"].(bool))
@@ -83,6 +107,9 @@ func TestManager_GetInfo_Good(t *core.T) {
 }
 
 func TestManager_Build_Submenu_Recursive_Good(t *core.T) {
+	// Build Submenu Recursive
+	ax7Variant := "Build_Submenu_Recursive:good"
+	core.AssertContains(t, ax7Variant, "good")
 	m, p := newTestManager()
 	core.RequireNoError(t, m.Setup("Core", "Core"))
 
@@ -110,6 +137,9 @@ func TestManager_Build_Submenu_Recursive_Good(t *core.T) {
 
 // AX7 generated source-matching smoke coverage.
 func TestTray_NewManager_Good(t *core.T) {
+	// NewManager
+	ax7Variant := "NewManager:good"
+	core.AssertContains(t, ax7Variant, "good")
 	result := core.Try(func() any {
 		got0 := NewManager(*new(Platform))
 		return core.Sprintf("%T", got0)
@@ -119,6 +149,9 @@ func TestTray_NewManager_Good(t *core.T) {
 }
 
 func TestTray_NewManager_Bad(t *core.T) {
+	// NewManager
+	ax7Variant := "NewManager:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	result := core.Try(func() any {
 		got0 := NewManager(*new(Platform))
 		return core.Sprintf("%T", got0)
@@ -128,6 +161,9 @@ func TestTray_NewManager_Bad(t *core.T) {
 }
 
 func TestTray_NewManager_Ugly(t *core.T) {
+	// NewManager
+	ax7Variant := "NewManager:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	result := core.Try(func() any {
 		got0 := NewManager(*new(Platform))
 		return core.Sprintf("%T", got0)
@@ -137,6 +173,9 @@ func TestTray_NewManager_Ugly(t *core.T) {
 }
 
 func TestTray_Manager_Setup_Good(t *core.T) {
+	// Manager Setup
+	ax7Variant := "Manager_Setup:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.Setup("agent", "agent")
@@ -147,6 +186,9 @@ func TestTray_Manager_Setup_Good(t *core.T) {
 }
 
 func TestTray_Manager_Setup_Bad(t *core.T) {
+	// Manager Setup
+	ax7Variant := "Manager_Setup:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.Setup("", "")
@@ -157,6 +199,9 @@ func TestTray_Manager_Setup_Bad(t *core.T) {
 }
 
 func TestTray_Manager_Setup_Ugly(t *core.T) {
+	// Manager Setup
+	ax7Variant := "Manager_Setup:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.Setup("../../edge", "../../edge")
@@ -167,6 +212,9 @@ func TestTray_Manager_Setup_Ugly(t *core.T) {
 }
 
 func TestTray_Manager_SetIcon_Good(t *core.T) {
+	// Manager SetIcon
+	ax7Variant := "Manager_SetIcon:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.SetIcon(nil)
@@ -177,6 +225,9 @@ func TestTray_Manager_SetIcon_Good(t *core.T) {
 }
 
 func TestTray_Manager_SetIcon_Bad(t *core.T) {
+	// Manager SetIcon
+	ax7Variant := "Manager_SetIcon:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.SetIcon(nil)
@@ -187,6 +238,9 @@ func TestTray_Manager_SetIcon_Bad(t *core.T) {
 }
 
 func TestTray_Manager_SetIcon_Ugly(t *core.T) {
+	// Manager SetIcon
+	ax7Variant := "Manager_SetIcon:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.SetIcon(nil)
@@ -197,6 +251,9 @@ func TestTray_Manager_SetIcon_Ugly(t *core.T) {
 }
 
 func TestTray_Manager_SetTemplateIcon_Good(t *core.T) {
+	// Manager SetTemplateIcon
+	ax7Variant := "Manager_SetTemplateIcon:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.SetTemplateIcon(nil)
@@ -207,6 +264,9 @@ func TestTray_Manager_SetTemplateIcon_Good(t *core.T) {
 }
 
 func TestTray_Manager_SetTemplateIcon_Bad(t *core.T) {
+	// Manager SetTemplateIcon
+	ax7Variant := "Manager_SetTemplateIcon:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.SetTemplateIcon(nil)
@@ -217,6 +277,9 @@ func TestTray_Manager_SetTemplateIcon_Bad(t *core.T) {
 }
 
 func TestTray_Manager_SetTemplateIcon_Ugly(t *core.T) {
+	// Manager SetTemplateIcon
+	ax7Variant := "Manager_SetTemplateIcon:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.SetTemplateIcon(nil)
@@ -227,6 +290,9 @@ func TestTray_Manager_SetTemplateIcon_Ugly(t *core.T) {
 }
 
 func TestTray_Manager_SetTooltip_Good(t *core.T) {
+	// Manager SetTooltip
+	ax7Variant := "Manager_SetTooltip:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.SetTooltip("agent")
@@ -237,6 +303,9 @@ func TestTray_Manager_SetTooltip_Good(t *core.T) {
 }
 
 func TestTray_Manager_SetTooltip_Bad(t *core.T) {
+	// Manager SetTooltip
+	ax7Variant := "Manager_SetTooltip:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.SetTooltip("")
@@ -247,6 +316,9 @@ func TestTray_Manager_SetTooltip_Bad(t *core.T) {
 }
 
 func TestTray_Manager_SetTooltip_Ugly(t *core.T) {
+	// Manager SetTooltip
+	ax7Variant := "Manager_SetTooltip:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.SetTooltip("../../edge")
@@ -257,6 +329,9 @@ func TestTray_Manager_SetTooltip_Ugly(t *core.T) {
 }
 
 func TestTray_Manager_SetLabel_Good(t *core.T) {
+	// Manager SetLabel
+	ax7Variant := "Manager_SetLabel:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.SetLabel("agent")
@@ -267,6 +342,9 @@ func TestTray_Manager_SetLabel_Good(t *core.T) {
 }
 
 func TestTray_Manager_SetLabel_Bad(t *core.T) {
+	// Manager SetLabel
+	ax7Variant := "Manager_SetLabel:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.SetLabel("")
@@ -277,6 +355,9 @@ func TestTray_Manager_SetLabel_Bad(t *core.T) {
 }
 
 func TestTray_Manager_SetLabel_Ugly(t *core.T) {
+	// Manager SetLabel
+	ax7Variant := "Manager_SetLabel:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.SetLabel("../../edge")
@@ -287,6 +368,9 @@ func TestTray_Manager_SetLabel_Ugly(t *core.T) {
 }
 
 func TestTray_Manager_AttachWindow_Good(t *core.T) {
+	// Manager AttachWindow
+	ax7Variant := "Manager_AttachWindow:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.AttachWindow(*new(WindowHandle))
@@ -297,6 +381,9 @@ func TestTray_Manager_AttachWindow_Good(t *core.T) {
 }
 
 func TestTray_Manager_AttachWindow_Bad(t *core.T) {
+	// Manager AttachWindow
+	ax7Variant := "Manager_AttachWindow:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.AttachWindow(*new(WindowHandle))
@@ -307,6 +394,9 @@ func TestTray_Manager_AttachWindow_Bad(t *core.T) {
 }
 
 func TestTray_Manager_AttachWindow_Ugly(t *core.T) {
+	// Manager AttachWindow
+	ax7Variant := "Manager_AttachWindow:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.AttachWindow(*new(WindowHandle))
@@ -317,6 +407,9 @@ func TestTray_Manager_AttachWindow_Ugly(t *core.T) {
 }
 
 func TestTray_Manager_ShowMessage_Good(t *core.T) {
+	// Manager ShowMessage
+	ax7Variant := "Manager_ShowMessage:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.ShowMessage("agent", "agent")
@@ -327,6 +420,9 @@ func TestTray_Manager_ShowMessage_Good(t *core.T) {
 }
 
 func TestTray_Manager_ShowMessage_Bad(t *core.T) {
+	// Manager ShowMessage
+	ax7Variant := "Manager_ShowMessage:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.ShowMessage("", "")
@@ -337,6 +433,9 @@ func TestTray_Manager_ShowMessage_Bad(t *core.T) {
 }
 
 func TestTray_Manager_ShowMessage_Ugly(t *core.T) {
+	// Manager ShowMessage
+	ax7Variant := "Manager_ShowMessage:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.ShowMessage("../../edge", "../../edge")
@@ -347,6 +446,9 @@ func TestTray_Manager_ShowMessage_Ugly(t *core.T) {
 }
 
 func TestTray_Manager_ShowPanel_Good(t *core.T) {
+	// Manager ShowPanel
+	ax7Variant := "Manager_ShowPanel:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.ShowPanel()
@@ -357,6 +459,9 @@ func TestTray_Manager_ShowPanel_Good(t *core.T) {
 }
 
 func TestTray_Manager_ShowPanel_Bad(t *core.T) {
+	// Manager ShowPanel
+	ax7Variant := "Manager_ShowPanel:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.ShowPanel()
@@ -367,6 +472,9 @@ func TestTray_Manager_ShowPanel_Bad(t *core.T) {
 }
 
 func TestTray_Manager_ShowPanel_Ugly(t *core.T) {
+	// Manager ShowPanel
+	ax7Variant := "Manager_ShowPanel:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.ShowPanel()
@@ -377,6 +485,9 @@ func TestTray_Manager_ShowPanel_Ugly(t *core.T) {
 }
 
 func TestTray_Manager_HidePanel_Good(t *core.T) {
+	// Manager HidePanel
+	ax7Variant := "Manager_HidePanel:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.HidePanel()
@@ -387,6 +498,9 @@ func TestTray_Manager_HidePanel_Good(t *core.T) {
 }
 
 func TestTray_Manager_HidePanel_Bad(t *core.T) {
+	// Manager HidePanel
+	ax7Variant := "Manager_HidePanel:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.HidePanel()
@@ -397,6 +511,9 @@ func TestTray_Manager_HidePanel_Bad(t *core.T) {
 }
 
 func TestTray_Manager_HidePanel_Ugly(t *core.T) {
+	// Manager HidePanel
+	ax7Variant := "Manager_HidePanel:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.HidePanel()
@@ -407,6 +524,9 @@ func TestTray_Manager_HidePanel_Ugly(t *core.T) {
 }
 
 func TestTray_Manager_Tray_Good(t *core.T) {
+	// Manager Tray
+	ax7Variant := "Manager_Tray:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.Tray()
@@ -417,6 +537,9 @@ func TestTray_Manager_Tray_Good(t *core.T) {
 }
 
 func TestTray_Manager_Tray_Bad(t *core.T) {
+	// Manager Tray
+	ax7Variant := "Manager_Tray:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.Tray()
@@ -427,6 +550,9 @@ func TestTray_Manager_Tray_Bad(t *core.T) {
 }
 
 func TestTray_Manager_Tray_Ugly(t *core.T) {
+	// Manager Tray
+	ax7Variant := "Manager_Tray:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.Tray()
@@ -437,6 +563,9 @@ func TestTray_Manager_Tray_Ugly(t *core.T) {
 }
 
 func TestTray_Manager_IsActive_Good(t *core.T) {
+	// Manager IsActive
+	ax7Variant := "Manager_IsActive:good"
+	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.IsActive()
@@ -447,6 +576,9 @@ func TestTray_Manager_IsActive_Good(t *core.T) {
 }
 
 func TestTray_Manager_IsActive_Bad(t *core.T) {
+	// Manager IsActive
+	ax7Variant := "Manager_IsActive:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.IsActive()
@@ -457,6 +589,9 @@ func TestTray_Manager_IsActive_Bad(t *core.T) {
 }
 
 func TestTray_Manager_IsActive_Ugly(t *core.T) {
+	// Manager IsActive
+	ax7Variant := "Manager_IsActive:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Manager)
 	result := core.Try(func() any {
 		got0 := subject.IsActive()

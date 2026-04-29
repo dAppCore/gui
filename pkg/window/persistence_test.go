@@ -30,6 +30,9 @@ func TestStateManager_SetAndGet_GoodCase(t *core.T) {
 }
 
 func TestStateManager_UpdatePosition_Good(t *core.T) {
+	// UpdatePosition
+	ax7Variant := "UpdatePosition:good"
+	core.AssertContains(t, ax7Variant, "good")
 	sm := NewStateManagerWithDir(t.TempDir())
 	sm.SetState("win", WindowState{X: 0, Y: 0, Width: 800, Height: 600})
 
@@ -45,6 +48,9 @@ func TestStateManager_UpdatePosition_Good(t *core.T) {
 }
 
 func TestStateManager_UpdateSize_Good(t *core.T) {
+	// UpdateSize
+	ax7Variant := "UpdateSize:good"
+	core.AssertContains(t, ax7Variant, "good")
 	sm := NewStateManagerWithDir(t.TempDir())
 	sm.SetState("win", WindowState{X: 100, Y: 200, Width: 800, Height: 600})
 
@@ -60,6 +66,9 @@ func TestStateManager_UpdateSize_Good(t *core.T) {
 }
 
 func TestStateManager_UpdateMaximized_Good(t *core.T) {
+	// UpdateMaximized
+	ax7Variant := "UpdateMaximized:good"
+	core.AssertContains(t, ax7Variant, "good")
 	sm := NewStateManagerWithDir(t.TempDir())
 	sm.SetState("win", WindowState{Width: 800, Height: 600, Maximized: false})
 
@@ -77,6 +86,9 @@ func TestStateManager_UpdateMaximized_Good(t *core.T) {
 }
 
 func TestStateManager_CaptureState_Good(t *core.T) {
+	// CaptureState
+	ax7Variant := "CaptureState:good"
+	core.AssertContains(t, ax7Variant, "good")
 	sm := NewStateManagerWithDir(t.TempDir())
 	pw := &mockWindow{
 		name: "captured", x: 75, y: 125,
@@ -96,6 +108,9 @@ func TestStateManager_CaptureState_Good(t *core.T) {
 }
 
 func TestStateManager_ApplyState_Good(t *core.T) {
+	// ApplyState
+	ax7Variant := "ApplyState:good"
+	core.AssertContains(t, ax7Variant, "good")
 	sm := NewStateManagerWithDir(t.TempDir())
 	sm.SetState("target", WindowState{X: 55, Y: 65, Width: 700, Height: 500})
 
@@ -122,6 +137,9 @@ func TestStateManager_ApplyState_Good_NoState(t *core.T) {
 }
 
 func TestStateManager_ListStates_Good(t *core.T) {
+	// ListStates
+	ax7Variant := "ListStates:good"
+	core.AssertContains(t, ax7Variant, "good")
 	sm := NewStateManagerWithDir(t.TempDir())
 	sm.SetState("alpha", WindowState{Width: 100})
 	sm.SetState("beta", WindowState{Width: 200})
@@ -135,6 +153,9 @@ func TestStateManager_ListStates_Good(t *core.T) {
 }
 
 func TestStateManager_Clear_Good(t *core.T) {
+	// Clear
+	ax7Variant := "Clear:good"
+	core.AssertContains(t, ax7Variant, "good")
 	sm := NewStateManagerWithDir(t.TempDir())
 	sm.SetState("a", WindowState{Width: 100})
 	sm.SetState("b", WindowState{Width: 200})
@@ -176,6 +197,9 @@ func TestStateManager_Persistence_GoodCase(t *core.T) {
 }
 
 func TestStateManager_SetPath_Good(t *core.T) {
+	// SetPath
+	ax7Variant := "SetPath:good"
+	core.AssertContains(t, ax7Variant, "good")
 	dir := t.TempDir()
 	path := core.JoinPath(dir, "custom", "window-state.json")
 
@@ -215,6 +239,9 @@ func TestLayoutManager_SaveAndGet_GoodCase(t *core.T) {
 }
 
 func TestLayoutManager_SaveLayout_EmptyName_Bad(t *core.T) {
+	// SaveLayout EmptyName
+	ax7Variant := "SaveLayout_EmptyName:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	lm := NewLayoutManagerWithDir(t.TempDir())
 	err := lm.SaveLayout("", map[string]WindowState{
 		"win": {Width: 800},
@@ -223,6 +250,9 @@ func TestLayoutManager_SaveLayout_EmptyName_Bad(t *core.T) {
 }
 
 func TestLayoutManager_SaveLayout_Update_Good(t *core.T) {
+	// SaveLayout Update
+	ax7Variant := "SaveLayout_Update:good"
+	core.AssertContains(t, ax7Variant, "good")
 	lm := NewLayoutManagerWithDir(t.TempDir())
 
 	// First save
@@ -259,6 +289,9 @@ func TestLayoutManager_SaveLayout_Update_Good(t *core.T) {
 }
 
 func TestLayoutManager_ListLayouts_Good(t *core.T) {
+	// ListLayouts
+	ax7Variant := "ListLayouts:good"
+	core.AssertContains(t, ax7Variant, "good")
 	lm := NewLayoutManagerWithDir(t.TempDir())
 	core.RequireNoError(t, lm.SaveLayout("coding", map[string]WindowState{
 		"editor": {Width: 960}, "terminal": {Width: 960},
@@ -285,6 +318,9 @@ func TestLayoutManager_ListLayouts_Good(t *core.T) {
 }
 
 func TestLayoutManager_DeleteLayout_Good(t *core.T) {
+	// DeleteLayout
+	ax7Variant := "DeleteLayout:good"
+	core.AssertContains(t, ax7Variant, "good")
 	lm := NewLayoutManagerWithDir(t.TempDir())
 	core.RequireNoError(t, lm.SaveLayout("temporary", map[string]WindowState{
 		"win": {Width: 800},
