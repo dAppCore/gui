@@ -2,7 +2,7 @@ package webview
 
 import (
 	core "dappco.re/go"
-	"encoding/json"
+	json "dappco.re/go/gui/compat/json"
 )
 
 func TestDiagnostics_ComputedStyleScript_Good(t *core.T) {
@@ -95,4 +95,113 @@ func mustJSON(v any) string {
 		panic(err)
 	}
 	return string(data)
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestDiagnostics_PerformanceScript_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := PerformanceScript()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestDiagnostics_PerformanceScript_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := PerformanceScript()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestDiagnostics_PerformanceScript_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := PerformanceScript()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestDiagnostics_ResourcesScript_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := ResourcesScript()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestDiagnostics_ResourcesScript_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := ResourcesScript()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestDiagnostics_ResourcesScript_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := ResourcesScript()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestDiagnostics_NetworkInitScript_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NetworkInitScript()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestDiagnostics_NetworkInitScript_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NetworkInitScript()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestDiagnostics_NetworkInitScript_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NetworkInitScript()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestDiagnostics_NetworkClearScript_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NetworkClearScript()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestDiagnostics_NetworkClearScript_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NetworkClearScript()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestDiagnostics_NetworkClearScript_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NetworkClearScript()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

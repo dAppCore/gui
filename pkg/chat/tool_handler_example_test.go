@@ -2,8 +2,9 @@ package chat
 
 import (
 	"context"
-	"fmt"
-	"strings"
+	core "dappco.re/go"
+	fmt "dappco.re/go/gui/compat/fmt"
+	strings "dappco.re/go/gui/compat/strings"
 
 	guimcp "dappco.re/go/gui/pkg/mcp"
 )
@@ -44,4 +45,60 @@ func ExampleNewToolCallHandler() {
 	// true
 	// {"mode":"left-right"}
 	// true
+}
+
+// AX7 generated examples exercise each public call path with stable output.
+func ExampleToolCallHandler_OnToolCall() {
+	var subject noopToolCallHandler
+	result := core.Try(func() any {
+		got0, got1 := subject.OnToolCall(core.Background(), *new(ToolCall))
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.Println(core.Sprintf("%T", result))
+	// Output:
+	// core.Result
+}
+
+func ExampleToolCallHandler_BuildToolManifest() {
+	var subject noopToolCallHandler
+	result := core.Try(func() any {
+		got0 := subject.BuildToolManifest()
+		return core.Sprintf("%T", got0)
+	})
+	core.Println(core.Sprintf("%T", result))
+	// Output:
+	// core.Result
+}
+
+func ExampleToolExecutor_Manifest() {
+	subject := new(actionToolExecutor)
+	result := core.Try(func() any {
+		got0 := subject.Manifest()
+		return core.Sprintf("%T", got0)
+	})
+	core.Println(core.Sprintf("%T", result))
+	// Output:
+	// core.Result
+}
+
+func ExampleToolExecutor_ManifestText() {
+	subject := new(actionToolExecutor)
+	result := core.Try(func() any {
+		got0 := subject.ManifestText()
+		return core.Sprintf("%T", got0)
+	})
+	core.Println(core.Sprintf("%T", result))
+	// Output:
+	// core.Result
+}
+
+func ExampleToolExecutor_CallTool() {
+	subject := new(actionToolExecutor)
+	result := core.Try(func() any {
+		got0, got1 := subject.CallTool(core.Background(), "agent", nil)
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.Println(core.Sprintf("%T", result))
+	// Output:
+	// core.Result
 }

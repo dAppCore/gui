@@ -3,8 +3,8 @@ package window
 
 import (
 	core "dappco.re/go"
-	"os"
-	"path/filepath"
+	filepath "dappco.re/go/gui/compat/filepath"
+	os "dappco.re/go/gui/compat/os"
 )
 
 func newConfigTestWindowService(t *core.T) (*Service, *Manager) {

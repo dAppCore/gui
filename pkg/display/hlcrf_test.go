@@ -2,31 +2,31 @@ package display
 
 import (
 	core "dappco.re/go"
-	"path/filepath"
-	"strings"
+	filepath "dappco.re/go/gui/compat/filepath"
+	strings "dappco.re/go/gui/compat/strings"
 
 	coreio "dappco.re/go/io"
 )
 
-func TestHLCRF_DefaultHLCRFTag_Good(t *core.T) {
+func TestHLCRF_DefaultHLCRFTag_GoodCase(t *core.T) {
 	core.AssertEqual(t, "core-widget", defaultHLCRFTag("Widget.ts"))
 	observedType := core.Sprintf("%T", defaultHLCRFTag("Widget.ts"))
 	core.AssertNotEmpty(t, observedType)
 }
 
-func TestHLCRF_DefaultHLCRFTag_Bad(t *core.T) {
+func TestHLCRF_DefaultHLCRFTag_BadCase(t *core.T) {
 	core.AssertEqual(t, "feature-card", defaultHLCRFTag("feature_card.html"))
 	observedType := core.Sprintf("%T", defaultHLCRFTag("feature_card.html"))
 	core.AssertNotEmpty(t, observedType)
 }
 
-func TestHLCRF_DefaultHLCRFTag_Ugly(t *core.T) {
+func TestHLCRF_DefaultHLCRFTag_UglyCase(t *core.T) {
 	core.AssertEqual(t, "core-", defaultHLCRFTag(""))
 	observedType := core.Sprintf("%T", defaultHLCRFTag(""))
 	core.AssertNotEmpty(t, observedType)
 }
 
-func TestHLCRF_BuildHLCRFComponents_Good(t *core.T) {
+func TestHLCRF_BuildHLCRFComponents_GoodCase(t *core.T) {
 	root := t.TempDir()
 	core.RequireNoError(t, coreio.Local.EnsureDir(filepath.Join(root, ".core")))
 	core.RequireNoError(t, coreio.Local.WriteMode(filepath.Join(root, "index.html"), "<html></html>", 0o644))
@@ -51,7 +51,7 @@ func TestHLCRF_BuildHLCRFComponents_Good(t *core.T) {
 	core.AssertContains(t, script, "core-inline")
 }
 
-func TestHLCRF_CompileHLCRFTemplate_Good(t *core.T) {
+func TestHLCRF_CompileHLCRFTemplate_GoodCase(t *core.T) {
 	compiled := compileHLCRFTemplate(`<section data-slot="H">{{slot "H"}}</section><main>{{ slot "L-C" }}</main><footer>{{ slot "" }}{{ slot "default" }}</footer>`)
 
 	core.AssertContains(t, compiled, `<slot name="H"></slot>`)
@@ -59,7 +59,7 @@ func TestHLCRF_CompileHLCRFTemplate_Good(t *core.T) {
 	core.AssertContains(t, compiled, `<footer><slot></slot><slot></slot></footer>`)
 }
 
-func TestHLCRF_BuildHLCRFComponents_Bad(t *core.T) {
+func TestHLCRF_BuildHLCRFComponents_BadCase(t *core.T) {
 	svc := &Service{}
 
 	script, err := svc.buildHLCRFComponents(filepath.Join(t.TempDir(), "missing.html"))
@@ -68,7 +68,7 @@ func TestHLCRF_BuildHLCRFComponents_Bad(t *core.T) {
 	core.AssertEmpty(t, script)
 }
 
-func TestHLCRF_BuildHLCRFComponents_Ugly(t *core.T) {
+func TestHLCRF_BuildHLCRFComponents_UglyCase(t *core.T) {
 	root := t.TempDir()
 	core.RequireNoError(t, coreio.Local.EnsureDir(filepath.Join(root, ".core")))
 	core.RequireNoError(t, coreio.Local.WriteMode(filepath.Join(root, "index.html"), "<html></html>", 0o644))

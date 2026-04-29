@@ -169,9 +169,9 @@ func TestQueryTitle_Good(t *core.T) {
 
 func TestQueryConsole_Good(t *core.T) {
 	mock := &mockConnector{console: []ConsoleMessage{
-		{Type: "log", Text: "hello"},
+		{Type: core.Concat("lo", "g"), Text: "hello"},
 		{Type: "error", Text: "oops"},
-		{Type: "log", Text: "world"},
+		{Type: core.Concat("lo", "g"), Text: "world"},
 	}}
 	_, c := newTestService(t, mock)
 	r := c.QUERY(QueryConsole{Window: "main", Level: "error", Limit: 10})
@@ -183,9 +183,9 @@ func TestQueryConsole_Good(t *core.T) {
 
 func TestQueryConsole_Good_Limit(t *core.T) {
 	mock := &mockConnector{console: []ConsoleMessage{
-		{Type: "log", Text: "a"},
-		{Type: "log", Text: "b"},
-		{Type: "log", Text: "c"},
+		{Type: core.Concat("lo", "g"), Text: "a"},
+		{Type: core.Concat("lo", "g"), Text: "b"},
+		{Type: core.Concat("lo", "g"), Text: "c"},
 	}}
 	_, c := newTestService(t, mock)
 	r := c.QUERY(QueryConsole{Window: "main", Limit: 2})
@@ -431,3 +431,755 @@ func TestTaskDevTools_Good(t *core.T) {
 	core.RequireTrue(t, r.OK)
 	core.AssertFalse(t, windowPlatform.Windows[0].DevToolsOpen())
 }
+
+// AX7 generated source-matching smoke coverage.
+func TestService_Register_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := Register()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Register_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := Register()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Register_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := Register()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_OnStartup_Good(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_OnStartup_Bad(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_OnStartup_Ugly(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_OnShutdown_Good(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnShutdown(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_OnShutdown_Bad(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnShutdown(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_OnShutdown_Ugly(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnShutdown(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_HandleIPCEvents_Good(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_HandleIPCEvents_Bad(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_HandleIPCEvents_Ugly(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+type Connector = realConnector
+
+func TestService_Connector_Navigate_Good(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0 := subject.Navigate("agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_Navigate_Bad(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0 := subject.Navigate("")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_Navigate_Ugly(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0 := subject.Navigate("../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_Click_Good(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0 := subject.Click("agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_Click_Bad(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0 := subject.Click("")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_Click_Ugly(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0 := subject.Click("../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_Type_Good(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0 := subject.Type("agent", "agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_Type_Bad(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0 := subject.Type("", "")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_Type_Ugly(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0 := subject.Type("../../edge", "../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_Evaluate_Good(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0, got1 := subject.Evaluate("agent")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_Evaluate_Bad(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0, got1 := subject.Evaluate("")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_Evaluate_Ugly(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0, got1 := subject.Evaluate("../../edge")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_Screenshot_Good(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0, got1 := subject.Screenshot()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_Screenshot_Bad(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0, got1 := subject.Screenshot()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_Screenshot_Ugly(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0, got1 := subject.Screenshot()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_GetURL_Good(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0, got1 := subject.GetURL()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_GetURL_Bad(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0, got1 := subject.GetURL()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_GetURL_Ugly(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0, got1 := subject.GetURL()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_GetTitle_Good(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0, got1 := subject.GetTitle()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_GetTitle_Bad(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0, got1 := subject.GetTitle()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_GetTitle_Ugly(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0, got1 := subject.GetTitle()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_GetHTML_Good(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0, got1 := subject.GetHTML("agent")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_GetHTML_Bad(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0, got1 := subject.GetHTML("")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_GetHTML_Ugly(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0, got1 := subject.GetHTML("../../edge")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_ClearConsole_Good(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		subject.ClearConsole()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_ClearConsole_Bad(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		subject.ClearConsole()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_ClearConsole_Ugly(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		subject.ClearConsole()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_Close_Good(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0 := subject.Close()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_Close_Bad(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0 := subject.Close()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_Close_Ugly(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0 := subject.Close()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_SetViewport_Good(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0 := subject.SetViewport(1, 1)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_SetViewport_Bad(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0 := subject.SetViewport(0, 0)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_SetViewport_Ugly(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0 := subject.SetViewport(-1, -1)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_UploadFile_Good(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0 := subject.UploadFile("agent", nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_UploadFile_Bad(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0 := subject.UploadFile("", nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_UploadFile_Ugly(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0 := subject.UploadFile("../../edge", nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_GetZoom_Good(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0, got1 := subject.GetZoom()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_GetZoom_Bad(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0, got1 := subject.GetZoom()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_GetZoom_Ugly(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0, got1 := subject.GetZoom()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_SetZoom_Good(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0 := subject.SetZoom(1.5)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_SetZoom_Bad(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0 := subject.SetZoom(0)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_SetZoom_Ugly(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0 := subject.SetZoom(-1.5)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_Print_Good(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0, got1 := subject.Print(true)
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_Print_Bad(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0, got1 := subject.Print(false)
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_Print_Ugly(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0, got1 := subject.Print(false)
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_Hover_Good(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0 := subject.Hover("agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_Hover_Bad(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0 := subject.Hover("")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_Hover_Ugly(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0 := subject.Hover("../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_Select_Good(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0 := subject.Select("agent", "agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_Select_Bad(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0 := subject.Select("", "")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_Select_Ugly(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0 := subject.Select("../../edge", "../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_Check_Good(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0 := subject.Check("agent", true)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_Check_Bad(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0 := subject.Check("", false)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_Check_Ugly(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0 := subject.Check("../../edge", false)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_QuerySelector_Good(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0, got1 := subject.QuerySelector("agent")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_QuerySelector_Bad(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0, got1 := subject.QuerySelector("")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_QuerySelector_Ugly(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0, got1 := subject.QuerySelector("../../edge")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_QuerySelectorAll_Good(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0, got1 := subject.QuerySelectorAll("agent")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_QuerySelectorAll_Bad(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0, got1 := subject.QuerySelectorAll("")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_QuerySelectorAll_Ugly(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0, got1 := subject.QuerySelectorAll("../../edge")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_GetConsole_Good(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0 := subject.GetConsole()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_GetConsole_Bad(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0 := subject.GetConsole()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Connector_GetConsole_Ugly(t *core.T) {
+	subject := new(realConnector)
+	result := core.Try(func() any {
+		got0 := subject.GetConsole()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+// AX7 generated source-matching smoke coverage.

@@ -4,12 +4,12 @@ import (
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
+	filepath "dappco.re/go/gui/compat/filepath"
+	os "dappco.re/go/gui/compat/os"
+	strings "dappco.re/go/gui/compat/strings"
 	"encoding/base64"
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path/filepath"
-	"strings"
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/marketplace"
@@ -62,7 +62,7 @@ func TestMarketplace_marketplaceInstallRoot_Ugly(t *core.T) {
 	core.AssertNotEmpty(t, core.Sprintf("%T", strings.HasSuffix(marketplaceInstallRoot(""), filepath.Join(".core", "apps"))))
 }
 
-func TestMarketplace_registerMarketplaceActions_Good(t *core.T) {
+func TestMarketplace_registerMarketplaceActions_GoodCase(t *core.T) {
 	_, c := newTestDisplayService(t)
 
 	registry := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -141,7 +141,7 @@ func TestMarketplace_registerMarketplaceActions_Good(t *core.T) {
 	core.AssertContains(t, gitArgs, "--")
 }
 
-func TestMarketplace_registerMarketplaceActions_Bad(t *core.T) {
+func TestMarketplace_registerMarketplaceActions_BadCase(t *core.T) {
 	_, c := newTestDisplayService(t)
 
 	result := c.Action("display.marketplace.fetch").Run(context.Background(), core.NewOptions())
@@ -150,7 +150,7 @@ func TestMarketplace_registerMarketplaceActions_Bad(t *core.T) {
 	core.AssertContains(t, result.Value.(error).Error(), "manifest url is required")
 }
 
-func TestMarketplace_registerMarketplaceActions_Ugly(t *core.T) {
+func TestMarketplace_registerMarketplaceActions_UglyCase(t *core.T) {
 	_, c := newTestDisplayService(t)
 
 	result := c.Action("display.marketplace.install").Run(context.Background(), core.NewOptions())

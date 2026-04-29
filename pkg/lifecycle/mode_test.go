@@ -2,7 +2,7 @@ package lifecycle
 
 import (
 	core "dappco.re/go"
-	"os"
+	os "dappco.re/go/gui/compat/os"
 )
 
 func TestMode_DetectMode_Good(t *core.T) {

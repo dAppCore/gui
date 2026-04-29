@@ -3,7 +3,7 @@ package mcp
 
 import (
 	"context"
-	"fmt"
+	fmt "dappco.re/go/gui/compat/fmt"
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/contextmenu"

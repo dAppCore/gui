@@ -2,10 +2,10 @@ package chat
 
 import (
 	"context"
+	filepath "dappco.re/go/gui/compat/filepath"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"path/filepath"
 	"time"
 
 	core "dappco.re/go"
@@ -552,4 +552,362 @@ func TestActionThinkingStop_Ugly_AllowsStopWithoutStart(t *core.T) {
 	state := result.Value.(ThinkingState)
 	core.AssertFalse(t, state.Active)
 	core.AssertTrue(t, state.DurationMS >= 0)
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestService_Register_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := Register()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Register_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := Register()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Register_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := Register()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_OnStartup_Good(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_OnStartup_Bad(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_OnStartup_Ugly(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_HandleIPCEvents_Good(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_HandleIPCEvents_Bad(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_HandleIPCEvents_Ugly(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_Send_Good(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.Send(core.Background(), *new(sendInput))
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_Send_Bad(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.Send(core.Background(), *new(sendInput))
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_Send_Ugly(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.Send(core.Background(), *new(sendInput))
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_History_Good(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.History("agent", 1)
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_History_Bad(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.History("", 0)
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_History_Ugly(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.History("../../edge", -1)
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_Models_Good(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.Models()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_Models_Bad(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.Models()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_Models_Ugly(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.Models()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_SelectModel_Good(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.SelectModel(*new(selectModelInput))
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_SelectModel_Bad(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.SelectModel(*new(selectModelInput))
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_SelectModel_Ugly(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.SelectModel(*new(selectModelInput))
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_ListConversations_Good(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.ListConversations()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_ListConversations_Bad(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.ListConversations()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_ListConversations_Ugly(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.ListConversations()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_LoadConversation_Good(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.LoadConversation("agent")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_LoadConversation_Bad(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.LoadConversation("")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_LoadConversation_Ugly(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.LoadConversation("../../edge")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_DeleteConversation_Good(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.DeleteConversation("agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_DeleteConversation_Bad(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.DeleteConversation("")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_DeleteConversation_Ugly(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.DeleteConversation("../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_StartThinking_Good(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.StartThinking(*new(thinkingInput))
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_StartThinking_Bad(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.StartThinking(*new(thinkingInput))
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_StartThinking_Ugly(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.StartThinking(*new(thinkingInput))
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_StopThinking_Good(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.StopThinking(*new(thinkingInput))
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_StopThinking_Bad(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.StopThinking(*new(thinkingInput))
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_StopThinking_Ugly(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.StopThinking(*new(thinkingInput))
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

@@ -2,8 +2,8 @@
 package mcp
 
 import (
-	"bytes"
 	"context"
+	bytes "dappco.re/go/gui/compat/bytes"
 	"encoding/base64"
 	"image"
 	"image/draw"
@@ -501,7 +501,7 @@ type WebviewErrorsInput struct {
 }
 
 type WebviewErrorsOutput struct {
-	Errors []webview.ExceptionInfo `json:"errors"`
+	Errors []webview.ExceptionInfo `json:"errors,omitempty"`
 }
 
 func (s *Subsystem) webviewErrors(_ context.Context, _ *mcp.CallToolRequest, input WebviewErrorsInput) (*mcp.CallToolResult, WebviewErrorsOutput, error) {

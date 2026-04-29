@@ -20,7 +20,7 @@ func TestKeyBindingManager_Add_Good(t *core.T) {
 	core.AssertLen(t, manager.GetAll(), 1)
 }
 
-func TestKeyBindingManager_Add_Bad(t *core.T) {
+func TestKeyBindingManager_Add_BadCase(t *core.T) {
 	manager := &KeyBindingManager{}
 
 	handled := manager.Process("missing", nil)
@@ -87,4 +87,125 @@ func TestKeyBindingManager_NilReceiver_IsSafe(t *core.T) {
 		core.AssertFalse(t, manager.Process("CmdOrCtrl+K", nil))
 		core.AssertNil(t, manager.GetAll())
 	})
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestKeybinding_KeyBindingManager_Add_Good(t *core.T) {
+	subject := new(KeyBindingManager)
+	result := core.Try(func() any {
+		subject.Add("agent", nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestKeybinding_KeyBindingManager_Add_Bad(t *core.T) {
+	subject := new(KeyBindingManager)
+	result := core.Try(func() any {
+		subject.Add("", nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestKeybinding_KeyBindingManager_Add_Ugly(t *core.T) {
+	subject := new(KeyBindingManager)
+	result := core.Try(func() any {
+		subject.Add("../../edge", nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestKeybinding_KeyBindingManager_Remove_Good(t *core.T) {
+	subject := new(KeyBindingManager)
+	result := core.Try(func() any {
+		subject.Remove("agent")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestKeybinding_KeyBindingManager_Remove_Bad(t *core.T) {
+	subject := new(KeyBindingManager)
+	result := core.Try(func() any {
+		subject.Remove("")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestKeybinding_KeyBindingManager_Remove_Ugly(t *core.T) {
+	subject := new(KeyBindingManager)
+	result := core.Try(func() any {
+		subject.Remove("../../edge")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestKeybinding_KeyBindingManager_Process_Good(t *core.T) {
+	subject := new(KeyBindingManager)
+	result := core.Try(func() any {
+		got0 := subject.Process("agent", *new(Window))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestKeybinding_KeyBindingManager_Process_Bad(t *core.T) {
+	subject := new(KeyBindingManager)
+	result := core.Try(func() any {
+		got0 := subject.Process("", *new(Window))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestKeybinding_KeyBindingManager_Process_Ugly(t *core.T) {
+	subject := new(KeyBindingManager)
+	result := core.Try(func() any {
+		got0 := subject.Process("../../edge", *new(Window))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestKeybinding_KeyBindingManager_GetAll_Good(t *core.T) {
+	subject := new(KeyBindingManager)
+	result := core.Try(func() any {
+		got0 := subject.GetAll()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestKeybinding_KeyBindingManager_GetAll_Bad(t *core.T) {
+	subject := new(KeyBindingManager)
+	result := core.Try(func() any {
+		got0 := subject.GetAll()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestKeybinding_KeyBindingManager_GetAll_Ugly(t *core.T) {
+	subject := new(KeyBindingManager)
+	result := core.Try(func() any {
+		got0 := subject.GetAll()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

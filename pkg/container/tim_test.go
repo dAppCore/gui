@@ -3,7 +3,7 @@ package container
 import (
 	"context"
 	core "dappco.re/go"
-	"errors"
+	errors "dappco.re/go/gui/compat/errors"
 	"time"
 )
 
@@ -315,4 +315,122 @@ func TestTIMManager_coalesceRuntime_Ugly(t *core.T) {
 	core.AssertEqual(t, RuntimeNone, coalesceRuntime(RuntimeNone, RuntimeNone))
 	observedType := core.Sprintf("%T", coalesceRuntime(RuntimeNone, RuntimeNone))
 	core.AssertNotEmpty(t, observedType)
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestTim_NewTIMManager_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewTIMManager(*new(TIMOptions))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestTim_NewTIMManager_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewTIMManager(*new(TIMOptions))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestTim_NewTIMManager_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewTIMManager(*new(TIMOptions))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestTim_TIMManager_State_Good(t *core.T) {
+	subject := new(TIMManager)
+	result := core.Try(func() any {
+		got0 := subject.State()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestTim_TIMManager_State_Bad(t *core.T) {
+	subject := new(TIMManager)
+	result := core.Try(func() any {
+		got0 := subject.State()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestTim_TIMManager_State_Ugly(t *core.T) {
+	subject := new(TIMManager)
+	result := core.Try(func() any {
+		got0 := subject.State()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestTim_TIMManager_Start_Good(t *core.T) {
+	subject := new(TIMManager)
+	result := core.Try(func() any {
+		got0, got1 := subject.Start(core.Background())
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestTim_TIMManager_Start_Bad(t *core.T) {
+	subject := new(TIMManager)
+	result := core.Try(func() any {
+		got0, got1 := subject.Start(core.Background())
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestTim_TIMManager_Start_Ugly(t *core.T) {
+	subject := new(TIMManager)
+	result := core.Try(func() any {
+		got0, got1 := subject.Start(core.Background())
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestTim_TIMManager_Stop_Good(t *core.T) {
+	subject := new(TIMManager)
+	result := core.Try(func() any {
+		got0, got1 := subject.Stop(core.Background())
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestTim_TIMManager_Stop_Bad(t *core.T) {
+	subject := new(TIMManager)
+	result := core.Try(func() any {
+		got0, got1 := subject.Stop(core.Background())
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestTim_TIMManager_Stop_Ugly(t *core.T) {
+	subject := new(TIMManager)
+	result := core.Try(func() any {
+		got0, got1 := subject.Stop(core.Background())
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

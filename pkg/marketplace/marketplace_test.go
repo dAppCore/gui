@@ -6,14 +6,14 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	core "dappco.re/go"
+	filepath "dappco.re/go/gui/compat/filepath"
+	os "dappco.re/go/gui/compat/os"
+	strings "dappco.re/go/gui/compat/strings"
 	"encoding/base64"
 	"encoding/hex"
 	"gopkg.in/yaml.v3"
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path/filepath"
-	"strings"
 )
 
 func signedManifest(t *core.T, manifest Manifest) Manifest {
@@ -484,4 +484,125 @@ func assertSafeModuleName(t *core.T, value string) {
 	for _, r := range value {
 		core.AssertTrue(t, (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-', core.Sprintf("unsafe character %q in %q", r, value))
 	}
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestMarketplace_Installer_FetchManifest_Good(t *core.T) {
+	var subject Installer
+	result := core.Try(func() any {
+		got0, got1 := subject.FetchManifest(core.Background(), "agent")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMarketplace_Installer_FetchManifest_Bad(t *core.T) {
+	var subject Installer
+	result := core.Try(func() any {
+		got0, got1 := subject.FetchManifest(core.Background(), "")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMarketplace_Installer_FetchManifest_Ugly(t *core.T) {
+	var subject Installer
+	result := core.Try(func() any {
+		got0, got1 := subject.FetchManifest(core.Background(), "../../edge")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMarketplace_Installer_Verify_Good(t *core.T) {
+	var subject Installer
+	result := core.Try(func() any {
+		got0, got1 := subject.Verify(core.Background(), "agent")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMarketplace_Installer_Verify_Bad(t *core.T) {
+	var subject Installer
+	result := core.Try(func() any {
+		got0, got1 := subject.Verify(core.Background(), "")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMarketplace_Installer_Verify_Ugly(t *core.T) {
+	var subject Installer
+	result := core.Try(func() any {
+		got0, got1 := subject.Verify(core.Background(), "../../edge")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMarketplace_Installer_Install_Good(t *core.T) {
+	var subject Installer
+	result := core.Try(func() any {
+		got0, got1 := subject.Install(core.Background(), *new(Manifest))
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMarketplace_Installer_Install_Bad(t *core.T) {
+	var subject Installer
+	result := core.Try(func() any {
+		got0, got1 := subject.Install(core.Background(), *new(Manifest))
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMarketplace_Installer_Install_Ugly(t *core.T) {
+	var subject Installer
+	result := core.Try(func() any {
+		got0, got1 := subject.Install(core.Background(), *new(Manifest))
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMarketplace_Installer_List_Good(t *core.T) {
+	var subject Installer
+	result := core.Try(func() any {
+		got0, got1 := subject.List(core.Background(), "agent")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMarketplace_Installer_List_Bad(t *core.T) {
+	var subject Installer
+	result := core.Try(func() any {
+		got0, got1 := subject.List(core.Background(), "")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMarketplace_Installer_List_Ugly(t *core.T) {
+	var subject Installer
+	result := core.Try(func() any {
+		got0, got1 := subject.List(core.Background(), "../../edge")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

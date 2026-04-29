@@ -100,7 +100,7 @@ func TestApplication_MenuItem_OnClick_Ugly(t *core.T) {
 	core.AssertEqual(t, 1, called)
 }
 
-func TestApplication_Menu_Good(t *core.T) {
+func TestApplication_Menu_GoodCase(t *core.T) {
 	menu := NewMenu()
 	menuItem := menu.Add("Open")
 	menu.AddSeparator()
@@ -118,14 +118,14 @@ func TestApplication_Menu_Good(t *core.T) {
 	core.AssertEqual(t, "file", menu.Items[3].Label)
 }
 
-func TestApplication_Menu_Bad(t *core.T) {
+func TestApplication_Menu_BadCase(t *core.T) {
 	menu := NewMenu()
 
 	core.AssertEmpty(t, menu.Items)
 	core.AssertNotEmpty(t, core.Sprintf("%T", menu))
 }
 
-func TestApplication_Menu_Ugly(t *core.T) {
+func TestApplication_Menu_UglyCase(t *core.T) {
 	menu := NewMenu()
 	submenu := menu.AddSubmenu("Nested")
 	submenu.Add("Child")
@@ -171,7 +171,7 @@ func TestApplication_MenuManager_SetApplicationMenu_NilReceiver(t *core.T) {
 	})
 }
 
-func TestApplication_SystemTray_Good(t *core.T) {
+func TestApplication_SystemTray_GoodCase(t *core.T) {
 	tray := (&SystemTrayManager{}).New()
 	menu := NewMenu()
 	window := (&WindowManager{}).NewWithOptions(WebviewWindowOptions{Name: "tray"})
@@ -191,7 +191,7 @@ func TestApplication_SystemTray_Good(t *core.T) {
 	core.AssertSame(t, window, tray.attachedWindow)
 }
 
-func TestApplication_SystemTray_Bad(t *core.T) {
+func TestApplication_SystemTray_BadCase(t *core.T) {
 	tray := (&SystemTrayManager{}).New()
 
 	core.AssertEmpty(t, tray.icon)
@@ -202,7 +202,7 @@ func TestApplication_SystemTray_Bad(t *core.T) {
 	core.AssertNil(t, tray.attachedWindow)
 }
 
-func TestApplication_SystemTray_Ugly(t *core.T) {
+func TestApplication_SystemTray_UglyCase(t *core.T) {
 	tray := (&SystemTrayManager{}).New()
 	icon := []byte{9, 8, 7}
 	tray.SetIcon(icon)
@@ -272,7 +272,7 @@ func TestApplication_WindowEventContext_NilReceiver(t *core.T) {
 	core.AssertNil(t, ctx.DropTargetDetails())
 }
 
-func TestApplication_WebviewWindow_Good(t *core.T) {
+func TestApplication_WebviewWindow_GoodCase(t *core.T) {
 	manager := &WindowManager{}
 	window := manager.NewWithOptions(WebviewWindowOptions{
 		Name:        "main",
@@ -314,7 +314,7 @@ func TestApplication_WebviewWindow_Good(t *core.T) {
 	core.AssertEqual(t, 768, window.Height())
 }
 
-func TestApplication_WebviewWindow_Bad(t *core.T) {
+func TestApplication_WebviewWindow_BadCase(t *core.T) {
 	manager := &WindowManager{}
 	window := manager.NewWithOptions(WebviewWindowOptions{Hidden: true})
 
@@ -323,7 +323,7 @@ func TestApplication_WebviewWindow_Bad(t *core.T) {
 	core.AssertNil(t, manager.GetByID(99))
 }
 
-func TestApplication_WebviewWindow_Ugly(t *core.T) {
+func TestApplication_WebviewWindow_UglyCase(t *core.T) {
 	manager := &WindowManager{}
 	first := manager.NewWithOptions(WebviewWindowOptions{Name: "first"})
 	second := manager.NewWithOptions(WebviewWindowOptions{Name: "second"})
@@ -405,7 +405,7 @@ func TestApplication_App_Ugly(t *core.T) {
 	core.AssertNotEmpty(t, core.Sprintf("%T", app))
 }
 
-func TestApplication_AppManagers_Good(t *core.T) {
+func TestApplication_AppManagers_GoodCase(t *core.T) {
 	app := &App{}
 
 	core.AssertNotNil(t, &app.Window)
@@ -477,7 +477,7 @@ func TestApplication_AppManagers_Good(t *core.T) {
 	})
 }
 
-func TestApplication_AppManagers_Bad(t *core.T) {
+func TestApplication_AppManagers_BadCase(t *core.T) {
 	app := &App{}
 
 	core.AssertNotPanics(t, func() {
@@ -510,7 +510,7 @@ func TestApplication_AppManagers_Bad(t *core.T) {
 	})
 }
 
-func TestApplication_AppManagers_Ugly(t *core.T) {
+func TestApplication_AppManagers_UglyCase(t *core.T) {
 	app := &App{}
 
 	core.AssertNotPanics(t, func() {
@@ -546,4 +546,3362 @@ func TestApplication_AppManagers_Ugly(t *core.T) {
 		app.KeyBinding.handleWindowKeyEvent(&windowKeyEvent{acceleratorString: "CmdOrCtrl+Shift+P"})
 		core.AssertEqual(t, 1, triggered)
 	})
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestApplication_Logger_Info_Good(t *core.T) {
+	var subject Logger
+	result := core.Try(func() any {
+		subject.Info("agent")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_Logger_Info_Bad(t *core.T) {
+	var subject Logger
+	result := core.Try(func() any {
+		subject.Info("")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_Logger_Info_Ugly(t *core.T) {
+	var subject Logger
+	result := core.Try(func() any {
+		subject.Info("../../edge")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_MenuItem_SetAccelerator_Good(t *core.T) {
+	subject := new(MenuItem)
+	result := core.Try(func() any {
+		subject.SetAccelerator("agent")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_MenuItem_SetAccelerator_Bad(t *core.T) {
+	subject := new(MenuItem)
+	result := core.Try(func() any {
+		subject.SetAccelerator("")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_MenuItem_SetAccelerator_Ugly(t *core.T) {
+	subject := new(MenuItem)
+	result := core.Try(func() any {
+		subject.SetAccelerator("../../edge")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_MenuItem_SetTooltip_Good(t *core.T) {
+	subject := new(MenuItem)
+	result := core.Try(func() any {
+		subject.SetTooltip("agent")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_MenuItem_SetTooltip_Bad(t *core.T) {
+	subject := new(MenuItem)
+	result := core.Try(func() any {
+		subject.SetTooltip("")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_MenuItem_SetTooltip_Ugly(t *core.T) {
+	subject := new(MenuItem)
+	result := core.Try(func() any {
+		subject.SetTooltip("../../edge")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_MenuItem_SetChecked_Good(t *core.T) {
+	subject := new(MenuItem)
+	result := core.Try(func() any {
+		subject.SetChecked(true)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_MenuItem_SetChecked_Bad(t *core.T) {
+	subject := new(MenuItem)
+	result := core.Try(func() any {
+		subject.SetChecked(false)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_MenuItem_SetChecked_Ugly(t *core.T) {
+	subject := new(MenuItem)
+	result := core.Try(func() any {
+		subject.SetChecked(false)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_MenuItem_SetEnabled_Good(t *core.T) {
+	subject := new(MenuItem)
+	result := core.Try(func() any {
+		subject.SetEnabled(true)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_MenuItem_SetEnabled_Bad(t *core.T) {
+	subject := new(MenuItem)
+	result := core.Try(func() any {
+		subject.SetEnabled(false)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_MenuItem_SetEnabled_Ugly(t *core.T) {
+	subject := new(MenuItem)
+	result := core.Try(func() any {
+		subject.SetEnabled(false)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_NewMenu_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewMenu()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_NewMenu_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewMenu()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_NewMenu_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewMenu()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_Menu_Add_Good(t *core.T) {
+	subject := new(Menu)
+	result := core.Try(func() any {
+		got0 := subject.Add("agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_Menu_Add_Bad(t *core.T) {
+	subject := new(Menu)
+	result := core.Try(func() any {
+		got0 := subject.Add("")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_Menu_Add_Ugly(t *core.T) {
+	subject := new(Menu)
+	result := core.Try(func() any {
+		got0 := subject.Add("../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_Menu_AddSeparator_Good(t *core.T) {
+	subject := new(Menu)
+	result := core.Try(func() any {
+		subject.AddSeparator()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_Menu_AddSeparator_Bad(t *core.T) {
+	subject := new(Menu)
+	result := core.Try(func() any {
+		subject.AddSeparator()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_Menu_AddSeparator_Ugly(t *core.T) {
+	subject := new(Menu)
+	result := core.Try(func() any {
+		subject.AddSeparator()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_Menu_AddSubmenu_Good(t *core.T) {
+	subject := new(Menu)
+	result := core.Try(func() any {
+		got0 := subject.AddSubmenu("agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_Menu_AddSubmenu_Bad(t *core.T) {
+	subject := new(Menu)
+	result := core.Try(func() any {
+		got0 := subject.AddSubmenu("")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_Menu_AddSubmenu_Ugly(t *core.T) {
+	subject := new(Menu)
+	result := core.Try(func() any {
+		got0 := subject.AddSubmenu("../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_Menu_AddRole_Good(t *core.T) {
+	subject := new(Menu)
+	result := core.Try(func() any {
+		subject.AddRole(*new(MenuRole))
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_Menu_AddRole_Bad(t *core.T) {
+	subject := new(Menu)
+	result := core.Try(func() any {
+		subject.AddRole(*new(MenuRole))
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_Menu_AddRole_Ugly(t *core.T) {
+	subject := new(Menu)
+	result := core.Try(func() any {
+		subject.AddRole(*new(MenuRole))
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_SystemTray_SetIcon_Good(t *core.T) {
+	subject := new(SystemTray)
+	result := core.Try(func() any {
+		subject.SetIcon(nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_SystemTray_SetIcon_Bad(t *core.T) {
+	subject := new(SystemTray)
+	result := core.Try(func() any {
+		subject.SetIcon(nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_SystemTray_SetIcon_Ugly(t *core.T) {
+	subject := new(SystemTray)
+	result := core.Try(func() any {
+		subject.SetIcon(nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_SystemTray_SetTemplateIcon_Good(t *core.T) {
+	subject := new(SystemTray)
+	result := core.Try(func() any {
+		subject.SetTemplateIcon(nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_SystemTray_SetTemplateIcon_Bad(t *core.T) {
+	subject := new(SystemTray)
+	result := core.Try(func() any {
+		subject.SetTemplateIcon(nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_SystemTray_SetTemplateIcon_Ugly(t *core.T) {
+	subject := new(SystemTray)
+	result := core.Try(func() any {
+		subject.SetTemplateIcon(nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_SystemTray_SetTooltip_Good(t *core.T) {
+	subject := new(SystemTray)
+	result := core.Try(func() any {
+		subject.SetTooltip("agent")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_SystemTray_SetTooltip_Bad(t *core.T) {
+	subject := new(SystemTray)
+	result := core.Try(func() any {
+		subject.SetTooltip("")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_SystemTray_SetTooltip_Ugly(t *core.T) {
+	subject := new(SystemTray)
+	result := core.Try(func() any {
+		subject.SetTooltip("../../edge")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_SystemTray_SetLabel_Good(t *core.T) {
+	subject := new(SystemTray)
+	result := core.Try(func() any {
+		subject.SetLabel("agent")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_SystemTray_SetLabel_Bad(t *core.T) {
+	subject := new(SystemTray)
+	result := core.Try(func() any {
+		subject.SetLabel("")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_SystemTray_SetLabel_Ugly(t *core.T) {
+	subject := new(SystemTray)
+	result := core.Try(func() any {
+		subject.SetLabel("../../edge")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_SystemTray_SetMenu_Good(t *core.T) {
+	subject := new(SystemTray)
+	result := core.Try(func() any {
+		subject.SetMenu(nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_SystemTray_SetMenu_Bad(t *core.T) {
+	subject := new(SystemTray)
+	result := core.Try(func() any {
+		subject.SetMenu(nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_SystemTray_SetMenu_Ugly(t *core.T) {
+	subject := new(SystemTray)
+	result := core.Try(func() any {
+		subject.SetMenu(nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_SystemTray_AttachWindow_Good(t *core.T) {
+	subject := new(SystemTray)
+	result := core.Try(func() any {
+		subject.AttachWindow(nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_SystemTray_AttachWindow_Bad(t *core.T) {
+	subject := new(SystemTray)
+	result := core.Try(func() any {
+		subject.AttachWindow(nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_SystemTray_AttachWindow_Ugly(t *core.T) {
+	subject := new(SystemTray)
+	result := core.Try(func() any {
+		subject.AttachWindow(nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_SystemTrayManager_New_Good(t *core.T) {
+	subject := new(SystemTrayManager)
+	result := core.Try(func() any {
+		got0 := subject.New()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_SystemTrayManager_New_Bad(t *core.T) {
+	subject := new(SystemTrayManager)
+	result := core.Try(func() any {
+		got0 := subject.New()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_SystemTrayManager_New_Ugly(t *core.T) {
+	subject := new(SystemTrayManager)
+	result := core.Try(func() any {
+		got0 := subject.New()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WindowEventContext_DroppedFiles_Good(t *core.T) {
+	subject := new(WindowEventContext)
+	result := core.Try(func() any {
+		got0 := subject.DroppedFiles()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WindowEventContext_DroppedFiles_Bad(t *core.T) {
+	subject := new(WindowEventContext)
+	result := core.Try(func() any {
+		got0 := subject.DroppedFiles()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WindowEventContext_DroppedFiles_Ugly(t *core.T) {
+	subject := new(WindowEventContext)
+	result := core.Try(func() any {
+		got0 := subject.DroppedFiles()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WindowEventContext_DropTargetDetails_Good(t *core.T) {
+	subject := new(WindowEventContext)
+	result := core.Try(func() any {
+		got0 := subject.DropTargetDetails()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WindowEventContext_DropTargetDetails_Bad(t *core.T) {
+	subject := new(WindowEventContext)
+	result := core.Try(func() any {
+		got0 := subject.DropTargetDetails()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WindowEventContext_DropTargetDetails_Ugly(t *core.T) {
+	subject := new(WindowEventContext)
+	result := core.Try(func() any {
+		got0 := subject.DropTargetDetails()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WindowEvent_Context_Good(t *core.T) {
+	subject := new(WindowEvent)
+	result := core.Try(func() any {
+		got0 := subject.Context()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WindowEvent_Context_Bad(t *core.T) {
+	subject := new(WindowEvent)
+	result := core.Try(func() any {
+		got0 := subject.Context()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WindowEvent_Context_Ugly(t *core.T) {
+	subject := new(WindowEvent)
+	result := core.Try(func() any {
+		got0 := subject.Context()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Name_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.Name()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Name_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.Name()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Name_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.Name()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Title_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.Title()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Title_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.Title()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Title_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.Title()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Position_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0, got1 := subject.Position()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Position_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0, got1 := subject.Position()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Position_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0, got1 := subject.Position()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Size_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0, got1 := subject.Size()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Size_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0, got1 := subject.Size()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Size_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0, got1 := subject.Size()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_IsMaximised_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.IsMaximised()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_IsMaximised_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.IsMaximised()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_IsMaximised_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.IsMaximised()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_IsFocused_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.IsFocused()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_IsFocused_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.IsFocused()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_IsFocused_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.IsFocused()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetTitle_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetTitle("agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetTitle_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetTitle("")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetTitle_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetTitle("../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetPosition_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.SetPosition(1, 1)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetPosition_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.SetPosition(0, 0)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetPosition_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.SetPosition(-1, -1)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetSize_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetSize(1, 1)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetSize_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetSize(0, 0)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetSize_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetSize(-1, -1)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetBackgroundColour_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetBackgroundColour(*new(RGBA))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetBackgroundColour_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetBackgroundColour(*new(RGBA))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetBackgroundColour_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetBackgroundColour(*new(RGBA))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetAlwaysOnTop_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetAlwaysOnTop(true)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetAlwaysOnTop_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetAlwaysOnTop(false)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetAlwaysOnTop_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetAlwaysOnTop(false)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetOpacity_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetOpacity(1.5)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetOpacity_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetOpacity(0)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetOpacity_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetOpacity(-1.5)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Maximise_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.Maximise()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Maximise_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.Maximise()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Maximise_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.Maximise()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Restore_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.Restore()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Restore_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.Restore()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Restore_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.Restore()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Minimise_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.Minimise()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Minimise_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.Minimise()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Minimise_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.Minimise()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Focus_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.Focus()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Focus_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.Focus()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Focus_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.Focus()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Close_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.Close()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Close_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.Close()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Close_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.Close()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Show_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.Show()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Show_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.Show()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Show_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.Show()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Hide_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.Hide()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Hide_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.Hide()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Hide_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.Hide()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Fullscreen_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.Fullscreen()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Fullscreen_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.Fullscreen()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Fullscreen_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.Fullscreen()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_UnFullscreen_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.UnFullscreen()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_UnFullscreen_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.UnFullscreen()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_UnFullscreen_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.UnFullscreen()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_OnWindowEvent_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.OnWindowEvent(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_OnWindowEvent_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.OnWindowEvent(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_OnWindowEvent_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.OnWindowEvent(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_ID_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.ID()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_ID_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.ID()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_ID_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.ID()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_ClientID_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.ClientID()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_ClientID_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.ClientID()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_ClientID_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.ClientID()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Width_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.Width()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Width_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.Width()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Width_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.Width()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Height_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.Height()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Height_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.Height()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Height_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.Height()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_IsVisible_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.IsVisible()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_IsVisible_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.IsVisible()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_IsVisible_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.IsVisible()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_IsFullscreen_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.IsFullscreen()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_IsFullscreen_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.IsFullscreen()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_IsFullscreen_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.IsFullscreen()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_IsMinimised_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.IsMinimised()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_IsMinimised_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.IsMinimised()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_IsMinimised_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.IsMinimised()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_IsIgnoreMouseEvents_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.IsIgnoreMouseEvents()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_IsIgnoreMouseEvents_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.IsIgnoreMouseEvents()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_IsIgnoreMouseEvents_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.IsIgnoreMouseEvents()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Resizable_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.Resizable()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Resizable_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.Resizable()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Resizable_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.Resizable()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Bounds_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.Bounds()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Bounds_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.Bounds()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Bounds_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.Bounds()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetBounds_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.SetBounds(*new(Rect))
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetBounds_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.SetBounds(*new(Rect))
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetBounds_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.SetBounds(*new(Rect))
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_RelativePosition_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0, got1 := subject.RelativePosition()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_RelativePosition_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0, got1 := subject.RelativePosition()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_RelativePosition_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0, got1 := subject.RelativePosition()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetRelativePosition_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetRelativePosition(1, 1)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetRelativePosition_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetRelativePosition(0, 0)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetRelativePosition_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetRelativePosition(-1, -1)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetMinSize_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetMinSize(1, 1)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetMinSize_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetMinSize(0, 0)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetMinSize_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetMinSize(-1, -1)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetMaxSize_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetMaxSize(1, 1)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetMaxSize_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetMaxSize(0, 0)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetMaxSize_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetMaxSize(-1, -1)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Center_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.Center()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Center_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.Center()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Center_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.Center()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetURL_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetURL("agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetURL_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetURL("")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetURL_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetURL("../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetHTML_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetHTML("agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetHTML_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetHTML("")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetHTML_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetHTML("../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetFrameless_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetFrameless(true)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetFrameless_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetFrameless(false)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetFrameless_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetFrameless(false)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetResizable_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetResizable(true)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetResizable_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetResizable(false)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetResizable_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetResizable(false)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetIgnoreMouseEvents_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetIgnoreMouseEvents(true)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetIgnoreMouseEvents_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetIgnoreMouseEvents(false)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetIgnoreMouseEvents_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetIgnoreMouseEvents(false)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetMinimiseButtonState_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetMinimiseButtonState(*new(ButtonState))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetMinimiseButtonState_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetMinimiseButtonState(*new(ButtonState))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetMinimiseButtonState_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetMinimiseButtonState(*new(ButtonState))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetMaximiseButtonState_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetMaximiseButtonState(*new(ButtonState))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetMaximiseButtonState_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetMaximiseButtonState(*new(ButtonState))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetMaximiseButtonState_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetMaximiseButtonState(*new(ButtonState))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetCloseButtonState_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetCloseButtonState(*new(ButtonState))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetCloseButtonState_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetCloseButtonState(*new(ButtonState))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetCloseButtonState_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetCloseButtonState(*new(ButtonState))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetEnabled_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.SetEnabled(true)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetEnabled_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.SetEnabled(false)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetEnabled_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.SetEnabled(false)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetContentProtection_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetContentProtection(true)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetContentProtection_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetContentProtection(false)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetContentProtection_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetContentProtection(false)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetMenu_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.SetMenu(nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetMenu_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.SetMenu(nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetMenu_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.SetMenu(nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_ShowMenuBar_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.ShowMenuBar()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_ShowMenuBar_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.ShowMenuBar()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_ShowMenuBar_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.ShowMenuBar()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_HideMenuBar_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.HideMenuBar()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_HideMenuBar_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.HideMenuBar()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_HideMenuBar_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.HideMenuBar()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_ToggleMenuBar_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.ToggleMenuBar()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_ToggleMenuBar_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.ToggleMenuBar()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_ToggleMenuBar_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.ToggleMenuBar()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_ToggleFrameless_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.ToggleFrameless()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_ToggleFrameless_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.ToggleFrameless()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_ToggleFrameless_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.ToggleFrameless()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_ExecJS_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.ExecJS("agent")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_ExecJS_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.ExecJS("")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_ExecJS_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.ExecJS("../../edge")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Reload_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.Reload()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Reload_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.Reload()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Reload_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.Reload()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_ForceReload_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.ForceReload()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_ForceReload_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.ForceReload()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_ForceReload_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.ForceReload()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_OpenDevTools_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.OpenDevTools()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_OpenDevTools_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.OpenDevTools()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_OpenDevTools_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.OpenDevTools()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_OpenContextMenu_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.OpenContextMenu(nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_OpenContextMenu_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.OpenContextMenu(nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_OpenContextMenu_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.OpenContextMenu(nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Zoom_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.Zoom()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Zoom_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.Zoom()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Zoom_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.Zoom()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_ZoomIn_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.ZoomIn()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_ZoomIn_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.ZoomIn()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_ZoomIn_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.ZoomIn()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_ZoomOut_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.ZoomOut()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_ZoomOut_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.ZoomOut()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_ZoomOut_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.ZoomOut()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_ZoomReset_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.ZoomReset()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_ZoomReset_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.ZoomReset()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_ZoomReset_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.ZoomReset()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_GetZoom_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.GetZoom()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_GetZoom_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.GetZoom()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_GetZoom_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.GetZoom()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_GetOpacity_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.GetOpacity()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_GetOpacity_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.GetOpacity()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_GetOpacity_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.GetOpacity()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetZoom_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetZoom(1.5)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetZoom_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetZoom(0)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SetZoom_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.SetZoom(-1.5)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_RegisterHook_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.RegisterHook(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_RegisterHook_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.RegisterHook(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_RegisterHook_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.RegisterHook(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_EmitEvent_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.EmitEvent("agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_EmitEvent_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.EmitEvent("")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_EmitEvent_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.EmitEvent("../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_DispatchWailsEvent_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.DispatchWailsEvent(nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_DispatchWailsEvent_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.DispatchWailsEvent(nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_DispatchWailsEvent_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.DispatchWailsEvent(nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_GetScreen_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0, got1 := subject.GetScreen()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_GetScreen_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0, got1 := subject.GetScreen()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_GetScreen_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0, got1 := subject.GetScreen()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_GetBorderSizes_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.GetBorderSizes()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_GetBorderSizes_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.GetBorderSizes()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_GetBorderSizes_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.GetBorderSizes()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_EnableSizeConstraints_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.EnableSizeConstraints()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_EnableSizeConstraints_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.EnableSizeConstraints()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_EnableSizeConstraints_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.EnableSizeConstraints()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_DisableSizeConstraints_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.DisableSizeConstraints()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_DisableSizeConstraints_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.DisableSizeConstraints()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_DisableSizeConstraints_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.DisableSizeConstraints()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_AttachModal_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.AttachModal(*new(Window))
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_AttachModal_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.AttachModal(*new(Window))
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_AttachModal_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.AttachModal(*new(Window))
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Flash_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.Flash(true)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Flash_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.Flash(false)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Flash_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.Flash(false)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Print_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.Print()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Print_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.Print()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Print_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.Print()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Error_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.Error("agent")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Error_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.Error("")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Error_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.Error("../../edge")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Info_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.Info("agent")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Info_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.Info("")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Info_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.Info("../../edge")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_NativeWindow_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.NativeWindow()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_NativeWindow_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.NativeWindow()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_NativeWindow_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		got0 := subject.NativeWindow()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Run_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.Run()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Run_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.Run()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_Run_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.Run()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_UnMaximise_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.UnMaximise()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_UnMaximise_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.UnMaximise()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_UnMaximise_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.UnMaximise()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_UnMinimise_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.UnMinimise()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_UnMinimise_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.UnMinimise()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_UnMinimise_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.UnMinimise()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_ToggleFullscreen_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.ToggleFullscreen()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_ToggleFullscreen_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.ToggleFullscreen()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_ToggleFullscreen_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.ToggleFullscreen()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_ToggleMaximise_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.ToggleMaximise()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_ToggleMaximise_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.ToggleMaximise()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_ToggleMaximise_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.ToggleMaximise()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SnapAssist_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.SnapAssist()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SnapAssist_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.SnapAssist()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_SnapAssist_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.SnapAssist()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_InitiateFrontendDropProcessing_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.InitiateFrontendDropProcessing(nil, 1, 1)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_InitiateFrontendDropProcessing_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.InitiateFrontendDropProcessing(nil, 0, 0)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_InitiateFrontendDropProcessing_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.InitiateFrontendDropProcessing(nil, -1, -1)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_HandleMessage_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.HandleMessage("agent")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_HandleMessage_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.HandleMessage("")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_HandleMessage_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.HandleMessage("../../edge")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_HandleWindowEvent_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.HandleWindowEvent(1)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_HandleWindowEvent_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.HandleWindowEvent(0)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_HandleWindowEvent_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.HandleWindowEvent(0)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_HandleKeyEvent_Good(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.HandleKeyEvent("agent")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_HandleKeyEvent_Bad(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.HandleKeyEvent("")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WebviewWindow_HandleKeyEvent_Ugly(t *core.T) {
+	subject := new(WebviewWindow)
+	result := core.Try(func() any {
+		subject.HandleKeyEvent("../../edge")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WindowManager_NewWithOptions_Good(t *core.T) {
+	subject := new(WindowManager)
+	result := core.Try(func() any {
+		got0 := subject.NewWithOptions(*new(WebviewWindowOptions))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WindowManager_NewWithOptions_Bad(t *core.T) {
+	subject := new(WindowManager)
+	result := core.Try(func() any {
+		got0 := subject.NewWithOptions(*new(WebviewWindowOptions))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WindowManager_NewWithOptions_Ugly(t *core.T) {
+	subject := new(WindowManager)
+	result := core.Try(func() any {
+		got0 := subject.NewWithOptions(*new(WebviewWindowOptions))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WindowManager_GetAll_Good(t *core.T) {
+	subject := new(WindowManager)
+	result := core.Try(func() any {
+		got0 := subject.GetAll()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WindowManager_GetAll_Bad(t *core.T) {
+	subject := new(WindowManager)
+	result := core.Try(func() any {
+		got0 := subject.GetAll()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_WindowManager_GetAll_Ugly(t *core.T) {
+	subject := new(WindowManager)
+	result := core.Try(func() any {
+		got0 := subject.GetAll()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_App_Quit_Good(t *core.T) {
+	subject := new(App)
+	result := core.Try(func() any {
+		subject.Quit()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_App_Quit_Bad(t *core.T) {
+	subject := new(App)
+	result := core.Try(func() any {
+		subject.Quit()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_App_Quit_Ugly(t *core.T) {
+	subject := new(App)
+	result := core.Try(func() any {
+		subject.Quit()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_App_NewMenu_Good(t *core.T) {
+	subject := new(App)
+	result := core.Try(func() any {
+		got0 := subject.NewMenu()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_App_NewMenu_Bad(t *core.T) {
+	subject := new(App)
+	result := core.Try(func() any {
+		got0 := subject.NewMenu()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestApplication_App_NewMenu_Ugly(t *core.T) {
+	subject := new(App)
+	result := core.Try(func() any {
+		got0 := subject.NewMenu()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

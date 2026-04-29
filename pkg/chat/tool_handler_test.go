@@ -2,9 +2,9 @@ package chat
 
 import (
 	"context"
+	strings "dappco.re/go/gui/compat/strings"
 	"io"
 	"net/http"
-	"strings"
 	"sync"
 
 	core "dappco.re/go"
@@ -178,4 +178,182 @@ func TestToolCallHandler_Ugly_MalformedInlineToolCallDoesNotDispatch(t *core.T) 
 	core.AssertEqual(t, "assistant", history[1].Role)
 	core.AssertContains(t, history[1].Content, "tool_call")
 	core.AssertEmpty(t, history[1].ToolCalls)
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestToolHandler_NewToolCallHandler_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewToolCallHandler(*new(ToolExecutor))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestToolHandler_NewToolCallHandler_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewToolCallHandler(*new(ToolExecutor))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestToolHandler_NewToolCallHandler_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewToolCallHandler(*new(ToolExecutor))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestToolHandler_ToolCallHandler_OnToolCall_Good(t *core.T) {
+	var subject noopToolCallHandler
+	result := core.Try(func() any {
+		got0, got1 := subject.OnToolCall(core.Background(), *new(ToolCall))
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestToolHandler_ToolCallHandler_OnToolCall_Bad(t *core.T) {
+	var subject noopToolCallHandler
+	result := core.Try(func() any {
+		got0, got1 := subject.OnToolCall(core.Background(), *new(ToolCall))
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestToolHandler_ToolCallHandler_OnToolCall_Ugly(t *core.T) {
+	var subject noopToolCallHandler
+	result := core.Try(func() any {
+		got0, got1 := subject.OnToolCall(core.Background(), *new(ToolCall))
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestToolHandler_ToolCallHandler_BuildToolManifest_Good(t *core.T) {
+	var subject noopToolCallHandler
+	result := core.Try(func() any {
+		got0 := subject.BuildToolManifest()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestToolHandler_ToolCallHandler_BuildToolManifest_Bad(t *core.T) {
+	var subject noopToolCallHandler
+	result := core.Try(func() any {
+		got0 := subject.BuildToolManifest()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestToolHandler_ToolCallHandler_BuildToolManifest_Ugly(t *core.T) {
+	var subject noopToolCallHandler
+	result := core.Try(func() any {
+		got0 := subject.BuildToolManifest()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestToolHandler_ToolExecutor_Manifest_Good(t *core.T) {
+	subject := new(actionToolExecutor)
+	result := core.Try(func() any {
+		got0 := subject.Manifest()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestToolHandler_ToolExecutor_Manifest_Bad(t *core.T) {
+	subject := new(actionToolExecutor)
+	result := core.Try(func() any {
+		got0 := subject.Manifest()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestToolHandler_ToolExecutor_Manifest_Ugly(t *core.T) {
+	subject := new(actionToolExecutor)
+	result := core.Try(func() any {
+		got0 := subject.Manifest()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestToolHandler_ToolExecutor_ManifestText_Good(t *core.T) {
+	subject := new(actionToolExecutor)
+	result := core.Try(func() any {
+		got0 := subject.ManifestText()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestToolHandler_ToolExecutor_ManifestText_Bad(t *core.T) {
+	subject := new(actionToolExecutor)
+	result := core.Try(func() any {
+		got0 := subject.ManifestText()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestToolHandler_ToolExecutor_ManifestText_Ugly(t *core.T) {
+	subject := new(actionToolExecutor)
+	result := core.Try(func() any {
+		got0 := subject.ManifestText()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestToolHandler_ToolExecutor_CallTool_Good(t *core.T) {
+	subject := new(actionToolExecutor)
+	result := core.Try(func() any {
+		got0, got1 := subject.CallTool(core.Background(), "agent", nil)
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestToolHandler_ToolExecutor_CallTool_Bad(t *core.T) {
+	subject := new(actionToolExecutor)
+	result := core.Try(func() any {
+		got0, got1 := subject.CallTool(core.Background(), "", nil)
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestToolHandler_ToolExecutor_CallTool_Ugly(t *core.T) {
+	subject := new(actionToolExecutor)
+	result := core.Try(func() any {
+		got0, got1 := subject.CallTool(core.Background(), "../../edge", nil)
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

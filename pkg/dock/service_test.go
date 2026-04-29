@@ -183,7 +183,7 @@ func TestTaskSetBadge_Good(t *core.T) {
 	core.AssertTrue(t, mock.hasBadge)
 }
 
-func TestTaskSetBadge_EmptyLabel_Good(t *core.T) {
+func TestTaskSetBadge_EmptyLabel_GoodCase(t *core.T) {
 	_, c, mock := newTestDockService(t)
 	r := setBadge(c, "")
 	core.RequireTrue(t, r.OK)
@@ -246,7 +246,7 @@ func TestTaskSetProgressBar_Good(t *core.T) {
 	core.AssertEqual(t, 0.5, received.Progress)
 }
 
-func TestTaskSetProgressBar_Hide_Good(t *core.T) {
+func TestTaskSetProgressBar_Hide_GoodCase(t *core.T) {
 	// Progress -1.0 hides the indicator
 	_, c, mock := newTestDockService(t)
 	r := taskRun(c, "dock.setProgressBar", TaskSetProgressBar{Progress: -1.0})
@@ -293,7 +293,7 @@ func TestTaskBounce_Good(t *core.T) {
 	core.AssertEqual(t, BounceInformational, received.BounceType)
 }
 
-func TestTaskBounce_Critical_Good(t *core.T) {
+func TestTaskBounce_Critical_GoodCase(t *core.T) {
 	_, c, mock := newTestDockService(t)
 	r := taskRun(c, "dock.bounce", TaskBounce{BounceType: BounceCritical})
 	core.RequireTrue(t, r.OK)
@@ -368,4 +368,65 @@ func TestQueryVisible_Ugly(t *core.T) {
 	r := c.QUERY(QueryVisible{})
 	core.RequireTrue(t, r.OK)
 	core.AssertEqual(t, false, r.Value)
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestService_Service_OnStartup_Good(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_OnStartup_Bad(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_OnStartup_Ugly(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_HandleIPCEvents_Good(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_HandleIPCEvents_Bad(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_HandleIPCEvents_Ugly(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

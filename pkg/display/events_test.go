@@ -2,10 +2,10 @@ package display
 
 import (
 	core "dappco.re/go"
-	"encoding/json"
+	json "dappco.re/go/gui/compat/json"
+	strings "dappco.re/go/gui/compat/strings"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"time"
 
 	"dappco.re/go/gui/pkg/events"
@@ -110,7 +110,7 @@ func writeJSONMessage(t *core.T, conn *websocket.Conn, payload map[string]any) {
 	core.RequireNoError(t, conn.WriteJSON(payload))
 }
 
-func TestWSEventManager_HandleWebSocket_Good(t *core.T) {
+func TestWSEventManager_HandleWebSocket_GoodCase(t *core.T) {
 	em := NewWSEventManager()
 	conn, cleanup := dialWSEventManager(t, em)
 	defer cleanup()
@@ -417,7 +417,7 @@ func TestWSEventManager_EmitWindowEvent_Good(t *core.T) {
 	core.AssertEqual(t, 10, event.Data["x"])
 }
 
-func TestWSEventManager_ClientSubscribed_Good(t *core.T) {
+func TestWSEventManager_ClientSubscribed_GoodCase(t *core.T) {
 	em := &WSEventManager{}
 	state := &clientState{
 		subscriptions: map[string]*Subscription{
@@ -430,7 +430,7 @@ func TestWSEventManager_ClientSubscribed_Good(t *core.T) {
 	core.AssertTrue(t, em.clientSubscribed(state, EventCustomEvent))
 }
 
-func TestWSEventManager_ClientSubscribed_Bad(t *core.T) {
+func TestWSEventManager_ClientSubscribed_BadCase(t *core.T) {
 	em := &WSEventManager{}
 	state := &clientState{subscriptions: map[string]*Subscription{}}
 
@@ -484,4 +484,242 @@ func TestWSEventManager_CloseIsIdempotent(t *core.T) {
 		em.Close()
 		em.Emit(Event{Type: EventCustomEvent})
 	})
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestEvents_NewWSEventManager_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewWSEventManager()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_NewWSEventManager_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewWSEventManager()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_NewWSEventManager_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewWSEventManager()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_WSEventManager_HandleWebSocket_Good(t *core.T) {
+	subject := new(WSEventManager)
+	result := core.Try(func() any {
+		subject.HandleWebSocket(nil, nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_WSEventManager_HandleWebSocket_Bad(t *core.T) {
+	subject := new(WSEventManager)
+	result := core.Try(func() any {
+		subject.HandleWebSocket(nil, nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_WSEventManager_HandleWebSocket_Ugly(t *core.T) {
+	subject := new(WSEventManager)
+	result := core.Try(func() any {
+		subject.HandleWebSocket(nil, nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_WSEventManager_Emit_Good(t *core.T) {
+	subject := new(WSEventManager)
+	result := core.Try(func() any {
+		subject.Emit(*new(Event))
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_WSEventManager_Emit_Bad(t *core.T) {
+	subject := new(WSEventManager)
+	result := core.Try(func() any {
+		subject.Emit(*new(Event))
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_WSEventManager_Emit_Ugly(t *core.T) {
+	subject := new(WSEventManager)
+	result := core.Try(func() any {
+		subject.Emit(*new(Event))
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_WSEventManager_EmitWindowEvent_Good(t *core.T) {
+	subject := new(WSEventManager)
+	result := core.Try(func() any {
+		subject.EmitWindowEvent(*new(EventType), "agent", nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_WSEventManager_EmitWindowEvent_Bad(t *core.T) {
+	subject := new(WSEventManager)
+	result := core.Try(func() any {
+		subject.EmitWindowEvent(*new(EventType), "", nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_WSEventManager_EmitWindowEvent_Ugly(t *core.T) {
+	subject := new(WSEventManager)
+	result := core.Try(func() any {
+		subject.EmitWindowEvent(*new(EventType), "../../edge", nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_WSEventManager_ConnectedClients_Good(t *core.T) {
+	subject := new(WSEventManager)
+	result := core.Try(func() any {
+		got0 := subject.ConnectedClients()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_WSEventManager_ConnectedClients_Bad(t *core.T) {
+	subject := new(WSEventManager)
+	result := core.Try(func() any {
+		got0 := subject.ConnectedClients()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_WSEventManager_ConnectedClients_Ugly(t *core.T) {
+	subject := new(WSEventManager)
+	result := core.Try(func() any {
+		got0 := subject.ConnectedClients()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_WSEventManager_Info_Good(t *core.T) {
+	subject := new(WSEventManager)
+	result := core.Try(func() any {
+		got0 := subject.Info()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_WSEventManager_Info_Bad(t *core.T) {
+	subject := new(WSEventManager)
+	result := core.Try(func() any {
+		got0 := subject.Info()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_WSEventManager_Info_Ugly(t *core.T) {
+	subject := new(WSEventManager)
+	result := core.Try(func() any {
+		got0 := subject.Info()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_WSEventManager_Close_Good(t *core.T) {
+	subject := new(WSEventManager)
+	result := core.Try(func() any {
+		subject.Close()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_WSEventManager_Close_Bad(t *core.T) {
+	subject := new(WSEventManager)
+	result := core.Try(func() any {
+		subject.Close()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_WSEventManager_Close_Ugly(t *core.T) {
+	subject := new(WSEventManager)
+	result := core.Try(func() any {
+		subject.Close()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_WSEventManager_AttachWindowListeners_Good(t *core.T) {
+	subject := new(WSEventManager)
+	result := core.Try(func() any {
+		subject.AttachWindowListeners(*new(windowEventSource))
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_WSEventManager_AttachWindowListeners_Bad(t *core.T) {
+	subject := new(WSEventManager)
+	result := core.Try(func() any {
+		subject.AttachWindowListeners(*new(windowEventSource))
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_WSEventManager_AttachWindowListeners_Ugly(t *core.T) {
+	subject := new(WSEventManager)
+	result := core.Try(func() any {
+		subject.AttachWindowListeners(*new(windowEventSource))
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

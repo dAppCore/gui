@@ -1,16 +1,16 @@
 package preload
 
 import (
+	errors "dappco.re/go/gui/compat/errors"
+	filepath "dappco.re/go/gui/compat/filepath"
+	os "dappco.re/go/gui/compat/os"
+	strings "dappco.re/go/gui/compat/strings"
 	"embed"
-	"errors"
 	"io"
 	"net"
 	"net/url"
-	"os"
-	"path/filepath"
 	"reflect"
 	"sort"
-	"strings"
 
 	core "dappco.re/go"
 	"gopkg.in/yaml.v3"
@@ -25,7 +25,7 @@ type Webview interface {
 }
 
 type ManifestPreload struct {
-	Path    string `yaml:"path"`
+	Path    string `yaml:"path,omitempty"`
 	Inline  string `yaml:"inline"`
 	Enabled *bool  `yaml:"enabled,omitempty"`
 }

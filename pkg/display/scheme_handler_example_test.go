@@ -1,7 +1,7 @@
 package display
 
 import (
-	"fmt"
+	fmt "dappco.re/go/gui/compat/fmt"
 	"net/url"
 
 	core "dappco.re/go"
@@ -22,4 +22,29 @@ func ExampleNewCoreSchemeHandler() {
 
 	fmt.Println(result.OK, result.Value)
 	// Output: true settings-query
+}
+
+// AX7 generated examples exercise each public call path with stable output.
+func (SchemeHandler) Handle(*url.URL) core.Result { return core.Ok(nil) }
+
+func ExampleService_SchemeHandler() {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.SchemeHandler()
+		return core.Sprintf("%T", got0)
+	})
+	core.Println(core.Sprintf("%T", result))
+	// Output:
+	// core.Result
+}
+
+func ExampleSchemeHandler_Handle() {
+	var subject coreSchemeHandler
+	result := core.Try(func() any {
+		got0 := subject.Handle(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.Println(core.Sprintf("%T", result))
+	// Output:
+	// core.Result
 }

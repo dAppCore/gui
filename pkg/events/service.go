@@ -3,8 +3,8 @@ package events
 
 import (
 	"context"
+	strings "dappco.re/go/gui/compat/strings"
 	"sort"
-	"strings"
 	"sync"
 
 	core "dappco.re/go"

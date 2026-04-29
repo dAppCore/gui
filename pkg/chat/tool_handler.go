@@ -2,8 +2,8 @@ package chat
 
 import (
 	"context"
+	strings "dappco.re/go/gui/compat/strings"
 	"sort"
-	"strings"
 
 	core "dappco.re/go"
 	guimcp "dappco.re/go/gui/pkg/mcp"

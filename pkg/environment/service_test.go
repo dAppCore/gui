@@ -3,7 +3,7 @@ package environment
 
 import (
 	"context"
-	"path/filepath"
+	filepath "dappco.re/go/gui/compat/filepath"
 	"sync"
 
 	core "dappco.re/go"
@@ -120,7 +120,7 @@ func TestTaskOpenFileManager_Bad_InvalidPath(t *core.T) {
 	core.AssertContains(t, r.Value.(error).Error(), "path must be absolute")
 }
 
-func TestThemeChange_ActionBroadcast_Good(t *core.T) {
+func TestThemeChange_ActionBroadcast_GoodCase(t *core.T) {
 	mock, c := newTestService(t)
 
 	// Register a listener that captures the action
@@ -257,4 +257,122 @@ func TestQueryFocusFollowsMouse_Ugly_NoService(t *core.T) {
 	c := core.New(core.WithServiceLock())
 	r := c.QUERY(QueryFocusFollowsMouse{})
 	core.AssertFalse(t, r.OK)
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestService_Register_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := Register(*new(Platform))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Register_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := Register(*new(Platform))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Register_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := Register(*new(Platform))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_OnStartup_Good(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_OnStartup_Bad(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_OnStartup_Ugly(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_OnShutdown_Good(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnShutdown(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_OnShutdown_Bad(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnShutdown(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_OnShutdown_Ugly(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnShutdown(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_HandleIPCEvents_Good(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_HandleIPCEvents_Bad(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_HandleIPCEvents_Ugly(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

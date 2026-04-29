@@ -1,11 +1,11 @@
 package display
 
 import (
-	"errors"
-	"os"
-	"path/filepath"
+	errors "dappco.re/go/gui/compat/errors"
+	filepath "dappco.re/go/gui/compat/filepath"
+	os "dappco.re/go/gui/compat/os"
+	strings "dappco.re/go/gui/compat/strings"
 	"regexp"
-	"strings"
 
 	coreio "dappco.re/go/io"
 )

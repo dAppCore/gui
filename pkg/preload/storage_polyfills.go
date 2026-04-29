@@ -1,7 +1,7 @@
 package preload
 
 import (
-	"strings"
+	strings "dappco.re/go/gui/compat/strings"
 
 	core "dappco.re/go"
 )

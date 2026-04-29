@@ -1,8 +1,8 @@
 package display
 
 import (
+	filepath "dappco.re/go/gui/compat/filepath"
 	"net/url"
-	"path/filepath"
 	"sort"
 	"sync" // Note: AX-6 — sync.RWMutex for registry guard, no core wrapper in pinned core module
 	"time"
@@ -53,7 +53,7 @@ func openStorageStore() *gostore.Store {
 		if !result.OK {
 			core.Error(
 				"storage registry init failed",
-				"path", path,
+				"file_path", path,
 				"step", "mkdir",
 				"err", coreerr.E("display.storage.open", "failed to create storage directory", coreResultError(result, "failed to create storage directory")),
 			)
@@ -64,7 +64,7 @@ func openStorageStore() *gostore.Store {
 	if err != nil {
 		core.Error(
 			"storage registry init failed",
-			"path", path,
+			"file_path", path,
 			"step", "open",
 			"err", coreerr.E("display.storage.open", "failed to open storage store", err),
 		)

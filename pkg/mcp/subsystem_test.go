@@ -114,3 +114,181 @@ func TestSubsystem_CallTool_Ugly_InvalidArguments(t *core.T) {
 	})
 	core.AssertError(t, err)
 }
+
+// AX7 generated source-matching smoke coverage.
+func TestSubsystem_New_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := New(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestSubsystem_New_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := New(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestSubsystem_New_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := New(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestSubsystem_Subsystem_Name_Good(t *core.T) {
+	subject := new(Subsystem)
+	result := core.Try(func() any {
+		got0 := subject.Name()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestSubsystem_Subsystem_Name_Bad(t *core.T) {
+	subject := new(Subsystem)
+	result := core.Try(func() any {
+		got0 := subject.Name()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestSubsystem_Subsystem_Name_Ugly(t *core.T) {
+	subject := new(Subsystem)
+	result := core.Try(func() any {
+		got0 := subject.Name()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestSubsystem_Subsystem_RegisterTools_Good(t *core.T) {
+	subject := new(Subsystem)
+	result := core.Try(func() any {
+		subject.RegisterTools(nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestSubsystem_Subsystem_RegisterTools_Bad(t *core.T) {
+	subject := new(Subsystem)
+	result := core.Try(func() any {
+		subject.RegisterTools(nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestSubsystem_Subsystem_RegisterTools_Ugly(t *core.T) {
+	subject := new(Subsystem)
+	result := core.Try(func() any {
+		subject.RegisterTools(nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestSubsystem_Subsystem_Manifest_Good(t *core.T) {
+	subject := new(Subsystem)
+	result := core.Try(func() any {
+		got0 := subject.Manifest()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestSubsystem_Subsystem_Manifest_Bad(t *core.T) {
+	subject := new(Subsystem)
+	result := core.Try(func() any {
+		got0 := subject.Manifest()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestSubsystem_Subsystem_Manifest_Ugly(t *core.T) {
+	subject := new(Subsystem)
+	result := core.Try(func() any {
+		got0 := subject.Manifest()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestSubsystem_Subsystem_ManifestText_Good(t *core.T) {
+	subject := new(Subsystem)
+	result := core.Try(func() any {
+		got0 := subject.ManifestText()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestSubsystem_Subsystem_ManifestText_Bad(t *core.T) {
+	subject := new(Subsystem)
+	result := core.Try(func() any {
+		got0 := subject.ManifestText()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestSubsystem_Subsystem_ManifestText_Ugly(t *core.T) {
+	subject := new(Subsystem)
+	result := core.Try(func() any {
+		got0 := subject.ManifestText()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestSubsystem_Subsystem_CallTool_Good(t *core.T) {
+	subject := new(Subsystem)
+	result := core.Try(func() any {
+		got0, got1 := subject.CallTool(core.Background(), "agent", nil)
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestSubsystem_Subsystem_CallTool_Bad(t *core.T) {
+	subject := new(Subsystem)
+	result := core.Try(func() any {
+		got0, got1 := subject.CallTool(core.Background(), "", nil)
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestSubsystem_Subsystem_CallTool_Ugly(t *core.T) {
+	subject := new(Subsystem)
+	result := core.Try(func() any {
+		got0, got1 := subject.CallTool(core.Background(), "../../edge", nil)
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}

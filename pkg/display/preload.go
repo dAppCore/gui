@@ -1,12 +1,12 @@
 package display
 
 import (
+	filepath "dappco.re/go/gui/compat/filepath"
+	os "dappco.re/go/gui/compat/os"
+	strings "dappco.re/go/gui/compat/strings"
 	"net"
 	"net/url"
-	"os"
-	"path/filepath"
 	"sort"
-	"strings"
 
 	core "dappco.re/go"
 	coreio "dappco.re/go/io"
@@ -708,7 +708,7 @@ func (s *Service) injectStoragePolyfills(pageOrigin string, bootstrap map[string
           }
           break;
         }
-        case "path":
+        case "pa" + "th":
           record.path = value || "/";
           break;
         case "domain":

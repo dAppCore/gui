@@ -2,17 +2,17 @@ package application
 
 import (
 	"context"
+	errors "dappco.re/go/gui/compat/errors"
+	fmt "dappco.re/go/gui/compat/fmt"
+	os "dappco.re/go/gui/compat/os"
+	strings "dappco.re/go/gui/compat/strings"
 	"embed"
-	"errors"
-	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
-	"os"
 	"runtime"
 	"slices"
 	"strconv"
-	"strings"
 	"sync"
 
 	"github.com/wailsapp/wails/v3/internal/assetserver"

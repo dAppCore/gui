@@ -109,7 +109,7 @@ func (sm *StateManager) load() {
 		}
 		core.Error(
 			"window state load failed",
-			"path", sm.filePath(),
+			"file_path", sm.filePath(),
 			"err", core.E("window.StateManager.load", "failed to read window state", err),
 		)
 		return
@@ -120,7 +120,7 @@ func (sm *StateManager) load() {
 		if decodeErr, ok := result.Value.(error); ok {
 			core.Error(
 				"window state load failed",
-				"path", sm.filePath(),
+				"file_path", sm.filePath(),
 				"err", core.E("window.StateManager.load", "failed to decode window state", decodeErr),
 			)
 		}
@@ -147,7 +147,7 @@ func (sm *StateManager) save() error {
 		marshalErr, _ := result.Value.(error)
 		core.Error(
 			"window state save failed",
-			"path", filePath,
+			"file_path", filePath,
 			"err", core.E("window.StateManager.save", "failed to encode window state", marshalErr),
 		)
 		return core.E("window.StateManager.save", "failed to encode window state", marshalErr)
@@ -157,7 +157,7 @@ func (sm *StateManager) save() error {
 		if err := coreio.Local.EnsureDir(dir); err != nil {
 			core.Error(
 				"window state save failed",
-				"path", filePath,
+				"file_path", filePath,
 				"err", core.E("window.StateManager.save", "failed to create window state directory", err),
 			)
 			return core.E("window.StateManager.save", "failed to create window state directory", err)
@@ -166,7 +166,7 @@ func (sm *StateManager) save() error {
 	if err := coreio.Local.Write(filePath, string(data)); err != nil {
 		core.Error(
 			"window state save failed",
-			"path", filePath,
+			"file_path", filePath,
 			"err", core.E("window.StateManager.save", "failed to write window state", err),
 		)
 		return core.E("window.StateManager.save", "failed to write window state", err)

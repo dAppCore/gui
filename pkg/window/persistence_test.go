@@ -3,13 +3,13 @@ package window
 
 import (
 	core "dappco.re/go"
-	"os"
+	os "dappco.re/go/gui/compat/os"
 	"time"
 )
 
 // --- StateManager Persistence Tests ---
 
-func TestStateManager_SetAndGet_Good(t *core.T) {
+func TestStateManager_SetAndGet_GoodCase(t *core.T) {
 	sm := NewStateManagerWithDir(t.TempDir())
 	state := WindowState{
 		X: 150, Y: 250, Width: 1024, Height: 768,
@@ -149,7 +149,7 @@ func TestStateManager_Clear_Good(t *core.T) {
 	core.AssertFalse(t, ok)
 }
 
-func TestStateManager_Persistence_Good(t *core.T) {
+func TestStateManager_Persistence_GoodCase(t *core.T) {
 	dir := t.TempDir()
 
 	// First manager: write state and force sync to disk
@@ -191,7 +191,7 @@ func TestStateManager_SetPath_Good(t *core.T) {
 
 // --- LayoutManager Persistence Tests ---
 
-func TestLayoutManager_SaveAndGet_Good(t *core.T) {
+func TestLayoutManager_SaveAndGet_GoodCase(t *core.T) {
 	lm := NewLayoutManagerWithDir(t.TempDir())
 	windows := map[string]WindowState{
 		"editor":   {X: 0, Y: 0, Width: 960, Height: 1080},
@@ -304,7 +304,7 @@ func TestLayoutManager_DeleteLayout_Good(t *core.T) {
 	core.AssertEmpty(t, lm.ListLayouts())
 }
 
-func TestLayoutManager_Persistence_Good(t *core.T) {
+func TestLayoutManager_Persistence_GoodCase(t *core.T) {
 	dir := t.TempDir()
 
 	// First manager: save layout to disk

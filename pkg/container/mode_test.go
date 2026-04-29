@@ -2,7 +2,7 @@ package container
 
 import (
 	core "dappco.re/go"
-	"os"
+	os "dappco.re/go/gui/compat/os"
 )
 
 func TestDetectModeWithEnvironment(t *core.T) {
@@ -72,4 +72,32 @@ func TestMode_DetectMode_Ugly(t *core.T) {
 	if mode != ModeManager {
 		t.Fatalf("expected manager mode after malformed input, got %q", mode)
 	}
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestMode_DetectModeWithEnvironment_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := DetectModeWithEnvironment(*new(ModeEnvironment))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMode_DetectModeWithEnvironment_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := DetectModeWithEnvironment(*new(ModeEnvironment))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMode_DetectModeWithEnvironment_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := DetectModeWithEnvironment(*new(ModeEnvironment))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

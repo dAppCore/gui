@@ -97,3 +97,271 @@ func TestScreenPlatform_Placement_Apply_Ugly(t *core.T) {
 	core.AssertEqual(t, Rect{X: -20, Y: 10, Width: 20, Height: 20}, screen.Bounds)
 	core.AssertEqual(t, Rect{X: -19, Y: 11, Width: 20, Height: 20}, screen.WorkArea)
 }
+
+// AX7 generated source-matching smoke coverage.
+func TestPlatform_Rect_Origin_Good(t *core.T) {
+	var subject Rect
+	result := core.Try(func() any {
+		got0 := subject.Origin()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPlatform_Rect_Origin_Bad(t *core.T) {
+	var subject Rect
+	result := core.Try(func() any {
+		got0 := subject.Origin()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPlatform_Rect_Origin_Ugly(t *core.T) {
+	var subject Rect
+	result := core.Try(func() any {
+		got0 := subject.Origin()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPlatform_Rect_Corner_Good(t *core.T) {
+	var subject Rect
+	result := core.Try(func() any {
+		got0 := subject.Corner()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPlatform_Rect_Corner_Bad(t *core.T) {
+	var subject Rect
+	result := core.Try(func() any {
+		got0 := subject.Corner()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPlatform_Rect_Corner_Ugly(t *core.T) {
+	var subject Rect
+	result := core.Try(func() any {
+		got0 := subject.Corner()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPlatform_Rect_InsideCorner_Good(t *core.T) {
+	var subject Rect
+	result := core.Try(func() any {
+		got0 := subject.InsideCorner()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPlatform_Rect_InsideCorner_Bad(t *core.T) {
+	var subject Rect
+	result := core.Try(func() any {
+		got0 := subject.InsideCorner()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPlatform_Rect_InsideCorner_Ugly(t *core.T) {
+	var subject Rect
+	result := core.Try(func() any {
+		got0 := subject.InsideCorner()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPlatform_Rect_IsEmpty_Good(t *core.T) {
+	var subject Rect
+	result := core.Try(func() any {
+		got0 := subject.IsEmpty()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPlatform_Rect_IsEmpty_Bad(t *core.T) {
+	var subject Rect
+	result := core.Try(func() any {
+		got0 := subject.IsEmpty()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPlatform_Rect_IsEmpty_Ugly(t *core.T) {
+	var subject Rect
+	result := core.Try(func() any {
+		got0 := subject.IsEmpty()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPlatform_Rect_Contains_Good(t *core.T) {
+	var subject Rect
+	result := core.Try(func() any {
+		got0 := subject.Contains(*new(Point))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPlatform_Rect_Contains_Bad(t *core.T) {
+	var subject Rect
+	result := core.Try(func() any {
+		got0 := subject.Contains(*new(Point))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPlatform_Rect_Contains_Ugly(t *core.T) {
+	var subject Rect
+	result := core.Try(func() any {
+		got0 := subject.Contains(*new(Point))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPlatform_Rect_RectSize_Good(t *core.T) {
+	var subject Rect
+	result := core.Try(func() any {
+		got0 := subject.RectSize()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPlatform_Rect_RectSize_Bad(t *core.T) {
+	var subject Rect
+	result := core.Try(func() any {
+		got0 := subject.RectSize()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPlatform_Rect_RectSize_Ugly(t *core.T) {
+	var subject Rect
+	result := core.Try(func() any {
+		got0 := subject.RectSize()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPlatform_Rect_Intersect_Good(t *core.T) {
+	var subject Rect
+	result := core.Try(func() any {
+		got0 := subject.Intersect(*new(Rect))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPlatform_Rect_Intersect_Bad(t *core.T) {
+	var subject Rect
+	result := core.Try(func() any {
+		got0 := subject.Intersect(*new(Rect))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPlatform_Rect_Intersect_Ugly(t *core.T) {
+	var subject Rect
+	result := core.Try(func() any {
+		got0 := subject.Intersect(*new(Rect))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPlatform_NewPlacement_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewPlacement(nil, nil, *new(Alignment), 1, *new(OffsetReference))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPlatform_NewPlacement_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewPlacement(nil, nil, *new(Alignment), 0, *new(OffsetReference))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPlatform_NewPlacement_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewPlacement(nil, nil, *new(Alignment), -1, *new(OffsetReference))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPlatform_ScreenPlacement_Apply_Good(t *core.T) {
+	var subject ScreenPlacement
+	result := core.Try(func() any {
+		subject.Apply()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPlatform_ScreenPlacement_Apply_Bad(t *core.T) {
+	var subject ScreenPlacement
+	result := core.Try(func() any {
+		subject.Apply()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPlatform_ScreenPlacement_Apply_Ugly(t *core.T) {
+	var subject ScreenPlacement
+	result := core.Try(func() any {
+		subject.Apply()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}

@@ -1,7 +1,7 @@
 package application
 
 import (
-	"errors"
+	errors "dappco.re/go/gui/compat/errors"
 	"runtime"
 	"sync"
 	"time"

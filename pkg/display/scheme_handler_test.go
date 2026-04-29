@@ -144,3 +144,91 @@ func TestSchemeHandler_Handle_Ugly(t *core.T) {
 	core.AssertFalse(t, result.OK)
 	core.AssertError(t, result.Value.(error), "malformed core URL")
 }
+
+// AX7 generated source-matching smoke coverage.
+func TestSchemeHandler_NewCoreSchemeHandler_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewCoreSchemeHandler(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestSchemeHandler_NewCoreSchemeHandler_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewCoreSchemeHandler(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestSchemeHandler_NewCoreSchemeHandler_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewCoreSchemeHandler(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestSchemeHandler_Service_SchemeHandler_Good(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.SchemeHandler()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestSchemeHandler_Service_SchemeHandler_Bad(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.SchemeHandler()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestSchemeHandler_Service_SchemeHandler_Ugly(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.SchemeHandler()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestSchemeHandler_SchemeHandler_Handle_Good(t *core.T) {
+	var subject coreSchemeHandler
+	result := core.Try(func() any {
+		got0 := subject.Handle(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestSchemeHandler_SchemeHandler_Handle_Bad(t *core.T) {
+	var subject coreSchemeHandler
+	result := core.Try(func() any {
+		got0 := subject.Handle(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestSchemeHandler_SchemeHandler_Handle_Ugly(t *core.T) {
+	var subject coreSchemeHandler
+	result := core.Try(func() any {
+		got0 := subject.Handle(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}

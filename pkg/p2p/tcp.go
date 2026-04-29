@@ -3,10 +3,10 @@ package p2p
 import (
 	"bufio"
 	"context"
-	"encoding/json"
-	"errors"
+	errors "dappco.re/go/gui/compat/errors"
+	json "dappco.re/go/gui/compat/json"
+	strings "dappco.re/go/gui/compat/strings"
 	"net"
-	"strings"
 	"sync"
 )
 

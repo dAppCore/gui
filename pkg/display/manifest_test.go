@@ -2,9 +2,9 @@ package display
 
 import (
 	core "dappco.re/go"
-	"os"
-	"path/filepath"
-	"strings"
+	filepath "dappco.re/go/gui/compat/filepath"
+	os "dappco.re/go/gui/compat/os"
+	strings "dappco.re/go/gui/compat/strings"
 	"sync"
 
 	coreio "dappco.re/go/io"
@@ -39,7 +39,7 @@ func TestInjectAppPreloads_RejectsTraversal(t *core.T) {
 	core.AssertError(t, err)
 }
 
-func TestManifest_SafeManifestPreloadPath_Good(t *core.T) {
+func TestManifest_SafeManifestPreloadPath_GoodCase(t *core.T) {
 	root := t.TempDir()
 	target := filepath.Join(root, "preload.js")
 	core.RequireNoError(t, coreio.Local.WriteMode(target, "globalThis.ready = true;", 0o644))
@@ -51,7 +51,7 @@ func TestManifest_SafeManifestPreloadPath_Good(t *core.T) {
 	core.AssertEqual(t, expected, got)
 }
 
-func TestManifest_SafeManifestPreloadPath_Bad(t *core.T) {
+func TestManifest_SafeManifestPreloadPath_BadCase(t *core.T) {
 	root := t.TempDir()
 	_, err := safeManifestPreloadPath(root, "")
 
@@ -59,7 +59,7 @@ func TestManifest_SafeManifestPreloadPath_Bad(t *core.T) {
 	core.AssertContains(t, err.Error(), "empty")
 }
 
-func TestManifest_SafeManifestPreloadPath_Ugly(t *core.T) {
+func TestManifest_SafeManifestPreloadPath_UglyCase(t *core.T) {
 	root := t.TempDir()
 	_, err := safeManifestPreloadPath(root, "../preload.js")
 
@@ -82,7 +82,7 @@ func TestManifest_SafeManifestPreloadPath_RejectsSymlinkEscape(t *core.T) {
 	core.AssertContains(t, err.Error(), "escapes")
 }
 
-func TestManifest_DiscoverManifestPath_Good(t *core.T) {
+func TestManifest_DiscoverManifestPath_GoodCase(t *core.T) {
 	root := t.TempDir()
 	core.RequireNoError(t, coreio.Local.EnsureDir(filepath.Join(root, ".core")))
 	manifestPath := filepath.Join(root, ".core", "view.yaml")
@@ -95,14 +95,14 @@ func TestManifest_DiscoverManifestPath_Good(t *core.T) {
 	core.AssertEqual(t, manifestPath, got)
 }
 
-func TestManifest_DiscoverManifestPath_Bad(t *core.T) {
+func TestManifest_DiscoverManifestPath_BadCase(t *core.T) {
 	_, err := discoverManifestPath(filepath.Join(t.TempDir(), "missing.html"))
 
 	core.AssertError(t, err)
 	core.AssertContains(t, err.Error(), "not found")
 }
 
-func TestManifest_DiscoverManifestPath_Ugly(t *core.T) {
+func TestManifest_DiscoverManifestPath_UglyCase(t *core.T) {
 	root := t.TempDir()
 	core.RequireNoError(t, coreio.Local.EnsureDir(filepath.Join(root, ".core")))
 	manifestPath := filepath.Join(root, ".core", "view.yaml")
@@ -114,7 +114,7 @@ func TestManifest_DiscoverManifestPath_Ugly(t *core.T) {
 	core.AssertEqual(t, manifestPath, got)
 }
 
-func TestManifest_DiscoverManifestPath_RemoteHost_Good(t *core.T) {
+func TestManifest_DiscoverManifestPath_RemoteHost_GoodCase(t *core.T) {
 	home := t.TempDir()
 	t.Setenv("DIR_HOME", home)
 	manifestPath := filepath.Join(home, ".core", "apps", "example.com", ".core", "view.yaml")
@@ -171,7 +171,7 @@ func TestManifest_DiscoverManifestPath_RemoteHost_RejectsTraversalHost(t *core.T
 	core.AssertContains(t, err.Error(), "relative path")
 }
 
-func TestManifest_ManifestWindowConfig_Good(t *core.T) {
+func TestManifest_ManifestWindowConfig_GoodCase(t *core.T) {
 	root := t.TempDir()
 	core.RequireNoError(t, coreio.Local.EnsureDir(filepath.Join(root, ".core")))
 	core.RequireNoError(t, coreio.Local.WriteMode(filepath.Join(root, "index.html"), "<html></html>", 0o644))
@@ -197,7 +197,7 @@ func TestManifest_ManifestWindowConfig_Good(t *core.T) {
 	core.AssertTrue(t, got["main"].Preload)
 }
 
-func TestManifest_ManifestWindowConfig_Bad(t *core.T) {
+func TestManifest_ManifestWindowConfig_BadCase(t *core.T) {
 	svc, err := New()
 	core.RequireNoError(t, err)
 
@@ -206,7 +206,7 @@ func TestManifest_ManifestWindowConfig_Bad(t *core.T) {
 	core.AssertNil(t, got)
 }
 
-func TestManifest_ManifestWindowConfig_Ugly(t *core.T) {
+func TestManifest_ManifestWindowConfig_UglyCase(t *core.T) {
 	root := t.TempDir()
 	core.RequireNoError(t, coreio.Local.EnsureDir(filepath.Join(root, ".core")))
 	core.RequireNoError(t, coreio.Local.WriteMode(filepath.Join(root, "index.html"), "<html></html>", 0o644))
@@ -296,25 +296,25 @@ func TestManifest_LoadManifestForOrigin_Concurrent(t *core.T) {
 	}
 }
 
-func TestManifest_ManifestBaseDir_Good(t *core.T) {
+func TestManifest_ManifestBaseDir_GoodCase(t *core.T) {
 	core.AssertEqual(t, "/tmp/app", manifestBaseDir("/tmp/app/.core/view.yaml"))
 	core.AssertEqual(t, "/tmp/app/assets", manifestBaseDir("/tmp/app/assets/view.yaml"))
 	core.AssertNotEmpty(t, core.Sprintf("%T", manifestBaseDir("/tmp/app/.core/view.yaml")))
 }
 
-func TestManifest_ManifestBaseDir_Bad(t *core.T) {
+func TestManifest_ManifestBaseDir_BadCase(t *core.T) {
 	core.AssertEqual(t, ".", manifestBaseDir(".core/view.yaml"))
 	observedType := core.Sprintf("%T", manifestBaseDir(".core/view.yaml"))
 	core.AssertNotEmpty(t, observedType)
 }
 
-func TestManifest_ManifestBaseDir_Ugly(t *core.T) {
+func TestManifest_ManifestBaseDir_UglyCase(t *core.T) {
 	core.AssertEqual(t, "/", manifestBaseDir("/.core/view.yaml"))
 	observedType := core.Sprintf("%T", manifestBaseDir("/.core/view.yaml"))
 	core.AssertNotEmpty(t, observedType)
 }
 
-func TestManifest_SafeManifestRelativePath_Good(t *core.T) {
+func TestManifest_SafeManifestRelativePath_GoodCase(t *core.T) {
 	root := t.TempDir()
 	target := filepath.Join(root, "preload.js")
 	core.RequireNoError(t, coreio.Local.WriteMode(target, "globalThis.ready = true;", 0o644))
@@ -327,7 +327,7 @@ func TestManifest_SafeManifestRelativePath_Good(t *core.T) {
 	core.AssertEqual(t, expected, got)
 }
 
-func TestManifest_SafeManifestRelativePath_Bad(t *core.T) {
+func TestManifest_SafeManifestRelativePath_BadCase(t *core.T) {
 	root := t.TempDir()
 
 	_, err := safeManifestRelativePath(root, "", "preload path")
@@ -343,7 +343,7 @@ func TestManifest_SafeManifestRelativePath_Bad_MissingFile(t *core.T) {
 	core.AssertError(t, err)
 }
 
-func TestManifest_SafeManifestRelativePath_Ugly(t *core.T) {
+func TestManifest_SafeManifestRelativePath_UglyCase(t *core.T) {
 	root := t.TempDir()
 
 	_, err := safeManifestRelativePath(root, "../escape.js", "preload path")

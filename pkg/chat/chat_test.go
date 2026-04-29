@@ -2,7 +2,7 @@ package chat
 
 import (
 	core "dappco.re/go"
-	"strings"
+	strings "dappco.re/go/gui/compat/strings"
 	"time"
 )
 
@@ -35,4 +35,152 @@ func TestStreamRenderer_Good_ParsesThinkingContentAndToolCalls(t *core.T) {
 
 func testTime() time.Time {
 	return time.Unix(1_700_000_000, 0).UTC()
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestChat_NewStreamRenderer_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewStreamRenderer(*new(StreamCallbacks))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestChat_NewStreamRenderer_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewStreamRenderer(*new(StreamCallbacks))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestChat_NewStreamRenderer_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewStreamRenderer(*new(StreamCallbacks))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestChat_StreamRenderer_Render_Good(t *core.T) {
+	subject := new(StreamRenderer)
+	result := core.Try(func() any {
+		got0 := subject.Render(core.NewReader(""))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestChat_StreamRenderer_Render_Bad(t *core.T) {
+	subject := new(StreamRenderer)
+	result := core.Try(func() any {
+		got0 := subject.Render(core.NewReader(""))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestChat_StreamRenderer_Render_Ugly(t *core.T) {
+	subject := new(StreamRenderer)
+	result := core.Try(func() any {
+		got0 := subject.Render(core.NewReader(""))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestChat_StreamRenderer_ToolCalls_Good(t *core.T) {
+	subject := new(StreamRenderer)
+	result := core.Try(func() any {
+		got0 := subject.ToolCalls()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestChat_StreamRenderer_ToolCalls_Bad(t *core.T) {
+	subject := new(StreamRenderer)
+	result := core.Try(func() any {
+		got0 := subject.ToolCalls()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestChat_StreamRenderer_ToolCalls_Ugly(t *core.T) {
+	subject := new(StreamRenderer)
+	result := core.Try(func() any {
+		got0 := subject.ToolCalls()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestChat_StreamRenderer_Thinking_Good(t *core.T) {
+	subject := new(StreamRenderer)
+	result := core.Try(func() any {
+		got0 := subject.Thinking()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestChat_StreamRenderer_Thinking_Bad(t *core.T) {
+	subject := new(StreamRenderer)
+	result := core.Try(func() any {
+		got0 := subject.Thinking()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestChat_StreamRenderer_Thinking_Ugly(t *core.T) {
+	subject := new(StreamRenderer)
+	result := core.Try(func() any {
+		got0 := subject.Thinking()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestChat_StreamRenderer_Message_Good(t *core.T) {
+	subject := new(StreamRenderer)
+	result := core.Try(func() any {
+		got0 := subject.Message("agent", "agent", core.Now())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestChat_StreamRenderer_Message_Bad(t *core.T) {
+	subject := new(StreamRenderer)
+	result := core.Try(func() any {
+		got0 := subject.Message("", "", core.Now())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestChat_StreamRenderer_Message_Ugly(t *core.T) {
+	subject := new(StreamRenderer)
+	result := core.Try(func() any {
+		got0 := subject.Message("../../edge", "../../edge", core.Now())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

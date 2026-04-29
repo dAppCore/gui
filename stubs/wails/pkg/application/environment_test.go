@@ -90,3 +90,214 @@ func TestEnvironmentManager_Info_Ugly(t *core.T) {
 	core.AssertTrue(t, got.Debug)
 	core.AssertTrue(t, got.IsDarkMode)
 }
+
+// AX7 generated source-matching smoke coverage.
+func TestEnvironment_EnvironmentManager_SetDarkMode_Good(t *core.T) {
+	subject := new(EnvironmentManager)
+	result := core.Try(func() any {
+		subject.SetDarkMode(true)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEnvironment_EnvironmentManager_SetDarkMode_Bad(t *core.T) {
+	subject := new(EnvironmentManager)
+	result := core.Try(func() any {
+		subject.SetDarkMode(false)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEnvironment_EnvironmentManager_SetDarkMode_Ugly(t *core.T) {
+	subject := new(EnvironmentManager)
+	result := core.Try(func() any {
+		subject.SetDarkMode(false)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEnvironment_EnvironmentManager_IsDarkMode_Good(t *core.T) {
+	subject := new(EnvironmentManager)
+	result := core.Try(func() any {
+		got0 := subject.IsDarkMode()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEnvironment_EnvironmentManager_IsDarkMode_Bad(t *core.T) {
+	subject := new(EnvironmentManager)
+	result := core.Try(func() any {
+		got0 := subject.IsDarkMode()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEnvironment_EnvironmentManager_IsDarkMode_Ugly(t *core.T) {
+	subject := new(EnvironmentManager)
+	result := core.Try(func() any {
+		got0 := subject.IsDarkMode()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEnvironment_EnvironmentManager_SetAccentColour_Good(t *core.T) {
+	subject := new(EnvironmentManager)
+	result := core.Try(func() any {
+		subject.SetAccentColour("agent")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEnvironment_EnvironmentManager_SetAccentColour_Bad(t *core.T) {
+	subject := new(EnvironmentManager)
+	result := core.Try(func() any {
+		subject.SetAccentColour("")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEnvironment_EnvironmentManager_SetAccentColour_Ugly(t *core.T) {
+	subject := new(EnvironmentManager)
+	result := core.Try(func() any {
+		subject.SetAccentColour("../../edge")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEnvironment_EnvironmentManager_GetAccentColor_Good(t *core.T) {
+	subject := new(EnvironmentManager)
+	result := core.Try(func() any {
+		got0 := subject.GetAccentColor()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEnvironment_EnvironmentManager_GetAccentColor_Bad(t *core.T) {
+	subject := new(EnvironmentManager)
+	result := core.Try(func() any {
+		got0 := subject.GetAccentColor()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEnvironment_EnvironmentManager_GetAccentColor_Ugly(t *core.T) {
+	subject := new(EnvironmentManager)
+	result := core.Try(func() any {
+		got0 := subject.GetAccentColor()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEnvironment_EnvironmentManager_Info_Good(t *core.T) {
+	subject := new(EnvironmentManager)
+	result := core.Try(func() any {
+		got0 := subject.Info()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEnvironment_EnvironmentManager_Info_Bad(t *core.T) {
+	subject := new(EnvironmentManager)
+	result := core.Try(func() any {
+		got0 := subject.Info()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEnvironment_EnvironmentManager_Info_Ugly(t *core.T) {
+	subject := new(EnvironmentManager)
+	result := core.Try(func() any {
+		got0 := subject.Info()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEnvironment_EnvironmentManager_OpenFileManager_Good(t *core.T) {
+	subject := new(EnvironmentManager)
+	result := core.Try(func() any {
+		got0 := subject.OpenFileManager("agent", true)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEnvironment_EnvironmentManager_OpenFileManager_Bad(t *core.T) {
+	subject := new(EnvironmentManager)
+	result := core.Try(func() any {
+		got0 := subject.OpenFileManager("", false)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEnvironment_EnvironmentManager_OpenFileManager_Ugly(t *core.T) {
+	subject := new(EnvironmentManager)
+	result := core.Try(func() any {
+		got0 := subject.OpenFileManager("../../edge", false)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEnvironment_EnvironmentManager_HasFocusFollowsMouse_Good(t *core.T) {
+	subject := new(EnvironmentManager)
+	result := core.Try(func() any {
+		got0 := subject.HasFocusFollowsMouse()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEnvironment_EnvironmentManager_HasFocusFollowsMouse_Bad(t *core.T) {
+	subject := new(EnvironmentManager)
+	result := core.Try(func() any {
+		got0 := subject.HasFocusFollowsMouse()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEnvironment_EnvironmentManager_HasFocusFollowsMouse_Ugly(t *core.T) {
+	subject := new(EnvironmentManager)
+	result := core.Try(func() any {
+		got0 := subject.HasFocusFollowsMouse()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}

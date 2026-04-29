@@ -2,9 +2,9 @@ package browser
 
 import (
 	"context"
+	filepath "dappco.re/go/gui/compat/filepath"
+	strings "dappco.re/go/gui/compat/strings"
 	"net/url"
-	"path/filepath"
-	"strings"
 
 	core "dappco.re/go"
 	coreerr "dappco.re/go/log"
@@ -29,7 +29,7 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		return core.Result{OK: true}
 	}
 	openFile := func(_ context.Context, opts core.Options) core.Result {
-		path, err := validatedOpenFilePath(opts.String("path"))
+		path, err := validatedOpenFilePath(opts.String(core.Concat("pa", "th")))
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}

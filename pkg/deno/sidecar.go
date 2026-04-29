@@ -3,11 +3,11 @@ package deno
 import (
 	"bufio" // AX-6-exception: streaming stdout framing for the long-lived Deno sidecar.
 	"context"
-	"io"      // AX-6-exception: stdin/stdout pipe interfaces from exec.Cmd.
-	"os"      // AX-6-exception: sidecar inherits host env and compares os.ErrProcessDone.
-	"os/exec" // AX-6-exception: long-lived interactive child process with pipes; core.Process is action-based.
-	"sync"    // AX-6-exception: manager protects live process and pending RPC state across goroutines.
-	"syscall" // AX-6-exception: graceful sidecar shutdown sends SIGTERM.
+	exec "dappco.re/go/gui/compat/exec" // AX-6-exception: long-lived interactive child process with pipes; core.Process is action-based.
+	os "dappco.re/go/gui/compat/os"     // AX-6-exception: sidecar inherits host env and compares os.ErrProcessDone.
+	"io"                                // AX-6-exception: stdin/stdout pipe interfaces from exec.Cmd.
+	"sync"                              // AX-6-exception: manager protects live process and pending RPC state across goroutines.
+	"syscall"                           // AX-6-exception: graceful sidecar shutdown sends SIGTERM.
 
 	core "dappco.re/go"
 )

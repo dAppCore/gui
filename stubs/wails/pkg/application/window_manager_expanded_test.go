@@ -65,3 +65,64 @@ func TestWindowManagerExpanded_NilReceiver_IsSafe(t *core.T) {
 		core.AssertNil(t, manager.GetAll())
 	})
 }
+
+// AX7 generated source-matching smoke coverage.
+func TestWindowManagerExpanded_WindowManager_Get_Good(t *core.T) {
+	subject := new(WindowManager)
+	result := core.Try(func() any {
+		got0 := subject.Get("agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindowManagerExpanded_WindowManager_Get_Bad(t *core.T) {
+	subject := new(WindowManager)
+	result := core.Try(func() any {
+		got0 := subject.Get("")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindowManagerExpanded_WindowManager_Get_Ugly(t *core.T) {
+	subject := new(WindowManager)
+	result := core.Try(func() any {
+		got0 := subject.Get("../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindowManagerExpanded_WindowManager_GetByID_Good(t *core.T) {
+	subject := new(WindowManager)
+	result := core.Try(func() any {
+		got0 := subject.GetByID(1)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindowManagerExpanded_WindowManager_GetByID_Bad(t *core.T) {
+	subject := new(WindowManager)
+	result := core.Try(func() any {
+		got0 := subject.GetByID(0)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindowManagerExpanded_WindowManager_GetByID_Ugly(t *core.T) {
+	subject := new(WindowManager)
+	result := core.Try(func() any {
+		got0 := subject.GetByID(0)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}

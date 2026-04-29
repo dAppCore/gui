@@ -2,9 +2,9 @@ package chat
 
 import (
 	"bufio"
+	strings "dappco.re/go/gui/compat/strings"
 	"io"
 	"slices"
-	"strings"
 	"time"
 
 	core "dappco.re/go"

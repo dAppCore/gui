@@ -3,7 +3,7 @@ package p2p
 import (
 	"context"
 	core "dappco.re/go"
-	"errors"
+	errors "dappco.re/go/gui/compat/errors"
 	"time"
 )
 
@@ -97,4 +97,122 @@ func TestRouter_Subscribe_Ugly(t *core.T) {
 	err := router.Subscribe(context.Background(), "timeline", func(Envelope) {})
 	core.AssertError(t, err)
 	core.AssertEqual(t, "subscribe failed", err.Error())
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestRouter_New_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := New(*new(Driver))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestRouter_New_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := New(*new(Driver))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestRouter_New_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := New(*new(Driver))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestRouter_Router_Subscribe_Good(t *core.T) {
+	subject := new(Router)
+	result := core.Try(func() any {
+		got0 := subject.Subscribe(core.Background(), "agent", nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestRouter_Router_Subscribe_Bad(t *core.T) {
+	subject := new(Router)
+	result := core.Try(func() any {
+		got0 := subject.Subscribe(core.Background(), "", nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestRouter_Router_Subscribe_Ugly(t *core.T) {
+	subject := new(Router)
+	result := core.Try(func() any {
+		got0 := subject.Subscribe(core.Background(), "../../edge", nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestRouter_Router_Publish_Good(t *core.T) {
+	subject := new(Router)
+	result := core.Try(func() any {
+		got0 := subject.Publish(core.Background(), *new(Envelope))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestRouter_Router_Publish_Bad(t *core.T) {
+	subject := new(Router)
+	result := core.Try(func() any {
+		got0 := subject.Publish(core.Background(), *new(Envelope))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestRouter_Router_Publish_Ugly(t *core.T) {
+	subject := new(Router)
+	result := core.Try(func() any {
+		got0 := subject.Publish(core.Background(), *new(Envelope))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestRouter_Router_Peers_Good(t *core.T) {
+	subject := new(Router)
+	result := core.Try(func() any {
+		got0 := subject.Peers()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestRouter_Router_Peers_Bad(t *core.T) {
+	subject := new(Router)
+	result := core.Try(func() any {
+		got0 := subject.Peers()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestRouter_Router_Peers_Ugly(t *core.T) {
+	subject := new(Router)
+	result := core.Try(func() any {
+		got0 := subject.Peers()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

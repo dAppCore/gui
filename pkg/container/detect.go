@@ -1,10 +1,10 @@
 package container
 
 import (
-	"os/exec"
+	exec "dappco.re/go/gui/compat/exec"
+	strings "dappco.re/go/gui/compat/strings"
 	"runtime"
 	"strconv"
-	"strings"
 )
 
 // ContainerRuntime describes the preferred isolated workload runtime for CoreGUI.

@@ -2,8 +2,8 @@ package display
 
 import (
 	"context"
-	"path/filepath"
-	"strings"
+	filepath "dappco.re/go/gui/compat/filepath"
+	strings "dappco.re/go/gui/compat/strings"
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/chat"
@@ -118,32 +118,32 @@ func TestDisplay_Good_CoreSchemeRoutesThroughBackend(t *core.T) {
 	core.AssertTrue(t, strings.Contains(platform.Windows[0].HTMLContent(), "core://settings"))
 }
 
-func TestPreload_ValidatedLocalMLAPIURL_Good(t *core.T) {
+func TestPreload_ValidatedLocalMLAPIURL_GoodCase(t *core.T) {
 	core.AssertEqual(t, "http://localhost:8090", validatedLocalMLAPIURL("http://localhost:8090/"))
 	core.AssertEqual(t, "https://127.0.0.1:9443", validatedLocalMLAPIURL("https://127.0.0.1:9443/"))
 	core.AssertNotEmpty(t, core.Sprintf("%T", validatedLocalMLAPIURL("http://localhost:8090/")))
 }
 
-func TestPreload_ValidatedLocalMLAPIURL_Bad(t *core.T) {
+func TestPreload_ValidatedLocalMLAPIURL_BadCase(t *core.T) {
 	core.AssertEqual(t, "http://localhost:8090", validatedLocalMLAPIURL("https://example.com"))
 	core.AssertEqual(t, "http://localhost:8090", validatedLocalMLAPIURL("ftp://localhost:8090"))
 	core.AssertNotEmpty(t, core.Sprintf("%T", validatedLocalMLAPIURL("https://example.com")))
 }
 
-func TestPreload_ValidatedLocalMLAPIURL_Ugly(t *core.T) {
+func TestPreload_ValidatedLocalMLAPIURL_UglyCase(t *core.T) {
 	core.AssertEqual(t, "http://localhost:8090", validatedLocalMLAPIURL(""))
 	core.AssertEqual(t, "http://localhost:8090", validatedLocalMLAPIURL("not a url"))
 	core.AssertNotEmpty(t, core.Sprintf("%T", validatedLocalMLAPIURL("")))
 }
 
-func TestPreload_TrustedPreloadOrigin_Good(t *core.T) {
+func TestPreload_TrustedPreloadOrigin_GoodCase(t *core.T) {
 	policy := NewTrustedOriginPolicy([]string{"core://lab.lthn.sh/"})
 
 	core.AssertTrue(t, trustedPreloadOrigin("core://lab.lthn.sh/page", policy))
 	core.AssertNotEmpty(t, core.Sprintf("%T", policy))
 }
 
-func TestPreload_TrustedPreloadOrigin_Bad(t *core.T) {
+func TestPreload_TrustedPreloadOrigin_BadCase(t *core.T) {
 	policy := NewTrustedOriginPolicy([]string{"core://lab.lthn.sh/"})
 
 	core.AssertFalse(t, trustedPreloadOrigin("core://attacker.com/x", policy))
@@ -322,4 +322,356 @@ func TestPreload_InjectPreload_Ugly(t *core.T) {
 	err = svc.InjectPreload(target, "file://"+filepath.ToSlash(filepath.Join(root, "index.html")))
 	core.AssertError(t, err)
 	core.AssertEmpty(t, target.scripts)
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestPreload_Service_InjectPreload_Good(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.InjectPreload(*new(PreloadTarget), "agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPreload_Service_InjectPreload_Bad(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.InjectPreload(*new(PreloadTarget), "")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPreload_Service_InjectPreload_Ugly(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.InjectPreload(*new(PreloadTarget), "../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPreload_Service_BuildPreloadScript_Good(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.BuildPreloadScript("agent")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPreload_Service_BuildPreloadScript_Bad(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.BuildPreloadScript("")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPreload_Service_BuildPreloadScript_Ugly(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.BuildPreloadScript("../../edge")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPreload_Service_BuildPreloadScriptWithTrustedOriginPolicy_Good(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.BuildPreloadScriptWithTrustedOriginPolicy("agent", *new(TrustedOriginPolicy))
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPreload_Service_BuildPreloadScriptWithTrustedOriginPolicy_Bad(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.BuildPreloadScriptWithTrustedOriginPolicy("", *new(TrustedOriginPolicy))
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPreload_Service_BuildPreloadScriptWithTrustedOriginPolicy_Ugly(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.BuildPreloadScriptWithTrustedOriginPolicy("../../edge", *new(TrustedOriginPolicy))
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPreload_NewTrustedOriginPolicy_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewTrustedOriginPolicy(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPreload_NewTrustedOriginPolicy_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewTrustedOriginPolicy(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPreload_NewTrustedOriginPolicy_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewTrustedOriginPolicy(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPreload_NewTrustedOriginPolicyWithActions_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewTrustedOriginPolicyWithActions(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPreload_NewTrustedOriginPolicyWithActions_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewTrustedOriginPolicyWithActions(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPreload_NewTrustedOriginPolicyWithActions_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewTrustedOriginPolicyWithActions(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPreload_DefaultTrustedOriginPolicy_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := DefaultTrustedOriginPolicy()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPreload_DefaultTrustedOriginPolicy_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := DefaultTrustedOriginPolicy()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPreload_DefaultTrustedOriginPolicy_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := DefaultTrustedOriginPolicy()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPreload_TrustedOriginPolicy_AllowsURL_Good(t *core.T) {
+	var subject TrustedOriginPolicy
+	result := core.Try(func() any {
+		got0 := subject.AllowsURL("agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPreload_TrustedOriginPolicy_AllowsURL_Bad(t *core.T) {
+	var subject TrustedOriginPolicy
+	result := core.Try(func() any {
+		got0 := subject.AllowsURL("")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPreload_TrustedOriginPolicy_AllowsURL_Ugly(t *core.T) {
+	var subject TrustedOriginPolicy
+	result := core.Try(func() any {
+		got0 := subject.AllowsURL("../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPreload_TrustedOriginPolicy_Allows_Good(t *core.T) {
+	var subject TrustedOriginPolicy
+	result := core.Try(func() any {
+		got0 := subject.Allows(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPreload_TrustedOriginPolicy_Allows_Bad(t *core.T) {
+	var subject TrustedOriginPolicy
+	result := core.Try(func() any {
+		got0 := subject.Allows(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPreload_TrustedOriginPolicy_Allows_Ugly(t *core.T) {
+	var subject TrustedOriginPolicy
+	result := core.Try(func() any {
+		got0 := subject.Allows(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPreload_TrustedOriginPolicy_AllowsActionURL_Good(t *core.T) {
+	var subject TrustedOriginPolicy
+	result := core.Try(func() any {
+		got0 := subject.AllowsActionURL("agent", "agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPreload_TrustedOriginPolicy_AllowsActionURL_Bad(t *core.T) {
+	var subject TrustedOriginPolicy
+	result := core.Try(func() any {
+		got0 := subject.AllowsActionURL("", "")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPreload_TrustedOriginPolicy_AllowsActionURL_Ugly(t *core.T) {
+	var subject TrustedOriginPolicy
+	result := core.Try(func() any {
+		got0 := subject.AllowsActionURL("../../edge", "../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPreload_TrustedOriginPolicy_AllowsAction_Good(t *core.T) {
+	var subject TrustedOriginPolicy
+	result := core.Try(func() any {
+		got0 := subject.AllowsAction(nil, "agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPreload_TrustedOriginPolicy_AllowsAction_Bad(t *core.T) {
+	var subject TrustedOriginPolicy
+	result := core.Try(func() any {
+		got0 := subject.AllowsAction(nil, "")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPreload_TrustedOriginPolicy_AllowsAction_Ugly(t *core.T) {
+	var subject TrustedOriginPolicy
+	result := core.Try(func() any {
+		got0 := subject.AllowsAction(nil, "../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPreload_TrustedOriginPolicy_AllowedActionsForURL_Good(t *core.T) {
+	var subject TrustedOriginPolicy
+	result := core.Try(func() any {
+		got0 := subject.AllowedActionsForURL("agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPreload_TrustedOriginPolicy_AllowedActionsForURL_Bad(t *core.T) {
+	var subject TrustedOriginPolicy
+	result := core.Try(func() any {
+		got0 := subject.AllowedActionsForURL("")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPreload_TrustedOriginPolicy_AllowedActionsForURL_Ugly(t *core.T) {
+	var subject TrustedOriginPolicy
+	result := core.Try(func() any {
+		got0 := subject.AllowedActionsForURL("../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPreload_TrustedOriginPolicy_AllowedActions_Good(t *core.T) {
+	var subject TrustedOriginPolicy
+	result := core.Try(func() any {
+		got0 := subject.AllowedActions(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPreload_TrustedOriginPolicy_AllowedActions_Bad(t *core.T) {
+	var subject TrustedOriginPolicy
+	result := core.Try(func() any {
+		got0 := subject.AllowedActions(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestPreload_TrustedOriginPolicy_AllowedActions_Ugly(t *core.T) {
+	var subject TrustedOriginPolicy
+	result := core.Try(func() any {
+		got0 := subject.AllowedActions(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

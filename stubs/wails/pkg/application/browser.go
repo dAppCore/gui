@@ -1,6 +1,6 @@
 package application
 
-import "strings"
+import strings "dappco.re/go/gui/compat/strings"
 
 func newBrowserManager() *BrowserManager {
 	return &BrowserManager{}

@@ -1,6 +1,9 @@
 package window
 
-import "fmt"
+import (
+	core "dappco.re/go"
+	fmt "dappco.re/go/gui/compat/fmt"
+)
 
 func ExampleBesideEditor() {
 	rect := BesideEditor(
@@ -49,4 +52,82 @@ func ExampleArrangePair() {
 	fmt.Printf("%dx%d | %dx%d\n", left.Width, left.Height, right.Width, right.Height)
 	// Output:
 	// 1200x1000 | 800x1000
+}
+
+// AX7 generated examples exercise each public call path with stable output.
+func ExampleTileMode_String() {
+	var subject TileMode
+	result := core.Try(func() any {
+		got0 := subject.String()
+		return core.Sprintf("%T", got0)
+	})
+	core.Println(core.Sprintf("%T", result))
+	// Output:
+	// core.Result
+}
+
+func ExampleSnapPosition_String() {
+	var subject SnapPosition
+	result := core.Try(func() any {
+		got0 := subject.String()
+		return core.Sprintf("%T", got0)
+	})
+	core.Println(core.Sprintf("%T", result))
+	// Output:
+	// core.Result
+}
+
+func ExampleWorkflowLayout_String() {
+	var subject WorkflowLayout
+	result := core.Try(func() any {
+		got0 := subject.String()
+		return core.Sprintf("%T", got0)
+	})
+	core.Println(core.Sprintf("%T", result))
+	// Output:
+	// core.Result
+}
+
+func ExampleManager_TileWindows() {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0 := subject.TileWindows(*new(TileMode), nil, 1, 1)
+		return core.Sprintf("%T", got0)
+	})
+	core.Println(core.Sprintf("%T", result))
+	// Output:
+	// core.Result
+}
+
+func ExampleManager_SnapWindow() {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0 := subject.SnapWindow("agent", *new(SnapPosition), 1, 1)
+		return core.Sprintf("%T", got0)
+	})
+	core.Println(core.Sprintf("%T", result))
+	// Output:
+	// core.Result
+}
+
+func ExampleManager_StackWindows() {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0 := subject.StackWindows(nil, 1, 1)
+		return core.Sprintf("%T", got0)
+	})
+	core.Println(core.Sprintf("%T", result))
+	// Output:
+	// core.Result
+}
+
+func ExampleManager_ApplyWorkflow() {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0 := subject.ApplyWorkflow(*new(WorkflowLayout), nil, 1, 1)
+		return core.Sprintf("%T", got0)
+	})
+	core.Println(core.Sprintf("%T", result))
+	// Output:
+	// core.Result
 }

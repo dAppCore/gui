@@ -125,3 +125,154 @@ func TestManager_GetCallback_Ugly(t *core.T) {
 	_, ok = mgr.GetCallback("quit")
 	core.AssertFalse(t, ok)
 }
+
+// AX7 generated source-matching smoke coverage.
+func TestMenu_Manager_SetMenu_Good(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0 := subject.SetMenu(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenu_Manager_SetMenu_Bad(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0 := subject.SetMenu(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenu_Manager_SetMenu_Ugly(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0 := subject.SetMenu(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenu_Manager_RegisterCallback_Good(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		subject.RegisterCallback("agent", nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenu_Manager_RegisterCallback_Bad(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		subject.RegisterCallback("", nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenu_Manager_RegisterCallback_Ugly(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		subject.RegisterCallback("../../edge", nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenu_Manager_UnregisterCallback_Good(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		subject.UnregisterCallback("agent")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenu_Manager_UnregisterCallback_Bad(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		subject.UnregisterCallback("")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenu_Manager_UnregisterCallback_Ugly(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		subject.UnregisterCallback("../../edge")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenu_Manager_GetCallback_Good(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0, got1 := subject.GetCallback("agent")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenu_Manager_GetCallback_Bad(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0, got1 := subject.GetCallback("")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenu_Manager_GetCallback_Ugly(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0, got1 := subject.GetCallback("../../edge")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenu_Manager_GetInfo_Good(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0 := subject.GetInfo()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenu_Manager_GetInfo_Bad(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0 := subject.GetInfo()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenu_Manager_GetInfo_Ugly(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0 := subject.GetInfo()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}

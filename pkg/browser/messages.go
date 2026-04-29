@@ -10,5 +10,5 @@ type TaskOpenURL struct {
 
 // TaskOpenFile opens a file with the system default application. Result: nil
 type TaskOpenFile struct {
-	Path string `json:"path"`
+	Path string `json:"path,omitempty"`
 }

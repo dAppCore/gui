@@ -1,7 +1,7 @@
 package application
 
 import (
-	"fmt"
+	fmt "dappco.re/go/gui/compat/fmt"
 	"sync"
 	"unsafe"
 

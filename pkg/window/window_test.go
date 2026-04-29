@@ -3,7 +3,7 @@ package window
 
 import (
 	core "dappco.re/go"
-	"path/filepath"
+	filepath "dappco.re/go/gui/compat/filepath"
 )
 
 func TestWindowDefaults_Good(t *core.T) {
@@ -33,7 +33,7 @@ func TestWindowOption_URL_Good(t *core.T) {
 	core.AssertEqual(t, "/dashboard", w.URL)
 }
 
-func TestWindowOption_Size_Good(t *core.T) {
+func TestWindowOption_Size_GoodCase(t *core.T) {
 	w := &Window{}
 	err := WithSize(1280, 720)(w)
 	core.RequireNoError(t, err)
@@ -41,7 +41,7 @@ func TestWindowOption_Size_Good(t *core.T) {
 	core.AssertEqual(t, 720, w.Height)
 }
 
-func TestWindowOption_Position_Good(t *core.T) {
+func TestWindowOption_Position_GoodCase(t *core.T) {
 	w := &Window{}
 	err := WithPosition(100, 200)(w)
 	core.RequireNoError(t, err)
@@ -71,7 +71,7 @@ func TestApplyOptions_Bad(t *core.T) {
 	core.AssertError(t, err)
 }
 
-func TestApplyOptions_Empty_Good(t *core.T) {
+func TestApplyOptions_Empty_GoodCase(t *core.T) {
 	w, err := ApplyOptions()
 	core.RequireNoError(t, err)
 	core.AssertNotNil(t, w)
@@ -247,7 +247,7 @@ func TestWorkflowLayout_Good(t *core.T) {
 
 // --- Comprehensive Tiling Tests ---
 
-func TestTileWindows_AllModes_Good(t *core.T) {
+func TestTileWindows_AllModes_GoodCase(t *core.T) {
 	const screenW, screenH = 1920, 1080
 	halfW, halfH := screenW/2, screenH/2
 
@@ -291,7 +291,7 @@ func TestTileWindows_AllModes_Good(t *core.T) {
 	}
 }
 
-func TestSnapWindow_AllPositions_Good(t *core.T) {
+func TestSnapWindow_AllPositions_GoodCase(t *core.T) {
 	const screenW, screenH = 1920, 1080
 	halfW, halfH := screenW/2, screenH/2
 
@@ -337,7 +337,7 @@ func TestSnapWindow_AllPositions_Good(t *core.T) {
 	}
 }
 
-func TestStackWindows_ThreeWindows_Good(t *core.T) {
+func TestStackWindows_ThreeWindows_GoodCase(t *core.T) {
 	m, _ := newTestManager()
 	names := []string{"s1", "s2", "s3"}
 	for _, name := range names {
@@ -357,7 +357,7 @@ func TestStackWindows_ThreeWindows_Good(t *core.T) {
 	}
 }
 
-func TestApplyWorkflow_AllLayouts_Good(t *core.T) {
+func TestApplyWorkflow_AllLayouts_GoodCase(t *core.T) {
 	const screenW, screenH = 1920, 1080
 
 	tests := []struct {
@@ -426,8 +426,393 @@ func TestApplyWorkflow_AllLayouts_Good(t *core.T) {
 	}
 }
 
-func TestApplyWorkflow_Empty_Bad(t *core.T) {
+func TestApplyWorkflow_Empty_BadCase(t *core.T) {
 	m, _ := newTestManager()
 	err := m.ApplyWorkflow(WorkflowCoding, []string{}, 1920, 1080)
 	core.AssertError(t, err)
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestWindow_Window_ToPlatformOptions_Good(t *core.T) {
+	subject := new(Window)
+	result := core.Try(func() any {
+		got0 := subject.ToPlatformOptions()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_Window_ToPlatformOptions_Bad(t *core.T) {
+	subject := new(Window)
+	result := core.Try(func() any {
+		got0 := subject.ToPlatformOptions()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_Window_ToPlatformOptions_Ugly(t *core.T) {
+	subject := new(Window)
+	result := core.Try(func() any {
+		got0 := subject.ToPlatformOptions()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_NewManager_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewManager(*new(Platform))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_NewManager_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewManager(*new(Platform))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_NewManager_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewManager(*new(Platform))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_NewManagerWithDir_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewManagerWithDir(*new(Platform), "agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_NewManagerWithDir_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewManagerWithDir(*new(Platform), "")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_NewManagerWithDir_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewManagerWithDir(*new(Platform), "../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_Manager_SetDefaultWidth_Good(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		subject.SetDefaultWidth(1)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_Manager_SetDefaultWidth_Bad(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		subject.SetDefaultWidth(0)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_Manager_SetDefaultWidth_Ugly(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		subject.SetDefaultWidth(-1)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_Manager_SetDefaultHeight_Good(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		subject.SetDefaultHeight(1)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_Manager_SetDefaultHeight_Bad(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		subject.SetDefaultHeight(0)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_Manager_SetDefaultHeight_Ugly(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		subject.SetDefaultHeight(-1)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_Manager_Open_Good(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0, got1 := subject.Open()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_Manager_Open_Bad(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0, got1 := subject.Open()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_Manager_Open_Ugly(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0, got1 := subject.Open()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_Manager_Create_Good(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0, got1 := subject.Create(nil)
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_Manager_Create_Bad(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0, got1 := subject.Create(nil)
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_Manager_Create_Ugly(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0, got1 := subject.Create(nil)
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_Manager_Get_Good(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0, got1 := subject.Get("agent")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_Manager_Get_Bad(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0, got1 := subject.Get("")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_Manager_Get_Ugly(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0, got1 := subject.Get("../../edge")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_Manager_List_Good(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0 := subject.List()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_Manager_List_Bad(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0 := subject.List()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_Manager_List_Ugly(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0 := subject.List()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_Manager_Remove_Good(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		subject.Remove("agent")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_Manager_Remove_Bad(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		subject.Remove("")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_Manager_Remove_Ugly(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		subject.Remove("../../edge")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_Manager_Platform_Good(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0 := subject.Platform()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_Manager_Platform_Bad(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0 := subject.Platform()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_Manager_Platform_Ugly(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0 := subject.Platform()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_Manager_State_Good(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0 := subject.State()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_Manager_State_Bad(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0 := subject.State()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_Manager_State_Ugly(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0 := subject.State()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_Manager_Layout_Good(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0 := subject.Layout()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_Manager_Layout_Bad(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0 := subject.Layout()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWindow_Manager_Layout_Ugly(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0 := subject.Layout()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

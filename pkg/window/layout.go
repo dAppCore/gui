@@ -112,7 +112,7 @@ func (lm *LayoutManager) load() {
 		}
 		core.Error(
 			"window layout load failed",
-			"path", lm.filePath(),
+			"file_path", lm.filePath(),
 			"err", core.E("window.LayoutManager.load", "failed to read window layouts", err),
 		)
 		return
@@ -122,7 +122,7 @@ func (lm *LayoutManager) load() {
 		if decodeErr, ok := result.Value.(error); ok {
 			core.Error(
 				"window layout load failed",
-				"path", lm.filePath(),
+				"file_path", lm.filePath(),
 				"err", core.E("window.LayoutManager.load", "failed to decode window layouts", decodeErr),
 			)
 		}
@@ -149,7 +149,7 @@ func (lm *LayoutManager) save() error {
 		marshalErr, _ := result.Value.(error)
 		core.Error(
 			"window layout save failed",
-			"path", filePath,
+			"file_path", filePath,
 			"err", core.E("window.LayoutManager.save", "failed to encode window layouts", marshalErr),
 		)
 		return core.E("window.LayoutManager.save", "failed to encode window layouts", marshalErr)
@@ -159,7 +159,7 @@ func (lm *LayoutManager) save() error {
 		if err := coreio.Local.EnsureDir(dir); err != nil {
 			core.Error(
 				"window layout save failed",
-				"path", filePath,
+				"file_path", filePath,
 				"err", core.E("window.LayoutManager.save", "failed to create window layout directory", err),
 			)
 			return core.E("window.LayoutManager.save", "failed to create window layout directory", err)
@@ -168,7 +168,7 @@ func (lm *LayoutManager) save() error {
 	if err := coreio.Local.Write(filePath, string(data)); err != nil {
 		core.Error(
 			"window layout save failed",
-			"path", filePath,
+			"file_path", filePath,
 			"err", core.E("window.LayoutManager.save", "failed to write window layouts", err),
 		)
 		return core.E("window.LayoutManager.save", "failed to write window layouts", err)

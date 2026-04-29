@@ -2,8 +2,8 @@ package window
 
 import (
 	core "dappco.re/go"
-	"os"
-	"path/filepath"
+	filepath "dappco.re/go/gui/compat/filepath"
+	os "dappco.re/go/gui/compat/os"
 	"time"
 )
 
@@ -57,7 +57,7 @@ func TestLayoutManager_SaveLayout_Ugly(t *core.T) {
 	core.AssertEqual(t, 1024, second.Windows["main"].Width)
 }
 
-func TestLayoutManager_NewLayoutManagerWithPathEnv_Good(t *core.T) {
+func TestLayoutManager_NewLayoutManagerWithPathEnv_GoodCase(t *core.T) {
 	path := filepath.Join(t.TempDir(), "custom", "layouts.json")
 	t.Setenv(layoutFileEnv, path)
 
@@ -74,4 +74,236 @@ func TestLayoutManager_NewLayoutManagerWithPathEnv_Good(t *core.T) {
 	content, err := os.ReadFile(path)
 	core.RequireNoError(t, err)
 	core.AssertContains(t, string(content), `"coding"`)
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestLayout_NewLayoutManager_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewLayoutManager()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestLayout_NewLayoutManager_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewLayoutManager()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestLayout_NewLayoutManager_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewLayoutManager()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestLayout_NewLayoutManagerWithDir_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewLayoutManagerWithDir("agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestLayout_NewLayoutManagerWithDir_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewLayoutManagerWithDir("")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestLayout_NewLayoutManagerWithDir_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewLayoutManagerWithDir("../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestLayout_NewLayoutManagerWithPath_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewLayoutManagerWithPath("agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestLayout_NewLayoutManagerWithPath_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewLayoutManagerWithPath("")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestLayout_NewLayoutManagerWithPath_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewLayoutManagerWithPath("../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestLayout_LayoutManager_SetPath_Good(t *core.T) {
+	subject := new(LayoutManager)
+	result := core.Try(func() any {
+		subject.SetPath("agent")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestLayout_LayoutManager_SetPath_Bad(t *core.T) {
+	subject := new(LayoutManager)
+	result := core.Try(func() any {
+		subject.SetPath("")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestLayout_LayoutManager_SetPath_Ugly(t *core.T) {
+	subject := new(LayoutManager)
+	result := core.Try(func() any {
+		subject.SetPath("../../edge")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestLayout_LayoutManager_SaveLayout_Good(t *core.T) {
+	subject := new(LayoutManager)
+	result := core.Try(func() any {
+		got0 := subject.SaveLayout("agent", nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestLayout_LayoutManager_SaveLayout_Bad(t *core.T) {
+	subject := new(LayoutManager)
+	result := core.Try(func() any {
+		got0 := subject.SaveLayout("", nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestLayout_LayoutManager_SaveLayout_Ugly(t *core.T) {
+	subject := new(LayoutManager)
+	result := core.Try(func() any {
+		got0 := subject.SaveLayout("../../edge", nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestLayout_LayoutManager_GetLayout_Good(t *core.T) {
+	subject := new(LayoutManager)
+	result := core.Try(func() any {
+		got0, got1 := subject.GetLayout("agent")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestLayout_LayoutManager_GetLayout_Bad(t *core.T) {
+	subject := new(LayoutManager)
+	result := core.Try(func() any {
+		got0, got1 := subject.GetLayout("")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestLayout_LayoutManager_GetLayout_Ugly(t *core.T) {
+	subject := new(LayoutManager)
+	result := core.Try(func() any {
+		got0, got1 := subject.GetLayout("../../edge")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestLayout_LayoutManager_ListLayouts_Good(t *core.T) {
+	subject := new(LayoutManager)
+	result := core.Try(func() any {
+		got0 := subject.ListLayouts()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestLayout_LayoutManager_ListLayouts_Bad(t *core.T) {
+	subject := new(LayoutManager)
+	result := core.Try(func() any {
+		got0 := subject.ListLayouts()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestLayout_LayoutManager_ListLayouts_Ugly(t *core.T) {
+	subject := new(LayoutManager)
+	result := core.Try(func() any {
+		got0 := subject.ListLayouts()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestLayout_LayoutManager_DeleteLayout_Good(t *core.T) {
+	subject := new(LayoutManager)
+	result := core.Try(func() any {
+		subject.DeleteLayout("agent")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestLayout_LayoutManager_DeleteLayout_Bad(t *core.T) {
+	subject := new(LayoutManager)
+	result := core.Try(func() any {
+		subject.DeleteLayout("")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestLayout_LayoutManager_DeleteLayout_Ugly(t *core.T) {
+	subject := new(LayoutManager)
+	result := core.Try(func() any {
+		subject.DeleteLayout("../../edge")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

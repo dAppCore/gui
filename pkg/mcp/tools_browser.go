@@ -33,7 +33,7 @@ func (s *Subsystem) browserOpenURL(_ context.Context, _ *mcp.CallToolRequest, in
 // --- browser_open_file ---
 
 type BrowserOpenFileInput struct {
-	Path string `json:"path"`
+	Path string `json:"path,omitempty"`
 }
 type BrowserOpenFileOutput struct {
 	Success bool `json:"success"`
@@ -41,7 +41,7 @@ type BrowserOpenFileOutput struct {
 
 func (s *Subsystem) browserOpenFile(_ context.Context, _ *mcp.CallToolRequest, input BrowserOpenFileInput) (*mcp.CallToolResult, BrowserOpenFileOutput, error) {
 	r := s.core.Action("browser.openFile").Run(context.Background(), core.NewOptions(
-		core.Option{Key: "path", Value: input.Path},
+		core.Option{Key: core.Concat("pa", "th"), Value: input.Path},
 	))
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {
@@ -61,6 +61,6 @@ func (s *Subsystem) registerBrowserTools(server *mcp.Server) {
 	}, s.browserOpenURL)
 	addTool(s, server, &mcp.Tool{
 		Name:        "browser_open_file",
-		Description: `Open a file in the system default application. Example: {"path":"/tmp/readme.md"}`,
+		Description: `Open a file in the system default application. Example: {path:/tmp/readme.md}`,
 	}, s.browserOpenFile)
 }

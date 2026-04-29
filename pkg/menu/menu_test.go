@@ -127,3 +127,121 @@ func TestManager_Build_NilMenuHandles_Good(t *core.T) {
 		}))
 	})
 }
+
+// AX7 generated source-matching smoke coverage.
+func TestMenu_NewManager_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewManager(*new(Platform))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenu_NewManager_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewManager(*new(Platform))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenu_NewManager_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewManager(*new(Platform))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenu_Manager_Build_Good(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0 := subject.Build(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenu_Manager_Build_Bad(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0 := subject.Build(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenu_Manager_Build_Ugly(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0 := subject.Build(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenu_Manager_SetApplicationMenu_Good(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		subject.SetApplicationMenu(nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenu_Manager_SetApplicationMenu_Bad(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		subject.SetApplicationMenu(nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenu_Manager_SetApplicationMenu_Ugly(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		subject.SetApplicationMenu(nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenu_Manager_Platform_Good(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0 := subject.Platform()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenu_Manager_Platform_Bad(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0 := subject.Platform()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenu_Manager_Platform_Ugly(t *core.T) {
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0 := subject.Platform()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}

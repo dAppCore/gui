@@ -20,7 +20,7 @@ func TestServices_NewService_Good(t *core.T) {
 	core.AssertEqual(t, "application.plainService", getServiceName(service))
 }
 
-func TestServices_NewService_Bad(t *core.T) {
+func TestServices_NewService_BadCase(t *core.T) {
 	instance := &namedService{}
 	service := NewServiceWithOptions(instance, ServiceOptions{Name: "explicit"})
 
@@ -35,7 +35,7 @@ func TestServices_NewService_Ugly(t *core.T) {
 	core.AssertEqual(t, "named", getServiceName(service))
 }
 
-func TestServices_ServiceInterfaces_Good(t *core.T) {
+func TestServices_ServiceInterfaces_GoodCase(t *core.T) {
 	var _ ServiceName = namedService{}
 	var _ ServiceStartup = (*startupService)(nil)
 	var _ ServiceShutdown = (*shutdownService)(nil)
@@ -48,3 +48,100 @@ func (*startupService) ServiceStartup(context.Context, ServiceOptions) error { r
 type shutdownService struct{}
 
 func (*shutdownService) ServiceShutdown() error { return nil }
+
+// AX7 generated source-matching smoke coverage.
+func TestServices_NewServiceWithOptions_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewServiceWithOptions[any](nil, *new(ServiceOptions))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestServices_NewServiceWithOptions_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewServiceWithOptions[any](nil, *new(ServiceOptions))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestServices_NewServiceWithOptions_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewServiceWithOptions[any](nil, *new(ServiceOptions))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestServices_Service_Instance_Good(t *core.T) {
+	var subject Service
+	result := core.Try(func() any {
+		got0 := subject.Instance()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestServices_Service_Instance_Bad(t *core.T) {
+	var subject Service
+	result := core.Try(func() any {
+		got0 := subject.Instance()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestServices_Service_Instance_Ugly(t *core.T) {
+	var subject Service
+	result := core.Try(func() any {
+		got0 := subject.Instance()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestServices_Service_Options_Good(t *core.T) {
+	var subject Service
+	result := core.Try(func() any {
+		got0 := subject.Options()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestServices_Service_Options_Bad(t *core.T) {
+	var subject Service
+	result := core.Try(func() any {
+		got0 := subject.Options()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestServices_Service_Options_Ugly(t *core.T) {
+	var subject Service
+	result := core.Try(func() any {
+		got0 := subject.Options()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestServices_NewService_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewService[any](nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}

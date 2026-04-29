@@ -70,11 +70,13 @@ All Wails application APIs are abstracted behind interfaces in `interfaces.go` (
 
 ## Testing
 
-- Framework: `testify` (assert + require)
-- Each sub-package has its own `*_test.go` with mock platform implementations
-- `pkg/window`: `NewManagerWithDir` / `NewStateManagerWithDir` / `NewLayoutManagerWithDir` accept custom config dirs for isolated tests
-- `pkg/display`: `newTestCore(t)` creates a real `core.Core` instance for integration-style tests
-- Sub-services use `mock_platform.go` or `mock_test.go` for platform mocks
+- Tests use the core test wrappers from `dappco.re/go`: `*core.T`, `core.AssertX`, and `core.RequireX`.
+- Keep AX7 triplets in the source-matching file: public symbols in `service.go` are covered in `service_test.go`, not in generated monoliths.
+- Examples live beside their source as `<file>_example_test.go` and print with `core.Println`, not standard formatting imports.
+- Each sub-package has focused `*_test.go` files with mock platform implementations.
+- `pkg/window`: `NewManagerWithDir` / `NewStateManagerWithDir` / `NewLayoutManagerWithDir` accept custom config dirs for isolated tests.
+- `pkg/display`: `newTestCore(t)` creates a real `core.Core` instance for integration-style tests.
+- Sub-services use `mock_platform.go` or `mock_test.go` for platform mocks.
 
 ## CI/CD
 
@@ -86,13 +88,12 @@ Both use reusable workflows from `core/go-devops`.
 
 ## Dependencies
 
-- `dappco.re/go/core` — Core framework with service container and DI
+- `dappco.re/go` — Core framework with service container, Result, assertion, formatting, path, JSON, and OS wrappers
 - `dappco.re/go/log` — Structured errors (`coreerr.E()`)
 - `dappco.re/go/io` — Filesystem abstraction (`coreio.Local`)
 - `dappco.re/go/config` — Configuration file management
 - `github.com/wailsapp/wails/v3` — Desktop app framework (alpha.74)
 - `github.com/gorilla/websocket` — WebSocket for real-time events
-- `github.com/stretchr/testify` — Test assertions
 - `github.com/modelcontextprotocol/go-sdk` — MCP tool registration
 
 ## Repository migration note

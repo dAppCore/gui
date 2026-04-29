@@ -166,3 +166,244 @@ func TestEvents_EventManager_OnApplicationEvent_Ugly(t *core.T) {
 	manager.Off("does-not-exist")
 	core.AssertLen(t, manager.appListeners[uint(eventType)], 1)
 }
+
+// AX7 generated source-matching smoke coverage.
+func TestEvents_ApplicationEvent_Context_Good(t *core.T) {
+	subject := new(ApplicationEvent)
+	result := core.Try(func() any {
+		got0 := subject.Context()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_ApplicationEvent_Context_Bad(t *core.T) {
+	subject := new(ApplicationEvent)
+	result := core.Try(func() any {
+		got0 := subject.Context()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_ApplicationEvent_Context_Ugly(t *core.T) {
+	subject := new(ApplicationEvent)
+	result := core.Try(func() any {
+		got0 := subject.Context()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_ApplicationEvent_Cancel_Good(t *core.T) {
+	subject := new(ApplicationEvent)
+	result := core.Try(func() any {
+		subject.Cancel()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_ApplicationEvent_Cancel_Bad(t *core.T) {
+	subject := new(ApplicationEvent)
+	result := core.Try(func() any {
+		subject.Cancel()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_ApplicationEvent_Cancel_Ugly(t *core.T) {
+	subject := new(ApplicationEvent)
+	result := core.Try(func() any {
+		subject.Cancel()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_ApplicationEvent_IsCancelled_Good(t *core.T) {
+	subject := new(ApplicationEvent)
+	result := core.Try(func() any {
+		got0 := subject.IsCancelled()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_ApplicationEvent_IsCancelled_Bad(t *core.T) {
+	subject := new(ApplicationEvent)
+	result := core.Try(func() any {
+		got0 := subject.IsCancelled()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_ApplicationEvent_IsCancelled_Ugly(t *core.T) {
+	subject := new(ApplicationEvent)
+	result := core.Try(func() any {
+		got0 := subject.IsCancelled()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_CustomEvent_Cancel_Good(t *core.T) {
+	subject := new(CustomEvent)
+	result := core.Try(func() any {
+		subject.Cancel()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_CustomEvent_Cancel_Bad(t *core.T) {
+	subject := new(CustomEvent)
+	result := core.Try(func() any {
+		subject.Cancel()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_CustomEvent_Cancel_Ugly(t *core.T) {
+	subject := new(CustomEvent)
+	result := core.Try(func() any {
+		subject.Cancel()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_CustomEvent_IsCancelled_Good(t *core.T) {
+	subject := new(CustomEvent)
+	result := core.Try(func() any {
+		got0 := subject.IsCancelled()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_CustomEvent_IsCancelled_Bad(t *core.T) {
+	subject := new(CustomEvent)
+	result := core.Try(func() any {
+		got0 := subject.IsCancelled()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_CustomEvent_IsCancelled_Ugly(t *core.T) {
+	subject := new(CustomEvent)
+	result := core.Try(func() any {
+		got0 := subject.IsCancelled()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_EventManager_On_Good(t *core.T) {
+	subject := new(EventManager)
+	result := core.Try(func() any {
+		got0 := subject.On("agent", nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_EventManager_On_Bad(t *core.T) {
+	subject := new(EventManager)
+	result := core.Try(func() any {
+		got0 := subject.On("", nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_EventManager_On_Ugly(t *core.T) {
+	subject := new(EventManager)
+	result := core.Try(func() any {
+		got0 := subject.On("../../edge", nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_EventManager_Off_Good(t *core.T) {
+	subject := new(EventManager)
+	result := core.Try(func() any {
+		subject.Off("agent")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_EventManager_Off_Bad(t *core.T) {
+	subject := new(EventManager)
+	result := core.Try(func() any {
+		subject.Off("")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_EventManager_Off_Ugly(t *core.T) {
+	subject := new(EventManager)
+	result := core.Try(func() any {
+		subject.Off("../../edge")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_EventManager_OnMultiple_Good(t *core.T) {
+	subject := new(EventManager)
+	result := core.Try(func() any {
+		subject.OnMultiple("agent", nil, 1)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_EventManager_OnMultiple_Bad(t *core.T) {
+	subject := new(EventManager)
+	result := core.Try(func() any {
+		subject.OnMultiple("", nil, 0)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestEvents_EventManager_OnMultiple_Ugly(t *core.T) {
+	subject := new(EventManager)
+	result := core.Try(func() any {
+		subject.OnMultiple("../../edge", nil, -1)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}

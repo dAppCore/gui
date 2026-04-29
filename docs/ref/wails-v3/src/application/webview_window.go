@@ -1,15 +1,15 @@
 package application
 
 import (
-	"fmt"
+	fmt "dappco.re/go/gui/compat/fmt"
+	strings "dappco.re/go/gui/compat/strings"
 	"runtime"
 	"slices"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"unsafe"
 
-	"encoding/json"
+	json "dappco.re/go/gui/compat/json"
 
 	"github.com/leaanthony/u"
 	"github.com/wailsapp/wails/v3/internal/assetserver"

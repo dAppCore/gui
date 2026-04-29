@@ -7,7 +7,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-func TestToolsLifecycle_appQuit_Good(t *core.T) {
+func TestToolsLifecycle_appQuit_GoodCase(t *core.T) {
 	c := core.New(core.WithServiceLock())
 	sub := New(c)
 	server := mcp.NewServer(&mcp.Implementation{Name: "test", Version: "0.1.0"}, nil)
@@ -27,7 +27,7 @@ func TestToolsLifecycle_appQuit_Bad(t *core.T) {
 	core.AssertNil(t, err)
 }
 
-func TestToolsLifecycle_appQuit_Ugly(t *core.T) {
+func TestToolsLifecycle_appQuit_UglyCase(t *core.T) {
 	c := core.New(core.WithServiceLock())
 	sub := New(c)
 	server := mcp.NewServer(&mcp.Implementation{Name: "test", Version: "0.1.0"}, nil)

@@ -1,8 +1,8 @@
 package container
 
 import (
-	"os"
-	"strings"
+	os "dappco.re/go/gui/compat/os"
+	strings "dappco.re/go/gui/compat/strings"
 
 	"dappco.re/go/config"
 )

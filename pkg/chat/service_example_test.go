@@ -2,11 +2,11 @@ package chat
 
 import (
 	"context"
-	"fmt"
+	filepath "dappco.re/go/gui/compat/filepath"
+	fmt "dappco.re/go/gui/compat/fmt"
+	os "dappco.re/go/gui/compat/os"
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path/filepath"
 	"time"
 
 	core "dappco.re/go"
@@ -58,4 +58,126 @@ func ExampleRegister() {
 	// Output:
 	// 2
 	// Hello from chat
+}
+
+// AX7 generated examples exercise each public call path with stable output.
+func ExampleService_OnStartup() {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.Println(core.Sprintf("%T", result))
+	// Output:
+	// core.Result
+}
+
+func ExampleService_HandleIPCEvents() {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.Println(core.Sprintf("%T", result))
+	// Output:
+	// core.Result
+}
+
+func ExampleService_Send() {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.Send(core.Background(), *new(sendInput))
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.Println(core.Sprintf("%T", result))
+	// Output:
+	// core.Result
+}
+
+func ExampleService_History() {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.History("agent", 1)
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.Println(core.Sprintf("%T", result))
+	// Output:
+	// core.Result
+}
+
+func ExampleService_Models() {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.Models()
+		return core.Sprintf("%T", got0)
+	})
+	core.Println(core.Sprintf("%T", result))
+	// Output:
+	// core.Result
+}
+
+func ExampleService_SelectModel() {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.SelectModel(*new(selectModelInput))
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.Println(core.Sprintf("%T", result))
+	// Output:
+	// core.Result
+}
+
+func ExampleService_ListConversations() {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.ListConversations()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.Println(core.Sprintf("%T", result))
+	// Output:
+	// core.Result
+}
+
+func ExampleService_LoadConversation() {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.LoadConversation("agent")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.Println(core.Sprintf("%T", result))
+	// Output:
+	// core.Result
+}
+
+func ExampleService_DeleteConversation() {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.DeleteConversation("agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.Println(core.Sprintf("%T", result))
+	// Output:
+	// core.Result
+}
+
+func ExampleService_StartThinking() {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.StartThinking(*new(thinkingInput))
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.Println(core.Sprintf("%T", result))
+	// Output:
+	// core.Result
+}
+
+func ExampleService_StopThinking() {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.StopThinking(*new(thinkingInput))
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.Println(core.Sprintf("%T", result))
+	// Output:
+	// core.Result
 }

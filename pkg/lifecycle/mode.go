@@ -1,8 +1,8 @@
 package lifecycle
 
 import (
-	"os"
-	"strings"
+	os "dappco.re/go/gui/compat/os"
+	strings "dappco.re/go/gui/compat/strings"
 )
 
 type AppMode string

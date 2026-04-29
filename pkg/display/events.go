@@ -1,11 +1,11 @@
 package display
 
 import (
+	strings "dappco.re/go/gui/compat/strings"
 	"net"
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 

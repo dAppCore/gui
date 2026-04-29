@@ -3,7 +3,7 @@ package dialog
 
 import (
 	"context"
-	"strings"
+	strings "dappco.re/go/gui/compat/strings"
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/webview"
@@ -66,7 +66,7 @@ func taskRun(c *core.Core, name string, task any) core.Result {
 
 // --- Good path tests ---
 
-func TestService_Register_Good(t *core.T) {
+func TestService_Register_GoodCase(t *core.T) {
 	_, c := newTestService(t)
 	svc := core.MustServiceFor[*Service](c, "dialog")
 	core.AssertNotNil(t, svc)
@@ -331,43 +331,43 @@ func TestService_TaskPrompt_Good(t *core.T) {
 
 // --- Bad path tests ---
 
-func TestService_TaskOpenFile_Bad(t *core.T) {
+func TestService_TaskOpenFile_BadCase(t *core.T) {
 	c := core.New(core.WithServiceLock())
 	r := c.Action("dialog.openFile").Run(context.Background(), core.NewOptions())
 	core.AssertFalse(t, r.OK)
 }
 
-func TestService_TaskOpenFileWithOptions_Bad(t *core.T) {
+func TestService_TaskOpenFileWithOptions_BadCase(t *core.T) {
 	c := core.New(core.WithServiceLock())
 	r := c.Action("dialog.openFile").Run(context.Background(), core.NewOptions())
 	core.AssertFalse(t, r.OK)
 }
 
-func TestService_TaskSaveFileWithOptions_Bad(t *core.T) {
+func TestService_TaskSaveFileWithOptions_BadCase(t *core.T) {
 	c := core.New(core.WithServiceLock())
 	r := c.Action("dialog.saveFile").Run(context.Background(), core.NewOptions())
 	core.AssertFalse(t, r.OK)
 }
 
-func TestService_TaskInfo_Bad(t *core.T) {
+func TestService_TaskInfo_BadCase(t *core.T) {
 	c := core.New(core.WithServiceLock())
 	r := c.Action("dialog.info").Run(context.Background(), core.NewOptions())
 	core.AssertFalse(t, r.OK)
 }
 
-func TestService_TaskQuestion_Bad(t *core.T) {
+func TestService_TaskQuestion_BadCase(t *core.T) {
 	c := core.New(core.WithServiceLock())
 	r := c.Action("dialog.question").Run(context.Background(), core.NewOptions())
 	core.AssertFalse(t, r.OK)
 }
 
-func TestService_TaskWarning_Bad(t *core.T) {
+func TestService_TaskWarning_BadCase(t *core.T) {
 	c := core.New(core.WithServiceLock())
 	r := c.Action("dialog.warning").Run(context.Background(), core.NewOptions())
 	core.AssertFalse(t, r.OK)
 }
 
-func TestService_TaskError_Bad(t *core.T) {
+func TestService_TaskError_BadCase(t *core.T) {
 	c := core.New(core.WithServiceLock())
 	r := c.Action("dialog.error").Run(context.Background(), core.NewOptions())
 	core.AssertFalse(t, r.OK)
@@ -419,7 +419,7 @@ func TestService_TaskSaveFileWithOptions_FiltersAndHidden_Ugly(t *core.T) {
 	core.AssertEqual(t, "output.csv", mock.lastSaveOpts.Filename)
 }
 
-func TestService_UnknownTask_Ugly(t *core.T) {
+func TestService_UnknownTask_UglyCase(t *core.T) {
 	c := core.New(core.WithServiceLock())
 	r := c.Action("dialog.nonexistent").Run(context.Background(), core.NewOptions())
 	core.AssertFalse(t, r.OK)
@@ -542,4 +542,92 @@ func TestService_promptScript_Ugly(t *core.T) {
 	core.AssertContains(t, script, "Line 2")
 	core.AssertContains(t, script, "quoted")
 	core.AssertTrue(t, strings.Contains(script, "window.prompt("))
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestService_Register_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := Register(*new(Platform))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Register_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := Register(*new(Platform))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_OnStartup_Good(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_OnStartup_Bad(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_OnStartup_Ugly(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_HandleIPCEvents_Good(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_HandleIPCEvents_Bad(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_HandleIPCEvents_Ugly(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Register_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := Register(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

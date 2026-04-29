@@ -1,7 +1,7 @@
 package application
 
 import (
-	"path/filepath"
+	filepath "dappco.re/go/gui/compat/filepath"
 	"runtime"
 	"sync"
 )

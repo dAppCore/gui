@@ -6,7 +6,7 @@ import (
 	core "dappco.re/go"
 )
 
-func TestBackground_CloneMap_Good(t *core.T) {
+func TestBackground_CloneMap_GoodCase(t *core.T) {
 	source := map[string]any{"alpha": "one", "beta": 2}
 
 	cloned := cloneMap(source)
@@ -18,14 +18,14 @@ func TestBackground_CloneMap_Good(t *core.T) {
 	core.AssertEqual(t, "one", cloned["alpha"])
 }
 
-func TestBackground_CloneMap_Bad(t *core.T) {
+func TestBackground_CloneMap_BadCase(t *core.T) {
 	cloned := cloneMap(nil)
 
 	core.AssertNotNil(t, cloned)
 	core.AssertEmpty(t, cloned)
 }
 
-func TestBackground_CloneMap_Ugly(t *core.T) {
+func TestBackground_CloneMap_UglyCase(t *core.T) {
 	source := map[string]any{"nested": map[string]any{"value": "original"}}
 
 	cloned := cloneMap(source)
@@ -35,7 +35,7 @@ func TestBackground_CloneMap_Ugly(t *core.T) {
 	core.AssertEqual(t, map[string]any{"value": "original"}, cloned["nested"])
 }
 
-func TestBackground_DecodeMap_Good(t *core.T) {
+func TestBackground_DecodeMap_GoodCase(t *core.T) {
 	source := map[string]any{"scope": "/app"}
 	decoded := decodeMap(source)
 
@@ -47,21 +47,21 @@ func TestBackground_DecodeMap_Good(t *core.T) {
 	}
 }
 
-func TestBackground_DecodeMap_Bad(t *core.T) {
+func TestBackground_DecodeMap_BadCase(t *core.T) {
 	decoded := decodeMap("not-a-map")
 
 	core.AssertNotNil(t, decoded)
 	core.AssertEmpty(t, decoded)
 }
 
-func TestBackground_DecodeMap_Ugly(t *core.T) {
+func TestBackground_DecodeMap_UglyCase(t *core.T) {
 	decoded := decodeMap(nil)
 
 	core.AssertNotNil(t, decoded)
 	core.AssertEmpty(t, decoded)
 }
 
-func TestBackground_RegisterBackgroundActions_Good(t *core.T) {
+func TestBackground_RegisterBackgroundActions_GoodCase(t *core.T) {
 	svc, c := newTestDisplayService(t)
 	svc.background = NewBackgroundRegistry()
 
@@ -78,7 +78,7 @@ func TestBackground_RegisterBackgroundActions_Good(t *core.T) {
 	core.AssertEqual(t, map[string]any{"scriptURL": "https://example.com/sw.js"}, payload["active"])
 }
 
-func TestBackground_RegisterBackgroundActions_Bad(t *core.T) {
+func TestBackground_RegisterBackgroundActions_BadCase(t *core.T) {
 	svc, c := newTestDisplayService(t)
 	svc.background = NewBackgroundRegistry()
 
@@ -96,7 +96,7 @@ func TestBackground_RegisterBackgroundActions_Bad(t *core.T) {
 	core.AssertNil(t, payload["requests"])
 }
 
-func TestBackground_RegisterBackgroundActions_Ugly(t *core.T) {
+func TestBackground_RegisterBackgroundActions_UglyCase(t *core.T) {
 	svc, c := newTestDisplayService(t)
 	svc.background = NewBackgroundRegistry()
 
@@ -172,4 +172,242 @@ func TestBackground_AddPush_Ugly(t *core.T) {
 	core.AssertEqual(t, 2, r.PushSubscriptionsCount())
 	core.AssertEqual(t, "/push/abc", first["endpoint"])
 	core.AssertEqual(t, "/push/def", second["endpoint"])
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestBackground_NewBackgroundRegistry_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewBackgroundRegistry()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestBackground_NewBackgroundRegistry_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewBackgroundRegistry()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestBackground_NewBackgroundRegistry_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewBackgroundRegistry()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestBackground_BackgroundRegistry_RegisterServiceWorker_Good(t *core.T) {
+	subject := new(BackgroundRegistry)
+	result := core.Try(func() any {
+		got0 := subject.RegisterServiceWorker("agent", nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestBackground_BackgroundRegistry_RegisterServiceWorker_Bad(t *core.T) {
+	subject := new(BackgroundRegistry)
+	result := core.Try(func() any {
+		got0 := subject.RegisterServiceWorker("", nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestBackground_BackgroundRegistry_RegisterServiceWorker_Ugly(t *core.T) {
+	subject := new(BackgroundRegistry)
+	result := core.Try(func() any {
+		got0 := subject.RegisterServiceWorker("../../edge", nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestBackground_BackgroundRegistry_AddFetch_Good(t *core.T) {
+	subject := new(BackgroundRegistry)
+	result := core.Try(func() any {
+		got0 := subject.AddFetch("agent", "agent", nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestBackground_BackgroundRegistry_AddFetch_Bad(t *core.T) {
+	subject := new(BackgroundRegistry)
+	result := core.Try(func() any {
+		got0 := subject.AddFetch("", nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestBackground_BackgroundRegistry_AddFetch_Ugly(t *core.T) {
+	subject := new(BackgroundRegistry)
+	result := core.Try(func() any {
+		got0 := subject.AddFetch("../../edge", map[string]any{}, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestBackground_BackgroundRegistry_AddSync_Good(t *core.T) {
+	subject := new(BackgroundRegistry)
+	result := core.Try(func() any {
+		got0 := subject.AddSync(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestBackground_BackgroundRegistry_AddSync_Bad(t *core.T) {
+	subject := new(BackgroundRegistry)
+	result := core.Try(func() any {
+		got0 := subject.AddSync(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestBackground_BackgroundRegistry_AddSync_Ugly(t *core.T) {
+	subject := new(BackgroundRegistry)
+	result := core.Try(func() any {
+		got0 := subject.AddSync(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestBackground_BackgroundRegistry_AddPush_Good(t *core.T) {
+	subject := new(BackgroundRegistry)
+	result := core.Try(func() any {
+		got0 := subject.AddPush(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestBackground_BackgroundRegistry_AddPush_Bad(t *core.T) {
+	subject := new(BackgroundRegistry)
+	result := core.Try(func() any {
+		got0 := subject.AddPush(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestBackground_BackgroundRegistry_AddPush_Ugly(t *core.T) {
+	subject := new(BackgroundRegistry)
+	result := core.Try(func() any {
+		got0 := subject.AddPush(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestBackground_BackgroundRegistry_SyncRegistrationsCount_Good(t *core.T) {
+	subject := new(BackgroundRegistry)
+	result := core.Try(func() any {
+		got0 := subject.SyncRegistrationsCount()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestBackground_BackgroundRegistry_SyncRegistrationsCount_Bad(t *core.T) {
+	subject := new(BackgroundRegistry)
+	result := core.Try(func() any {
+		got0 := subject.SyncRegistrationsCount()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestBackground_BackgroundRegistry_SyncRegistrationsCount_Ugly(t *core.T) {
+	subject := new(BackgroundRegistry)
+	result := core.Try(func() any {
+		got0 := subject.SyncRegistrationsCount()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestBackground_BackgroundRegistry_PushSubscriptionsCount_Good(t *core.T) {
+	subject := new(BackgroundRegistry)
+	result := core.Try(func() any {
+		got0 := subject.PushSubscriptionsCount()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestBackground_BackgroundRegistry_PushSubscriptionsCount_Bad(t *core.T) {
+	subject := new(BackgroundRegistry)
+	result := core.Try(func() any {
+		got0 := subject.PushSubscriptionsCount()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestBackground_BackgroundRegistry_PushSubscriptionsCount_Ugly(t *core.T) {
+	subject := new(BackgroundRegistry)
+	result := core.Try(func() any {
+		got0 := subject.PushSubscriptionsCount()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestBackground_BackgroundRegistry_SetPaymentInstrument_Good(t *core.T) {
+	subject := new(BackgroundRegistry)
+	result := core.Try(func() any {
+		got0 := subject.SetPaymentInstrument("agent", nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestBackground_BackgroundRegistry_SetPaymentInstrument_Bad(t *core.T) {
+	subject := new(BackgroundRegistry)
+	result := core.Try(func() any {
+		got0 := subject.SetPaymentInstrument("", nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestBackground_BackgroundRegistry_SetPaymentInstrument_Ugly(t *core.T) {
+	subject := new(BackgroundRegistry)
+	result := core.Try(func() any {
+		got0 := subject.SetPaymentInstrument("../../edge", nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

@@ -1,11 +1,11 @@
 package display
 
 import (
+	filepath "dappco.re/go/gui/compat/filepath"
+	os "dappco.re/go/gui/compat/os" // Note: AX-6 — os.Getenv intrinsic, core.Env(...) preferred where reading config
 	"io"
 	"net"
 	"net/url"
-	"os" // Note: AX-6 — os.Getenv intrinsic, core.Env(...) preferred where reading config
-	"path/filepath"
 
 	core "dappco.re/go"
 	coreerr "dappco.re/go/log"
@@ -24,7 +24,7 @@ type ViewManifest struct {
 }
 
 type ManifestPreload struct {
-	Path    string `yaml:"path" json:"path"`
+	Path    string `yaml:"path,omitempty" json:"path,omitempty"`
 	Inline  string `yaml:"inline" json:"inline"`
 	Enabled *bool  `yaml:"enabled" json:"enabled,omitempty"`
 }

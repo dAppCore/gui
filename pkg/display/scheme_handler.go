@@ -2,8 +2,8 @@ package display
 
 import (
 	"context"
+	strings "dappco.re/go/gui/compat/strings"
 	"net/url"
-	"strings"
 
 	core "dappco.re/go"
 	coreerr "dappco.re/go/log"

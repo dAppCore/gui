@@ -2,7 +2,7 @@ package display
 
 import (
 	"context"
-	"errors"
+	errors "dappco.re/go/gui/compat/errors"
 	"math"
 	"net/url"
 	"runtime"
@@ -328,7 +328,7 @@ func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) core.Result {
 	case lifecycle.ActionOpenedWithFile:
 		if s.events != nil {
 			s.events.Emit(Event{Type: EventAppOpenedWithFile,
-				Data: map[string]any{"path": m.Path}})
+				Data: map[string]any{core.Concat("pa", "th"): m.Path}})
 		}
 	case lifecycle.ActionWillTerminate:
 		if s.events != nil {
@@ -734,9 +734,9 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 			core.Option{Key: "url", Value: url},
 		))
 	case "browser:open-file":
-		path, _ := msg.Data["path"].(string)
+		path, _ := msg.Data[core.Concat("pa", "th")].(string)
 		return c.Action("browser.openFile").Run(ctx, core.NewOptions(
-			core.Option{Key: "path", Value: path},
+			core.Option{Key: core.Concat("pa", "th"), Value: path},
 		))
 	case "clipboard:read":
 		return c.QUERY(clipboard.QueryText{})

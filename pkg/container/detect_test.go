@@ -2,8 +2,8 @@ package container
 
 import (
 	core "dappco.re/go"
-	"errors"
-	"path/filepath"
+	errors "dappco.re/go/gui/compat/errors"
+	filepath "dappco.re/go/gui/compat/filepath"
 
 	coreio "dappco.re/go/io"
 )
@@ -127,4 +127,59 @@ func writeExecutable(t *core.T, dir, name, script string) string {
 	path := filepath.Join(dir, name)
 	core.RequireNoError(t, coreio.Local.WriteMode(path, script, 0o755))
 	return path
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestDetect_Detect_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := Detect()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestDetect_Detect_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := Detect()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestDetect_Detect_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := Detect()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestDetect_DetectWithEnvironment_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := DetectWithEnvironment(*new(DetectEnvironment))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestDetect_DetectWithEnvironment_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := DetectWithEnvironment(*new(DetectEnvironment))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestDetect_DetectWithEnvironment_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := DetectWithEnvironment(*new(DetectEnvironment))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

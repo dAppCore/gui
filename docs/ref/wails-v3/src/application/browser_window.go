@@ -3,7 +3,7 @@
 package application
 
 import (
-	"fmt"
+	fmt "dappco.re/go/gui/compat/fmt"
 	"unsafe"
 
 	"github.com/wailsapp/wails/v3/pkg/events"

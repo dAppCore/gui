@@ -2,7 +2,7 @@ package mcp
 
 import (
 	"context"
-	"errors"
+	errors "dappco.re/go/gui/compat/errors"
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/webview"
@@ -28,7 +28,7 @@ func newWebviewToolsTestSubsystem(t *core.T, handler func(name string, opts core
 	return New(c)
 }
 
-func TestToolsWebview_webviewDevTools_Good(t *core.T) {
+func TestToolsWebview_webviewDevTools_GoodCase(t *core.T) {
 	var calls []string
 
 	sub := newWebviewToolsTestSubsystem(t, func(name string, opts core.Options) core.Result {

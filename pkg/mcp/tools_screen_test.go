@@ -2,7 +2,7 @@ package mcp
 
 import (
 	"context"
-	"errors"
+	errors "dappco.re/go/gui/compat/errors"
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/screen"

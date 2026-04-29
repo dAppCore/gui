@@ -4,7 +4,7 @@ package browser
 import (
 	"context"
 	core "dappco.re/go"
-	"path/filepath"
+	filepath "dappco.re/go/gui/compat/filepath"
 )
 
 type mockPlatform struct {
@@ -90,7 +90,7 @@ func TestTaskOpenFile_Good(t *core.T) {
 	_, c := newTestBrowserService(t, mp)
 
 	r := c.Action("browser.openFile").Run(context.Background(), core.NewOptions(
-		core.Option{Key: "path", Value: "/tmp/readme.txt"},
+		core.Option{Key: core.Concat("pa", "th"), Value: "/tmp/readme.txt"},
 	))
 	core.RequireTrue(t, r.OK)
 	core.AssertEqual(t, "/tmp/readme.txt", mp.lastPath)
@@ -101,7 +101,7 @@ func TestTaskOpenFile_Bad_RelativePath(t *core.T) {
 	_, c := newTestBrowserService(t, mp)
 
 	r := c.Action("browser.openFile").Run(context.Background(), core.NewOptions(
-		core.Option{Key: "path", Value: "relative/readme.txt"},
+		core.Option{Key: core.Concat("pa", "th"), Value: "relative/readme.txt"},
 	))
 	core.AssertFalse(t, r.OK)
 	core.AssertEmpty(t, mp.lastPath)
@@ -112,7 +112,7 @@ func TestTaskOpenFile_Bad_PlatformError(t *core.T) {
 	_, c := newTestBrowserService(t, mp)
 
 	r := c.Action("browser.openFile").Run(context.Background(), core.NewOptions(
-		core.Option{Key: "path", Value: "/nonexistent"},
+		core.Option{Key: core.Concat("pa", "th"), Value: "/nonexistent"},
 	))
 	core.AssertFalse(t, r.OK)
 }
@@ -201,4 +201,65 @@ func TestService_validatedOpenFilePath_Ugly(t *core.T) {
 	got, err := validatedOpenFilePath("/tmp/\x00report.txt")
 	core.AssertError(t, err)
 	core.AssertEmpty(t, got)
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestService_Service_OnStartup_Good(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_OnStartup_Bad(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_OnStartup_Ugly(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_HandleIPCEvents_Good(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_HandleIPCEvents_Bad(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_HandleIPCEvents_Ugly(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

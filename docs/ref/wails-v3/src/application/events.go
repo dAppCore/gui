@@ -1,13 +1,13 @@
 package application
 
 import (
-	"fmt"
+	fmt "dappco.re/go/gui/compat/fmt"
 	"reflect"
 	"slices"
 	"sync"
 	"sync/atomic"
 
-	"encoding/json"
+	json "dappco.re/go/gui/compat/json"
 
 	"github.com/wailsapp/wails/v3/pkg/events"
 )

@@ -1,11 +1,11 @@
 package display
 
 import (
-	"bytes"
 	"context"
-	"os"
-	"path/filepath"
-	"strings"
+	bytes "dappco.re/go/gui/compat/bytes"
+	filepath "dappco.re/go/gui/compat/filepath"
+	os "dappco.re/go/gui/compat/os"
+	strings "dappco.re/go/gui/compat/strings"
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/deno"
@@ -15,44 +15,37 @@ func captureStderr(t *core.T, fn func()) string {
 	t.Helper()
 
 	original := os.Stderr
-	reader, writer, err := os.Pipe()
-	core.RequireNoError(t, err)
+	var output bytes.Buffer
 	defer func() {
 		os.Stderr = original
-		_ = reader.Close()
-		_ = writer.Close()
 	}()
 
-	os.Stderr = writer
+	os.Stderr = &output
 	fn()
 	os.Stderr = original
-	core.RequireNoError(t, writer.Close())
 
-	var output bytes.Buffer
-	_, err = output.ReadFrom(reader)
-	core.RequireNoError(t, err)
 	return output.String()
 }
 
-func TestSidecar_SplitCommandArgs_Good(t *core.T) {
+func TestSidecar_SplitCommandArgs_GoodCase(t *core.T) {
 	core.AssertEqual(t, []string{"--import-map", "map.json", "--watch"}, splitCommandArgs("--import-map map.json --watch"))
 	observedType := core.Sprintf("%T", splitCommandArgs("--import-map map.json --watch"))
 	core.AssertNotEmpty(t, observedType)
 }
 
-func TestSidecar_SplitCommandArgs_Bad(t *core.T) {
+func TestSidecar_SplitCommandArgs_BadCase(t *core.T) {
 	core.AssertNil(t, splitCommandArgs(""))
 	core.AssertNil(t, splitCommandArgs("   "))
 	core.AssertNotEmpty(t, core.Sprintf("%T", splitCommandArgs("")))
 }
 
-func TestSidecar_SplitCommandArgs_Ugly(t *core.T) {
+func TestSidecar_SplitCommandArgs_UglyCase(t *core.T) {
 	core.AssertEqual(t, []string{"--flag", "--another", "value"}, splitCommandArgs("\t--flag\n--another   value\t"))
 	observedType := core.Sprintf("%T", splitCommandArgs("\t--flag\n--another   value\t"))
 	core.AssertNotEmpty(t, observedType)
 }
 
-func TestSidecar_ValidateArgs_Good(t *core.T) {
+func TestSidecar_ValidateArgs_GoodCase(t *core.T) {
 	output := captureStderr(t, func() {
 		core.AssertNoError(t, validateSidecarArgs(splitCommandArgs(""), nil))
 		core.AssertNoError(t, validateSidecarArgs(splitCommandArgs("   "), nil))
@@ -135,7 +128,7 @@ func TestSidecar_StartAction_Bad_RefusesPermissionArgs(t *core.T) {
 	core.AssertNil(t, svc.sidecar)
 }
 
-func TestSidecar_ValidateBinary_Good(t *core.T) {
+func TestSidecar_ValidateBinary_GoodCase(t *core.T) {
 	binary := filepath.Join(t.TempDir(), "deno")
 	core.RequireNoError(t, os.WriteFile(binary, []byte("#!/bin/sh\n"), 0o755))
 	expected, err := filepath.EvalSymlinks(binary)
@@ -147,7 +140,7 @@ func TestSidecar_ValidateBinary_Good(t *core.T) {
 	core.AssertEqual(t, expected, actual)
 }
 
-func TestSidecar_ValidateBinary_Bad(t *core.T) {
+func TestSidecar_ValidateBinary_BadCase(t *core.T) {
 	customBinary := filepath.Join(t.TempDir(), "deno-custom")
 	core.RequireNoError(t, os.WriteFile(customBinary, []byte("#!/bin/sh\n"), 0o755))
 
@@ -171,7 +164,7 @@ func TestSidecar_ValidateBinary_Bad(t *core.T) {
 	}
 }
 
-func TestSidecar_ValidateDir_Good(t *core.T) {
+func TestSidecar_ValidateDir_GoodCase(t *core.T) {
 	dir := canonicalTempDir(t)
 
 	actual, err := validateSidecarDir(dir)
@@ -180,7 +173,7 @@ func TestSidecar_ValidateDir_Good(t *core.T) {
 	core.AssertEqual(t, dir, actual)
 }
 
-func TestSidecar_ValidateDir_Bad(t *core.T) {
+func TestSidecar_ValidateDir_BadCase(t *core.T) {
 	base := canonicalTempDir(t)
 	child := filepath.Join(base, "child")
 	core.RequireNoError(t, os.Mkdir(child, 0o755))
@@ -221,7 +214,7 @@ func canonicalTempDir(t *core.T) string {
 	return dir
 }
 
-func TestSidecar_EnsureSidecar_Good(t *core.T) {
+func TestSidecar_EnsureSidecar_GoodCase(t *core.T) {
 	t.Setenv("CORE_DENO_BINARY", "/usr/local/bin/deno-custom")
 	t.Setenv("CORE_DENO_DIR", "/tmp/core-deno")
 	t.Setenv("CORE_DENO_ARGS", "--import-map map.json")
@@ -235,7 +228,7 @@ func TestSidecar_EnsureSidecar_Good(t *core.T) {
 	core.AssertFalse(t, status.Running)
 }
 
-func TestSidecar_EnsureSidecar_Bad(t *core.T) {
+func TestSidecar_EnsureSidecar_BadCase(t *core.T) {
 	svc := &Service{sidecar: deno.New(deno.Options{Binary: "custom-deno"})}
 
 	manager := svc.ensureSidecar()
@@ -244,7 +237,7 @@ func TestSidecar_EnsureSidecar_Bad(t *core.T) {
 	core.AssertEqual(t, "custom-deno", manager.Status().Binary)
 }
 
-func TestSidecar_EnsureSidecar_Ugly(t *core.T) {
+func TestSidecar_EnsureSidecar_UglyCase(t *core.T) {
 	t.Setenv("CORE_DENO_BINARY", "   ")
 	t.Setenv("CORE_DENO_DIR", "")
 	t.Setenv("CORE_DENO_ARGS", "   ")
@@ -268,7 +261,7 @@ func TestSidecar_RegisterActions_StartFailureClearsSidecar(t *core.T) {
 	core.AssertNil(t, svc.sidecar)
 }
 
-func TestSidecar_StatusAction_Good(t *core.T) {
+func TestSidecar_StatusAction_GoodCase(t *core.T) {
 	t.Setenv("CORE_DENO_BINARY", "/opt/core/deno")
 
 	_, c := newTestDisplayService(t)

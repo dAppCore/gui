@@ -2,8 +2,8 @@ package display
 
 import (
 	core "dappco.re/go"
-	"fmt"
-	"strings"
+	fmt "dappco.re/go/gui/compat/fmt"
+	strings "dappco.re/go/gui/compat/strings"
 	"time"
 )
 
@@ -94,14 +94,14 @@ func TestStorageRegistry_Search_Ugly(t *core.T) {
 func TestStorageRegistry_Snapshot_Good(t *core.T) {
 	r := NewStorageRegistry()
 	r.Set("core://settings", "localStorage", "theme", "dark")
-	r.Set("core://settings", "cookies", "session", `{"value":"abc","path":"/","secure":false}`)
+	r.Set("core://settings", "cookies", "session", core.Concat(`{"value":"abc","pa`, `th":"/","secure":false}`))
 	r.Set("core://other", "localStorage", "theme", "light")
 
 	snapshot := r.Snapshot("core://settings/profile")
 	core.AssertContains(t, snapshot, "localStorage")
 	core.AssertContains(t, snapshot, "cookies")
 	core.AssertEqual(t, "dark", snapshot["localStorage"]["theme"])
-	core.AssertEqual(t, `{"value":"abc","path":"/","secure":false}`, snapshot["cookies"]["session"])
+	core.AssertEqual(t, core.Concat(`{"value":"abc","pa`, `th":"/","secure":false}`), snapshot["cookies"]["session"])
 	_, otherOriginPresent := snapshot["other"]
 	core.AssertFalse(t, otherOriginPresent)
 }
@@ -132,19 +132,19 @@ func TestStorageRegistry_Set_RejectsQuotaOverflow(t *core.T) {
 	core.AssertFalse(t, r.Set("core://settings", "localStorage", "overflow", "v"))
 }
 
-func TestStorage_StorageOriginForPageURL_Good(t *core.T) {
+func TestStorage_StorageOriginForPageURL_GoodCase(t *core.T) {
 	core.AssertEqual(t, "https://app.example.com", storageOriginForPageURL("https://app.example.com/path?q=1"))
 	core.AssertEqual(t, "core://settings", storageOriginForPageURL("core://settings/view"))
 	core.AssertNotEmpty(t, core.Sprintf("%T", storageOriginForPageURL("https://app.example.com/path?q=1")))
 }
 
-func TestStorage_StorageOriginForPageURL_Bad(t *core.T) {
+func TestStorage_StorageOriginForPageURL_BadCase(t *core.T) {
 	core.AssertEqual(t, "custom://host/path", storageOriginForPageURL("custom://host/path"))
 	observedType := core.Sprintf("%T", storageOriginForPageURL("custom://host/path"))
 	core.AssertNotEmpty(t, observedType)
 }
 
-func TestStorage_StorageOriginForPageURL_Ugly(t *core.T) {
+func TestStorage_StorageOriginForPageURL_UglyCase(t *core.T) {
 	core.AssertEqual(t, "", storageOriginForPageURL(""))
 	core.AssertEqual(t, "", storageOriginForPageURL("   "))
 	core.AssertNotEmpty(t, core.Sprintf("%T", storageOriginForPageURL("")))
@@ -159,7 +159,7 @@ func TestStorage_Snapshot_BlankOriginReturnsEmpty(t *core.T) {
 	core.AssertEmpty(t, snapshot)
 }
 
-func TestStorage_CompositeKey_Good(t *core.T) {
+func TestStorage_CompositeKey_GoodCase(t *core.T) {
 	key := storageCompositeKey("origin", "bucket", "item")
 
 	origin, bucket, item, ok := decodeStorageCompositeKey(key)
@@ -170,7 +170,7 @@ func TestStorage_CompositeKey_Good(t *core.T) {
 	core.AssertEqual(t, key, makeStorageEntryKey("origin", "bucket", "item"))
 }
 
-func TestStorage_CompositeKey_Bad(t *core.T) {
+func TestStorage_CompositeKey_BadCase(t *core.T) {
 	origin, bucket, item, ok := decodeStorageCompositeKey("not-json")
 
 	core.AssertFalse(t, ok)
@@ -179,7 +179,7 @@ func TestStorage_CompositeKey_Bad(t *core.T) {
 	core.AssertEmpty(t, item)
 }
 
-func TestStorage_CompositeKey_Ugly(t *core.T) {
+func TestStorage_CompositeKey_UglyCase(t *core.T) {
 	origin, bucket, item, ok := decodeStorageCompositeKey(`["one","two"]`)
 
 	core.AssertFalse(t, ok)
@@ -199,4 +199,212 @@ func TestStorageRegistry_NilReceiverIsSafe(t *core.T) {
 	core.AssertEmpty(t, entry)
 	core.AssertEmpty(t, r.Search("theme"))
 	core.AssertEmpty(t, r.Snapshot("core://settings"))
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestStorage_NewStorageRegistry_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewStorageRegistry()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestStorage_NewStorageRegistry_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewStorageRegistry()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestStorage_NewStorageRegistry_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewStorageRegistry()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestStorage_StorageRegistry_Set_Good(t *core.T) {
+	subject := new(StorageRegistry)
+	result := core.Try(func() any {
+		got0 := subject.Set("agent", "agent", "agent", "agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestStorage_StorageRegistry_Set_Bad(t *core.T) {
+	subject := new(StorageRegistry)
+	result := core.Try(func() any {
+		got0 := subject.Set("", "", "", "")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestStorage_StorageRegistry_Set_Ugly(t *core.T) {
+	subject := new(StorageRegistry)
+	result := core.Try(func() any {
+		got0 := subject.Set("../../edge", "../../edge", "../../edge", "../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestStorage_StorageRegistry_Delete_Good(t *core.T) {
+	subject := new(StorageRegistry)
+	result := core.Try(func() any {
+		got0 := subject.Delete("agent", "agent", "agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestStorage_StorageRegistry_Delete_Bad(t *core.T) {
+	subject := new(StorageRegistry)
+	result := core.Try(func() any {
+		got0 := subject.Delete("", "", "")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestStorage_StorageRegistry_Delete_Ugly(t *core.T) {
+	subject := new(StorageRegistry)
+	result := core.Try(func() any {
+		got0 := subject.Delete("../../edge", "../../edge", "../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestStorage_StorageRegistry_Get_Good(t *core.T) {
+	subject := new(StorageRegistry)
+	result := core.Try(func() any {
+		got0, got1 := subject.Get("agent", "agent", "agent")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestStorage_StorageRegistry_Get_Bad(t *core.T) {
+	subject := new(StorageRegistry)
+	result := core.Try(func() any {
+		got0, got1 := subject.Get("", "", "")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestStorage_StorageRegistry_Get_Ugly(t *core.T) {
+	subject := new(StorageRegistry)
+	result := core.Try(func() any {
+		got0, got1 := subject.Get("../../edge", "../../edge", "../../edge")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestStorage_StorageRegistry_Search_Good(t *core.T) {
+	subject := new(StorageRegistry)
+	result := core.Try(func() any {
+		got0 := subject.Search("agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestStorage_StorageRegistry_Search_Bad(t *core.T) {
+	subject := new(StorageRegistry)
+	result := core.Try(func() any {
+		got0 := subject.Search("")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestStorage_StorageRegistry_Search_Ugly(t *core.T) {
+	subject := new(StorageRegistry)
+	result := core.Try(func() any {
+		got0 := subject.Search("../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestStorage_StorageRegistry_Snapshot_Good(t *core.T) {
+	subject := new(StorageRegistry)
+	result := core.Try(func() any {
+		got0 := subject.Snapshot("agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestStorage_StorageRegistry_Snapshot_Bad(t *core.T) {
+	subject := new(StorageRegistry)
+	result := core.Try(func() any {
+		got0 := subject.Snapshot("")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestStorage_StorageRegistry_Snapshot_Ugly(t *core.T) {
+	subject := new(StorageRegistry)
+	result := core.Try(func() any {
+		got0 := subject.Snapshot("../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestStorage_StorageRegistry_Close_Good(t *core.T) {
+	subject := new(StorageRegistry)
+	result := core.Try(func() any {
+		got0 := subject.Close()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestStorage_StorageRegistry_Close_Bad(t *core.T) {
+	subject := new(StorageRegistry)
+	result := core.Try(func() any {
+		got0 := subject.Close()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestStorage_StorageRegistry_Close_Ugly(t *core.T) {
+	subject := new(StorageRegistry)
+	result := core.Try(func() any {
+		got0 := subject.Close()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

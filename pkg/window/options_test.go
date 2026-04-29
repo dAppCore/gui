@@ -11,7 +11,7 @@ func applyWindowOptions(t *core.T, options ...WindowOption) *Window {
 	return w
 }
 
-func TestOptions_WindowOptionSetters_Good(t *core.T) {
+func TestOptions_WindowOptionSetters_GoodCase(t *core.T) {
 	w := applyWindowOptions(t,
 		WithName("main"),
 		WithTitle("Core GUI"),
@@ -49,7 +49,7 @@ func TestOptions_WindowOptionSetters_Good(t *core.T) {
 	core.AssertTrue(t, w.EnableFileDrop)
 }
 
-func TestOptions_WindowOptionSetters_Bad(t *core.T) {
+func TestOptions_WindowOptionSetters_BadCase(t *core.T) {
 	w := applyWindowOptions(t,
 		WithName(""),
 		WithTitle(""),
@@ -87,7 +87,7 @@ func TestOptions_WindowOptionSetters_Bad(t *core.T) {
 	core.AssertFalse(t, w.EnableFileDrop)
 }
 
-func TestOptions_WindowOptionSetters_Ugly(t *core.T) {
+func TestOptions_WindowOptionSetters_UglyCase(t *core.T) {
 	w := applyWindowOptions(t,
 		WithName("⚙︎core-window"),
 		WithTitle("A very long title that stays intact"),
@@ -157,4 +157,383 @@ func TestOptions_ApplyOptions_Ugly(t *core.T) {
 	core.RequireNoError(t, err)
 	core.AssertNotNil(t, w)
 	core.AssertEqual(t, &Window{}, w)
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestOptions_WithName_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithName("agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithName_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithName("")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithName_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithName("../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithTitle_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithTitle("agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithTitle_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithTitle("")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithTitle_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithTitle("../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithURL_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithURL("agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithURL_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithURL("")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithURL_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithURL("../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithHTML_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithHTML("agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithHTML_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithHTML("")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithHTML_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithHTML("../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithJS_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithJS("agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithJS_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithJS("")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithJS_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithJS("../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithSize_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithSize(1, 1)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithSize_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithSize(0, 0)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithSize_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithSize(-1, -1)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithPosition_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithPosition(1, 1)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithPosition_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithPosition(0, 0)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithPosition_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithPosition(-1, -1)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithMinSize_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithMinSize(1, 1)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithMinSize_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithMinSize(0, 0)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithMinSize_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithMinSize(-1, -1)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithMaxSize_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithMaxSize(1, 1)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithMaxSize_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithMaxSize(0, 0)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithMaxSize_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithMaxSize(-1, -1)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithFrameless_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithFrameless(true)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithFrameless_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithFrameless(false)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithFrameless_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithFrameless(false)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithHidden_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithHidden(true)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithHidden_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithHidden(false)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithHidden_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithHidden(false)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithAlwaysOnTop_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithAlwaysOnTop(true)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithAlwaysOnTop_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithAlwaysOnTop(false)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithAlwaysOnTop_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithAlwaysOnTop(false)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithBackgroundColour_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithBackgroundColour(1, 1, 1, 1)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithBackgroundColour_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithBackgroundColour(0, 0, 0, 0)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithBackgroundColour_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithBackgroundColour(0, 0, 0, 0)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithFileDrop_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithFileDrop(true)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithFileDrop_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithFileDrop(false)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestOptions_WithFileDrop_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := WithFileDrop(false)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

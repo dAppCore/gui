@@ -2,8 +2,8 @@
 package window
 
 import (
+	strings "dappco.re/go/gui/compat/strings"
 	"reflect"
-	"strings"
 
 	"dappco.re/go/gui/pkg/preload"
 	"github.com/wailsapp/wails/v3/pkg/application"

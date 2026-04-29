@@ -2,8 +2,8 @@ package container
 
 import (
 	"context"
+	strings "dappco.re/go/gui/compat/strings"
 	"regexp"
-	"strings"
 	"unicode"
 
 	core "dappco.re/go"

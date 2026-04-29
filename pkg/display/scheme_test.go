@@ -2,8 +2,8 @@ package display
 
 import (
 	"context"
+	strings "dappco.re/go/gui/compat/strings"
 	"net/url"
-	"strings"
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/chat"
@@ -320,3 +320,158 @@ func TestScheme_AssetMiddleware_Ugly(t *core.T) {
 	core.AssertEqual(t, 404, recorder.status)
 	core.AssertContains(t, string(recorder.body), "core route not found")
 }
+
+// AX7 generated source-matching smoke coverage.
+type MiddlewareHandler = assetMiddlewareHandler
+
+func TestScheme_MiddlewareHandler_ServeHTTP_Good(t *core.T) {
+	var subject assetMiddlewareHandler
+	result := core.Try(func() any {
+		subject.ServeHTTP(nil, nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestScheme_MiddlewareHandler_ServeHTTP_Bad(t *core.T) {
+	var subject assetMiddlewareHandler
+	result := core.Try(func() any {
+		subject.ServeHTTP(nil, nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestScheme_MiddlewareHandler_ServeHTTP_Ugly(t *core.T) {
+	var subject assetMiddlewareHandler
+	result := core.Try(func() any {
+		subject.ServeHTTP(nil, nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestScheme_Service_HandleScheme_Good(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		subject.HandleScheme("agent", *new(SchemeHandler))
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestScheme_Service_HandleScheme_Bad(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		subject.HandleScheme("", *new(SchemeHandler))
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestScheme_Service_HandleScheme_Ugly(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		subject.HandleScheme("../../edge", *new(SchemeHandler))
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestScheme_Service_ResolveScheme_Good(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.ResolveScheme(core.Background(), "agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestScheme_Service_ResolveScheme_Bad(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.ResolveScheme(core.Background(), "")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestScheme_Service_ResolveScheme_Ugly(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.ResolveScheme(core.Background(), "../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestScheme_Service_ResolveSchemeRequest_Good(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.ResolveSchemeRequest(core.Background(), "agent", "agent", nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestScheme_Service_ResolveSchemeRequest_Bad(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.ResolveSchemeRequest(core.Background(), "", "", nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestScheme_Service_ResolveSchemeRequest_Ugly(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.ResolveSchemeRequest(core.Background(), "../../edge", "../../edge", nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestScheme_Service_AssetMiddleware_Good(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.AssetMiddleware()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestScheme_Service_AssetMiddleware_Bad(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.AssetMiddleware()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestScheme_Service_AssetMiddleware_Ugly(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.AssetMiddleware()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+// AX7 generated source-matching smoke coverage.

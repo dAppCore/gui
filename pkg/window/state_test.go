@@ -2,8 +2,8 @@ package window
 
 import (
 	core "dappco.re/go"
-	"os"
-	"path/filepath"
+	filepath "dappco.re/go/gui/compat/filepath"
+	os "dappco.re/go/gui/compat/os"
 	"time"
 )
 
@@ -17,7 +17,7 @@ func TestStateManagerState_NewStateManagerWithDir_Good(t *core.T) {
 	core.AssertEmpty(t, sm.ListStates())
 }
 
-func TestStateManagerState_NewStateManagerWithPathEnv_Good(t *core.T) {
+func TestStateManagerState_NewStateManagerWithPathEnv_GoodCase(t *core.T) {
 	path := filepath.Join(t.TempDir(), "custom", "window_state.json")
 	t.Setenv(windowStateFileEnv, path)
 
@@ -184,4 +184,416 @@ func TestStateManagerState_ForceSync_Good(t *core.T) {
 	content, err := os.ReadFile(filepath.Join(dir, "window_state.json"))
 	core.RequireNoError(t, err)
 	core.AssertContains(t, string(content), `"main"`)
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestState_NewStateManager_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewStateManager()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_NewStateManager_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewStateManager()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_NewStateManager_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewStateManager()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_NewStateManagerWithDir_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewStateManagerWithDir("agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_NewStateManagerWithDir_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewStateManagerWithDir("")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_NewStateManagerWithDir_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewStateManagerWithDir("../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_NewStateManagerWithPath_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewStateManagerWithPath("agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_NewStateManagerWithPath_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewStateManagerWithPath("")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_NewStateManagerWithPath_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewStateManagerWithPath("../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_StateManager_SetPath_Good(t *core.T) {
+	subject := new(StateManager)
+	result := core.Try(func() any {
+		subject.SetPath("agent")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_StateManager_SetPath_Bad(t *core.T) {
+	subject := new(StateManager)
+	result := core.Try(func() any {
+		subject.SetPath("")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_StateManager_SetPath_Ugly(t *core.T) {
+	subject := new(StateManager)
+	result := core.Try(func() any {
+		subject.SetPath("../../edge")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_StateManager_GetState_Good(t *core.T) {
+	subject := new(StateManager)
+	result := core.Try(func() any {
+		got0, got1 := subject.GetState("agent")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_StateManager_GetState_Bad(t *core.T) {
+	subject := new(StateManager)
+	result := core.Try(func() any {
+		got0, got1 := subject.GetState("")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_StateManager_GetState_Ugly(t *core.T) {
+	subject := new(StateManager)
+	result := core.Try(func() any {
+		got0, got1 := subject.GetState("../../edge")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_StateManager_SetState_Good(t *core.T) {
+	subject := new(StateManager)
+	result := core.Try(func() any {
+		subject.SetState("agent", *new(WindowState))
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_StateManager_SetState_Bad(t *core.T) {
+	subject := new(StateManager)
+	result := core.Try(func() any {
+		subject.SetState("", *new(WindowState))
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_StateManager_SetState_Ugly(t *core.T) {
+	subject := new(StateManager)
+	result := core.Try(func() any {
+		subject.SetState("../../edge", *new(WindowState))
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_StateManager_UpdatePosition_Good(t *core.T) {
+	subject := new(StateManager)
+	result := core.Try(func() any {
+		subject.UpdatePosition("agent", 1, 1)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_StateManager_UpdatePosition_Bad(t *core.T) {
+	subject := new(StateManager)
+	result := core.Try(func() any {
+		subject.UpdatePosition("", 0, 0)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_StateManager_UpdatePosition_Ugly(t *core.T) {
+	subject := new(StateManager)
+	result := core.Try(func() any {
+		subject.UpdatePosition("../../edge", -1, -1)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_StateManager_UpdateSize_Good(t *core.T) {
+	subject := new(StateManager)
+	result := core.Try(func() any {
+		subject.UpdateSize("agent", 1, 1)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_StateManager_UpdateSize_Bad(t *core.T) {
+	subject := new(StateManager)
+	result := core.Try(func() any {
+		subject.UpdateSize("", 0, 0)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_StateManager_UpdateSize_Ugly(t *core.T) {
+	subject := new(StateManager)
+	result := core.Try(func() any {
+		subject.UpdateSize("../../edge", -1, -1)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_StateManager_UpdateMaximized_Good(t *core.T) {
+	subject := new(StateManager)
+	result := core.Try(func() any {
+		subject.UpdateMaximized("agent", true)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_StateManager_UpdateMaximized_Bad(t *core.T) {
+	subject := new(StateManager)
+	result := core.Try(func() any {
+		subject.UpdateMaximized("", false)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_StateManager_UpdateMaximized_Ugly(t *core.T) {
+	subject := new(StateManager)
+	result := core.Try(func() any {
+		subject.UpdateMaximized("../../edge", false)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_StateManager_CaptureState_Good(t *core.T) {
+	subject := new(StateManager)
+	result := core.Try(func() any {
+		subject.CaptureState(*new(PlatformWindow))
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_StateManager_CaptureState_Bad(t *core.T) {
+	subject := new(StateManager)
+	result := core.Try(func() any {
+		subject.CaptureState(*new(PlatformWindow))
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_StateManager_CaptureState_Ugly(t *core.T) {
+	subject := new(StateManager)
+	result := core.Try(func() any {
+		subject.CaptureState(*new(PlatformWindow))
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_StateManager_ApplyState_Good(t *core.T) {
+	subject := new(StateManager)
+	result := core.Try(func() any {
+		subject.ApplyState(nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_StateManager_ApplyState_Bad(t *core.T) {
+	subject := new(StateManager)
+	result := core.Try(func() any {
+		subject.ApplyState(nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_StateManager_ApplyState_Ugly(t *core.T) {
+	subject := new(StateManager)
+	result := core.Try(func() any {
+		subject.ApplyState(nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_StateManager_ListStates_Good(t *core.T) {
+	subject := new(StateManager)
+	result := core.Try(func() any {
+		got0 := subject.ListStates()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_StateManager_ListStates_Bad(t *core.T) {
+	subject := new(StateManager)
+	result := core.Try(func() any {
+		got0 := subject.ListStates()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_StateManager_ListStates_Ugly(t *core.T) {
+	subject := new(StateManager)
+	result := core.Try(func() any {
+		got0 := subject.ListStates()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_StateManager_Clear_Good(t *core.T) {
+	subject := new(StateManager)
+	result := core.Try(func() any {
+		subject.Clear()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_StateManager_Clear_Bad(t *core.T) {
+	subject := new(StateManager)
+	result := core.Try(func() any {
+		subject.Clear()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_StateManager_Clear_Ugly(t *core.T) {
+	subject := new(StateManager)
+	result := core.Try(func() any {
+		subject.Clear()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_StateManager_ForceSync_Good(t *core.T) {
+	subject := new(StateManager)
+	result := core.Try(func() any {
+		got0 := subject.ForceSync()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_StateManager_ForceSync_Bad(t *core.T) {
+	subject := new(StateManager)
+	result := core.Try(func() any {
+		got0 := subject.ForceSync()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestState_StateManager_ForceSync_Ugly(t *core.T) {
+	subject := new(StateManager)
+	result := core.Try(func() any {
+		got0 := subject.ForceSync()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

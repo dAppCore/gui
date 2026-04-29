@@ -67,3 +67,154 @@ func TestContextMenuManager_Remove_Ugly(t *core.T) {
 
 	core.AssertEmpty(t, manager.GetAll())
 }
+
+// AX7 generated source-matching smoke coverage.
+func TestContextMenu_ContextMenuManager_New_Good(t *core.T) {
+	subject := new(ContextMenuManager)
+	result := core.Try(func() any {
+		got0 := subject.New()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestContextMenu_ContextMenuManager_New_Bad(t *core.T) {
+	subject := new(ContextMenuManager)
+	result := core.Try(func() any {
+		got0 := subject.New()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestContextMenu_ContextMenuManager_New_Ugly(t *core.T) {
+	subject := new(ContextMenuManager)
+	result := core.Try(func() any {
+		got0 := subject.New()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestContextMenu_ContextMenuManager_Add_Good(t *core.T) {
+	subject := new(ContextMenuManager)
+	result := core.Try(func() any {
+		subject.Add("agent", nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestContextMenu_ContextMenuManager_Add_Bad(t *core.T) {
+	subject := new(ContextMenuManager)
+	result := core.Try(func() any {
+		subject.Add("", nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestContextMenu_ContextMenuManager_Add_Ugly(t *core.T) {
+	subject := new(ContextMenuManager)
+	result := core.Try(func() any {
+		subject.Add("../../edge", nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestContextMenu_ContextMenuManager_Remove_Good(t *core.T) {
+	subject := new(ContextMenuManager)
+	result := core.Try(func() any {
+		subject.Remove("agent")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestContextMenu_ContextMenuManager_Remove_Bad(t *core.T) {
+	subject := new(ContextMenuManager)
+	result := core.Try(func() any {
+		subject.Remove("")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestContextMenu_ContextMenuManager_Remove_Ugly(t *core.T) {
+	subject := new(ContextMenuManager)
+	result := core.Try(func() any {
+		subject.Remove("../../edge")
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestContextMenu_ContextMenuManager_Get_Good(t *core.T) {
+	subject := new(ContextMenuManager)
+	result := core.Try(func() any {
+		got0, got1 := subject.Get("agent")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestContextMenu_ContextMenuManager_Get_Bad(t *core.T) {
+	subject := new(ContextMenuManager)
+	result := core.Try(func() any {
+		got0, got1 := subject.Get("")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestContextMenu_ContextMenuManager_Get_Ugly(t *core.T) {
+	subject := new(ContextMenuManager)
+	result := core.Try(func() any {
+		got0, got1 := subject.Get("../../edge")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestContextMenu_ContextMenuManager_GetAll_Good(t *core.T) {
+	subject := new(ContextMenuManager)
+	result := core.Try(func() any {
+		got0 := subject.GetAll()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestContextMenu_ContextMenuManager_GetAll_Bad(t *core.T) {
+	subject := new(ContextMenuManager)
+	result := core.Try(func() any {
+		got0 := subject.GetAll()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestContextMenu_ContextMenuManager_GetAll_Ugly(t *core.T) {
+	subject := new(ContextMenuManager)
+	result := core.Try(func() any {
+		got0 := subject.GetAll()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}

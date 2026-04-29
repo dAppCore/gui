@@ -2,10 +2,10 @@ package container
 
 import (
 	"context"
-	"fmt"
-	"os/exec"
+	exec "dappco.re/go/gui/compat/exec"
+	fmt "dappco.re/go/gui/compat/fmt"
+	strings "dappco.re/go/gui/compat/strings"
 	"sort"
-	"strings"
 	"sync"
 	"time"
 

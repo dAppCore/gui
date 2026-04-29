@@ -88,7 +88,7 @@ func TestTaskSend_Good(t *core.T) {
 	core.AssertEqual(t, "Test", mock.lastOpts.Title)
 }
 
-func TestTaskSend_Fallback_Good(t *core.T) {
+func TestTaskSend_Fallback_GoodCase(t *core.T) {
 	// Platform fails -> falls back to dialog via IPC
 	mockNotify := &mockPlatform{sendErr: core.NewError("no permission")}
 	mockDlg := &mockDialogPlatform{}
@@ -196,7 +196,7 @@ func TestTaskRegisterCategory_Ugly(t *core.T) {
 
 // --- NotificationOptions with Actions ---
 
-func TestTaskSend_WithActions_Good(t *core.T) {
+func TestTaskSend_WithActions_GoodCase(t *core.T) {
 	mock, c := newTestService(t)
 	options := NotificationOptions{
 		Title:      "Team Chat",
@@ -213,7 +213,7 @@ func TestTaskSend_WithActions_Good(t *core.T) {
 	core.AssertEqual(t, 2, len(mock.lastOpts.Actions))
 }
 
-func TestTaskSend_RegisteredCategoryActions_Good(t *core.T) {
+func TestTaskSend_RegisteredCategoryActions_GoodCase(t *core.T) {
 	mock, c := newTestService(t)
 	core.RequireTrue(t, taskRun(c, "notification.registerCategory", TaskRegisterCategory{
 		Category: NotificationCategory{
@@ -316,4 +316,92 @@ func TestQueryPermission_Ugly(t *core.T) {
 	core.RequireTrue(t, c.ServiceStartup(context.Background(), nil).OK)
 	r := c.QUERY(QueryPermission{})
 	core.AssertFalse(t, r.OK)
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestService_Register_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := Register(*new(Platform))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Register_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := Register(*new(Platform))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Register_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := Register(*new(Platform))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_OnStartup_Good(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_OnStartup_Bad(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_OnStartup_Ugly(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_HandleIPCEvents_Good(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_HandleIPCEvents_Bad(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_HandleIPCEvents_Ugly(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

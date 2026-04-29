@@ -69,7 +69,7 @@ func (d *immediateP2PDriver) Subscribe(_ context.Context, topic string, handler 
 	return nil
 }
 
-func TestDisplayP2P_attachP2PBridge_Good(t *core.T) {
+func TestDisplayP2P_attachP2PBridge_GoodCase(t *core.T) {
 	_, p2pSvc, _, eventBuffer := newDisplayP2PTestService(t)
 
 	err := p2pSvc.Publish(context.Background(), p2p.Envelope{
@@ -133,7 +133,7 @@ func TestDisplayP2P_attachP2PBridge_Bad(t *core.T) {
 	})
 }
 
-func TestDisplayP2P_attachP2PBridge_Ugly(t *core.T) {
+func TestDisplayP2P_attachP2PBridge_UglyCase(t *core.T) {
 	displaySvc, p2pSvc, _, _ := newDisplayP2PTestService(t)
 	displaySvc.events = nil
 

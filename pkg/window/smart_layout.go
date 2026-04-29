@@ -2,8 +2,8 @@ package window
 
 import (
 	"context"
+	strings "dappco.re/go/gui/compat/strings"
 	"sort"
-	"strings"
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/screen"

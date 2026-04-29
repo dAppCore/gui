@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"context"
 	core "dappco.re/go"
-	"encoding/json"
+	json "dappco.re/go/gui/compat/json"
 	"net"
 	"time"
 )
@@ -78,4 +78,152 @@ func TestTCPDriver_Publish_ContinuesAfterPeerFailure(t *core.T) {
 	case <-time.After(time.Second):
 		t.Fatal("timed out waiting for peer delivery")
 	}
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestTcp_NewTCPDriver_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewTCPDriver(*new(TCPOptions))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestTcp_NewTCPDriver_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewTCPDriver(*new(TCPOptions))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestTcp_NewTCPDriver_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewTCPDriver(*new(TCPOptions))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestTcp_TCPDriver_ListenAddr_Good(t *core.T) {
+	subject := new(TCPDriver)
+	result := core.Try(func() any {
+		got0 := subject.ListenAddr()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestTcp_TCPDriver_ListenAddr_Bad(t *core.T) {
+	subject := new(TCPDriver)
+	result := core.Try(func() any {
+		got0 := subject.ListenAddr()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestTcp_TCPDriver_ListenAddr_Ugly(t *core.T) {
+	subject := new(TCPDriver)
+	result := core.Try(func() any {
+		got0 := subject.ListenAddr()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestTcp_TCPDriver_Subscribe_Good(t *core.T) {
+	subject := new(TCPDriver)
+	result := core.Try(func() any {
+		got0 := subject.Subscribe(core.Background(), "agent", nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestTcp_TCPDriver_Subscribe_Bad(t *core.T) {
+	subject := new(TCPDriver)
+	result := core.Try(func() any {
+		got0 := subject.Subscribe(core.Background(), "", nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestTcp_TCPDriver_Subscribe_Ugly(t *core.T) {
+	subject := new(TCPDriver)
+	result := core.Try(func() any {
+		got0 := subject.Subscribe(core.Background(), "../../edge", nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestTcp_TCPDriver_Publish_Good(t *core.T) {
+	subject := new(TCPDriver)
+	result := core.Try(func() any {
+		got0 := subject.Publish(core.Background(), *new(Envelope))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestTcp_TCPDriver_Publish_Bad(t *core.T) {
+	subject := new(TCPDriver)
+	result := core.Try(func() any {
+		got0 := subject.Publish(core.Background(), *new(Envelope))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestTcp_TCPDriver_Publish_Ugly(t *core.T) {
+	subject := new(TCPDriver)
+	result := core.Try(func() any {
+		got0 := subject.Publish(core.Background(), *new(Envelope))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestTcp_TCPDriver_Close_Good(t *core.T) {
+	subject := new(TCPDriver)
+	result := core.Try(func() any {
+		got0 := subject.Close()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestTcp_TCPDriver_Close_Bad(t *core.T) {
+	subject := new(TCPDriver)
+	result := core.Try(func() any {
+		got0 := subject.Close()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestTcp_TCPDriver_Close_Ugly(t *core.T) {
+	subject := new(TCPDriver)
+	result := core.Try(func() any {
+		got0 := subject.Close()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

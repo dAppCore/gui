@@ -60,7 +60,7 @@ type DialogSaveFileInput struct {
 	ShowHiddenFiles bool                `json:"showHiddenFiles,omitempty"`
 }
 type DialogSaveFileOutput struct {
-	Path string `json:"path"`
+	Path string `json:"path,omitempty"`
 }
 
 func (s *Subsystem) dialogSaveFile(_ context.Context, _ *mcp.CallToolRequest, input DialogSaveFileInput) (*mcp.CallToolResult, DialogSaveFileOutput, error) {
@@ -94,7 +94,7 @@ type DialogOpenDirectoryInput struct {
 	ShowHiddenFiles bool   `json:"showHiddenFiles,omitempty"`
 }
 type DialogOpenDirectoryOutput struct {
-	Path string `json:"path"`
+	Path string `json:"path,omitempty"`
 }
 
 func (s *Subsystem) dialogOpenDirectory(_ context.Context, _ *mcp.CallToolRequest, input DialogOpenDirectoryInput) (*mcp.CallToolResult, DialogOpenDirectoryOutput, error) {

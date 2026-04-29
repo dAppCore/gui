@@ -1,18 +1,18 @@
 package chat
 
 import (
-	"bytes"
 	"context"
+	bytes "dappco.re/go/gui/compat/bytes"
+	filepath "dappco.re/go/gui/compat/filepath"
+	os "dappco.re/go/gui/compat/os"
+	strings "dappco.re/go/gui/compat/strings"
 	"encoding/base64"
 	"image"
 	"io"
 	"net/http"
-	"os"
-	"path/filepath"
 	"slices"
 	"sort"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -128,7 +128,7 @@ type removeImageInput struct {
 
 type attachImageFileInput struct {
 	ConversationID string `json:"conversation_id,omitempty"`
-	Path           string `json:"path"`
+	Path           string `json:"path,omitempty"`
 }
 
 type openAIRequest struct {
@@ -177,7 +177,7 @@ type configuredModels struct {
 	DefaultModel string `yaml:"default_model"`
 	Models       []struct {
 		Name           string `yaml:"name"`
-		Path           string `yaml:"path"`
+		Path           string `yaml:"path,omitempty"`
 		Architecture   string `yaml:"architecture"`
 		Backend        string `yaml:"backend"`
 		SupportsVision *bool  `yaml:"supports_vision"`

@@ -3,8 +3,8 @@ package environment
 
 import (
 	"context"
-	"path/filepath"
-	"strings"
+	filepath "dappco.re/go/gui/compat/filepath"
+	strings "dappco.re/go/gui/compat/strings"
 	"sync"
 
 	core "dappco.re/go"

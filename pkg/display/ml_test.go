@@ -7,7 +7,7 @@ import (
 	"dappco.re/go/gui/pkg/chat"
 )
 
-func TestML_ModelState_Good(t *core.T) {
+func TestML_ModelState_GoodCase(t *core.T) {
 	t.Setenv("CORE_ML_API_URL", "https://ml.example.test/api/")
 	svc, c := newTestDisplayService(t)
 	c.Action("gui.chat.models", func(_ context.Context, _ core.Options) core.Result {
@@ -28,7 +28,7 @@ func TestML_ModelState_Good(t *core.T) {
 	core.AssertEqual(t, "https://ml.example.test/api/v1/chat/completions", state.InferenceURL)
 }
 
-func TestML_ModelState_Bad(t *core.T) {
+func TestML_ModelState_BadCase(t *core.T) {
 	t.Setenv("CORE_ML_API_URL", "")
 	svc, _ := newTestDisplayService(t)
 
@@ -39,7 +39,7 @@ func TestML_ModelState_Bad(t *core.T) {
 	core.AssertEqual(t, "local", state.Backend)
 }
 
-func TestML_ModelState_Ugly(t *core.T) {
+func TestML_ModelState_UglyCase(t *core.T) {
 	svc, c := newTestDisplayService(t)
 	c.Action("gui.chat.models", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{

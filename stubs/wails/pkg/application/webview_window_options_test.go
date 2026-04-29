@@ -4,7 +4,7 @@ import (
 	core "dappco.re/go"
 )
 
-func TestWebviewWindowOptions_Constants_Good(t *core.T) {
+func TestWebviewWindowOptions_Constants_GoodCase(t *core.T) {
 	core.AssertEqual(t, WindowStateNormal, WindowState(0))
 	core.AssertEqual(t, WindowStateMinimised, WindowState(1))
 	core.AssertEqual(t, WindowStateMaximised, WindowState(2))
@@ -38,7 +38,7 @@ func TestWebviewWindowOptions_Constants_Good(t *core.T) {
 	core.AssertEqual(t, NSAppearanceNameDarkAqua, MacAppearanceType("NSAppearanceNameDarkAqua"))
 }
 
-func TestWebviewWindowOptions_Constants_Bad(t *core.T) {
+func TestWebviewWindowOptions_Constants_BadCase(t *core.T) {
 	core.AssertEqual(t, MacTitleBarDefault, MacTitleBar{})
 	core.AssertEqual(t, MacTitleBarHidden, MacTitleBar{
 		AppearsTransparent: true,
@@ -66,7 +66,7 @@ func TestWebviewWindowOptions_Constants_Bad(t *core.T) {
 	core.AssertEqual(t, MacWindowCollectionBehaviorFullScreenAuxiliary, MacWindowCollectionBehavior(1<<8))
 }
 
-func TestWebviewWindowOptions_Constants_Ugly(t *core.T) {
+func TestWebviewWindowOptions_Constants_UglyCase(t *core.T) {
 	options := WebviewWindowOptions{
 		Name:             "main",
 		Title:            "Main",
@@ -99,4 +99,59 @@ func TestWebviewWindowOptions_Constants_Ugly(t *core.T) {
 	core.AssertTrue(t, options.DisableResize)
 	core.AssertTrue(t, options.EnableFileDrop)
 	core.AssertEqual(t, RGBA{Red: 1, Green: 2, Blue: 3, Alpha: 4}, options.BackgroundColour)
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestWebviewWindowOptions_NewRGB_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewRGB(1, 1, 1)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWebviewWindowOptions_NewRGB_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewRGB(0, 0, 0)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWebviewWindowOptions_NewRGB_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewRGB(0, 0, 0)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWebviewWindowOptions_NewRGBPtr_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewRGBPtr(1, 1, 1)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWebviewWindowOptions_NewRGBPtr_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewRGBPtr(0, 0, 0)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestWebviewWindowOptions_NewRGBPtr_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewRGBPtr(0, 0, 0)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

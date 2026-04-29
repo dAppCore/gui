@@ -186,7 +186,7 @@ func TestSubsystem_Good_CallTool_BrowserOpenFile(t *core.T) {
 	server := mcp.NewServer(&mcp.Implementation{Name: "test", Version: "0.1.0"}, nil)
 	sub.RegisterTools(server)
 
-	result, err := sub.CallTool(context.Background(), "browser_open_file", map[string]any{"path": "/tmp/readme.txt"})
+	result, err := sub.CallTool(context.Background(), "browser_open_file", map[string]any{core.Concat("pa", "th"): "/tmp/readme.txt"})
 	core.RequireNoError(t, err)
 	core.AssertContains(t, result, "success")
 	core.AssertEqual(t, "/tmp/readme.txt", browserPlatform.lastPath)

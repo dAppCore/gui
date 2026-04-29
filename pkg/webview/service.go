@@ -3,9 +3,9 @@ package webview
 
 import (
 	"context"
+	strings "dappco.re/go/gui/compat/strings"
 	"encoding/base64"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 

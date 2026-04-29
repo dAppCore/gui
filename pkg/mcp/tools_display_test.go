@@ -2,7 +2,7 @@ package mcp
 
 import (
 	"context"
-	"errors"
+	errors "dappco.re/go/gui/compat/errors"
 
 	core "dappco.re/go"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -19,7 +19,7 @@ func newDisplayToolTestSubsystem(t *core.T, handler func(core.Options) core.Resu
 	return New(c)
 }
 
-func TestToolsDisplay_schemeResolve_Good(t *core.T) {
+func TestToolsDisplay_schemeResolve_GoodCase(t *core.T) {
 	sub := newDisplayToolTestSubsystem(t, func(opts core.Options) core.Result {
 		return core.Result{
 			Value: map[string]any{

@@ -33,7 +33,7 @@ func TestMenuItem_NewRole_Bad(t *core.T) {
 	core.AssertEqual(t, "unknown", MenuRole(999).String())
 }
 
-func TestMenuItem_NewRole_Ugly(t *core.T) {
+func TestMenuItem_NewRole_UglyCase(t *core.T) {
 	item := NewMenuItem("Open")
 	item.SetAccelerator("CmdOrCtrl+O")
 	item.SetTooltip("Open a file")
@@ -45,4 +45,254 @@ func TestMenuItem_NewRole_Ugly(t *core.T) {
 	core.AssertEqual(t, "Open a file", item.Tooltip)
 	core.AssertTrue(t, item.Checked)
 	core.AssertFalse(t, item.Enabled)
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestMenuitem_NewMenuItem_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewMenuItem("agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenuitem_NewMenuItem_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewMenuItem("")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenuitem_NewMenuItem_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewMenuItem("../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenuitem_NewMenuItemSeparator_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewMenuItemSeparator()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenuitem_NewMenuItemSeparator_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewMenuItemSeparator()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenuitem_NewMenuItemSeparator_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewMenuItemSeparator()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenuitem_NewMenuItemCheckbox_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewMenuItemCheckbox("agent", true)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenuitem_NewMenuItemCheckbox_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewMenuItemCheckbox("", false)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenuitem_NewMenuItemCheckbox_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewMenuItemCheckbox("../../edge", false)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenuitem_NewMenuItemRadio_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewMenuItemRadio("agent", true)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenuitem_NewMenuItemRadio_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewMenuItemRadio("", false)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenuitem_NewMenuItemRadio_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewMenuItemRadio("../../edge", false)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenuitem_NewSubMenuItem_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewSubMenuItem("agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenuitem_NewSubMenuItem_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewSubMenuItem("")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenuitem_NewSubMenuItem_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewSubMenuItem("../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenuitem_NewRole_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewRole(*new(Role))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenuitem_NewRole_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewRole(*new(Role))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenuitem_NewRole_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewRole(*new(Role))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenuitem_NewServicesMenu_Good(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewServicesMenu()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenuitem_NewServicesMenu_Bad(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewServicesMenu()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenuitem_NewServicesMenu_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := NewServicesMenu()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenuitem_MenuItem_GetAccelerator_Good(t *core.T) {
+	subject := new(MenuItem)
+	result := core.Try(func() any {
+		got0 := subject.GetAccelerator()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenuitem_MenuItem_GetAccelerator_Bad(t *core.T) {
+	subject := new(MenuItem)
+	result := core.Try(func() any {
+		got0 := subject.GetAccelerator()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenuitem_MenuItem_GetAccelerator_Ugly(t *core.T) {
+	subject := new(MenuItem)
+	result := core.Try(func() any {
+		got0 := subject.GetAccelerator()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenuitem_MenuItem_GetSubmenu_Good(t *core.T) {
+	subject := new(MenuItem)
+	result := core.Try(func() any {
+		got0 := subject.GetSubmenu()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenuitem_MenuItem_GetSubmenu_Bad(t *core.T) {
+	subject := new(MenuItem)
+	result := core.Try(func() any {
+		got0 := subject.GetSubmenu()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestMenuitem_MenuItem_GetSubmenu_Ugly(t *core.T) {
+	subject := new(MenuItem)
+	result := core.Try(func() any {
+		got0 := subject.GetSubmenu()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

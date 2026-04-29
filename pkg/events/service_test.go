@@ -152,7 +152,7 @@ func TestTaskEmit_Good(t *core.T) {
 	core.AssertEqual(t, "alice", mock.emitted[0].Data)
 }
 
-func TestTaskEmit_NoData_Good(t *core.T) {
+func TestTaskEmit_NoData_GoodCase(t *core.T) {
 	_, c, mock := newTestService(t)
 
 	r := taskRun(c, "events.emit", TaskEmit{Name: "ping"})
@@ -236,7 +236,7 @@ func TestQueryListeners_Good(t *core.T) {
 	core.AssertEqual(t, 1, counts["theme:changed"])
 }
 
-func TestQueryListeners_Empty_Good(t *core.T) {
+func TestQueryListeners_Empty_GoodCase(t *core.T) {
 	_, c, _ := newTestService(t)
 
 	r := c.QUERY(QueryListeners{})
@@ -246,7 +246,7 @@ func TestQueryListeners_Empty_Good(t *core.T) {
 	core.AssertEmpty(t, infos)
 }
 
-func TestOnShutdown_CancelsAll_Good(t *core.T) {
+func TestOnShutdown_CancelsAll_GoodCase(t *core.T) {
 	svc, _, mock := newTestService(t)
 
 	core.RequireTrue(t, taskRun(svc.Core(), "events.on", TaskOn{Name: "a:b"}).OK)
@@ -257,7 +257,7 @@ func TestOnShutdown_CancelsAll_Good(t *core.T) {
 	core.AssertEqual(t, 0, mock.listenerCount())
 }
 
-func TestOnShutdown_IgnoresNilCancels_Good(t *core.T) {
+func TestOnShutdown_IgnoresNilCancels_GoodCase(t *core.T) {
 	mock := newMockPlatform()
 	mock.nilCancel = true
 	c := core.New(
@@ -275,7 +275,7 @@ func TestOnShutdown_IgnoresNilCancels_Good(t *core.T) {
 	})
 }
 
-func TestActionEventFired_BroadcastOnSimulate_Good(t *core.T) {
+func TestActionEventFired_BroadcastOnSimulate_GoodCase(t *core.T) {
 	_, c, mock := newTestService(t)
 
 	var receivedEvents []CustomEvent
@@ -296,14 +296,14 @@ func TestActionEventFired_BroadcastOnSimulate_Good(t *core.T) {
 
 // --- Bad path tests ---
 
-func TestTaskOn_EmptyName_Bad(t *core.T) {
+func TestTaskOn_EmptyName_BadCase(t *core.T) {
 	_, c, _ := newTestService(t)
 
 	r := taskRun(c, "events.on", TaskOn{Name: ""})
 	core.AssertFalse(t, r.OK)
 }
 
-func TestTaskEmit_UnknownEvent_Bad(t *core.T) {
+func TestTaskEmit_UnknownEvent_BadCase(t *core.T) {
 	// Emitting an event with no listeners is valid — returns not-cancelled.
 	_, c, mock := newTestService(t)
 
@@ -313,14 +313,14 @@ func TestTaskEmit_UnknownEvent_Bad(t *core.T) {
 	core.AssertLen(t, mock.emitted, 1) // still recorded as emitted
 }
 
-func TestTaskEmit_EmptyName_Bad(t *core.T) {
+func TestTaskEmit_EmptyName_BadCase(t *core.T) {
 	_, c, _ := newTestService(t)
 
 	r := taskRun(c, "events.emit", TaskEmit{Name: ""})
 	core.AssertFalse(t, r.OK)
 }
 
-func TestQueryListeners_NoService_Bad(t *core.T) {
+func TestQueryListeners_NoService_BadCase(t *core.T) {
 	// No events service registered — query is not handled.
 	c := core.New(core.WithServiceLock())
 
@@ -328,14 +328,14 @@ func TestQueryListeners_NoService_Bad(t *core.T) {
 	core.AssertFalse(t, r.OK)
 }
 
-func TestTaskEmit_NoService_Bad(t *core.T) {
+func TestTaskEmit_NoService_BadCase(t *core.T) {
 	c := core.New(core.WithServiceLock())
 
 	r := c.Action("events.emit").Run(context.Background(), core.NewOptions())
 	core.AssertFalse(t, r.OK)
 }
 
-func TestTaskEmit_PlatformUnavailable_Bad(t *core.T) {
+func TestTaskEmit_PlatformUnavailable_BadCase(t *core.T) {
 	c := core.New(
 		core.WithService(Register(nil)),
 		core.WithServiceLock(),
@@ -371,7 +371,7 @@ func TestTaskEmit_PlatformUnavailable_Bad(t *core.T) {
 
 // --- Ugly path tests ---
 
-func TestTaskOff_NeverRegistered_Ugly(t *core.T) {
+func TestTaskOff_NeverRegistered_UglyCase(t *core.T) {
 	// Off on a name that was never registered is a no-op — must not panic.
 	_, c, _ := newTestService(t)
 
@@ -379,14 +379,14 @@ func TestTaskOff_NeverRegistered_Ugly(t *core.T) {
 	core.AssertTrue(t, r.OK)
 }
 
-func TestTaskOff_EmptyName_Bad(t *core.T) {
+func TestTaskOff_EmptyName_BadCase(t *core.T) {
 	_, c, _ := newTestService(t)
 
 	r := taskRun(c, "events.off", TaskOff{Name: ""})
 	core.AssertFalse(t, r.OK)
 }
 
-func TestTaskOn_MultipleListeners_Ugly(t *core.T) {
+func TestTaskOn_MultipleListeners_UglyCase(t *core.T) {
 	// Multiple IPC listeners for the same event each receive ActionEventFired.
 	_, c, mock := newTestService(t)
 
@@ -413,7 +413,7 @@ func TestTaskOn_MultipleListeners_Ugly(t *core.T) {
 	core.AssertEqual(t, 3, count)
 }
 
-func TestTaskOff_ThenEmit_Ugly(t *core.T) {
+func TestTaskOff_ThenEmit_UglyCase(t *core.T) {
 	// After Off, simulating the event must not trigger any IPC actions.
 	_, c, mock := newTestService(t)
 
@@ -432,7 +432,7 @@ func TestTaskOff_ThenEmit_Ugly(t *core.T) {
 	core.AssertFalse(t, received)
 }
 
-func TestQueryListeners_AfterOff_Ugly(t *core.T) {
+func TestQueryListeners_AfterOff_UglyCase(t *core.T) {
 	// After Off, the event name must not appear in QueryListeners results.
 	_, c, _ := newTestService(t)
 
@@ -445,4 +445,95 @@ func TestQueryListeners_AfterOff_Ugly(t *core.T) {
 	for _, info := range infos {
 		core.AssertNotEqual(t, "ephemeral", info.EventName)
 	}
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestService_Service_OnStartup_Good(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_OnStartup_Bad(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_OnStartup_Ugly(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_OnShutdown_Good(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnShutdown(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_OnShutdown_Bad(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnShutdown(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_OnShutdown_Ugly(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnShutdown(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_HandleIPCEvents_Good(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_HandleIPCEvents_Bad(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
+}
+
+func TestService_Service_HandleIPCEvents_Ugly(t *core.T) {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

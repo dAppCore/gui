@@ -2,7 +2,7 @@ package p2p
 
 import (
 	"context"
-	"strings"
+	strings "dappco.re/go/gui/compat/strings"
 
 	core "dappco.re/go"
 )

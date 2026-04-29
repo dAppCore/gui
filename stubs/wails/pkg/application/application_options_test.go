@@ -122,7 +122,7 @@ func TestApplicationOptions_AssetFileServerFS_Bad(t *core.T) {
 	core.AssertNotEmpty(t, observedType)
 }
 
-func TestApplicationOptions_AssetFileServerFS_Ugly(t *core.T) {
+func TestApplicationOptions_AssetFileServerFS_UglyCase(t *core.T) {
 	core.AssertNil(t, BundledAssetFileServer(fakeFS{}))
 	observedType := core.Sprintf("%T", BundledAssetFileServer(fakeFS{}))
 	core.AssertNotEmpty(t, observedType)
@@ -144,4 +144,13 @@ func TestApplicationOptions_BundledAssetFileServer_Ugly(t *core.T) {
 	core.AssertNil(t, BundledAssetFileServer(fakeFS{}))
 	observedType := core.Sprintf("%T", BundledAssetFileServer(fakeFS{}))
 	core.AssertNotEmpty(t, observedType)
+}
+
+func TestApplicationOptions_AssetFileServerFS_Ugly(t *core.T) {
+	result := core.Try(func() any {
+		got0 := AssetFileServerFS(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+	core.AssertNotEqual(t, "", core.Sprintf("%T", result.Value))
 }

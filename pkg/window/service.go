@@ -2,7 +2,7 @@ package window
 
 import (
 	"context"
-	"strings"
+	strings "dappco.re/go/gui/compat/strings"
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/internal/coreutil"

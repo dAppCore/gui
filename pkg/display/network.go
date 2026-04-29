@@ -1,12 +1,12 @@
 package display
 
 import (
-	"fmt"
+	fmt "dappco.re/go/gui/compat/fmt"
+	os "dappco.re/go/gui/compat/os"
+	strings "dappco.re/go/gui/compat/strings"
 	"html"
 	"net"
-	"os"
 	"sort"
-	"strings"
 	"time"
 
 	"dappco.re/go/gui/pkg/p2p"

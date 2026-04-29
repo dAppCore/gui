@@ -2,12 +2,12 @@ package display
 
 import (
 	"context"
-	"fmt"
-	"os"
-	"os/exec"
-	"path/filepath"
+	exec "dappco.re/go/gui/compat/exec"
+	filepath "dappco.re/go/gui/compat/filepath"
+	fmt "dappco.re/go/gui/compat/fmt"
+	os "dappco.re/go/gui/compat/os"
+	strings "dappco.re/go/gui/compat/strings"
 	"reflect"
-	"strings"
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/deno"

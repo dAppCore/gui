@@ -3,9 +3,9 @@ package mcp
 
 import (
 	"context"
+	strings "dappco.re/go/gui/compat/strings"
 	"reflect"
 	"sort"
-	"strings"
 	"sync"
 	"time"
 

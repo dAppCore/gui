@@ -2,10 +2,10 @@ package display
 
 import (
 	"context"
+	filepath "dappco.re/go/gui/compat/filepath"
+	os "dappco.re/go/gui/compat/os"
+	strings "dappco.re/go/gui/compat/strings"
 	"net/http"
-	"os"
-	"path/filepath"
-	"strings"
 	"time"
 
 	core "dappco.re/go"
