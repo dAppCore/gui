@@ -6,21 +6,40 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is `dappco.re/go/gui` — a display/windowing module for the Core web3 desktop framework. It provides window management, dialogs, system tray, clipboard, notifications, theming, layouts, and real-time WebSocket events. Built on **Wails v3** (Go backend) with an **Angular 20** custom element frontend.
 
+## Repository layout
+
+Go sources now live under `go/` and are the only content under that module root:
+
+```
+go/
+├── internal/   ← internal Go packages
+├── pkg/        ← Go subpackages
+├── stubs/      ← Wails shim packages
+├── tests/      ← Go test material
+├── docs/       ← symlink to ../docs
+├── README.md   ← symlink to ../README.md
+├── CLAUDE.md   ← symlink to ../CLAUDE.md
+└── AGENTS.md   ← symlink to ../AGENTS.md
+```
+
+UI/TS frontend material remains at repo root under `ui/`.
+
 ## Build & Development Commands
 
 ### Go backend
 ```bash
-go build ./...              # Build all packages
-go test ./...               # Run all tests
-go test ./pkg/display/...   # Run display package tests
-go test -race ./...         # Run tests with race detection
-go test -cover ./...        # Run tests with coverage
+cd go
+go build ./...                 # Build all packages
+go test ./...                  # Run all tests
+go test ./pkg/display/...      # Run display package tests
+go test -race ./...            # Run tests with race detection
+go test -cover ./...           # Run tests with coverage
 go test -run TestNew ./pkg/display/  # Run a single test
 ```
 
-### Angular frontend (pkg/display/ui/)
+### Angular frontend (ui/)
 ```bash
-cd pkg/display/ui
+cd ui
 npm install                 # Install dependencies
 npm run build               # Production build
 npm run watch               # Dev watch mode
