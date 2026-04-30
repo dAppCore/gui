@@ -89,7 +89,7 @@ func (s *Service) registerMarketplaceActions() {
 		installer := marketplace.Installer{
 			HTTPClient: marketplaceHTTPClient,
 			GitBinary:  input.GitBinary,
-			GitRunner:  marketplaceGitRunner,
+			GitRunner:  s.marketplaceGitRunner(),
 			InstallDir: marketplaceInstallRoot(input.InstallDir),
 		}
 		manifest, err := installer.Verify(ctx, input.ManifestURL)
@@ -131,4 +131,30 @@ func marketplaceInstallRoot(raw string) string {
 		return ""
 	}
 	return core.PathJoin(home, ".core", "apps")
+}
+
+func (s *Service) marketplaceGitRunner() func(context.Context, string, ...string) ([]byte, error) {
+	if marketplaceGitRunner != nil {
+		return marketplaceGitRunner
+	}
+	coreRef := s.coreRef()
+	if coreRef == nil {
+		return nil
+	}
+	return func(ctx context.Context, binary string, args ...string) ([]byte, error) {
+		result := coreRef.Process().Run(ctx, binary, args...)
+		if !result.OK {
+			return nil, coreResultError(result, "failed to run marketplace git command")
+		}
+		switch output := result.Value.(type) {
+		case []byte:
+			return append([]byte(nil), output...), nil
+		case string:
+			return []byte(output), nil
+		case nil:
+			return nil, nil
+		default:
+			return []byte(core.Sprint(output)), nil
+		}
+	}
 }

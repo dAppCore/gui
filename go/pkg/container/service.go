@@ -18,6 +18,18 @@ var timContainerNamePattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_.-]*$`)
 
 func NewService(c *core.Core, options TIMOptions) *Service {
 	options, err := normalizeTIMOptions(options)
+	if options.Exec == nil && c != nil {
+		options.Exec = func(ctx context.Context, name string, args ...string) error {
+			result := c.Process().Run(ctx, name, args...)
+			if result.OK {
+				return nil
+			}
+			if err, ok := result.Value.(error); ok {
+				return err
+			}
+			return core.E("container.TIMManager.Exec", result.Error(), nil)
+		}
+	}
 	return &Service{
 		ServiceRuntime: core.NewServiceRuntime(c, options),
 		manager:        NewTIMManager(options),
