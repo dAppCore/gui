@@ -82,14 +82,14 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 	return core.Result{OK: true}
 }
 
-func (s *Service) requirePlatform(method string) error {
+func (s *Service) requirePlatform(method string) resultFailure {
 	if s == nil || s.platform == nil {
 		return core.E(method, "event platform unavailable", nil)
 	}
 	return nil
 }
 
-func validateEventName(method, name string) error {
+func validateEventName(method, name string) resultFailure {
 	if core.Trim(name) == "" {
 		return core.E(method, "event name must not be empty", nil)
 	}

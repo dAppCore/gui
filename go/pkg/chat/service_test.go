@@ -27,7 +27,7 @@ func (m *mockToolExecutor) ManifestText() string {
 	return "Available MCP tools:\n- layout_suggest: Suggest a layout"
 }
 
-func (m *mockToolExecutor) CallTool(_ context.Context, name string, arguments map[string]any) (string, error) {
+func (m *mockToolExecutor) CallTool(_ context.Context, name string, arguments map[string]any) (string, resultFailure) {
 	m.calls = append(m.calls, ToolCall{Name: name, Arguments: arguments})
 	return `{"mode":"left-right"}`, nil
 }
@@ -141,8 +141,8 @@ func TestActionSend_Bad_RejectsEmptyMessage(t *core.T) {
 
 	result := c.Action("gui.chat.send").Run(context.Background(), core.NewOptions())
 	core.AssertFalse(t, result.OK)
-	core.AssertError(t, result.Value.(error))
-	core.AssertContains(t, result.Value.(error).Error(), "message content is required")
+	core.AssertError(t, result.Value.(resultFailure))
+	core.AssertContains(t, result.Value.(resultFailure).Error(), "message content is required")
 }
 
 func TestActionSend_Ugly_PropagatesUpstreamFailure(t *core.T) {
@@ -154,8 +154,8 @@ func TestActionSend_Ugly_PropagatesUpstreamFailure(t *core.T) {
 		core.Option{Key: "content", Value: "Hi"},
 	))
 	core.AssertFalse(t, result.OK)
-	core.AssertError(t, result.Value.(error))
-	core.AssertContains(t, result.Value.(error).Error(), "model unavailable")
+	core.AssertError(t, result.Value.(resultFailure))
+	core.AssertContains(t, result.Value.(resultFailure).Error(), "model unavailable")
 }
 
 func TestActionHistory_Good_HonoursLimit(t *core.T) {
@@ -186,8 +186,8 @@ func TestActionHistory_Bad_RequiresConversationID(t *core.T) {
 
 	result := c.Action("gui.chat.history").Run(context.Background(), core.NewOptions())
 	core.AssertFalse(t, result.OK)
-	core.AssertError(t, result.Value.(error))
-	core.AssertContains(t, result.Value.(error).Error(), "conversation id is required")
+	core.AssertError(t, result.Value.(resultFailure))
+	core.AssertContains(t, result.Value.(resultFailure).Error(), "conversation id is required")
 }
 
 func TestActionHistory_Ugly_UnknownConversationFails(t *core.T) {
@@ -199,7 +199,7 @@ func TestActionHistory_Ugly_UnknownConversationFails(t *core.T) {
 		core.Option{Key: "conversation_id", Value: "missing"},
 	))
 	core.AssertFalse(t, result.OK)
-	core.AssertError(t, result.Value.(error))
+	core.AssertError(t, result.Value.(resultFailure))
 }
 
 func TestActionModels_Good_ReportsSizeAndStatus(t *core.T) {
@@ -293,8 +293,8 @@ func TestActionSelectModel_Bad_RequiresModelName(t *core.T) {
 
 	result := c.Action("gui.chat.selectModel").Run(context.Background(), core.NewOptions())
 	core.AssertFalse(t, result.OK)
-	core.AssertError(t, result.Value.(error))
-	core.AssertContains(t, result.Value.(error).Error(), "model is required")
+	core.AssertError(t, result.Value.(resultFailure))
+	core.AssertContains(t, result.Value.(resultFailure).Error(), "model is required")
 }
 
 func TestActionSelectModel_Ugly_RejectsUnknownDiscoveredModel(t *core.T) {
@@ -307,8 +307,8 @@ func TestActionSelectModel_Ugly_RejectsUnknownDiscoveredModel(t *core.T) {
 		core.Option{Key: "model", Value: "missing"},
 	))
 	core.AssertFalse(t, result.OK)
-	core.AssertError(t, result.Value.(error))
-	core.AssertContains(t, result.Value.(error).Error(), "model is not available")
+	core.AssertError(t, result.Value.(resultFailure))
+	core.AssertContains(t, result.Value.(resultFailure).Error(), "model is not available")
 }
 
 func TestActionConversationsList_Good_ReturnsNewestFirst(t *core.T) {
@@ -401,8 +401,8 @@ func TestActionConversationsLoad_Bad_RequiresConversationID(t *core.T) {
 
 	result := c.Action("gui.chat.conversations.load").Run(context.Background(), core.NewOptions())
 	core.AssertFalse(t, result.OK)
-	core.AssertError(t, result.Value.(error))
-	core.AssertContains(t, result.Value.(error).Error(), "conversation id is required")
+	core.AssertError(t, result.Value.(resultFailure))
+	core.AssertContains(t, result.Value.(resultFailure).Error(), "conversation id is required")
 }
 
 func TestActionConversationsLoad_Ugly_UnknownConversationFails(t *core.T) {
@@ -414,7 +414,7 @@ func TestActionConversationsLoad_Ugly_UnknownConversationFails(t *core.T) {
 		core.Option{Key: "conversation_id", Value: "missing"},
 	))
 	core.AssertFalse(t, result.OK)
-	core.AssertError(t, result.Value.(error))
+	core.AssertError(t, result.Value.(resultFailure))
 }
 
 func TestActionConversationsDelete_Good_RemovesConversation(t *core.T) {
@@ -449,8 +449,8 @@ func TestActionConversationsDelete_Bad_RequiresConversationID(t *core.T) {
 
 	result := c.Action("gui.chat.conversations.delete").Run(context.Background(), core.NewOptions())
 	core.AssertFalse(t, result.OK)
-	core.AssertError(t, result.Value.(error))
-	core.AssertContains(t, result.Value.(error).Error(), "conversation id is required")
+	core.AssertError(t, result.Value.(resultFailure))
+	core.AssertContains(t, result.Value.(resultFailure).Error(), "conversation id is required")
 }
 
 func TestActionConversationsDelete_Ugly_IsIdempotentForMissingConversation(t *core.T) {
@@ -486,8 +486,8 @@ func TestActionThinkingStart_Bad_RequiresConversationID(t *core.T) {
 
 	result := c.Action("gui.chat.thinking.start").Run(context.Background(), core.NewOptions())
 	core.AssertFalse(t, result.OK)
-	core.AssertError(t, result.Value.(error))
-	core.AssertContains(t, result.Value.(error).Error(), "conversation id is required")
+	core.AssertError(t, result.Value.(resultFailure))
+	core.AssertContains(t, result.Value.(resultFailure).Error(), "conversation id is required")
 }
 
 func TestActionThinkingStart_Ugly_RestartReplacesExistingState(t *core.T) {
@@ -534,8 +534,8 @@ func TestActionThinkingStop_Bad_RequiresConversationID(t *core.T) {
 
 	result := c.Action("gui.chat.thinking.stop").Run(context.Background(), core.NewOptions())
 	core.AssertFalse(t, result.OK)
-	core.AssertError(t, result.Value.(error))
-	core.AssertContains(t, result.Value.(error).Error(), "conversation id is required")
+	core.AssertError(t, result.Value.(resultFailure))
+	core.AssertContains(t, result.Value.(resultFailure).Error(), "conversation id is required")
 }
 
 func TestActionThinkingStop_Ugly_AllowsStopWithoutStart(t *core.T) {

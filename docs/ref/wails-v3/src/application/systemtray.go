@@ -186,7 +186,7 @@ func (s *SystemTray) HideWindow() {
 	s.attachedWindow.Window.Hide()
 }
 
-func (s *SystemTray) PositionWindow(window Window, offset int) error {
+func (s *SystemTray) PositionWindow(window Window, offset int) resultFailure {
 	if s.impl == nil {
 		return core.NewError("system tray not running")
 	}

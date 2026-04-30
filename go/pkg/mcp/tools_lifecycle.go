@@ -16,7 +16,7 @@ type AppQuitOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) appQuit(_ context.Context, _ *mcp.CallToolRequest, _ AppQuitInput) (*mcp.CallToolResult, AppQuitOutput, error) {
+func (s *Subsystem) appQuit(_ context.Context, _ *mcp.CallToolRequest, _ AppQuitInput) (*mcp.CallToolResult, AppQuitOutput, resultFailure) {
 	// Broadcast the will-terminate action which triggers application shutdown
 	coreutil.DispatchAction(s.core, "mcp.appQuit", lifecycle.ActionWillTerminate{})
 	return nil, AppQuitOutput{Success: true}, nil

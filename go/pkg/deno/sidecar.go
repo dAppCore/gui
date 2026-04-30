@@ -59,7 +59,7 @@ func New(options Options) *Manager {
 	}
 }
 
-func (m *Manager) Start(ctx context.Context) (Status, error) {
+func (m *Manager) Start(ctx context.Context) (Status, resultFailure) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.cmd != nil && m.cmd.Process != nil {
@@ -95,7 +95,7 @@ func (m *Manager) Start(ctx context.Context) (Status, error) {
 	return m.statusLocked(), nil
 }
 
-func (m *Manager) Stop(context.Context) (Status, error) {
+func (m *Manager) Stop(context.Context) (Status, resultFailure) {
 	m.mu.Lock()
 	if m.cmd == nil || m.cmd.Process == nil {
 		m.mu.Unlock()
@@ -168,7 +168,7 @@ func (m *Manager) OnEvent(handler func(Event)) {
 	m.events = append(m.events, handler)
 }
 
-func (m *Manager) Eval(ctx context.Context, code string) (EvalResult, error) {
+func (m *Manager) Eval(ctx context.Context, code string) (EvalResult, resultFailure) {
 	response, err := m.request(ctx, rpcMessage{Type: "eval", Code: code})
 	if err != nil {
 		return EvalResult{}, err
@@ -176,14 +176,14 @@ func (m *Manager) Eval(ctx context.Context, code string) (EvalResult, error) {
 	return EvalResult{Value: response.Result}, nil
 }
 
-func (m *Manager) Emit(name string, data any) error {
+func (m *Manager) Emit(name string, data any) resultFailure {
 	if core.Trim(name) == "" {
 		return core.NewError("event name is required")
 	}
 	return m.send(rpcMessage{Type: "event", Name: name, Data: data})
 }
 
-func (m *Manager) request(ctx context.Context, message rpcMessage) (rpcMessage, error) {
+func (m *Manager) request(ctx context.Context, message rpcMessage) (rpcMessage, resultFailure) {
 	m.mu.Lock()
 	if m.stdin == nil {
 		m.mu.Unlock()
@@ -291,7 +291,7 @@ func (m *Manager) handleAction(message rpcMessage) {
 	}
 }
 
-func (m *Manager) send(message rpcMessage) error {
+func (m *Manager) send(message rpcMessage) resultFailure {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.stdin == nil {
@@ -305,7 +305,7 @@ func (m *Manager) send(message rpcMessage) error {
 	return err
 }
 
-func marshalRPCMessage(message rpcMessage) ([]byte, error) {
+func marshalRPCMessage(message rpcMessage) ([]byte, resultFailure) {
 	result := core.JSONMarshal(message)
 	if !result.OK {
 		if err, ok := result.Value.(error); ok {

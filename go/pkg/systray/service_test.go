@@ -90,15 +90,15 @@ type fallbackNotificationPlatform struct {
 	opts notification.NotificationOptions
 }
 
-func (m *fallbackNotificationPlatform) Send(opts notification.NotificationOptions) error {
+func (m *fallbackNotificationPlatform) Send(opts notification.NotificationOptions) resultFailure {
 	m.sent = true
 	m.opts = opts
 	return nil
 }
-func (m *fallbackNotificationPlatform) RequestPermission() (bool, error) { return true, nil }
-func (m *fallbackNotificationPlatform) CheckPermission() (bool, error)   { return true, nil }
-func (m *fallbackNotificationPlatform) RevokePermission() error          { return nil }
-func (m *fallbackNotificationPlatform) Clear(id string) error            { return nil }
+func (m *fallbackNotificationPlatform) RequestPermission() (bool, resultFailure) { return true, nil }
+func (m *fallbackNotificationPlatform) CheckPermission() (bool, resultFailure)   { return true, nil }
+func (m *fallbackNotificationPlatform) RevokePermission() resultFailure          { return nil }
+func (m *fallbackNotificationPlatform) Clear(id string) resultFailure            { return nil }
 
 type failingTrayPlatform struct{}
 
@@ -107,7 +107,7 @@ func (failingTrayPlatform) NewMenu() PlatformMenu { return &mockTrayMenu{} }
 
 type failingTray struct{ mockTray }
 
-func (t *failingTray) ShowMessage(title, message string) error {
+func (t *failingTray) ShowMessage(title, message string) resultFailure {
 	return core.NewError("tray balloon unavailable")
 }
 

@@ -17,27 +17,27 @@ import (
 // connector abstracts go-webview for testing. The real implementation wraps
 // *gowebview.Webview, converting go-webview types to our own types at the boundary.
 type connector interface {
-	Navigate(url string) error
-	Click(selector string) error
-	Type(selector, text string) error
-	Hover(selector string) error
-	Select(selector, value string) error
-	Check(selector string, checked bool) error
-	Evaluate(script string) (any, error)
-	Screenshot() ([]byte, error)
-	GetURL() (string, error)
-	GetTitle() (string, error)
-	GetHTML(selector string) (string, error)
-	QuerySelector(selector string) (*ElementInfo, error)
-	QuerySelectorAll(selector string) ([]*ElementInfo, error)
+	Navigate(url string) resultFailure
+	Click(selector string) resultFailure
+	Type(selector, text string) resultFailure
+	Hover(selector string) resultFailure
+	Select(selector, value string) resultFailure
+	Check(selector string, checked bool) resultFailure
+	Evaluate(script string) (any, resultFailure)
+	Screenshot() ([]byte, resultFailure)
+	GetURL() (string, resultFailure)
+	GetTitle() (string, resultFailure)
+	GetHTML(selector string) (string, resultFailure)
+	QuerySelector(selector string) (*ElementInfo, resultFailure)
+	QuerySelectorAll(selector string) ([]*ElementInfo, resultFailure)
 	GetConsole() []ConsoleMessage
 	ClearConsole()
-	SetViewport(width, height int) error
-	UploadFile(selector string, paths []string) error
-	GetZoom() (float64, error)
-	SetZoom(zoom float64) error
-	Print(toPDF bool) ([]byte, error)
-	Close() error
+	SetViewport(width, height int) resultFailure
+	UploadFile(selector string, paths []string) resultFailure
+	GetZoom() (float64, resultFailure)
+	SetZoom(zoom float64) resultFailure
+	Print(toPDF bool) ([]byte, resultFailure)
+	Close() resultFailure
 }
 
 type Options struct {
@@ -53,8 +53,8 @@ type Service struct {
 	mu           sync.RWMutex
 	diagMu       sync.RWMutex
 	exceptions   map[string][]ExceptionInfo
-	newConn      func(debugURL, windowName string) (connector, error) // injectable for tests
-	watcherSetup func(conn connector, windowName string)              // called after connection creation
+	newConn      func(debugURL, windowName string) (connector, resultFailure) // injectable for tests
+	watcherSetup func(conn connector, windowName string)                      // called after connection creation
 }
 
 // Register binds the webview service to a Core instance.
@@ -83,8 +83,8 @@ func Register(optionFns ...func(*Options)) func(*core.Core) core.Result {
 }
 
 // defaultNewConn creates real go-webview connections.
-func defaultNewConn(options Options) func(string, string) (connector, error) {
-	return func(debugURL, windowName string) (connector, error) {
+func defaultNewConn(options Options) func(string, string) (connector, resultFailure) {
+	return func(debugURL, windowName string) (connector, resultFailure) {
 		windowName = core.Trim(windowName)
 		if windowName == "" {
 			return nil, core.E("webview.connect", "window name is required", nil)
@@ -201,7 +201,7 @@ func (s *Service) HandleIPCEvents(_ *core.Core, msg core.Message) core.Result {
 }
 
 // getConn returns the connector for a window, creating it if needed.
-func (s *Service) getConn(windowName string) (connector, error) {
+func (s *Service) getConn(windowName string) (connector, resultFailure) {
 	windowName = core.Trim(windowName)
 	if windowName == "" {
 		return nil, core.E("webview.getConn", "window name is required", nil)
@@ -486,8 +486,8 @@ func (s *Service) exceptionLog(windowName string, limit int) []ExceptionInfo {
 	return log
 }
 
-func (s *Service) devToolsOpen(windowName string) error {
-	return s.withWindowHandle(windowName, func(handle any) error {
+func (s *Service) devToolsOpen(windowName string) resultFailure {
+	return s.withWindowHandle(windowName, func(handle any) resultFailure {
 		if opener, ok := handle.(interface{ OpenDevTools() }); ok {
 			opener.OpenDevTools()
 			return nil
@@ -496,8 +496,8 @@ func (s *Service) devToolsOpen(windowName string) error {
 	})
 }
 
-func (s *Service) devToolsClose(windowName string) error {
-	return s.withWindowHandle(windowName, func(handle any) error {
+func (s *Service) devToolsClose(windowName string) resultFailure {
+	return s.withWindowHandle(windowName, func(handle any) resultFailure {
 		if closer, ok := handle.(interface{ CloseDevTools() }); ok {
 			closer.CloseDevTools()
 			return nil
@@ -506,7 +506,7 @@ func (s *Service) devToolsClose(windowName string) error {
 	})
 }
 
-func (s *Service) withWindowHandle(windowName string, fn func(handle any) error) error {
+func (s *Service) withWindowHandle(windowName string, fn func(handle any) resultFailure) resultFailure {
 	windowService, ok := core.ServiceFor[*window.Service](s.Core(), "window")
 	if !ok {
 		return core.E("webview.withWindowHandle", "window service unavailable", nil)
@@ -526,22 +526,24 @@ type realConnector struct {
 	debugURL string // Chrome debug HTTP endpoint (e.g., http://localhost:9222) for direct CDP calls
 }
 
-func (r *realConnector) Navigate(url string) error               { return r.wv.Navigate(url) }
-func (r *realConnector) Click(sel string) error                  { return r.wv.Click(sel) }
-func (r *realConnector) Type(sel, text string) error             { return r.wv.Type(sel, text) }
-func (r *realConnector) Evaluate(script string) (any, error)     { return r.wv.Evaluate(script) }
-func (r *realConnector) Screenshot() ([]byte, error)             { return r.wv.Screenshot() }
-func (r *realConnector) GetURL() (string, error)                 { return r.wv.GetURL() }
-func (r *realConnector) GetTitle() (string, error)               { return r.wv.GetTitle() }
-func (r *realConnector) GetHTML(sel string) (string, error)      { return r.wv.GetHTML(sel) }
-func (r *realConnector) ClearConsole()                           { r.wv.ClearConsole() }
-func (r *realConnector) Close() error                            { return r.wv.Close() }
-func (r *realConnector) SetViewport(w, h int) error              { return r.wv.SetViewport(w, h) }
-func (r *realConnector) UploadFile(sel string, p []string) error { return r.wv.UploadFile(sel, p) }
+func (r *realConnector) Navigate(url string) resultFailure           { return r.wv.Navigate(url) }
+func (r *realConnector) Click(sel string) resultFailure              { return r.wv.Click(sel) }
+func (r *realConnector) Type(sel, text string) resultFailure         { return r.wv.Type(sel, text) }
+func (r *realConnector) Evaluate(script string) (any, resultFailure) { return r.wv.Evaluate(script) }
+func (r *realConnector) Screenshot() ([]byte, resultFailure)         { return r.wv.Screenshot() }
+func (r *realConnector) GetURL() (string, resultFailure)             { return r.wv.GetURL() }
+func (r *realConnector) GetTitle() (string, resultFailure)           { return r.wv.GetTitle() }
+func (r *realConnector) GetHTML(sel string) (string, resultFailure)  { return r.wv.GetHTML(sel) }
+func (r *realConnector) ClearConsole()                               { r.wv.ClearConsole() }
+func (r *realConnector) Close() resultFailure                        { return r.wv.Close() }
+func (r *realConnector) SetViewport(w, h int) resultFailure          { return r.wv.SetViewport(w, h) }
+func (r *realConnector) UploadFile(sel string, p []string) resultFailure {
+	return r.wv.UploadFile(sel, p)
+}
 
 // GetZoom returns the current CSS zoom level as a float64.
 // zoom, _ := conn.GetZoom()  // 1.0 = 100%, 1.5 = 150%
-func (r *realConnector) GetZoom() (float64, error) {
+func (r *realConnector) GetZoom() (float64, resultFailure) {
 	raw, err := r.wv.Evaluate("parseFloat(document.documentElement.style.zoom) || 1.0")
 	if err != nil {
 		return 0, core.E("realConnector.GetZoom", "failed to get zoom", err)
@@ -559,7 +561,7 @@ func (r *realConnector) GetZoom() (float64, error) {
 // SetZoom sets the CSS zoom level on the document root element.
 // conn.SetZoom(1.5)  // 150%
 // conn.SetZoom(1.0)  // reset to normal
-func (r *realConnector) SetZoom(zoom float64) error {
+func (r *realConnector) SetZoom(zoom float64) resultFailure {
 	script := "document.documentElement.style.zoom = '" + strconv.FormatFloat(zoom, 'g', -1, 64) + "'; undefined"
 	_, err := r.wv.Evaluate(script)
 	if err != nil {
@@ -572,7 +574,7 @@ func (r *realConnector) SetZoom(zoom float64) error {
 // When toPDF is false the browser print dialog is opened (via window.print()) and nil bytes are returned.
 // When toPDF is true a fresh CDPClient is opened against the stored WebSocket URL to issue
 // Page.printToPDF, which returns raw PDF bytes.
-func (r *realConnector) Print(toPDF bool) ([]byte, error) {
+func (r *realConnector) Print(toPDF bool) ([]byte, resultFailure) {
 	if !toPDF {
 		_, err := r.wv.Evaluate("window.print(); undefined")
 		if err != nil {
@@ -616,19 +618,19 @@ func (r *realConnector) Print(toPDF bool) ([]byte, error) {
 	return pdfBytes, nil
 }
 
-func (r *realConnector) Hover(sel string) error {
+func (r *realConnector) Hover(sel string) resultFailure {
 	return gowebview.NewActionSequence().Add(&gowebview.HoverAction{Selector: sel}).Execute(context.Background(), r.wv)
 }
 
-func (r *realConnector) Select(sel, val string) error {
+func (r *realConnector) Select(sel, val string) resultFailure {
 	return gowebview.NewActionSequence().Add(&gowebview.SelectAction{Selector: sel, Value: val}).Execute(context.Background(), r.wv)
 }
 
-func (r *realConnector) Check(sel string, checked bool) error {
+func (r *realConnector) Check(sel string, checked bool) resultFailure {
 	return gowebview.NewActionSequence().Add(&gowebview.CheckAction{Selector: sel, Checked: checked}).Execute(context.Background(), r.wv)
 }
 
-func (r *realConnector) QuerySelector(sel string) (*ElementInfo, error) {
+func (r *realConnector) QuerySelector(sel string) (*ElementInfo, resultFailure) {
 	el, err := r.wv.QuerySelector(sel)
 	if err != nil {
 		return nil, err
@@ -636,7 +638,7 @@ func (r *realConnector) QuerySelector(sel string) (*ElementInfo, error) {
 	return convertElementInfo(el), nil
 }
 
-func (r *realConnector) QuerySelectorAll(sel string) ([]*ElementInfo, error) {
+func (r *realConnector) QuerySelectorAll(sel string) ([]*ElementInfo, resultFailure) {
 	els, err := r.wv.QuerySelectorAll(sel)
 	if err != nil {
 		return nil, err

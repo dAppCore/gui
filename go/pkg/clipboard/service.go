@@ -120,7 +120,7 @@ func (s *Service) handleQuery(_ *core.Core, q core.Query) core.Result {
 
 // clipboardImageData normalizes clipboard image inputs from MCP, preload bridge, and WS callers.
 // Use: bytes, err := clipboardImageData(core.NewOptions(core.Option{Key: "data", Value: "iVBORw0KGgo..."}))
-func clipboardImageData(opts core.Options) ([]byte, error) {
+func clipboardImageData(opts core.Options) ([]byte, resultFailure) {
 	if raw, ok := opts.Get("data").Value.([]byte); ok && len(raw) > 0 {
 		return append([]byte(nil), raw...), nil
 	}

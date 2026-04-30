@@ -13,7 +13,7 @@ type ContainerDetectOutput struct {
 	Runtime container.ContainerRuntime `json:"runtime"`
 }
 
-func (s *Subsystem) containerDetect(_ context.Context, _ *mcp.CallToolRequest, _ ContainerDetectInput) (*mcp.CallToolResult, ContainerDetectOutput, error) {
+func (s *Subsystem) containerDetect(_ context.Context, _ *mcp.CallToolRequest, _ ContainerDetectInput) (*mcp.CallToolResult, ContainerDetectOutput, resultFailure) {
 	result := s.core.Action("container.runtime.detect").Run(context.Background(), core.Options{})
 	if !result.OK {
 		if err, ok := result.Value.(error); ok {
@@ -33,7 +33,7 @@ type TIMStateOutput struct {
 	State container.TIMState `json:"state"`
 }
 
-func (s *Subsystem) timStatus(_ context.Context, _ *mcp.CallToolRequest, _ TIMStateInput) (*mcp.CallToolResult, TIMStateOutput, error) {
+func (s *Subsystem) timStatus(_ context.Context, _ *mcp.CallToolRequest, _ TIMStateInput) (*mcp.CallToolResult, TIMStateOutput, resultFailure) {
 	result := s.core.Action("tim.status").Run(context.Background(), core.Options{})
 	if !result.OK {
 		if err, ok := result.Value.(error); ok {
@@ -53,7 +53,7 @@ type TIMStartOutput struct {
 	State container.TIMState `json:"state"`
 }
 
-func (s *Subsystem) timStart(_ context.Context, _ *mcp.CallToolRequest, _ TIMStartInput) (*mcp.CallToolResult, TIMStartOutput, error) {
+func (s *Subsystem) timStart(_ context.Context, _ *mcp.CallToolRequest, _ TIMStartInput) (*mcp.CallToolResult, TIMStartOutput, resultFailure) {
 	result := s.core.Action("tim.start").Run(context.Background(), core.Options{})
 	if !result.OK {
 		if err, ok := result.Value.(error); ok {
@@ -73,7 +73,7 @@ type TIMStopOutput struct {
 	State container.TIMState `json:"state"`
 }
 
-func (s *Subsystem) timStop(_ context.Context, _ *mcp.CallToolRequest, _ TIMStopInput) (*mcp.CallToolResult, TIMStopOutput, error) {
+func (s *Subsystem) timStop(_ context.Context, _ *mcp.CallToolRequest, _ TIMStopInput) (*mcp.CallToolResult, TIMStopOutput, resultFailure) {
 	result := s.core.Action("tim.stop").Run(context.Background(), core.Options{})
 	if !result.OK {
 		if err, ok := result.Value.(error); ok {

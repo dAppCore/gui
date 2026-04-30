@@ -136,7 +136,7 @@ func (d *OpenFileDialogStruct) SetSelectedFiles(paths []string) {
 //
 //	path, err := dialog.PromptForSingleSelection()
 //	if err != nil { return err }
-func (d *OpenFileDialogStruct) PromptForSingleSelection() (string, error) {
+func (d *OpenFileDialogStruct) PromptForSingleSelection() (string, resultFailure) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 	if len(d.selectedFiles) > 0 {
@@ -149,7 +149,7 @@ func (d *OpenFileDialogStruct) PromptForSingleSelection() (string, error) {
 //
 //	paths, err := dialog.PromptForMultipleSelection()
 //	for _, p := range paths { process(p) }
-func (d *OpenFileDialogStruct) PromptForMultipleSelection() ([]string, error) {
+func (d *OpenFileDialogStruct) PromptForMultipleSelection() ([]string, resultFailure) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 	return append([]string(nil), d.selectedFiles...), nil
@@ -243,7 +243,7 @@ func (d *SaveFileDialogStruct) SetSelectedPath(path string) {
 //
 //	path, err := dialog.PromptForSingleSelection()
 //	if err != nil { return err }
-func (d *SaveFileDialogStruct) PromptForSingleSelection() (string, error) {
+func (d *SaveFileDialogStruct) PromptForSingleSelection() (string, resultFailure) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 	return d.selectedPath, nil
@@ -342,7 +342,7 @@ func (d *MessageDialog) SetButtonClickedForStub(label string) {
 //
 //	clicked, err := dialog.Show()
 //	if clicked == "Yes" { deleteFile() }
-func (d *MessageDialog) Show() (string, error) {
+func (d *MessageDialog) Show() (string, resultFailure) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 	return d.clickedButton, nil
@@ -424,23 +424,23 @@ func (dm *DialogManager) Error() *MessageDialog {
 	return newMessageDialog(ErrorDialogType)
 }
 
-func (dm *DialogManager) ShowInfo(args ...string) (string, error) {
+func (dm *DialogManager) ShowInfo(args ...string) (string, resultFailure) {
 	return dm.showDialog(dm.Info(), args...)
 }
 
-func (dm *DialogManager) ShowQuestion(args ...string) (string, error) {
+func (dm *DialogManager) ShowQuestion(args ...string) (string, resultFailure) {
 	return dm.showDialog(dm.Question(), args...)
 }
 
-func (dm *DialogManager) ShowWarning(args ...string) (string, error) {
+func (dm *DialogManager) ShowWarning(args ...string) (string, resultFailure) {
 	return dm.showDialog(dm.Warning(), args...)
 }
 
-func (dm *DialogManager) ShowError(args ...string) (string, error) {
+func (dm *DialogManager) ShowError(args ...string) (string, resultFailure) {
 	return dm.showDialog(dm.Error(), args...)
 }
 
-func (dm *DialogManager) showDialog(dialog *MessageDialog, args ...string) (string, error) {
+func (dm *DialogManager) showDialog(dialog *MessageDialog, args ...string) (string, resultFailure) {
 	if dialog == nil {
 		return "", nil
 	}

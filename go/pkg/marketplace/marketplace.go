@@ -43,7 +43,7 @@ const maxManifestBytes = 1 << 20
 
 var credentialRedactionPattern = regexp.MustCompile(`(?i)\b([a-z][a-z0-9+.-]*://)([^@\s/]+)@`)
 
-func (i Installer) FetchManifest(ctx context.Context, manifestURL string) (Manifest, error) {
+func (i Installer) FetchManifest(ctx context.Context, manifestURL string) (Manifest, resultFailure) {
 	client := i.HTTPClient
 	if client == nil {
 		client = http.DefaultClient
@@ -77,7 +77,7 @@ func (i Installer) FetchManifest(ctx context.Context, manifestURL string) (Manif
 	return manifest, nil
 }
 
-func VerifyManifest(manifest Manifest) error {
+func VerifyManifest(manifest Manifest) resultFailure {
 	if core.Lower(core.Trim(manifest.Signature.Algorithm)) != "ed25519" {
 		return core.NewError("manifest signature algorithm must be ed25519")
 	}
@@ -105,7 +105,7 @@ func VerifyManifest(manifest Manifest) error {
 	return nil
 }
 
-func (i Installer) Verify(ctx context.Context, manifestURL string) (Manifest, error) {
+func (i Installer) Verify(ctx context.Context, manifestURL string) (Manifest, resultFailure) {
 	manifest, err := i.FetchManifest(ctx, manifestURL)
 	if err != nil {
 		return Manifest{}, err
@@ -116,7 +116,7 @@ func (i Installer) Verify(ctx context.Context, manifestURL string) (Manifest, er
 	return manifest, nil
 }
 
-func (i Installer) Install(ctx context.Context, manifest Manifest) (string, error) {
+func (i Installer) Install(ctx context.Context, manifest Manifest) (string, resultFailure) {
 	if core.Trim(i.InstallDir) == "" {
 		return "", core.NewError("install dir is required")
 	}
@@ -178,7 +178,9 @@ func (i Installer) Install(ctx context.Context, manifest Manifest) (string, erro
 	}
 	runGit := i.GitRunner
 	if runGit == nil {
-		runGit = runGitCommand
+		runGit = func(ctx context.Context, binary string, args ...string) ([]byte, error) {
+			return runGitCommand(ctx, binary, args...)
+		}
 	}
 	if output, err := runGit(ctx, binary, args...); err != nil {
 		return "", core.Errorf("git clone failed: %w: %s", err, sanitizeCommandOutput(output))
@@ -190,12 +192,12 @@ func (i Installer) Install(ctx context.Context, manifest Manifest) (string, erro
 	return targetDir, nil
 }
 
-func runGitCommand(ctx context.Context, binary string, args ...string) ([]byte, error) {
+func runGitCommand(ctx context.Context, binary string, args ...string) ([]byte, resultFailure) {
 	cmd := commandContext(ctx, binary, args...)
 	return cmd.CombinedOutput()
 }
 
-func (i Installer) List(ctx context.Context, registryURL string) ([]Manifest, error) {
+func (i Installer) List(ctx context.Context, registryURL string) ([]Manifest, resultFailure) {
 	client := i.HTTPClient
 	if client == nil {
 		client = http.DefaultClient
@@ -222,7 +224,7 @@ func (i Installer) List(ctx context.Context, registryURL string) ([]Manifest, er
 	return decodeManifestList(body)
 }
 
-func validateManifestName(value string) error {
+func validateManifestName(value string) resultFailure {
 	trimmed := core.Trim(value)
 	if trimmed == "" {
 		return core.NewError("manifest name is required")
@@ -236,7 +238,7 @@ func validateManifestName(value string) error {
 	return nil
 }
 
-func validateCloneArg(label, value string) error {
+func validateCloneArg(label, value string) resultFailure {
 	trimmed := core.Trim(value)
 	if trimmed == "" {
 		return core.Errorf("%s is required", label)
@@ -250,7 +252,7 @@ func validateCloneArg(label, value string) error {
 	return nil
 }
 
-func validateCloneArgOptional(label, value string) error {
+func validateCloneArgOptional(label, value string) resultFailure {
 	trimmed := core.Trim(value)
 	if trimmed == "" {
 		return nil
@@ -258,7 +260,7 @@ func validateCloneArgOptional(label, value string) error {
 	return validateCloneArg(label, trimmed)
 }
 
-func validateRepositorySource(value string) error {
+func validateRepositorySource(value string) resultFailure {
 	trimmed := core.Trim(value)
 	if trimmed == "" {
 		return core.NewError("repository is required")
@@ -333,7 +335,7 @@ func fallbackSafeName(value string) string {
 	return "module-" + hex.EncodeToString(hash[:])[:8]
 }
 
-func decodeManifestList(body []byte) ([]Manifest, error) {
+func decodeManifestList(body []byte) ([]Manifest, resultFailure) {
 	trimmed := core.Trim(string(body))
 	if trimmed == "" {
 		return nil, nil
@@ -357,7 +359,7 @@ func decodeManifestList(body []byte) ([]Manifest, error) {
 	return manifests, nil
 }
 
-func writeInstalledManifest(targetDir string, manifest Manifest) error {
+func writeInstalledManifest(targetDir string, manifest Manifest) resultFailure {
 	manifestDir := core.PathJoin(targetDir, ".core")
 	if err := coreMkdirAll(manifestDir, 0o755); err != nil {
 		return err

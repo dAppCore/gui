@@ -39,72 +39,72 @@ type mockConnector struct {
 	printToPDF    bool
 	printCalled   bool
 	printPDFBytes []byte
-	printErr      error
+	printErr      resultFailure
 }
 
-func (m *mockConnector) Navigate(url string) error { m.lastNavURL = url; return nil }
-func (m *mockConnector) Click(sel string) error    { m.lastClickSel = sel; return nil }
-func (m *mockConnector) Type(sel, text string) error {
+func (m *mockConnector) Navigate(url string) resultFailure { m.lastNavURL = url; return nil }
+func (m *mockConnector) Click(sel string) resultFailure    { m.lastClickSel = sel; return nil }
+func (m *mockConnector) Type(sel, text string) resultFailure {
 	m.lastTypeSel = sel
 	m.lastTypeText = text
 	return nil
 }
-func (m *mockConnector) Hover(sel string) error { m.lastHoverSel = sel; return nil }
-func (m *mockConnector) Select(sel, val string) error {
+func (m *mockConnector) Hover(sel string) resultFailure { m.lastHoverSel = sel; return nil }
+func (m *mockConnector) Select(sel, val string) resultFailure {
 	m.lastSelectSel = sel
 	m.lastSelectVal = val
 	return nil
 }
-func (m *mockConnector) Check(sel string, c bool) error {
+func (m *mockConnector) Check(sel string, c bool) resultFailure {
 	m.lastCheckSel = sel
 	m.lastCheckVal = c
 	return nil
 }
-func (m *mockConnector) Evaluate(s string) (any, error)     { return m.evalResult, nil }
-func (m *mockConnector) Screenshot() ([]byte, error)        { return m.screenshot, nil }
-func (m *mockConnector) GetURL() (string, error)            { return m.url, nil }
-func (m *mockConnector) GetTitle() (string, error)          { return m.title, nil }
-func (m *mockConnector) GetHTML(sel string) (string, error) { return m.html, nil }
-func (m *mockConnector) ClearConsole()                      { m.consoleClearCalled = true }
-func (m *mockConnector) Close() error                       { m.closed = true; return nil }
-func (m *mockConnector) SetViewport(w, h int) error {
+func (m *mockConnector) Evaluate(s string) (any, resultFailure)     { return m.evalResult, nil }
+func (m *mockConnector) Screenshot() ([]byte, resultFailure)        { return m.screenshot, nil }
+func (m *mockConnector) GetURL() (string, resultFailure)            { return m.url, nil }
+func (m *mockConnector) GetTitle() (string, resultFailure)          { return m.title, nil }
+func (m *mockConnector) GetHTML(sel string) (string, resultFailure) { return m.html, nil }
+func (m *mockConnector) ClearConsole()                              { m.consoleClearCalled = true }
+func (m *mockConnector) Close() resultFailure                       { m.closed = true; return nil }
+func (m *mockConnector) SetViewport(w, h int) resultFailure {
 	m.lastViewportW = w
 	m.lastViewportH = h
 	return nil
 }
-func (m *mockConnector) UploadFile(sel string, p []string) error {
+func (m *mockConnector) UploadFile(sel string, p []string) resultFailure {
 	m.lastUploadSel = sel
 	m.lastUploadPaths = p
 	return nil
 }
 
-func (m *mockConnector) QuerySelector(sel string) (*ElementInfo, error) {
+func (m *mockConnector) QuerySelector(sel string) (*ElementInfo, resultFailure) {
 	if len(m.elements) > 0 {
 		return m.elements[0], nil
 	}
 	return nil, nil
 }
 
-func (m *mockConnector) QuerySelectorAll(sel string) ([]*ElementInfo, error) {
+func (m *mockConnector) QuerySelectorAll(sel string) ([]*ElementInfo, resultFailure) {
 	return m.elements, nil
 }
 
 func (m *mockConnector) GetConsole() []ConsoleMessage { return m.console }
 
-func (m *mockConnector) GetZoom() (float64, error) {
+func (m *mockConnector) GetZoom() (float64, resultFailure) {
 	if m.zoom == 0 {
 		return 1.0, nil
 	}
 	return m.zoom, nil
 }
 
-func (m *mockConnector) SetZoom(zoom float64) error {
+func (m *mockConnector) SetZoom(zoom float64) resultFailure {
 	m.lastZoomSet = zoom
 	m.zoom = zoom
 	return nil
 }
 
-func (m *mockConnector) Print(toPDF bool) ([]byte, error) {
+func (m *mockConnector) Print(toPDF bool) ([]byte, resultFailure) {
 	m.printCalled = true
 	m.printToPDF = toPDF
 	return m.printPDFBytes, m.printErr
@@ -117,7 +117,7 @@ func newTestService(t *core.T, mock *mockConnector) (*Service, *core.Core) {
 	core.RequireTrue(t, c.ServiceStartup(context.Background(), nil).OK)
 	svc := core.MustServiceFor[*Service](c, "webview")
 	// Inject mock connector
-	svc.newConn = func(_, _ string) (connector, error) { return mock, nil }
+	svc.newConn = func(_, _ string) (connector, resultFailure) { return mock, nil }
 	return svc, c
 }
 
@@ -137,7 +137,7 @@ func newTestServiceWithWindow(t *core.T, mock *mockConnector) (*Service, *window
 	core.RequireTrue(t, result.OK)
 
 	svc := core.MustServiceFor[*Service](c, "webview")
-	svc.newConn = func(_, _ string) (connector, error) { return mock, nil }
+	svc.newConn = func(_, _ string) (connector, resultFailure) { return mock, nil }
 	return svc, windowPlatform, c
 }
 
@@ -288,7 +288,7 @@ func TestTaskSetURL_Bad_UnknownWindow(t *core.T) {
 	_, c := newTestService(t, &mockConnector{})
 	// Inject a connector factory that errors
 	svc := core.MustServiceFor[*Service](c, "webview")
-	svc.newConn = func(_, _ string) (connector, error) {
+	svc.newConn = func(_, _ string) (connector, resultFailure) {
 		return nil, core.E("test", "no connection", nil)
 	}
 	r := taskRun(c, "webview.setURL", TaskSetURL{Window: "bad", URL: "https://example.com"})

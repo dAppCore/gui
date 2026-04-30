@@ -18,17 +18,17 @@ const (
 // Windows: taskbar badge + progress bar (show/hide and bounce not supported).
 // Linux: not supported — adapter returns nil for all operations.
 type Platform interface {
-	ShowIcon() error
-	HideIcon() error
-	SetBadge(label string) error
-	RemoveBadge() error
+	ShowIcon() resultFailure
+	HideIcon() resultFailure
+	SetBadge(label string) resultFailure
+	RemoveBadge() resultFailure
 	IsVisible() bool
 	// SetProgressBar sets a progress indicator on the dock/taskbar icon.
 	// progress is clamped to [0.0, 1.0]. Pass -1.0 to hide the indicator.
-	SetProgressBar(progress float64) error
+	SetProgressBar(progress float64) resultFailure
 	// Bounce requests user attention by animating the dock icon.
 	// Returns a request ID that can be passed to StopBounce.
-	Bounce(bounceType BounceType) (int, error)
+	Bounce(bounceType BounceType) (int, resultFailure)
 	// StopBounce cancels a pending attention request by its ID.
-	StopBounce(requestID int) error
+	StopBounce(requestID int) resultFailure
 }

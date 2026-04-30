@@ -14,7 +14,7 @@ type DenoStatusOutput struct {
 	Status deno.Status `json:"status"`
 }
 
-func (s *Subsystem) denoStatus(_ context.Context, _ *mcp.CallToolRequest, _ DenoStatusInput) (*mcp.CallToolResult, DenoStatusOutput, error) {
+func (s *Subsystem) denoStatus(_ context.Context, _ *mcp.CallToolRequest, _ DenoStatusInput) (*mcp.CallToolResult, DenoStatusOutput, resultFailure) {
 	result := s.core.Action("core.deno.sidecar.status").Run(context.Background(), core.Options{})
 	if !result.OK {
 		if err, ok := result.Value.(error); ok {
@@ -34,7 +34,7 @@ type DenoStartOutput struct {
 	Status deno.Status `json:"status"`
 }
 
-func (s *Subsystem) denoStart(_ context.Context, _ *mcp.CallToolRequest, _ DenoStartInput) (*mcp.CallToolResult, DenoStartOutput, error) {
+func (s *Subsystem) denoStart(_ context.Context, _ *mcp.CallToolRequest, _ DenoStartInput) (*mcp.CallToolResult, DenoStartOutput, resultFailure) {
 	result := s.core.Action("core.deno.sidecar.start").Run(context.Background(), core.Options{})
 	if !result.OK {
 		if err, ok := result.Value.(error); ok {
@@ -54,7 +54,7 @@ type DenoStopOutput struct {
 	Status deno.Status `json:"status"`
 }
 
-func (s *Subsystem) denoStop(_ context.Context, _ *mcp.CallToolRequest, _ DenoStopInput) (*mcp.CallToolResult, DenoStopOutput, error) {
+func (s *Subsystem) denoStop(_ context.Context, _ *mcp.CallToolRequest, _ DenoStopInput) (*mcp.CallToolResult, DenoStopOutput, resultFailure) {
 	result := s.core.Action("core.deno.sidecar.stop").Run(context.Background(), core.Options{})
 	if !result.OK {
 		if err, ok := result.Value.(error); ok {
@@ -77,7 +77,7 @@ type DenoEvalOutput struct {
 	Result deno.EvalResult `json:"result"`
 }
 
-func (s *Subsystem) denoEval(_ context.Context, _ *mcp.CallToolRequest, input DenoEvalInput) (*mcp.CallToolResult, DenoEvalOutput, error) {
+func (s *Subsystem) denoEval(_ context.Context, _ *mcp.CallToolRequest, input DenoEvalInput) (*mcp.CallToolResult, DenoEvalOutput, resultFailure) {
 	result := s.core.Action("core.deno.sidecar.eval").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "code", Value: input.Code},
 	))

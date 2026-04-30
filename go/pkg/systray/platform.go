@@ -17,7 +17,7 @@ type PlatformTray interface {
 	SetLabel(text string)
 	SetMenu(menu PlatformMenu)
 	AttachWindow(w WindowHandle)
-	ShowMessage(title, message string) error
+	ShowMessage(title, message string) resultFailure
 }
 
 // PlatformMenu is a tray menu built by the backend.

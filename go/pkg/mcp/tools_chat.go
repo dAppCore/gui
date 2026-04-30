@@ -91,7 +91,7 @@ type ChatSendOutput struct {
 	MessageID string `json:"message_id"`
 }
 
-func (s *Subsystem) chatSend(_ context.Context, _ *mcp.CallToolRequest, input ChatSendInput) (*mcp.CallToolResult, ChatSendOutput, error) {
+func (s *Subsystem) chatSend(_ context.Context, _ *mcp.CallToolRequest, input ChatSendInput) (*mcp.CallToolResult, ChatSendOutput, resultFailure) {
 	result := s.core.Action("gui.chat.send").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "conversation_id", Value: input.ConversationID},
 		core.Option{Key: "content", Value: input.Content},
@@ -120,7 +120,7 @@ type ChatHistoryOutput struct {
 	Messages []ChatMessage `json:"messages"`
 }
 
-func (s *Subsystem) chatHistory(_ context.Context, _ *mcp.CallToolRequest, input ChatHistoryInput) (*mcp.CallToolResult, ChatHistoryOutput, error) {
+func (s *Subsystem) chatHistory(_ context.Context, _ *mcp.CallToolRequest, input ChatHistoryInput) (*mcp.CallToolResult, ChatHistoryOutput, resultFailure) {
 	result := s.core.Action("gui.chat.history").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "conversation_id", Value: input.ConversationID},
 		core.Option{Key: "id", Value: input.ID},
@@ -145,7 +145,7 @@ type ChatModelsOutput struct {
 	Models []ChatModel `json:"models"`
 }
 
-func (s *Subsystem) chatModels(_ context.Context, _ *mcp.CallToolRequest, _ ChatModelsInput) (*mcp.CallToolResult, ChatModelsOutput, error) {
+func (s *Subsystem) chatModels(_ context.Context, _ *mcp.CallToolRequest, _ ChatModelsInput) (*mcp.CallToolResult, ChatModelsOutput, resultFailure) {
 	result := s.core.Action("gui.chat.models").Run(context.Background(), core.NewOptions())
 	if !result.OK {
 		if err, ok := result.Value.(error); ok {
@@ -171,7 +171,7 @@ type ChatSelectModelOutput struct {
 	Settings ChatSettings `json:"settings"`
 }
 
-func (s *Subsystem) chatSelectModel(_ context.Context, _ *mcp.CallToolRequest, input ChatSelectModelInput) (*mcp.CallToolResult, ChatSelectModelOutput, error) {
+func (s *Subsystem) chatSelectModel(_ context.Context, _ *mcp.CallToolRequest, input ChatSelectModelInput) (*mcp.CallToolResult, ChatSelectModelOutput, resultFailure) {
 	result := s.core.Action("gui.chat.selectModel").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "name", Value: input.Name},
 		core.Option{Key: "model", Value: input.Model},
@@ -197,7 +197,7 @@ type ChatConversationsListOutput struct {
 	Conversations []ChatConversation `json:"conversations"`
 }
 
-func (s *Subsystem) chatConversationsList(_ context.Context, _ *mcp.CallToolRequest, _ ChatConversationsListInput) (*mcp.CallToolResult, ChatConversationsListOutput, error) {
+func (s *Subsystem) chatConversationsList(_ context.Context, _ *mcp.CallToolRequest, _ ChatConversationsListInput) (*mcp.CallToolResult, ChatConversationsListOutput, resultFailure) {
 	result := s.core.Action("gui.chat.conversations.list").Run(context.Background(), core.NewOptions())
 	if !result.OK {
 		if err, ok := result.Value.(error); ok {
@@ -221,7 +221,7 @@ type ChatConversationsLoadOutput struct {
 	Conversation ChatConversation `json:"conversation"`
 }
 
-func (s *Subsystem) chatConversationsLoad(_ context.Context, _ *mcp.CallToolRequest, input ChatConversationsLoadInput) (*mcp.CallToolResult, ChatConversationsLoadOutput, error) {
+func (s *Subsystem) chatConversationsLoad(_ context.Context, _ *mcp.CallToolRequest, input ChatConversationsLoadInput) (*mcp.CallToolResult, ChatConversationsLoadOutput, resultFailure) {
 	result := s.core.Action("gui.chat.conversations.load").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "conversation_id", Value: input.ConversationID},
 		core.Option{Key: "id", Value: input.ID},
@@ -248,7 +248,7 @@ type ChatConversationsDeleteOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) chatConversationsDelete(_ context.Context, _ *mcp.CallToolRequest, input ChatConversationsDeleteInput) (*mcp.CallToolResult, ChatConversationsDeleteOutput, error) {
+func (s *Subsystem) chatConversationsDelete(_ context.Context, _ *mcp.CallToolRequest, input ChatConversationsDeleteInput) (*mcp.CallToolResult, ChatConversationsDeleteOutput, resultFailure) {
 	result := s.core.Action("gui.chat.conversations.delete").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "conversation_id", Value: input.ConversationID},
 		core.Option{Key: "id", Value: input.ID},
@@ -276,7 +276,7 @@ type ChatThinkingStartOutput struct {
 	State ChatThinkingState `json:"state"`
 }
 
-func (s *Subsystem) chatThinkingStart(_ context.Context, _ *mcp.CallToolRequest, input ChatThinkingStartInput) (*mcp.CallToolResult, ChatThinkingStartOutput, error) {
+func (s *Subsystem) chatThinkingStart(_ context.Context, _ *mcp.CallToolRequest, input ChatThinkingStartInput) (*mcp.CallToolResult, ChatThinkingStartOutput, resultFailure) {
 	result := s.core.Action("gui.chat.thinking.start").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "conversation_id", Value: input.ConversationID},
 		core.Option{Key: "message_id", Value: input.MessageID},
@@ -306,7 +306,7 @@ type ChatThinkingStopOutput struct {
 	State ChatThinkingState `json:"state"`
 }
 
-func (s *Subsystem) chatThinkingStop(_ context.Context, _ *mcp.CallToolRequest, input ChatThinkingStopInput) (*mcp.CallToolResult, ChatThinkingStopOutput, error) {
+func (s *Subsystem) chatThinkingStop(_ context.Context, _ *mcp.CallToolRequest, input ChatThinkingStopInput) (*mcp.CallToolResult, ChatThinkingStopOutput, resultFailure) {
 	result := s.core.Action("gui.chat.thinking.stop").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "conversation_id", Value: input.ConversationID},
 		core.Option{Key: "message_id", Value: input.MessageID},
@@ -326,7 +326,7 @@ func (s *Subsystem) chatThinkingStop(_ context.Context, _ *mcp.CallToolRequest, 
 	return nil, ChatThinkingStopOutput{State: state}, nil
 }
 
-func decodeChatValue[T any](value any) (T, error) {
+func decodeChatValue[T any](value any) (T, resultFailure) {
 	var output T
 	result := core.JSONUnmarshalString(core.JSONMarshalString(value), &output)
 	if result.OK {

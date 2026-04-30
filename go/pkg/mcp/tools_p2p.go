@@ -19,7 +19,7 @@ type P2PPublishOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) p2pPublish(_ context.Context, _ *mcp.CallToolRequest, input P2PPublishInput) (*mcp.CallToolResult, P2PPublishOutput, error) {
+func (s *Subsystem) p2pPublish(_ context.Context, _ *mcp.CallToolRequest, input P2PPublishInput) (*mcp.CallToolResult, P2PPublishOutput, resultFailure) {
 	result := s.core.Action("p2p.publish").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "topic", Value: input.Topic},
 		core.Option{Key: "route", Value: input.Route},
@@ -41,7 +41,7 @@ type P2PStateOutput struct {
 	State p2p.State `json:"state"`
 }
 
-func (s *Subsystem) p2pState(_ context.Context, _ *mcp.CallToolRequest, _ P2PStateInput) (*mcp.CallToolResult, P2PStateOutput, error) {
+func (s *Subsystem) p2pState(_ context.Context, _ *mcp.CallToolRequest, _ P2PStateInput) (*mcp.CallToolResult, P2PStateOutput, resultFailure) {
 	result := s.core.Action("p2p.state").Run(context.Background(), core.Options{})
 	if !result.OK {
 		if err, ok := result.Value.(error); ok {

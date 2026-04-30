@@ -83,11 +83,11 @@ func (s *Service) OnShutdown(_ context.Context) core.Result {
 	return core.Result{OK: true}
 }
 
-func (s *Service) Publish(ctx context.Context, envelope Envelope) error {
+func (s *Service) Publish(ctx context.Context, envelope Envelope) resultFailure {
 	return s.router.Publish(ctx, envelope)
 }
 
-func (s *Service) Subscribe(ctx context.Context, topic string, handler func(Envelope)) error {
+func (s *Service) Subscribe(ctx context.Context, topic string, handler func(Envelope)) resultFailure {
 	return s.router.Subscribe(ctx, topic, handler)
 }
 

@@ -282,15 +282,15 @@ type windowKeyEvent struct {
 	acceleratorString string
 }
 
-func (r *webViewAssetRequest) URL() (string, error) {
+func (r *webViewAssetRequest) URL() (string, resultFailure) {
 	return r.Request.URL()
 }
 
-func (r *webViewAssetRequest) Method() (string, error) {
+func (r *webViewAssetRequest) Method() (string, resultFailure) {
 	return r.Request.Method()
 }
 
-func (r *webViewAssetRequest) Header() (http.Header, error) {
+func (r *webViewAssetRequest) Header() (http.Header, resultFailure) {
 	h, err := r.Request.Header()
 	if err != nil {
 		return nil, err
@@ -304,7 +304,7 @@ func (r *webViewAssetRequest) Header() (http.Header, error) {
 	return hh, nil
 }
 
-func (r *webViewAssetRequest) Body() (io.ReadCloser, error) {
+func (r *webViewAssetRequest) Body() (io.ReadCloser, resultFailure) {
 	return r.Request.Body()
 }
 
@@ -312,7 +312,7 @@ func (r *webViewAssetRequest) Response() webview.ResponseWriter {
 	return r.Request.Response()
 }
 
-func (r *webViewAssetRequest) Close() error {
+func (r *webViewAssetRequest) Close() resultFailure {
 	return r.Request.Close()
 }
 
@@ -433,7 +433,7 @@ func (a *App) handleWarning(msg string) {
 	}
 }
 
-func (a *App) handleError(err error) {
+func (a *App) handleError(err resultFailure) {
 	if a.options.ErrorHandler != nil {
 		a.options.ErrorHandler(err)
 	} else {
@@ -463,7 +463,7 @@ func (a *App) RegisterService(service Service) {
 	a.options.Services = append(a.options.Services, service)
 }
 
-func (a *App) handleFatalError(err error) {
+func (a *App) handleFatalError(err resultFailure) {
 	a.handleError(&FatalError{err: err})
 	core.Exit(1)
 }
@@ -533,7 +533,7 @@ func (a *App) error(message string, args ...any) {
 	a.handleError(core.Errorf(message, args...))
 }
 
-func (a *App) Run() error {
+func (a *App) Run() resultFailure {
 	a.runLock.Lock()
 	// Prevent double invocations.
 	if a.starting || a.running {
@@ -643,7 +643,7 @@ func (a *App) Run() error {
 	return a.impl.run()
 }
 
-func (a *App) startupService(service Service) error {
+func (a *App) startupService(service Service) resultFailure {
 	err := a.bindings.Add(service)
 	if err != nil {
 		return core.Errorf("cannot bind service methods: %w", err)

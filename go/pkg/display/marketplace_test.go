@@ -161,8 +161,8 @@ func TestMarketplace_registerMarketplaceActions_BadCase(t *core.T) {
 
 	result := c.Action("display.marketplace.fetch").Run(context.Background(), core.NewOptions())
 	core.AssertFalse(t, result.OK)
-	core.AssertError(t, result.Value.(error))
-	core.AssertContains(t, result.Value.(error).Error(), "manifest url is required")
+	core.AssertError(t, result.Value.(resultFailure))
+	core.AssertContains(t, result.Value.(resultFailure).Error(), "manifest url is required")
 }
 
 func TestMarketplace_registerMarketplaceActions_UglyCase(t *core.T) {
@@ -170,8 +170,8 @@ func TestMarketplace_registerMarketplaceActions_UglyCase(t *core.T) {
 
 	result := c.Action("display.marketplace.install").Run(context.Background(), core.NewOptions())
 	core.AssertFalse(t, result.OK)
-	core.AssertError(t, result.Value.(error))
-	core.AssertContains(t, result.Value.(error).Error(), "manifest url is required")
+	core.AssertError(t, result.Value.(resultFailure))
+	core.AssertContains(t, result.Value.(resultFailure).Error(), "manifest url is required")
 }
 
 func signedMarketplaceManifest(t *core.T, manifest marketplace.Manifest) marketplace.Manifest {

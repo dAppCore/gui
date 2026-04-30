@@ -42,7 +42,7 @@ func (d *TCPDriver) ListenAddr() string {
 	return d.options.ListenAddr
 }
 
-func (d *TCPDriver) Subscribe(ctx context.Context, topic string, handler func(Envelope)) error {
+func (d *TCPDriver) Subscribe(ctx context.Context, topic string, handler func(Envelope)) resultFailure {
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -82,7 +82,7 @@ func (d *TCPDriver) Subscribe(ctx context.Context, topic string, handler func(En
 	return nil
 }
 
-func (d *TCPDriver) Publish(ctx context.Context, envelope Envelope) error {
+func (d *TCPDriver) Publish(ctx context.Context, envelope Envelope) resultFailure {
 	if core.Trim(envelope.Topic) == "" {
 		return core.NewError("topic is required")
 	}
@@ -119,7 +119,7 @@ func (d *TCPDriver) Publish(ctx context.Context, envelope Envelope) error {
 	return publishErr
 }
 
-func (d *TCPDriver) Close() error {
+func (d *TCPDriver) Close() resultFailure {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	if d.listener == nil {
@@ -132,7 +132,7 @@ func (d *TCPDriver) Close() error {
 	return err
 }
 
-func (d *TCPDriver) ensureListener() error {
+func (d *TCPDriver) ensureListener() resultFailure {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	if d.listener != nil || core.Trim(d.options.ListenAddr) == "" {

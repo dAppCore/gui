@@ -42,15 +42,15 @@ type Options struct {
 }
 
 type contract interface {
-	Send(context.Context, sendInput) (string, error)
-	History(string, int) ([]Message, error)
+	Send(context.Context, sendInput) (string, resultFailure)
+	History(string, int) ([]Message, resultFailure)
 	Models() []ModelEntry
-	SelectModel(selectModelInput) (ChatSettings, error)
-	ListConversations() ([]Conversation, error)
-	LoadConversation(string) (Conversation, error)
-	DeleteConversation(string) error
-	StartThinking(thinkingInput) (ThinkingState, error)
-	StopThinking(thinkingInput) (ThinkingState, error)
+	SelectModel(selectModelInput) (ChatSettings, resultFailure)
+	ListConversations() ([]Conversation, resultFailure)
+	LoadConversation(string) (Conversation, resultFailure)
+	DeleteConversation(string) resultFailure
+	StartThinking(thinkingInput) (ThinkingState, resultFailure)
+	StopThinking(thinkingInput) (ThinkingState, resultFailure)
 }
 
 var _ contract = (*Service)(nil)
@@ -225,7 +225,7 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		subsystem := guimcp.New(s.Core())
 		server := sdkmcp.NewServer(&sdkmcp.Implementation{Name: "coregui-chat", Version: "0.1.0"}, nil)
 		subsystem.RegisterTools(server)
-		s.toolExecutor = subsystem
+		s.toolExecutor = adapter{subsystem: subsystem}
 	}
 	registerMCPToolActions(s.Core(), s.toolExecutor)
 	s.toolExecutor = newActionToolExecutor(s.Core(), s.toolExecutor)
@@ -452,7 +452,7 @@ func (s *Service) registerActions() {
 	c.Action("gui.chat.thinking.end", stopThinking)
 }
 
-func decodeInput[T any](opts core.Options) (T, error) {
+func decodeInput[T any](opts core.Options) (T, resultFailure) {
 	var input T
 	if task := opts.Get("task"); task.OK {
 		if typed, ok := task.Value.(T); ok {
@@ -470,7 +470,7 @@ func decodeInput[T any](opts core.Options) (T, error) {
 
 	result := core.JSONUnmarshalString(core.JSONMarshalString(items), &input)
 	if !result.OK {
-		if err, ok := result.Value.(error); ok {
+		if err, ok := result.Value.(resultFailure); ok {
 			return input, err
 		}
 		return input, core.E("chat.decodeInput", "failed to decode action input", nil)
@@ -493,11 +493,11 @@ func (s *Service) now() time.Time {
 	return time.Now()
 }
 
-func (s *Service) Send(ctx context.Context, input sendInput) (string, error) {
+func (s *Service) Send(ctx context.Context, input sendInput) (string, resultFailure) {
 	return s.send(ctx, input)
 }
 
-func (s *Service) History(conversationID string, limit int) ([]Message, error) {
+func (s *Service) History(conversationID string, limit int) ([]Message, resultFailure) {
 	if limit < 0 {
 		return nil, core.E("chat.history", "limit must be greater than or equal to zero", nil)
 	}
@@ -538,7 +538,7 @@ func (s *Service) Models() []ModelEntry {
 	return models
 }
 
-func (s *Service) saveSettings(settings ChatSettings) error {
+func (s *Service) saveSettings(settings ChatSettings) resultFailure {
 	if err := s.validateSettings(settings); err != nil {
 		return err
 	}
@@ -561,7 +561,7 @@ func (s *Service) loadSettings() ChatSettings {
 	return settings
 }
 
-func (s *Service) SelectModel(input selectModelInput) (ChatSettings, error) {
+func (s *Service) SelectModel(input selectModelInput) (ChatSettings, resultFailure) {
 	modelName := coalesce(input.Name, input.Model)
 	if err := s.validateModelName(modelName); err != nil {
 		return ChatSettings{}, err
@@ -590,19 +590,19 @@ func (s *Service) SelectModel(input selectModelInput) (ChatSettings, error) {
 	return settings, nil
 }
 
-func (s *Service) ListConversations() ([]Conversation, error) {
+func (s *Service) ListConversations() ([]Conversation, resultFailure) {
 	return s.listConversations()
 }
 
-func (s *Service) LoadConversation(id string) (Conversation, error) {
+func (s *Service) LoadConversation(id string) (Conversation, resultFailure) {
 	return s.getConversation(id, "")
 }
 
-func (s *Service) DeleteConversation(id string) error {
+func (s *Service) DeleteConversation(id string) resultFailure {
 	return s.deleteConversation(id)
 }
 
-func (s *Service) StartThinking(input thinkingInput) (ThinkingState, error) {
+func (s *Service) StartThinking(input thinkingInput) (ThinkingState, resultFailure) {
 	if core.Trim(input.ConversationID) == "" {
 		return ThinkingState{}, core.E("chat.thinking.start", "conversation id is required", nil)
 	}
@@ -627,7 +627,7 @@ func (s *Service) StartThinking(input thinkingInput) (ThinkingState, error) {
 	return state, nil
 }
 
-func (s *Service) StopThinking(input thinkingInput) (ThinkingState, error) {
+func (s *Service) StopThinking(input thinkingInput) (ThinkingState, resultFailure) {
 	if core.Trim(input.ConversationID) == "" {
 		return ThinkingState{}, core.E("chat.thinking.stop", "conversation id is required", nil)
 	}
@@ -681,7 +681,7 @@ func (s *Service) appendThinking(conversationID, content string) {
 	s.thinkingStates[key] = state
 }
 
-func (s *Service) saveConversation(conv Conversation) (Conversation, error) {
+func (s *Service) saveConversation(conv Conversation) (Conversation, resultFailure) {
 	if err := s.validateConversation(conv); err != nil {
 		return Conversation{}, err
 	}
@@ -700,7 +700,7 @@ func (s *Service) saveConversation(conv Conversation) (Conversation, error) {
 	return conv, s.store.set(conversationsGroup, conv.ID, payload)
 }
 
-func (s *Service) loadConversation(id string) (Conversation, error) {
+func (s *Service) loadConversation(id string) (Conversation, resultFailure) {
 	payload, err := s.store.get(conversationsGroup, id)
 	if err != nil {
 		return Conversation{}, err
@@ -708,7 +708,7 @@ func (s *Service) loadConversation(id string) (Conversation, error) {
 	var conv Conversation
 	result := core.JSONUnmarshalString(payload, &conv)
 	if !result.OK {
-		if decodeErr, ok := result.Value.(error); ok {
+		if decodeErr, ok := result.Value.(resultFailure); ok {
 			return Conversation{}, decodeErr
 		}
 		return Conversation{}, core.E("chat.loadConversation", "failed to decode conversation", nil)
@@ -716,7 +716,7 @@ func (s *Service) loadConversation(id string) (Conversation, error) {
 	return conv, nil
 }
 
-func (s *Service) listConversations() ([]Conversation, error) {
+func (s *Service) listConversations() ([]Conversation, resultFailure) {
 	if s.store == nil {
 		return nil, nil
 	}
@@ -738,7 +738,7 @@ func (s *Service) listConversations() ([]Conversation, error) {
 	return conversations, nil
 }
 
-func (s *Service) listConversationSummaries() ([]ConversationSummary, error) {
+func (s *Service) listConversationSummaries() ([]ConversationSummary, resultFailure) {
 	conversations, err := s.listConversations()
 	if err != nil {
 		return nil, err
@@ -754,7 +754,7 @@ func (s *Service) listConversationSummaries() ([]ConversationSummary, error) {
 	return summaries, nil
 }
 
-func (s *Service) searchConversationSummaries(query string) ([]ConversationSummary, error) {
+func (s *Service) searchConversationSummaries(query string) ([]ConversationSummary, resultFailure) {
 	query = core.Trim(core.Lower(query))
 	summaries, err := s.listConversationSummaries()
 	if err != nil || query == "" {
@@ -826,7 +826,7 @@ func conversationSearchText(conv Conversation) string {
 	return builder.String()
 }
 
-func (s *Service) createConversation() (Conversation, error) {
+func (s *Service) createConversation() (Conversation, resultFailure) {
 	settings := s.loadSettings()
 	now := s.now()
 	conv := Conversation{
@@ -845,7 +845,7 @@ func (s *Service) createConversation() (Conversation, error) {
 	return conv, nil
 }
 
-func (s *Service) getConversation(id, conversationID string) (Conversation, error) {
+func (s *Service) getConversation(id, conversationID string) (Conversation, resultFailure) {
 	target := coalesce(id, conversationID)
 	if target == "" {
 		return Conversation{}, core.E("chat.getConversation", "conversation id is required", nil)
@@ -853,7 +853,7 @@ func (s *Service) getConversation(id, conversationID string) (Conversation, erro
 	return s.loadConversation(target)
 }
 
-func (s *Service) renameConversation(id, title string) (Conversation, error) {
+func (s *Service) renameConversation(id, title string) (Conversation, resultFailure) {
 	conv, err := s.loadConversation(id)
 	if err != nil {
 		return Conversation{}, err
@@ -870,7 +870,7 @@ func (s *Service) renameConversation(id, title string) (Conversation, error) {
 	return conv, nil
 }
 
-func (s *Service) clearConversation(id, conversationID string) (Conversation, error) {
+func (s *Service) clearConversation(id, conversationID string) (Conversation, resultFailure) {
 	conv, err := s.getConversation(id, conversationID)
 	if err != nil {
 		return Conversation{}, err
@@ -887,7 +887,7 @@ func (s *Service) clearConversation(id, conversationID string) (Conversation, er
 	return conv, nil
 }
 
-func (s *Service) deleteConversation(id string) error {
+func (s *Service) deleteConversation(id string) resultFailure {
 	if id == "" {
 		return core.E("chat.deleteConversation", "conversation id is required", nil)
 	}
@@ -899,7 +899,7 @@ func (s *Service) deleteConversation(id string) error {
 	return nil
 }
 
-func (s *Service) exportConversation(id string) (string, error) {
+func (s *Service) exportConversation(id string) (string, resultFailure) {
 	conv, err := s.loadConversation(id)
 	if err != nil {
 		return "", err
@@ -956,7 +956,7 @@ func (s *Service) drainAttachments(conversationID string) []ImageAttachment {
 
 // removeAttachment removes a queued image by index from the pending attachment queue.
 // Use: removed, _ := service.removeAttachment("draft", 0)
-func (s *Service) removeAttachment(conversationID string, index int) (ImageAttachment, error) {
+func (s *Service) removeAttachment(conversationID string, index int) (ImageAttachment, resultFailure) {
 	key := coalesce(conversationID, "draft")
 	if index < 0 {
 		return ImageAttachment{}, core.E("chat.removeAttachment", "attachment index must be non-negative", nil)
@@ -1018,7 +1018,7 @@ func (s *Service) mergedSettings(global ChatSettings, override *ChatSettings) Ch
 	return merged
 }
 
-func (s *Service) send(ctx context.Context, input sendInput) (string, error) {
+func (s *Service) send(ctx context.Context, input sendInput) (string, resultFailure) {
 	if core.Trim(input.Content) == "" && !s.hasPendingAttachments(input.ConversationID) {
 		return "", core.E("chat.send", "message content is required", nil)
 	}
@@ -1026,7 +1026,7 @@ func (s *Service) send(ctx context.Context, input sendInput) (string, error) {
 	settings := s.loadSettings()
 	var (
 		conv                   Conversation
-		err                    error
+		err                    resultFailure
 		created                bool
 		lastAssistantMessageID string
 	)
@@ -1150,7 +1150,7 @@ func (s *Service) hasPendingAttachments(conversationID string) bool {
 	return false
 }
 
-func (s *Service) streamAssistant(ctx context.Context, conv Conversation, settings ChatSettings) (ChatMessage, error) {
+func (s *Service) streamAssistant(ctx context.Context, conv Conversation, settings ChatSettings) (ChatMessage, resultFailure) {
 	messageID := "msg-" + strconv.FormatInt(s.now().UnixNano(), 36)
 	requestBody := s.buildCompletionRequest(conv, settings)
 	payload := core.JSONMarshalString(requestBody)
@@ -1445,7 +1445,7 @@ func (s *Service) discoverModels() []ModelEntry {
 	return results
 }
 
-func (s *Service) validateSettings(settings ChatSettings) error {
+func (s *Service) validateSettings(settings ChatSettings) resultFailure {
 	if settings.Temperature < 0 || settings.Temperature > 2 {
 		return core.E("chat.settings.save", "temperature must be between 0.0 and 2.0", nil)
 	}
@@ -1476,7 +1476,7 @@ func validContextWindow(value int) bool {
 	}
 }
 
-func (s *Service) validateConversation(conv Conversation) error {
+func (s *Service) validateConversation(conv Conversation) resultFailure {
 	if core.Trim(conv.ID) == "" {
 		return core.E("chat.saveConversation", "conversation id is required", nil)
 	}
@@ -1499,7 +1499,7 @@ func (s *Service) validateConversation(conv Conversation) error {
 	return nil
 }
 
-func (s *Service) validateModelName(name string) error {
+func (s *Service) validateModelName(name string) resultFailure {
 	if core.Trim(name) == "" {
 		return core.E("chat.selectModel", "model is required", nil)
 	}
@@ -1512,7 +1512,7 @@ func (s *Service) validateModelName(name string) error {
 	return core.E("chat.selectModel", "model is not available: "+name, nil)
 }
 
-func (s *Service) validateOptionalModelName(name string) error {
+func (s *Service) validateOptionalModelName(name string) resultFailure {
 	if core.Trim(name) == "" {
 		return nil
 	}
@@ -1534,7 +1534,7 @@ func (s *Service) findModel(name string) (ModelEntry, bool) {
 	return ModelEntry{}, false
 }
 
-func (s *Service) validateAttachmentsForModel(modelName string, attachments []ImageAttachment) error {
+func (s *Service) validateAttachmentsForModel(modelName string, attachments []ImageAttachment) resultFailure {
 	if len(attachments) == 0 {
 		return nil
 	}
@@ -1548,7 +1548,7 @@ func (s *Service) validateAttachmentsForModel(modelName string, attachments []Im
 	return nil
 }
 
-func validateMessageAttachments(message ChatMessage) error {
+func validateMessageAttachments(message ChatMessage) resultFailure {
 	for _, attachment := range message.Attachments {
 		if err := validateImageAttachment(attachment); err != nil {
 			return err
@@ -1618,7 +1618,7 @@ func readModelConfig(modelPath string) (modelConfig, bool) {
 	return config, true
 }
 
-func validateImageAttachment(attachment ImageAttachment) error {
+func validateImageAttachment(attachment ImageAttachment) resultFailure {
 	if core.Trim(attachment.Filename) == "" {
 		return core.E("chat.attachImage", "attachment filename is required", nil)
 	}
@@ -1632,7 +1632,7 @@ func validateImageAttachment(attachment ImageAttachment) error {
 	return nil
 }
 
-func imageAttachmentFromFile(rawPath string) (ImageAttachment, error) {
+func imageAttachmentFromFile(rawPath string) (ImageAttachment, resultFailure) {
 	path, err := validatedImageFilePath(rawPath)
 	if err != nil {
 		return ImageAttachment{}, err
@@ -1660,7 +1660,7 @@ func imageAttachmentFromFile(rawPath string) (ImageAttachment, error) {
 	return attachment, nil
 }
 
-func validatedImageFilePath(rawPath string) (string, error) {
+func validatedImageFilePath(rawPath string) (string, resultFailure) {
 	trimmed := core.Trim(rawPath)
 	if trimmed == "" {
 		return "", core.E("chat.attachImageFile", "path is required", nil)
@@ -1675,7 +1675,7 @@ func validatedImageFilePath(rawPath string) (string, error) {
 	return cleaned, nil
 }
 
-func detectImageMimeType(path string, data []byte) (string, error) {
+func detectImageMimeType(path string, data []byte) (string, resultFailure) {
 	mimeType := core.Lower(core.Trim(http.DetectContentType(data)))
 	if _, ok := supportedImageMimeTypes[mimeType]; ok {
 		return mimeType, nil

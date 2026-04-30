@@ -64,7 +64,7 @@ func (w *testWindowListener) ToggleFullscreen()            {}
 func (w *testWindowListener) ToggleMaximise()              {}
 func (w *testWindowListener) ExecJS(string)                {}
 func (w *testWindowListener) Flash(bool)                   {}
-func (w *testWindowListener) Print() error                 { return nil }
+func (w *testWindowListener) Print() resultFailure         { return nil }
 func (w *testWindowListener) OnWindowEvent(handler func(window.WindowEvent)) {
 	w.handler = handler
 }

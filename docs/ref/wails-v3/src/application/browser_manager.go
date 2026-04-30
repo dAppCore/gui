@@ -17,11 +17,11 @@ func newBrowserManager(app *App) *BrowserManager {
 }
 
 // OpenURL opens a URL in the default browser
-func (bm *BrowserManager) OpenURL(url string) error {
+func (bm *BrowserManager) OpenURL(url string) resultFailure {
 	return browser.OpenURL(url)
 }
 
 // OpenFile opens a file in the default browser
-func (bm *BrowserManager) OpenFile(path string) error {
+func (bm *BrowserManager) OpenFile(path string) resultFailure {
 	return browser.OpenFile(path)
 }

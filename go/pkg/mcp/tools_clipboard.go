@@ -17,7 +17,7 @@ type ClipboardReadOutput struct {
 	Content string `json:"content"`
 }
 
-func (s *Subsystem) clipboardRead(_ context.Context, _ *mcp.CallToolRequest, _ ClipboardReadInput) (*mcp.CallToolResult, ClipboardReadOutput, error) {
+func (s *Subsystem) clipboardRead(_ context.Context, _ *mcp.CallToolRequest, _ ClipboardReadInput) (*mcp.CallToolResult, ClipboardReadOutput, resultFailure) {
 	r := s.core.QUERY(clipboard.QueryText{})
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {
@@ -41,7 +41,7 @@ type ClipboardWriteOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) clipboardWrite(_ context.Context, _ *mcp.CallToolRequest, input ClipboardWriteInput) (*mcp.CallToolResult, ClipboardWriteOutput, error) {
+func (s *Subsystem) clipboardWrite(_ context.Context, _ *mcp.CallToolRequest, input ClipboardWriteInput) (*mcp.CallToolResult, ClipboardWriteOutput, resultFailure) {
 	r := s.core.Action("clipboard.setText").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: clipboard.TaskSetText{Text: input.Text}},
 	))
@@ -61,7 +61,7 @@ type ClipboardHasOutput struct {
 	HasContent bool `json:"hasContent"`
 }
 
-func (s *Subsystem) clipboardHas(_ context.Context, _ *mcp.CallToolRequest, _ ClipboardHasInput) (*mcp.CallToolResult, ClipboardHasOutput, error) {
+func (s *Subsystem) clipboardHas(_ context.Context, _ *mcp.CallToolRequest, _ ClipboardHasInput) (*mcp.CallToolResult, ClipboardHasOutput, resultFailure) {
 	r := s.core.QUERY(clipboard.QueryText{})
 	if !r.OK {
 		return nil, ClipboardHasOutput{}, nil
@@ -80,7 +80,7 @@ type ClipboardClearOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) clipboardClear(_ context.Context, _ *mcp.CallToolRequest, _ ClipboardClearInput) (*mcp.CallToolResult, ClipboardClearOutput, error) {
+func (s *Subsystem) clipboardClear(_ context.Context, _ *mcp.CallToolRequest, _ ClipboardClearInput) (*mcp.CallToolResult, ClipboardClearOutput, resultFailure) {
 	r := s.core.Action("clipboard.clear").Run(context.Background(), core.NewOptions())
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {
@@ -98,7 +98,7 @@ type ClipboardReadImageOutput struct {
 	Base64 string `json:"base64"`
 }
 
-func (s *Subsystem) clipboardReadImage(_ context.Context, _ *mcp.CallToolRequest, _ ClipboardReadImageInput) (*mcp.CallToolResult, ClipboardReadImageOutput, error) {
+func (s *Subsystem) clipboardReadImage(_ context.Context, _ *mcp.CallToolRequest, _ ClipboardReadImageInput) (*mcp.CallToolResult, ClipboardReadImageOutput, resultFailure) {
 	r := s.core.QUERY(clipboard.QueryImage{})
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {
@@ -125,7 +125,7 @@ type ClipboardWriteImageOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) clipboardWriteImage(_ context.Context, _ *mcp.CallToolRequest, input ClipboardWriteImageInput) (*mcp.CallToolResult, ClipboardWriteImageOutput, error) {
+func (s *Subsystem) clipboardWriteImage(_ context.Context, _ *mcp.CallToolRequest, input ClipboardWriteImageInput) (*mcp.CallToolResult, ClipboardWriteImageOutput, resultFailure) {
 	maxEncodedLen := ((clipboard.MaxImageBytes + 2) / 3) * 4
 	if len(input.Base64) == 0 || len(input.Base64) > maxEncodedLen {
 		return nil, ClipboardWriteImageOutput{}, core.E("mcp.clipboardWriteImage", "clipboard image exceeds maximum size", nil)

@@ -270,7 +270,7 @@ func TestManifest_LoadManifestForOrigin_Concurrent(t *core.T) {
 	core.RequireNoError(t, err)
 
 	var wg sync.WaitGroup
-	errs := make(chan error, 16)
+	errs := make(chan resultFailure, 16)
 	for i := 0; i < 16; i++ {
 		wg.Add(1)
 		go func() {

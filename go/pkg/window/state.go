@@ -129,7 +129,7 @@ func (sm *StateManager) load() {
 	sm.mu.Unlock()
 }
 
-func (sm *StateManager) save() error {
+func (sm *StateManager) save() resultFailure {
 	if sm.configDir == "" && sm.statePath == "" {
 		return nil
 	}
@@ -289,7 +289,7 @@ func (sm *StateManager) stopSaveTimerLocked() {
 }
 
 // ForceSync writes state to disk immediately.
-func (sm *StateManager) ForceSync() error {
+func (sm *StateManager) ForceSync() resultFailure {
 	sm.mu.Lock()
 	sm.stopSaveTimerLocked()
 	sm.mu.Unlock()

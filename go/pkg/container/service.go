@@ -19,7 +19,7 @@ var timContainerNamePattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_.-]*$`)
 func NewService(c *core.Core, options TIMOptions) *Service {
 	options, err := normalizeTIMOptions(options)
 	if options.Exec == nil && c != nil {
-		options.Exec = func(ctx context.Context, name string, args ...string) error {
+		options.Exec = func(ctx context.Context, name string, args ...string) resultFailure {
 			result := c.Process().Run(ctx, name, args...)
 			if result.OK {
 				return nil
@@ -42,7 +42,7 @@ func OptionsFromEnv() TIMOptions {
 	return options
 }
 
-func OptionsFromEnvValidated() (TIMOptions, error) {
+func OptionsFromEnvValidated() (TIMOptions, resultFailure) {
 	return TIMOptions{
 		Name:    core.Trim(core.Env("CORE_TIM_NAME")),
 		Image:   core.Trim(core.Env("CORE_TIM_IMAGE")),
@@ -75,11 +75,11 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 	return core.Result{OK: true}
 }
 
-func (options TIMOptions) Validate() (TIMOptions, error) {
+func (options TIMOptions) Validate() (TIMOptions, resultFailure) {
 	return normalizeTIMOptions(options)
 }
 
-func normalizeTIMOptions(options TIMOptions) (TIMOptions, error) {
+func normalizeTIMOptions(options TIMOptions) (TIMOptions, resultFailure) {
 	options.Name = core.Trim(options.Name)
 	options.Image = core.Trim(options.Image)
 	options.DataDir = core.Trim(options.DataDir)
@@ -97,7 +97,7 @@ func normalizeTIMOptions(options TIMOptions) (TIMOptions, error) {
 	return options, nil
 }
 
-func validateTIMContainerName(value string) error {
+func validateTIMContainerName(value string) resultFailure {
 	if value == "" {
 		return nil
 	}
@@ -113,7 +113,7 @@ func validateTIMContainerName(value string) error {
 	return nil
 }
 
-func validateTIMArgValue(label, value string) error {
+func validateTIMArgValue(label, value string) resultFailure {
 	if value == "" {
 		return nil
 	}

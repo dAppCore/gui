@@ -149,7 +149,7 @@ func TestOptions_ApplyOptions_Bad(t *core.T) {
 
 	w, err := ApplyOptions(
 		WithName("before"),
-		func(*Window) error { return boom },
+		func(*Window) resultFailure { return boom },
 		WithTitle("after"),
 	)
 

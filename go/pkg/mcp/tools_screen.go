@@ -17,7 +17,7 @@ type ScreenListOutput struct {
 	Screens []screen.Screen `json:"screens"`
 }
 
-func (s *Subsystem) screenList(_ context.Context, _ *mcp.CallToolRequest, _ ScreenListInput) (*mcp.CallToolResult, ScreenListOutput, error) {
+func (s *Subsystem) screenList(_ context.Context, _ *mcp.CallToolRequest, _ ScreenListInput) (*mcp.CallToolResult, ScreenListOutput, resultFailure) {
 	r := s.core.QUERY(screen.QueryAll{})
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {
@@ -41,7 +41,7 @@ type ScreenGetOutput struct {
 	Screen *screen.Screen `json:"screen"`
 }
 
-func (s *Subsystem) screenGet(_ context.Context, _ *mcp.CallToolRequest, input ScreenGetInput) (*mcp.CallToolResult, ScreenGetOutput, error) {
+func (s *Subsystem) screenGet(_ context.Context, _ *mcp.CallToolRequest, input ScreenGetInput) (*mcp.CallToolResult, ScreenGetOutput, resultFailure) {
 	r := s.core.QUERY(screen.QueryByID{ID: input.ID})
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {
@@ -63,7 +63,7 @@ type ScreenPrimaryOutput struct {
 	Screen *screen.Screen `json:"screen"`
 }
 
-func (s *Subsystem) screenPrimary(_ context.Context, _ *mcp.CallToolRequest, _ ScreenPrimaryInput) (*mcp.CallToolResult, ScreenPrimaryOutput, error) {
+func (s *Subsystem) screenPrimary(_ context.Context, _ *mcp.CallToolRequest, _ ScreenPrimaryInput) (*mcp.CallToolResult, ScreenPrimaryOutput, resultFailure) {
 	r := s.core.QUERY(screen.QueryPrimary{})
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {
@@ -88,7 +88,7 @@ type ScreenAtPointOutput struct {
 	Screen *screen.Screen `json:"screen"`
 }
 
-func (s *Subsystem) screenAtPoint(_ context.Context, _ *mcp.CallToolRequest, input ScreenAtPointInput) (*mcp.CallToolResult, ScreenAtPointOutput, error) {
+func (s *Subsystem) screenAtPoint(_ context.Context, _ *mcp.CallToolRequest, input ScreenAtPointInput) (*mcp.CallToolResult, ScreenAtPointOutput, resultFailure) {
 	r := s.core.QUERY(screen.QueryAtPoint{X: input.X, Y: input.Y})
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {
@@ -110,7 +110,7 @@ type ScreenWorkAreasOutput struct {
 	WorkAreas []screen.Rect `json:"workAreas"`
 }
 
-func (s *Subsystem) screenWorkAreas(_ context.Context, _ *mcp.CallToolRequest, _ ScreenWorkAreasInput) (*mcp.CallToolResult, ScreenWorkAreasOutput, error) {
+func (s *Subsystem) screenWorkAreas(_ context.Context, _ *mcp.CallToolRequest, _ ScreenWorkAreasInput) (*mcp.CallToolResult, ScreenWorkAreasOutput, resultFailure) {
 	r := s.core.QUERY(screen.QueryWorkAreas{})
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {
@@ -134,7 +134,7 @@ type ScreenWorkAreaOutput struct {
 	WorkArea screen.Rect `json:"workArea"`
 }
 
-func (s *Subsystem) screenWorkArea(_ context.Context, _ *mcp.CallToolRequest, input ScreenWorkAreaInput) (*mcp.CallToolResult, ScreenWorkAreaOutput, error) {
+func (s *Subsystem) screenWorkArea(_ context.Context, _ *mcp.CallToolRequest, input ScreenWorkAreaInput) (*mcp.CallToolResult, ScreenWorkAreaOutput, resultFailure) {
 	var query core.Query = screen.QueryPrimary{}
 	if input.ID != "" {
 		query = screen.QueryByID{ID: input.ID}
@@ -165,7 +165,7 @@ type ScreenForWindowOutput struct {
 	Screen *screen.Screen `json:"screen"`
 }
 
-func (s *Subsystem) screenForWindow(_ context.Context, _ *mcp.CallToolRequest, input ScreenForWindowInput) (*mcp.CallToolResult, ScreenForWindowOutput, error) {
+func (s *Subsystem) screenForWindow(_ context.Context, _ *mcp.CallToolRequest, input ScreenForWindowInput) (*mcp.CallToolResult, ScreenForWindowOutput, resultFailure) {
 	r := s.core.QUERY(window.QueryWindowByName{Name: input.Name})
 	if !r.OK {
 		return nil, ScreenForWindowOutput{}, nil

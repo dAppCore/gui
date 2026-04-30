@@ -22,8 +22,8 @@ type Peer struct {
 }
 
 type Driver interface {
-	Publish(context.Context, Envelope) error
-	Subscribe(context.Context, string, func(Envelope)) error
+	Publish(context.Context, Envelope) resultFailure
+	Subscribe(context.Context, string, func(Envelope)) resultFailure
 }
 
 type Router struct {
@@ -39,7 +39,7 @@ func New(driver Driver) *Router {
 	}
 }
 
-func (r *Router) Subscribe(ctx context.Context, topic string, handler func(Envelope)) error {
+func (r *Router) Subscribe(ctx context.Context, topic string, handler func(Envelope)) resultFailure {
 	if r.driver == nil {
 		return nil
 	}
@@ -56,7 +56,7 @@ func (r *Router) Subscribe(ctx context.Context, topic string, handler func(Envel
 	})
 }
 
-func (r *Router) Publish(ctx context.Context, envelope Envelope) error {
+func (r *Router) Publish(ctx context.Context, envelope Envelope) resultFailure {
 	if r.driver == nil {
 		return nil
 	}

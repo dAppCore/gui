@@ -660,7 +660,7 @@ func (w *WebviewWindow) DispatchWailsEvent(event *CustomEvent) {}
 // GetScreen returns the screen on which this window is currently displayed.
 //
 //	screen, err := w.GetScreen()
-func (w *WebviewWindow) GetScreen() (*Screen, error) { return &Screen{}, nil }
+func (w *WebviewWindow) GetScreen() (*Screen, resultFailure) { return &Screen{}, nil }
 
 // GetBorderSizes returns the platform-specific window border dimensions.
 //
@@ -690,7 +690,7 @@ func (w *WebviewWindow) Flash(enabled bool) {}
 // Print opens the system print dialog for the webview contents.
 //
 //	err := w.Print()
-func (w *WebviewWindow) Print() error { return nil }
+func (w *WebviewWindow) Print() resultFailure { return nil }
 
 // Error logs an error-level message on behalf of this window.
 //

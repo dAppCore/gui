@@ -201,7 +201,7 @@ func TestScheme_ResolveSchemeRequest_BodyQuery_Bad(t *core.T) {
 		[]byte(repeatString("a", maxSchemeRequestBodyBytes+1)),
 	)
 	core.AssertFalse(t, result.OK)
-	core.AssertContains(t, result.Value.(error).Error(), "request body exceeds")
+	core.AssertContains(t, result.Value.(resultFailure).Error(), "request body exceeds")
 }
 
 func TestScheme_ResolveScheme_Ugly(t *core.T) {

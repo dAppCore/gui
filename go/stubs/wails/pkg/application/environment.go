@@ -109,7 +109,7 @@ func (em *EnvironmentManager) Info() EnvironmentInfo {
 	}
 }
 
-func (em *EnvironmentManager) OpenFileManager(path string, selectFile bool) error {
+func (em *EnvironmentManager) OpenFileManager(path string, selectFile bool) resultFailure {
 	if em == nil {
 		return nil
 	}

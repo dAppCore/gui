@@ -19,7 +19,7 @@ type TraySetIconOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) traySetIcon(_ context.Context, _ *mcp.CallToolRequest, input TraySetIconInput) (*mcp.CallToolResult, TraySetIconOutput, error) {
+func (s *Subsystem) traySetIcon(_ context.Context, _ *mcp.CallToolRequest, input TraySetIconInput) (*mcp.CallToolResult, TraySetIconOutput, resultFailure) {
 	if input.Base64 == "" {
 		return nil, TraySetIconOutput{}, core.E("mcp.traySetIcon", "base64 icon data is required", nil)
 	}
@@ -48,7 +48,7 @@ type TraySetTooltipOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) traySetTooltip(_ context.Context, _ *mcp.CallToolRequest, input TraySetTooltipInput) (*mcp.CallToolResult, TraySetTooltipOutput, error) {
+func (s *Subsystem) traySetTooltip(_ context.Context, _ *mcp.CallToolRequest, input TraySetTooltipInput) (*mcp.CallToolResult, TraySetTooltipOutput, resultFailure) {
 	r := s.core.Action("systray.setTooltip").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: systray.TaskSetTrayTooltip{Tooltip: input.Tooltip}},
 	))
@@ -70,7 +70,7 @@ type TraySetLabelOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) traySetLabel(_ context.Context, _ *mcp.CallToolRequest, input TraySetLabelInput) (*mcp.CallToolResult, TraySetLabelOutput, error) {
+func (s *Subsystem) traySetLabel(_ context.Context, _ *mcp.CallToolRequest, input TraySetLabelInput) (*mcp.CallToolResult, TraySetLabelOutput, resultFailure) {
 	r := s.core.Action("systray.setLabel").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: systray.TaskSetTrayLabel{Label: input.Label}},
 	))
@@ -93,7 +93,7 @@ type TraySetMenuOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) traySetMenu(_ context.Context, _ *mcp.CallToolRequest, input TraySetMenuInput) (*mcp.CallToolResult, TraySetMenuOutput, error) {
+func (s *Subsystem) traySetMenu(_ context.Context, _ *mcp.CallToolRequest, input TraySetMenuInput) (*mcp.CallToolResult, TraySetMenuOutput, resultFailure) {
 	r := s.core.Action("systray.setMenu").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: systray.TaskSetTrayMenu{Items: input.Items}},
 	))
@@ -117,7 +117,7 @@ type TrayShowMessageOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) trayShowMessage(_ context.Context, _ *mcp.CallToolRequest, input TrayShowMessageInput) (*mcp.CallToolResult, TrayShowMessageOutput, error) {
+func (s *Subsystem) trayShowMessage(_ context.Context, _ *mcp.CallToolRequest, input TrayShowMessageInput) (*mcp.CallToolResult, TrayShowMessageOutput, resultFailure) {
 	r := s.core.Action("systray.showMessage").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: systray.TaskShowMessage{Title: input.Title, Message: input.Message}},
 	))
@@ -137,7 +137,7 @@ type TrayInfoOutput struct {
 	Config map[string]any `json:"config"`
 }
 
-func (s *Subsystem) trayInfo(_ context.Context, _ *mcp.CallToolRequest, _ TrayInfoInput) (*mcp.CallToolResult, TrayInfoOutput, error) {
+func (s *Subsystem) trayInfo(_ context.Context, _ *mcp.CallToolRequest, _ TrayInfoInput) (*mcp.CallToolResult, TrayInfoOutput, resultFailure) {
 	r := s.core.QUERY(systray.QueryInfo{})
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {

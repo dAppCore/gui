@@ -77,7 +77,7 @@ func (s *Service) ensureSidecar() *deno.Manager {
 	return s.sidecar
 }
 
-func (s *Service) startSidecar(ctx context.Context) (deno.Status, error) {
+func (s *Service) startSidecar(ctx context.Context) (deno.Status, resultFailure) {
 	manager, err := s.sidecarForStart()
 	if err != nil {
 		s.sidecar = nil
@@ -86,7 +86,7 @@ func (s *Service) startSidecar(ctx context.Context) (deno.Status, error) {
 	return manager.Start(ctx)
 }
 
-func (s *Service) sidecarForStart() (*deno.Manager, error) {
+func (s *Service) sidecarForStart() (*deno.Manager, resultFailure) {
 	options, err := sidecarLaunchOptions(s.coreRef())
 	if err != nil {
 		return nil, err
@@ -122,7 +122,7 @@ func (s *Service) newSidecar(options deno.Options) *deno.Manager {
 	return manager
 }
 
-func sidecarLaunchOptions(coreRef *core.Core) (deno.Options, error) {
+func sidecarLaunchOptions(coreRef *core.Core) (deno.Options, resultFailure) {
 	args := splitCommandArgs(core.Env("CORE_DENO_ARGS"))
 	if err := validateSidecarArgs(args, coreRef); err != nil {
 		return deno.Options{}, err
@@ -145,7 +145,7 @@ func sidecarLaunchOptions(coreRef *core.Core) (deno.Options, error) {
 	}, nil
 }
 
-func validateSidecarArgs(args []string, coreRef *core.Core) error {
+func validateSidecarArgs(args []string, coreRef *core.Core) resultFailure {
 	for _, arg := range args {
 		flag := denoPermissionFlag(arg)
 		if flag == "" {
@@ -181,7 +181,7 @@ func denoPermissionFlag(arg string) string {
 	}
 }
 
-func validateSidecarBinary(value string) (string, error) {
+func validateSidecarBinary(value string) (string, resultFailure) {
 	binary := core.Trim(value)
 	if binary == "" {
 		return "", nil
@@ -209,7 +209,7 @@ func validateSidecarBinary(value string) (string, error) {
 	return resolved, nil
 }
 
-func validateSidecarDir(value string) (string, error) {
+func validateSidecarDir(value string) (string, resultFailure) {
 	dir := core.Trim(value)
 	if dir == "" {
 		return "", nil
@@ -243,7 +243,7 @@ func hasParentPathComponent(path string) bool {
 	return false
 }
 
-func rejectSymlinkPathComponents(path string) error {
+func rejectSymlinkPathComponents(path string) resultFailure {
 	clean := core.CleanPath(path, string(core.PathSeparator))
 	volume := pathVolumeName(clean)
 	rest := core.TrimPrefix(clean, volume)

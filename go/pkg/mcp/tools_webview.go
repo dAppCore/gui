@@ -27,7 +27,7 @@ type WebviewEvalOutput struct {
 	Window string `json:"window"`
 }
 
-func (s *Subsystem) webviewEval(_ context.Context, _ *mcp.CallToolRequest, input WebviewEvalInput) (*mcp.CallToolResult, WebviewEvalOutput, error) {
+func (s *Subsystem) webviewEval(_ context.Context, _ *mcp.CallToolRequest, input WebviewEvalInput) (*mcp.CallToolResult, WebviewEvalOutput, resultFailure) {
 	r := s.core.Action("webview.evaluate").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: webview.TaskEvaluate{Window: input.Window, Script: input.Script}},
 	))
@@ -51,7 +51,7 @@ type WebviewClickOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) webviewClick(_ context.Context, _ *mcp.CallToolRequest, input WebviewClickInput) (*mcp.CallToolResult, WebviewClickOutput, error) {
+func (s *Subsystem) webviewClick(_ context.Context, _ *mcp.CallToolRequest, input WebviewClickInput) (*mcp.CallToolResult, WebviewClickOutput, resultFailure) {
 	r := s.core.Action("webview.click").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: webview.TaskClick{Window: input.Window, Selector: input.Selector}},
 	))
@@ -76,7 +76,7 @@ type WebviewTypeOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) webviewType(_ context.Context, _ *mcp.CallToolRequest, input WebviewTypeInput) (*mcp.CallToolResult, WebviewTypeOutput, error) {
+func (s *Subsystem) webviewType(_ context.Context, _ *mcp.CallToolRequest, input WebviewTypeInput) (*mcp.CallToolResult, WebviewTypeOutput, resultFailure) {
 	r := s.core.Action("webview.type").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: webview.TaskType{Window: input.Window, Selector: input.Selector, Text: input.Text}},
 	))
@@ -100,7 +100,7 @@ type WebviewNavigateOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) webviewNavigate(_ context.Context, _ *mcp.CallToolRequest, input WebviewNavigateInput) (*mcp.CallToolResult, WebviewNavigateOutput, error) {
+func (s *Subsystem) webviewNavigate(_ context.Context, _ *mcp.CallToolRequest, input WebviewNavigateInput) (*mcp.CallToolResult, WebviewNavigateOutput, resultFailure) {
 	r := s.core.Action("webview.navigate").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: webview.TaskNavigate{Window: input.Window, URL: input.URL}},
 	))
@@ -124,7 +124,7 @@ type WebviewScreenshotOutput struct {
 	MimeType string `json:"mimeType"`
 }
 
-func (s *Subsystem) webviewScreenshot(_ context.Context, _ *mcp.CallToolRequest, input WebviewScreenshotInput) (*mcp.CallToolResult, WebviewScreenshotOutput, error) {
+func (s *Subsystem) webviewScreenshot(_ context.Context, _ *mcp.CallToolRequest, input WebviewScreenshotInput) (*mcp.CallToolResult, WebviewScreenshotOutput, resultFailure) {
 	r := s.core.Action("webview.screenshot").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: webview.TaskScreenshot{Window: input.Window}},
 	))
@@ -153,7 +153,7 @@ type WebviewScrollOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) webviewScroll(_ context.Context, _ *mcp.CallToolRequest, input WebviewScrollInput) (*mcp.CallToolResult, WebviewScrollOutput, error) {
+func (s *Subsystem) webviewScroll(_ context.Context, _ *mcp.CallToolRequest, input WebviewScrollInput) (*mcp.CallToolResult, WebviewScrollOutput, resultFailure) {
 	r := s.core.Action("webview.scroll").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: webview.TaskScroll{Window: input.Window, X: input.X, Y: input.Y}},
 	))
@@ -177,7 +177,7 @@ type WebviewHoverOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) webviewHover(_ context.Context, _ *mcp.CallToolRequest, input WebviewHoverInput) (*mcp.CallToolResult, WebviewHoverOutput, error) {
+func (s *Subsystem) webviewHover(_ context.Context, _ *mcp.CallToolRequest, input WebviewHoverInput) (*mcp.CallToolResult, WebviewHoverOutput, resultFailure) {
 	r := s.core.Action("webview.hover").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: webview.TaskHover{Window: input.Window, Selector: input.Selector}},
 	))
@@ -202,7 +202,7 @@ type WebviewSelectOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) webviewSelect(_ context.Context, _ *mcp.CallToolRequest, input WebviewSelectInput) (*mcp.CallToolResult, WebviewSelectOutput, error) {
+func (s *Subsystem) webviewSelect(_ context.Context, _ *mcp.CallToolRequest, input WebviewSelectInput) (*mcp.CallToolResult, WebviewSelectOutput, resultFailure) {
 	r := s.core.Action("webview.select").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: webview.TaskSelect{Window: input.Window, Selector: input.Selector, Value: input.Value}},
 	))
@@ -227,7 +227,7 @@ type WebviewCheckOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) webviewCheck(_ context.Context, _ *mcp.CallToolRequest, input WebviewCheckInput) (*mcp.CallToolResult, WebviewCheckOutput, error) {
+func (s *Subsystem) webviewCheck(_ context.Context, _ *mcp.CallToolRequest, input WebviewCheckInput) (*mcp.CallToolResult, WebviewCheckOutput, resultFailure) {
 	r := s.core.Action("webview.check").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: webview.TaskCheck{Window: input.Window, Selector: input.Selector, Checked: input.Checked}},
 	))
@@ -252,7 +252,7 @@ type WebviewUploadOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) webviewUpload(_ context.Context, _ *mcp.CallToolRequest, input WebviewUploadInput) (*mcp.CallToolResult, WebviewUploadOutput, error) {
+func (s *Subsystem) webviewUpload(_ context.Context, _ *mcp.CallToolRequest, input WebviewUploadInput) (*mcp.CallToolResult, WebviewUploadOutput, resultFailure) {
 	r := s.core.Action("webview.uploadFile").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: webview.TaskUploadFile{Window: input.Window, Selector: input.Selector, Paths: input.Paths}},
 	))
@@ -277,7 +277,7 @@ type WebviewViewportOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) webviewViewport(_ context.Context, _ *mcp.CallToolRequest, input WebviewViewportInput) (*mcp.CallToolResult, WebviewViewportOutput, error) {
+func (s *Subsystem) webviewViewport(_ context.Context, _ *mcp.CallToolRequest, input WebviewViewportInput) (*mcp.CallToolResult, WebviewViewportOutput, resultFailure) {
 	r := s.core.Action("webview.setViewport").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: webview.TaskSetViewport{Window: input.Window, Width: input.Width, Height: input.Height}},
 	))
@@ -302,7 +302,7 @@ type WebviewConsoleOutput struct {
 	Messages []webview.ConsoleMessage `json:"messages"`
 }
 
-func (s *Subsystem) webviewConsole(_ context.Context, _ *mcp.CallToolRequest, input WebviewConsoleInput) (*mcp.CallToolResult, WebviewConsoleOutput, error) {
+func (s *Subsystem) webviewConsole(_ context.Context, _ *mcp.CallToolRequest, input WebviewConsoleInput) (*mcp.CallToolResult, WebviewConsoleOutput, resultFailure) {
 	r := s.core.QUERY(webview.QueryConsole{Window: input.Window, Level: input.Level, Limit: input.Limit})
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {
@@ -327,7 +327,7 @@ type WebviewConsoleClearOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) webviewConsoleClear(_ context.Context, _ *mcp.CallToolRequest, input WebviewConsoleClearInput) (*mcp.CallToolResult, WebviewConsoleClearOutput, error) {
+func (s *Subsystem) webviewConsoleClear(_ context.Context, _ *mcp.CallToolRequest, input WebviewConsoleClearInput) (*mcp.CallToolResult, WebviewConsoleClearOutput, resultFailure) {
 	r := s.core.Action("webview.clearConsole").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: webview.TaskClearConsole{Window: input.Window}},
 	))
@@ -351,7 +351,7 @@ type WebviewQueryOutput struct {
 	Element *webview.ElementInfo `json:"element"`
 }
 
-func (s *Subsystem) webviewQuery(_ context.Context, _ *mcp.CallToolRequest, input WebviewQueryInput) (*mcp.CallToolResult, WebviewQueryOutput, error) {
+func (s *Subsystem) webviewQuery(_ context.Context, _ *mcp.CallToolRequest, input WebviewQueryInput) (*mcp.CallToolResult, WebviewQueryOutput, resultFailure) {
 	r := s.core.QUERY(webview.QuerySelector{Window: input.Window, Selector: input.Selector})
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {
@@ -377,7 +377,7 @@ type WebviewQueryAllOutput struct {
 	Elements []*webview.ElementInfo `json:"elements"`
 }
 
-func (s *Subsystem) webviewQueryAll(_ context.Context, _ *mcp.CallToolRequest, input WebviewQueryAllInput) (*mcp.CallToolResult, WebviewQueryAllOutput, error) {
+func (s *Subsystem) webviewQueryAll(_ context.Context, _ *mcp.CallToolRequest, input WebviewQueryAllInput) (*mcp.CallToolResult, WebviewQueryAllOutput, resultFailure) {
 	r := s.core.QUERY(webview.QuerySelectorAll{Window: input.Window, Selector: input.Selector})
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {
@@ -403,7 +403,7 @@ type WebviewDOMTreeOutput struct {
 	HTML string `json:"html"`
 }
 
-func (s *Subsystem) webviewDOMTree(_ context.Context, _ *mcp.CallToolRequest, input WebviewDOMTreeInput) (*mcp.CallToolResult, WebviewDOMTreeOutput, error) {
+func (s *Subsystem) webviewDOMTree(_ context.Context, _ *mcp.CallToolRequest, input WebviewDOMTreeInput) (*mcp.CallToolResult, WebviewDOMTreeOutput, resultFailure) {
 	r := s.core.QUERY(webview.QueryDOMTree{Window: input.Window, Selector: input.Selector})
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {
@@ -428,7 +428,7 @@ type WebviewURLOutput struct {
 	URL string `json:"url"`
 }
 
-func (s *Subsystem) webviewURL(_ context.Context, _ *mcp.CallToolRequest, input WebviewURLInput) (*mcp.CallToolResult, WebviewURLOutput, error) {
+func (s *Subsystem) webviewURL(_ context.Context, _ *mcp.CallToolRequest, input WebviewURLInput) (*mcp.CallToolResult, WebviewURLOutput, resultFailure) {
 	r := s.core.QUERY(webview.QueryURL{Window: input.Window})
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {
@@ -453,7 +453,7 @@ type WebviewTitleOutput struct {
 	Title string `json:"title"`
 }
 
-func (s *Subsystem) webviewTitle(_ context.Context, _ *mcp.CallToolRequest, input WebviewTitleInput) (*mcp.CallToolResult, WebviewTitleOutput, error) {
+func (s *Subsystem) webviewTitle(_ context.Context, _ *mcp.CallToolRequest, input WebviewTitleInput) (*mcp.CallToolResult, WebviewTitleOutput, resultFailure) {
 	r := s.core.QUERY(webview.QueryTitle{Window: input.Window})
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {
@@ -476,7 +476,7 @@ type WebviewListOutput struct {
 	Windows []window.WindowInfo `json:"windows"`
 }
 
-func (s *Subsystem) webviewList(_ context.Context, _ *mcp.CallToolRequest, _ WebviewListInput) (*mcp.CallToolResult, WebviewListOutput, error) {
+func (s *Subsystem) webviewList(_ context.Context, _ *mcp.CallToolRequest, _ WebviewListInput) (*mcp.CallToolResult, WebviewListOutput, resultFailure) {
 	r := s.core.QUERY(window.QueryWindowList{})
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {
@@ -502,7 +502,7 @@ type WebviewErrorsOutput struct {
 	Errors []webview.ExceptionInfo `json:"errors,omitempty"`
 }
 
-func (s *Subsystem) webviewErrors(_ context.Context, _ *mcp.CallToolRequest, input WebviewErrorsInput) (*mcp.CallToolResult, WebviewErrorsOutput, error) {
+func (s *Subsystem) webviewErrors(_ context.Context, _ *mcp.CallToolRequest, input WebviewErrorsInput) (*mcp.CallToolResult, WebviewErrorsOutput, resultFailure) {
 	r := s.core.QUERY(webview.QueryExceptions{Window: input.Window, Limit: input.Limit})
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {
@@ -527,7 +527,7 @@ type WebviewClearConsoleOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) webviewClearConsole(_ context.Context, _ *mcp.CallToolRequest, input WebviewClearConsoleInput) (*mcp.CallToolResult, WebviewClearConsoleOutput, error) {
+func (s *Subsystem) webviewClearConsole(_ context.Context, _ *mcp.CallToolRequest, input WebviewClearConsoleInput) (*mcp.CallToolResult, WebviewClearConsoleOutput, resultFailure) {
 	_, out, err := s.webviewConsoleClear(context.Background(), nil, WebviewConsoleClearInput{Window: input.Window})
 	return nil, WebviewClearConsoleOutput{Success: out.Success}, err
 }
@@ -543,7 +543,7 @@ type WebviewElementInfoOutput struct {
 	Element *webview.ElementInfo `json:"element"`
 }
 
-func (s *Subsystem) webviewElementInfo(_ context.Context, _ *mcp.CallToolRequest, input WebviewElementInfoInput) (*mcp.CallToolResult, WebviewElementInfoOutput, error) {
+func (s *Subsystem) webviewElementInfo(_ context.Context, _ *mcp.CallToolRequest, input WebviewElementInfoInput) (*mcp.CallToolResult, WebviewElementInfoOutput, resultFailure) {
 	_, out, err := s.webviewQuery(context.Background(), nil, WebviewQueryInput{Window: input.Window, Selector: input.Selector})
 	return nil, WebviewElementInfoOutput{Element: out.Element}, err
 }
@@ -560,7 +560,7 @@ type WebviewHighlightOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) webviewHighlight(_ context.Context, _ *mcp.CallToolRequest, input WebviewHighlightInput) (*mcp.CallToolResult, WebviewHighlightOutput, error) {
+func (s *Subsystem) webviewHighlight(_ context.Context, _ *mcp.CallToolRequest, input WebviewHighlightInput) (*mcp.CallToolResult, WebviewHighlightOutput, resultFailure) {
 	result, err := s.evaluateWebview(input.Window, webview.HighlightScript(input.Selector, input.Colour))
 	if err != nil {
 		return nil, WebviewHighlightOutput{}, err
@@ -580,7 +580,7 @@ type WebviewComputedStyleOutput struct {
 	Styles map[string]any `json:"styles"`
 }
 
-func (s *Subsystem) webviewComputedStyle(_ context.Context, _ *mcp.CallToolRequest, input WebviewComputedStyleInput) (*mcp.CallToolResult, WebviewComputedStyleOutput, error) {
+func (s *Subsystem) webviewComputedStyle(_ context.Context, _ *mcp.CallToolRequest, input WebviewComputedStyleInput) (*mcp.CallToolResult, WebviewComputedStyleOutput, resultFailure) {
 	result, err := s.evaluateWebview(input.Window, webview.ComputedStyleScript(input.Selector))
 	if err != nil {
 		return nil, WebviewComputedStyleOutput{}, err
@@ -602,7 +602,7 @@ type WebviewSourceOutput struct {
 	HTML string `json:"html"`
 }
 
-func (s *Subsystem) webviewSource(_ context.Context, _ *mcp.CallToolRequest, input WebviewSourceInput) (*mcp.CallToolResult, WebviewSourceOutput, error) {
+func (s *Subsystem) webviewSource(_ context.Context, _ *mcp.CallToolRequest, input WebviewSourceInput) (*mcp.CallToolResult, WebviewSourceOutput, resultFailure) {
 	r := s.core.QUERY(webview.QueryDOMTree{Window: input.Window})
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {
@@ -629,7 +629,7 @@ type WebviewScreenshotElementOutput struct {
 	MimeType string `json:"mimeType"`
 }
 
-func (s *Subsystem) webviewScreenshotElement(_ context.Context, _ *mcp.CallToolRequest, input WebviewScreenshotElementInput) (*mcp.CallToolResult, WebviewScreenshotElementOutput, error) {
+func (s *Subsystem) webviewScreenshotElement(_ context.Context, _ *mcp.CallToolRequest, input WebviewScreenshotElementInput) (*mcp.CallToolResult, WebviewScreenshotElementOutput, resultFailure) {
 	r := s.core.QUERY(webview.QuerySelector{Window: input.Window, Selector: input.Selector})
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {
@@ -684,7 +684,7 @@ type WebviewPDFOutput struct {
 	MimeType string `json:"mimeType"`
 }
 
-func (s *Subsystem) webviewPDF(_ context.Context, _ *mcp.CallToolRequest, input WebviewPDFInput) (*mcp.CallToolResult, WebviewPDFOutput, error) {
+func (s *Subsystem) webviewPDF(_ context.Context, _ *mcp.CallToolRequest, input WebviewPDFInput) (*mcp.CallToolResult, WebviewPDFOutput, resultFailure) {
 	r := s.core.Action("webview.print").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: webview.TaskPrint{Window: input.Window, ToPDF: true}},
 	))
@@ -711,7 +711,7 @@ type WebviewPrintOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) webviewPrint(_ context.Context, _ *mcp.CallToolRequest, input WebviewPrintInput) (*mcp.CallToolResult, WebviewPrintOutput, error) {
+func (s *Subsystem) webviewPrint(_ context.Context, _ *mcp.CallToolRequest, input WebviewPrintInput) (*mcp.CallToolResult, WebviewPrintOutput, resultFailure) {
 	r := s.core.Action("webview.print").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: webview.TaskPrint{Window: input.Window}},
 	))
@@ -735,7 +735,7 @@ type WebviewNetworkOutput struct {
 	Requests []map[string]any `json:"requests"`
 }
 
-func (s *Subsystem) webviewNetwork(_ context.Context, _ *mcp.CallToolRequest, input WebviewNetworkInput) (*mcp.CallToolResult, WebviewNetworkOutput, error) {
+func (s *Subsystem) webviewNetwork(_ context.Context, _ *mcp.CallToolRequest, input WebviewNetworkInput) (*mcp.CallToolResult, WebviewNetworkOutput, resultFailure) {
 	result, err := s.evaluateWebview(input.Window, webview.NetworkLogScript(input.Limit))
 	if err != nil {
 		return nil, WebviewNetworkOutput{}, err
@@ -757,7 +757,7 @@ type WebviewNetworkClearOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) webviewNetworkClear(_ context.Context, _ *mcp.CallToolRequest, input WebviewNetworkClearInput) (*mcp.CallToolResult, WebviewNetworkClearOutput, error) {
+func (s *Subsystem) webviewNetworkClear(_ context.Context, _ *mcp.CallToolRequest, input WebviewNetworkClearInput) (*mcp.CallToolResult, WebviewNetworkClearOutput, resultFailure) {
 	_, err := s.evaluateWebview(input.Window, webview.NetworkClearScript())
 	if err != nil {
 		return nil, WebviewNetworkClearOutput{}, err
@@ -775,7 +775,7 @@ type WebviewNetworkInjectOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) webviewNetworkInject(_ context.Context, _ *mcp.CallToolRequest, input WebviewNetworkInjectInput) (*mcp.CallToolResult, WebviewNetworkInjectOutput, error) {
+func (s *Subsystem) webviewNetworkInject(_ context.Context, _ *mcp.CallToolRequest, input WebviewNetworkInjectInput) (*mcp.CallToolResult, WebviewNetworkInjectOutput, resultFailure) {
 	_, err := s.evaluateWebview(input.Window, webview.NetworkInitScript())
 	if err != nil {
 		return nil, WebviewNetworkInjectOutput{}, err
@@ -793,7 +793,7 @@ type WebviewPerformanceOutput struct {
 	Metrics map[string]any `json:"metrics"`
 }
 
-func (s *Subsystem) webviewPerformance(_ context.Context, _ *mcp.CallToolRequest, input WebviewPerformanceInput) (*mcp.CallToolResult, WebviewPerformanceOutput, error) {
+func (s *Subsystem) webviewPerformance(_ context.Context, _ *mcp.CallToolRequest, input WebviewPerformanceInput) (*mcp.CallToolResult, WebviewPerformanceOutput, resultFailure) {
 	result, err := s.evaluateWebview(input.Window, webview.PerformanceScript())
 	if err != nil {
 		return nil, WebviewPerformanceOutput{}, err
@@ -815,7 +815,7 @@ type WebviewResourcesOutput struct {
 	Resources []map[string]any `json:"resources"`
 }
 
-func (s *Subsystem) webviewResources(_ context.Context, _ *mcp.CallToolRequest, input WebviewResourcesInput) (*mcp.CallToolResult, WebviewResourcesOutput, error) {
+func (s *Subsystem) webviewResources(_ context.Context, _ *mcp.CallToolRequest, input WebviewResourcesInput) (*mcp.CallToolResult, WebviewResourcesOutput, resultFailure) {
 	result, err := s.evaluateWebview(input.Window, webview.ResourcesScript())
 	if err != nil {
 		return nil, WebviewResourcesOutput{}, err
@@ -837,7 +837,7 @@ type WebviewDevToolsOpenOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) webviewDevToolsOpen(_ context.Context, _ *mcp.CallToolRequest, input WebviewDevToolsOpenInput) (*mcp.CallToolResult, WebviewDevToolsOpenOutput, error) {
+func (s *Subsystem) webviewDevToolsOpen(_ context.Context, _ *mcp.CallToolRequest, input WebviewDevToolsOpenInput) (*mcp.CallToolResult, WebviewDevToolsOpenOutput, resultFailure) {
 	r := s.core.Action("webview.devtoolsOpen").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: webview.TaskDevToolsOpen{Window: input.Window}},
 	))
@@ -860,7 +860,7 @@ type WebviewDevToolsCloseOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) webviewDevToolsClose(_ context.Context, _ *mcp.CallToolRequest, input WebviewDevToolsCloseInput) (*mcp.CallToolResult, WebviewDevToolsCloseOutput, error) {
+func (s *Subsystem) webviewDevToolsClose(_ context.Context, _ *mcp.CallToolRequest, input WebviewDevToolsCloseInput) (*mcp.CallToolResult, WebviewDevToolsCloseOutput, resultFailure) {
 	r := s.core.Action("webview.devtoolsClose").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: webview.TaskDevToolsClose{Window: input.Window}},
 	))
@@ -873,7 +873,7 @@ func (s *Subsystem) webviewDevToolsClose(_ context.Context, _ *mcp.CallToolReque
 	return nil, WebviewDevToolsCloseOutput{Success: true}, nil
 }
 
-func (s *Subsystem) evaluateWebview(windowName, script string) (any, error) {
+func (s *Subsystem) evaluateWebview(windowName, script string) (any, resultFailure) {
 	r := s.core.Action("webview.evaluate").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: webview.TaskEvaluate{Window: windowName, Script: script}},
 	))
@@ -886,7 +886,7 @@ func (s *Subsystem) evaluateWebview(windowName, script string) (any, error) {
 	return r.Value, nil
 }
 
-func decodeJSONLike[T any](value any) (T, error) {
+func decodeJSONLike[T any](value any) (T, resultFailure) {
 	var out T
 	result := core.JSONUnmarshalString(core.JSONMarshalString(value), &out)
 	if !result.OK {
@@ -898,7 +898,7 @@ func decodeJSONLike[T any](value any) (T, error) {
 	return out, nil
 }
 
-func cropPNGToBoundingBox(pngData []byte, bbox *webview.BoundingBox) ([]byte, error) {
+func cropPNGToBoundingBox(pngData []byte, bbox *webview.BoundingBox) ([]byte, resultFailure) {
 	img, err := png.Decode(core.NewBuffer(pngData))
 	if err != nil {
 		return nil, err

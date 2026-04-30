@@ -8,7 +8,7 @@ func TestDetectWithEnvironment_PrefersAppleContainersOnMacOS26(t *core.T) {
 	runtime := DetectWithEnvironment(DetectEnvironment{
 		GOOS:           "darwin",
 		ProductVersion: "26.0",
-		LookPath: func(file string) (string, error) {
+		LookPath: func(file string) (string, resultFailure) {
 			if file == "container" {
 				return "/usr/bin/container", nil
 			}
@@ -23,7 +23,7 @@ func TestDetectWithEnvironment_FallsBackToDockerWhenAppleUnavailable(t *core.T) 
 	runtime := DetectWithEnvironment(DetectEnvironment{
 		GOOS:           "darwin",
 		ProductVersion: "26.1",
-		LookPath: func(file string) (string, error) {
+		LookPath: func(file string) (string, resultFailure) {
 			if file == "docker" {
 				return "/usr/local/bin/docker", nil
 			}
@@ -38,7 +38,7 @@ func TestDetectWithEnvironment_UsesDockerOnNonMacHosts(t *core.T) {
 	runtime := DetectWithEnvironment(DetectEnvironment{
 		GOOS:           "linux",
 		ProductVersion: "",
-		LookPath: func(file string) (string, error) {
+		LookPath: func(file string) (string, resultFailure) {
 			if file == "docker" {
 				return "/usr/bin/docker", nil
 			}
@@ -53,7 +53,7 @@ func TestDetectWithEnvironment_UsesPodmanWhenDockerMissing(t *core.T) {
 	runtime := DetectWithEnvironment(DetectEnvironment{
 		GOOS:           "linux",
 		ProductVersion: "",
-		LookPath: func(file string) (string, error) {
+		LookPath: func(file string) (string, resultFailure) {
 			if file == "podman" {
 				return "/usr/bin/podman", nil
 			}
@@ -68,7 +68,7 @@ func TestDetectWithEnvironment_ReturnsNoneWhenNoRuntimeIsAvailable(t *core.T) {
 	runtime := DetectWithEnvironment(DetectEnvironment{
 		GOOS:           "linux",
 		ProductVersion: "",
-		LookPath: func(string) (string, error) {
+		LookPath: func(string) (string, resultFailure) {
 			return "", core.NewError("not found")
 		},
 	})
@@ -89,7 +89,7 @@ func TestDetect_Good(t *core.T) {
 	runtime := DetectWithEnvironment(DetectEnvironment{
 		GOOS:           "darwin",
 		ProductVersion: "26.0",
-		LookPath: func(file string) (string, error) {
+		LookPath: func(file string) (string, resultFailure) {
 			if file == "container" {
 				return containerPath, nil
 			}

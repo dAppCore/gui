@@ -33,7 +33,7 @@ import (
 
 type Options struct{}
 
-func failedAction(method, action string) error {
+func failedAction(method, action string) resultFailure {
 	return core.E(method, action+" action failed", nil)
 }
 
@@ -66,7 +66,7 @@ type Service struct {
 
 // New returns a display Service with empty config sections.
 // s, _ := display.New(); s.loadConfigFrom("/path/to/config.yaml")
-func New() (*Service, error) {
+func New() (*Service, resultFailure) {
 	return &Service{
 		configData: map[string]map[string]any{
 			"window":  {},
@@ -220,7 +220,7 @@ func (s *Service) OnShutdown(ctx context.Context) core.Result {
 	if events != nil {
 		events.Close()
 	}
-	var shutdownErr error
+	var shutdownErr resultFailure
 	if s.storage != nil {
 		if err := s.storage.Close(); err != nil {
 			shutdownErr = err
@@ -519,7 +519,7 @@ type WSMessage struct {
 }
 
 // requireStringField extracts a string field from WebSocket data and fails when it is missing.
-func requireStringField(data map[string]any, key string) (string, error) {
+func requireStringField(data map[string]any, key string) (string, resultFailure) {
 	v, _ := data[key].(string)
 	if v == "" {
 		return "", core.E("display.requireStringField", "missing required field \""+key+"\"", nil)
@@ -528,11 +528,11 @@ func requireStringField(data map[string]any, key string) (string, error) {
 }
 
 // wsRequire is kept for backward compatibility inside the display package.
-func wsRequire(data map[string]any, key string) (string, error) {
+func wsRequire(data map[string]any, key string) (string, resultFailure) {
 	return requireStringField(data, key)
 }
 
-func requireFloatField(data map[string]any, key string) (float64, error) {
+func requireFloatField(data map[string]any, key string) (float64, resultFailure) {
 	value, ok := data[key]
 	if !ok || value == nil {
 		return 0, core.E("display.handleWSMessage", "missing required field \""+key+"\"", nil)
@@ -575,7 +575,7 @@ func requireFloatField(data map[string]any, key string) (float64, error) {
 	}
 }
 
-func intFromFloatField(value float64, key string) (int, error) {
+func intFromFloatField(value float64, key string) (int, resultFailure) {
 	if math.IsNaN(value) || math.IsInf(value, 0) {
 		return 0, core.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
 	}
@@ -588,7 +588,7 @@ func intFromFloatField(value float64, key string) (int, error) {
 	return int(value), nil
 }
 
-func requireIntField(data map[string]any, key string) (int, error) {
+func requireIntField(data map[string]any, key string) (int, resultFailure) {
 	value, ok := data[key]
 	if !ok || value == nil {
 		return 0, core.E("display.handleWSMessage", "missing required field \""+key+"\"", nil)
@@ -807,7 +807,7 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 		}
 		marshalResult := core.JSONMarshal(menuValue)
 		if !marshalResult.OK {
-			if err, ok := marshalResult.Value.(error); ok {
+			if err, ok := marshalResult.Value.(resultFailure); ok {
 				return core.Result{Value: core.E("display.handleWSMessage", "failed to marshal menu definition", err), OK: false}
 			}
 			return core.Result{Value: core.E("display.handleWSMessage", "failed to marshal menu definition", nil), OK: false}
@@ -816,7 +816,7 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 		menuJSON, _ := marshalResult.Value.([]byte)
 		unmarshalResult := core.JSONUnmarshal(menuJSON, &menuDef)
 		if !unmarshalResult.OK {
-			if err, ok := unmarshalResult.Value.(error); ok {
+			if err, ok := unmarshalResult.Value.(resultFailure); ok {
 				return core.Result{Value: core.E("display.handleWSMessage", "failed to unmarshal menu definition", err), OK: false}
 			}
 			return core.Result{Value: core.E("display.handleWSMessage", "failed to unmarshal menu definition", nil), OK: false}
@@ -1222,7 +1222,7 @@ func (s *Service) handleConfigQuery(_ *core.Core, q core.Query) core.Result {
 	}
 }
 
-func (s *Service) persistSection(key string, value map[string]any) error {
+func (s *Service) persistSection(key string, value map[string]any) resultFailure {
 	if s.configFile == nil {
 		return nil
 	}
@@ -1252,7 +1252,7 @@ func (s *Service) windowService() *window.Service {
 // --- Window Management (delegates via IPC) ---
 
 // OpenWindow creates a new window via IPC.
-func (s *Service) OpenWindow(options ...window.WindowOption) error {
+func (s *Service) OpenWindow(options ...window.WindowOption) resultFailure {
 	spec, err := window.ApplyOptions(options...)
 	if err != nil {
 		return err
@@ -1261,7 +1261,7 @@ func (s *Service) OpenWindow(options ...window.WindowOption) error {
 		core.Option{Key: "task", Value: window.TaskOpenWindow{Window: spec}},
 	))
 	if !r.OK {
-		if e, ok := r.Value.(error); ok {
+		if e, ok := r.Value.(resultFailure); ok {
 			return e
 		}
 		return core.E("display.OpenWindow", "window.open action failed", nil)
@@ -1270,10 +1270,10 @@ func (s *Service) OpenWindow(options ...window.WindowOption) error {
 }
 
 // GetWindowInfo returns information about a window via IPC.
-func (s *Service) GetWindowInfo(name string) (*window.WindowInfo, error) {
+func (s *Service) GetWindowInfo(name string) (*window.WindowInfo, resultFailure) {
 	r := s.Core().QUERY(window.QueryWindowByName{Name: name})
 	if !r.OK {
-		if err, ok := r.Value.(error); ok {
+		if err, ok := r.Value.(resultFailure); ok {
 			return nil, err
 		}
 		return nil, failedAction("display.GetWindowInfo", "window.queryWindowByName")
@@ -1302,12 +1302,12 @@ func (s *Service) ListWindowInfos() []window.WindowInfo {
 }
 
 // SetWindowPosition moves a window via IPC.
-func (s *Service) SetWindowPosition(name string, x, y int) error {
+func (s *Service) SetWindowPosition(name string, x, y int) resultFailure {
 	r := s.Core().Action("window.setPosition").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetPosition{Name: name, X: x, Y: y}},
 	))
 	if !r.OK {
-		if e, ok := r.Value.(error); ok {
+		if e, ok := r.Value.(resultFailure); ok {
 			return e
 		}
 		return failedAction("display.SetWindowPosition", "window.setPosition")
@@ -1316,12 +1316,12 @@ func (s *Service) SetWindowPosition(name string, x, y int) error {
 }
 
 // SetWindowSize resizes a window via IPC.
-func (s *Service) SetWindowSize(name string, width, height int) error {
+func (s *Service) SetWindowSize(name string, width, height int) resultFailure {
 	r := s.Core().Action("window.setSize").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetSize{Name: name, Width: width, Height: height}},
 	))
 	if !r.OK {
-		if e, ok := r.Value.(error); ok {
+		if e, ok := r.Value.(resultFailure); ok {
 			return e
 		}
 		return failedAction("display.SetWindowSize", "window.setSize")
@@ -1330,7 +1330,7 @@ func (s *Service) SetWindowSize(name string, width, height int) error {
 }
 
 // SetWindowBounds sets both position and size of a window via IPC.
-func (s *Service) SetWindowBounds(name string, x, y, width, height int) error {
+func (s *Service) SetWindowBounds(name string, x, y, width, height int) resultFailure {
 	if err := s.SetWindowPosition(name, x, y); err != nil {
 		return err
 	}
@@ -1338,12 +1338,12 @@ func (s *Service) SetWindowBounds(name string, x, y, width, height int) error {
 }
 
 // MaximizeWindow maximizes a window via IPC.
-func (s *Service) MaximizeWindow(name string) error {
+func (s *Service) MaximizeWindow(name string) resultFailure {
 	r := s.Core().Action("window.maximise").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskMaximise{Name: name}},
 	))
 	if !r.OK {
-		if e, ok := r.Value.(error); ok {
+		if e, ok := r.Value.(resultFailure); ok {
 			return e
 		}
 		return failedAction("display.MaximizeWindow", "window.maximise")
@@ -1352,12 +1352,12 @@ func (s *Service) MaximizeWindow(name string) error {
 }
 
 // MinimizeWindow minimizes a window via IPC.
-func (s *Service) MinimizeWindow(name string) error {
+func (s *Service) MinimizeWindow(name string) resultFailure {
 	r := s.Core().Action("window.minimise").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskMinimise{Name: name}},
 	))
 	if !r.OK {
-		if e, ok := r.Value.(error); ok {
+		if e, ok := r.Value.(resultFailure); ok {
 			return e
 		}
 		return failedAction("display.MinimizeWindow", "window.minimise")
@@ -1366,12 +1366,12 @@ func (s *Service) MinimizeWindow(name string) error {
 }
 
 // FocusWindow brings a window to the front via IPC.
-func (s *Service) FocusWindow(name string) error {
+func (s *Service) FocusWindow(name string) resultFailure {
 	r := s.Core().Action("window.focus").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskFocus{Name: name}},
 	))
 	if !r.OK {
-		if e, ok := r.Value.(error); ok {
+		if e, ok := r.Value.(resultFailure); ok {
 			return e
 		}
 		return failedAction("display.FocusWindow", "window.focus")
@@ -1380,12 +1380,12 @@ func (s *Service) FocusWindow(name string) error {
 }
 
 // CloseWindow closes a window via IPC.
-func (s *Service) CloseWindow(name string) error {
+func (s *Service) CloseWindow(name string) resultFailure {
 	r := s.Core().Action("window.close").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskCloseWindow{Name: name}},
 	))
 	if !r.OK {
-		if e, ok := r.Value.(error); ok {
+		if e, ok := r.Value.(resultFailure); ok {
 			return e
 		}
 		return failedAction("display.CloseWindow", "window.close")
@@ -1394,12 +1394,12 @@ func (s *Service) CloseWindow(name string) error {
 }
 
 // RestoreWindow restores a maximized/minimized window.
-func (s *Service) RestoreWindow(name string) error {
+func (s *Service) RestoreWindow(name string) resultFailure {
 	r := s.Core().Action("window.restore").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskRestore{Name: name}},
 	))
 	if !r.OK {
-		if e, ok := r.Value.(error); ok {
+		if e, ok := r.Value.(resultFailure); ok {
 			return e
 		}
 		return failedAction("display.RestoreWindow", "window.restore")
@@ -1408,12 +1408,12 @@ func (s *Service) RestoreWindow(name string) error {
 }
 
 // SetWindowVisibility shows or hides a window.
-func (s *Service) SetWindowVisibility(name string, visible bool) error {
+func (s *Service) SetWindowVisibility(name string, visible bool) resultFailure {
 	r := s.Core().Action("window.setVisibility").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetVisibility{Name: name, Visible: visible}},
 	))
 	if !r.OK {
-		if e, ok := r.Value.(error); ok {
+		if e, ok := r.Value.(resultFailure); ok {
 			return e
 		}
 		return failedAction("display.SetWindowVisibility", "window.setVisibility")
@@ -1422,12 +1422,12 @@ func (s *Service) SetWindowVisibility(name string, visible bool) error {
 }
 
 // SetWindowAlwaysOnTop sets whether a window stays on top.
-func (s *Service) SetWindowAlwaysOnTop(name string, alwaysOnTop bool) error {
+func (s *Service) SetWindowAlwaysOnTop(name string, alwaysOnTop bool) resultFailure {
 	r := s.Core().Action("window.setAlwaysOnTop").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetAlwaysOnTop{Name: name, AlwaysOnTop: alwaysOnTop}},
 	))
 	if !r.OK {
-		if e, ok := r.Value.(error); ok {
+		if e, ok := r.Value.(resultFailure); ok {
 			return e
 		}
 		return failedAction("display.SetWindowAlwaysOnTop", "window.setAlwaysOnTop")
@@ -1436,12 +1436,12 @@ func (s *Service) SetWindowAlwaysOnTop(name string, alwaysOnTop bool) error {
 }
 
 // SetWindowTitle changes a window's title.
-func (s *Service) SetWindowTitle(name string, title string) error {
+func (s *Service) SetWindowTitle(name string, title string) resultFailure {
 	r := s.Core().Action("window.setTitle").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetTitle{Name: name, Title: title}},
 	))
 	if !r.OK {
-		if e, ok := r.Value.(error); ok {
+		if e, ok := r.Value.(resultFailure); ok {
 			return e
 		}
 		return failedAction("display.SetWindowTitle", "window.setTitle")
@@ -1450,12 +1450,12 @@ func (s *Service) SetWindowTitle(name string, title string) error {
 }
 
 // SetWindowFullscreen sets a window to fullscreen mode.
-func (s *Service) SetWindowFullscreen(name string, fullscreen bool) error {
+func (s *Service) SetWindowFullscreen(name string, fullscreen bool) resultFailure {
 	r := s.Core().Action("window.fullscreen").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskFullscreen{Name: name, Fullscreen: fullscreen}},
 	))
 	if !r.OK {
-		if e, ok := r.Value.(error); ok {
+		if e, ok := r.Value.(resultFailure); ok {
 			return e
 		}
 		return failedAction("display.SetWindowFullscreen", "window.fullscreen")
@@ -1464,14 +1464,14 @@ func (s *Service) SetWindowFullscreen(name string, fullscreen bool) error {
 }
 
 // SetWindowBackgroundColour sets the background colour of a window.
-func (s *Service) SetWindowBackgroundColour(name string, r, g, b, a uint8) error {
+func (s *Service) SetWindowBackgroundColour(name string, r, g, b, a uint8) resultFailure {
 	result := s.Core().Action("window.setBackgroundColour").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetBackgroundColour{
 			Name: name, Red: r, Green: g, Blue: b, Alpha: a,
 		}},
 	))
 	if !result.OK {
-		if e, ok := result.Value.(error); ok {
+		if e, ok := result.Value.(resultFailure); ok {
 			return e
 		}
 		return failedAction("display.SetWindowBackgroundColour", "window.setBackgroundColour")
@@ -1491,7 +1491,7 @@ func (s *Service) GetFocusedWindow() string {
 }
 
 // GetWindowTitle returns the title of a window by name.
-func (s *Service) GetWindowTitle(name string) (string, error) {
+func (s *Service) GetWindowTitle(name string) (string, resultFailure) {
 	info, err := s.GetWindowInfo(name)
 	if err != nil {
 		return "", err
@@ -1503,7 +1503,7 @@ func (s *Service) GetWindowTitle(name string) (string, error) {
 }
 
 // ResetWindowState clears saved window positions.
-func (s *Service) ResetWindowState() error {
+func (s *Service) ResetWindowState() resultFailure {
 	ws := s.windowService()
 	if ws != nil {
 		ws.Manager().State().Clear()
@@ -1538,7 +1538,7 @@ type CreateWindowOptions struct {
 	Height int    `json:"height,omitempty"`
 }
 
-func (s *Service) CreateWindow(options CreateWindowOptions) (*window.WindowInfo, error) {
+func (s *Service) CreateWindow(options CreateWindowOptions) (*window.WindowInfo, resultFailure) {
 	if options.Name == "" {
 		return nil, core.E("display.CreateWindow", "window name is required", nil)
 	}
@@ -1556,7 +1556,7 @@ func (s *Service) CreateWindow(options CreateWindowOptions) (*window.WindowInfo,
 		}},
 	))
 	if !r.OK {
-		if e, ok := r.Value.(error); ok {
+		if e, ok := r.Value.(resultFailure); ok {
 			return nil, e
 		}
 		return nil, core.E("display.CreateWindow", "window.open action failed", nil)
@@ -1571,12 +1571,12 @@ func (s *Service) CreateWindow(options CreateWindowOptions) (*window.WindowInfo,
 // --- Layout delegation ---
 
 // SaveLayout saves the current window arrangement as a named layout.
-func (s *Service) SaveLayout(name string) error {
+func (s *Service) SaveLayout(name string) resultFailure {
 	r := s.Core().Action("window.saveLayout").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSaveLayout{Name: name}},
 	))
 	if !r.OK {
-		if e, ok := r.Value.(error); ok {
+		if e, ok := r.Value.(resultFailure); ok {
 			return e
 		}
 		return failedAction("display.SaveLayout", "window.saveLayout")
@@ -1585,12 +1585,12 @@ func (s *Service) SaveLayout(name string) error {
 }
 
 // RestoreLayout applies a saved layout.
-func (s *Service) RestoreLayout(name string) error {
+func (s *Service) RestoreLayout(name string) resultFailure {
 	r := s.Core().Action("window.restoreLayout").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskRestoreLayout{Name: name}},
 	))
 	if !r.OK {
-		if e, ok := r.Value.(error); ok {
+		if e, ok := r.Value.(resultFailure); ok {
 			return e
 		}
 		return failedAction("display.RestoreLayout", "window.restoreLayout")
@@ -1612,12 +1612,12 @@ func (s *Service) ListLayouts() []window.LayoutInfo {
 }
 
 // DeleteLayout removes a saved layout by name.
-func (s *Service) DeleteLayout(name string) error {
+func (s *Service) DeleteLayout(name string) resultFailure {
 	r := s.Core().Action("window.deleteLayout").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskDeleteLayout{Name: name}},
 	))
 	if !r.OK {
-		if e, ok := r.Value.(error); ok {
+		if e, ok := r.Value.(resultFailure); ok {
 			return e
 		}
 		return failedAction("display.DeleteLayout", "window.deleteLayout")
@@ -1644,12 +1644,12 @@ func (s *Service) GetLayout(name string) *window.Layout {
 // --- Tiling/snapping delegation ---
 
 // TileWindows arranges windows in a tiled layout.
-func (s *Service) TileWindows(mode window.TileMode, windowNames []string) error {
+func (s *Service) TileWindows(mode window.TileMode, windowNames []string) resultFailure {
 	r := s.Core().Action("window.tileWindows").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskTileWindows{Mode: mode.String(), Windows: windowNames}},
 	))
 	if !r.OK {
-		if e, ok := r.Value.(error); ok {
+		if e, ok := r.Value.(resultFailure); ok {
 			return e
 		}
 		return failedAction("display.TileWindows", "window.tileWindows")
@@ -1658,12 +1658,12 @@ func (s *Service) TileWindows(mode window.TileMode, windowNames []string) error 
 }
 
 // SnapWindow snaps a window to a screen edge or corner.
-func (s *Service) SnapWindow(name string, position window.SnapPosition) error {
+func (s *Service) SnapWindow(name string, position window.SnapPosition) resultFailure {
 	r := s.Core().Action("window.snapWindow").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSnapWindow{Name: name, Position: position.String()}},
 	))
 	if !r.OK {
-		if e, ok := r.Value.(error); ok {
+		if e, ok := r.Value.(resultFailure); ok {
 			return e
 		}
 		return failedAction("display.SnapWindow", "window.snapWindow")
@@ -1672,12 +1672,12 @@ func (s *Service) SnapWindow(name string, position window.SnapPosition) error {
 }
 
 // StackWindows arranges windows in a cascade pattern.
-func (s *Service) StackWindows(windowNames []string, offsetX, offsetY int) error {
+func (s *Service) StackWindows(windowNames []string, offsetX, offsetY int) resultFailure {
 	r := s.Core().Action("window.stackWindows").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskStackWindows{Windows: windowNames, OffsetX: offsetX, OffsetY: offsetY}},
 	))
 	if !r.OK {
-		if e, ok := r.Value.(error); ok {
+		if e, ok := r.Value.(resultFailure); ok {
 			return e
 		}
 		return failedAction("display.StackWindows", "window.stackWindows")
@@ -1686,12 +1686,12 @@ func (s *Service) StackWindows(windowNames []string, offsetX, offsetY int) error
 }
 
 // ApplyWorkflowLayout applies a predefined layout for a specific workflow.
-func (s *Service) ApplyWorkflowLayout(workflow window.WorkflowLayout) error {
+func (s *Service) ApplyWorkflowLayout(workflow window.WorkflowLayout) resultFailure {
 	r := s.Core().Action("window.applyWorkflow").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskApplyWorkflow{Workflow: workflow.String()}},
 	))
 	if !r.OK {
-		if e, ok := r.Value.(error); ok {
+		if e, ok := r.Value.(resultFailure); ok {
 			return e
 		}
 		return failedAction("display.ApplyWorkflowLayout", "window.applyWorkflow")
@@ -1702,14 +1702,14 @@ func (s *Service) ApplyWorkflowLayout(workflow window.WorkflowLayout) error {
 // LayoutBesideEditor places a window beside a detected editor window.
 //
 //	result, err := svc.LayoutBesideEditor("preview", "code", "right", 0.62)
-func (s *Service) LayoutBesideEditor(name, editor, side string, ratio float64) (window.LayoutBesideEditorResult, error) {
+func (s *Service) LayoutBesideEditor(name, editor, side string, ratio float64) (window.LayoutBesideEditorResult, resultFailure) {
 	r := s.Core().Action("window.layoutBesideEditor").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskLayoutBesideEditor{
 			Name: name, Editor: editor, Side: side, Ratio: ratio,
 		}},
 	))
 	if !r.OK {
-		if e, ok := r.Value.(error); ok {
+		if e, ok := r.Value.(resultFailure); ok {
 			return window.LayoutBesideEditorResult{}, e
 		}
 		return window.LayoutBesideEditorResult{}, failedAction("display.LayoutBesideEditor", "window.layoutBesideEditor")
@@ -1724,14 +1724,14 @@ func (s *Service) LayoutBesideEditor(name, editor, side string, ratio float64) (
 // LayoutSuggest returns a layout recommendation for the current screen.
 //
 //	suggestion, err := svc.LayoutSuggest("", 2)
-func (s *Service) LayoutSuggest(screenID string, windowCount int) (window.LayoutSuggestion, error) {
+func (s *Service) LayoutSuggest(screenID string, windowCount int) (window.LayoutSuggestion, resultFailure) {
 	r := s.Core().Action("window.layoutSuggest").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskLayoutSuggest{
 			ScreenID: screenID, WindowCount: windowCount,
 		}},
 	))
 	if !r.OK {
-		if e, ok := r.Value.(error); ok {
+		if e, ok := r.Value.(resultFailure); ok {
 			return window.LayoutSuggestion{}, e
 		}
 		return window.LayoutSuggestion{}, failedAction("display.LayoutSuggest", "window.layoutSuggest")
@@ -1746,14 +1746,14 @@ func (s *Service) LayoutSuggest(screenID string, windowCount int) (window.Layout
 // FindScreenSpace finds an unused rectangle for a new window.
 //
 //	space, err := svc.FindScreenSpace("", 800, 600, 24)
-func (s *Service) FindScreenSpace(screenID string, width, height, padding int) (window.ScreenSpace, error) {
+func (s *Service) FindScreenSpace(screenID string, width, height, padding int) (window.ScreenSpace, resultFailure) {
 	r := s.Core().Action("window.findSpace").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskScreenFindSpace{
 			ScreenID: screenID, Width: width, Height: height, Padding: padding,
 		}},
 	))
 	if !r.OK {
-		if e, ok := r.Value.(error); ok {
+		if e, ok := r.Value.(resultFailure); ok {
 			return window.ScreenSpace{}, e
 		}
 		return window.ScreenSpace{}, failedAction("display.FindScreenSpace", "window.findSpace")
@@ -1768,14 +1768,14 @@ func (s *Service) FindScreenSpace(screenID string, width, height, padding int) (
 // ArrangeWindowPair positions two windows in an optimal split.
 //
 //	arrangement, err := svc.ArrangeWindowPair("editor", "preview", "", 0.55)
-func (s *Service) ArrangeWindowPair(primary, secondary, screenID string, ratio float64) (window.PairArrangement, error) {
+func (s *Service) ArrangeWindowPair(primary, secondary, screenID string, ratio float64) (window.PairArrangement, resultFailure) {
 	r := s.Core().Action("window.arrangePair").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskWindowArrangePair{
 			Primary: primary, Secondary: secondary, ScreenID: screenID, Ratio: ratio,
 		}},
 	))
 	if !r.OK {
-		if e, ok := r.Value.(error); ok {
+		if e, ok := r.Value.(resultFailure); ok {
 			return window.PairArrangement{}, e
 		}
 		return window.PairArrangement{}, failedAction("display.ArrangeWindowPair", "window.arrangePair")

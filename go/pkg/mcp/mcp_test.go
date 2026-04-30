@@ -164,12 +164,12 @@ func TestSubsystem_Good_CallTool_LayoutSuggest(t *core.T) {
 	core.AssertContains(t, result, "left-right")
 }
 
-func (m *manifestBrowserPlatform) OpenURL(url string) error {
+func (m *manifestBrowserPlatform) OpenURL(url string) resultFailure {
 	m.lastURL = url
 	return nil
 }
 
-func (m *manifestBrowserPlatform) OpenFile(path string) error {
+func (m *manifestBrowserPlatform) OpenFile(path string) resultFailure {
 	m.lastPath = path
 	return nil
 }
@@ -223,12 +223,16 @@ type aliasDialogPlatform struct {
 	last dialog.MessageDialogOptions
 }
 
-func (m *aliasDialogPlatform) OpenFile(_ dialog.OpenFileOptions) ([]string, error) { return nil, nil }
-func (m *aliasDialogPlatform) SaveFile(_ dialog.SaveFileOptions) (string, error)   { return "", nil }
-func (m *aliasDialogPlatform) OpenDirectory(_ dialog.OpenDirectoryOptions) (string, error) {
+func (m *aliasDialogPlatform) OpenFile(_ dialog.OpenFileOptions) ([]string, resultFailure) {
+	return nil, nil
+}
+func (m *aliasDialogPlatform) SaveFile(_ dialog.SaveFileOptions) (string, resultFailure) {
 	return "", nil
 }
-func (m *aliasDialogPlatform) MessageDialog(opts dialog.MessageDialogOptions) (string, error) {
+func (m *aliasDialogPlatform) OpenDirectory(_ dialog.OpenDirectoryOptions) (string, resultFailure) {
+	return "", nil
+}
+func (m *aliasDialogPlatform) MessageDialog(opts dialog.MessageDialogOptions) (string, resultFailure) {
 	m.last = opts
 	return "OK", nil
 }

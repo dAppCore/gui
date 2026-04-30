@@ -132,7 +132,7 @@ func (e *EventProcessor) Once(eventName string, callback func(event *CustomEvent
 // If the event is globally registered, it validates associated data
 // against the expected data type. In case of mismatches,
 // it cancels the event and returns an error.
-func (e *EventProcessor) Emit(thisEvent *CustomEvent) error {
+func (e *EventProcessor) Emit(thisEvent *CustomEvent) resultFailure {
 	if thisEvent == nil {
 		return nil
 	}
@@ -305,7 +305,7 @@ func RegisterEvent[Data any](name string) {
 	eventRegistered(name)
 }
 
-func validateCustomEvent(event *CustomEvent) error {
+func validateCustomEvent(event *CustomEvent) resultFailure {
 	r, ok := registeredEvents.Load(event.Name)
 	if !ok {
 		warnAboutUnregisteredEvent(event.Name)
@@ -336,7 +336,7 @@ func validateCustomEvent(event *CustomEvent) error {
 	)
 }
 
-func decodeEventData(name string, data []byte) (result any, err error) {
+func decodeEventData(name string, data []byte) (result any, err resultFailure) {
 	r, ok := registeredEvents.Load(name)
 	if !ok {
 		// Unregistered events unmarshal to any.

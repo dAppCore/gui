@@ -224,21 +224,21 @@ func (ww *wailsWindow) SetZoom(magnification float64) { ww.w.SetZoom(magnificati
 func (ww *wailsWindow) SetContentProtection(protection bool) {
 	ww.w.SetContentProtection(protection)
 }
-func (ww *wailsWindow) Maximise()          { ww.w.Maximise() }
-func (ww *wailsWindow) Restore()           { ww.w.Restore() }
-func (ww *wailsWindow) Minimise()          { ww.w.Minimise() }
-func (ww *wailsWindow) Focus()             { ww.w.Focus() }
-func (ww *wailsWindow) Close()             { ww.w.Close() }
-func (ww *wailsWindow) Show()              { ww.w.Show() }
-func (ww *wailsWindow) Hide()              { ww.w.Hide() }
-func (ww *wailsWindow) Fullscreen()        { ww.w.Fullscreen() }
-func (ww *wailsWindow) UnFullscreen()      { ww.w.UnFullscreen() }
-func (ww *wailsWindow) ToggleFullscreen()  { ww.w.ToggleFullscreen() }
-func (ww *wailsWindow) ToggleMaximise()    { ww.w.ToggleMaximise() }
-func (ww *wailsWindow) ExecJS(js string)   { ww.w.ExecJS(js) }
-func (ww *wailsWindow) Flash(enabled bool) { ww.w.Flash(enabled) }
-func (ww *wailsWindow) Print() error       { return ww.w.Print() }
-func (ww *wailsWindow) OpenDevTools()      { ww.w.OpenDevTools() }
+func (ww *wailsWindow) Maximise()            { ww.w.Maximise() }
+func (ww *wailsWindow) Restore()             { ww.w.Restore() }
+func (ww *wailsWindow) Minimise()            { ww.w.Minimise() }
+func (ww *wailsWindow) Focus()               { ww.w.Focus() }
+func (ww *wailsWindow) Close()               { ww.w.Close() }
+func (ww *wailsWindow) Show()                { ww.w.Show() }
+func (ww *wailsWindow) Hide()                { ww.w.Hide() }
+func (ww *wailsWindow) Fullscreen()          { ww.w.Fullscreen() }
+func (ww *wailsWindow) UnFullscreen()        { ww.w.UnFullscreen() }
+func (ww *wailsWindow) ToggleFullscreen()    { ww.w.ToggleFullscreen() }
+func (ww *wailsWindow) ToggleMaximise()      { ww.w.ToggleMaximise() }
+func (ww *wailsWindow) ExecJS(js string)     { ww.w.ExecJS(js) }
+func (ww *wailsWindow) Flash(enabled bool)   { ww.w.Flash(enabled) }
+func (ww *wailsWindow) Print() resultFailure { return ww.w.Print() }
+func (ww *wailsWindow) OpenDevTools()        { ww.w.OpenDevTools() }
 func (ww *wailsWindow) CloseDevTools() {
 	if closer, ok := any(ww.w).(interface{ CloseDevTools() }); ok {
 		closer.CloseDevTools()

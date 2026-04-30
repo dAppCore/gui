@@ -121,7 +121,7 @@ func (s *Service) handleQuery(_ *core.Core, q core.Query) core.Result {
 	}
 }
 
-func (s *Service) taskSetTrayMenu(t TaskSetTrayMenu) error {
+func (s *Service) taskSetTrayMenu(t TaskSetTrayMenu) resultFailure {
 	// Register IPC-emitting callbacks for each menu item
 	for _, item := range t.Items {
 		if item.ActionID != "" {

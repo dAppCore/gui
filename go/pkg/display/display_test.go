@@ -335,7 +335,7 @@ func TestStorageTask_Bad(t *core.T) {
 	))
 
 	core.AssertFalse(t, r.OK)
-	core.AssertContains(t, r.Value.(error).Error(), "invalid storage entry")
+	core.AssertContains(t, r.Value.(resultFailure).Error(), "invalid storage entry")
 }
 
 func TestResolveScheme_StoreRoute_GoodCase(t *core.T) {
@@ -925,7 +925,7 @@ func TestDisplay_handleWSMessage_Bad(t *core.T) {
 	result := svc.handleWSMessage(WSMessage{Action: "unknown:action"})
 
 	core.AssertFalse(t, result.OK)
-	core.AssertContains(t, result.Value.(error).Error(), "unknown websocket action")
+	core.AssertContains(t, result.Value.(resultFailure).Error(), "unknown websocket action")
 }
 
 func TestDisplay_handleWSMessage_Ugly(t *core.T) {
@@ -941,7 +941,7 @@ func TestDisplay_handleWSMessage_Ugly(t *core.T) {
 	})
 
 	core.AssertFalse(t, result.OK)
-	core.AssertContains(t, result.Value.(error).Error(), "missing required field \"opacity\"")
+	core.AssertContains(t, result.Value.(resultFailure).Error(), "missing required field \"opacity\"")
 }
 
 func TestDisplay_handleWSMessage_RejectsFloatOverflow(t *core.T) {
@@ -1135,7 +1135,7 @@ func TestDisplay_handleWSMessage_LayoutCommands_Bad(t *core.T) {
 
 			core.AssertFalse(t, result.OK)
 			core.AssertFalse(t, called)
-			core.AssertContains(t, result.Value.(error).Error(), "missing required field \""+tc.field+"\"")
+			core.AssertContains(t, result.Value.(resultFailure).Error(), "missing required field \""+tc.field+"\"")
 		})
 	}
 }
@@ -1219,7 +1219,7 @@ func TestDisplay_handleWSMessage_LayoutCommands_Ugly(t *core.T) {
 
 			core.AssertFalse(t, result.OK)
 			core.AssertFalse(t, called)
-			core.AssertContains(t, result.Value.(error).Error(), "invalid required field \""+tc.field+"\"")
+			core.AssertContains(t, result.Value.(resultFailure).Error(), "invalid required field \""+tc.field+"\"")
 		})
 	}
 }

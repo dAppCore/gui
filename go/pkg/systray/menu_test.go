@@ -26,13 +26,13 @@ type recordingTray struct {
 	attachedWindow     WindowHandle
 }
 
-func (t *recordingTray) SetIcon(data []byte)                     { t.icon = append([]byte(nil), data...) }
-func (t *recordingTray) SetTemplateIcon(data []byte)             { t.templateIcon = append([]byte(nil), data...) }
-func (t *recordingTray) SetTooltip(text string)                  { t.tooltip = text }
-func (t *recordingTray) SetLabel(text string)                    { t.label = text }
-func (t *recordingTray) SetMenu(menu PlatformMenu)               { t.menu = menu }
-func (t *recordingTray) AttachWindow(w WindowHandle)             { t.attachedWindow = w }
-func (t *recordingTray) ShowMessage(title, message string) error { return nil }
+func (t *recordingTray) SetIcon(data []byte)                             { t.icon = append([]byte(nil), data...) }
+func (t *recordingTray) SetTemplateIcon(data []byte)                     { t.templateIcon = append([]byte(nil), data...) }
+func (t *recordingTray) SetTooltip(text string)                          { t.tooltip = text }
+func (t *recordingTray) SetLabel(text string)                            { t.label = text }
+func (t *recordingTray) SetMenu(menu PlatformMenu)                       { t.menu = menu }
+func (t *recordingTray) AttachWindow(w WindowHandle)                     { t.attachedWindow = w }
+func (t *recordingTray) ShowMessage(title, message string) resultFailure { return nil }
 
 type recordingTrayMenu struct {
 	items []*recordingTrayMenuItem

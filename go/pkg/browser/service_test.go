@@ -9,16 +9,16 @@ import (
 type mockPlatform struct {
 	lastURL  string
 	lastPath string
-	urlErr   error
-	fileErr  error
+	urlErr   resultFailure
+	fileErr  resultFailure
 }
 
-func (m *mockPlatform) OpenURL(url string) error {
+func (m *mockPlatform) OpenURL(url string) resultFailure {
 	m.lastURL = url
 	return m.urlErr
 }
 
-func (m *mockPlatform) OpenFile(path string) error {
+func (m *mockPlatform) OpenFile(path string) resultFailure {
 	m.lastPath = path
 	return m.fileErr
 }

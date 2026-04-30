@@ -19,7 +19,7 @@ type EventEmitOutput struct {
 	Cancelled bool `json:"cancelled"`
 }
 
-func (s *Subsystem) eventEmit(_ context.Context, _ *mcp.CallToolRequest, input EventEmitInput) (*mcp.CallToolResult, EventEmitOutput, error) {
+func (s *Subsystem) eventEmit(_ context.Context, _ *mcp.CallToolRequest, input EventEmitInput) (*mcp.CallToolResult, EventEmitOutput, resultFailure) {
 	r := s.core.Action("events.emit").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: events.TaskEmit{Name: input.Name, Data: input.Data}},
 	))
@@ -45,7 +45,7 @@ type EventOnOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) eventOn(_ context.Context, _ *mcp.CallToolRequest, input EventOnInput) (*mcp.CallToolResult, EventOnOutput, error) {
+func (s *Subsystem) eventOn(_ context.Context, _ *mcp.CallToolRequest, input EventOnInput) (*mcp.CallToolResult, EventOnOutput, resultFailure) {
 	r := s.core.Action("events.on").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: events.TaskOn{Name: input.Name}},
 	))
@@ -67,7 +67,7 @@ type EventSubscribeOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) eventSubscribe(ctx context.Context, req *mcp.CallToolRequest, input EventSubscribeInput) (*mcp.CallToolResult, EventSubscribeOutput, error) {
+func (s *Subsystem) eventSubscribe(ctx context.Context, req *mcp.CallToolRequest, input EventSubscribeInput) (*mcp.CallToolResult, EventSubscribeOutput, resultFailure) {
 	result, output, err := s.eventOn(ctx, req, EventOnInput{Name: input.Name})
 	if err != nil {
 		return nil, EventSubscribeOutput{}, err
@@ -87,7 +87,7 @@ type EventOffOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) eventOff(_ context.Context, _ *mcp.CallToolRequest, input EventOffInput) (*mcp.CallToolResult, EventOffOutput, error) {
+func (s *Subsystem) eventOff(_ context.Context, _ *mcp.CallToolRequest, input EventOffInput) (*mcp.CallToolResult, EventOffOutput, resultFailure) {
 	r := s.core.Action("events.off").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: events.TaskOff{Name: input.Name}},
 	))
@@ -109,7 +109,7 @@ type EventUnsubscribeOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) eventUnsubscribe(ctx context.Context, req *mcp.CallToolRequest, input EventUnsubscribeInput) (*mcp.CallToolResult, EventUnsubscribeOutput, error) {
+func (s *Subsystem) eventUnsubscribe(ctx context.Context, req *mcp.CallToolRequest, input EventUnsubscribeInput) (*mcp.CallToolResult, EventUnsubscribeOutput, resultFailure) {
 	result, output, err := s.eventOff(ctx, req, EventOffInput{Name: input.Name})
 	if err != nil {
 		return nil, EventUnsubscribeOutput{}, err
@@ -127,7 +127,7 @@ type EventListOutput struct {
 	Listeners []events.ListenerInfo `json:"listeners"`
 }
 
-func (s *Subsystem) eventList(_ context.Context, _ *mcp.CallToolRequest, _ EventListInput) (*mcp.CallToolResult, EventListOutput, error) {
+func (s *Subsystem) eventList(_ context.Context, _ *mcp.CallToolRequest, _ EventListInput) (*mcp.CallToolResult, EventListOutput, resultFailure) {
 	r := s.core.QUERY(events.QueryListeners{})
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {
@@ -149,7 +149,7 @@ type EventInfoOutput struct {
 	Info events.ServerInfo `json:"info"`
 }
 
-func (s *Subsystem) eventInfo(_ context.Context, _ *mcp.CallToolRequest, _ EventInfoInput) (*mcp.CallToolResult, EventInfoOutput, error) {
+func (s *Subsystem) eventInfo(_ context.Context, _ *mcp.CallToolRequest, _ EventInfoInput) (*mcp.CallToolResult, EventInfoOutput, resultFailure) {
 	r := s.core.QUERY(events.QueryServerInfo{})
 	if !r.OK {
 		return nil, EventInfoOutput{}, nil

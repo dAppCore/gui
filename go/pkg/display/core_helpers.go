@@ -8,7 +8,7 @@ import (
 
 var sidecarWarningWriter core.Writer = core.Stderr()
 
-func coreResultError(result core.Result, fallback string) error {
+func coreResultError(result core.Result, fallback string) resultFailure {
 	if result.OK {
 		return nil
 	}
@@ -21,31 +21,31 @@ func coreResultError(result core.Result, fallback string) error {
 	return core.NewError(fallback)
 }
 
-func coreMkdirAll(path string, mode core.FileMode) error {
+func coreMkdirAll(path string, mode core.FileMode) resultFailure {
 	return coreResultError(core.MkdirAll(path, mode), "failed to create directory")
 }
 
-func coreMkdir(path string, mode core.FileMode) error {
+func coreMkdir(path string, mode core.FileMode) resultFailure {
 	return coreResultError(core.Mkdir(path, mode), "failed to create directory")
 }
 
-func coreRemoveAll(path string) error {
+func coreRemoveAll(path string) resultFailure {
 	return coreResultError(core.RemoveAll(path), "failed to remove path")
 }
 
-func coreWriteFile(path string, data []byte, mode core.FileMode) error {
+func coreWriteFile(path string, data []byte, mode core.FileMode) resultFailure {
 	return coreResultError(core.WriteFile(path, data, mode), "failed to write file")
 }
 
-func coreWriteMode(path, content string, mode core.FileMode) error {
+func coreWriteMode(path, content string, mode core.FileMode) resultFailure {
 	return coreWriteFile(path, []byte(content), mode)
 }
 
-func coreEnsureDir(path string) error {
+func coreEnsureDir(path string) resultFailure {
 	return coreMkdirAll(path, 0o755)
 }
 
-func coreReadFile(path string) ([]byte, error) {
+func coreReadFile(path string) ([]byte, resultFailure) {
 	result := core.ReadFile(path)
 	if !result.OK {
 		return nil, coreResultError(result, "failed to read file")
@@ -53,7 +53,7 @@ func coreReadFile(path string) ([]byte, error) {
 	return result.Value.([]byte), nil
 }
 
-func coreStat(path string) (core.FsFileInfo, error) {
+func coreStat(path string) (core.FsFileInfo, resultFailure) {
 	result := core.Stat(path)
 	if !result.OK {
 		return nil, coreResultError(result, "failed to stat path")
@@ -61,7 +61,7 @@ func coreStat(path string) (core.FsFileInfo, error) {
 	return result.Value.(core.FsFileInfo), nil
 }
 
-func coreLstat(path string) (core.FsFileInfo, error) {
+func coreLstat(path string) (core.FsFileInfo, resultFailure) {
 	result := core.Lstat(path)
 	if !result.OK {
 		return nil, coreResultError(result, "failed to stat path")
@@ -69,7 +69,7 @@ func coreLstat(path string) (core.FsFileInfo, error) {
 	return result.Value.(core.FsFileInfo), nil
 }
 
-func coreHostname() (string, error) {
+func coreHostname() (string, resultFailure) {
 	result := core.Hostname()
 	if !result.OK {
 		return "", coreResultError(result, "failed to read hostname")
@@ -77,7 +77,7 @@ func coreHostname() (string, error) {
 	return result.Value.(string), nil
 }
 
-func coreUserConfigDir() (string, error) {
+func coreUserConfigDir() (string, resultFailure) {
 	result := core.UserConfigDir()
 	if !result.OK {
 		return "", coreResultError(result, "failed to read config dir")
@@ -85,7 +85,7 @@ func coreUserConfigDir() (string, error) {
 	return result.Value.(string), nil
 }
 
-func coreUserHomeDir() (string, error) {
+func coreUserHomeDir() (string, resultFailure) {
 	result := core.UserHomeDir()
 	if !result.OK {
 		return "", coreResultError(result, "failed to read home dir")
@@ -93,7 +93,7 @@ func coreUserHomeDir() (string, error) {
 	return result.Value.(string), nil
 }
 
-func pathAbs(path string) (string, error) {
+func pathAbs(path string) (string, resultFailure) {
 	result := core.PathAbs(path)
 	if !result.OK {
 		return "", coreResultError(result, "failed to make path absolute")
@@ -101,7 +101,7 @@ func pathAbs(path string) (string, error) {
 	return result.Value.(string), nil
 }
 
-func pathEvalSymlinks(path string) (string, error) {
+func pathEvalSymlinks(path string) (string, resultFailure) {
 	result := core.PathEvalSymlinks(path)
 	if !result.OK {
 		return "", coreResultError(result, "failed to resolve symlinks")
@@ -109,7 +109,7 @@ func pathEvalSymlinks(path string) (string, error) {
 	return result.Value.(string), nil
 }
 
-func pathRel(base, target string) (string, error) {
+func pathRel(base, target string) (string, resultFailure) {
 	result := core.PathRel(base, target)
 	if !result.OK {
 		return "", coreResultError(result, "failed to compare paths")
@@ -137,7 +137,7 @@ func pathFromSlash(path string) string {
 	return core.Replace(path, "/", string(core.PathSeparator))
 }
 
-func jsonMarshal(value any) ([]byte, error) {
+func jsonMarshal(value any) ([]byte, resultFailure) {
 	result := core.JSONMarshal(value)
 	if !result.OK {
 		return nil, coreResultError(result, "failed to encode JSON")
@@ -145,7 +145,7 @@ func jsonMarshal(value any) ([]byte, error) {
 	return result.Value.([]byte), nil
 }
 
-func jsonUnmarshal(data []byte, target any) error {
+func jsonUnmarshal(data []byte, target any) resultFailure {
 	return coreResultError(core.JSONUnmarshal(data, target), "failed to decode JSON")
 }
 
@@ -209,7 +209,7 @@ func indexString(value, needle string) int {
 	return -1
 }
 
-func lookPath(file string) (string, error) {
+func lookPath(file string) (string, resultFailure) {
 	name := core.Trim(file)
 	if name == "" {
 		return "", core.NewError("executable name is empty")

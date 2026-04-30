@@ -368,7 +368,7 @@ func (s *Screen) physicalToDipRect(physicalRect Rect) Rect {
 
 // Layout screens in the virtual space with DIP calculations and cache the screens
 // for future coordinate transformation between the physical and logical (DIP) space
-func (m *ScreenManager) LayoutScreens(screens []*Screen) error {
+func (m *ScreenManager) LayoutScreens(screens []*Screen) resultFailure {
 	if screens == nil || len(screens) == 0 {
 		return core.NewError("screens parameter is nil or empty")
 	}
@@ -391,7 +391,7 @@ func (m *ScreenManager) GetPrimary() *Screen {
 }
 
 // Reference: https://source.chromium.org/chromium/chromium/src/+/main:ui/display/win/screen_win.cc;l=317
-func (m *ScreenManager) calculateScreensDipCoordinates() error {
+func (m *ScreenManager) calculateScreensDipCoordinates() resultFailure {
 	remainingScreens := []*Screen{}
 
 	// Find the primary screen

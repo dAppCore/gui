@@ -416,7 +416,7 @@ func TestTaskSaveLayout_Good(t *core.T) {
 
 func TestTaskSaveLayout_Bad(t *core.T) {
 	_, c := newTestWindowService(t)
-	// Saving an empty layout with empty name returns an error from LayoutManager
+	// Saving an empty layout with empty name returns an resultFailure from LayoutManager
 	r := taskRun(c, "window.saveLayout", TaskSaveLayout{Name: ""})
 	core.AssertFalse(t, r.OK)
 }

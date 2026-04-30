@@ -80,7 +80,7 @@ func TestTIMManager_Start_Good(t *core.T) {
 		Detect: func() ContainerRuntime {
 			return RuntimeDocker
 		},
-		Exec: func(_ context.Context, name string, args ...string) error {
+		Exec: func(_ context.Context, name string, args ...string) resultFailure {
 			calls = append(calls, append([]string{name}, args...)...)
 			return nil
 		},
@@ -126,7 +126,7 @@ func TestTIMManager_Start_Ugly(t *core.T) {
 		Detect: func() ContainerRuntime {
 			return RuntimeDocker
 		},
-		Exec: func(context.Context, string, ...string) error {
+		Exec: func(context.Context, string, ...string) resultFailure {
 			return core.NewError("docker failed")
 		},
 	})
@@ -146,7 +146,7 @@ func TestTIMManager_Stop_Good(t *core.T) {
 		Detect: func() ContainerRuntime {
 			return RuntimeDocker
 		},
-		Exec: func(_ context.Context, name string, args ...string) error {
+		Exec: func(_ context.Context, name string, args ...string) resultFailure {
 			calls = append(calls, append([]string{name}, args...)...)
 			return nil
 		},
@@ -174,7 +174,7 @@ func TestTIMManager_Stop_Bad(t *core.T) {
 		Detect: func() ContainerRuntime {
 			return RuntimeDocker
 		},
-		Exec: func(context.Context, string, ...string) error {
+		Exec: func(context.Context, string, ...string) resultFailure {
 			return core.NewError("stop failed")
 		},
 	})

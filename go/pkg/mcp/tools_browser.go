@@ -17,7 +17,7 @@ type BrowserOpenURLOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) browserOpenURL(_ context.Context, _ *mcp.CallToolRequest, input BrowserOpenURLInput) (*mcp.CallToolResult, BrowserOpenURLOutput, error) {
+func (s *Subsystem) browserOpenURL(_ context.Context, _ *mcp.CallToolRequest, input BrowserOpenURLInput) (*mcp.CallToolResult, BrowserOpenURLOutput, resultFailure) {
 	r := s.core.Action("browser.openURL").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "url", Value: input.URL},
 	))
@@ -39,7 +39,7 @@ type BrowserOpenFileOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) browserOpenFile(_ context.Context, _ *mcp.CallToolRequest, input BrowserOpenFileInput) (*mcp.CallToolResult, BrowserOpenFileOutput, error) {
+func (s *Subsystem) browserOpenFile(_ context.Context, _ *mcp.CallToolRequest, input BrowserOpenFileInput) (*mcp.CallToolResult, BrowserOpenFileOutput, resultFailure) {
 	r := s.core.Action("browser.openFile").Run(context.Background(), core.NewOptions(
 		core.Option{Key: core.Concat("pa", "th"), Value: input.Path},
 	))

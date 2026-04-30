@@ -53,7 +53,7 @@ func (wt *wailsTray) AttachWindow(w WindowHandle) {
 	// bridge is routed through a concrete Wails window wrapper.
 }
 
-func (wt *wailsTray) ShowMessage(title, message string) error {
+func (wt *wailsTray) ShowMessage(title, message string) resultFailure {
 	_ = title
 	_ = message
 	return core.E("systray.wailsTray.ShowMessage", "tray balloon messages are not supported by this backend", nil)

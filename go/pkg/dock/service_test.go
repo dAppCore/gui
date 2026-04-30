@@ -18,16 +18,16 @@ type mockPlatform struct {
 	bounceType       BounceType
 	bounceCalled     bool
 	stopBounceCalled bool
-	showErr          error
-	hideErr          error
-	badgeErr         error
-	removeErr        error
-	progressErr      error
-	bounceErr        error
-	stopBounceErr    error
+	showErr          resultFailure
+	hideErr          resultFailure
+	badgeErr         resultFailure
+	removeErr        resultFailure
+	progressErr      resultFailure
+	bounceErr        resultFailure
+	stopBounceErr    resultFailure
 }
 
-func (m *mockPlatform) ShowIcon() error {
+func (m *mockPlatform) ShowIcon() resultFailure {
 	if m.showErr != nil {
 		return m.showErr
 	}
@@ -35,7 +35,7 @@ func (m *mockPlatform) ShowIcon() error {
 	return nil
 }
 
-func (m *mockPlatform) HideIcon() error {
+func (m *mockPlatform) HideIcon() resultFailure {
 	if m.hideErr != nil {
 		return m.hideErr
 	}
@@ -43,7 +43,7 @@ func (m *mockPlatform) HideIcon() error {
 	return nil
 }
 
-func (m *mockPlatform) SetBadge(label string) error {
+func (m *mockPlatform) SetBadge(label string) resultFailure {
 	if m.badgeErr != nil {
 		return m.badgeErr
 	}
@@ -52,7 +52,7 @@ func (m *mockPlatform) SetBadge(label string) error {
 	return nil
 }
 
-func (m *mockPlatform) RemoveBadge() error {
+func (m *mockPlatform) RemoveBadge() resultFailure {
 	if m.removeErr != nil {
 		return m.removeErr
 	}
@@ -63,7 +63,7 @@ func (m *mockPlatform) RemoveBadge() error {
 
 func (m *mockPlatform) IsVisible() bool { return m.visible }
 
-func (m *mockPlatform) SetProgressBar(progress float64) error {
+func (m *mockPlatform) SetProgressBar(progress float64) resultFailure {
 	if m.progressErr != nil {
 		return m.progressErr
 	}
@@ -71,7 +71,7 @@ func (m *mockPlatform) SetProgressBar(progress float64) error {
 	return nil
 }
 
-func (m *mockPlatform) Bounce(bounceType BounceType) (int, error) {
+func (m *mockPlatform) Bounce(bounceType BounceType) (int, resultFailure) {
 	if m.bounceErr != nil {
 		return 0, m.bounceErr
 	}
@@ -81,7 +81,7 @@ func (m *mockPlatform) Bounce(bounceType BounceType) (int, error) {
 	return m.bounceID, nil
 }
 
-func (m *mockPlatform) StopBounce(requestID int) error {
+func (m *mockPlatform) StopBounce(requestID int) resultFailure {
 	if m.stopBounceErr != nil {
 		return m.stopBounceErr
 	}

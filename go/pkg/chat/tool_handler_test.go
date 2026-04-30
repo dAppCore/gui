@@ -32,7 +32,7 @@ func (m *strictToolExecutor) ManifestText() string {
 	return "Available MCP tools:\n- layout_suggest: Suggest a layout"
 }
 
-func (m *strictToolExecutor) CallTool(_ context.Context, name string, arguments map[string]any) (string, error) {
+func (m *strictToolExecutor) CallTool(_ context.Context, name string, arguments map[string]any) (string, resultFailure) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.calls = append(m.calls, ToolCall{Name: name, Arguments: arguments})

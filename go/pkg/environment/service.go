@@ -132,7 +132,7 @@ func (s *Service) hasThemeOverride() bool {
 	return s.override != ""
 }
 
-func (s *Service) setThemeOverride(theme string) (bool, error) {
+func (s *Service) setThemeOverride(theme string) (bool, resultFailure) {
 	normalized, err := normalizeTheme(theme)
 	if err != nil {
 		return false, err
@@ -150,7 +150,7 @@ func (s *Service) setThemeOverride(theme string) (bool, error) {
 	return after, nil
 }
 
-func normalizeTheme(theme string) (string, error) {
+func normalizeTheme(theme string) (string, resultFailure) {
 	switch core.Lower(core.Trim(theme)) {
 	case "", "system":
 		return "", nil
@@ -163,7 +163,7 @@ func normalizeTheme(theme string) (string, error) {
 	}
 }
 
-func validatedOpenFileManagerPath(raw string) (string, error) {
+func validatedOpenFileManagerPath(raw string) (string, resultFailure) {
 	trimmed := core.Trim(raw)
 	if trimmed == "" {
 		return "", core.E("environment.openFileManager", "path is required", nil)

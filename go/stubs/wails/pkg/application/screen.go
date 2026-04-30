@@ -224,7 +224,7 @@ func (m *ScreenManager) GetCurrent() *Screen {
 	return m.primary
 }
 
-func (m *ScreenManager) LayoutScreens(screens []*Screen) error {
+func (m *ScreenManager) LayoutScreens(screens []*Screen) resultFailure {
 	m.SetScreens(screens)
 	return nil
 }

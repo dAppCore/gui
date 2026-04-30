@@ -6,7 +6,7 @@ func newBrowserManager() *BrowserManager {
 	return &BrowserManager{}
 }
 
-func (bm *BrowserManager) Open(target string) error {
+func (bm *BrowserManager) Open(target string) resultFailure {
 	if bm == nil {
 		return nil
 	}

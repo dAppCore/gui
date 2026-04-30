@@ -30,7 +30,7 @@ func TestTCPDriver_Publish_ContinuesAfterPeerFailure(t *core.T) {
 	defer listener.Close()
 
 	received := make(chan Envelope, 1)
-	acceptErr := make(chan error, 1)
+	acceptErr := make(chan resultFailure, 1)
 	go func() {
 		conn, err := listener.Accept()
 		if err != nil {
