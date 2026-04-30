@@ -4,9 +4,8 @@ package mcp
 import (
 	"context"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/marketplace"
-	coreerr "dappco.re/go/log"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -27,11 +26,11 @@ func (s *Subsystem) marketplaceList(_ context.Context, _ *mcp.CallToolRequest, i
 		if e, ok := r.Value.(error); ok {
 			return nil, MarketplaceListOutput{}, e
 		}
-		return nil, MarketplaceListOutput{}, coreerr.E("mcp.marketplaceList", "display.marketplace.list failed", nil)
+		return nil, MarketplaceListOutput{}, core.E("mcp.marketplaceList", "display.marketplace.list failed", nil)
 	}
 	payload, ok := r.Value.(map[string]any)
 	if !ok {
-		return nil, MarketplaceListOutput{}, coreerr.E("mcp.marketplaceList", "unexpected result type", nil)
+		return nil, MarketplaceListOutput{}, core.E("mcp.marketplaceList", "unexpected result type", nil)
 	}
 	output := MarketplaceListOutput{RegistryURL: stringValue(payload, "registry_url")}
 	if manifests, ok := payload["manifests"].([]marketplace.Manifest); ok {
@@ -52,11 +51,11 @@ func (s *Subsystem) marketplaceFetch(_ context.Context, _ *mcp.CallToolRequest, 
 		if e, ok := r.Value.(error); ok {
 			return nil, marketplace.Manifest{}, e
 		}
-		return nil, marketplace.Manifest{}, coreerr.E("mcp.marketplaceFetch", "display.marketplace.fetch failed", nil)
+		return nil, marketplace.Manifest{}, core.E("mcp.marketplaceFetch", "display.marketplace.fetch failed", nil)
 	}
 	manifest, ok := r.Value.(marketplace.Manifest)
 	if !ok {
-		return nil, marketplace.Manifest{}, coreerr.E("mcp.marketplaceFetch", "unexpected result type", nil)
+		return nil, marketplace.Manifest{}, core.E("mcp.marketplaceFetch", "unexpected result type", nil)
 	}
 	return nil, manifest, nil
 }
@@ -78,11 +77,11 @@ func (s *Subsystem) marketplaceVerify(_ context.Context, _ *mcp.CallToolRequest,
 		if e, ok := r.Value.(error); ok {
 			return nil, MarketplaceVerifyOutput{}, e
 		}
-		return nil, MarketplaceVerifyOutput{}, coreerr.E("mcp.marketplaceVerify", "display.marketplace.verify failed", nil)
+		return nil, MarketplaceVerifyOutput{}, core.E("mcp.marketplaceVerify", "display.marketplace.verify failed", nil)
 	}
 	payload, ok := r.Value.(map[string]any)
 	if !ok {
-		return nil, MarketplaceVerifyOutput{}, coreerr.E("mcp.marketplaceVerify", "unexpected result type", nil)
+		return nil, MarketplaceVerifyOutput{}, core.E("mcp.marketplaceVerify", "unexpected result type", nil)
 	}
 	output := MarketplaceVerifyOutput{Digest: stringValue(payload, "digest")}
 	if manifest, ok := payload["manifest"].(marketplace.Manifest); ok {
@@ -114,11 +113,11 @@ func (s *Subsystem) marketplaceInstall(_ context.Context, _ *mcp.CallToolRequest
 		if e, ok := r.Value.(error); ok {
 			return nil, MarketplaceInstallOutput{}, e
 		}
-		return nil, MarketplaceInstallOutput{}, coreerr.E("mcp.marketplaceInstall", "display.marketplace.install failed", nil)
+		return nil, MarketplaceInstallOutput{}, core.E("mcp.marketplaceInstall", "display.marketplace.install failed", nil)
 	}
 	payload, ok := r.Value.(map[string]any)
 	if !ok {
-		return nil, MarketplaceInstallOutput{}, coreerr.E("mcp.marketplaceInstall", "unexpected result type", nil)
+		return nil, MarketplaceInstallOutput{}, core.E("mcp.marketplaceInstall", "unexpected result type", nil)
 	}
 	output := MarketplaceInstallOutput{
 		Digest:     stringValue(payload, "digest"),

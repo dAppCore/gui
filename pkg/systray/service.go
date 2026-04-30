@@ -3,9 +3,9 @@ package systray
 import (
 	"context"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
+	"dappco.re/go/gui/pkg/internal/coreutil"
 	"dappco.re/go/gui/pkg/notification"
-	coreerr "dappco.re/go/log"
 )
 
 type Options struct{}
@@ -56,7 +56,7 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 				return core.Result{OK: true}
 			}
 			if fallbackErr, ok := fallback.Value.(error); ok {
-				return core.Result{Value: coreerr.E("systray.showMessage", "tray message failed and notification fallback failed", fallbackErr), OK: false}
+				return core.Result{Value: core.E("systray.showMessage", "tray message failed and notification fallback failed", fallbackErr), OK: false}
 			}
 			return core.Result{Value: err, OK: false}
 		}
@@ -76,7 +76,7 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 				return core.Result{OK: true}
 			}
 			if fallbackErr, ok := fallback.Value.(error); ok {
-				return core.Result{Value: coreerr.E("systray.showMessage", "tray message failed and notification fallback failed", fallbackErr), OK: false}
+				return core.Result{Value: core.E("systray.showMessage", "tray message failed and notification fallback failed", fallbackErr), OK: false}
 			}
 			return core.Result{Value: err, OK: false}
 		}
@@ -97,7 +97,9 @@ func (s *Service) applyConfig(configData map[string]any) {
 	if tooltip == "" {
 		tooltip = "Core"
 	}
-	_ = s.manager.Setup(tooltip, tooltip)
+	if err := s.manager.Setup(tooltip, tooltip); err != nil {
+		return
+	}
 
 	if iconPath, ok := configData["icon"].(string); ok && iconPath != "" {
 		// Icon loading is deferred to when assets are available.
@@ -125,7 +127,7 @@ func (s *Service) taskSetTrayMenu(t TaskSetTrayMenu) error {
 		if item.ActionID != "" {
 			actionID := item.ActionID
 			s.manager.RegisterCallback(actionID, func() {
-				_ = s.Core().ACTION(ActionTrayMenuItemClicked{ActionID: actionID})
+				coreutil.DispatchAction(s.Core(), "systray.taskSetTrayMenu", ActionTrayMenuItemClicked{ActionID: actionID})
 			})
 		}
 	}

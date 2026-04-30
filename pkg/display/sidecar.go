@@ -2,27 +2,23 @@ package display
 
 import (
 	"context"
-	"fmt"
-	"os"
-	"os/exec"
-	"path/filepath"
 	"reflect"
-	"strings"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/deno"
+	"dappco.re/go/gui/pkg/internal/coreutil"
 )
 
 func (s *Service) registerSidecarActions() {
-	if strings.TrimSpace(core.Env("CORE_DENO_ENABLE")) != "" && s.sidecar == nil {
+	if core.Trim(core.Env("CORE_DENO_ENABLE")) != "" && s.sidecar == nil {
 		manager, err := s.sidecarForStart()
 		if err != nil {
 			if s != nil && s.ServiceRuntime != nil && s.Core() != nil {
 				s.Core().LogWarn(err, "display.registerSidecarActions", "skipping sidecar auto-start; invalid sidecar environment")
 			}
 			s.sidecar = nil
-		} else if binary := strings.TrimSpace(manager.Status().Binary); binary != "" {
-			if _, err := exec.LookPath(binary); err != nil {
+		} else if binary := core.Trim(manager.Status().Binary); binary != "" {
+			if _, err := lookPath(binary); err != nil {
 				if s != nil && s.ServiceRuntime != nil && s.Core() != nil {
 					s.Core().LogWarn(err, "display.registerSidecarActions", "skipping sidecar auto-start; binary unavailable")
 				}
@@ -72,8 +68,8 @@ func (s *Service) registerSidecarActions() {
 func (s *Service) ensureSidecar() *deno.Manager {
 	if s.sidecar == nil {
 		s.sidecar = s.newSidecar(deno.Options{
-			Binary: strings.TrimSpace(core.Env("CORE_DENO_BINARY")),
-			Dir:    strings.TrimSpace(core.Env("CORE_DENO_DIR")),
+			Binary: core.Trim(core.Env("CORE_DENO_BINARY")),
+			Dir:    core.Trim(core.Env("CORE_DENO_DIR")),
 			Args:   splitCommandArgs(core.Env("CORE_DENO_ARGS")),
 			Core:   s.coreRef(),
 		})
@@ -155,28 +151,28 @@ func validateSidecarArgs(args []string, coreRef *core.Core) error {
 		if flag == "" {
 			continue
 		}
-		msg := fmt.Sprintf("CORE_DENO_ARGS contains permission flag %s; deno sandbox is being weakened. This is intentional only if you understand the implications.", flag)
-		if strings.EqualFold(strings.TrimSpace(core.Env("CORE_DENO_ALLOW_PERMISSIONS")), "true") {
-			fmt.Fprintln(os.Stderr, msg)
+		msg := core.Sprintf("CORE_DENO_ARGS contains permission flag %s; deno sandbox is being weakened. This is intentional only if you understand the implications.", flag)
+		if equalFold(core.Trim(core.Env("CORE_DENO_ALLOW_PERMISSIONS")), "true") {
+			core.Print(sidecarWarningWriter, "%s", msg)
 			if coreRef != nil {
-				coreRef.LogWarn(fmt.Errorf("permission flag %s", flag), "display.sidecar.env", msg)
+				coreRef.LogWarn(core.Errorf("permission flag %s", flag), "display.sidecar.env", msg)
 			}
 			continue
 		}
-		return fmt.Errorf("%s Set CORE_DENO_ALLOW_PERMISSIONS=true to allow this intentionally", msg)
+		return core.Errorf("%s Set CORE_DENO_ALLOW_PERMISSIONS=true to allow this intentionally", msg)
 	}
 	return nil
 }
 
 func denoPermissionFlag(arg string) string {
-	token := strings.TrimSpace(arg)
+	token := core.Trim(arg)
 	switch {
-	case token == "-A" || strings.HasPrefix(token, "-A="):
+	case token == "-A" || core.HasPrefix(token, "-A="):
 		return "-A"
-	case token == "--allow-all" || strings.HasPrefix(token, "--allow-all="):
+	case token == "--allow-all" || core.HasPrefix(token, "--allow-all="):
 		return "--allow-all"
-	case strings.HasPrefix(token, "--allow-"):
-		if flag, _, ok := strings.Cut(token, "="); ok {
+	case core.HasPrefix(token, "--allow-"):
+		if flag, _, ok := cut(token, "="); ok {
 			return flag
 		}
 		return token
@@ -186,60 +182,60 @@ func denoPermissionFlag(arg string) string {
 }
 
 func validateSidecarBinary(value string) (string, error) {
-	binary := strings.TrimSpace(value)
+	binary := core.Trim(value)
 	if binary == "" {
 		return "", nil
 	}
-	if !filepath.IsAbs(binary) {
-		return "", fmt.Errorf("CORE_DENO_BINARY must be an absolute path: %q", binary)
+	if !core.PathIsAbs(binary) {
+		return "", core.Errorf("CORE_DENO_BINARY must be an absolute path: %q", binary)
 	}
-	info, err := os.Stat(binary)
+	info, err := coreStat(binary)
 	if err != nil {
-		return "", fmt.Errorf("CORE_DENO_BINARY does not exist: %q: %w", binary, err)
+		return "", core.Errorf("CORE_DENO_BINARY does not exist: %q: %w", binary, err)
 	}
 	if info.IsDir() {
-		return "", fmt.Errorf("CORE_DENO_BINARY must point to a file, not a directory: %q", binary)
+		return "", core.Errorf("CORE_DENO_BINARY must point to a file, not a directory: %q", binary)
 	}
-	if filepath.Base(binary) != "deno" {
-		return "", fmt.Errorf("CORE_DENO_BINARY must point to a binary named deno: %q", binary)
+	if core.PathBase(binary) != "deno" {
+		return "", core.Errorf("CORE_DENO_BINARY must point to a binary named deno: %q", binary)
 	}
-	resolved, err := filepath.EvalSymlinks(binary)
+	resolved, err := pathEvalSymlinks(binary)
 	if err != nil {
-		return "", fmt.Errorf("CORE_DENO_BINARY could not be resolved: %q: %w", binary, err)
+		return "", core.Errorf("CORE_DENO_BINARY could not be resolved: %q: %w", binary, err)
 	}
-	if filepath.Base(resolved) != "deno" {
-		return "", fmt.Errorf("CORE_DENO_BINARY must resolve to a binary named deno: %q", binary)
+	if core.PathBase(resolved) != "deno" {
+		return "", core.Errorf("CORE_DENO_BINARY must resolve to a binary named deno: %q", binary)
 	}
 	return resolved, nil
 }
 
 func validateSidecarDir(value string) (string, error) {
-	dir := strings.TrimSpace(value)
+	dir := core.Trim(value)
 	if dir == "" {
 		return "", nil
 	}
 	if hasParentPathComponent(dir) {
-		return "", fmt.Errorf("CORE_DENO_DIR must not contain .. path components: %q", dir)
+		return "", core.Errorf("CORE_DENO_DIR must not contain .. path components: %q", dir)
 	}
-	abs, err := filepath.Abs(dir)
+	abs, err := pathAbs(dir)
 	if err != nil {
-		return "", fmt.Errorf("CORE_DENO_DIR could not be made absolute: %q: %w", dir, err)
+		return "", core.Errorf("CORE_DENO_DIR could not be made absolute: %q: %w", dir, err)
 	}
 	if err := rejectSymlinkPathComponents(abs); err != nil {
 		return "", err
 	}
-	info, err := os.Stat(abs)
+	info, err := coreStat(abs)
 	if err != nil {
-		return "", fmt.Errorf("CORE_DENO_DIR does not exist: %q: %w", dir, err)
+		return "", core.Errorf("CORE_DENO_DIR does not exist: %q: %w", dir, err)
 	}
 	if !info.IsDir() {
-		return "", fmt.Errorf("CORE_DENO_DIR must be an existing directory: %q", dir)
+		return "", core.Errorf("CORE_DENO_DIR must be an existing directory: %q", dir)
 	}
 	return abs, nil
 }
 
 func hasParentPathComponent(path string) bool {
-	for _, part := range strings.Split(filepath.ToSlash(path), "/") {
+	for _, part := range core.Split(core.PathToSlash(path), "/") {
 		if part == ".." {
 			return true
 		}
@@ -248,32 +244,32 @@ func hasParentPathComponent(path string) bool {
 }
 
 func rejectSymlinkPathComponents(path string) error {
-	clean := filepath.Clean(path)
-	volume := filepath.VolumeName(clean)
-	rest := strings.TrimPrefix(clean, volume)
+	clean := core.CleanPath(path, string(core.PathSeparator))
+	volume := pathVolumeName(clean)
+	rest := core.TrimPrefix(clean, volume)
 	current := volume
-	if strings.HasPrefix(rest, string(filepath.Separator)) {
-		current += string(filepath.Separator)
-		rest = strings.TrimPrefix(rest, string(filepath.Separator))
+	if core.HasPrefix(rest, string(core.PathSeparator)) {
+		current += string(core.PathSeparator)
+		rest = core.TrimPrefix(rest, string(core.PathSeparator))
 	}
-	for _, part := range strings.Split(rest, string(filepath.Separator)) {
+	for _, part := range core.Split(rest, string(core.PathSeparator)) {
 		if part == "" || part == "." {
 			continue
 		}
-		current = filepath.Join(current, part)
-		info, err := os.Lstat(current)
+		current = core.PathJoin(current, part)
+		info, err := coreLstat(current)
 		if err != nil {
-			return fmt.Errorf("CORE_DENO_DIR component does not exist: %q: %w", current, err)
+			return core.Errorf("CORE_DENO_DIR component does not exist: %q: %w", current, err)
 		}
-		if info.Mode()&os.ModeSymlink != 0 {
-			return fmt.Errorf("CORE_DENO_DIR must not contain symlink component: %q", current)
+		if info.Mode()&core.ModeSymlink != 0 {
+			return core.Errorf("CORE_DENO_DIR must not contain symlink component: %q", current)
 		}
 	}
 	return nil
 }
 
 func splitCommandArgs(value string) []string {
-	fields := strings.Fields(strings.TrimSpace(value))
+	fields := fields(core.Trim(value))
 	if len(fields) == 0 {
 		return nil
 	}
@@ -292,10 +288,12 @@ func (s *Service) forwardIPCToSidecar(msg core.Message) {
 	if t := reflect.TypeOf(msg); t != nil {
 		typeName = t.String()
 	}
-	_ = s.sidecar.Emit("core.ipc.message", map[string]any{
+	if err := s.sidecar.Emit("core.ipc.message", map[string]any{
 		"type": typeName,
 		"data": normalizeSidecarValue(msg),
-	})
+	}); err != nil {
+		coreutil.LogWarn(s.Core(), err, "display.emitSidecarIPC", "sidecar emit failed")
+	}
 }
 
 func normalizeSidecarValue(value any) any {

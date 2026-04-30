@@ -1,7 +1,6 @@
 package application
 
 import (
-	"errors"
 	"math"
 	"sort"
 )
@@ -371,7 +370,7 @@ func (s *Screen) physicalToDipRect(physicalRect Rect) Rect {
 // for future coordinate transformation between the physical and logical (DIP) space
 func (m *ScreenManager) LayoutScreens(screens []*Screen) error {
 	if screens == nil || len(screens) == 0 {
-		return errors.New("screens parameter is nil or empty")
+		return core.NewError("screens parameter is nil or empty")
 	}
 	m.screens = screens
 
@@ -405,9 +404,9 @@ func (m *ScreenManager) calculateScreensDipCoordinates() error {
 		}
 	}
 	if m.primaryScreen == nil {
-		return errors.New("no primary screen found")
+		return core.NewError("no primary screen found")
 	} else if len(remainingScreens) != len(m.screens)-1 {
-		return errors.New("invalid primary screen found")
+		return core.NewError("invalid primary screen found")
 	}
 
 	// Build screens tree using the primary screen as root

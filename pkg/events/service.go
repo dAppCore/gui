@@ -4,11 +4,10 @@ package events
 import (
 	"context"
 	"sort"
-	"strings"
 	"sync"
 
-	core "dappco.re/go/core"
-	coreerr "dappco.re/go/log"
+	core "dappco.re/go"
+	"dappco.re/go/gui/pkg/internal/coreutil"
 )
 
 // Options holds configuration for the events service (currently empty).
@@ -52,7 +51,7 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 			if event == nil {
 				return
 			}
-			_ = s.Core().ACTION(ActionEventFired{Event: *event})
+			coreutil.DispatchAction(s.Core(), "events.on", ActionEventFired{Event: *event})
 		})
 		s.mu.Lock()
 		if cancel != nil {
@@ -85,14 +84,14 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 
 func (s *Service) requirePlatform(method string) error {
 	if s == nil || s.platform == nil {
-		return coreerr.E(method, "event platform unavailable", nil)
+		return core.E(method, "event platform unavailable", nil)
 	}
 	return nil
 }
 
 func validateEventName(method, name string) error {
-	if strings.TrimSpace(name) == "" {
-		return coreerr.E(method, "event name must not be empty", nil)
+	if core.Trim(name) == "" {
+		return core.E(method, "event name must not be empty", nil)
 	}
 	return nil
 }

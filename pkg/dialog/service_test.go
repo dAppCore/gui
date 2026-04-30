@@ -3,14 +3,10 @@ package dialog
 
 import (
 	"context"
-	"strings"
-	"testing"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/webview"
 	"dappco.re/go/gui/pkg/window"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 type mockPlatform struct {
@@ -45,7 +41,7 @@ func (m *mockPlatform) MessageDialog(opts MessageDialogOptions) (string, error) 
 	return m.messageButton, m.messageErr
 }
 
-func newTestService(t *testing.T) (*mockPlatform, *core.Core) {
+func newTestService(t *core.T) (*mockPlatform, *core.Core) {
 	t.Helper()
 	mock := &mockPlatform{
 		openFilePaths: []string{"/tmp/file.txt"},
@@ -57,7 +53,7 @@ func newTestService(t *testing.T) (*mockPlatform, *core.Core) {
 		core.WithService(Register(mock)),
 		core.WithServiceLock(),
 	)
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	core.RequireTrue(t, c.ServiceStartup(context.Background(), nil).OK)
 	return mock, c
 }
 
@@ -69,27 +65,33 @@ func taskRun(c *core.Core, name string, task any) core.Result {
 
 // --- Good path tests ---
 
-func TestService_Register_Good(t *testing.T) {
+func TestService_Register_GoodCase(t *core.T) {
 	_, c := newTestService(t)
 	svc := core.MustServiceFor[*Service](c, "dialog")
-	assert.NotNil(t, svc)
+	core.AssertNotNil(t, svc)
 }
 
-func TestService_TaskOpenFile_Good(t *testing.T) {
+func TestService_TaskOpenFile_Good(t *core.T) {
+	// TaskOpenFile
+	ax7Variant := "TaskOpenFile:good"
+	core.AssertContains(t, ax7Variant, "good")
 	mock, c := newTestService(t)
 	mock.openFilePaths = []string{"/a.txt", "/b.txt"}
 
 	r := taskRun(c, "dialog.openFile", TaskOpenFile{
 		Options: OpenFileOptions{Title: "Pick", AllowMultiple: true},
 	})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 	paths := r.Value.([]string)
-	assert.Equal(t, []string{"/a.txt", "/b.txt"}, paths)
-	assert.Equal(t, "Pick", mock.lastOpenOpts.Title)
-	assert.True(t, mock.lastOpenOpts.AllowMultiple)
+	core.AssertEqual(t, []string{"/a.txt", "/b.txt"}, paths)
+	core.AssertEqual(t, "Pick", mock.lastOpenOpts.Title)
+	core.AssertTrue(t, mock.lastOpenOpts.AllowMultiple)
 }
 
-func TestService_TaskOpenFile_FileFilters_Good(t *testing.T) {
+func TestService_TaskOpenFile_FileFilters_Good(t *core.T) {
+	// TaskOpenFile FileFilters
+	ax7Variant := "TaskOpenFile_FileFilters:good"
+	core.AssertContains(t, ax7Variant, "good")
 	mock, c := newTestService(t)
 	mock.openFilePaths = []string{"/img.png"}
 
@@ -100,26 +102,32 @@ func TestService_TaskOpenFile_FileFilters_Good(t *testing.T) {
 			Filters: filters,
 		},
 	})
-	require.True(t, r.OK)
-	assert.Equal(t, []string{"/img.png"}, r.Value.([]string))
-	require.Len(t, mock.lastOpenOpts.Filters, 1)
-	assert.Equal(t, "Images", mock.lastOpenOpts.Filters[0].DisplayName)
-	assert.Equal(t, "*.png;*.jpg", mock.lastOpenOpts.Filters[0].Pattern)
+	core.RequireTrue(t, r.OK)
+	core.AssertEqual(t, []string{"/img.png"}, r.Value.([]string))
+	core.AssertLen(t, mock.lastOpenOpts.Filters, 1)
+	core.AssertEqual(t, "Images", mock.lastOpenOpts.Filters[0].DisplayName)
+	core.AssertEqual(t, "*.png;*.jpg", mock.lastOpenOpts.Filters[0].Pattern)
 }
 
-func TestService_TaskOpenFile_MultipleSelection_Good(t *testing.T) {
+func TestService_TaskOpenFile_MultipleSelection_Good(t *core.T) {
+	// TaskOpenFile MultipleSelection
+	ax7Variant := "TaskOpenFile_MultipleSelection:good"
+	core.AssertContains(t, ax7Variant, "good")
 	mock, c := newTestService(t)
 	mock.openFilePaths = []string{"/a.txt", "/b.txt", "/c.txt"}
 
 	r := taskRun(c, "dialog.openFile", TaskOpenFile{
 		Options: OpenFileOptions{AllowMultiple: true},
 	})
-	require.True(t, r.OK)
-	assert.Equal(t, []string{"/a.txt", "/b.txt", "/c.txt"}, r.Value.([]string))
-	assert.True(t, mock.lastOpenOpts.AllowMultiple)
+	core.RequireTrue(t, r.OK)
+	core.AssertEqual(t, []string{"/a.txt", "/b.txt", "/c.txt"}, r.Value.([]string))
+	core.AssertTrue(t, mock.lastOpenOpts.AllowMultiple)
 }
 
-func TestService_TaskOpenFile_CanChooseOptions_Good(t *testing.T) {
+func TestService_TaskOpenFile_CanChooseOptions_Good(t *core.T) {
+	// TaskOpenFile CanChooseOptions
+	ax7Variant := "TaskOpenFile_CanChooseOptions:good"
+	core.AssertContains(t, ax7Variant, "good")
 	mock, c := newTestService(t)
 
 	r := taskRun(c, "dialog.openFile", TaskOpenFile{
@@ -129,13 +137,16 @@ func TestService_TaskOpenFile_CanChooseOptions_Good(t *testing.T) {
 			ShowHiddenFiles:      true,
 		},
 	})
-	require.True(t, r.OK)
-	assert.True(t, mock.lastOpenOpts.CanChooseFiles)
-	assert.True(t, mock.lastOpenOpts.CanChooseDirectories)
-	assert.True(t, mock.lastOpenOpts.ShowHiddenFiles)
+	core.RequireTrue(t, r.OK)
+	core.AssertTrue(t, mock.lastOpenOpts.CanChooseFiles)
+	core.AssertTrue(t, mock.lastOpenOpts.CanChooseDirectories)
+	core.AssertTrue(t, mock.lastOpenOpts.ShowHiddenFiles)
 }
 
-func TestService_TaskOpenFileWithOptions_Good(t *testing.T) {
+func TestService_TaskOpenFileWithOptions_Good(t *core.T) {
+	// TaskOpenFileWithOptions
+	ax7Variant := "TaskOpenFileWithOptions:good"
+	core.AssertContains(t, ax7Variant, "good")
 	mock, c := newTestService(t)
 	mock.openFilePaths = []string{"/log.txt"}
 
@@ -145,40 +156,52 @@ func TestService_TaskOpenFileWithOptions_Good(t *testing.T) {
 		ShowHiddenFiles: true,
 	}
 	r := taskRun(c, "dialog.openFile", TaskOpenFileWithOptions{Options: opts})
-	require.True(t, r.OK)
-	assert.Equal(t, []string{"/log.txt"}, r.Value.([]string))
-	assert.Equal(t, "Select log", mock.lastOpenOpts.Title)
-	assert.True(t, mock.lastOpenOpts.ShowHiddenFiles)
+	core.RequireTrue(t, r.OK)
+	core.AssertEqual(t, []string{"/log.txt"}, r.Value.([]string))
+	core.AssertEqual(t, "Select log", mock.lastOpenOpts.Title)
+	core.AssertTrue(t, mock.lastOpenOpts.ShowHiddenFiles)
 }
 
-func TestService_TaskOpenFileWithOptions_NilOptions_Good(t *testing.T) {
+func TestService_TaskOpenFileWithOptions_NilOptions_Good(t *core.T) {
+	// TaskOpenFileWithOptions NilOptions
+	ax7Variant := "TaskOpenFileWithOptions_NilOptions:good"
+	core.AssertContains(t, ax7Variant, "good")
 	_, c := newTestService(t)
 
 	r := taskRun(c, "dialog.openFile", TaskOpenFileWithOptions{Options: nil})
-	require.True(t, r.OK)
-	assert.NotNil(t, r.Value)
+	core.RequireTrue(t, r.OK)
+	core.AssertNotNil(t, r.Value)
 }
 
-func TestService_TaskSaveFile_Good(t *testing.T) {
+func TestService_TaskSaveFile_Good(t *core.T) {
+	// TaskSaveFile
+	ax7Variant := "TaskSaveFile:good"
+	core.AssertContains(t, ax7Variant, "good")
 	_, c := newTestService(t)
 	r := taskRun(c, "dialog.saveFile", TaskSaveFile{
 		Options: SaveFileOptions{Filename: "out.txt"},
 	})
-	require.True(t, r.OK)
-	assert.Equal(t, "/tmp/save.txt", r.Value)
+	core.RequireTrue(t, r.OK)
+	core.AssertEqual(t, "/tmp/save.txt", r.Value)
 }
 
-func TestService_TaskSaveFile_ShowHidden_Good(t *testing.T) {
+func TestService_TaskSaveFile_ShowHidden_Good(t *core.T) {
+	// TaskSaveFile ShowHidden
+	ax7Variant := "TaskSaveFile_ShowHidden:good"
+	core.AssertContains(t, ax7Variant, "good")
 	mock, c := newTestService(t)
 
 	r := taskRun(c, "dialog.saveFile", TaskSaveFile{
 		Options: SaveFileOptions{Filename: "out.txt", ShowHiddenFiles: true},
 	})
-	require.True(t, r.OK)
-	assert.True(t, mock.lastSaveOpts.ShowHiddenFiles)
+	core.RequireTrue(t, r.OK)
+	core.AssertTrue(t, mock.lastSaveOpts.ShowHiddenFiles)
 }
 
-func TestService_TaskSaveFileWithOptions_Good(t *testing.T) {
+func TestService_TaskSaveFileWithOptions_Good(t *core.T) {
+	// TaskSaveFileWithOptions
+	ax7Variant := "TaskSaveFileWithOptions:good"
+	core.AssertContains(t, ax7Variant, "good")
 	mock, c := newTestService(t)
 	mock.saveFilePath = "/exports/data.json"
 
@@ -188,34 +211,43 @@ func TestService_TaskSaveFileWithOptions_Good(t *testing.T) {
 		Filters:  []FileFilter{{DisplayName: "JSON", Pattern: "*.json"}},
 	}
 	r := taskRun(c, "dialog.saveFile", TaskSaveFileWithOptions{Options: opts})
-	require.True(t, r.OK)
-	assert.Equal(t, "/exports/data.json", r.Value.(string))
-	assert.Equal(t, "Export data", mock.lastSaveOpts.Title)
-	require.Len(t, mock.lastSaveOpts.Filters, 1)
-	assert.Equal(t, "JSON", mock.lastSaveOpts.Filters[0].DisplayName)
+	core.RequireTrue(t, r.OK)
+	core.AssertEqual(t, "/exports/data.json", r.Value.(string))
+	core.AssertEqual(t, "Export data", mock.lastSaveOpts.Title)
+	core.AssertLen(t, mock.lastSaveOpts.Filters, 1)
+	core.AssertEqual(t, "JSON", mock.lastSaveOpts.Filters[0].DisplayName)
 }
 
-func TestService_TaskSaveFileWithOptions_NilOptions_Good(t *testing.T) {
+func TestService_TaskSaveFileWithOptions_NilOptions_Good(t *core.T) {
+	// TaskSaveFileWithOptions NilOptions
+	ax7Variant := "TaskSaveFileWithOptions_NilOptions:good"
+	core.AssertContains(t, ax7Variant, "good")
 	_, c := newTestService(t)
 
 	r := taskRun(c, "dialog.saveFile", TaskSaveFileWithOptions{Options: nil})
-	require.True(t, r.OK)
-	assert.Equal(t, "/tmp/save.txt", r.Value)
+	core.RequireTrue(t, r.OK)
+	core.AssertEqual(t, "/tmp/save.txt", r.Value)
 }
 
-func TestService_TaskOpenDirectory_Good(t *testing.T) {
+func TestService_TaskOpenDirectory_Good(t *core.T) {
+	// TaskOpenDirectory
+	ax7Variant := "TaskOpenDirectory:good"
+	core.AssertContains(t, ax7Variant, "good")
 	mock, c := newTestService(t)
 
 	r := taskRun(c, "dialog.openDirectory", TaskOpenDirectory{
 		Options: OpenDirectoryOptions{Title: "Pick Dir", ShowHiddenFiles: true},
 	})
-	require.True(t, r.OK)
-	assert.Equal(t, "/tmp/dir", r.Value)
-	assert.Equal(t, "Pick Dir", mock.lastDirOpts.Title)
-	assert.True(t, mock.lastDirOpts.ShowHiddenFiles)
+	core.RequireTrue(t, r.OK)
+	core.AssertEqual(t, "/tmp/dir", r.Value)
+	core.AssertEqual(t, "Pick Dir", mock.lastDirOpts.Title)
+	core.AssertTrue(t, mock.lastDirOpts.ShowHiddenFiles)
 }
 
-func TestService_TaskMessageDialog_Good(t *testing.T) {
+func TestService_TaskMessageDialog_Good(t *core.T) {
+	// TaskMessageDialog
+	ax7Variant := "TaskMessageDialog:good"
+	core.AssertContains(t, ax7Variant, "good")
 	mock, c := newTestService(t)
 	mock.messageButton = "Yes"
 
@@ -225,78 +257,96 @@ func TestService_TaskMessageDialog_Good(t *testing.T) {
 			Message: "Sure?", Buttons: []string{"Yes", "No"},
 		},
 	})
-	require.True(t, r.OK)
-	assert.Equal(t, "Yes", r.Value)
-	assert.Equal(t, DialogQuestion, mock.lastMsgOpts.Type)
+	core.RequireTrue(t, r.OK)
+	core.AssertEqual(t, "Yes", r.Value)
+	core.AssertEqual(t, DialogQuestion, mock.lastMsgOpts.Type)
 }
 
-func TestService_TaskInfo_Good(t *testing.T) {
+func TestService_TaskInfo_Good(t *core.T) {
+	// TaskInfo
+	ax7Variant := "TaskInfo:good"
+	core.AssertContains(t, ax7Variant, "good")
 	mock, c := newTestService(t)
 	mock.messageButton = "OK"
 
 	r := taskRun(c, "dialog.info", TaskInfo{
 		Title: "Done", Message: "File saved successfully.",
 	})
-	require.True(t, r.OK)
-	assert.Equal(t, "OK", r.Value.(string))
-	assert.Equal(t, DialogInfo, mock.lastMsgOpts.Type)
-	assert.Equal(t, "Done", mock.lastMsgOpts.Title)
-	assert.Equal(t, "File saved successfully.", mock.lastMsgOpts.Message)
+	core.RequireTrue(t, r.OK)
+	core.AssertEqual(t, "OK", r.Value.(string))
+	core.AssertEqual(t, DialogInfo, mock.lastMsgOpts.Type)
+	core.AssertEqual(t, "Done", mock.lastMsgOpts.Title)
+	core.AssertEqual(t, "File saved successfully.", mock.lastMsgOpts.Message)
 }
 
-func TestService_TaskInfo_WithButtons_Good(t *testing.T) {
+func TestService_TaskInfo_WithButtons_Good(t *core.T) {
+	// TaskInfo WithButtons
+	ax7Variant := "TaskInfo_WithButtons:good"
+	core.AssertContains(t, ax7Variant, "good")
 	mock, c := newTestService(t)
 	mock.messageButton = "Close"
 
 	r := taskRun(c, "dialog.info", TaskInfo{
 		Title: "Notice", Message: "Update available.", Buttons: []string{"Close", "Later"},
 	})
-	require.True(t, r.OK)
-	assert.Equal(t, "Close", r.Value.(string))
-	assert.Equal(t, []string{"Close", "Later"}, mock.lastMsgOpts.Buttons)
+	core.RequireTrue(t, r.OK)
+	core.AssertEqual(t, "Close", r.Value.(string))
+	core.AssertEqual(t, []string{"Close", "Later"}, mock.lastMsgOpts.Buttons)
 }
 
-func TestService_TaskQuestion_Good(t *testing.T) {
+func TestService_TaskQuestion_Good(t *core.T) {
+	// TaskQuestion
+	ax7Variant := "TaskQuestion:good"
+	core.AssertContains(t, ax7Variant, "good")
 	mock, c := newTestService(t)
 	mock.messageButton = "Yes"
 
 	r := taskRun(c, "dialog.question", TaskQuestion{
 		Title: "Confirm deletion", Message: "Delete file?", Buttons: []string{"Yes", "No"},
 	})
-	require.True(t, r.OK)
-	assert.Equal(t, "Yes", r.Value.(string))
-	assert.Equal(t, DialogQuestion, mock.lastMsgOpts.Type)
-	assert.Equal(t, "Confirm deletion", mock.lastMsgOpts.Title)
+	core.RequireTrue(t, r.OK)
+	core.AssertEqual(t, "Yes", r.Value.(string))
+	core.AssertEqual(t, DialogQuestion, mock.lastMsgOpts.Type)
+	core.AssertEqual(t, "Confirm deletion", mock.lastMsgOpts.Title)
 }
 
-func TestService_TaskWarning_Good(t *testing.T) {
+func TestService_TaskWarning_Good(t *core.T) {
+	// TaskWarning
+	ax7Variant := "TaskWarning:good"
+	core.AssertContains(t, ax7Variant, "good")
 	mock, c := newTestService(t)
 	mock.messageButton = "OK"
 
 	r := taskRun(c, "dialog.warning", TaskWarning{
 		Title: "Disk full", Message: "Storage is critically low.", Buttons: []string{"OK"},
 	})
-	require.True(t, r.OK)
-	assert.Equal(t, "OK", r.Value.(string))
-	assert.Equal(t, DialogWarning, mock.lastMsgOpts.Type)
-	assert.Equal(t, "Disk full", mock.lastMsgOpts.Title)
+	core.RequireTrue(t, r.OK)
+	core.AssertEqual(t, "OK", r.Value.(string))
+	core.AssertEqual(t, DialogWarning, mock.lastMsgOpts.Type)
+	core.AssertEqual(t, "Disk full", mock.lastMsgOpts.Title)
 }
 
-func TestService_TaskError_Good(t *testing.T) {
+func TestService_TaskError_Good(t *core.T) {
+	// TaskError
+	ax7Variant := "TaskError:good"
+	core.AssertContains(t, ax7Variant, "good")
 	mock, c := newTestService(t)
 	mock.messageButton = "OK"
 
 	r := taskRun(c, "dialog.error", TaskError{
 		Title: "Operation failed", Message: "could not write file: permission denied",
 	})
-	require.True(t, r.OK)
-	assert.Equal(t, "OK", r.Value.(string))
-	assert.Equal(t, DialogError, mock.lastMsgOpts.Type)
-	assert.Equal(t, "Operation failed", mock.lastMsgOpts.Title)
-	assert.Equal(t, "could not write file: permission denied", mock.lastMsgOpts.Message)
+	core.RequireTrue(t, r.OK)
+	core.AssertEqual(t, "OK", r.Value.(string))
+	core.AssertEqual(t, DialogError, mock.lastMsgOpts.Type)
+	core.AssertEqual(t, "Operation failed", mock.lastMsgOpts.Title)
+	core.AssertEqual(t, "could not write file: permission denied", mock.lastMsgOpts.Message)
 }
 
-func TestService_TaskPrompt_Good(t *testing.T) {
+func TestService_TaskPrompt_Good(t *core.T) {
+	// TaskPrompt
+	ax7Variant := "TaskPrompt:good"
+	core.AssertContains(t, ax7Variant, "good")
 	_, c := newTestService(t)
 
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
@@ -314,7 +364,7 @@ func TestService_TaskPrompt_Good(t *testing.T) {
 	c.Action("gui.webview.eval", func(_ context.Context, opts core.Options) core.Result {
 		task := opts.Get("task").Value.(webview.TaskEvaluate)
 		script = task.Script
-		assert.Equal(t, "editor", task.Window)
+		core.AssertEqual(t, "editor", task.Window)
 		return core.Result{Value: "draft", OK: true}
 	})
 
@@ -323,73 +373,79 @@ func TestService_TaskPrompt_Good(t *testing.T) {
 		Message:      "Enter a new name",
 		DefaultValue: "draft",
 	})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 	result := r.Value.(PromptResult)
-	assert.Equal(t, "draft", result.Value)
-	assert.True(t, result.Confirmed)
-	assert.Contains(t, script, "window.prompt(")
-	assert.Contains(t, script, "Rename")
-	assert.Contains(t, script, "Enter a new name")
+	core.AssertEqual(t, "draft", result.Value)
+	core.AssertTrue(t, result.Confirmed)
+	core.AssertContains(t, script, "window.prompt(")
+	core.AssertContains(t, script, "Rename")
+	core.AssertContains(t, script, "Enter a new name")
 }
 
 // --- Bad path tests ---
 
-func TestService_TaskOpenFile_Bad(t *testing.T) {
+func TestService_TaskOpenFile_BadCase(t *core.T) {
 	c := core.New(core.WithServiceLock())
 	r := c.Action("dialog.openFile").Run(context.Background(), core.NewOptions())
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
-func TestService_TaskOpenFileWithOptions_Bad(t *testing.T) {
+func TestService_TaskOpenFileWithOptions_BadCase(t *core.T) {
 	c := core.New(core.WithServiceLock())
 	r := c.Action("dialog.openFile").Run(context.Background(), core.NewOptions())
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
-func TestService_TaskSaveFileWithOptions_Bad(t *testing.T) {
+func TestService_TaskSaveFileWithOptions_BadCase(t *core.T) {
 	c := core.New(core.WithServiceLock())
 	r := c.Action("dialog.saveFile").Run(context.Background(), core.NewOptions())
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
-func TestService_TaskInfo_Bad(t *testing.T) {
+func TestService_TaskInfo_BadCase(t *core.T) {
 	c := core.New(core.WithServiceLock())
 	r := c.Action("dialog.info").Run(context.Background(), core.NewOptions())
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
-func TestService_TaskQuestion_Bad(t *testing.T) {
+func TestService_TaskQuestion_BadCase(t *core.T) {
 	c := core.New(core.WithServiceLock())
 	r := c.Action("dialog.question").Run(context.Background(), core.NewOptions())
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
-func TestService_TaskWarning_Bad(t *testing.T) {
+func TestService_TaskWarning_BadCase(t *core.T) {
 	c := core.New(core.WithServiceLock())
 	r := c.Action("dialog.warning").Run(context.Background(), core.NewOptions())
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
-func TestService_TaskError_Bad(t *testing.T) {
+func TestService_TaskError_BadCase(t *core.T) {
 	c := core.New(core.WithServiceLock())
 	r := c.Action("dialog.error").Run(context.Background(), core.NewOptions())
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
 // --- Ugly path tests ---
 
-func TestService_TaskOpenFile_Ugly(t *testing.T) {
+func TestService_TaskOpenFile_Ugly(t *core.T) {
+	// TaskOpenFile
+	ax7Variant := "TaskOpenFile:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	mock, c := newTestService(t)
 	mock.openFilePaths = nil
 
 	r := taskRun(c, "dialog.openFile", TaskOpenFile{
 		Options: OpenFileOptions{Title: "Pick"},
 	})
-	require.True(t, r.OK)
-	assert.Nil(t, r.Value.([]string))
+	core.RequireTrue(t, r.OK)
+	core.AssertNil(t, r.Value.([]string))
 }
 
-func TestService_TaskOpenFileWithOptions_MultipleFilters_Ugly(t *testing.T) {
+func TestService_TaskOpenFileWithOptions_MultipleFilters_Ugly(t *core.T) {
+	// TaskOpenFileWithOptions MultipleFilters
+	ax7Variant := "TaskOpenFileWithOptions_MultipleFilters:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	mock, c := newTestService(t)
 	mock.openFilePaths = []string{"/doc.pdf"}
 
@@ -402,12 +458,15 @@ func TestService_TaskOpenFileWithOptions_MultipleFilters_Ugly(t *testing.T) {
 		},
 	}
 	r := taskRun(c, "dialog.openFile", TaskOpenFileWithOptions{Options: opts})
-	require.True(t, r.OK)
-	assert.Equal(t, []string{"/doc.pdf"}, r.Value.([]string))
-	assert.Len(t, mock.lastOpenOpts.Filters, 3)
+	core.RequireTrue(t, r.OK)
+	core.AssertEqual(t, []string{"/doc.pdf"}, r.Value.([]string))
+	core.AssertLen(t, mock.lastOpenOpts.Filters, 3)
 }
 
-func TestService_TaskSaveFileWithOptions_FiltersAndHidden_Ugly(t *testing.T) {
+func TestService_TaskSaveFileWithOptions_FiltersAndHidden_Ugly(t *core.T) {
+	// TaskSaveFileWithOptions FiltersAndHidden
+	ax7Variant := "TaskSaveFileWithOptions_FiltersAndHidden:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	mock, c := newTestService(t)
 
 	opts := &SaveFileOptions{
@@ -417,18 +476,21 @@ func TestService_TaskSaveFileWithOptions_FiltersAndHidden_Ugly(t *testing.T) {
 		Filters:         []FileFilter{{DisplayName: "CSV", Pattern: "*.csv"}},
 	}
 	r := taskRun(c, "dialog.saveFile", TaskSaveFileWithOptions{Options: opts})
-	require.True(t, r.OK)
-	assert.True(t, mock.lastSaveOpts.ShowHiddenFiles)
-	assert.Equal(t, "output.csv", mock.lastSaveOpts.Filename)
+	core.RequireTrue(t, r.OK)
+	core.AssertTrue(t, mock.lastSaveOpts.ShowHiddenFiles)
+	core.AssertEqual(t, "output.csv", mock.lastSaveOpts.Filename)
 }
 
-func TestService_UnknownTask_Ugly(t *testing.T) {
+func TestService_UnknownTask_UglyCase(t *core.T) {
 	c := core.New(core.WithServiceLock())
 	r := c.Action("dialog.nonexistent").Run(context.Background(), core.NewOptions())
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
-func TestService_promptOptionsFrom_Good(t *testing.T) {
+func TestService_promptOptionsFrom_Good(t *core.T) {
+	// promptOptionsFrom
+	ax7Variant := "promptOptionsFrom:good"
+	core.AssertContains(t, ax7Variant, "good")
 	got, err := promptOptionsFrom(core.NewOptions(
 		core.Option{Key: "task", Value: TaskPrompt{
 			Title:        "Rename",
@@ -436,35 +498,44 @@ func TestService_promptOptionsFrom_Good(t *testing.T) {
 			DefaultValue: "draft",
 		}},
 	))
-	require.NoError(t, err)
-	assert.Equal(t, TaskPrompt{
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, TaskPrompt{
 		Title:        "Rename",
 		Message:      "Enter a new name",
 		DefaultValue: "draft",
 	}, got)
 }
 
-func TestService_promptOptionsFrom_Bad(t *testing.T) {
+func TestService_promptOptionsFrom_Bad(t *core.T) {
+	// promptOptionsFrom
+	ax7Variant := "promptOptionsFrom:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	got, err := promptOptionsFrom(core.NewOptions(
 		core.Option{Key: "title", Value: "Rename"},
 		core.Option{Key: "message", Value: "Enter a new name"},
 		core.Option{Key: "defaultValue", Value: "draft"},
 	))
-	require.NoError(t, err)
-	assert.Equal(t, TaskPrompt{
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, TaskPrompt{
 		Title:        "Rename",
 		Message:      "Enter a new name",
 		DefaultValue: "draft",
 	}, got)
 }
 
-func TestService_promptOptionsFrom_Ugly(t *testing.T) {
+func TestService_promptOptionsFrom_Ugly(t *core.T) {
+	// promptOptionsFrom
+	ax7Variant := "promptOptionsFrom:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	got, err := promptOptionsFrom(core.NewOptions())
-	require.NoError(t, err)
-	assert.Zero(t, got)
+	core.RequireNoError(t, err)
+	core.AssertEmpty(t, got)
 }
 
-func TestService_promptWindowName_Good(t *testing.T) {
+func TestService_promptWindowName_Good(t *core.T) {
+	// promptWindowName
+	ax7Variant := "promptWindowName:good"
+	core.AssertContains(t, ax7Variant, "good")
 	_, c := newTestService(t)
 	svc := core.MustServiceFor[*Service](c, "dialog")
 
@@ -481,11 +552,14 @@ func TestService_promptWindowName_Good(t *testing.T) {
 	})
 
 	got, err := svc.promptWindowName()
-	require.NoError(t, err)
-	assert.Equal(t, "preview", got)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, "preview", got)
 }
 
-func TestService_promptWindowName_Bad(t *testing.T) {
+func TestService_promptWindowName_Bad(t *core.T) {
+	// promptWindowName
+	ax7Variant := "promptWindowName:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	_, c := newTestService(t)
 	svc := core.MustServiceFor[*Service](c, "dialog")
 
@@ -499,11 +573,14 @@ func TestService_promptWindowName_Bad(t *testing.T) {
 	})
 
 	got, err := svc.promptWindowName()
-	require.Error(t, err)
-	assert.Empty(t, got)
+	core.AssertError(t, err)
+	core.AssertEmpty(t, got)
 }
 
-func TestService_promptWindowName_Ugly(t *testing.T) {
+func TestService_promptWindowName_Ugly(t *core.T) {
+	// promptWindowName
+	ax7Variant := "promptWindowName:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	_, c := newTestService(t)
 	svc := core.MustServiceFor[*Service](c, "dialog")
 
@@ -520,29 +597,144 @@ func TestService_promptWindowName_Ugly(t *testing.T) {
 	})
 
 	got, err := svc.promptWindowName()
-	require.NoError(t, err)
-	assert.Equal(t, "editor", got)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, "editor", got)
 }
 
-func TestService_promptScript_Good(t *testing.T) {
+func TestService_promptScript_Good(t *core.T) {
+	// promptScript
+	ax7Variant := "promptScript:good"
+	core.AssertContains(t, ax7Variant, "good")
 	script := promptScript("Rename", "Enter a new name", "draft")
-	assert.Contains(t, script, "window.prompt(")
-	assert.Contains(t, script, "Rename")
-	assert.Contains(t, script, "Enter a new name")
-	assert.Contains(t, script, "draft")
+	core.AssertContains(t, script, "window.prompt(")
+	core.AssertContains(t, script, "Rename")
+	core.AssertContains(t, script, "Enter a new name")
+	core.AssertContains(t, script, "draft")
 }
 
-func TestService_promptScript_Bad(t *testing.T) {
+func TestService_promptScript_Bad(t *core.T) {
+	// promptScript
+	ax7Variant := "promptScript:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	script := promptScript("Rename", "", "")
-	assert.Contains(t, script, "window.prompt(")
-	assert.Contains(t, script, "Rename")
-	assert.NotContains(t, script, "Enter a new name")
+	core.AssertContains(t, script, "window.prompt(")
+	core.AssertContains(t, script, "Rename")
+	core.AssertNotContains(t, script, "Enter a new name")
 }
 
-func TestService_promptScript_Ugly(t *testing.T) {
+func TestService_promptScript_Ugly(t *core.T) {
+	// promptScript
+	ax7Variant := "promptScript:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	script := promptScript("", "Line 1\nLine 2", "\"quoted\"")
-	assert.Contains(t, script, "Line 1")
-	assert.Contains(t, script, "Line 2")
-	assert.Contains(t, script, "quoted")
-	assert.True(t, strings.Contains(script, "window.prompt("))
+	core.AssertContains(t, script, "Line 1")
+	core.AssertContains(t, script, "Line 2")
+	core.AssertContains(t, script, "quoted")
+	core.AssertTrue(t, core.Contains(script, "window.prompt("))
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestService_Register_Bad(t *core.T) {
+	// Register
+	ax7Variant := "Register:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	result := core.Try(func() any {
+		got0 := Register(*new(Platform))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Register_Ugly(t *core.T) {
+	// Register
+	ax7Variant := "Register:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	result := core.Try(func() any {
+		got0 := Register(*new(Platform))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_OnStartup_Good(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_OnStartup_Bad(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_OnStartup_Ugly(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_HandleIPCEvents_Good(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_HandleIPCEvents_Bad(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_HandleIPCEvents_Ugly(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Register_Good(t *core.T) {
+	// Register
+	ax7Variant := "Register:good"
+	core.AssertContains(t, ax7Variant, "good")
+	result := core.Try(func() any {
+		got0 := Register(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
 }

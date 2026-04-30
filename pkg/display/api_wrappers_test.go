@@ -2,59 +2,56 @@ package display
 
 import (
 	"context"
-	"testing"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/clipboard"
 	"dappco.re/go/gui/pkg/environment"
 	"dappco.re/go/gui/pkg/notification"
 	"dappco.re/go/gui/pkg/systray"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 type errorOnlyWrapperCase struct {
 	name      string
 	action    string
 	call      func(*Service) error
-	setupGood func(*testing.T, *core.Core)
+	setupGood func(*core.T, *core.Core)
 }
 
-func runErrorOnlyWrapperCase(t *testing.T, tc errorOnlyWrapperCase) {
+func runErrorOnlyWrapperCase(t *core.T, tc errorOnlyWrapperCase) {
 	t.Helper()
 
-	t.Run("good", func(t *testing.T) {
+	t.Run("good", func(t *core.T) {
 		svc, c := newTestDisplayAPIService(t)
 		if tc.setupGood != nil {
 			tc.setupGood(t, c)
 		}
-		require.NoError(t, tc.call(svc))
+		core.RequireNoError(t, tc.call(svc))
 	})
 
-	t.Run("bad", func(t *testing.T) {
+	t.Run("bad", func(t *core.T) {
 		svc, c := newTestDisplayAPIService(t)
 		c.Action(tc.action, func(_ context.Context, _ core.Options) core.Result {
-			return core.Result{Value: assert.AnError, OK: false}
+			return core.Result{Value: core.AnError, OK: false}
 		})
 
 		err := tc.call(svc)
-		require.Error(t, err)
-		assert.Equal(t, assert.AnError, err)
+		core.AssertError(t, err)
+		core.AssertEqual(t, core.AnError, err)
 	})
 
-	t.Run("ugly", func(t *testing.T) {
+	t.Run("ugly", func(t *core.T) {
 		svc, c := newTestDisplayAPIService(t)
 		c.Action(tc.action, func(_ context.Context, _ core.Options) core.Result {
 			return core.Result{Value: "unexpected", OK: false}
 		})
 
 		err := tc.call(svc)
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), tc.action)
+		core.AssertError(t, err)
+		core.AssertContains(t, err.Error(), tc.action)
 	})
 }
 
-func TestDisplayAPI_TrayWrappers(t *testing.T) {
+func TestDisplayAPI_TrayWrappers(t *core.T) {
 	cases := []errorOnlyWrapperCase{
 		{
 			name:   "SetTrayTooltip",
@@ -62,11 +59,11 @@ func TestDisplayAPI_TrayWrappers(t *testing.T) {
 			call: func(svc *Service) error {
 				return svc.SetTrayTooltip("Helper tooltip")
 			},
-			setupGood: func(t *testing.T, c *core.Core) {
+			setupGood: func(t *core.T, c *core.Core) {
 				t.Helper()
 				c.Action("systray.setTooltip", func(_ context.Context, opts core.Options) core.Result {
 					task := opts.Get("task").Value.(systray.TaskSetTrayTooltip)
-					assert.Equal(t, "Helper tooltip", task.Tooltip)
+					core.AssertEqual(t, "Helper tooltip", task.Tooltip)
 					return core.Result{OK: true}
 				})
 			},
@@ -77,11 +74,11 @@ func TestDisplayAPI_TrayWrappers(t *testing.T) {
 			call: func(svc *Service) error {
 				return svc.SetTrayLabel("Launcher")
 			},
-			setupGood: func(t *testing.T, c *core.Core) {
+			setupGood: func(t *core.T, c *core.Core) {
 				t.Helper()
 				c.Action("systray.setLabel", func(_ context.Context, opts core.Options) core.Result {
 					task := opts.Get("task").Value.(systray.TaskSetTrayLabel)
-					assert.Equal(t, "Launcher", task.Label)
+					core.AssertEqual(t, "Launcher", task.Label)
 					return core.Result{OK: true}
 				})
 			},
@@ -99,14 +96,14 @@ func TestDisplayAPI_TrayWrappers(t *testing.T) {
 					},
 				})
 			},
-			setupGood: func(t *testing.T, c *core.Core) {
+			setupGood: func(t *core.T, c *core.Core) {
 				t.Helper()
 				c.Action("systray.setMenu", func(_ context.Context, opts core.Options) core.Result {
 					task := opts.Get("task").Value.(systray.TaskSetTrayMenu)
-					require.Len(t, task.Items, 2)
-					assert.Equal(t, "Open", task.Items[0].Label)
-					require.Len(t, task.Items[1].Submenu, 1)
-					assert.Equal(t, "nested", task.Items[1].Submenu[0].ActionID)
+					core.AssertLen(t, task.Items, 2)
+					core.AssertEqual(t, "Open", task.Items[0].Label)
+					core.AssertLen(t, task.Items[1].Submenu, 1)
+					core.AssertEqual(t, "nested", task.Items[1].Submenu[0].ActionID)
 					return core.Result{OK: true}
 				})
 			},
@@ -117,12 +114,12 @@ func TestDisplayAPI_TrayWrappers(t *testing.T) {
 			call: func(svc *Service) error {
 				return svc.ShowTrayMessage("Status", "Task complete")
 			},
-			setupGood: func(t *testing.T, c *core.Core) {
+			setupGood: func(t *core.T, c *core.Core) {
 				t.Helper()
 				c.Action("systray.showMessage", func(_ context.Context, opts core.Options) core.Result {
 					task := opts.Get("task").Value.(systray.TaskShowMessage)
-					assert.Equal(t, "Status", task.Title)
-					assert.Equal(t, "Task complete", task.Message)
+					core.AssertEqual(t, "Status", task.Title)
+					core.AssertEqual(t, "Task complete", task.Message)
 					return core.Result{OK: true}
 				})
 			},
@@ -130,31 +127,31 @@ func TestDisplayAPI_TrayWrappers(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(t *core.T) {
 			runErrorOnlyWrapperCase(t, tc)
 		})
 	}
 }
 
-func TestDisplayAPI_ClipboardWrappers(t *testing.T) {
-	t.Run("ClearClipboard", func(t *testing.T) {
+func TestDisplayAPI_ClipboardWrappers(t *core.T) {
+	t.Run("ClearClipboard", func(t *core.T) {
 		runErrorOnlyWrapperCase(t, errorOnlyWrapperCase{
 			name:   "ClearClipboard",
 			action: "clipboard.clear",
 			call: func(svc *Service) error {
 				return svc.ClearClipboard()
 			},
-			setupGood: func(t *testing.T, c *core.Core) {
+			setupGood: func(t *core.T, c *core.Core) {
 				t.Helper()
 				c.Action("clipboard.clear", func(_ context.Context, opts core.Options) core.Result {
-					assert.Equal(t, 0, opts.Len())
+					core.AssertEqual(t, 0, opts.Len())
 					return core.Result{OK: true}
 				})
 			},
 		})
 	})
 
-	t.Run("HasClipboard", func(t *testing.T) {
+	t.Run("HasClipboard", func(t *core.T) {
 		svc, c := newTestDisplayAPIService(t)
 		c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
 			switch q.(type) {
@@ -170,7 +167,7 @@ func TestDisplayAPI_ClipboardWrappers(t *testing.T) {
 				return core.Result{}
 			}
 		})
-		assert.True(t, svc.HasClipboard())
+		core.AssertTrue(t, svc.HasClipboard())
 
 		svc, c = newTestDisplayAPIService(t)
 		c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
@@ -187,7 +184,7 @@ func TestDisplayAPI_ClipboardWrappers(t *testing.T) {
 				return core.Result{}
 			}
 		})
-		assert.False(t, svc.HasClipboard())
+		core.AssertFalse(t, svc.HasClipboard())
 
 		svc, c = newTestDisplayAPIService(t)
 		c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
@@ -198,11 +195,11 @@ func TestDisplayAPI_ClipboardWrappers(t *testing.T) {
 				return core.Result{}
 			}
 		})
-		assert.False(t, svc.HasClipboard())
+		core.AssertFalse(t, svc.HasClipboard())
 	})
 }
 
-func TestDisplayAPI_NotificationWrappers(t *testing.T) {
+func TestDisplayAPI_NotificationWrappers(t *core.T) {
 	cases := []errorOnlyWrapperCase{
 		{
 			name:   "ShowNotification",
@@ -215,11 +212,11 @@ func TestDisplayAPI_NotificationWrappers(t *testing.T) {
 					Subtitle: "CI",
 				})
 			},
-			setupGood: func(t *testing.T, c *core.Core) {
+			setupGood: func(t *core.T, c *core.Core) {
 				t.Helper()
 				c.Action("notification.send", func(_ context.Context, opts core.Options) core.Result {
 					task := opts.Get("task").Value.(notification.TaskSend)
-					assert.Equal(t, notification.NotificationOptions{
+					core.AssertEqual(t, notification.NotificationOptions{
 						ID:       "alert-1",
 						Title:    "Deploy",
 						Message:  "Done",
@@ -235,11 +232,11 @@ func TestDisplayAPI_NotificationWrappers(t *testing.T) {
 			call: func(svc *Service) error {
 				return svc.ShowInfoNotification("Info", "Ready")
 			},
-			setupGood: func(t *testing.T, c *core.Core) {
+			setupGood: func(t *core.T, c *core.Core) {
 				t.Helper()
 				c.Action("notification.send", func(_ context.Context, opts core.Options) core.Result {
 					task := opts.Get("task").Value.(notification.TaskSend)
-					assert.Equal(t, notification.NotificationOptions{
+					core.AssertEqual(t, notification.NotificationOptions{
 						Title:   "Info",
 						Message: "Ready",
 					}, task.Options)
@@ -253,11 +250,11 @@ func TestDisplayAPI_NotificationWrappers(t *testing.T) {
 			call: func(svc *Service) error {
 				return svc.ShowWarningNotification("Warn", "Careful")
 			},
-			setupGood: func(t *testing.T, c *core.Core) {
+			setupGood: func(t *core.T, c *core.Core) {
 				t.Helper()
 				c.Action("notification.send", func(_ context.Context, opts core.Options) core.Result {
 					task := opts.Get("task").Value.(notification.TaskSend)
-					assert.Equal(t, notification.NotificationOptions{
+					core.AssertEqual(t, notification.NotificationOptions{
 						Title:    "Warn",
 						Message:  "Careful",
 						Severity: notification.SeverityWarning,
@@ -272,11 +269,11 @@ func TestDisplayAPI_NotificationWrappers(t *testing.T) {
 			call: func(svc *Service) error {
 				return svc.ShowErrorNotification("Error", "Failed")
 			},
-			setupGood: func(t *testing.T, c *core.Core) {
+			setupGood: func(t *core.T, c *core.Core) {
 				t.Helper()
 				c.Action("notification.send", func(_ context.Context, opts core.Options) core.Result {
 					task := opts.Get("task").Value.(notification.TaskSend)
-					assert.Equal(t, notification.NotificationOptions{
+					core.AssertEqual(t, notification.NotificationOptions{
 						Title:    "Error",
 						Message:  "Failed",
 						Severity: notification.SeverityError,
@@ -291,11 +288,11 @@ func TestDisplayAPI_NotificationWrappers(t *testing.T) {
 			call: func(svc *Service) error {
 				return svc.ClearNotifications()
 			},
-			setupGood: func(t *testing.T, c *core.Core) {
+			setupGood: func(t *core.T, c *core.Core) {
 				t.Helper()
 				c.Action("notification.clear", func(_ context.Context, opts core.Options) core.Result {
 					task := opts.Get("task").Value.(notification.TaskClear)
-					assert.Empty(t, task.ID)
+					core.AssertEmpty(t, task.ID)
 					return core.Result{OK: true}
 				})
 			},
@@ -303,31 +300,31 @@ func TestDisplayAPI_NotificationWrappers(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(t *core.T) {
 			runErrorOnlyWrapperCase(t, tc)
 		})
 	}
 }
 
-func TestDisplayAPI_ThemeWrapper(t *testing.T) {
+func TestDisplayAPI_ThemeWrapper(t *core.T) {
 	runErrorOnlyWrapperCase(t, errorOnlyWrapperCase{
 		name:   "SetTheme",
 		action: "environment.setTheme",
 		call: func(svc *Service) error {
 			return svc.SetTheme("system")
 		},
-		setupGood: func(t *testing.T, c *core.Core) {
+		setupGood: func(t *core.T, c *core.Core) {
 			t.Helper()
 			c.Action("environment.setTheme", func(_ context.Context, opts core.Options) core.Result {
 				task := opts.Get("task").Value.(environment.TaskSetTheme)
-				assert.Equal(t, "system", task.Theme)
+				core.AssertEqual(t, "system", task.Theme)
 				return core.Result{OK: true}
 			})
 		},
 	})
 }
 
-func TestDisplayAPI_GetTrayInfo(t *testing.T) {
+func TestDisplayAPI_GetTrayInfo(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
 		switch q.(type) {
@@ -344,8 +341,8 @@ func TestDisplayAPI_GetTrayInfo(t *testing.T) {
 	})
 
 	info := svc.GetTrayInfo()
-	require.NotNil(t, info)
-	assert.Equal(t, "Ready", info["tooltip"])
+	core.AssertNotNil(t, info)
+	core.AssertEqual(t, "Ready", info["tooltip"])
 
 	svc, c = newTestDisplayAPIService(t)
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
@@ -356,7 +353,7 @@ func TestDisplayAPI_GetTrayInfo(t *testing.T) {
 			return core.Result{}
 		}
 	})
-	assert.Nil(t, svc.GetTrayInfo())
+	core.AssertNil(t, svc.GetTrayInfo())
 
 	svc, c = newTestDisplayAPIService(t)
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
@@ -367,5 +364,5 @@ func TestDisplayAPI_GetTrayInfo(t *testing.T) {
 			return core.Result{}
 		}
 	})
-	assert.Nil(t, svc.GetTrayInfo())
+	core.AssertNil(t, svc.GetTrayInfo())
 }

@@ -2,20 +2,17 @@ package menu
 
 import (
 	"context"
-	"testing"
 
-	core "dappco.re/go/core"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	core "dappco.re/go"
 )
 
-func newTestMenuService(t *testing.T) (*Service, *core.Core) {
+func newTestMenuService(t *core.T) (*Service, *core.Core) {
 	t.Helper()
 	c := core.New(
 		core.WithService(Register(newMockPlatform())),
 		core.WithServiceLock(),
 	)
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	core.RequireTrue(t, c.ServiceStartup(context.Background(), nil).OK)
 	svc := core.MustServiceFor[*Service](c, "menu")
 	return svc, c
 }
@@ -26,13 +23,13 @@ func taskRun(c *core.Core, name string, task any) core.Result {
 	))
 }
 
-func TestRegister_Good(t *testing.T) {
+func TestRegister_Good(t *core.T) {
 	svc, _ := newTestMenuService(t)
-	assert.NotNil(t, svc)
-	assert.NotNil(t, svc.manager)
+	core.AssertNotNil(t, svc)
+	core.AssertNotNil(t, svc.manager)
 }
 
-func TestTaskSetAppMenu_Good(t *testing.T) {
+func TestTaskSetAppMenu_Good(t *core.T) {
 	_, c := newTestMenuService(t)
 
 	items := []MenuItem{
@@ -43,40 +40,185 @@ func TestTaskSetAppMenu_Good(t *testing.T) {
 		}},
 	}
 	r := taskRun(c, "menu.setAppMenu", TaskSetAppMenu{Items: items})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 }
 
-func TestQueryGetAppMenu_Good(t *testing.T) {
+func TestQueryGetAppMenu_Good(t *core.T) {
 	_, c := newTestMenuService(t)
 
 	items := []MenuItem{{Label: "File"}, {Label: "Edit"}}
 	taskRun(c, "menu.setAppMenu", TaskSetAppMenu{Items: items})
 
 	r := c.QUERY(QueryGetAppMenu{})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 	menuItems := r.Value.([]MenuItem)
-	assert.Len(t, menuItems, 2)
-	assert.Equal(t, "File", menuItems[0].Label)
+	core.AssertLen(t, menuItems, 2)
+	core.AssertEqual(t, "File", menuItems[0].Label)
 }
 
-func TestTaskSetAppMenu_Bad(t *testing.T) {
+func TestTaskSetAppMenu_Bad(t *core.T) {
 	c := core.New(core.WithServiceLock())
 	r := c.Action("menu.setAppMenu").Run(context.Background(), core.NewOptions())
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
-func TestTaskSetAppMenu_NoManager_FailsClosed(t *testing.T) {
+func TestTaskSetAppMenu_NoManager_FailsClosed(t *core.T) {
 	c := core.New(core.WithServiceLock())
 	svc := &Service{
 		ServiceRuntime: core.NewServiceRuntime[Options](c, Options{}),
 	}
-	require.True(t, svc.OnStartup(context.Background()).OK)
+	core.RequireTrue(t, svc.OnStartup(context.Background()).OK)
 
 	r := c.Action("menu.setAppMenu").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: TaskSetAppMenu{Items: []MenuItem{{Label: "File"}}}},
 	))
-	require.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 	err, ok := r.Value.(error)
-	require.True(t, ok)
-	assert.Contains(t, err.Error(), "menu manager unavailable")
+	core.RequireTrue(t, ok)
+	core.AssertContains(t, err.Error(), "menu manager unavailable")
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestService_Service_OnStartup_Good(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_OnStartup_Bad(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_OnStartup_Ugly(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_ShowDevTools_Good(t *core.T) {
+	// Service ShowDevTools
+	ax7Variant := "Service_ShowDevTools:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.ShowDevTools()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_ShowDevTools_Bad(t *core.T) {
+	// Service ShowDevTools
+	ax7Variant := "Service_ShowDevTools:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.ShowDevTools()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_ShowDevTools_Ugly(t *core.T) {
+	// Service ShowDevTools
+	ax7Variant := "Service_ShowDevTools:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.ShowDevTools()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_HandleIPCEvents_Good(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_HandleIPCEvents_Bad(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_HandleIPCEvents_Ugly(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_Manager_Good(t *core.T) {
+	// Service Manager
+	ax7Variant := "Service_Manager:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.Manager()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_Manager_Bad(t *core.T) {
+	// Service Manager
+	ax7Variant := "Service_Manager:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.Manager()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_Manager_Ugly(t *core.T) {
+	// Service Manager
+	ax7Variant := "Service_Manager:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.Manager()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
 }

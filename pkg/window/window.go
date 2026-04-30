@@ -4,7 +4,7 @@ package window
 import (
 	"sync"
 
-	coreerr "dappco.re/go/log"
+	core "dappco.re/go"
 )
 
 // Window is CoreGUI's own window descriptor — NOT a Wails type alias.
@@ -88,7 +88,7 @@ func (m *Manager) SetDefaultHeight(height int) {
 func (m *Manager) Open(options ...WindowOption) (PlatformWindow, error) {
 	windowSpec, err := ApplyOptions(options...)
 	if err != nil {
-		return nil, coreerr.E("window.Manager.Open", "failed to apply options", err)
+		return nil, core.E("window.Manager.Open", "failed to apply options", err)
 	}
 	return m.Create(windowSpec)
 }

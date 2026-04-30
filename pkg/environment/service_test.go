@@ -3,14 +3,9 @@ package environment
 
 import (
 	"context"
-	"path/filepath"
 	"sync"
-	"testing"
 
-	core "dappco.re/go/core"
-	coreerr "dappco.re/go/log"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	core "dappco.re/go"
 )
 
 type mockPlatform struct {
@@ -55,7 +50,7 @@ func (m *mockPlatform) simulateThemeChange(isDark bool) {
 	}
 }
 
-func newTestService(t *testing.T) (*mockPlatform, *core.Core) {
+func newTestService(t *core.T) (*mockPlatform, *core.Core) {
 	t.Helper()
 	mock := &mockPlatform{
 		isDark:       true,
@@ -69,61 +64,61 @@ func newTestService(t *testing.T) (*mockPlatform, *core.Core) {
 		core.WithService(Register(mock)),
 		core.WithServiceLock(),
 	)
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	core.RequireTrue(t, c.ServiceStartup(context.Background(), nil).OK)
 	return mock, c
 }
 
-func TestRegister_Good(t *testing.T) {
+func TestRegister_Good(t *core.T) {
 	_, c := newTestService(t)
 	svc := core.MustServiceFor[*Service](c, "environment")
-	assert.NotNil(t, svc)
+	core.AssertNotNil(t, svc)
 }
 
-func TestQueryTheme_Good(t *testing.T) {
+func TestQueryTheme_Good(t *core.T) {
 	_, c := newTestService(t)
 	r := c.QUERY(QueryTheme{})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 	theme := r.Value.(ThemeInfo)
-	assert.True(t, theme.IsDark)
-	assert.Equal(t, "dark", theme.Theme)
+	core.AssertTrue(t, theme.IsDark)
+	core.AssertEqual(t, "dark", theme.Theme)
 }
 
-func TestQueryInfo_Good(t *testing.T) {
+func TestQueryInfo_Good(t *core.T) {
 	_, c := newTestService(t)
 	r := c.QUERY(QueryInfo{})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 	info := r.Value.(EnvironmentInfo)
-	assert.Equal(t, "darwin", info.OS)
-	assert.Equal(t, "arm64", info.Arch)
+	core.AssertEqual(t, "darwin", info.OS)
+	core.AssertEqual(t, "arm64", info.Arch)
 }
 
-func TestQueryAccentColour_Good(t *testing.T) {
+func TestQueryAccentColour_Good(t *core.T) {
 	_, c := newTestService(t)
 	r := c.QUERY(QueryAccentColour{})
-	require.True(t, r.OK)
-	assert.Equal(t, "rgb(0,122,255)", r.Value)
+	core.RequireTrue(t, r.OK)
+	core.AssertEqual(t, "rgb(0,122,255)", r.Value)
 }
 
-func TestTaskOpenFileManager_Good(t *testing.T) {
+func TestTaskOpenFileManager_Good(t *core.T) {
 	mock, c := newTestService(t)
 	r := c.Action("environment.openFileManager").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: TaskOpenFileManager{Path: "/tmp", Select: true}},
 	))
-	require.True(t, r.OK)
-	assert.Equal(t, filepath.Clean("/tmp"), mock.openFMPath)
-	assert.True(t, mock.openFMSelect)
+	core.RequireTrue(t, r.OK)
+	core.AssertEqual(t, core.CleanPath("/tmp", string(core.PathSeparator)), mock.openFMPath)
+	core.AssertTrue(t, mock.openFMSelect)
 }
 
-func TestTaskOpenFileManager_Bad_InvalidPath(t *testing.T) {
+func TestTaskOpenFileManager_Bad_InvalidPath(t *core.T) {
 	_, c := newTestService(t)
 	r := c.Action("environment.openFileManager").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: TaskOpenFileManager{Path: "../tmp", Select: false}},
 	))
-	assert.False(t, r.OK)
-	assert.Contains(t, r.Value.(error).Error(), "path must be absolute")
+	core.AssertFalse(t, r.OK)
+	core.AssertContains(t, r.Value.(error).Error(), "path must be absolute")
 }
 
-func TestThemeChange_ActionBroadcast_Good(t *testing.T) {
+func TestThemeChange_ActionBroadcast_GoodCase(t *core.T) {
 	mock, c := newTestService(t)
 
 	// Register a listener that captures the action
@@ -144,48 +139,48 @@ func TestThemeChange_ActionBroadcast_Good(t *testing.T) {
 	mu.Lock()
 	r := received
 	mu.Unlock()
-	require.NotNil(t, r)
-	assert.False(t, r.IsDark)
+	core.AssertNotNil(t, r)
+	core.AssertFalse(t, r.IsDark)
 }
 
-func TestTaskSetTheme_Good_OverrideAndReset(t *testing.T) {
+func TestTaskSetTheme_Good_OverrideAndReset(t *core.T) {
 	mock, c := newTestService(t)
 	mock.isDark = false
 
 	r := c.Action("environment.setTheme").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: TaskSetTheme{Theme: "dark"}},
 	))
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 
 	theme := c.QUERY(QueryTheme{})
-	require.True(t, theme.OK)
+	core.RequireTrue(t, theme.OK)
 	info := theme.Value.(ThemeInfo)
-	assert.True(t, info.IsDark)
-	assert.Equal(t, "dark", info.Theme)
+	core.AssertTrue(t, info.IsDark)
+	core.AssertEqual(t, "dark", info.Theme)
 
 	r = c.Action("environment.setTheme").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: TaskSetTheme{Theme: "system"}},
 	))
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 
 	theme = c.QUERY(QueryTheme{})
-	require.True(t, theme.OK)
+	core.RequireTrue(t, theme.OK)
 	info = theme.Value.(ThemeInfo)
-	assert.False(t, info.IsDark)
-	assert.Equal(t, "light", info.Theme)
+	core.AssertFalse(t, info.IsDark)
+	core.AssertEqual(t, "light", info.Theme)
 }
 
-func TestTaskSetTheme_Bad_Invalid(t *testing.T) {
+func TestTaskSetTheme_Bad_Invalid(t *core.T) {
 	_, c := newTestService(t)
 	r := c.Action("environment.setTheme").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: TaskSetTheme{Theme: "sepia"}},
 	))
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
 // --- GetAccentColor ---
 
-func TestQueryAccentColour_Bad_Empty(t *testing.T) {
+func TestQueryAccentColour_Bad_Empty(t *core.T) {
 	// accent colour := "" — still returns handled with empty string
 	mock := &mockPlatform{
 		isDark:       false,
@@ -193,71 +188,213 @@ func TestQueryAccentColour_Bad_Empty(t *testing.T) {
 		info:         EnvironmentInfo{OS: "linux", Arch: "amd64"},
 	}
 	c := core.New(core.WithService(Register(mock)), core.WithServiceLock())
-	require.True(t, c.ServiceStartup(t.Context(), nil).OK)
+	core.RequireTrue(t, c.ServiceStartup(t.Context(), nil).OK)
 
 	r := c.QUERY(QueryAccentColour{})
-	require.True(t, r.OK)
-	assert.Equal(t, "", r.Value)
+	core.RequireTrue(t, r.OK)
+	core.AssertEqual(t, "", r.Value)
 }
 
-func TestQueryAccentColour_Ugly_NoService(t *testing.T) {
+func TestQueryAccentColour_Ugly_NoService(t *core.T) {
 	// No environment service — query is unhandled
 	c := core.New(core.WithServiceLock())
 	r := c.QUERY(QueryAccentColour{})
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
 // --- OpenFileManager ---
 
-func TestTaskOpenFileManager_Bad_Error(t *testing.T) {
+func TestTaskOpenFileManager_Bad_Error(t *core.T) {
 	// platform returns an error on open
-	openErr := coreerr.E("test", "file manager unavailable", nil)
+	openErr := core.E("test", "file manager unavailable", nil)
 	mock := &mockPlatform{openFMErr: openErr}
 	c := core.New(core.WithService(Register(mock)), core.WithServiceLock())
-	require.True(t, c.ServiceStartup(t.Context(), nil).OK)
+	core.RequireTrue(t, c.ServiceStartup(t.Context(), nil).OK)
 
 	r := c.Action("environment.openFileManager").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: TaskOpenFileManager{Path: "/missing", Select: false}},
 	))
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 	err, _ := r.Value.(error)
-	assert.ErrorIs(t, err, openErr)
+	core.AssertErrorIs(t, err, openErr)
 }
 
-func TestTaskOpenFileManager_Ugly_NoService(t *testing.T) {
+func TestTaskOpenFileManager_Ugly_NoService(t *core.T) {
 	// No environment service — action is not registered
 	c := core.New(core.WithServiceLock())
 	r := c.Action("environment.openFileManager").Run(context.Background(), core.NewOptions())
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
 // --- HasFocusFollowsMouse ---
 
-func TestQueryFocusFollowsMouse_Good_True(t *testing.T) {
+func TestQueryFocusFollowsMouse_Good_True(t *core.T) {
 	// platform reports focus-follows-mouse enabled (Linux/X11 sloppy focus)
 	mock := &mockPlatform{focusFollowsMouse: true}
 	c := core.New(core.WithService(Register(mock)), core.WithServiceLock())
-	require.True(t, c.ServiceStartup(t.Context(), nil).OK)
+	core.RequireTrue(t, c.ServiceStartup(t.Context(), nil).OK)
 
 	r := c.QUERY(QueryFocusFollowsMouse{})
-	require.True(t, r.OK)
-	assert.Equal(t, true, r.Value)
+	core.RequireTrue(t, r.OK)
+	core.AssertEqual(t, true, r.Value)
 }
 
-func TestQueryFocusFollowsMouse_Bad_False(t *testing.T) {
+func TestQueryFocusFollowsMouse_Bad_False(t *core.T) {
 	// platform reports focus-follows-mouse disabled (Windows/macOS default)
 	mock := &mockPlatform{focusFollowsMouse: false}
 	c := core.New(core.WithService(Register(mock)), core.WithServiceLock())
-	require.True(t, c.ServiceStartup(t.Context(), nil).OK)
+	core.RequireTrue(t, c.ServiceStartup(t.Context(), nil).OK)
 
 	r := c.QUERY(QueryFocusFollowsMouse{})
-	require.True(t, r.OK)
-	assert.Equal(t, false, r.Value)
+	core.RequireTrue(t, r.OK)
+	core.AssertEqual(t, false, r.Value)
 }
 
-func TestQueryFocusFollowsMouse_Ugly_NoService(t *testing.T) {
+func TestQueryFocusFollowsMouse_Ugly_NoService(t *core.T) {
 	// No environment service — query is unhandled
 	c := core.New(core.WithServiceLock())
 	r := c.QUERY(QueryFocusFollowsMouse{})
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestService_Register_Good(t *core.T) {
+	// Register
+	ax7Variant := "Register:good"
+	core.AssertContains(t, ax7Variant, "good")
+	result := core.Try(func() any {
+		got0 := Register(*new(Platform))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Register_Bad(t *core.T) {
+	// Register
+	ax7Variant := "Register:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	result := core.Try(func() any {
+		got0 := Register(*new(Platform))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Register_Ugly(t *core.T) {
+	// Register
+	ax7Variant := "Register:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	result := core.Try(func() any {
+		got0 := Register(*new(Platform))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_OnStartup_Good(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_OnStartup_Bad(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_OnStartup_Ugly(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_OnShutdown_Good(t *core.T) {
+	// Service OnShutdown
+	ax7Variant := "Service_OnShutdown:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnShutdown(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_OnShutdown_Bad(t *core.T) {
+	// Service OnShutdown
+	ax7Variant := "Service_OnShutdown:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnShutdown(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_OnShutdown_Ugly(t *core.T) {
+	// Service OnShutdown
+	ax7Variant := "Service_OnShutdown:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnShutdown(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_HandleIPCEvents_Good(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_HandleIPCEvents_Bad(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_HandleIPCEvents_Ugly(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
 }

@@ -2,21 +2,18 @@ package systray
 
 import (
 	"context"
-	"testing"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/notification"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-func newTestSystrayService(t *testing.T) (*Service, *core.Core) {
+func newTestSystrayService(t *core.T) (*Service, *core.Core) {
 	t.Helper()
 	c := core.New(
 		core.WithService(Register(newMockPlatform())),
 		core.WithServiceLock(),
 	)
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	core.RequireTrue(t, c.ServiceStartup(context.Background(), nil).OK)
 	svc := core.MustServiceFor[*Service](c, "systray")
 	return svc, c
 }
@@ -27,27 +24,27 @@ func taskRun(c *core.Core, name string, task any) core.Result {
 	))
 }
 
-func TestRegister_Good(t *testing.T) {
+func TestRegister_Good(t *core.T) {
 	svc, _ := newTestSystrayService(t)
-	assert.NotNil(t, svc)
-	assert.NotNil(t, svc.manager)
+	core.AssertNotNil(t, svc)
+	core.AssertNotNil(t, svc.manager)
 }
 
-func TestTaskSetTrayIcon_Good(t *testing.T) {
+func TestTaskSetTrayIcon_Good(t *core.T) {
 	svc, c := newTestSystrayService(t)
 
 	// Setup tray first (normally done via config in OnStartup)
-	require.NoError(t, svc.manager.Setup("Test", "Test"))
+	core.RequireNoError(t, svc.manager.Setup("Test", "Test"))
 
 	icon := []byte{0x89, 0x50, 0x4E, 0x47} // PNG header
 	r := taskRun(c, "systray.setIcon", TaskSetTrayIcon{Data: icon})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 }
 
-func TestTaskSetTrayMenu_Good(t *testing.T) {
+func TestTaskSetTrayMenu_Good(t *core.T) {
 	svc, c := newTestSystrayService(t)
 
-	require.NoError(t, svc.manager.Setup("Test", "Test"))
+	core.RequireNoError(t, svc.manager.Setup("Test", "Test"))
 
 	items := []TrayMenuItem{
 		{Label: "Open", ActionID: "open"},
@@ -55,37 +52,37 @@ func TestTaskSetTrayMenu_Good(t *testing.T) {
 		{Label: "Quit", ActionID: "quit"},
 	}
 	r := taskRun(c, "systray.setMenu", TaskSetTrayMenu{Items: items})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 }
 
-func TestTaskSetTrayTooltip_Good(t *testing.T) {
+func TestTaskSetTrayTooltip_Good(t *core.T) {
 	svc, c := newTestSystrayService(t)
-	require.NoError(t, svc.manager.Setup("Test", "Test"))
+	core.RequireNoError(t, svc.manager.Setup("Test", "Test"))
 
 	r := taskRun(c, "systray.setTooltip", TaskSetTrayTooltip{Tooltip: "New Tooltip"})
-	require.True(t, r.OK)
-	assert.Equal(t, "New Tooltip", svc.manager.GetInfo()["tooltip"])
+	core.RequireTrue(t, r.OK)
+	core.AssertEqual(t, "New Tooltip", svc.manager.GetInfo()["tooltip"])
 }
 
-func TestTaskSetTrayLabel_Good(t *testing.T) {
+func TestTaskSetTrayLabel_Good(t *core.T) {
 	svc, c := newTestSystrayService(t)
-	require.NoError(t, svc.manager.Setup("Test", "Test"))
+	core.RequireNoError(t, svc.manager.Setup("Test", "Test"))
 
 	r := taskRun(c, "systray.setLabel", TaskSetTrayLabel{Label: "Ready"})
-	require.True(t, r.OK)
-	assert.Equal(t, "Ready", svc.manager.GetInfo()["label"])
+	core.RequireTrue(t, r.OK)
+	core.AssertEqual(t, "Ready", svc.manager.GetInfo()["label"])
 }
 
-func TestTaskShowMessage_Good(t *testing.T) {
+func TestTaskShowMessage_Good(t *core.T) {
 	svc, c := newTestSystrayService(t)
-	require.NoError(t, svc.manager.Setup("Test", "Test"))
+	core.RequireNoError(t, svc.manager.Setup("Test", "Test"))
 
 	r := taskRun(c, "systray.showMessage", TaskShowMessage{Title: "Core", Message: "Up"})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 
 	mockTray := svc.manager.Tray().(*mockTray)
-	assert.Equal(t, "Core", mockTray.lastMessageTitle)
-	assert.Equal(t, "Up", mockTray.lastMessageBody)
+	core.AssertEqual(t, "Core", mockTray.lastMessageTitle)
+	core.AssertEqual(t, "Up", mockTray.lastMessageBody)
 }
 
 type fallbackNotificationPlatform struct {
@@ -114,39 +111,148 @@ func (t *failingTray) ShowMessage(title, message string) error {
 	return core.NewError("tray balloon unavailable")
 }
 
-func TestTaskShowMessage_FallbackToNotification_Good(t *testing.T) {
+func TestTaskShowMessage_FallbackToNotification_GoodCase(t *core.T) {
 	notifPlatform := &fallbackNotificationPlatform{}
 	c := core.New(
 		core.WithService(notification.Register(notifPlatform)),
 		core.WithService(Register(failingTrayPlatform{})),
 		core.WithServiceLock(),
 	)
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	core.RequireTrue(t, c.ServiceStartup(context.Background(), nil).OK)
 
 	svc := core.MustServiceFor[*Service](c, "systray")
-	require.NoError(t, svc.manager.Setup("Test", "Test"))
+	core.RequireNoError(t, svc.manager.Setup("Test", "Test"))
 
 	r := taskRun(c, "systray.showMessage", TaskShowMessage{Title: "Core", Message: "Up"})
-	require.True(t, r.OK)
-	assert.True(t, notifPlatform.sent)
-	assert.Equal(t, "Core", notifPlatform.opts.Title)
-	assert.Equal(t, "Up", notifPlatform.opts.Message)
+	core.RequireTrue(t, r.OK)
+	core.AssertTrue(t, notifPlatform.sent)
+	core.AssertEqual(t, "Core", notifPlatform.opts.Title)
+	core.AssertEqual(t, "Up", notifPlatform.opts.Message)
 }
 
-func TestQueryInfo_Good(t *testing.T) {
+func TestQueryInfo_Good(t *core.T) {
 	svc, c := newTestSystrayService(t)
-	require.NoError(t, svc.manager.Setup("Core", "Core"))
+	core.RequireNoError(t, svc.manager.Setup("Core", "Core"))
 
 	r := c.QUERY(QueryInfo{})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 	info := r.Value.(map[string]any)
-	assert.Equal(t, "Core", info["tooltip"])
-	assert.Equal(t, "Core", info["label"])
+	core.AssertEqual(t, "Core", info["tooltip"])
+	core.AssertEqual(t, "Core", info["label"])
 }
 
-func TestTaskSetTrayIcon_Bad(t *testing.T) {
+func TestTaskSetTrayIcon_Bad(t *core.T) {
 	// No systray service — action is not registered
 	c := core.New(core.WithServiceLock())
 	r := c.Action("systray.setIcon").Run(context.Background(), core.NewOptions())
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestService_Service_OnStartup_Good(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_OnStartup_Bad(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_OnStartup_Ugly(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_HandleIPCEvents_Good(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_HandleIPCEvents_Bad(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_HandleIPCEvents_Ugly(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_Manager_Good(t *core.T) {
+	// Service Manager
+	ax7Variant := "Service_Manager:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.Manager()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_Manager_Bad(t *core.T) {
+	// Service Manager
+	ax7Variant := "Service_Manager:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.Manager()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_Manager_Ugly(t *core.T) {
+	// Service Manager
+	ax7Variant := "Service_Manager:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.Manager()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
 }

@@ -1,10 +1,10 @@
 package container
 
 import (
-	"os/exec"
 	"runtime"
 	"strconv"
-	"strings"
+
+	core "dappco.re/go"
 )
 
 // ContainerRuntime describes the preferred isolated workload runtime for CoreGUI.
@@ -39,7 +39,7 @@ func Detect() ContainerRuntime {
 	environment := DetectEnvironment{
 		GOOS:           runtime.GOOS,
 		ProductVersion: "",
-		LookPath:       exec.LookPath,
+		LookPath:       lookPath,
 	}
 	if runtime.GOOS == "darwin" {
 		environment.ProductVersion = productVersion()
@@ -51,28 +51,28 @@ func Detect() ContainerRuntime {
 //
 //	runtime := container.DetectWithEnvironment(env)
 func DetectWithEnvironment(environment DetectEnvironment) ContainerRuntime {
-	lookPath := environment.LookPath
-	if lookPath == nil {
-		lookPath = exec.LookPath
+	resolvePath := environment.LookPath
+	if resolvePath == nil {
+		resolvePath = lookPath
 	}
 
-	goos := strings.ToLower(strings.TrimSpace(environment.GOOS))
+	goos := core.Lower(core.Trim(environment.GOOS))
 	if goos == "darwin" && majorVersion(environment.ProductVersion) >= 26 {
-		if hasBinary(lookPath, "container") || hasBinary(lookPath, "apple-container") || hasBinary(lookPath, "containerctl") {
+		if hasBinary(resolvePath, "container") || hasBinary(resolvePath, "apple-container") || hasBinary(resolvePath, "containerctl") {
 			return RuntimeApple
 		}
 	}
-	if hasBinary(lookPath, "docker") {
+	if hasBinary(resolvePath, "docker") {
 		return RuntimeDocker
 	}
-	if hasBinary(lookPath, "podman") {
+	if hasBinary(resolvePath, "podman") {
 		return RuntimePodman
 	}
 	return RuntimeNone
 }
 
 func hasBinary(lookPath func(string) (string, error), binary string) bool {
-	if strings.TrimSpace(binary) == "" {
+	if core.Trim(binary) == "" {
 		return false
 	}
 	_, err := lookPath(binary)
@@ -80,11 +80,11 @@ func hasBinary(lookPath func(string) (string, error), binary string) bool {
 }
 
 func majorVersion(productVersion string) int {
-	productVersion = strings.TrimSpace(productVersion)
+	productVersion = core.Trim(productVersion)
 	if productVersion == "" {
 		return 0
 	}
-	major, _, _ := strings.Cut(productVersion, ".")
+	major, _, _ := cut(productVersion, ".")
 	value, err := strconv.Atoi(major)
 	if err != nil {
 		return 0
@@ -93,9 +93,9 @@ func majorVersion(productVersion string) int {
 }
 
 func productVersion() string {
-	output, err := exec.Command("sw_vers", "-productVersion").Output()
+	output, err := command("sw_vers", "-productVersion").Output()
 	if err != nil {
 		return ""
 	}
-	return strings.TrimSpace(string(output))
+	return core.Trim(string(output))
 }

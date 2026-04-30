@@ -1,7 +1,6 @@
 package application
 
 import (
-	"errors"
 	"runtime"
 	"sync"
 	"time"
@@ -132,7 +131,9 @@ func (s *SystemTray) ToggleWindow() {
 		s.attachedWindow.Window.Hide()
 	} else {
 		s.attachedWindow.hasBeenShown = true
-		_ = s.PositionWindow(s.attachedWindow.Window, s.attachedWindow.Offset)
+		if err := s.PositionWindow(s.attachedWindow.Window, s.attachedWindow.Offset); err != nil {
+			return
+		}
 		s.attachedWindow.Window.Show().Focus()
 	}
 }
@@ -156,7 +157,9 @@ func (s *SystemTray) defaultClickHandler() {
 		s.attachedWindow.Window.Hide()
 	} else {
 		s.attachedWindow.hasBeenShown = true
-		_ = s.PositionWindow(s.attachedWindow.Window, s.attachedWindow.Offset)
+		if err := s.PositionWindow(s.attachedWindow.Window, s.attachedWindow.Offset); err != nil {
+			return
+		}
 		s.attachedWindow.Window.Show().Focus()
 	}
 }
@@ -170,7 +173,9 @@ func (s *SystemTray) ShowWindow() {
 		return
 	}
 	s.attachedWindow.hasBeenShown = true
-	_ = s.PositionWindow(s.attachedWindow.Window, s.attachedWindow.Offset)
+	if err := s.PositionWindow(s.attachedWindow.Window, s.attachedWindow.Offset); err != nil {
+		return
+	}
 	s.attachedWindow.Window.Show().Focus()
 }
 
@@ -183,7 +188,7 @@ func (s *SystemTray) HideWindow() {
 
 func (s *SystemTray) PositionWindow(window Window, offset int) error {
 	if s.impl == nil {
-		return errors.New("system tray not running")
+		return core.NewError("system tray not running")
 	}
 	return InvokeSyncWithError(func() error {
 		return s.impl.positionWindow(window, offset)

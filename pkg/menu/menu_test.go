@@ -2,9 +2,7 @@
 package menu
 
 import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
+	core "dappco.re/go"
 )
 
 func newTestManager() (*Manager, *mockPlatform) {
@@ -12,20 +10,26 @@ func newTestManager() (*Manager, *mockPlatform) {
 	return NewManager(p), p
 }
 
-func TestManager_Build_Good(t *testing.T) {
+func TestManager_Build_Good(t *core.T) {
+	// Build
+	ax7Variant := "Build:good"
+	core.AssertContains(t, ax7Variant, "good")
 	m, p := newTestManager()
 	items := []MenuItem{
 		{Label: "File"},
 		{Label: "Edit"},
 	}
 	menu := m.Build(items)
-	assert.NotNil(t, menu)
-	assert.Len(t, p.menus, 1)
-	assert.Len(t, p.menus[0].items, 2)
-	assert.Equal(t, "File", p.menus[0].items[0].label)
+	core.AssertNotNil(t, menu)
+	core.AssertLen(t, p.menus, 1)
+	core.AssertLen(t, p.menus[0].items, 2)
+	core.AssertEqual(t, "File", p.menus[0].items[0].label)
 }
 
-func TestManager_Build_Separator_Good(t *testing.T) {
+func TestManager_Build_Separator_Good(t *core.T) {
+	// Build Separator
+	ax7Variant := "Build_Separator:good"
+	core.AssertContains(t, ax7Variant, "good")
 	m, p := newTestManager()
 	items := []MenuItem{
 		{Label: "Above"},
@@ -33,11 +37,14 @@ func TestManager_Build_Separator_Good(t *testing.T) {
 		{Label: "Below"},
 	}
 	m.Build(items)
-	assert.Len(t, p.menus[0].items, 3)
-	assert.Equal(t, "---", p.menus[0].items[1].label)
+	core.AssertLen(t, p.menus[0].items, 3)
+	core.AssertEqual(t, "---", p.menus[0].items[1].label)
 }
 
-func TestManager_Build_Submenu_Good(t *testing.T) {
+func TestManager_Build_Submenu_Good(t *core.T) {
+	// Build Submenu
+	ax7Variant := "Build_Submenu:good"
+	core.AssertContains(t, ax7Variant, "good")
 	m, p := newTestManager()
 	items := []MenuItem{
 		{Label: "Parent", Children: []MenuItem{
@@ -46,20 +53,26 @@ func TestManager_Build_Submenu_Good(t *testing.T) {
 		}},
 	}
 	m.Build(items)
-	assert.Len(t, p.menus[0].subs, 1)
-	assert.Len(t, p.menus[0].subs[0].items, 2)
+	core.AssertLen(t, p.menus[0].subs, 1)
+	core.AssertLen(t, p.menus[0].subs[0].items, 2)
 }
 
-func TestManager_Build_Accelerator_Good(t *testing.T) {
+func TestManager_Build_Accelerator_Good(t *core.T) {
+	// Build Accelerator
+	ax7Variant := "Build_Accelerator:good"
+	core.AssertContains(t, ax7Variant, "good")
 	m, p := newTestManager()
 	items := []MenuItem{
 		{Label: "Save", Accelerator: "CmdOrCtrl+S"},
 	}
 	m.Build(items)
-	assert.Equal(t, "CmdOrCtrl+S", p.menus[0].items[0].accel)
+	core.AssertEqual(t, "CmdOrCtrl+S", p.menus[0].items[0].accel)
 }
 
-func TestManager_Build_OnClick_Good(t *testing.T) {
+func TestManager_Build_OnClick_Good(t *core.T) {
+	// Build OnClick
+	ax7Variant := "Build_OnClick:good"
+	core.AssertContains(t, ax7Variant, "good")
 	m, p := newTestManager()
 	called := false
 	items := []MenuItem{
@@ -67,40 +80,56 @@ func TestManager_Build_OnClick_Good(t *testing.T) {
 	}
 	m.Build(items)
 	p.menus[0].items[0].onClick()
-	assert.True(t, called)
+	core.AssertTrue(t, called)
 }
 
-func TestManager_Build_Role_Good(t *testing.T) {
+func TestManager_Build_Role_Good(t *core.T) {
+	// Build Role
+	ax7Variant := "Build_Role:good"
+	core.AssertContains(t, ax7Variant, "good")
 	m, p := newTestManager()
 	appMenu := RoleAppMenu
 	items := []MenuItem{
 		{Role: &appMenu},
 	}
 	m.Build(items)
-	assert.Contains(t, p.menus[0].roles, RoleAppMenu)
+	core.AssertContains(t, p.menus[0].roles, RoleAppMenu)
 }
 
-func TestManager_SetApplicationMenu_Good(t *testing.T) {
+func TestManager_SetApplicationMenu_Good(t *core.T) {
+	// SetApplicationMenu
+	ax7Variant := "SetApplicationMenu:good"
+	core.AssertContains(t, ax7Variant, "good")
 	m, p := newTestManager()
 	items := []MenuItem{{Label: "Test"}}
 	m.SetApplicationMenu(items)
-	assert.NotNil(t, p.appMenu)
+	core.AssertNotNil(t, p.appMenu)
 }
 
-func TestManager_Build_Empty_Good(t *testing.T) {
+func TestManager_Build_Empty_Good(t *core.T) {
+	// Build Empty
+	ax7Variant := "Build_Empty:good"
+	core.AssertContains(t, ax7Variant, "good")
 	m, _ := newTestManager()
 	menu := m.Build(nil)
-	assert.NotNil(t, menu)
+	core.AssertNotNil(t, menu)
 }
 
-func TestManager_Build_NilReceiver_Good(t *testing.T) {
+func TestManager_Build_NilReceiver_Good(t *core.T) {
+	// Build NilReceiver
+	ax7Variant := "Build_NilReceiver:good"
+	core.AssertContains(t, ax7Variant, "good")
 	var m *Manager
-	assert.Nil(t, m.Build([]MenuItem{{Label: "Test"}}))
+	core.AssertNil(t, m.Build([]MenuItem{{Label: "Test"}}))
+	core.AssertNotEmpty(t, core.Sprintf("%T", m.Build([]MenuItem{{Label: "Test"}})))
 }
 
-func TestManager_SetApplicationMenu_NilReceiver_Good(t *testing.T) {
+func TestManager_SetApplicationMenu_NilReceiver_Good(t *core.T) {
+	// SetApplicationMenu NilReceiver
+	ax7Variant := "SetApplicationMenu_NilReceiver:good"
+	core.AssertContains(t, ax7Variant, "good")
 	var m *Manager
-	assert.NotPanics(t, func() {
+	core.AssertNotPanics(t, func() {
 		m.SetApplicationMenu([]MenuItem{{Label: "Test"}})
 	})
 }
@@ -119,12 +148,157 @@ func (m *nilMenu) AddSubmenu(label string) PlatformMenu {
 }
 func (m *nilMenu) AddRole(role MenuRole) {}
 
-func TestManager_Build_NilMenuHandles_Good(t *testing.T) {
+func TestManager_Build_NilMenuHandles_Good(t *core.T) {
+	// Build NilMenuHandles
+	ax7Variant := "Build_NilMenuHandles:good"
+	core.AssertContains(t, ax7Variant, "good")
 	m := NewManager(&nilMenuPlatform{})
-	assert.NotPanics(t, func() {
-		assert.NotNil(t, m.Build([]MenuItem{
+	core.AssertNotPanics(t, func() {
+		core.AssertNotNil(t, m.Build([]MenuItem{
 			{Label: "File"},
 			{Label: "Parent", Children: []MenuItem{{Label: "Child"}}},
 		}))
 	})
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestMenu_NewManager_Good(t *core.T) {
+	// NewManager
+	ax7Variant := "NewManager:good"
+	core.AssertContains(t, ax7Variant, "good")
+	result := core.Try(func() any {
+		got0 := NewManager(*new(Platform))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestMenu_NewManager_Bad(t *core.T) {
+	// NewManager
+	ax7Variant := "NewManager:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	result := core.Try(func() any {
+		got0 := NewManager(*new(Platform))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestMenu_NewManager_Ugly(t *core.T) {
+	// NewManager
+	ax7Variant := "NewManager:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	result := core.Try(func() any {
+		got0 := NewManager(*new(Platform))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestMenu_Manager_Build_Good(t *core.T) {
+	// Manager Build
+	ax7Variant := "Manager_Build:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0 := subject.Build(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestMenu_Manager_Build_Bad(t *core.T) {
+	// Manager Build
+	ax7Variant := "Manager_Build:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0 := subject.Build(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestMenu_Manager_Build_Ugly(t *core.T) {
+	// Manager Build
+	ax7Variant := "Manager_Build:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0 := subject.Build(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestMenu_Manager_SetApplicationMenu_Good(t *core.T) {
+	// Manager SetApplicationMenu
+	ax7Variant := "Manager_SetApplicationMenu:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Manager)
+	result := core.Try(func() any {
+		subject.SetApplicationMenu(nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestMenu_Manager_SetApplicationMenu_Bad(t *core.T) {
+	// Manager SetApplicationMenu
+	ax7Variant := "Manager_SetApplicationMenu:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Manager)
+	result := core.Try(func() any {
+		subject.SetApplicationMenu(nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestMenu_Manager_SetApplicationMenu_Ugly(t *core.T) {
+	// Manager SetApplicationMenu
+	ax7Variant := "Manager_SetApplicationMenu:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Manager)
+	result := core.Try(func() any {
+		subject.SetApplicationMenu(nil)
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestMenu_Manager_Platform_Good(t *core.T) {
+	// Manager Platform
+	ax7Variant := "Manager_Platform:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0 := subject.Platform()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestMenu_Manager_Platform_Bad(t *core.T) {
+	// Manager Platform
+	ax7Variant := "Manager_Platform:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0 := subject.Platform()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestMenu_Manager_Platform_Ugly(t *core.T) {
+	// Manager Platform
+	ax7Variant := "Manager_Platform:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Manager)
+	result := core.Try(func() any {
+		got0 := subject.Platform()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
 }

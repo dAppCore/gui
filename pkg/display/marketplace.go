@@ -3,14 +3,10 @@ package display
 import (
 	"context"
 	"net/http"
-	"os"
-	"path/filepath"
-	"strings"
 	"time"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/marketplace"
-	coreerr "dappco.re/go/log"
 )
 
 const marketplaceHTTPTimeout = 30 * time.Second
@@ -37,13 +33,13 @@ type marketplaceInstallInput struct {
 func (s *Service) registerMarketplaceActions() {
 	s.Core().Action("display.marketplace.list", func(ctx context.Context, opts core.Options) core.Result {
 		input := marketplaceListInput{RegistryURL: marketplaceRegistryURL(opts)}
-		if strings.TrimSpace(input.RegistryURL) == "" {
-			return core.Result{Value: coreerr.E("display.marketplace.list", "registry url is required", nil), OK: false}
+		if core.Trim(input.RegistryURL) == "" {
+			return core.Result{Value: core.E("display.marketplace.list", "registry url is required", nil), OK: false}
 		}
 		installer := marketplace.Installer{HTTPClient: marketplaceHTTPClient}
 		manifests, err := installer.List(ctx, input.RegistryURL)
 		if err != nil {
-			return core.Result{Value: coreerr.E("display.marketplace.list", "failed to list marketplace manifests", err), OK: false}
+			return core.Result{Value: core.E("display.marketplace.list", "failed to list marketplace manifests", err), OK: false}
 		}
 		return core.Result{Value: map[string]any{
 			"registry_url": input.RegistryURL,
@@ -52,27 +48,27 @@ func (s *Service) registerMarketplaceActions() {
 	})
 
 	s.Core().Action("display.marketplace.fetch", func(ctx context.Context, opts core.Options) core.Result {
-		input := marketplaceFetchInput{ManifestURL: strings.TrimSpace(opts.String("url"))}
+		input := marketplaceFetchInput{ManifestURL: core.Trim(opts.String("url"))}
 		if input.ManifestURL == "" {
-			return core.Result{Value: coreerr.E("display.marketplace.fetch", "manifest url is required", nil), OK: false}
+			return core.Result{Value: core.E("display.marketplace.fetch", "manifest url is required", nil), OK: false}
 		}
 		installer := marketplace.Installer{HTTPClient: marketplaceHTTPClient}
 		manifest, err := installer.FetchManifest(ctx, input.ManifestURL)
 		if err != nil {
-			return core.Result{Value: coreerr.E("display.marketplace.fetch", "failed to fetch marketplace manifest", err), OK: false}
+			return core.Result{Value: core.E("display.marketplace.fetch", "failed to fetch marketplace manifest", err), OK: false}
 		}
 		return core.Result{Value: manifest, OK: true}
 	})
 
 	s.Core().Action("display.marketplace.verify", func(ctx context.Context, opts core.Options) core.Result {
-		input := marketplaceFetchInput{ManifestURL: strings.TrimSpace(opts.String("url"))}
+		input := marketplaceFetchInput{ManifestURL: core.Trim(opts.String("url"))}
 		if input.ManifestURL == "" {
-			return core.Result{Value: coreerr.E("display.marketplace.verify", "manifest url is required", nil), OK: false}
+			return core.Result{Value: core.E("display.marketplace.verify", "manifest url is required", nil), OK: false}
 		}
 		installer := marketplace.Installer{HTTPClient: marketplaceHTTPClient}
 		manifest, err := installer.Verify(ctx, input.ManifestURL)
 		if err != nil {
-			return core.Result{Value: coreerr.E("display.marketplace.verify", "failed to verify marketplace manifest", err), OK: false}
+			return core.Result{Value: core.E("display.marketplace.verify", "failed to verify marketplace manifest", err), OK: false}
 		}
 		return core.Result{Value: map[string]any{
 			"manifest": manifest,
@@ -82,12 +78,12 @@ func (s *Service) registerMarketplaceActions() {
 
 	s.Core().Action("display.marketplace.install", func(ctx context.Context, opts core.Options) core.Result {
 		input := marketplaceInstallInput{
-			ManifestURL: strings.TrimSpace(opts.String("url")),
-			InstallDir:  strings.TrimSpace(opts.String("install_dir")),
-			GitBinary:   strings.TrimSpace(opts.String("git_binary")),
+			ManifestURL: core.Trim(opts.String("url")),
+			InstallDir:  core.Trim(opts.String("install_dir")),
+			GitBinary:   core.Trim(opts.String("git_binary")),
 		}
 		if input.ManifestURL == "" {
-			return core.Result{Value: coreerr.E("display.marketplace.install", "manifest url is required", nil), OK: false}
+			return core.Result{Value: core.E("display.marketplace.install", "manifest url is required", nil), OK: false}
 		}
 
 		installer := marketplace.Installer{
@@ -98,11 +94,11 @@ func (s *Service) registerMarketplaceActions() {
 		}
 		manifest, err := installer.Verify(ctx, input.ManifestURL)
 		if err != nil {
-			return core.Result{Value: coreerr.E("display.marketplace.install", "failed to verify marketplace manifest", err), OK: false}
+			return core.Result{Value: core.E("display.marketplace.install", "failed to verify marketplace manifest", err), OK: false}
 		}
 		targetDir, err := installer.Install(ctx, manifest)
 		if err != nil {
-			return core.Result{Value: coreerr.E("display.marketplace.install", "failed to install marketplace manifest", err), OK: false}
+			return core.Result{Value: core.E("display.marketplace.install", "failed to install marketplace manifest", err), OK: false}
 		}
 		return core.Result{Value: map[string]any{
 			"manifest":    manifest,
@@ -114,25 +110,25 @@ func (s *Service) registerMarketplaceActions() {
 }
 
 func marketplaceRegistryURL(opts core.Options) string {
-	if url := strings.TrimSpace(opts.String("url")); url != "" {
+	if url := core.Trim(opts.String("url")); url != "" {
 		return url
 	}
-	return strings.TrimSpace(core.Env("CORE_MARKETPLACE_REGISTRY_URL"))
+	return core.Trim(core.Env("CORE_MARKETPLACE_REGISTRY_URL"))
 }
 
 func marketplaceInstallRoot(raw string) string {
-	if trimmed := strings.TrimSpace(raw); trimmed != "" {
+	if trimmed := core.Trim(raw); trimmed != "" {
 		return trimmed
 	}
-	home := strings.TrimSpace(core.Env("DIR_HOME"))
+	home := core.Trim(core.Env("DIR_HOME"))
 	if home == "" {
-		if configDir, err := os.UserConfigDir(); err == nil && strings.TrimSpace(configDir) != "" {
-			return filepath.Join(configDir, "core", "apps")
+		if configDir, err := coreUserConfigDir(); err == nil && core.Trim(configDir) != "" {
+			return core.PathJoin(configDir, "core", "apps")
 		}
-		if userHome, err := os.UserHomeDir(); err == nil && strings.TrimSpace(userHome) != "" {
-			return filepath.Join(userHome, ".core", "apps")
+		if userHome, err := coreUserHomeDir(); err == nil && core.Trim(userHome) != "" {
+			return core.PathJoin(userHome, ".core", "apps")
 		}
 		return ""
 	}
-	return filepath.Join(home, ".core", "apps")
+	return core.PathJoin(home, ".core", "apps")
 }

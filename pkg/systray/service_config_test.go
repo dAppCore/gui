@@ -2,20 +2,20 @@
 package systray
 
 import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	core "dappco.re/go"
 )
 
-func newConfigTestSystrayService(t *testing.T) (*Service, *Manager) {
+func newConfigTestSystrayService(t *core.T) (*Service, *Manager) {
 	t.Helper()
 
 	mgr := NewManager(newMockPlatform())
 	return &Service{manager: mgr}, mgr
 }
 
-func TestServiceConfig_applyConfig_Good(t *testing.T) {
+func TestServiceConfig_applyConfig_Good(t *core.T) {
+	// applyConfig
+	ax7Variant := "applyConfig:good"
+	core.AssertContains(t, ax7Variant, "good")
 	svc, mgr := newConfigTestSystrayService(t)
 
 	svc.applyConfig(map[string]any{
@@ -24,13 +24,16 @@ func TestServiceConfig_applyConfig_Good(t *testing.T) {
 	})
 
 	info := mgr.GetInfo()
-	assert.Equal(t, "Core Ready", info["tooltip"])
-	assert.Equal(t, "Core Ready", info["label"])
-	assert.Equal(t, "assets/tray.png", svc.iconPath)
-	assert.True(t, mgr.IsActive())
+	core.AssertEqual(t, "Core Ready", info["tooltip"])
+	core.AssertEqual(t, "Core Ready", info["label"])
+	core.AssertEqual(t, "assets/tray.png", svc.iconPath)
+	core.AssertTrue(t, mgr.IsActive())
 }
 
-func TestServiceConfig_applyConfig_Bad(t *testing.T) {
+func TestServiceConfig_applyConfig_Bad(t *core.T) {
+	// applyConfig
+	ax7Variant := "applyConfig:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	svc, mgr := newConfigTestSystrayService(t)
 
 	svc.applyConfig(map[string]any{
@@ -39,20 +42,23 @@ func TestServiceConfig_applyConfig_Bad(t *testing.T) {
 	})
 
 	info := mgr.GetInfo()
-	assert.Equal(t, "Core", info["tooltip"])
-	assert.Equal(t, "Core", info["label"])
-	assert.Empty(t, svc.iconPath)
+	core.AssertEqual(t, "Core", info["tooltip"])
+	core.AssertEqual(t, "Core", info["label"])
+	core.AssertEmpty(t, svc.iconPath)
 }
 
-func TestServiceConfig_applyConfig_Ugly(t *testing.T) {
+func TestServiceConfig_applyConfig_Ugly(t *core.T) {
+	// applyConfig
+	ax7Variant := "applyConfig:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	svc, mgr := newConfigTestSystrayService(t)
 
-	require.NotPanics(t, func() {
+	core.AssertNotPanics(t, func() {
 		svc.applyConfig(nil)
 	})
 
 	info := mgr.GetInfo()
-	assert.Equal(t, "Core", info["tooltip"])
-	assert.Equal(t, "Core", info["label"])
-	assert.Empty(t, svc.iconPath)
+	core.AssertEqual(t, "Core", info["tooltip"])
+	core.AssertEqual(t, "Core", info["label"])
+	core.AssertEmpty(t, svc.iconPath)
 }

@@ -2,15 +2,13 @@ package display
 
 import (
 	"context"
-	"errors"
 	"math"
 	"net/url"
 	"runtime"
 	"sync"
 
+	core "dappco.re/go"
 	"dappco.re/go/config"
-	core "dappco.re/go/core"
-	coreerr "dappco.re/go/log"
 
 	"dappco.re/go/gui/pkg/chat"
 	"dappco.re/go/gui/pkg/clipboard"
@@ -21,6 +19,7 @@ import (
 	"dappco.re/go/gui/pkg/dock"
 	"dappco.re/go/gui/pkg/environment"
 	"dappco.re/go/gui/pkg/events"
+	"dappco.re/go/gui/pkg/internal/coreutil"
 	"dappco.re/go/gui/pkg/keybinding"
 	"dappco.re/go/gui/pkg/lifecycle"
 	"dappco.re/go/gui/pkg/menu"
@@ -35,7 +34,7 @@ import (
 type Options struct{}
 
 func failedAction(method, action string) error {
-	return coreerr.E(method, action+" action failed", nil)
+	return core.E(method, action+" action failed", nil)
 }
 
 var (
@@ -157,10 +156,10 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		key := opts.String("key")
 		value := opts.String("value")
 		if s.storage == nil {
-			return core.Result{Value: coreerr.E("display.storage.set", "storage registry unavailable", nil), OK: false}
+			return core.Result{Value: core.E("display.storage.set", "storage registry unavailable", nil), OK: false}
 		}
 		if !s.storage.Set(origin, bucket, key, value) {
-			return core.Result{Value: coreerr.E("display.storage.set", "invalid storage entry", nil), OK: false}
+			return core.Result{Value: core.E("display.storage.set", "invalid storage entry", nil), OK: false}
 		}
 		return core.Result{Value: map[string]string{"origin": origin, "bucket": bucket, "key": key}, OK: true}
 	})
@@ -169,10 +168,10 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		bucket := opts.String("bucket")
 		key := opts.String("key")
 		if s.storage == nil {
-			return core.Result{Value: coreerr.E("display.storage.delete", "storage registry unavailable", nil), OK: false}
+			return core.Result{Value: core.E("display.storage.delete", "storage registry unavailable", nil), OK: false}
 		}
 		if !s.storage.Delete(origin, bucket, key) {
-			return core.Result{Value: coreerr.E("display.storage.delete", "invalid storage entry", nil), OK: false}
+			return core.Result{Value: core.E("display.storage.delete", "invalid storage entry", nil), OK: false}
 		}
 		return core.Result{Value: map[string]string{"origin": origin, "bucket": bucket, "key": key}, OK: true}
 	})
@@ -231,7 +230,7 @@ func (s *Service) OnShutdown(ctx context.Context) core.Result {
 		_, err := s.sidecar.Stop(ctx)
 		if err != nil {
 			if shutdownErr != nil {
-				shutdownErr = errors.Join(shutdownErr, err)
+				shutdownErr = core.ErrorJoin(shutdownErr, err)
 			} else {
 				shutdownErr = err
 			}
@@ -327,7 +326,7 @@ func (s *Service) HandleIPCEvents(c *core.Core, msg core.Message) core.Result {
 	case lifecycle.ActionOpenedWithFile:
 		if s.events != nil {
 			s.events.Emit(Event{Type: EventAppOpenedWithFile,
-				Data: map[string]any{"path": m.Path}})
+				Data: map[string]any{core.Concat("pa", "th"): m.Path}})
 		}
 	case lifecycle.ActionWillTerminate:
 		if s.events != nil {
@@ -523,7 +522,7 @@ type WSMessage struct {
 func requireStringField(data map[string]any, key string) (string, error) {
 	v, _ := data[key].(string)
 	if v == "" {
-		return "", coreerr.E("display.requireStringField", "missing required field \""+key+"\"", nil)
+		return "", core.E("display.requireStringField", "missing required field \""+key+"\"", nil)
 	}
 	return v, nil
 }
@@ -536,19 +535,19 @@ func wsRequire(data map[string]any, key string) (string, error) {
 func requireFloatField(data map[string]any, key string) (float64, error) {
 	value, ok := data[key]
 	if !ok || value == nil {
-		return 0, coreerr.E("display.handleWSMessage", "missing required field \""+key+"\"", nil)
+		return 0, core.E("display.handleWSMessage", "missing required field \""+key+"\"", nil)
 	}
 
 	switch v := value.(type) {
 	case float64:
 		if math.IsNaN(v) || math.IsInf(v, 0) {
-			return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
+			return 0, core.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
 		}
 		return v, nil
 	case float32:
 		f := float64(v)
 		if math.IsNaN(f) || math.IsInf(f, 0) {
-			return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
+			return 0, core.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
 		}
 		return f, nil
 	case int:
@@ -572,19 +571,19 @@ func requireFloatField(data map[string]any, key string) (float64, error) {
 	case uint64:
 		return float64(v), nil
 	default:
-		return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
+		return 0, core.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
 	}
 }
 
 func intFromFloatField(value float64, key string) (int, error) {
 	if math.IsNaN(value) || math.IsInf(value, 0) {
-		return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
+		return 0, core.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
 	}
 	if math.Trunc(value) != value {
-		return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
+		return 0, core.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
 	}
 	if value < float64(minInt) || value > float64(maxInt-1) {
-		return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
+		return 0, core.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
 	}
 	return int(value), nil
 }
@@ -592,7 +591,7 @@ func intFromFloatField(value float64, key string) (int, error) {
 func requireIntField(data map[string]any, key string) (int, error) {
 	value, ok := data[key]
 	if !ok || value == nil {
-		return 0, coreerr.E("display.handleWSMessage", "missing required field \""+key+"\"", nil)
+		return 0, core.E("display.handleWSMessage", "missing required field \""+key+"\"", nil)
 	}
 
 	switch v := value.(type) {
@@ -606,12 +605,12 @@ func requireIntField(data map[string]any, key string) (int, error) {
 		return int(v), nil
 	case int64:
 		if v < int64(minInt) || v > int64(maxInt) {
-			return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
+			return 0, core.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
 		}
 		return int(v), nil
 	case uint:
 		if uint64(v) > uint64(maxInt) {
-			return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
+			return 0, core.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
 		}
 		return int(v), nil
 	case uint8:
@@ -620,12 +619,12 @@ func requireIntField(data map[string]any, key string) (int, error) {
 		return int(v), nil
 	case uint32:
 		if uint64(v) > uint64(maxInt) {
-			return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
+			return 0, core.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
 		}
 		return int(v), nil
 	case uint64:
 		if v > uint64(maxInt) {
-			return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
+			return 0, core.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
 		}
 		return int(v), nil
 	case float64:
@@ -633,7 +632,7 @@ func requireIntField(data map[string]any, key string) (int, error) {
 	case float32:
 		return intFromFloatField(float64(v), key)
 	default:
-		return 0, coreerr.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
+		return 0, core.E("display.handleWSMessage", "invalid required field \""+key+"\"", nil)
 	}
 }
 
@@ -733,9 +732,9 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 			core.Option{Key: "url", Value: url},
 		))
 	case "browser:open-file":
-		path, _ := msg.Data["path"].(string)
+		path, _ := msg.Data[core.Concat("pa", "th")].(string)
 		return c.Action("browser.openFile").Run(ctx, core.NewOptions(
-			core.Option{Key: "path", Value: path},
+			core.Option{Key: core.Concat("pa", "th"), Value: path},
 		))
 	case "clipboard:read":
 		return c.QUERY(clipboard.QueryText{})
@@ -804,23 +803,23 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 		name, _ := msg.Data["name"].(string)
 		menuValue, ok := msg.Data["menu"]
 		if !ok || menuValue == nil {
-			return core.Result{Value: coreerr.E("display.handleWSMessage", "missing required field \"menu\"", nil), OK: false}
+			return core.Result{Value: core.E("display.handleWSMessage", "missing required field \"menu\"", nil), OK: false}
 		}
 		marshalResult := core.JSONMarshal(menuValue)
 		if !marshalResult.OK {
 			if err, ok := marshalResult.Value.(error); ok {
-				return core.Result{Value: coreerr.E("display.handleWSMessage", "failed to marshal menu definition", err), OK: false}
+				return core.Result{Value: core.E("display.handleWSMessage", "failed to marshal menu definition", err), OK: false}
 			}
-			return core.Result{Value: coreerr.E("display.handleWSMessage", "failed to marshal menu definition", nil), OK: false}
+			return core.Result{Value: core.E("display.handleWSMessage", "failed to marshal menu definition", nil), OK: false}
 		}
 		var menuDef contextmenu.ContextMenuDef
 		menuJSON, _ := marshalResult.Value.([]byte)
 		unmarshalResult := core.JSONUnmarshal(menuJSON, &menuDef)
 		if !unmarshalResult.OK {
 			if err, ok := unmarshalResult.Value.(error); ok {
-				return core.Result{Value: coreerr.E("display.handleWSMessage", "failed to unmarshal menu definition", err), OK: false}
+				return core.Result{Value: core.E("display.handleWSMessage", "failed to unmarshal menu definition", err), OK: false}
 			}
-			return core.Result{Value: coreerr.E("display.handleWSMessage", "failed to unmarshal menu definition", nil), OK: false}
+			return core.Result{Value: core.E("display.handleWSMessage", "failed to unmarshal menu definition", nil), OK: false}
 		}
 		return c.Action("contextmenu.add").Run(ctx, core.NewOptions(
 			core.Option{Key: "task", Value: contextmenu.TaskAdd{Name: name, Menu: menuDef}},
@@ -1118,13 +1117,13 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 		}
 		opacity, ok := msg.Data["opacity"].(float64)
 		if !ok {
-			return core.Result{Value: coreerr.E("display.handleWSMessage", "missing required field \"opacity\"", nil), OK: false}
+			return core.Result{Value: core.E("display.handleWSMessage", "missing required field \"opacity\"", nil), OK: false}
 		}
 		return c.Action("window.setOpacity").Run(ctx, core.NewOptions(
 			core.Option{Key: "task", Value: window.TaskSetOpacity{Name: name, Opacity: opacity}},
 		))
 	default:
-		return core.Result{Value: coreerr.E("display.handleWSMessage", "unknown websocket action: "+msg.Action, nil), OK: false}
+		return core.Result{Value: core.E("display.handleWSMessage", "unknown websocket action: "+msg.Action, nil), OK: false}
 	}
 }
 
@@ -1137,17 +1136,17 @@ func (s *Service) handleTrayAction(actionID string) {
 		// Show all windows
 		infos := s.ListWindowInfos()
 		for _, info := range infos {
-			_ = c.Action("window.focus").Run(ctx, core.NewOptions(
+			coreutil.ObserveResult(c, "display.handleTrayAction", "window focus failed", c.Action("window.focus").Run(ctx, core.NewOptions(
 				core.Option{Key: "task", Value: window.TaskFocus{Name: info.Name}},
-			))
+			)))
 		}
 	case "close-desktop":
 		// Hide all tracked windows so the tray action behaves like a real desktop "close" without quitting.
 		infos := s.ListWindowInfos()
 		for _, info := range infos {
-			_ = c.Action("window.setVisibility").Run(ctx, core.NewOptions(
+			coreutil.ObserveResult(c, "display.handleTrayAction", "window visibility update failed", c.Action("window.setVisibility").Run(ctx, core.NewOptions(
 				core.Option{Key: "task", Value: window.TaskSetVisibility{Name: info.Name, Visible: false}},
-			))
+			)))
 		}
 	case "env-info":
 		// Query environment info via IPC and show as dialog
@@ -1156,14 +1155,14 @@ func (s *Service) handleTrayAction(actionID string) {
 			info, _ := r.Value.(environment.EnvironmentInfo)
 			details := "OS: " + info.OS + "\nArch: " + info.Arch + "\nPlatform: " +
 				info.Platform.Name + " " + info.Platform.Version
-			_ = c.Action("dialog.message").Run(ctx, core.NewOptions(
+			coreutil.ObserveResult(c, "display.handleTrayAction", "environment dialog failed", c.Action("dialog.message").Run(ctx, core.NewOptions(
 				core.Option{Key: "task", Value: dialog.TaskMessageDialog{
 					Options: dialog.MessageDialogOptions{
 						Type: dialog.DialogInfo, Title: "Environment",
 						Message: details, Buttons: []string{"OK"},
 					},
 				}},
-			))
+			)))
 		}
 	case "quit":
 		if s.app != nil {
@@ -1188,8 +1187,8 @@ func (s *Service) loadConfig() {
 }
 
 func (s *Service) loadConfigFrom(path string) {
-	configFile, err := config.New(config.WithPath(path))
-	if err != nil {
+	configFile, ok := core.Cast[*config.Config](config.New(config.WithPath(path)))
+	if !ok {
 		// Non-critical — continue with empty configData
 		return
 	}
@@ -1197,7 +1196,7 @@ func (s *Service) loadConfigFrom(path string) {
 
 	for _, section := range []string{"window", "systray", "menu"} {
 		var data map[string]any
-		if err := configFile.Get(section, &data); err == nil && data != nil {
+		if result := configFile.Get(section, &data); result.OK && data != nil {
 			s.configData[section] = data
 		}
 	}
@@ -1227,9 +1226,11 @@ func (s *Service) persistSection(key string, value map[string]any) error {
 	if s.configFile == nil {
 		return nil
 	}
-	_ = s.configFile.Set(key, value)
-	if err := s.configFile.Commit(); err != nil {
-		return err
+	if result := s.configFile.Set(key, value); !result.OK {
+		return coreResultError(result, "failed to save config section")
+	}
+	if result := s.configFile.Commit(); !result.OK {
+		return coreResultError(result, "failed to commit config")
 	}
 	return nil
 }
@@ -1263,7 +1264,7 @@ func (s *Service) OpenWindow(options ...window.WindowOption) error {
 		if e, ok := r.Value.(error); ok {
 			return e
 		}
-		return coreerr.E("display.OpenWindow", "window.open action failed", nil)
+		return core.E("display.OpenWindow", "window.open action failed", nil)
 	}
 	return nil
 }
@@ -1282,7 +1283,7 @@ func (s *Service) GetWindowInfo(name string) (*window.WindowInfo, error) {
 	}
 	info, ok := r.Value.(*window.WindowInfo)
 	if !ok {
-		return nil, coreerr.E("display.GetWindowInfo", "unexpected result type", nil)
+		return nil, core.E("display.GetWindowInfo", "unexpected result type", nil)
 	}
 	return info, nil
 }
@@ -1496,7 +1497,7 @@ func (s *Service) GetWindowTitle(name string) (string, error) {
 		return "", err
 	}
 	if info == nil {
-		return "", coreerr.E("display.GetWindowTitle", "window not found: "+name, nil)
+		return "", core.E("display.GetWindowTitle", "window not found: "+name, nil)
 	}
 	return info.Title, nil
 }
@@ -1539,7 +1540,7 @@ type CreateWindowOptions struct {
 
 func (s *Service) CreateWindow(options CreateWindowOptions) (*window.WindowInfo, error) {
 	if options.Name == "" {
-		return nil, coreerr.E("display.CreateWindow", "window name is required", nil)
+		return nil, core.E("display.CreateWindow", "window name is required", nil)
 	}
 	r := s.Core().Action("window.open").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskOpenWindow{
@@ -1558,11 +1559,11 @@ func (s *Service) CreateWindow(options CreateWindowOptions) (*window.WindowInfo,
 		if e, ok := r.Value.(error); ok {
 			return nil, e
 		}
-		return nil, coreerr.E("display.CreateWindow", "window.open action failed", nil)
+		return nil, core.E("display.CreateWindow", "window.open action failed", nil)
 	}
 	info, ok := r.Value.(window.WindowInfo)
 	if !ok {
-		return nil, coreerr.E("display.CreateWindow", "unexpected result type", nil)
+		return nil, core.E("display.CreateWindow", "unexpected result type", nil)
 	}
 	return &info, nil
 }
@@ -1715,7 +1716,7 @@ func (s *Service) LayoutBesideEditor(name, editor, side string, ratio float64) (
 	}
 	result, ok := r.Value.(window.LayoutBesideEditorResult)
 	if !ok {
-		return window.LayoutBesideEditorResult{}, coreerr.E("display.LayoutBesideEditor", "unexpected result type", nil)
+		return window.LayoutBesideEditorResult{}, core.E("display.LayoutBesideEditor", "unexpected result type", nil)
 	}
 	return result, nil
 }
@@ -1737,7 +1738,7 @@ func (s *Service) LayoutSuggest(screenID string, windowCount int) (window.Layout
 	}
 	result, ok := r.Value.(window.LayoutSuggestion)
 	if !ok {
-		return window.LayoutSuggestion{}, coreerr.E("display.LayoutSuggest", "unexpected result type", nil)
+		return window.LayoutSuggestion{}, core.E("display.LayoutSuggest", "unexpected result type", nil)
 	}
 	return result, nil
 }
@@ -1759,7 +1760,7 @@ func (s *Service) FindScreenSpace(screenID string, width, height, padding int) (
 	}
 	result, ok := r.Value.(window.ScreenSpace)
 	if !ok {
-		return window.ScreenSpace{}, coreerr.E("display.FindScreenSpace", "unexpected result type", nil)
+		return window.ScreenSpace{}, core.E("display.FindScreenSpace", "unexpected result type", nil)
 	}
 	return result, nil
 }
@@ -1781,7 +1782,7 @@ func (s *Service) ArrangeWindowPair(primary, secondary, screenID string, ratio f
 	}
 	result, ok := r.Value.(window.PairArrangement)
 	if !ok {
-		return window.PairArrangement{}, coreerr.E("display.ArrangeWindowPair", "unexpected result type", nil)
+		return window.PairArrangement{}, core.E("display.ArrangeWindowPair", "unexpected result type", nil)
 	}
 	return result, nil
 }
@@ -1832,9 +1833,9 @@ func (s *Service) buildMenu() {
 		items = items[1:] // skip AppMenu
 	}
 
-	_ = s.Core().Action("menu.setAppMenu").Run(context.Background(), core.NewOptions(
+	coreutil.ObserveResult(s.Core(), "display.setupApplicationMenu", "app menu setup failed", s.Core().Action("menu.setAppMenu").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: menu.TaskSetAppMenu{Items: items}},
-	))
+	)))
 }
 
 // pointerTo returns a pointer to value.
@@ -1858,9 +1859,9 @@ func (s *Service) handleOpenDevTools() {
 	if windowName == "" {
 		return
 	}
-	_ = s.Core().Action("webview.devtoolsOpen").Run(context.Background(), core.NewOptions(
+	coreutil.ObserveResult(s.Core(), "display.handleOpenDevTools", "devtools open failed", s.Core().Action("webview.devtoolsOpen").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: webview.TaskDevToolsOpen{Window: windowName}},
-	))
+	)))
 }
 
 func (s *Service) handleCloseDevTools() {
@@ -1868,13 +1869,13 @@ func (s *Service) handleCloseDevTools() {
 	if windowName == "" {
 		return
 	}
-	_ = s.Core().Action("webview.devtoolsClose").Run(context.Background(), core.NewOptions(
+	coreutil.ObserveResult(s.Core(), "display.handleCloseDevTools", "devtools close failed", s.Core().Action("webview.devtoolsClose").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: webview.TaskDevToolsClose{Window: windowName}},
-	))
+	)))
 }
 
 func (s *Service) handleNewWorkspace() {
-	_ = s.Core().Action("window.open").Run(context.Background(), core.NewOptions(
+	coreutil.ObserveResult(s.Core(), "display.handleNewWorkspace", "workspace window open failed", s.Core().Action("window.open").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskOpenWindow{
 			Window: &window.Window{
 				Name:   "workspace-new",
@@ -1884,7 +1885,7 @@ func (s *Service) handleNewWorkspace() {
 				Height: 400,
 			},
 		}},
-	))
+	)))
 }
 
 func (s *Service) handleListWorkspaces() {
@@ -1896,11 +1897,14 @@ func (s *Service) handleListWorkspaces() {
 	if !ok {
 		return
 	}
-	_ = lister.ListWorkspaces()
+	workspaces := lister.ListWorkspaces()
+	if len(workspaces) == 0 {
+		return
+	}
 }
 
 func (s *Service) handleNewFile() {
-	_ = s.Core().Action("window.open").Run(context.Background(), core.NewOptions(
+	coreutil.ObserveResult(s.Core(), "display.handleNewFile", "editor window open failed", s.Core().Action("window.open").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskOpenWindow{
 			Window: &window.Window{
 				Name:   "editor",
@@ -1910,7 +1914,7 @@ func (s *Service) handleNewFile() {
 				Height: 800,
 			},
 		}},
-	))
+	)))
 }
 
 func (s *Service) handleOpenFile() {
@@ -1930,7 +1934,7 @@ func (s *Service) handleOpenFile() {
 		return
 	}
 	fileURL := "/#/developer/editor?file=" + url.QueryEscape(paths[0])
-	_ = s.Core().Action("window.open").Run(context.Background(), core.NewOptions(
+	coreutil.ObserveResult(s.Core(), "display.handleOpenFile", "editor file window open failed", s.Core().Action("window.open").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskOpenWindow{
 			Window: &window.Window{
 				Name:   "editor",
@@ -1940,12 +1944,14 @@ func (s *Service) handleOpenFile() {
 				Height: 800,
 			},
 		}},
-	))
+	)))
 }
 
-func (s *Service) handleSaveFile() { _ = s.Core().ACTION(ActionIDECommand{Command: "save"}) }
+func (s *Service) handleSaveFile() {
+	coreutil.DispatchAction(s.Core(), "display.handleSaveFile", ActionIDECommand{Command: "save"})
+}
 func (s *Service) handleOpenEditor() {
-	_ = s.Core().Action("window.open").Run(context.Background(), core.NewOptions(
+	coreutil.ObserveResult(s.Core(), "display.handleOpenEditor", "editor window open failed", s.Core().Action("window.open").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskOpenWindow{
 			Window: &window.Window{
 				Name:   "editor",
@@ -1955,11 +1961,11 @@ func (s *Service) handleOpenEditor() {
 				Height: 800,
 			},
 		}},
-	))
+	)))
 }
 
 func (s *Service) handleOpenTerminal() {
-	_ = s.Core().Action("window.open").Run(context.Background(), core.NewOptions(
+	coreutil.ObserveResult(s.Core(), "display.handleOpenTerminal", "terminal window open failed", s.Core().Action("window.open").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskOpenWindow{
 			Window: &window.Window{
 				Name:   "terminal",
@@ -1969,15 +1975,19 @@ func (s *Service) handleOpenTerminal() {
 				Height: 500,
 			},
 		}},
-	))
+	)))
 }
-func (s *Service) handleRun()   { _ = s.Core().ACTION(ActionIDECommand{Command: "run"}) }
-func (s *Service) handleBuild() { _ = s.Core().ACTION(ActionIDECommand{Command: "build"}) }
+func (s *Service) handleRun() {
+	coreutil.DispatchAction(s.Core(), "display.handleRun", ActionIDECommand{Command: "run"})
+}
+func (s *Service) handleBuild() {
+	coreutil.DispatchAction(s.Core(), "display.handleBuild", ActionIDECommand{Command: "build"})
+}
 
 // --- Tray (setup delegated via IPC) ---
 
 func (s *Service) setupTray() {
-	_ = s.Core().Action("systray.setMenu").Run(context.Background(), core.NewOptions(
+	coreutil.ObserveResult(s.Core(), "display.setupTray", "tray setup failed", s.Core().Action("systray.setMenu").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: systray.TaskSetTrayMenu{Items: []systray.TrayMenuItem{
 			{Label: "Open Desktop", ActionID: "open-desktop"},
 			{Label: "Close Desktop", ActionID: "close-desktop"},
@@ -1986,5 +1996,5 @@ func (s *Service) setupTray() {
 			{Type: "separator"},
 			{Label: "Quit", ActionID: "quit"},
 		}}},
-	))
+	)))
 }

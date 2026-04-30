@@ -5,8 +5,7 @@ import (
 	"context"
 	"encoding/base64"
 
-	core "dappco.re/go/core"
-	coreerr "dappco.re/go/log"
+	core "dappco.re/go"
 )
 
 type Options struct{}
@@ -60,7 +59,9 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 			}
 			if !s.platform.SetText("") {
 				if hadImage {
-					_ = imgPlatform.SetImage(oldImage)
+					if !imgPlatform.SetImage(oldImage) {
+						return core.Result{Value: false, OK: true}
+					}
 				}
 				return core.Result{Value: false, OK: true}
 			}
@@ -68,7 +69,9 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		}
 		success := s.platform.SetText("")
 		if !success && hadText {
-			_ = s.platform.SetText(oldText)
+			if !s.platform.SetText(oldText) {
+				return core.Result{Value: false, OK: true}
+			}
 		}
 		return core.Result{Value: success, OK: true}
 	}
@@ -127,7 +130,7 @@ func clipboardImageData(opts core.Options) ([]byte, error) {
 	}
 	data, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {
-		return nil, coreerr.E("clipboard.imageData", "invalid base64 image data", err)
+		return nil, core.E("clipboard.imageData", "invalid base64 image data", err)
 	}
 	return data, nil
 }

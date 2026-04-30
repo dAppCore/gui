@@ -2,14 +2,11 @@ package display
 
 import (
 	"net/url"
-	"path/filepath"
 	"sort"
 	"sync" // Note: AX-6 — sync.RWMutex for registry guard, no core wrapper in pinned core module
 	"time"
 
-	core "dappco.re/go/core"
-	coreerr "dappco.re/go/log"
-	gostore "dappco.re/go/store"
+	core "dappco.re/go"
 )
 
 const (
@@ -33,7 +30,7 @@ type StorageEntry struct {
 type StorageRegistry struct {
 	mu      sync.RWMutex
 	entries map[string]StorageEntry
-	store   *gostore.Store
+	store   *storageStore
 }
 
 func NewStorageRegistry() *StorageRegistry {
@@ -43,30 +40,18 @@ func NewStorageRegistry() *StorageRegistry {
 	return registry
 }
 
-func openStorageStore() *gostore.Store {
+func openStorageStore() *storageStore {
 	path := storageDatabasePath()
 	if core.Trim(path) == "" {
 		return nil
 	}
-	if path != ":memory:" {
-		result := (&core.Fs{}).NewUnrestricted().EnsureDir(filepath.Dir(path))
-		if !result.OK {
-			core.Error(
-				"storage registry init failed",
-				"path", path,
-				"step", "mkdir",
-				"err", coreerr.E("display.storage.open", "failed to create storage directory", coreResultError(result, "failed to create storage directory")),
-			)
-			return nil
-		}
-	}
-	storeInstance, err := gostore.New(path)
+	storeInstance, err := newStorageStore(path)
 	if err != nil {
 		core.Error(
 			"storage registry init failed",
-			"path", path,
+			"file_path", path,
 			"step", "open",
-			"err", coreerr.E("display.storage.open", "failed to open storage store", err),
+			"err", core.E("display.storage.open", "failed to open storage store", err),
 		)
 		return nil
 	}
@@ -158,18 +143,19 @@ func (r *StorageRegistry) loadPersistedEntries() {
 	if r.entries == nil {
 		r.entries = make(map[string]StorageEntry)
 	}
-	for entry, err := range r.store.AllSeq("storage") {
-		if err != nil {
-			continue
-		}
+	items, err := r.store.getAll("storage")
+	if err != nil {
+		return
+	}
+	for key, value := range items {
 		var stored StorageEntry
-		if result := core.JSONUnmarshalString(entry.Value, &stored); !result.OK {
-			if origin, bucket, key, ok := decodeStorageCompositeKey(entry.Key); ok {
+		if result := core.JSONUnmarshalString(value, &stored); !result.OK {
+			if origin, bucket, key, ok := decodeStorageCompositeKey(key); ok {
 				stored = StorageEntry{
 					Origin:    origin,
 					Bucket:    bucket,
 					Key:       key,
-					Value:     entry.Value,
+					Value:     value,
 					UpdatedAt: time.Now(),
 				}
 			} else {
@@ -218,7 +204,7 @@ func (r *StorageRegistry) Set(origin, bucket, key, value string) bool {
 		UpdatedAt: time.Now(),
 	}
 	if r.store != nil {
-		if err := r.store.Set("storage", storageCompositeKey(origin, bucket, key), core.JSONMarshalString(entry)); err != nil {
+		if err := r.store.set("storage", storageCompositeKey(origin, bucket, key), core.JSONMarshalString(entry)); err != nil {
 			return false
 		}
 	}
@@ -245,7 +231,7 @@ func (r *StorageRegistry) Delete(origin, bucket, key string) bool {
 	}
 	composite := makeStorageEntryKey(origin, bucket, key)
 	if r.store != nil {
-		if err := r.store.Delete("storage", storageCompositeKey(origin, bucket, key)); err != nil {
+		if err := r.store.delete("storage", storageCompositeKey(origin, bucket, key)); err != nil {
 			return false
 		}
 	}
@@ -389,5 +375,5 @@ func (r *StorageRegistry) Close() error {
 	if r == nil || r.store == nil {
 		return nil
 	}
-	return r.store.Close()
+	return r.store.close()
 }

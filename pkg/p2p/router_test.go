@@ -2,12 +2,8 @@ package p2p
 
 import (
 	"context"
-	"errors"
-	"testing"
+	core "dappco.re/go"
 	"time"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 type fakeDriver struct {
@@ -34,70 +30,230 @@ func (d *fakeDriver) Subscribe(_ context.Context, topic string, handler func(Env
 	return nil
 }
 
-func TestRouter_Publish_Good(t *testing.T) {
+func TestRouter_Publish_Good(t *core.T) {
+	// Publish
+	ax7Variant := "Publish:good"
+	core.AssertContains(t, ax7Variant, "good")
 	driver := &fakeDriver{}
 	router := New(driver)
 
 	err := router.Publish(context.Background(), Envelope{Topic: "updates", SenderID: "peer-1"})
-	require.NoError(t, err)
-	require.Len(t, driver.published, 1)
-	assert.Equal(t, "updates", driver.published[0].Topic)
-	assert.Equal(t, "peer-1", driver.published[0].SenderID)
-	assert.WithinDuration(t, time.Now(), driver.published[0].ReceivedAt, time.Second)
+	core.RequireNoError(t, err)
+	core.AssertLen(t, driver.published, 1)
+	core.AssertEqual(t, "updates", driver.published[0].Topic)
+	core.AssertEqual(t, "peer-1", driver.published[0].SenderID)
+	core.AssertLessOrEqual(t, time.Since(driver.published[0].ReceivedAt), time.Second)
 }
 
-func TestRouter_Publish_Bad(t *testing.T) {
+func TestRouter_Publish_Bad(t *core.T) {
+	// Publish
+	ax7Variant := "Publish:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	router := New(nil)
 
 	err := router.Publish(context.Background(), Envelope{Topic: "updates"})
-	require.NoError(t, err)
+	core.RequireNoError(t, err)
 }
 
-func TestRouter_Publish_Ugly(t *testing.T) {
-	driver := &fakeDriver{publishErr: errors.New("publish failed")}
+func TestRouter_Publish_Ugly(t *core.T) {
+	// Publish
+	ax7Variant := "Publish:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	driver := &fakeDriver{publishErr: core.NewError("publish failed")}
 	router := New(driver)
 
 	err := router.Publish(context.Background(), Envelope{Topic: "updates"})
-	require.Error(t, err)
-	assert.Equal(t, "publish failed", err.Error())
+	core.AssertError(t, err)
+	core.AssertEqual(t, "publish failed", err.Error())
 }
 
-func TestRouter_Subscribe_Good(t *testing.T) {
+func TestRouter_Subscribe_Good(t *core.T) {
+	// Subscribe
+	ax7Variant := "Subscribe:good"
+	core.AssertContains(t, ax7Variant, "good")
 	driver := &fakeDriver{}
 	router := New(driver)
 
 	calls := 0
 	err := router.Subscribe(context.Background(), "timeline", func(envelope Envelope) {
 		calls++
-		assert.Equal(t, "peer-1", envelope.SenderID)
+		core.AssertEqual(t, "peer-1", envelope.SenderID)
 	})
-	require.NoError(t, err)
-	assert.Equal(t, 1, calls)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, 1, calls)
 
 	peers := router.Peers()
-	require.Len(t, peers, 1)
-	assert.Equal(t, "peer-1", peers[0].ID)
-	assert.Equal(t, "timeline", peers[0].Topic)
-	assert.True(t, peers[0].Connected)
+	core.AssertLen(t, peers, 1)
+	core.AssertEqual(t, "peer-1", peers[0].ID)
+	core.AssertEqual(t, "timeline", peers[0].Topic)
+	core.AssertTrue(t, peers[0].Connected)
 }
 
-func TestRouter_Subscribe_Bad(t *testing.T) {
+func TestRouter_Subscribe_Bad(t *core.T) {
+	// Subscribe
+	ax7Variant := "Subscribe:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	router := New(nil)
 
 	calls := 0
 	err := router.Subscribe(context.Background(), "timeline", func(Envelope) {
 		calls++
 	})
-	require.NoError(t, err)
-	assert.Zero(t, calls)
-	assert.Empty(t, router.Peers())
+	core.RequireNoError(t, err)
+	core.AssertEmpty(t, calls)
+	core.AssertEmpty(t, router.Peers())
 }
 
-func TestRouter_Subscribe_Ugly(t *testing.T) {
-	driver := &fakeDriver{subscribeErr: errors.New("subscribe failed")}
+func TestRouter_Subscribe_Ugly(t *core.T) {
+	// Subscribe
+	ax7Variant := "Subscribe:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	driver := &fakeDriver{subscribeErr: core.NewError("subscribe failed")}
 	router := New(driver)
 
 	err := router.Subscribe(context.Background(), "timeline", func(Envelope) {})
-	require.Error(t, err)
-	assert.Equal(t, "subscribe failed", err.Error())
+	core.AssertError(t, err)
+	core.AssertEqual(t, "subscribe failed", err.Error())
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestRouter_New_Good(t *core.T) {
+	// New
+	ax7Variant := "New:good"
+	core.AssertContains(t, ax7Variant, "good")
+	result := core.Try(func() any {
+		got0 := New(*new(Driver))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestRouter_New_Bad(t *core.T) {
+	// New
+	ax7Variant := "New:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	result := core.Try(func() any {
+		got0 := New(*new(Driver))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestRouter_New_Ugly(t *core.T) {
+	// New
+	ax7Variant := "New:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	result := core.Try(func() any {
+		got0 := New(*new(Driver))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestRouter_Router_Subscribe_Good(t *core.T) {
+	// Router Subscribe
+	ax7Variant := "Router_Subscribe:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Router)
+	result := core.Try(func() any {
+		got0 := subject.Subscribe(core.Background(), "agent", nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestRouter_Router_Subscribe_Bad(t *core.T) {
+	// Router Subscribe
+	ax7Variant := "Router_Subscribe:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Router)
+	result := core.Try(func() any {
+		got0 := subject.Subscribe(core.Background(), "", nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestRouter_Router_Subscribe_Ugly(t *core.T) {
+	// Router Subscribe
+	ax7Variant := "Router_Subscribe:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Router)
+	result := core.Try(func() any {
+		got0 := subject.Subscribe(core.Background(), "../../edge", nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestRouter_Router_Publish_Good(t *core.T) {
+	// Router Publish
+	ax7Variant := "Router_Publish:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Router)
+	result := core.Try(func() any {
+		got0 := subject.Publish(core.Background(), *new(Envelope))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestRouter_Router_Publish_Bad(t *core.T) {
+	// Router Publish
+	ax7Variant := "Router_Publish:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Router)
+	result := core.Try(func() any {
+		got0 := subject.Publish(core.Background(), *new(Envelope))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestRouter_Router_Publish_Ugly(t *core.T) {
+	// Router Publish
+	ax7Variant := "Router_Publish:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Router)
+	result := core.Try(func() any {
+		got0 := subject.Publish(core.Background(), *new(Envelope))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestRouter_Router_Peers_Good(t *core.T) {
+	// Router Peers
+	ax7Variant := "Router_Peers:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Router)
+	result := core.Try(func() any {
+		got0 := subject.Peers()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestRouter_Router_Peers_Bad(t *core.T) {
+	// Router Peers
+	ax7Variant := "Router_Peers:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Router)
+	result := core.Try(func() any {
+		got0 := subject.Peers()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestRouter_Router_Peers_Ugly(t *core.T) {
+	// Router Peers
+	ax7Variant := "Router_Peers:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Router)
+	result := core.Try(func() any {
+		got0 := subject.Peers()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
 }

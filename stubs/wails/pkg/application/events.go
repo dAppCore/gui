@@ -177,7 +177,7 @@ func invokeCustomEventListener(listener *customEventListener, event *CustomEvent
 	}
 
 	defer func() {
-		_ = recover()
+		recover()
 	}()
 	listener.callback(event)
 }

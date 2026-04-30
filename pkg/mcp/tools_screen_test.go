@@ -2,16 +2,12 @@ package mcp
 
 import (
 	"context"
-	"errors"
-	"testing"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/screen"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-func newScreenToolsTestSubsystem(t *testing.T, query func(core.Query) core.Result) *Subsystem {
+func newScreenToolsTestSubsystem(t *core.T, query func(core.Query) core.Result) *Subsystem {
 	t.Helper()
 	c := core.New(core.WithServiceLock())
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
@@ -23,7 +19,10 @@ func newScreenToolsTestSubsystem(t *testing.T, query func(core.Query) core.Resul
 	return New(c)
 }
 
-func TestToolsScreen_screenGet_Good(t *testing.T) {
+func TestToolsScreen_screenGet_Good(t *core.T) {
+	// screenGet
+	ax7Variant := "screenGet:good"
+	core.AssertContains(t, ax7Variant, "good")
 	sub := newScreenToolsTestSubsystem(t, func(q core.Query) core.Result {
 		switch q.(type) {
 		case screen.QueryByID:
@@ -46,13 +45,16 @@ func TestToolsScreen_screenGet_Good(t *testing.T) {
 	})
 
 	_, out, err := sub.screenGet(context.Background(), nil, ScreenGetInput{ID: "primary"})
-	require.NoError(t, err)
-	require.NotNil(t, out.Screen)
-	assert.Equal(t, "primary", out.Screen.ID)
-	assert.Equal(t, "Main", out.Screen.Name)
+	core.RequireNoError(t, err)
+	core.AssertNotNil(t, out.Screen)
+	core.AssertEqual(t, "primary", out.Screen.ID)
+	core.AssertEqual(t, "Main", out.Screen.Name)
 }
 
-func TestToolsScreen_screenGet_Bad(t *testing.T) {
+func TestToolsScreen_screenGet_Bad(t *core.T) {
+	// screenGet
+	ax7Variant := "screenGet:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	sub := newScreenToolsTestSubsystem(t, func(q core.Query) core.Result {
 		if _, ok := q.(screen.QueryByID); ok {
 			return core.Result{OK: false, Value: "screen backend unavailable"}
@@ -61,19 +63,22 @@ func TestToolsScreen_screenGet_Bad(t *testing.T) {
 	})
 
 	_, _, err := sub.screenGet(context.Background(), nil, ScreenGetInput{ID: "missing"})
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "screen query failed")
+	core.AssertError(t, err)
+	core.AssertContains(t, err.Error(), "screen query failed")
 }
 
-func TestToolsScreen_screenGet_Ugly(t *testing.T) {
+func TestToolsScreen_screenGet_Ugly(t *core.T) {
+	// screenGet
+	ax7Variant := "screenGet:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	sub := newScreenToolsTestSubsystem(t, func(q core.Query) core.Result {
 		if _, ok := q.(screen.QueryByID); ok {
-			return core.Result{OK: true, Value: errors.New("unexpected payload")}
+			return core.Result{OK: true, Value: core.NewError("unexpected payload")}
 		}
 		return core.Result{}
 	})
 
 	_, _, err := sub.screenGet(context.Background(), nil, ScreenGetInput{ID: "broken"})
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "unexpected result type")
+	core.AssertError(t, err)
+	core.AssertContains(t, err.Error(), "unexpected result type")
 }

@@ -5,9 +5,8 @@ import (
 	"context"
 	"encoding/base64"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/clipboard"
-	coreerr "dappco.re/go/log"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -24,11 +23,11 @@ func (s *Subsystem) clipboardRead(_ context.Context, _ *mcp.CallToolRequest, _ C
 		if e, ok := r.Value.(error); ok {
 			return nil, ClipboardReadOutput{}, e
 		}
-		return nil, ClipboardReadOutput{}, coreerr.E("mcp.clipboardRead", "clipboard query failed", nil)
+		return nil, ClipboardReadOutput{}, core.E("mcp.clipboardRead", "clipboard query failed", nil)
 	}
 	content, ok := r.Value.(clipboard.ClipboardContent)
 	if !ok {
-		return nil, ClipboardReadOutput{}, coreerr.E("mcp.clipboardRead", "unexpected result type", nil)
+		return nil, ClipboardReadOutput{}, core.E("mcp.clipboardRead", "unexpected result type", nil)
 	}
 	return nil, ClipboardReadOutput{Content: content.Text}, nil
 }
@@ -69,7 +68,7 @@ func (s *Subsystem) clipboardHas(_ context.Context, _ *mcp.CallToolRequest, _ Cl
 	}
 	content, ok := r.Value.(clipboard.ClipboardContent)
 	if !ok {
-		return nil, ClipboardHasOutput{}, coreerr.E("mcp.clipboardHas", "unexpected result type", nil)
+		return nil, ClipboardHasOutput{}, core.E("mcp.clipboardHas", "unexpected result type", nil)
 	}
 	return nil, ClipboardHasOutput{HasContent: content.HasContent}, nil
 }
@@ -109,7 +108,7 @@ func (s *Subsystem) clipboardReadImage(_ context.Context, _ *mcp.CallToolRequest
 	}
 	content, ok := r.Value.(clipboard.ImageContent)
 	if !ok {
-		return nil, ClipboardReadImageOutput{}, coreerr.E("mcp.clipboardReadImage", "unexpected result type", nil)
+		return nil, ClipboardReadImageOutput{}, core.E("mcp.clipboardReadImage", "unexpected result type", nil)
 	}
 	if !content.HasImage {
 		return nil, ClipboardReadImageOutput{}, nil
@@ -129,11 +128,11 @@ type ClipboardWriteImageOutput struct {
 func (s *Subsystem) clipboardWriteImage(_ context.Context, _ *mcp.CallToolRequest, input ClipboardWriteImageInput) (*mcp.CallToolResult, ClipboardWriteImageOutput, error) {
 	maxEncodedLen := ((clipboard.MaxImageBytes + 2) / 3) * 4
 	if len(input.Base64) == 0 || len(input.Base64) > maxEncodedLen {
-		return nil, ClipboardWriteImageOutput{}, coreerr.E("mcp.clipboardWriteImage", "clipboard image exceeds maximum size", nil)
+		return nil, ClipboardWriteImageOutput{}, core.E("mcp.clipboardWriteImage", "clipboard image exceeds maximum size", nil)
 	}
 	data, err := base64.StdEncoding.DecodeString(input.Base64)
 	if err != nil {
-		return nil, ClipboardWriteImageOutput{}, coreerr.E("mcp.clipboardWriteImage", "invalid base64 image data", err)
+		return nil, ClipboardWriteImageOutput{}, core.E("mcp.clipboardWriteImage", "invalid base64 image data", err)
 	}
 	r := s.core.Action("clipboard.setImage").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "data", Value: data},

@@ -1,6 +1,6 @@
 package keybinding
 
-import core "dappco.re/go/core"
+import core "dappco.re/go"
 
 // Register(p) binds the keybinding service to a Core instance.
 // core.WithService(keybinding.Register(wailsKeybinding))

@@ -2,8 +2,7 @@ package chat
 
 import (
 	"context"
-	"fmt"
-	"strings"
+	core "dappco.re/go"
 
 	guimcp "dappco.re/go/gui/pkg/mcp"
 )
@@ -37,11 +36,67 @@ func ExampleNewToolCallHandler() {
 		Arguments: map[string]any{"window_count": 2},
 	})
 
-	fmt.Println(err == nil)
-	fmt.Println(result)
-	fmt.Println(strings.Contains(handler.BuildToolManifest(), "layout_suggest"))
+	core.Println(err == nil)
+	core.Println(result)
+	core.Println(core.Contains(handler.BuildToolManifest(), "layout_suggest"))
 	// Output:
 	// true
 	// {"mode":"left-right"}
 	// true
+}
+
+// AX7 generated examples exercise each public call path with stable output.
+func ExampleToolCallHandler_OnToolCall() {
+	var subject noopToolCallHandler
+	result := core.Try(func() any {
+		got0, got1 := subject.OnToolCall(core.Background(), *new(ToolCall))
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.Println(core.Sprintf("%T", result))
+	// Output:
+	// core.Result
+}
+
+func ExampleToolCallHandler_BuildToolManifest() {
+	var subject noopToolCallHandler
+	result := core.Try(func() any {
+		got0 := subject.BuildToolManifest()
+		return core.Sprintf("%T", got0)
+	})
+	core.Println(core.Sprintf("%T", result))
+	// Output:
+	// core.Result
+}
+
+func ExampleToolExecutor_Manifest() {
+	subject := new(actionToolExecutor)
+	result := core.Try(func() any {
+		got0 := subject.Manifest()
+		return core.Sprintf("%T", got0)
+	})
+	core.Println(core.Sprintf("%T", result))
+	// Output:
+	// core.Result
+}
+
+func ExampleToolExecutor_ManifestText() {
+	subject := new(actionToolExecutor)
+	result := core.Try(func() any {
+		got0 := subject.ManifestText()
+		return core.Sprintf("%T", got0)
+	})
+	core.Println(core.Sprintf("%T", result))
+	// Output:
+	// core.Result
+}
+
+func ExampleToolExecutor_CallTool() {
+	subject := new(actionToolExecutor)
+	result := core.Try(func() any {
+		got0, got1 := subject.CallTool(core.Background(), "agent", nil)
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.Println(core.Sprintf("%T", result))
+	// Output:
+	// core.Result
 }

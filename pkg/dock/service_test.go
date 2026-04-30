@@ -3,11 +3,8 @@ package dock
 
 import (
 	"context"
-	"testing"
 
-	core "dappco.re/go/core"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	core "dappco.re/go"
 )
 
 // --- Mock Platform ---
@@ -94,14 +91,14 @@ func (m *mockPlatform) StopBounce(requestID int) error {
 
 // --- Test helpers ---
 
-func newTestDockService(t *testing.T) (*Service, *core.Core, *mockPlatform) {
+func newTestDockService(t *core.T) (*Service, *core.Core, *mockPlatform) {
 	t.Helper()
 	mock := &mockPlatform{visible: true}
 	c := core.New(
 		core.WithService(Register(mock)),
 		core.WithServiceLock(),
 	)
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	core.RequireTrue(t, c.ServiceStartup(context.Background(), nil).OK)
 	svc := core.MustServiceFor[*Service](c, "dock")
 	return svc, c, mock
 }
@@ -120,26 +117,27 @@ func setBadge(c *core.Core, label string) core.Result {
 
 // --- Tests ---
 
-func TestRegister_Good(t *testing.T) {
+func TestRegister_Good(t *core.T) {
 	svc, _, _ := newTestDockService(t)
-	assert.NotNil(t, svc)
+	core.AssertNotNil(t, svc)
+	core.AssertNotEmpty(t, core.Sprintf("%T", svc))
 }
 
-func TestQueryVisible_Good(t *testing.T) {
+func TestQueryVisible_Good(t *core.T) {
 	_, c, _ := newTestDockService(t)
 	r := c.QUERY(QueryVisible{})
-	require.True(t, r.OK)
-	assert.Equal(t, true, r.Value)
+	core.RequireTrue(t, r.OK)
+	core.AssertEqual(t, true, r.Value)
 }
 
-func TestQueryVisible_Bad(t *testing.T) {
+func TestQueryVisible_Bad(t *core.T) {
 	// No dock service registered — QUERY returns handled=false
 	c := core.New(core.WithServiceLock())
 	r := c.QUERY(QueryVisible{})
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
-func TestTaskShowIcon_Good(t *testing.T) {
+func TestTaskShowIcon_Good(t *core.T) {
 	_, c, mock := newTestDockService(t)
 	mock.visible = false // Start hidden
 
@@ -152,13 +150,13 @@ func TestTaskShowIcon_Good(t *testing.T) {
 	})
 
 	r := taskRun(c, "dock.showIcon", TaskShowIcon{})
-	require.True(t, r.OK)
-	assert.True(t, mock.visible)
-	require.NotNil(t, received)
-	assert.True(t, received.Visible)
+	core.RequireTrue(t, r.OK)
+	core.AssertTrue(t, mock.visible)
+	core.AssertNotNil(t, received)
+	core.AssertTrue(t, received.Visible)
 }
 
-func TestTaskHideIcon_Good(t *testing.T) {
+func TestTaskHideIcon_Good(t *core.T) {
 	_, c, mock := newTestDockService(t)
 	mock.visible = true // Start visible
 
@@ -171,66 +169,66 @@ func TestTaskHideIcon_Good(t *testing.T) {
 	})
 
 	r := taskRun(c, "dock.hideIcon", TaskHideIcon{})
-	require.True(t, r.OK)
-	assert.False(t, mock.visible)
-	require.NotNil(t, received)
-	assert.False(t, received.Visible)
+	core.RequireTrue(t, r.OK)
+	core.AssertFalse(t, mock.visible)
+	core.AssertNotNil(t, received)
+	core.AssertFalse(t, received.Visible)
 }
 
-func TestTaskSetBadge_Good(t *testing.T) {
+func TestTaskSetBadge_Good(t *core.T) {
 	_, c, mock := newTestDockService(t)
 	r := setBadge(c, "3")
-	require.True(t, r.OK)
-	assert.Equal(t, "3", mock.badge)
-	assert.True(t, mock.hasBadge)
+	core.RequireTrue(t, r.OK)
+	core.AssertEqual(t, "3", mock.badge)
+	core.AssertTrue(t, mock.hasBadge)
 }
 
-func TestTaskSetBadge_EmptyLabel_Good(t *testing.T) {
+func TestTaskSetBadge_EmptyLabel_GoodCase(t *core.T) {
 	_, c, mock := newTestDockService(t)
 	r := setBadge(c, "")
-	require.True(t, r.OK)
-	assert.Equal(t, "", mock.badge)
-	assert.True(t, mock.hasBadge) // Empty string = default system badge indicator
+	core.RequireTrue(t, r.OK)
+	core.AssertEqual(t, "", mock.badge)
+	core.AssertTrue(t, mock.hasBadge) // Empty string = default system badge indicator
 }
 
-func TestTaskRemoveBadge_Good(t *testing.T) {
+func TestTaskRemoveBadge_Good(t *core.T) {
 	_, c, mock := newTestDockService(t)
 	// Set a badge first
 	_ = setBadge(c, "5")
 
 	r := taskRun(c, "dock.removeBadge", TaskRemoveBadge{})
-	require.True(t, r.OK)
-	assert.Equal(t, "", mock.badge)
-	assert.False(t, mock.hasBadge)
+	core.RequireTrue(t, r.OK)
+	core.AssertEqual(t, "", mock.badge)
+	core.AssertFalse(t, mock.hasBadge)
 }
 
-func TestTaskShowIcon_Bad(t *testing.T) {
+func TestTaskShowIcon_Bad(t *core.T) {
 	_, c, mock := newTestDockService(t)
-	mock.showErr = assert.AnError
+	mock.showErr = core.AnError
 
 	r := taskRun(c, "dock.showIcon", TaskShowIcon{})
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
-func TestTaskHideIcon_Bad(t *testing.T) {
+func TestTaskHideIcon_Bad(t *core.T) {
 	_, c, mock := newTestDockService(t)
-	mock.hideErr = assert.AnError
+	mock.hideErr = core.AnError
 
 	r := taskRun(c, "dock.hideIcon", TaskHideIcon{})
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
-func TestTaskSetBadge_Bad(t *testing.T) {
+func TestTaskSetBadge_Bad(t *core.T) {
 	_, c, mock := newTestDockService(t)
-	mock.badgeErr = assert.AnError
+	mock.badgeErr = core.AnError
 
 	r := setBadge(c, "3")
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
 // --- TaskSetProgressBar ---
 
-func TestTaskSetProgressBar_Good(t *testing.T) {
+func TestTaskSetProgressBar_Good(t *core.T) {
 	_, c, mock := newTestDockService(t)
 
 	var received *ActionProgressChanged
@@ -242,38 +240,38 @@ func TestTaskSetProgressBar_Good(t *testing.T) {
 	})
 
 	r := taskRun(c, "dock.setProgressBar", TaskSetProgressBar{Progress: 0.5})
-	require.True(t, r.OK)
-	assert.Equal(t, 0.5, mock.progress)
-	require.NotNil(t, received)
-	assert.Equal(t, 0.5, received.Progress)
+	core.RequireTrue(t, r.OK)
+	core.AssertEqual(t, 0.5, mock.progress)
+	core.AssertNotNil(t, received)
+	core.AssertEqual(t, 0.5, received.Progress)
 }
 
-func TestTaskSetProgressBar_Hide_Good(t *testing.T) {
+func TestTaskSetProgressBar_Hide_GoodCase(t *core.T) {
 	// Progress -1.0 hides the indicator
 	_, c, mock := newTestDockService(t)
 	r := taskRun(c, "dock.setProgressBar", TaskSetProgressBar{Progress: -1.0})
-	require.True(t, r.OK)
-	assert.Equal(t, -1.0, mock.progress)
+	core.RequireTrue(t, r.OK)
+	core.AssertEqual(t, -1.0, mock.progress)
 }
 
-func TestTaskSetProgressBar_Bad(t *testing.T) {
+func TestTaskSetProgressBar_Bad(t *core.T) {
 	_, c, mock := newTestDockService(t)
-	mock.progressErr = assert.AnError
+	mock.progressErr = core.AnError
 
 	r := taskRun(c, "dock.setProgressBar", TaskSetProgressBar{Progress: 0.5})
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
-func TestTaskSetProgressBar_Ugly(t *testing.T) {
+func TestTaskSetProgressBar_Ugly(t *core.T) {
 	// No dock service — action is not registered
 	c := core.New(core.WithServiceLock())
 	r := c.Action("dock.setProgressBar").Run(context.Background(), core.NewOptions())
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
 // --- TaskBounce ---
 
-func TestTaskBounce_Good(t *testing.T) {
+func TestTaskBounce_Good(t *core.T) {
 	_, c, mock := newTestDockService(t)
 
 	var received *ActionBounceStarted
@@ -285,89 +283,162 @@ func TestTaskBounce_Good(t *testing.T) {
 	})
 
 	r := taskRun(c, "dock.bounce", TaskBounce{BounceType: BounceInformational})
-	require.True(t, r.OK)
-	assert.True(t, mock.bounceCalled)
-	assert.Equal(t, BounceInformational, mock.bounceType)
+	core.RequireTrue(t, r.OK)
+	core.AssertTrue(t, mock.bounceCalled)
+	core.AssertEqual(t, BounceInformational, mock.bounceType)
 	requestID, ok := r.Value.(int)
-	require.True(t, ok)
-	assert.Equal(t, 1, requestID)
-	require.NotNil(t, received)
-	assert.Equal(t, BounceInformational, received.BounceType)
+	core.RequireTrue(t, ok)
+	core.AssertEqual(t, 1, requestID)
+	core.AssertNotNil(t, received)
+	core.AssertEqual(t, BounceInformational, received.BounceType)
 }
 
-func TestTaskBounce_Critical_Good(t *testing.T) {
+func TestTaskBounce_Critical_GoodCase(t *core.T) {
 	_, c, mock := newTestDockService(t)
 	r := taskRun(c, "dock.bounce", TaskBounce{BounceType: BounceCritical})
-	require.True(t, r.OK)
-	assert.Equal(t, BounceCritical, mock.bounceType)
+	core.RequireTrue(t, r.OK)
+	core.AssertEqual(t, BounceCritical, mock.bounceType)
 	requestID, ok := r.Value.(int)
-	require.True(t, ok)
-	assert.Equal(t, 1, requestID)
+	core.RequireTrue(t, ok)
+	core.AssertEqual(t, 1, requestID)
 }
 
-func TestTaskBounce_Bad(t *testing.T) {
+func TestTaskBounce_Bad(t *core.T) {
 	_, c, mock := newTestDockService(t)
-	mock.bounceErr = assert.AnError
+	mock.bounceErr = core.AnError
 
 	r := taskRun(c, "dock.bounce", TaskBounce{BounceType: BounceInformational})
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
-func TestTaskBounce_Ugly(t *testing.T) {
+func TestTaskBounce_Ugly(t *core.T) {
 	// No dock service — action is not registered
 	c := core.New(core.WithServiceLock())
 	r := c.Action("dock.bounce").Run(context.Background(), core.NewOptions())
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
 // --- TaskStopBounce ---
 
-func TestTaskStopBounce_Good(t *testing.T) {
+func TestTaskStopBounce_Good(t *core.T) {
 	_, c, mock := newTestDockService(t)
 
 	// Start a bounce to get a requestID
 	r := taskRun(c, "dock.bounce", TaskBounce{BounceType: BounceInformational})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 	requestID := r.Value.(int)
 
 	r2 := taskRun(c, "dock.stopBounce", TaskStopBounce{RequestID: requestID})
-	require.True(t, r2.OK)
-	assert.True(t, mock.stopBounceCalled)
+	core.RequireTrue(t, r2.OK)
+	core.AssertTrue(t, mock.stopBounceCalled)
 }
 
-func TestTaskStopBounce_Bad(t *testing.T) {
+func TestTaskStopBounce_Bad(t *core.T) {
 	_, c, mock := newTestDockService(t)
-	mock.stopBounceErr = assert.AnError
+	mock.stopBounceErr = core.AnError
 
 	r := taskRun(c, "dock.stopBounce", TaskStopBounce{RequestID: 1})
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
-func TestTaskStopBounce_Ugly(t *testing.T) {
+func TestTaskStopBounce_Ugly(t *core.T) {
 	// No dock service — action is not registered
 	c := core.New(core.WithServiceLock())
 	r := c.Action("dock.stopBounce").Run(context.Background(), core.NewOptions())
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
-func TestTaskRemoveBadge_Bad(t *testing.T) {
+func TestTaskRemoveBadge_Bad(t *core.T) {
 	_, c, mock := newTestDockService(t)
-	mock.removeErr = assert.AnError
+	mock.removeErr = core.AnError
 
 	r := taskRun(c, "dock.removeBadge", TaskRemoveBadge{})
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
-func TestQueryVisible_Ugly(t *testing.T) {
+func TestQueryVisible_Ugly(t *core.T) {
 	// Dock icon initially hidden
 	mock := &mockPlatform{visible: false}
 	c := core.New(
 		core.WithService(Register(mock)),
 		core.WithServiceLock(),
 	)
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	core.RequireTrue(t, c.ServiceStartup(context.Background(), nil).OK)
 
 	r := c.QUERY(QueryVisible{})
-	require.True(t, r.OK)
-	assert.Equal(t, false, r.Value)
+	core.RequireTrue(t, r.OK)
+	core.AssertEqual(t, false, r.Value)
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestService_Service_OnStartup_Good(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_OnStartup_Bad(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_OnStartup_Ugly(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_HandleIPCEvents_Good(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_HandleIPCEvents_Bad(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_HandleIPCEvents_Ugly(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
 }

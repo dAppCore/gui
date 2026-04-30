@@ -1,14 +1,12 @@
 package application
 
 import (
-	"fmt"
 	"reflect"
 	"slices"
 	"sync"
 	"sync/atomic"
 
-	"encoding/json"
-
+	core "dappco.re/go"
 	"github.com/wailsapp/wails/v3/pkg/events"
 )
 
@@ -68,7 +66,7 @@ func (e *CustomEvent) IsCancelled() bool {
 }
 
 func (e *CustomEvent) ToJSON() string {
-	marshal, err := json.Marshal(&e)
+	marshal, err := jsonMarshal(&e)
 	if err != nil {
 		// TODO: Fatal error? log?
 		return ""
@@ -297,10 +295,10 @@ var voidType = reflect.TypeFor[Void]()
 // Indirect calls or instantiations are not discoverable by the binding generator.
 func RegisterEvent[Data any](name string) {
 	if events.IsKnownEvent(name) {
-		panic(fmt.Errorf("'%s' is a known system event name", name))
+		panic(core.Errorf("'%s' is a known system event name", name))
 	}
 	if typ, ok := registeredEvents.Load(name); ok {
-		panic(fmt.Errorf("event '%s' is already registered with data type %s", name, typ))
+		panic(core.Errorf("event '%s' is already registered with data type %s", name, typ))
 	}
 
 	registeredEvents.Store(name, reflect.TypeFor[Data]())
@@ -330,7 +328,7 @@ func validateCustomEvent(event *CustomEvent) error {
 		}
 	}
 
-	return fmt.Errorf(
+	return core.Errorf(
 		"data of type %s for event '%s' does not match registered data type %s",
 		reflect.TypeOf(event.Data),
 		event.Name,
@@ -342,7 +340,7 @@ func decodeEventData(name string, data []byte) (result any, err error) {
 	r, ok := registeredEvents.Load(name)
 	if !ok {
 		// Unregistered events unmarshal to any.
-		err = json.Unmarshal(data, &result)
+		err = jsonUnmarshal(data, &result)
 		return
 	}
 
@@ -350,13 +348,13 @@ func decodeEventData(name string, data []byte) (result any, err error) {
 
 	if typ == voidType {
 		// When typ is voidType, perform a null check
-		err = json.Unmarshal(data, &result)
+		err = jsonUnmarshal(data, &result)
 		if err == nil && result != nil {
-			err = fmt.Errorf("non-null data for event '%s' does not match registered data type %s", name, typ)
+			err = core.Errorf("non-null data for event '%s' does not match registered data type %s", name, typ)
 		}
 	} else {
 		value := reflect.New(typ.(reflect.Type))
-		err = json.Unmarshal(data, value.Interface())
+		err = jsonUnmarshal(data, value.Interface())
 		if err == nil {
 			result = value.Elem().Interface()
 		}

@@ -4,12 +4,10 @@ import (
 	"bufio"
 	"io"
 	"slices"
-	"strings"
 	"time"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/internal/textutil"
-	coreerr "dappco.re/go/log"
 )
 
 type StreamCallbacks struct {
@@ -25,8 +23,8 @@ type StreamCallbacks struct {
 type StreamRenderer struct {
 	callbacks      StreamCallbacks
 	now            func() time.Time
-	content        strings.Builder
-	thinking       strings.Builder
+	content        streamBuilder
+	thinking       streamBuilder
 	thinkingState  ThinkingState
 	toolCalls      map[int]*streamToolCall
 	parsedToolArgs map[int]map[string]any
@@ -39,7 +37,23 @@ type StreamRenderer struct {
 type streamToolCall struct {
 	ID        string
 	Name      string
-	Arguments strings.Builder
+	Arguments streamBuilder
+}
+
+type streamBuilder struct {
+	value string
+}
+
+func (b *streamBuilder) writeString(value string) {
+	b.value += value
+}
+
+func (b *streamBuilder) string() string {
+	return b.value
+}
+
+func (b *streamBuilder) len() int {
+	return len(b.value)
 }
 
 type streamChunk struct {
@@ -83,21 +97,21 @@ func (r *StreamRenderer) Render(reader io.Reader) error {
 		if len(dataLines) == 0 {
 			return nil
 		}
-		payload := strings.Join(dataLines, "\n")
+		payload := core.Join("\n", dataLines...)
 		dataLines = nil
 		return r.handleData(payload)
 	}
 
 	for scanner.Scan() {
 		line := scanner.Text()
-		if strings.TrimSpace(line) == "" {
+		if core.Trim(line) == "" {
 			if err := flush(); err != nil {
 				return err
 			}
 			continue
 		}
-		if strings.HasPrefix(line, "data:") {
-			dataLines = append(dataLines, strings.TrimSpace(strings.TrimPrefix(line, "data:")))
+		if core.HasPrefix(line, "data:") {
+			dataLines = append(dataLines, core.Trim(core.TrimPrefix(line, "data:")))
 		}
 	}
 	if err := scanner.Err(); err != nil {
@@ -133,7 +147,7 @@ func (r *StreamRenderer) handleData(payload string) error {
 		if err, ok := result.Value.(error); ok {
 			return err
 		}
-		return coreerr.E("chat.StreamRenderer.handleData", "failed to decode stream chunk", nil)
+		return core.E("chat.StreamRenderer.handleData", "failed to decode stream chunk", nil)
 	}
 	if !r.started {
 		r.started = true
@@ -151,7 +165,7 @@ func (r *StreamRenderer) handleData(payload string) error {
 		}
 		if delta.Content != "" {
 			r.completeThinking()
-			r.content.WriteString(delta.Content)
+			r.content.writeString(delta.Content)
 			if r.callbacks.OnToken != nil {
 				r.callbacks.OnToken(delta.Content)
 			}
@@ -179,7 +193,7 @@ func (r *StreamRenderer) appendThinking(content string) {
 			r.callbacks.OnThinkingStart(r.thinkingState)
 		}
 	}
-	r.thinking.WriteString(content)
+	r.thinking.writeString(content)
 	if r.callbacks.OnThinkingAppend != nil {
 		r.callbacks.OnThinkingAppend(content)
 	}
@@ -190,7 +204,7 @@ func (r *StreamRenderer) completeThinking() {
 		return
 	}
 	r.thinkingState.Active = false
-	r.thinkingState.Content = r.thinking.String()
+	r.thinkingState.Content = r.thinking.string()
 	r.thinkingState.EndedAt = r.now()
 	r.thinkingState.DurationMS = r.thinkingState.EndedAt.Sub(r.thinkingState.StartedAt).Milliseconds()
 	if r.callbacks.OnThinkingEnd != nil {
@@ -212,7 +226,7 @@ func (r *StreamRenderer) appendToolCall(index int, id, name, arguments string) {
 		call.Name = name
 	}
 	if arguments != "" {
-		call.Arguments.WriteString(arguments)
+		call.Arguments.writeString(arguments)
 		delete(r.parsedToolArgs, index)
 	}
 }
@@ -229,7 +243,7 @@ func (r *StreamRenderer) ToolCalls() []ToolCall {
 		arguments, ok := r.parsedToolArgs[index]
 		if !ok {
 			arguments = map[string]any{}
-			raw := strings.TrimSpace(call.Arguments.String())
+			raw := core.Trim(call.Arguments.string())
 			if raw != "" {
 				if decode := core.JSONUnmarshalString(raw, &arguments); !decode.OK {
 					arguments = map[string]any{"raw": raw}
@@ -247,11 +261,11 @@ func (r *StreamRenderer) ToolCalls() []ToolCall {
 }
 
 func (r *StreamRenderer) Thinking() *ThinkingState {
-	if r.thinking.Len() == 0 && !r.thinkingState.Active {
+	if r.thinking.len() == 0 && !r.thinkingState.Active {
 		return nil
 	}
 	state := r.thinkingState
-	state.Content = r.thinking.String()
+	state.Content = r.thinking.string()
 	return &state
 }
 
@@ -259,7 +273,7 @@ func (r *StreamRenderer) Message(messageID, model string, createdAt time.Time) C
 	return ChatMessage{
 		ID:           messageID,
 		Role:         "assistant",
-		Content:      r.content.String(),
+		Content:      r.content.string(),
 		CreatedAt:    createdAt,
 		Model:        model,
 		Thinking:     r.Thinking(),

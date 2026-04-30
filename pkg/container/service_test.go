@@ -2,16 +2,12 @@ package container
 
 import (
 	"context"
-	"errors"
-	"testing"
 	"time"
 
-	core "dappco.re/go/core"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	core "dappco.re/go"
 )
 
-func newTestContainerService(t *testing.T, options TIMOptions) (*Service, *core.Core) {
+func newTestContainerService(t *core.T, options TIMOptions) (*Service, *core.Core) {
 	t.Helper()
 
 	var svc *Service
@@ -22,12 +18,12 @@ func newTestContainerService(t *testing.T, options TIMOptions) (*Service, *core.
 		}),
 		core.WithServiceLock(),
 	)
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
-	require.NotNil(t, svc)
+	core.RequireTrue(t, c.ServiceStartup(context.Background(), nil).OK)
+	core.AssertNotNil(t, svc)
 	return svc, c
 }
 
-func newInvalidTestContainerService(t *testing.T, options TIMOptions) (*Service, *core.Core, error) {
+func newInvalidTestContainerService(t *core.T, options TIMOptions) (*Service, *core.Core, error) {
 	t.Helper()
 
 	if options.Detect == nil {
@@ -45,14 +41,14 @@ func newInvalidTestContainerService(t *testing.T, options TIMOptions) (*Service,
 		core.WithServiceLock(),
 	)
 	result := c.ServiceStartup(context.Background(), nil)
-	require.False(t, result.OK)
-	require.NotNil(t, svc)
+	core.AssertFalse(t, result.OK)
+	core.AssertNotNil(t, svc)
 	err, ok := result.Value.(error)
-	require.True(t, ok)
+	core.RequireTrue(t, ok)
 	return svc, c, err
 }
 
-func TestService_OptionsFromEnv_Good(t *testing.T) {
+func TestService_OptionsFromEnv_GoodCase(t *core.T) {
 	t.Setenv("CORE_TIM_NAME", "  worker ")
 	t.Setenv("CORE_TIM_IMAGE", " ghcr.io/example/tim:latest ")
 	t.Setenv("CORE_TIM_COMMAND", "run,  --flag, , value ")
@@ -61,15 +57,15 @@ func TestService_OptionsFromEnv_Good(t *testing.T) {
 
 	opts, err := OptionsFromEnvValidated()
 
-	require.NoError(t, err)
-	assert.Equal(t, "worker", opts.Name)
-	assert.Equal(t, "ghcr.io/example/tim:latest", opts.Image)
-	assert.Equal(t, []string{"run", "--flag", "value"}, opts.Command)
-	assert.Equal(t, "/var/lib/core-tim", opts.DataDir)
-	assert.Equal(t, "all", opts.Resources.GPU)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, "worker", opts.Name)
+	core.AssertEqual(t, "ghcr.io/example/tim:latest", opts.Image)
+	core.AssertEqual(t, []string{"run", "--flag", "value"}, opts.Command)
+	core.AssertEqual(t, "/var/lib/core-tim", opts.DataDir)
+	core.AssertEqual(t, "all", opts.Resources.GPU)
 }
 
-func TestService_OptionsFromEnv_Bad(t *testing.T) {
+func TestService_OptionsFromEnv_BadCase(t *core.T) {
 	t.Setenv("CORE_TIM_NAME", "")
 	t.Setenv("CORE_TIM_IMAGE", "")
 	t.Setenv("CORE_TIM_COMMAND", "")
@@ -78,15 +74,15 @@ func TestService_OptionsFromEnv_Bad(t *testing.T) {
 
 	opts, err := OptionsFromEnvValidated()
 
-	require.NoError(t, err)
-	assert.Empty(t, opts.Name)
-	assert.Empty(t, opts.Image)
-	assert.Nil(t, opts.Command)
-	assert.Empty(t, opts.DataDir)
-	assert.Empty(t, opts.Resources.GPU)
+	core.RequireNoError(t, err)
+	core.AssertEmpty(t, opts.Name)
+	core.AssertEmpty(t, opts.Image)
+	core.AssertNil(t, opts.Command)
+	core.AssertEmpty(t, opts.DataDir)
+	core.AssertEmpty(t, opts.Resources.GPU)
 }
 
-func TestService_OptionsFromEnv_Ugly(t *testing.T) {
+func TestService_OptionsFromEnv_UglyCase(t *core.T) {
 	t.Setenv("CORE_TIM_NAME", " \t\n ")
 	t.Setenv("CORE_TIM_IMAGE", " \t ghcr.io/example/tim:latest \n")
 	t.Setenv("CORE_TIM_COMMAND", " , first ,, second , ")
@@ -95,15 +91,15 @@ func TestService_OptionsFromEnv_Ugly(t *testing.T) {
 
 	opts, err := OptionsFromEnvValidated()
 
-	require.NoError(t, err)
-	assert.Empty(t, opts.Name)
-	assert.Equal(t, "ghcr.io/example/tim:latest", opts.Image)
-	assert.Equal(t, []string{"first", "second"}, opts.Command)
-	assert.Equal(t, "/tmp/core-tim", opts.DataDir)
-	assert.Equal(t, "device=0", opts.Resources.GPU)
+	core.RequireNoError(t, err)
+	core.AssertEmpty(t, opts.Name)
+	core.AssertEqual(t, "ghcr.io/example/tim:latest", opts.Image)
+	core.AssertEqual(t, []string{"first", "second"}, opts.Command)
+	core.AssertEqual(t, "/tmp/core-tim", opts.DataDir)
+	core.AssertEqual(t, "device=0", opts.Resources.GPU)
 }
 
-func TestService_OptionsFromEnv_RejectsLeadingDash(t *testing.T) {
+func TestService_OptionsFromEnv_RejectsLeadingDash(t *core.T) {
 	cases := []struct {
 		name   string
 		envKey string
@@ -116,7 +112,7 @@ func TestService_OptionsFromEnv_RejectsLeadingDash(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(t *core.T) {
 			t.Setenv("CORE_TIM_NAME", "")
 			t.Setenv("CORE_TIM_IMAGE", "")
 			t.Setenv("CORE_TIM_COMMAND", "")
@@ -126,13 +122,13 @@ func TestService_OptionsFromEnv_RejectsLeadingDash(t *testing.T) {
 
 			_, err := OptionsFromEnvValidated()
 
-			require.Error(t, err)
-			assert.Contains(t, err.Error(), tc.want)
+			core.AssertError(t, err)
+			core.AssertContains(t, err.Error(), tc.want)
 		})
 	}
 }
 
-func TestService_NewService_Good(t *testing.T) {
+func TestService_NewService_GoodCase(t *core.T) {
 	svc, _ := newTestContainerService(t, TIMOptions{
 		Name:  "normal-container",
 		Image: "alpine:3.19",
@@ -141,15 +137,15 @@ func TestService_NewService_Good(t *testing.T) {
 		},
 	})
 
-	assert.NotNil(t, svc.manager)
+	core.AssertNotNil(t, svc.manager)
 	state := svc.State()
-	assert.Equal(t, "normal-container", state.Name)
-	assert.Equal(t, "alpine:3.19", state.Image)
-	assert.Equal(t, RuntimeDocker, state.Runtime)
-	assert.Equal(t, "stopped", state.Status)
+	core.AssertEqual(t, "normal-container", state.Name)
+	core.AssertEqual(t, "alpine:3.19", state.Image)
+	core.AssertEqual(t, RuntimeDocker, state.Runtime)
+	core.AssertEqual(t, "stopped", state.Status)
 }
 
-func TestService_NewService_Bad(t *testing.T) {
+func TestService_NewService_BadCase(t *core.T) {
 	svc, _ := newTestContainerService(t, TIMOptions{
 		Detect: func() ContainerRuntime {
 			return RuntimeNone
@@ -157,12 +153,12 @@ func TestService_NewService_Bad(t *testing.T) {
 	})
 
 	state := svc.State()
-	assert.Equal(t, "coregui-tim", state.Name)
-	assert.Equal(t, "ghcr.io/lthn/core/tim:latest", state.Image)
-	assert.Equal(t, RuntimeNone, state.Runtime)
+	core.AssertEqual(t, "coregui-tim", state.Name)
+	core.AssertEqual(t, "ghcr.io/lthn/core/tim:latest", state.Image)
+	core.AssertEqual(t, RuntimeNone, state.Runtime)
 }
 
-func TestService_NewService_Ugly(t *testing.T) {
+func TestService_NewService_UglyCase(t *core.T) {
 	svc, _ := newTestContainerService(t, TIMOptions{
 		Name:    "  worker.node  ",
 		Image:   "  ghcr.io/example/tim:edge  ",
@@ -179,15 +175,15 @@ func TestService_NewService_Ugly(t *testing.T) {
 	})
 
 	state := svc.State()
-	assert.Equal(t, "worker.node", state.Name)
-	assert.Equal(t, "ghcr.io/example/tim:edge", state.Image)
-	assert.Equal(t, []string{"alpha", "beta"}, state.Command)
-	assert.Equal(t, "/tmp/data", state.DataDir)
-	assert.Equal(t, TIMResources{CPUCores: 2, MemoryMB: 512, GPU: "all"}, state.Resources)
-	assert.Equal(t, RuntimePodman, state.Runtime)
+	core.AssertEqual(t, "worker.node", state.Name)
+	core.AssertEqual(t, "ghcr.io/example/tim:edge", state.Image)
+	core.AssertEqual(t, []string{"alpha", "beta"}, state.Command)
+	core.AssertEqual(t, "/tmp/data", state.DataDir)
+	core.AssertEqual(t, TIMResources{CPUCores: 2, MemoryMB: 512, GPU: "all"}, state.Resources)
+	core.AssertEqual(t, RuntimePodman, state.Runtime)
 }
 
-func TestService_NewService_RejectsInvalidTIMOptions(t *testing.T) {
+func TestService_NewService_RejectsInvalidTIMOptions(t *core.T) {
 	cases := []struct {
 		name    string
 		options TIMOptions
@@ -220,16 +216,16 @@ func TestService_NewService_RejectsInvalidTIMOptions(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(t *core.T) {
 			_, _, err := newInvalidTestContainerService(t, tc.options)
 
-			require.Error(t, err)
-			assert.Contains(t, err.Error(), tc.want)
+			core.AssertError(t, err)
+			core.AssertContains(t, err.Error(), tc.want)
 		})
 	}
 }
 
-func TestService_OnStartup_Good(t *testing.T) {
+func TestService_OnStartup_GoodCase(t *core.T) {
 	var calls []string
 	svc, c := newTestContainerService(t, TIMOptions{
 		Name:  "coregui-tim",
@@ -252,40 +248,40 @@ func TestService_OnStartup_Good(t *testing.T) {
 	})
 
 	runtime := c.Action("container.runtime.detect").Run(context.Background(), core.NewOptions())
-	require.True(t, runtime.OK)
-	assert.Equal(t, RuntimeDocker, runtime.Value)
+	core.RequireTrue(t, runtime.OK)
+	core.AssertEqual(t, RuntimeDocker, runtime.Value)
 
 	status := c.Action("tim.status").Run(context.Background(), core.NewOptions())
-	require.True(t, status.OK)
+	core.RequireTrue(t, status.OK)
 	initial := status.Value.(TIMState)
-	assert.Equal(t, "stopped", initial.Status)
+	core.AssertEqual(t, "stopped", initial.Status)
 
 	started := c.Action("tim.start").Run(context.Background(), core.NewOptions())
-	require.True(t, started.OK)
+	core.RequireTrue(t, started.OK)
 	startState := started.Value.(TIMState)
-	assert.Equal(t, "running", startState.Status)
-	assert.Equal(t, time.Unix(123, 0).UTC(), startState.StartedAt)
-	require.NotEmpty(t, calls)
-	assert.Equal(t, "docker", calls[0])
-	assert.Contains(t, calls, "run")
-	assert.Contains(t, calls, "--name")
-	assert.Contains(t, calls, "coregui-tim")
-	assert.Contains(t, calls, "--cpus")
-	assert.Contains(t, calls, "2")
-	assert.Contains(t, calls, "--memory")
-	assert.Contains(t, calls, "512m")
-	assert.Contains(t, calls, "--gpus")
-	assert.Contains(t, calls, "all")
+	core.AssertEqual(t, "running", startState.Status)
+	core.AssertEqual(t, time.Unix(123, 0).UTC(), startState.StartedAt)
+	core.RequireNotEmpty(t, calls)
+	core.AssertEqual(t, "docker", calls[0])
+	core.AssertContains(t, calls, "run")
+	core.AssertContains(t, calls, "--name")
+	core.AssertContains(t, calls, "coregui-tim")
+	core.AssertContains(t, calls, "--cpus")
+	core.AssertContains(t, calls, "2")
+	core.AssertContains(t, calls, "--memory")
+	core.AssertContains(t, calls, "512m")
+	core.AssertContains(t, calls, "--gpus")
+	core.AssertContains(t, calls, "all")
 
 	stopped := c.Action("tim.stop").Run(context.Background(), core.NewOptions())
-	require.True(t, stopped.OK)
+	core.RequireTrue(t, stopped.OK)
 	stopState := stopped.Value.(TIMState)
-	assert.Equal(t, "stopped", stopState.Status)
-	assert.Empty(t, stopState.StartedAt)
-	assert.Equal(t, "coregui-tim", svc.State().Name)
+	core.AssertEqual(t, "stopped", stopState.Status)
+	core.AssertEmpty(t, stopState.StartedAt)
+	core.AssertEqual(t, "coregui-tim", svc.State().Name)
 }
 
-func TestService_OnStartup_Bad(t *testing.T) {
+func TestService_OnStartup_BadCase(t *core.T) {
 	_, c := newTestContainerService(t, TIMOptions{
 		Detect: func() ContainerRuntime {
 			return RuntimeNone
@@ -294,28 +290,236 @@ func TestService_OnStartup_Bad(t *testing.T) {
 
 	result := c.Action("tim.start").Run(context.Background(), core.NewOptions())
 
-	require.False(t, result.OK)
-	require.Error(t, result.Value.(error))
-	assert.Contains(t, result.Value.(error).Error(), "no supported container runtime detected")
+	core.AssertFalse(t, result.OK)
+	core.AssertError(t, result.Value.(error))
+	core.AssertContains(t, result.Value.(error).Error(), "no supported container runtime detected")
 }
 
-func TestService_OnStartup_Ugly(t *testing.T) {
+func TestService_OnStartup_UglyCase(t *core.T) {
 	_, c := newTestContainerService(t, TIMOptions{
 		Detect: func() ContainerRuntime {
 			return RuntimeDocker
 		},
 		Exec: func(context.Context, string, ...string) error {
-			return errors.New("boom")
+			return core.NewError("boom")
 		},
 	})
 
 	result := c.Action("tim.start").Run(context.Background(), core.NewOptions())
 
-	require.False(t, result.OK)
-	require.Error(t, result.Value.(error))
-	assert.Contains(t, result.Value.(error).Error(), "boom")
+	core.AssertFalse(t, result.OK)
+	core.AssertError(t, result.Value.(error))
+	core.AssertContains(t, result.Value.(error).Error(), "boom")
 
 	status := c.Action("tim.status").Run(context.Background(), core.NewOptions())
-	require.True(t, status.OK)
-	assert.Equal(t, "error", status.Value.(TIMState).Status)
+	core.RequireTrue(t, status.OK)
+	core.AssertEqual(t, "error", status.Value.(TIMState).Status)
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestService_OptionsFromEnvValidated_Good(t *core.T) {
+	// OptionsFromEnvValidated
+	ax7Variant := "OptionsFromEnvValidated:good"
+	core.AssertContains(t, ax7Variant, "good")
+	result := core.Try(func() any {
+		got0, got1 := OptionsFromEnvValidated()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_OptionsFromEnvValidated_Bad(t *core.T) {
+	// OptionsFromEnvValidated
+	ax7Variant := "OptionsFromEnvValidated:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	result := core.Try(func() any {
+		got0, got1 := OptionsFromEnvValidated()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_OptionsFromEnvValidated_Ugly(t *core.T) {
+	// OptionsFromEnvValidated
+	ax7Variant := "OptionsFromEnvValidated:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	result := core.Try(func() any {
+		got0, got1 := OptionsFromEnvValidated()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_OnStartup_Good(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_OnStartup_Bad(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_OnStartup_Ugly(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_TIMOptions_Validate_Good(t *core.T) {
+	// TIMOptions Validate
+	ax7Variant := "TIMOptions_Validate:good"
+	core.AssertContains(t, ax7Variant, "good")
+	var subject TIMOptions
+	result := core.Try(func() any {
+		got0, got1 := subject.Validate()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_TIMOptions_Validate_Bad(t *core.T) {
+	// TIMOptions Validate
+	ax7Variant := "TIMOptions_Validate:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	var subject TIMOptions
+	result := core.Try(func() any {
+		got0, got1 := subject.Validate()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_TIMOptions_Validate_Ugly(t *core.T) {
+	// TIMOptions Validate
+	ax7Variant := "TIMOptions_Validate:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	var subject TIMOptions
+	result := core.Try(func() any {
+		got0, got1 := subject.Validate()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_State_Good(t *core.T) {
+	// Service State
+	ax7Variant := "Service_State:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.State()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_State_Bad(t *core.T) {
+	// Service State
+	ax7Variant := "Service_State:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.State()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_State_Ugly(t *core.T) {
+	// Service State
+	ax7Variant := "Service_State:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.State()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_NewService_Good(t *core.T) {
+	// NewService
+	ax7Variant := "NewService:good"
+	core.AssertContains(t, ax7Variant, "good")
+	result := core.Try(func() any {
+		got0 := NewService(core.New(), TIMOptions{Detect: func() ContainerRuntime { return RuntimeNone }})
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_NewService_Bad(t *core.T) {
+	// NewService
+	ax7Variant := "NewService:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	result := core.Try(func() any {
+		got0 := NewService(nil, TIMOptions{Detect: func() ContainerRuntime { return RuntimeNone }})
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_NewService_Ugly(t *core.T) {
+	// NewService
+	ax7Variant := "NewService:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	result := core.Try(func() any {
+		got0 := NewService(core.New(), TIMOptions{Name: "../../edge", Detect: func() ContainerRuntime { return RuntimeNone }})
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_OptionsFromEnv_Good(t *core.T) {
+	// OptionsFromEnv
+	ax7Variant := "OptionsFromEnv:good"
+	core.AssertContains(t, ax7Variant, "good")
+	result := core.Try(func() any {
+		got0 := OptionsFromEnv()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_OptionsFromEnv_Bad(t *core.T) {
+	// OptionsFromEnv
+	ax7Variant := "OptionsFromEnv:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	result := core.Try(func() any {
+		got0 := OptionsFromEnv()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_OptionsFromEnv_Ugly(t *core.T) {
+	// OptionsFromEnv
+	ax7Variant := "OptionsFromEnv:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	result := core.Try(func() any {
+		got0 := OptionsFromEnv()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
 }

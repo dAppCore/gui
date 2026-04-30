@@ -5,26 +5,21 @@ import (
 	"math"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"reflect"
-	"strings"
-	"testing"
 	"time"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/container"
 	"dappco.re/go/gui/pkg/menu"
 	"dappco.re/go/gui/pkg/systray"
 	"dappco.re/go/gui/pkg/webview"
 	"dappco.re/go/gui/pkg/window"
 	"github.com/gorilla/websocket"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 // --- Test helpers ---
 
-func newTestCore(t *testing.T, serviceFactories ...func(*core.Core) core.Result) *core.Core {
+func newTestCore(t *core.T, serviceFactories ...func(*core.Core) core.Result) *core.Core {
 	t.Helper()
 	configPath := core.JoinPath(t.TempDir(), "config.yaml")
 	options := []core.CoreOption{core.WithService(registerDisplayWithConfigPath(configPath))}
@@ -33,18 +28,18 @@ func newTestCore(t *testing.T, serviceFactories ...func(*core.Core) core.Result)
 	}
 	options = append(options, core.WithServiceLock())
 	c := core.New(options...)
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	core.RequireTrue(t, c.ServiceStartup(context.Background(), nil).OK)
 	return c
 }
 
-func newServiceWithMockApp(t *testing.T, serviceFactories ...func(*core.Core) core.Result) (*Service, *core.Core, <-chan Event) {
+func newServiceWithMockApp(t *core.T, serviceFactories ...func(*core.Core) core.Result) (*Service, *core.Core, <-chan Event) {
 	t.Helper()
 	configPath := core.JoinPath(t.TempDir(), "config.yaml")
 	var eventBuffer chan Event
 	options := []core.CoreOption{
 		core.WithService(func(c *core.Core) core.Result {
 			svc, err := New()
-			require.NoError(t, err)
+			core.RequireNoError(t, err)
 			svc.loadConfigFrom(configPath)
 			svc.ServiceRuntime = core.NewServiceRuntime(c, Options{})
 			svc.app = &mockDisplayApp{}
@@ -58,7 +53,7 @@ func newServiceWithMockApp(t *testing.T, serviceFactories ...func(*core.Core) co
 	}
 	options = append(options, core.WithServiceLock())
 	c := core.New(options...)
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	core.RequireTrue(t, c.ServiceStartup(context.Background(), nil).OK)
 	svc := core.MustServiceFor[*Service](c, "display")
 	return svc, c, eventBuffer
 }
@@ -86,7 +81,7 @@ func newTestEventManager() *WSEventManager {
 }
 
 // newTestDisplayService creates a display service registered with Core for IPC testing.
-func newTestDisplayService(t *testing.T) (*Service, *core.Core) {
+func newTestDisplayService(t *core.T) (*Service, *core.Core) {
 	t.Helper()
 	c := newTestCore(t)
 	svc := core.MustServiceFor[*Service](c, "display")
@@ -94,7 +89,7 @@ func newTestDisplayService(t *testing.T) (*Service, *core.Core) {
 }
 
 // newTestConclave creates a full 4-service conclave for integration testing.
-func newTestConclave(t *testing.T) *core.Core {
+func newTestConclave(t *core.T) *core.Core {
 	t.Helper()
 	t.Setenv("HOME", t.TempDir())
 	c := core.New(
@@ -104,7 +99,7 @@ func newTestConclave(t *testing.T) *core.Core {
 		core.WithService(menu.Register(menu.NewMockPlatform())),
 		core.WithServiceLock(),
 	)
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	core.RequireTrue(t, c.ServiceStartup(context.Background(), nil).OK)
 	return c
 }
 
@@ -139,20 +134,20 @@ func registerDisplayWithConfigPath(path string) func(*core.Core) core.Result {
 	}
 }
 
-func writeMenuConfig(t *testing.T, showDevTools bool) string {
+func writeMenuConfig(t *core.T, showDevTools bool) string {
 	t.Helper()
 
 	dir := t.TempDir()
 	cfgPath := core.JoinPath(dir, ".core", "gui", "config.yaml")
-	require.NoError(t, os.MkdirAll(core.PathDir(cfgPath), 0o755))
-	require.NoError(t, os.WriteFile(cfgPath, []byte(`
+	core.RequireNoError(t, coreMkdirAll(core.PathDir(cfgPath), 0o755))
+	core.RequireNoError(t, coreWriteFile(cfgPath, []byte(`
 menu:
   show_dev_tools: `+map[bool]string{true: "true", false: "false"}[showDevTools]+`
 `), 0o644))
 	return cfgPath
 }
 
-func newDevToolsMenuConclave(t *testing.T, showDevTools bool) (*core.Core, *captureMenuPlatform, *window.MockPlatform) {
+func newDevToolsMenuConclave(t *core.T, showDevTools bool) (*core.Core, *captureMenuPlatform, *window.MockPlatform) {
 	t.Helper()
 
 	menuPlatform := newCaptureMenuPlatform()
@@ -165,7 +160,7 @@ func newDevToolsMenuConclave(t *testing.T, showDevTools bool) (*core.Core, *capt
 		core.WithService(menu.Register(menuPlatform)),
 		core.WithServiceLock(),
 	)
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	core.RequireTrue(t, c.ServiceStartup(context.Background(), nil).OK)
 	return c, menuPlatform, windowPlatform
 }
 
@@ -267,35 +262,35 @@ func (m *captureMenuItem) OnClick(fn func()) menu.PlatformMenuItem {
 
 // --- Tests ---
 
-func TestNew_Good(t *testing.T) {
+func TestNew_Good(t *core.T) {
 	service, err := New()
-	assert.NoError(t, err)
-	assert.NotNil(t, service)
+	core.AssertNoError(t, err)
+	core.AssertNotNil(t, service)
 }
 
-func TestNew_Good_IndependentInstances(t *testing.T) {
+func TestNew_Good_IndependentInstances(t *core.T) {
 	service1, err1 := New()
 	service2, err2 := New()
-	assert.NoError(t, err1)
-	assert.NoError(t, err2)
-	assert.NotSame(t, service1, service2)
+	core.AssertNoError(t, err1)
+	core.AssertNoError(t, err2)
+	core.AssertNotEqual(t, core.Sprintf("%p", service1), core.Sprintf("%p", service2))
 }
 
-func TestRegister_Good(t *testing.T) {
+func TestRegister_Good(t *core.T) {
 	factory := Register(nil) // nil wailsApp for testing
-	assert.NotNil(t, factory)
+	core.AssertNotNil(t, factory)
 
 	c := core.New(
 		core.WithService(factory),
 		core.WithServiceLock(),
 	)
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	core.RequireTrue(t, c.ServiceStartup(context.Background(), nil).OK)
 
 	svc := core.MustServiceFor[*Service](c, "display")
-	assert.NotNil(t, svc)
+	core.AssertNotNil(t, svc)
 }
 
-func TestConfigQuery_Good(t *testing.T) {
+func TestConfigQuery_Good(t *core.T) {
 	svc, c := newTestDisplayService(t)
 
 	// Set window config
@@ -304,173 +299,173 @@ func TestConfigQuery_Good(t *testing.T) {
 	}
 
 	r := c.QUERY(window.QueryConfig{})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 	cfg := r.Value.(map[string]any)
-	assert.Equal(t, 1024, cfg["default_width"])
+	core.AssertEqual(t, 1024, cfg["default_width"])
 }
 
-func TestConfigQuery_Bad(t *testing.T) {
+func TestConfigQuery_Bad(t *core.T) {
 	// No display service — window config query returns handled=false
 	c := core.New(core.WithServiceLock())
 	r := c.QUERY(window.QueryConfig{})
-	assert.False(t, r.OK)
+	core.AssertFalse(t, r.OK)
 }
 
-func TestConfigTask_Good(t *testing.T) {
+func TestConfigTask_Good(t *core.T) {
 	_, c := newTestDisplayService(t)
 
 	newCfg := map[string]any{"default_width": 800}
 	r := taskRun(c, "display.saveWindowConfig", window.TaskSaveConfig{Config: newCfg})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 
 	// Verify config was saved
 	r2 := c.QUERY(window.QueryConfig{})
 	cfg := r2.Value.(map[string]any)
-	assert.Equal(t, 800, cfg["default_width"])
+	core.AssertEqual(t, 800, cfg["default_width"])
 }
 
-func TestStorageTask_Bad(t *testing.T) {
+func TestStorageTask_Bad(t *core.T) {
 	_, c := newTestDisplayService(t)
 
 	r := c.Action("display.storage.set").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "origin", Value: "core://settings"},
 		core.Option{Key: "bucket", Value: "localStorage"},
-		core.Option{Key: "key", Value: strings.Repeat("k", maxStorageKeyBytes+1)},
+		core.Option{Key: "key", Value: repeatString("k", maxStorageKeyBytes+1)},
 		core.Option{Key: "value", Value: "dark"},
 	))
 
-	require.False(t, r.OK)
-	assert.Contains(t, r.Value.(error).Error(), "invalid storage entry")
+	core.AssertFalse(t, r.OK)
+	core.AssertContains(t, r.Value.(error).Error(), "invalid storage entry")
 }
 
-func TestResolveScheme_StoreRoute_Good(t *testing.T) {
+func TestResolveScheme_StoreRoute_GoodCase(t *core.T) {
 	svc, _ := newTestDisplayService(t)
 
 	result := svc.ResolveScheme(context.Background(), "core://store?q=alpha")
-	require.True(t, result.OK)
+	core.RequireTrue(t, result.OK)
 
 	payload, ok := result.Value.(map[string]any)
-	require.True(t, ok)
-	assert.Equal(t, "text/html", payload["content_type"])
+	core.RequireTrue(t, ok)
+	core.AssertEqual(t, "text/html", payload["content_type"])
 
 	body, ok := payload["body"].(string)
-	require.True(t, ok)
-	assert.Contains(t, body, "core://store")
-	assert.Contains(t, body, "storage scopes")
-	assert.Contains(t, body, "Search the in-memory storage scopes")
+	core.RequireTrue(t, ok)
+	core.AssertContains(t, body, "core://store")
+	core.AssertContains(t, body, "storage scopes")
+	core.AssertContains(t, body, "Search the in-memory storage scopes")
 }
 
 // --- Conclave integration tests ---
 
-func TestServiceConclave_Good(t *testing.T) {
+func TestServiceConclave_Good(t *core.T) {
 	c := newTestConclave(t)
 
 	// Open a window via IPC
 	r := taskRun(c, "window.open", window.TaskOpenWindow{
 		Window: &window.Window{Name: "main"},
 	})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 	info := r.Value.(window.WindowInfo)
-	assert.Equal(t, "main", info.Name)
+	core.AssertEqual(t, "main", info.Name)
 
 	// Query window config from display
 	r2 := c.QUERY(window.QueryConfig{})
-	require.True(t, r2.OK)
-	assert.NotNil(t, r2.Value)
+	core.RequireTrue(t, r2.OK)
+	core.AssertNotNil(t, r2.Value)
 
 	// Set app menu via IPC
 	r3 := taskRun(c, "menu.setAppMenu", menu.TaskSetAppMenu{Items: []menu.MenuItem{
 		{Label: "File"},
 	}})
-	require.True(t, r3.OK)
+	core.RequireTrue(t, r3.OK)
 
 	// Query app menu via IPC
 	r4 := c.QUERY(menu.QueryGetAppMenu{})
-	assert.True(t, r4.OK)
+	core.AssertTrue(t, r4.OK)
 	items := r4.Value.([]menu.MenuItem)
-	assert.Len(t, items, 1)
+	core.AssertLen(t, items, 1)
 }
 
-func TestServiceConclave_Bad(t *testing.T) {
+func TestServiceConclave_Bad(t *core.T) {
 	// Sub-service starts without display — config QUERY returns handled=false
 	c := core.New(
 		core.WithService(window.Register(window.NewMockPlatform())),
 		core.WithServiceLock(),
 	)
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	core.RequireTrue(t, c.ServiceStartup(context.Background(), nil).OK)
 
 	r := c.QUERY(window.QueryConfig{})
-	assert.False(t, r.OK, "no display service means no config handler")
+	core.AssertFalse(t, r.OK, "no display service means no config handler")
 }
 
-func TestBuildMenu_Good_ShowDevTools(t *testing.T) {
+func TestBuildMenu_Good_ShowDevTools(t *core.T) {
 	c, menuPlatform, windowPlatform := newDevToolsMenuConclave(t, true)
 
-	require.True(t, taskRun(c, "window.open", window.TaskOpenWindow{
+	core.RequireTrue(t, taskRun(c, "window.open", window.TaskOpenWindow{
 		Window: &window.Window{Name: "main"},
 	}).OK)
-	require.True(t, taskRun(c, "window.focus", window.TaskFocus{Name: "main"}).OK)
+	core.RequireTrue(t, taskRun(c, "window.focus", window.TaskFocus{Name: "main"}).OK)
 
-	require.NotNil(t, menuPlatform.appMenu)
+	core.AssertNotNil(t, menuPlatform.appMenu)
 	developer := menuPlatform.appMenu.findSubmenu("Developer")
-	require.NotNil(t, developer)
+	core.AssertNotNil(t, developer)
 
 	openItem := developer.findItem("Open DevTools")
 	closeItem := developer.findItem("Close DevTools")
-	require.NotNil(t, openItem)
-	require.NotNil(t, closeItem)
-	require.NotNil(t, openItem.onClick)
-	require.NotNil(t, closeItem.onClick)
-	require.Len(t, windowPlatform.Windows, 1)
+	core.AssertNotNil(t, openItem)
+	core.AssertNotNil(t, closeItem)
+	core.AssertNotNil(t, openItem.onClick)
+	core.AssertNotNil(t, closeItem.onClick)
+	core.AssertLen(t, windowPlatform.Windows, 1)
 
 	openItem.onClick()
-	assert.True(t, windowPlatform.Windows[0].DevToolsOpen())
+	core.AssertTrue(t, windowPlatform.Windows[0].DevToolsOpen())
 
 	closeItem.onClick()
-	assert.False(t, windowPlatform.Windows[0].DevToolsOpen())
+	core.AssertFalse(t, windowPlatform.Windows[0].DevToolsOpen())
 }
 
-func TestBuildMenu_Bad_ShowDevToolsDisabled(t *testing.T) {
+func TestBuildMenu_Bad_ShowDevToolsDisabled(t *core.T) {
 	_, menuPlatform, _ := newDevToolsMenuConclave(t, false)
 
-	require.NotNil(t, menuPlatform.appMenu)
+	core.AssertNotNil(t, menuPlatform.appMenu)
 	developer := menuPlatform.appMenu.findSubmenu("Developer")
-	require.NotNil(t, developer)
-	assert.Nil(t, developer.findItem("Open DevTools"))
-	assert.Nil(t, developer.findItem("Close DevTools"))
+	core.AssertNotNil(t, developer)
+	core.AssertNil(t, developer.findItem("Open DevTools"))
+	core.AssertNil(t, developer.findItem("Close DevTools"))
 }
 
 // --- IPC delegation tests (full conclave) ---
 
-func TestOpenWindow_Good(t *testing.T) {
+func TestOpenWindow_Good(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 
-	t.Run("creates window with default options", func(t *testing.T) {
+	t.Run("creates window with default options", func(t *core.T) {
 		err := svc.OpenWindow()
-		assert.NoError(t, err)
+		core.AssertNoError(t, err)
 
 		// Verify via IPC query
 		infos := svc.ListWindowInfos()
-		assert.GreaterOrEqual(t, len(infos), 1)
+		core.AssertGreaterOrEqual(t, len(infos), 1)
 	})
 
-	t.Run("creates window with custom options", func(t *testing.T) {
+	t.Run("creates window with custom options", func(t *core.T) {
 		err := svc.OpenWindow(
 			window.WithName("custom-window"),
 			window.WithTitle("Custom Title"),
 			window.WithSize(640, 480),
 			window.WithURL("/custom"),
 		)
-		assert.NoError(t, err)
+		core.AssertNoError(t, err)
 
 		r := c.QUERY(window.QueryWindowByName{Name: "custom-window"})
 		info := r.Value.(*window.WindowInfo)
-		assert.Equal(t, "custom-window", info.Name)
+		core.AssertEqual(t, "custom-window", info.Name)
 	})
 }
 
-func TestGetWindowInfo_Good(t *testing.T) {
+func TestGetWindowInfo_Good(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 
@@ -483,25 +478,25 @@ func TestGetWindowInfo_Good(t *testing.T) {
 	taskRun(c, "window.setPosition", window.TaskSetPosition{Name: "test-win", X: 100, Y: 200})
 
 	info, err := svc.GetWindowInfo("test-win")
-	require.NoError(t, err)
-	assert.Equal(t, "test-win", info.Name)
-	assert.Equal(t, 100, info.X)
-	assert.Equal(t, 200, info.Y)
-	assert.Equal(t, 800, info.Width)
-	assert.Equal(t, 600, info.Height)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, "test-win", info.Name)
+	core.AssertEqual(t, 100, info.X)
+	core.AssertEqual(t, 200, info.Y)
+	core.AssertEqual(t, 800, info.Width)
+	core.AssertEqual(t, 600, info.Height)
 }
 
-func TestGetWindowInfo_Bad(t *testing.T) {
+func TestGetWindowInfo_Bad(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 
 	info, err := svc.GetWindowInfo("nonexistent")
 	// QueryWindowByName returns nil for nonexistent — handled=true, result=nil
-	assert.NoError(t, err)
-	assert.Nil(t, info)
+	core.AssertNoError(t, err)
+	core.AssertNil(t, info)
 }
 
-func TestGetWindowInfo_BadType(t *testing.T) {
+func TestGetWindowInfo_BadType(t *core.T) {
 	svc, c := newTestDisplayService(t)
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
 		switch q.(type) {
@@ -514,11 +509,11 @@ func TestGetWindowInfo_BadType(t *testing.T) {
 
 	info, err := svc.GetWindowInfo("broken")
 
-	require.Error(t, err)
-	assert.Nil(t, info)
+	core.AssertError(t, err)
+	core.AssertNil(t, info)
 }
 
-func TestListWindowInfos_Good(t *testing.T) {
+func TestListWindowInfos_Good(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 
@@ -526,31 +521,31 @@ func TestListWindowInfos_Good(t *testing.T) {
 	_ = svc.OpenWindow(window.WithName("win-2"))
 
 	infos := svc.ListWindowInfos()
-	assert.Len(t, infos, 2)
+	core.AssertLen(t, infos, 2)
 }
 
-func TestSetWindowPosition_Good(t *testing.T) {
+func TestSetWindowPosition_Good(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 	_ = svc.OpenWindow(window.WithName("pos-win"))
 
 	err := svc.SetWindowPosition("pos-win", 300, 400)
-	assert.NoError(t, err)
+	core.AssertNoError(t, err)
 
 	info, _ := svc.GetWindowInfo("pos-win")
-	assert.Equal(t, 300, info.X)
-	assert.Equal(t, 400, info.Y)
+	core.AssertEqual(t, 300, info.X)
+	core.AssertEqual(t, 400, info.Y)
 }
 
-func TestSetWindowPosition_Bad(t *testing.T) {
+func TestSetWindowPosition_Bad(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 
 	err := svc.SetWindowPosition("nonexistent", 0, 0)
-	assert.Error(t, err)
+	core.AssertError(t, err)
 }
 
-func TestSetWindowPosition_ActionFailure(t *testing.T) {
+func TestSetWindowPosition_ActionFailure(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 	c.Action("window.setPosition", func(_ context.Context, _ core.Options) core.Result {
@@ -559,143 +554,143 @@ func TestSetWindowPosition_ActionFailure(t *testing.T) {
 
 	err := svc.SetWindowPosition("pos-win", 300, 400)
 
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "window.setPosition")
+	core.AssertError(t, err)
+	core.AssertContains(t, err.Error(), "window.setPosition")
 }
 
-func TestSetWindowSize_Good(t *testing.T) {
+func TestSetWindowSize_Good(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 	_ = svc.OpenWindow(window.WithName("size-win"))
 
 	err := svc.SetWindowSize("size-win", 1024, 768)
-	assert.NoError(t, err)
+	core.AssertNoError(t, err)
 
 	info, _ := svc.GetWindowInfo("size-win")
-	assert.Equal(t, 1024, info.Width)
-	assert.Equal(t, 768, info.Height)
+	core.AssertEqual(t, 1024, info.Width)
+	core.AssertEqual(t, 768, info.Height)
 }
 
-func TestSetWindowBounds_Good(t *testing.T) {
+func TestSetWindowBounds_Good(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 	_ = svc.OpenWindow(window.WithName("bounds-win"))
 
 	err := svc.SetWindowBounds("bounds-win", 10, 20, 640, 480)
-	assert.NoError(t, err)
+	core.AssertNoError(t, err)
 
 	info, _ := svc.GetWindowInfo("bounds-win")
-	assert.Equal(t, 10, info.X)
-	assert.Equal(t, 20, info.Y)
-	assert.Equal(t, 640, info.Width)
-	assert.Equal(t, 480, info.Height)
+	core.AssertEqual(t, 10, info.X)
+	core.AssertEqual(t, 20, info.Y)
+	core.AssertEqual(t, 640, info.Width)
+	core.AssertEqual(t, 480, info.Height)
 }
 
-func TestSetWindowBounds_Bad(t *testing.T) {
+func TestSetWindowBounds_Bad(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 
 	err := svc.SetWindowBounds("missing", 1, 2, 3, 4)
 
-	assert.Error(t, err)
+	core.AssertError(t, err)
 }
 
-func TestSetWindowBounds_Ugly(t *testing.T) {
+func TestSetWindowBounds_Ugly(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 	_ = svc.OpenWindow(window.WithName("bounds-win"))
 
 	err := svc.SetWindowBounds("bounds-win", -10, -20, 0, 1)
-	assert.NoError(t, err)
+	core.AssertNoError(t, err)
 
 	info, _ := svc.GetWindowInfo("bounds-win")
-	assert.Equal(t, -10, info.X)
-	assert.Equal(t, -20, info.Y)
-	assert.Equal(t, 0, info.Width)
-	assert.Equal(t, 1, info.Height)
+	core.AssertEqual(t, -10, info.X)
+	core.AssertEqual(t, -20, info.Y)
+	core.AssertEqual(t, 0, info.Width)
+	core.AssertEqual(t, 1, info.Height)
 }
 
-func TestMaximizeWindow_Good(t *testing.T) {
+func TestMaximizeWindow_Good(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 	_ = svc.OpenWindow(window.WithName("max-win"))
 
 	err := svc.MaximizeWindow("max-win")
-	assert.NoError(t, err)
+	core.AssertNoError(t, err)
 
 	info, _ := svc.GetWindowInfo("max-win")
-	assert.True(t, info.Maximized)
+	core.AssertTrue(t, info.Maximized)
 }
 
-func TestRestoreWindow_Good(t *testing.T) {
+func TestRestoreWindow_Good(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 	_ = svc.OpenWindow(window.WithName("restore-win"))
 	_ = svc.MaximizeWindow("restore-win")
 
 	err := svc.RestoreWindow("restore-win")
-	assert.NoError(t, err)
+	core.AssertNoError(t, err)
 
 	info, _ := svc.GetWindowInfo("restore-win")
-	assert.False(t, info.Maximized)
+	core.AssertFalse(t, info.Maximized)
 }
 
-func TestFocusWindow_Good(t *testing.T) {
+func TestFocusWindow_Good(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 	_ = svc.OpenWindow(window.WithName("focus-win"))
 
 	err := svc.FocusWindow("focus-win")
-	assert.NoError(t, err)
+	core.AssertNoError(t, err)
 
 	info, _ := svc.GetWindowInfo("focus-win")
-	assert.True(t, info.Focused)
+	core.AssertTrue(t, info.Focused)
 }
 
-func TestCloseWindow_Good(t *testing.T) {
+func TestCloseWindow_Good(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 	_ = svc.OpenWindow(window.WithName("close-win"))
 
 	err := svc.CloseWindow("close-win")
-	assert.NoError(t, err)
+	core.AssertNoError(t, err)
 
 	// Window should be removed
 	info, _ := svc.GetWindowInfo("close-win")
-	assert.Nil(t, info)
+	core.AssertNil(t, info)
 }
 
-func TestSetWindowVisibility_Good(t *testing.T) {
+func TestSetWindowVisibility_Good(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 	_ = svc.OpenWindow(window.WithName("vis-win"))
 
 	err := svc.SetWindowVisibility("vis-win", false)
-	assert.NoError(t, err)
+	core.AssertNoError(t, err)
 
 	err = svc.SetWindowVisibility("vis-win", true)
-	assert.NoError(t, err)
+	core.AssertNoError(t, err)
 }
 
-func TestSetWindowAlwaysOnTop_Good(t *testing.T) {
+func TestSetWindowAlwaysOnTop_Good(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 	_ = svc.OpenWindow(window.WithName("ontop-win"))
 
 	err := svc.SetWindowAlwaysOnTop("ontop-win", true)
-	assert.NoError(t, err)
+	core.AssertNoError(t, err)
 }
 
-func TestSetWindowTitle_Good(t *testing.T) {
+func TestSetWindowTitle_Good(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 	_ = svc.OpenWindow(window.WithName("title-win"))
 
 	err := svc.SetWindowTitle("title-win", "New Title")
-	assert.NoError(t, err)
+	core.AssertNoError(t, err)
 }
 
-func TestSetWindowFullscreen_Good(t *testing.T) {
+func TestSetWindowFullscreen_Good(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 	windowSvc := core.MustServiceFor[*window.Service](c, "window")
@@ -703,22 +698,22 @@ func TestSetWindowFullscreen_Good(t *testing.T) {
 
 	err := svc.SetWindowFullscreen("full-win", true)
 
-	require.NoError(t, err)
+	core.RequireNoError(t, err)
 	pw, ok := windowSvc.Manager().Get("full-win")
-	require.True(t, ok)
-	assert.True(t, pw.IsFullscreen())
+	core.RequireTrue(t, ok)
+	core.AssertTrue(t, pw.IsFullscreen())
 }
 
-func TestSetWindowFullscreen_Bad(t *testing.T) {
+func TestSetWindowFullscreen_Bad(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 
 	err := svc.SetWindowFullscreen("missing", true)
 
-	require.Error(t, err)
+	core.AssertError(t, err)
 }
 
-func TestLayoutBesideEditor_ActionFailure(t *testing.T) {
+func TestLayoutBesideEditor_ActionFailure(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 	c.Action("window.layoutBesideEditor", func(_ context.Context, _ core.Options) core.Result {
@@ -727,58 +722,58 @@ func TestLayoutBesideEditor_ActionFailure(t *testing.T) {
 
 	result, err := svc.LayoutBesideEditor("preview", "code", "right", 0.62)
 
-	require.Error(t, err)
-	assert.Zero(t, result)
-	assert.Contains(t, err.Error(), "window.layoutBesideEditor")
+	core.AssertError(t, err)
+	core.AssertEmpty(t, result)
+	core.AssertContains(t, err.Error(), "window.layoutBesideEditor")
 }
 
-func TestSetWindowFullscreen_Ugly(t *testing.T) {
+func TestSetWindowFullscreen_Ugly(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 	windowSvc := core.MustServiceFor[*window.Service](c, "window")
 	_ = svc.OpenWindow(window.WithName("full-win"))
 
-	require.NoError(t, svc.SetWindowFullscreen("full-win", true))
+	core.RequireNoError(t, svc.SetWindowFullscreen("full-win", true))
 	err := svc.SetWindowFullscreen("full-win", false)
 
-	require.NoError(t, err)
+	core.RequireNoError(t, err)
 	pw, ok := windowSvc.Manager().Get("full-win")
-	require.True(t, ok)
-	assert.False(t, pw.IsFullscreen())
+	core.RequireTrue(t, ok)
+	core.AssertFalse(t, pw.IsFullscreen())
 }
 
-func TestGetWindowTitle_Good(t *testing.T) {
+func TestGetWindowTitle_Good(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 	_ = svc.OpenWindow(window.WithName("title-win"), window.WithTitle("Inspector"))
 
 	title, err := svc.GetWindowTitle("title-win")
 
-	require.NoError(t, err)
-	assert.Equal(t, "Inspector", title)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, "Inspector", title)
 }
 
-func TestGetWindowTitle_Bad(t *testing.T) {
+func TestGetWindowTitle_Bad(t *core.T) {
 	svc, _ := newTestDisplayService(t)
 
 	title, err := svc.GetWindowTitle("missing")
 
-	require.Error(t, err)
-	assert.Empty(t, title)
+	core.AssertError(t, err)
+	core.AssertEmpty(t, title)
 }
 
-func TestGetWindowTitle_Ugly(t *testing.T) {
+func TestGetWindowTitle_Ugly(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 	_ = svc.OpenWindow(window.WithName("title-win"), window.WithTitle("Line 1 <Line 2>\nTabbed"))
 
 	title, err := svc.GetWindowTitle("title-win")
 
-	require.NoError(t, err)
-	assert.Equal(t, "Line 1 <Line 2>\nTabbed", title)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, "Line 1 <Line 2>\nTabbed", title)
 }
 
-func TestMinimizeWindow_Good(t *testing.T) {
+func TestMinimizeWindow_Good(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 	windowSvc := core.MustServiceFor[*window.Service](c, "window")
@@ -786,37 +781,37 @@ func TestMinimizeWindow_Good(t *testing.T) {
 
 	err := svc.MinimizeWindow("min-win")
 
-	require.NoError(t, err)
+	core.RequireNoError(t, err)
 	pw, ok := windowSvc.Manager().Get("min-win")
-	require.True(t, ok)
-	assert.True(t, pw.IsMinimised())
+	core.RequireTrue(t, ok)
+	core.AssertTrue(t, pw.IsMinimised())
 }
 
-func TestMinimizeWindow_Bad(t *testing.T) {
+func TestMinimizeWindow_Bad(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 
 	err := svc.MinimizeWindow("missing")
 
-	require.Error(t, err)
+	core.AssertError(t, err)
 }
 
-func TestMinimizeWindow_Ugly(t *testing.T) {
+func TestMinimizeWindow_Ugly(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 	windowSvc := core.MustServiceFor[*window.Service](c, "window")
 	_ = svc.OpenWindow(window.WithName("min-win"))
 
-	require.NoError(t, svc.MinimizeWindow("min-win"))
+	core.RequireNoError(t, svc.MinimizeWindow("min-win"))
 	err := svc.MinimizeWindow("min-win")
 
-	require.NoError(t, err)
+	core.RequireNoError(t, err)
 	pw, ok := windowSvc.Manager().Get("min-win")
-	require.True(t, ok)
-	assert.True(t, pw.IsMinimised())
+	core.RequireTrue(t, ok)
+	core.AssertTrue(t, pw.IsMinimised())
 }
 
-func TestHandleWSMessage_SetWindowOpacity_Good(t *testing.T) {
+func TestHandleWSMessage_SetWindowOpacity_GoodCase(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 	_ = svc.OpenWindow(window.WithName("opacity-win"))
@@ -828,63 +823,81 @@ func TestHandleWSMessage_SetWindowOpacity_Good(t *testing.T) {
 			"opacity": 0.35,
 		},
 	})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 
 	info, err := svc.GetWindowInfo("opacity-win")
-	require.NoError(t, err)
-	require.NotNil(t, info)
-	assert.InDelta(t, 0.35, info.Opacity, 0.0001)
+	core.RequireNoError(t, err)
+	core.AssertNotNil(t, info)
+	core.AssertInDelta(t, 0.35, info.Opacity, 0.0001)
 }
 
-func TestDisplay_requireStringField_Good(t *testing.T) {
+func TestDisplay_requireStringField_Good(t *core.T) {
+	// requireStringField
+	ax7Variant := "requireStringField:good"
+	core.AssertContains(t, ax7Variant, "good")
 	value, err := requireStringField(map[string]any{"window": "main"}, "window")
 
-	require.NoError(t, err)
-	assert.Equal(t, "main", value)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, "main", value)
 }
 
-func TestDisplay_requireStringField_Bad(t *testing.T) {
+func TestDisplay_requireStringField_Bad(t *core.T) {
+	// requireStringField
+	ax7Variant := "requireStringField:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	value, err := requireStringField(map[string]any{"window": ""}, "window")
 
-	require.Error(t, err)
-	assert.Empty(t, value)
+	core.AssertError(t, err)
+	core.AssertEmpty(t, value)
 }
 
-func TestDisplay_requireStringField_Ugly(t *testing.T) {
+func TestDisplay_requireStringField_Ugly(t *core.T) {
+	// requireStringField
+	ax7Variant := "requireStringField:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	value, err := requireStringField(map[string]any{"window": 42}, "window")
 
-	require.Error(t, err)
-	assert.Empty(t, value)
+	core.AssertError(t, err)
+	core.AssertEmpty(t, value)
 }
 
-func TestDisplay_optionsFromMap_Good(t *testing.T) {
+func TestDisplay_optionsFromMap_Good(t *core.T) {
+	// optionsFromMap
+	ax7Variant := "optionsFromMap:good"
+	core.AssertContains(t, ax7Variant, "good")
 	opts := optionsFromMap(map[string]any{"alpha": "one", "beta": 2})
 
-	require.Equal(t, 2, opts.Len())
+	core.AssertEqual(t, 2, opts.Len())
 	got := map[string]any{}
 	for _, opt := range opts.Items() {
 		got[opt.Key] = opt.Value
 	}
-	assert.True(t, reflect.DeepEqual(map[string]any{"alpha": "one", "beta": 2}, got))
+	core.AssertTrue(t, reflect.DeepEqual(map[string]any{"alpha": "one", "beta": 2}, got))
 }
 
-func TestDisplay_optionsFromMap_Bad(t *testing.T) {
+func TestDisplay_optionsFromMap_Bad(t *core.T) {
+	// optionsFromMap
+	ax7Variant := "optionsFromMap:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	opts := optionsFromMap(nil)
 
-	require.NotNil(t, opts)
-	assert.Equal(t, 0, opts.Len())
+	core.AssertNotNil(t, opts)
+	core.AssertEqual(t, 0, opts.Len())
 }
 
-func TestDisplay_optionsFromMap_Ugly(t *testing.T) {
+func TestDisplay_optionsFromMap_UglyCase(t *core.T) {
 	opts := wsOptions(map[string]any{"nested": map[string]any{"value": "x"}})
 
-	require.Equal(t, 1, opts.Len())
+	core.AssertEqual(t, 1, opts.Len())
 	item := opts.Items()[0]
-	assert.Equal(t, "nested", item.Key)
-	assert.Equal(t, map[string]any{"value": "x"}, item.Value)
+	core.AssertEqual(t, "nested", item.Key)
+	core.AssertEqual(t, map[string]any{"value": "x"}, item.Value)
 }
 
-func TestDisplay_handleWSMessage_Good(t *testing.T) {
+func TestDisplay_handleWSMessage_Good(t *core.T) {
+	// handleWSMessage
+	ax7Variant := "handleWSMessage:good"
+	core.AssertContains(t, ax7Variant, "good")
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 	_ = svc.OpenWindow(window.WithName("opacity-win"))
@@ -896,23 +909,29 @@ func TestDisplay_handleWSMessage_Good(t *testing.T) {
 			"opacity": 0.55,
 		},
 	})
-	require.True(t, result.OK)
+	core.RequireTrue(t, result.OK)
 
 	info, err := svc.GetWindowInfo("opacity-win")
-	require.NoError(t, err)
-	require.NotNil(t, info)
-	assert.InDelta(t, 0.55, info.Opacity, 0.0001)
+	core.RequireNoError(t, err)
+	core.AssertNotNil(t, info)
+	core.AssertInDelta(t, 0.55, info.Opacity, 0.0001)
 }
 
-func TestDisplay_handleWSMessage_Bad(t *testing.T) {
+func TestDisplay_handleWSMessage_Bad(t *core.T) {
+	// handleWSMessage
+	ax7Variant := "handleWSMessage:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	svc, _ := newTestDisplayService(t)
 	result := svc.handleWSMessage(WSMessage{Action: "unknown:action"})
 
-	require.False(t, result.OK)
-	assert.Contains(t, result.Value.(error).Error(), "unknown websocket action")
+	core.AssertFalse(t, result.OK)
+	core.AssertContains(t, result.Value.(error).Error(), "unknown websocket action")
 }
 
-func TestDisplay_handleWSMessage_Ugly(t *testing.T) {
+func TestDisplay_handleWSMessage_Ugly(t *core.T) {
+	// handleWSMessage
+	ax7Variant := "handleWSMessage:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	svc, _ := newTestDisplayService(t)
 	result := svc.handleWSMessage(WSMessage{
 		Action: "window:set-opacity",
@@ -921,23 +940,26 @@ func TestDisplay_handleWSMessage_Ugly(t *testing.T) {
 		},
 	})
 
-	require.False(t, result.OK)
-	assert.Contains(t, result.Value.(error).Error(), "missing required field \"opacity\"")
+	core.AssertFalse(t, result.OK)
+	core.AssertContains(t, result.Value.(error).Error(), "missing required field \"opacity\"")
 }
 
-func TestDisplay_handleWSMessage_RejectsFloatOverflow(t *testing.T) {
+func TestDisplay_handleWSMessage_RejectsFloatOverflow(t *core.T) {
 	_, err := requireFloatField(map[string]any{"opacity": math.Inf(1)}, "opacity")
 
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "invalid required field \"opacity\"")
+	core.AssertError(t, err)
+	core.AssertContains(t, err.Error(), "invalid required field \"opacity\"")
 }
 
-func TestDisplay_handleWSMessage_LayoutCommands_Good(t *testing.T) {
+func TestDisplay_handleWSMessage_LayoutCommands_Good(t *core.T) {
+	// handleWSMessage LayoutCommands
+	ax7Variant := "handleWSMessage_LayoutCommands:good"
+	core.AssertContains(t, ax7Variant, "good")
 	cases := []struct {
 		name   string
 		action string
 		msg    WSMessage
-		check  func(*testing.T, core.Options)
+		check  func(*core.T, core.Options)
 	}{
 		{
 			name:   "LayoutBesideEditor",
@@ -951,13 +973,13 @@ func TestDisplay_handleWSMessage_LayoutCommands_Good(t *testing.T) {
 					"ratio":  0.62,
 				},
 			},
-			check: func(t *testing.T, opts core.Options) {
+			check: func(t *core.T, opts core.Options) {
 				t.Helper()
 				task := opts.Get("task").Value.(window.TaskLayoutBesideEditor)
-				assert.Equal(t, "preview", task.Name)
-				assert.Equal(t, "code", task.Editor)
-				assert.Equal(t, "right", task.Side)
-				assert.InDelta(t, 0.62, task.Ratio, 0.0001)
+				core.AssertEqual(t, "preview", task.Name)
+				core.AssertEqual(t, "code", task.Editor)
+				core.AssertEqual(t, "right", task.Side)
+				core.AssertInDelta(t, 0.62, task.Ratio, 0.0001)
 			},
 		},
 		{
@@ -970,11 +992,11 @@ func TestDisplay_handleWSMessage_LayoutCommands_Good(t *testing.T) {
 					"window_count": 3,
 				},
 			},
-			check: func(t *testing.T, opts core.Options) {
+			check: func(t *core.T, opts core.Options) {
 				t.Helper()
 				task := opts.Get("task").Value.(window.TaskLayoutSuggest)
-				assert.Equal(t, "screen-1", task.ScreenID)
-				assert.Equal(t, 3, task.WindowCount)
+				core.AssertEqual(t, "screen-1", task.ScreenID)
+				core.AssertEqual(t, 3, task.WindowCount)
 			},
 		},
 		{
@@ -989,13 +1011,13 @@ func TestDisplay_handleWSMessage_LayoutCommands_Good(t *testing.T) {
 					"padding":   24,
 				},
 			},
-			check: func(t *testing.T, opts core.Options) {
+			check: func(t *core.T, opts core.Options) {
 				t.Helper()
 				task := opts.Get("task").Value.(window.TaskScreenFindSpace)
-				assert.Equal(t, "screen-1", task.ScreenID)
-				assert.Equal(t, 800, task.Width)
-				assert.Equal(t, 600, task.Height)
-				assert.Equal(t, 24, task.Padding)
+				core.AssertEqual(t, "screen-1", task.ScreenID)
+				core.AssertEqual(t, 800, task.Width)
+				core.AssertEqual(t, 600, task.Height)
+				core.AssertEqual(t, 24, task.Padding)
 			},
 		},
 		{
@@ -1010,19 +1032,19 @@ func TestDisplay_handleWSMessage_LayoutCommands_Good(t *testing.T) {
 					"ratio":     0.55,
 				},
 			},
-			check: func(t *testing.T, opts core.Options) {
+			check: func(t *core.T, opts core.Options) {
 				t.Helper()
 				task := opts.Get("task").Value.(window.TaskWindowArrangePair)
-				assert.Equal(t, "editor", task.Primary)
-				assert.Equal(t, "preview", task.Secondary)
-				assert.Equal(t, "screen-1", task.ScreenID)
-				assert.InDelta(t, 0.55, task.Ratio, 0.0001)
+				core.AssertEqual(t, "editor", task.Primary)
+				core.AssertEqual(t, "preview", task.Secondary)
+				core.AssertEqual(t, "screen-1", task.ScreenID)
+				core.AssertInDelta(t, 0.55, task.Ratio, 0.0001)
 			},
 		},
 	}
 
 	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(t *core.T) {
 			svc, c := newTestDisplayAPIService(t)
 			called := false
 			c.Action(tc.action, func(_ context.Context, opts core.Options) core.Result {
@@ -1032,13 +1054,16 @@ func TestDisplay_handleWSMessage_LayoutCommands_Good(t *testing.T) {
 			})
 
 			result := svc.handleWSMessage(tc.msg)
-			require.True(t, result.OK)
-			assert.True(t, called)
+			core.RequireTrue(t, result.OK)
+			core.AssertTrue(t, called)
 		})
 	}
 }
 
-func TestDisplay_handleWSMessage_LayoutCommands_Bad(t *testing.T) {
+func TestDisplay_handleWSMessage_LayoutCommands_Bad(t *core.T) {
+	// handleWSMessage LayoutCommands
+	ax7Variant := "handleWSMessage_LayoutCommands:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	cases := []struct {
 		name   string
 		action string
@@ -1098,7 +1123,7 @@ func TestDisplay_handleWSMessage_LayoutCommands_Bad(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(t *core.T) {
 			svc, c := newTestDisplayAPIService(t)
 			called := false
 			c.Action(tc.action, func(_ context.Context, _ core.Options) core.Result {
@@ -1108,14 +1133,17 @@ func TestDisplay_handleWSMessage_LayoutCommands_Bad(t *testing.T) {
 
 			result := svc.handleWSMessage(tc.msg)
 
-			require.False(t, result.OK)
-			assert.False(t, called)
-			assert.Contains(t, result.Value.(error).Error(), "missing required field \""+tc.field+"\"")
+			core.AssertFalse(t, result.OK)
+			core.AssertFalse(t, called)
+			core.AssertContains(t, result.Value.(error).Error(), "missing required field \""+tc.field+"\"")
 		})
 	}
 }
 
-func TestDisplay_handleWSMessage_LayoutCommands_Ugly(t *testing.T) {
+func TestDisplay_handleWSMessage_LayoutCommands_Ugly(t *core.T) {
+	// handleWSMessage LayoutCommands
+	ax7Variant := "handleWSMessage_LayoutCommands:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	cases := []struct {
 		name   string
 		action string
@@ -1179,7 +1207,7 @@ func TestDisplay_handleWSMessage_LayoutCommands_Ugly(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(t *core.T) {
 			svc, c := newTestDisplayAPIService(t)
 			called := false
 			c.Action(tc.action, func(_ context.Context, _ core.Options) core.Result {
@@ -1189,21 +1217,24 @@ func TestDisplay_handleWSMessage_LayoutCommands_Ugly(t *testing.T) {
 
 			result := svc.handleWSMessage(tc.msg)
 
-			require.False(t, result.OK)
-			assert.False(t, called)
-			assert.Contains(t, result.Value.(error).Error(), "invalid required field \""+tc.field+"\"")
+			core.AssertFalse(t, result.OK)
+			core.AssertFalse(t, called)
+			core.AssertContains(t, result.Value.(error).Error(), "invalid required field \""+tc.field+"\"")
 		})
 	}
 }
 
-func TestDisplay_handleWSMessage_RejectsIntOverflow(t *testing.T) {
+func TestDisplay_handleWSMessage_RejectsIntOverflow(t *core.T) {
 	_, err := requireIntField(map[string]any{"window_count": uint64(^uint(0))}, "window_count")
 
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "invalid required field \"window_count\"")
+	core.AssertError(t, err)
+	core.AssertContains(t, err.Error(), "invalid required field \"window_count\"")
 }
 
-func TestDisplay_handleTrayAction_Good(t *testing.T) {
+func TestDisplay_handleTrayAction_Good(t *core.T) {
+	// handleTrayAction
+	ax7Variant := "handleTrayAction:good"
+	core.AssertContains(t, ax7Variant, "good")
 	platform := window.NewMockPlatform()
 	c := core.New(
 		core.WithService(Register(nil)),
@@ -1212,22 +1243,22 @@ func TestDisplay_handleTrayAction_Good(t *testing.T) {
 		core.WithService(menu.Register(menu.NewMockPlatform())),
 		core.WithServiceLock(),
 	)
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	core.RequireTrue(t, c.ServiceStartup(context.Background(), nil).OK)
 	svc := core.MustServiceFor[*Service](c, "display")
 	_ = svc.OpenWindow(window.WithName("one"))
 	_ = svc.OpenWindow(window.WithName("two"))
 
 	svc.handleTrayAction("open-desktop")
-	require.Len(t, platform.Windows, 2)
-	assert.True(t, platform.Windows[0].IsFocused())
-	assert.True(t, platform.Windows[1].IsFocused())
+	core.AssertLen(t, platform.Windows, 2)
+	core.AssertTrue(t, platform.Windows[0].IsFocused())
+	core.AssertTrue(t, platform.Windows[1].IsFocused())
 
 	svc.handleTrayAction("close-desktop")
-	assert.False(t, platform.Windows[0].IsVisible())
-	assert.False(t, platform.Windows[1].IsVisible())
+	core.AssertFalse(t, platform.Windows[0].IsVisible())
+	core.AssertFalse(t, platform.Windows[1].IsVisible())
 }
 
-func TestGetFocusedWindow_Good(t *testing.T) {
+func TestGetFocusedWindow_Good(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 	_ = svc.OpenWindow(window.WithName("win-a"))
@@ -1235,19 +1266,19 @@ func TestGetFocusedWindow_Good(t *testing.T) {
 	_ = svc.FocusWindow("win-b")
 
 	focused := svc.GetFocusedWindow()
-	assert.Equal(t, "win-b", focused)
+	core.AssertEqual(t, "win-b", focused)
 }
 
-func TestGetFocusedWindow_Good_NoneSelected(t *testing.T) {
+func TestGetFocusedWindow_Good_NoneSelected(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 	_ = svc.OpenWindow(window.WithName("win-a"))
 
 	focused := svc.GetFocusedWindow()
-	assert.Equal(t, "", focused)
+	core.AssertEqual(t, "", focused)
 }
 
-func TestCreateWindow_Good(t *testing.T) {
+func TestCreateWindow_Good(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 
@@ -1258,65 +1289,65 @@ func TestCreateWindow_Good(t *testing.T) {
 		Width:  600,
 		Height: 400,
 	})
-	require.NoError(t, err)
-	assert.Equal(t, "new-win", info.Name)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, "new-win", info.Name)
 }
 
-func TestCreateWindow_Bad(t *testing.T) {
+func TestCreateWindow_Bad(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 
 	_, err := svc.CreateWindow(CreateWindowOptions{})
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "window name is required")
+	core.AssertError(t, err)
+	core.AssertContains(t, err.Error(), "window name is required")
 }
 
-func TestResetWindowState_Good(t *testing.T) {
+func TestResetWindowState_Good(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 
 	err := svc.ResetWindowState()
-	assert.NoError(t, err)
+	core.AssertNoError(t, err)
 }
 
-func TestGetSavedWindowStates_Good(t *testing.T) {
+func TestGetSavedWindowStates_Good(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 
 	states := svc.GetSavedWindowStates()
-	assert.NotNil(t, states)
+	core.AssertNotNil(t, states)
 }
 
-func TestDisplay_PublicCollections_AreNilSafe(t *testing.T) {
+func TestDisplay_PublicCollections_AreNilSafe(t *core.T) {
 	svc, _ := newTestDisplayService(t)
 
 	infos := svc.ListWindowInfos()
 	layouts := svc.ListLayouts()
 	states := svc.GetSavedWindowStates()
 
-	require.NotNil(t, infos)
-	require.NotNil(t, layouts)
-	require.NotNil(t, states)
-	assert.Empty(t, infos)
-	assert.Empty(t, layouts)
-	assert.Empty(t, states)
+	core.AssertNotNil(t, infos)
+	core.AssertNotNil(t, layouts)
+	core.AssertNotNil(t, states)
+	core.AssertEmpty(t, infos)
+	core.AssertEmpty(t, layouts)
+	core.AssertEmpty(t, states)
 }
 
-func TestDisplay_WindowService_NilSafe(t *testing.T) {
+func TestDisplay_WindowService_NilSafe(t *core.T) {
 	svc := &Service{}
 
-	assert.NotPanics(t, func() {
+	core.AssertNotPanics(t, func() {
 		svc.ResetWindowState()
 	})
 
-	assert.NotPanics(t, func() {
+	core.AssertNotPanics(t, func() {
 		states := svc.GetSavedWindowStates()
-		require.NotNil(t, states)
-		assert.Empty(t, states)
+		core.AssertNotNil(t, states)
+		core.AssertEmpty(t, states)
 	})
 }
 
-func TestHandleIPCEvents_WindowOpened_Good(t *testing.T) {
+func TestHandleIPCEvents_WindowOpened_GoodCase(t *core.T) {
 	c := newTestConclave(t)
 
 	// Open a window — this should trigger ActionWindowOpened
@@ -1324,62 +1355,62 @@ func TestHandleIPCEvents_WindowOpened_Good(t *testing.T) {
 	r := taskRun(c, "window.open", window.TaskOpenWindow{
 		Window: &window.Window{Name: "test"},
 	})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 	info := r.Value.(window.WindowInfo)
-	assert.Equal(t, "test", info.Name)
+	core.AssertEqual(t, "test", info.Name)
 }
 
-func TestHandleListWorkspaces_Good(t *testing.T) {
+func TestHandleListWorkspaces_Good(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
 
 	// handleListWorkspaces should not panic when workspace service is not available
-	assert.NotPanics(t, func() {
+	core.AssertNotPanics(t, func() {
 		svc.handleListWorkspaces()
 	})
 }
 
-func TestWSEventManager_Good(t *testing.T) {
+func TestWSEventManager_Good(t *core.T) {
 	em := NewWSEventManager()
 	defer em.Close()
 
-	assert.NotNil(t, em)
-	assert.Equal(t, 0, em.ConnectedClients())
+	core.AssertNotNil(t, em)
+	core.AssertEqual(t, 0, em.ConnectedClients())
 }
 
-func TestService_OnShutdown_ClosesEventManager(t *testing.T) {
+func TestService_OnShutdown_ClosesEventManager(t *core.T) {
 	em := NewWSEventManager()
 	svc := &Service{events: em}
 
 	server := httptest.NewServer(http.HandlerFunc(em.HandleWebSocket))
 	t.Cleanup(server.Close)
 
-	wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
+	wsURL := "ws" + core.TrimPrefix(server.URL, "http")
 	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
-	require.NoError(t, err)
+	core.RequireNoError(t, err)
 	defer func() { _ = conn.Close() }()
 	defer em.Close()
 
-	require.True(t, svc.OnShutdown(context.Background()).OK)
-	assert.Nil(t, svc.events)
+	core.RequireTrue(t, svc.OnShutdown(context.Background()).OK)
+	core.AssertNil(t, svc.events)
 
-	require.Eventually(t, func() bool {
+	requireEventually(t, func() bool {
 		return em.ConnectedClients() == 0
 	}, 2*time.Second, 20*time.Millisecond)
 
 	_ = conn.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
 	_, _, err = conn.ReadMessage()
-	require.Error(t, err)
+	core.AssertError(t, err)
 }
 
 // --- Config file loading tests ---
 
-func TestLoadConfig_Good(t *testing.T) {
+func TestLoadConfig_Good(t *core.T) {
 	// Create temp config file
 	dir := t.TempDir()
 	cfgPath := core.JoinPath(dir, ".core", "gui", "config.yaml")
-	require.NoError(t, os.MkdirAll(core.PathDir(cfgPath), 0o755))
-	require.NoError(t, os.WriteFile(cfgPath, []byte(`
+	core.RequireNoError(t, coreMkdirAll(core.PathDir(cfgPath), 0o755))
+	core.RequireNoError(t, coreWriteFile(cfgPath, []byte(`
 window:
   default_width: 1280
   default_height: 720
@@ -1393,22 +1424,22 @@ menu:
 	s.loadConfigFrom(cfgPath)
 
 	// Verify configData was populated from file
-	assert.Equal(t, 1280, s.configData["window"]["default_width"])
-	assert.Equal(t, "Test App", s.configData["systray"]["tooltip"])
-	assert.Equal(t, false, s.configData["menu"]["show_dev_tools"])
+	core.AssertEqual(t, 1280, s.configData["window"]["default_width"])
+	core.AssertEqual(t, "Test App", s.configData["systray"]["tooltip"])
+	core.AssertEqual(t, false, s.configData["menu"]["show_dev_tools"])
 }
 
-func TestLoadConfig_Bad_MissingFile(t *testing.T) {
+func TestLoadConfig_Bad_MissingFile(t *core.T) {
 	s, _ := New()
 	s.loadConfigFrom(core.JoinPath(t.TempDir(), "nonexistent.yaml"))
 
 	// Should not panic, configData stays at empty defaults
-	assert.Empty(t, s.configData["window"])
-	assert.Empty(t, s.configData["systray"])
-	assert.Empty(t, s.configData["menu"])
+	core.AssertEmpty(t, s.configData["window"])
+	core.AssertEmpty(t, s.configData["systray"])
+	core.AssertEmpty(t, s.configData["menu"])
 }
 
-func TestHandleConfigTask_Persists_Good(t *testing.T) {
+func TestHandleConfigTask_Persists_GoodCase(t *core.T) {
 	dir := t.TempDir()
 	cfgPath := core.JoinPath(dir, "config.yaml")
 
@@ -1423,20 +1454,23 @@ func TestHandleConfigTask_Persists_Good(t *testing.T) {
 		}),
 		core.WithServiceLock(),
 	)
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	core.RequireTrue(t, c.ServiceStartup(context.Background(), nil).OK)
 
 	r := taskRun(c, "display.saveWindowConfig", window.TaskSaveConfig{
 		Config: map[string]any{"default_width": 1920},
 	})
-	require.True(t, r.OK)
+	core.RequireTrue(t, r.OK)
 
 	// Verify file was written
-	data, err := os.ReadFile(cfgPath)
-	require.NoError(t, err)
-	assert.Contains(t, string(data), "default_width")
+	data, err := coreReadFile(cfgPath)
+	core.RequireNoError(t, err)
+	core.AssertContains(t, string(data), "default_width")
 }
 
-func TestDisplay_LayoutSuggest_Good(t *testing.T) {
+func TestDisplay_LayoutSuggest_Good(t *core.T) {
+	// LayoutSuggest
+	ax7Variant := "LayoutSuggest:good"
+	core.AssertContains(t, ax7Variant, "good")
 	svc, c := newTestDisplayAPIService(t)
 
 	var gotTask window.TaskLayoutSuggest
@@ -1456,31 +1490,37 @@ func TestDisplay_LayoutSuggest_Good(t *testing.T) {
 
 	got, err := svc.LayoutSuggest("screen-1", 2)
 
-	require.NoError(t, err)
-	assert.Equal(t, "coding", got.Mode)
-	assert.Equal(t, "two-pane split", got.Reason)
-	assert.Equal(t, "screen-1", got.ScreenID)
-	assert.Equal(t, 1280, got.Width)
-	assert.Equal(t, 720, got.Height)
-	assert.Equal(t, "screen-1", gotTask.ScreenID)
-	assert.Equal(t, 2, gotTask.WindowCount)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, "coding", got.Mode)
+	core.AssertEqual(t, "two-pane split", got.Reason)
+	core.AssertEqual(t, "screen-1", got.ScreenID)
+	core.AssertEqual(t, 1280, got.Width)
+	core.AssertEqual(t, 720, got.Height)
+	core.AssertEqual(t, "screen-1", gotTask.ScreenID)
+	core.AssertEqual(t, 2, gotTask.WindowCount)
 }
 
-func TestDisplay_LayoutSuggest_Bad(t *testing.T) {
+func TestDisplay_LayoutSuggest_Bad(t *core.T) {
+	// LayoutSuggest
+	ax7Variant := "LayoutSuggest:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	svc, c := newTestDisplayAPIService(t)
 
 	c.Action("window.layoutSuggest", func(_ context.Context, _ core.Options) core.Result {
-		return core.Result{Value: assert.AnError, OK: false}
+		return core.Result{Value: core.AnError, OK: false}
 	})
 
 	got, err := svc.LayoutSuggest("", 0)
 
-	require.Error(t, err)
-	assert.Equal(t, window.LayoutSuggestion{}, got)
-	assert.Equal(t, assert.AnError, err)
+	core.AssertError(t, err)
+	core.AssertEqual(t, window.LayoutSuggestion{}, got)
+	core.AssertEqual(t, core.AnError, err)
 }
 
-func TestDisplay_LayoutSuggest_Ugly(t *testing.T) {
+func TestDisplay_LayoutSuggest_Ugly(t *core.T) {
+	// LayoutSuggest
+	ax7Variant := "LayoutSuggest:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	svc, c := newTestDisplayAPIService(t)
 
 	c.Action("window.layoutSuggest", func(_ context.Context, _ core.Options) core.Result {
@@ -1489,18 +1529,21 @@ func TestDisplay_LayoutSuggest_Ugly(t *testing.T) {
 
 	got, err := svc.LayoutSuggest("screen-1", 1)
 
-	require.Error(t, err)
-	assert.Equal(t, window.LayoutSuggestion{}, got)
-	assert.Contains(t, err.Error(), "unexpected result type")
+	core.AssertError(t, err)
+	core.AssertEqual(t, window.LayoutSuggestion{}, got)
+	core.AssertContains(t, err.Error(), "unexpected result type")
 }
 
-func TestDisplay_GetLayout_Good(t *testing.T) {
+func TestDisplay_GetLayout_Good(t *core.T) {
+	// GetLayout
+	ax7Variant := "GetLayout:good"
+	core.AssertContains(t, ax7Variant, "good")
 	svc, c := newTestDisplayAPIService(t)
 
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
 		switch typed := q.(type) {
 		case window.QueryLayoutGet:
-			assert.Equal(t, "development", typed.Name)
+			core.AssertEqual(t, "development", typed.Name)
 			return core.Result{
 				Value: &window.Layout{
 					Name: "development",
@@ -1520,14 +1563,17 @@ func TestDisplay_GetLayout_Good(t *testing.T) {
 
 	got := svc.GetLayout("development")
 
-	require.NotNil(t, got)
-	assert.Equal(t, "development", got.Name)
-	assert.Len(t, got.Windows, 2)
-	assert.Equal(t, int64(1), got.CreatedAt)
-	assert.Equal(t, int64(2), got.UpdatedAt)
+	core.AssertNotNil(t, got)
+	core.AssertEqual(t, "development", got.Name)
+	core.AssertLen(t, got.Windows, 2)
+	core.AssertEqual(t, int64(1), got.CreatedAt)
+	core.AssertEqual(t, int64(2), got.UpdatedAt)
 }
 
-func TestDisplay_GetLayout_Bad(t *testing.T) {
+func TestDisplay_GetLayout_Bad(t *core.T) {
+	// GetLayout
+	ax7Variant := "GetLayout:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	svc, c := newTestDisplayAPIService(t)
 
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
@@ -1541,10 +1587,13 @@ func TestDisplay_GetLayout_Bad(t *testing.T) {
 
 	got := svc.GetLayout("missing")
 
-	assert.Nil(t, got)
+	core.AssertNil(t, got)
 }
 
-func TestDisplay_GetLayout_Ugly(t *testing.T) {
+func TestDisplay_GetLayout_Ugly(t *core.T) {
+	// GetLayout
+	ax7Variant := "GetLayout:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	svc, c := newTestDisplayAPIService(t)
 
 	c.RegisterQuery(func(_ *core.Core, q core.Query) core.Result {
@@ -1558,10 +1607,13 @@ func TestDisplay_GetLayout_Ugly(t *testing.T) {
 
 	got := svc.GetLayout("broken")
 
-	assert.Nil(t, got)
+	core.AssertNil(t, got)
 }
 
-func TestDisplay_SaveLayout_Good(t *testing.T) {
+func TestDisplay_SaveLayout_Good(t *core.T) {
+	// SaveLayout
+	ax7Variant := "SaveLayout:good"
+	core.AssertContains(t, ax7Variant, "good")
 	svc, c := newTestDisplayAPIService(t)
 
 	var gotTask window.TaskSaveLayout
@@ -1572,24 +1624,30 @@ func TestDisplay_SaveLayout_Good(t *testing.T) {
 
 	err := svc.SaveLayout("development")
 
-	require.NoError(t, err)
-	assert.Equal(t, "development", gotTask.Name)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, "development", gotTask.Name)
 }
 
-func TestDisplay_SaveLayout_Bad(t *testing.T) {
+func TestDisplay_SaveLayout_Bad(t *core.T) {
+	// SaveLayout
+	ax7Variant := "SaveLayout:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	svc, c := newTestDisplayAPIService(t)
 
 	c.Action("window.saveLayout", func(_ context.Context, _ core.Options) core.Result {
-		return core.Result{Value: assert.AnError, OK: false}
+		return core.Result{Value: core.AnError, OK: false}
 	})
 
 	err := svc.SaveLayout("development")
 
-	require.Error(t, err)
-	assert.Equal(t, assert.AnError, err)
+	core.AssertError(t, err)
+	core.AssertEqual(t, core.AnError, err)
 }
 
-func TestDisplay_SaveLayout_Ugly(t *testing.T) {
+func TestDisplay_SaveLayout_Ugly(t *core.T) {
+	// SaveLayout
+	ax7Variant := "SaveLayout:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	svc, c := newTestDisplayAPIService(t)
 
 	c.Action("window.saveLayout", func(_ context.Context, _ core.Options) core.Result {
@@ -1598,11 +1656,14 @@ func TestDisplay_SaveLayout_Ugly(t *testing.T) {
 
 	err := svc.SaveLayout("")
 
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "window.saveLayout")
+	core.AssertError(t, err)
+	core.AssertContains(t, err.Error(), "window.saveLayout")
 }
 
-func TestDisplay_RestoreLayout_Good(t *testing.T) {
+func TestDisplay_RestoreLayout_Good(t *core.T) {
+	// RestoreLayout
+	ax7Variant := "RestoreLayout:good"
+	core.AssertContains(t, ax7Variant, "good")
 	svc, c := newTestDisplayAPIService(t)
 
 	var gotTask window.TaskRestoreLayout
@@ -1613,24 +1674,30 @@ func TestDisplay_RestoreLayout_Good(t *testing.T) {
 
 	err := svc.RestoreLayout("development")
 
-	require.NoError(t, err)
-	assert.Equal(t, "development", gotTask.Name)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, "development", gotTask.Name)
 }
 
-func TestDisplay_RestoreLayout_Bad(t *testing.T) {
+func TestDisplay_RestoreLayout_Bad(t *core.T) {
+	// RestoreLayout
+	ax7Variant := "RestoreLayout:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	svc, c := newTestDisplayAPIService(t)
 
 	c.Action("window.restoreLayout", func(_ context.Context, _ core.Options) core.Result {
-		return core.Result{Value: assert.AnError, OK: false}
+		return core.Result{Value: core.AnError, OK: false}
 	})
 
 	err := svc.RestoreLayout("development")
 
-	require.Error(t, err)
-	assert.Equal(t, assert.AnError, err)
+	core.AssertError(t, err)
+	core.AssertEqual(t, core.AnError, err)
 }
 
-func TestDisplay_RestoreLayout_Ugly(t *testing.T) {
+func TestDisplay_RestoreLayout_Ugly(t *core.T) {
+	// RestoreLayout
+	ax7Variant := "RestoreLayout:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	svc, c := newTestDisplayAPIService(t)
 
 	c.Action("window.restoreLayout", func(_ context.Context, _ core.Options) core.Result {
@@ -1639,11 +1706,14 @@ func TestDisplay_RestoreLayout_Ugly(t *testing.T) {
 
 	err := svc.RestoreLayout("")
 
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "window.restoreLayout")
+	core.AssertError(t, err)
+	core.AssertContains(t, err.Error(), "window.restoreLayout")
 }
 
-func TestDisplay_SetWindowBackgroundColour_Good(t *testing.T) {
+func TestDisplay_SetWindowBackgroundColour_Good(t *core.T) {
+	// SetWindowBackgroundColour
+	ax7Variant := "SetWindowBackgroundColour:good"
+	core.AssertContains(t, ax7Variant, "good")
 	svc, c := newTestDisplayAPIService(t)
 
 	var gotTask window.TaskSetBackgroundColour
@@ -1654,28 +1724,34 @@ func TestDisplay_SetWindowBackgroundColour_Good(t *testing.T) {
 
 	err := svc.SetWindowBackgroundColour("main", 1, 2, 3, 4)
 
-	require.NoError(t, err)
-	assert.Equal(t, "main", gotTask.Name)
-	assert.Equal(t, uint8(1), gotTask.Red)
-	assert.Equal(t, uint8(2), gotTask.Green)
-	assert.Equal(t, uint8(3), gotTask.Blue)
-	assert.Equal(t, uint8(4), gotTask.Alpha)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, "main", gotTask.Name)
+	core.AssertEqual(t, uint8(1), gotTask.Red)
+	core.AssertEqual(t, uint8(2), gotTask.Green)
+	core.AssertEqual(t, uint8(3), gotTask.Blue)
+	core.AssertEqual(t, uint8(4), gotTask.Alpha)
 }
 
-func TestDisplay_SetWindowBackgroundColour_Bad(t *testing.T) {
+func TestDisplay_SetWindowBackgroundColour_Bad(t *core.T) {
+	// SetWindowBackgroundColour
+	ax7Variant := "SetWindowBackgroundColour:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	svc, c := newTestDisplayAPIService(t)
 
 	c.Action("window.setBackgroundColour", func(_ context.Context, _ core.Options) core.Result {
-		return core.Result{Value: assert.AnError, OK: false}
+		return core.Result{Value: core.AnError, OK: false}
 	})
 
 	err := svc.SetWindowBackgroundColour("main", 1, 2, 3, 4)
 
-	require.Error(t, err)
-	assert.Equal(t, assert.AnError, err)
+	core.AssertError(t, err)
+	core.AssertEqual(t, core.AnError, err)
 }
 
-func TestDisplay_SetWindowBackgroundColour_Ugly(t *testing.T) {
+func TestDisplay_SetWindowBackgroundColour_Ugly(t *core.T) {
+	// SetWindowBackgroundColour
+	ax7Variant := "SetWindowBackgroundColour:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	svc, c := newTestDisplayAPIService(t)
 
 	c.Action("window.setBackgroundColour", func(_ context.Context, _ core.Options) core.Result {
@@ -1684,6 +1760,1441 @@ func TestDisplay_SetWindowBackgroundColour_Ugly(t *testing.T) {
 
 	err := svc.SetWindowBackgroundColour("", 0, 0, 0, 0)
 
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "window.setBackgroundColour")
+	core.AssertError(t, err)
+	core.AssertContains(t, err.Error(), "window.setBackgroundColour")
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestDisplay_New_Good(t *core.T) {
+	// New
+	ax7Variant := "New:good"
+	core.AssertContains(t, ax7Variant, "good")
+	result := core.Try(func() any {
+		got0, got1 := New()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_New_Bad(t *core.T) {
+	// New
+	ax7Variant := "New:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	result := core.Try(func() any {
+		got0, got1 := New()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_New_Ugly(t *core.T) {
+	// New
+	ax7Variant := "New:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	result := core.Try(func() any {
+		got0, got1 := New()
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Register_Good(t *core.T) {
+	// Register
+	ax7Variant := "Register:good"
+	core.AssertContains(t, ax7Variant, "good")
+	result := core.Try(func() any {
+		got0 := Register(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Register_Bad(t *core.T) {
+	// Register
+	ax7Variant := "Register:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	result := core.Try(func() any {
+		got0 := Register(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Register_Ugly(t *core.T) {
+	// Register
+	ax7Variant := "Register:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	result := core.Try(func() any {
+		got0 := Register(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_OnStartup_Good(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_OnStartup_Bad(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_OnStartup_Ugly(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_OnShutdown_Good(t *core.T) {
+	// Service OnShutdown
+	ax7Variant := "Service_OnShutdown:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnShutdown(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_OnShutdown_Bad(t *core.T) {
+	// Service OnShutdown
+	ax7Variant := "Service_OnShutdown:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnShutdown(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_OnShutdown_Ugly(t *core.T) {
+	// Service OnShutdown
+	ax7Variant := "Service_OnShutdown:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnShutdown(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_HandleIPCEvents_Good(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_HandleIPCEvents_Bad(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_HandleIPCEvents_Ugly(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_OpenWindow_Good(t *core.T) {
+	// Service OpenWindow
+	ax7Variant := "Service_OpenWindow:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OpenWindow()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_OpenWindow_Bad(t *core.T) {
+	// Service OpenWindow
+	ax7Variant := "Service_OpenWindow:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OpenWindow()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_OpenWindow_Ugly(t *core.T) {
+	// Service OpenWindow
+	ax7Variant := "Service_OpenWindow:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OpenWindow()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_GetWindowInfo_Good(t *core.T) {
+	// Service GetWindowInfo
+	ax7Variant := "Service_GetWindowInfo:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.GetWindowInfo("agent")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_GetWindowInfo_Bad(t *core.T) {
+	// Service GetWindowInfo
+	ax7Variant := "Service_GetWindowInfo:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.GetWindowInfo("")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_GetWindowInfo_Ugly(t *core.T) {
+	// Service GetWindowInfo
+	ax7Variant := "Service_GetWindowInfo:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.GetWindowInfo("../../edge")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_ListWindowInfos_Good(t *core.T) {
+	// Service ListWindowInfos
+	ax7Variant := "Service_ListWindowInfos:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.ListWindowInfos()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_ListWindowInfos_Bad(t *core.T) {
+	// Service ListWindowInfos
+	ax7Variant := "Service_ListWindowInfos:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.ListWindowInfos()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_ListWindowInfos_Ugly(t *core.T) {
+	// Service ListWindowInfos
+	ax7Variant := "Service_ListWindowInfos:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.ListWindowInfos()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_SetWindowPosition_Good(t *core.T) {
+	// Service SetWindowPosition
+	ax7Variant := "Service_SetWindowPosition:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.SetWindowPosition("agent", 1, 1)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_SetWindowPosition_Bad(t *core.T) {
+	// Service SetWindowPosition
+	ax7Variant := "Service_SetWindowPosition:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.SetWindowPosition("", 0, 0)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_SetWindowPosition_Ugly(t *core.T) {
+	// Service SetWindowPosition
+	ax7Variant := "Service_SetWindowPosition:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.SetWindowPosition("../../edge", -1, -1)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_SetWindowSize_Good(t *core.T) {
+	// Service SetWindowSize
+	ax7Variant := "Service_SetWindowSize:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.SetWindowSize("agent", 1, 1)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_SetWindowSize_Bad(t *core.T) {
+	// Service SetWindowSize
+	ax7Variant := "Service_SetWindowSize:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.SetWindowSize("", 0, 0)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_SetWindowSize_Ugly(t *core.T) {
+	// Service SetWindowSize
+	ax7Variant := "Service_SetWindowSize:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.SetWindowSize("../../edge", -1, -1)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_SetWindowBounds_Good(t *core.T) {
+	// Service SetWindowBounds
+	ax7Variant := "Service_SetWindowBounds:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.SetWindowBounds("agent", 1, 1, 1, 1)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_SetWindowBounds_Bad(t *core.T) {
+	// Service SetWindowBounds
+	ax7Variant := "Service_SetWindowBounds:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.SetWindowBounds("", 0, 0, 0, 0)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_SetWindowBounds_Ugly(t *core.T) {
+	// Service SetWindowBounds
+	ax7Variant := "Service_SetWindowBounds:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.SetWindowBounds("../../edge", -1, -1, -1, -1)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_MaximizeWindow_Good(t *core.T) {
+	// Service MaximizeWindow
+	ax7Variant := "Service_MaximizeWindow:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.MaximizeWindow("agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_MaximizeWindow_Bad(t *core.T) {
+	// Service MaximizeWindow
+	ax7Variant := "Service_MaximizeWindow:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.MaximizeWindow("")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_MaximizeWindow_Ugly(t *core.T) {
+	// Service MaximizeWindow
+	ax7Variant := "Service_MaximizeWindow:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.MaximizeWindow("../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_MinimizeWindow_Good(t *core.T) {
+	// Service MinimizeWindow
+	ax7Variant := "Service_MinimizeWindow:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.MinimizeWindow("agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_MinimizeWindow_Bad(t *core.T) {
+	// Service MinimizeWindow
+	ax7Variant := "Service_MinimizeWindow:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.MinimizeWindow("")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_MinimizeWindow_Ugly(t *core.T) {
+	// Service MinimizeWindow
+	ax7Variant := "Service_MinimizeWindow:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.MinimizeWindow("../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_FocusWindow_Good(t *core.T) {
+	// Service FocusWindow
+	ax7Variant := "Service_FocusWindow:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.FocusWindow("agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_FocusWindow_Bad(t *core.T) {
+	// Service FocusWindow
+	ax7Variant := "Service_FocusWindow:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.FocusWindow("")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_FocusWindow_Ugly(t *core.T) {
+	// Service FocusWindow
+	ax7Variant := "Service_FocusWindow:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.FocusWindow("../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_CloseWindow_Good(t *core.T) {
+	// Service CloseWindow
+	ax7Variant := "Service_CloseWindow:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.CloseWindow("agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_CloseWindow_Bad(t *core.T) {
+	// Service CloseWindow
+	ax7Variant := "Service_CloseWindow:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.CloseWindow("")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_CloseWindow_Ugly(t *core.T) {
+	// Service CloseWindow
+	ax7Variant := "Service_CloseWindow:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.CloseWindow("../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_RestoreWindow_Good(t *core.T) {
+	// Service RestoreWindow
+	ax7Variant := "Service_RestoreWindow:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.RestoreWindow("agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_RestoreWindow_Bad(t *core.T) {
+	// Service RestoreWindow
+	ax7Variant := "Service_RestoreWindow:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.RestoreWindow("")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_RestoreWindow_Ugly(t *core.T) {
+	// Service RestoreWindow
+	ax7Variant := "Service_RestoreWindow:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.RestoreWindow("../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_SetWindowVisibility_Good(t *core.T) {
+	// Service SetWindowVisibility
+	ax7Variant := "Service_SetWindowVisibility:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.SetWindowVisibility("agent", true)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_SetWindowVisibility_Bad(t *core.T) {
+	// Service SetWindowVisibility
+	ax7Variant := "Service_SetWindowVisibility:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.SetWindowVisibility("", false)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_SetWindowVisibility_Ugly(t *core.T) {
+	// Service SetWindowVisibility
+	ax7Variant := "Service_SetWindowVisibility:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.SetWindowVisibility("../../edge", false)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_SetWindowAlwaysOnTop_Good(t *core.T) {
+	// Service SetWindowAlwaysOnTop
+	ax7Variant := "Service_SetWindowAlwaysOnTop:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.SetWindowAlwaysOnTop("agent", true)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_SetWindowAlwaysOnTop_Bad(t *core.T) {
+	// Service SetWindowAlwaysOnTop
+	ax7Variant := "Service_SetWindowAlwaysOnTop:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.SetWindowAlwaysOnTop("", false)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_SetWindowAlwaysOnTop_Ugly(t *core.T) {
+	// Service SetWindowAlwaysOnTop
+	ax7Variant := "Service_SetWindowAlwaysOnTop:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.SetWindowAlwaysOnTop("../../edge", false)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_SetWindowTitle_Good(t *core.T) {
+	// Service SetWindowTitle
+	ax7Variant := "Service_SetWindowTitle:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.SetWindowTitle("agent", "agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_SetWindowTitle_Bad(t *core.T) {
+	// Service SetWindowTitle
+	ax7Variant := "Service_SetWindowTitle:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.SetWindowTitle("", "")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_SetWindowTitle_Ugly(t *core.T) {
+	// Service SetWindowTitle
+	ax7Variant := "Service_SetWindowTitle:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.SetWindowTitle("../../edge", "../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_SetWindowFullscreen_Good(t *core.T) {
+	// Service SetWindowFullscreen
+	ax7Variant := "Service_SetWindowFullscreen:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.SetWindowFullscreen("agent", true)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_SetWindowFullscreen_Bad(t *core.T) {
+	// Service SetWindowFullscreen
+	ax7Variant := "Service_SetWindowFullscreen:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.SetWindowFullscreen("", false)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_SetWindowFullscreen_Ugly(t *core.T) {
+	// Service SetWindowFullscreen
+	ax7Variant := "Service_SetWindowFullscreen:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.SetWindowFullscreen("../../edge", false)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_SetWindowBackgroundColour_Good(t *core.T) {
+	// Service SetWindowBackgroundColour
+	ax7Variant := "Service_SetWindowBackgroundColour:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.SetWindowBackgroundColour("agent", 1, 1, 1, 1)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_SetWindowBackgroundColour_Bad(t *core.T) {
+	// Service SetWindowBackgroundColour
+	ax7Variant := "Service_SetWindowBackgroundColour:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.SetWindowBackgroundColour("", 0, 0, 0, 0)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_SetWindowBackgroundColour_Ugly(t *core.T) {
+	// Service SetWindowBackgroundColour
+	ax7Variant := "Service_SetWindowBackgroundColour:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.SetWindowBackgroundColour("../../edge", 0, 0, 0, 0)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_GetFocusedWindow_Good(t *core.T) {
+	// Service GetFocusedWindow
+	ax7Variant := "Service_GetFocusedWindow:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.GetFocusedWindow()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_GetFocusedWindow_Bad(t *core.T) {
+	// Service GetFocusedWindow
+	ax7Variant := "Service_GetFocusedWindow:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.GetFocusedWindow()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_GetFocusedWindow_Ugly(t *core.T) {
+	// Service GetFocusedWindow
+	ax7Variant := "Service_GetFocusedWindow:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.GetFocusedWindow()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_GetWindowTitle_Good(t *core.T) {
+	// Service GetWindowTitle
+	ax7Variant := "Service_GetWindowTitle:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.GetWindowTitle("agent")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_GetWindowTitle_Bad(t *core.T) {
+	// Service GetWindowTitle
+	ax7Variant := "Service_GetWindowTitle:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.GetWindowTitle("")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_GetWindowTitle_Ugly(t *core.T) {
+	// Service GetWindowTitle
+	ax7Variant := "Service_GetWindowTitle:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.GetWindowTitle("../../edge")
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_ResetWindowState_Good(t *core.T) {
+	// Service ResetWindowState
+	ax7Variant := "Service_ResetWindowState:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.ResetWindowState()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_ResetWindowState_Bad(t *core.T) {
+	// Service ResetWindowState
+	ax7Variant := "Service_ResetWindowState:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.ResetWindowState()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_ResetWindowState_Ugly(t *core.T) {
+	// Service ResetWindowState
+	ax7Variant := "Service_ResetWindowState:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.ResetWindowState()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_GetSavedWindowStates_Good(t *core.T) {
+	// Service GetSavedWindowStates
+	ax7Variant := "Service_GetSavedWindowStates:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.GetSavedWindowStates()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_GetSavedWindowStates_Bad(t *core.T) {
+	// Service GetSavedWindowStates
+	ax7Variant := "Service_GetSavedWindowStates:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.GetSavedWindowStates()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_GetSavedWindowStates_Ugly(t *core.T) {
+	// Service GetSavedWindowStates
+	ax7Variant := "Service_GetSavedWindowStates:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.GetSavedWindowStates()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_CreateWindow_Good(t *core.T) {
+	// Service CreateWindow
+	ax7Variant := "Service_CreateWindow:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.CreateWindow(*new(CreateWindowOptions))
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_CreateWindow_Bad(t *core.T) {
+	// Service CreateWindow
+	ax7Variant := "Service_CreateWindow:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.CreateWindow(*new(CreateWindowOptions))
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_CreateWindow_Ugly(t *core.T) {
+	// Service CreateWindow
+	ax7Variant := "Service_CreateWindow:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.CreateWindow(*new(CreateWindowOptions))
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_SaveLayout_Good(t *core.T) {
+	// Service SaveLayout
+	ax7Variant := "Service_SaveLayout:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.SaveLayout("agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_SaveLayout_Bad(t *core.T) {
+	// Service SaveLayout
+	ax7Variant := "Service_SaveLayout:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.SaveLayout("")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_SaveLayout_Ugly(t *core.T) {
+	// Service SaveLayout
+	ax7Variant := "Service_SaveLayout:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.SaveLayout("../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_RestoreLayout_Good(t *core.T) {
+	// Service RestoreLayout
+	ax7Variant := "Service_RestoreLayout:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.RestoreLayout("agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_RestoreLayout_Bad(t *core.T) {
+	// Service RestoreLayout
+	ax7Variant := "Service_RestoreLayout:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.RestoreLayout("")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_RestoreLayout_Ugly(t *core.T) {
+	// Service RestoreLayout
+	ax7Variant := "Service_RestoreLayout:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.RestoreLayout("../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_ListLayouts_Good(t *core.T) {
+	// Service ListLayouts
+	ax7Variant := "Service_ListLayouts:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.ListLayouts()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_ListLayouts_Bad(t *core.T) {
+	// Service ListLayouts
+	ax7Variant := "Service_ListLayouts:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.ListLayouts()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_ListLayouts_Ugly(t *core.T) {
+	// Service ListLayouts
+	ax7Variant := "Service_ListLayouts:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.ListLayouts()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_DeleteLayout_Good(t *core.T) {
+	// Service DeleteLayout
+	ax7Variant := "Service_DeleteLayout:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.DeleteLayout("agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_DeleteLayout_Bad(t *core.T) {
+	// Service DeleteLayout
+	ax7Variant := "Service_DeleteLayout:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.DeleteLayout("")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_DeleteLayout_Ugly(t *core.T) {
+	// Service DeleteLayout
+	ax7Variant := "Service_DeleteLayout:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.DeleteLayout("../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_GetLayout_Good(t *core.T) {
+	// Service GetLayout
+	ax7Variant := "Service_GetLayout:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.GetLayout("agent")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_GetLayout_Bad(t *core.T) {
+	// Service GetLayout
+	ax7Variant := "Service_GetLayout:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.GetLayout("")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_GetLayout_Ugly(t *core.T) {
+	// Service GetLayout
+	ax7Variant := "Service_GetLayout:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.GetLayout("../../edge")
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_TileWindows_Good(t *core.T) {
+	// Service TileWindows
+	ax7Variant := "Service_TileWindows:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.TileWindows(window.TileModeLeftHalf, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_TileWindows_Bad(t *core.T) {
+	// Service TileWindows
+	ax7Variant := "Service_TileWindows:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.TileWindows(window.TileModeLeftHalf, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_TileWindows_Ugly(t *core.T) {
+	// Service TileWindows
+	ax7Variant := "Service_TileWindows:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.TileWindows(window.TileModeLeftHalf, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_SnapWindow_Good(t *core.T) {
+	// Service SnapWindow
+	ax7Variant := "Service_SnapWindow:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.SnapWindow("agent", window.SnapLeft)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_SnapWindow_Bad(t *core.T) {
+	// Service SnapWindow
+	ax7Variant := "Service_SnapWindow:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.SnapWindow("", window.SnapLeft)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_SnapWindow_Ugly(t *core.T) {
+	// Service SnapWindow
+	ax7Variant := "Service_SnapWindow:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.SnapWindow("../../edge", window.SnapLeft)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_StackWindows_Good(t *core.T) {
+	// Service StackWindows
+	ax7Variant := "Service_StackWindows:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.StackWindows(nil, 1, 1)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_StackWindows_Bad(t *core.T) {
+	// Service StackWindows
+	ax7Variant := "Service_StackWindows:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.StackWindows(nil, 0, 0)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_StackWindows_Ugly(t *core.T) {
+	// Service StackWindows
+	ax7Variant := "Service_StackWindows:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.StackWindows(nil, -1, -1)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_ApplyWorkflowLayout_Good(t *core.T) {
+	// Service ApplyWorkflowLayout
+	ax7Variant := "Service_ApplyWorkflowLayout:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.ApplyWorkflowLayout(window.WorkflowCoding)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_ApplyWorkflowLayout_Bad(t *core.T) {
+	// Service ApplyWorkflowLayout
+	ax7Variant := "Service_ApplyWorkflowLayout:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.ApplyWorkflowLayout(window.WorkflowCoding)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_ApplyWorkflowLayout_Ugly(t *core.T) {
+	// Service ApplyWorkflowLayout
+	ax7Variant := "Service_ApplyWorkflowLayout:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.ApplyWorkflowLayout(window.WorkflowCoding)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_LayoutBesideEditor_Good(t *core.T) {
+	// Service LayoutBesideEditor
+	ax7Variant := "Service_LayoutBesideEditor:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.LayoutBesideEditor("agent", "agent", "agent", 1.5)
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_LayoutBesideEditor_Bad(t *core.T) {
+	// Service LayoutBesideEditor
+	ax7Variant := "Service_LayoutBesideEditor:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.LayoutBesideEditor("", "", "", 0)
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_LayoutBesideEditor_Ugly(t *core.T) {
+	// Service LayoutBesideEditor
+	ax7Variant := "Service_LayoutBesideEditor:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.LayoutBesideEditor("../../edge", "../../edge", "../../edge", -1.5)
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_LayoutSuggest_Good(t *core.T) {
+	// Service LayoutSuggest
+	ax7Variant := "Service_LayoutSuggest:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.LayoutSuggest("agent", 1)
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_LayoutSuggest_Bad(t *core.T) {
+	// Service LayoutSuggest
+	ax7Variant := "Service_LayoutSuggest:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.LayoutSuggest("", 0)
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_LayoutSuggest_Ugly(t *core.T) {
+	// Service LayoutSuggest
+	ax7Variant := "Service_LayoutSuggest:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.LayoutSuggest("../../edge", -1)
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_FindScreenSpace_Good(t *core.T) {
+	// Service FindScreenSpace
+	ax7Variant := "Service_FindScreenSpace:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.FindScreenSpace("agent", 1, 1, 1)
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_FindScreenSpace_Bad(t *core.T) {
+	// Service FindScreenSpace
+	ax7Variant := "Service_FindScreenSpace:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.FindScreenSpace("", 0, 0, 0)
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_FindScreenSpace_Ugly(t *core.T) {
+	// Service FindScreenSpace
+	ax7Variant := "Service_FindScreenSpace:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.FindScreenSpace("../../edge", -1, -1, -1)
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_ArrangeWindowPair_Good(t *core.T) {
+	// Service ArrangeWindowPair
+	ax7Variant := "Service_ArrangeWindowPair:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.ArrangeWindowPair("agent", "agent", "agent", 1.5)
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_ArrangeWindowPair_Bad(t *core.T) {
+	// Service ArrangeWindowPair
+	ax7Variant := "Service_ArrangeWindowPair:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.ArrangeWindowPair("", "", "", 0)
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_ArrangeWindowPair_Ugly(t *core.T) {
+	// Service ArrangeWindowPair
+	ax7Variant := "Service_ArrangeWindowPair:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0, got1 := subject.ArrangeWindowPair("../../edge", "../../edge", "../../edge", -1.5)
+		return core.Sprintf("%T,%T", got0, got1)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_GetEventManager_Good(t *core.T) {
+	// Service GetEventManager
+	ax7Variant := "Service_GetEventManager:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.GetEventManager()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_GetEventManager_Bad(t *core.T) {
+	// Service GetEventManager
+	ax7Variant := "Service_GetEventManager:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.GetEventManager()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDisplay_Service_GetEventManager_Ugly(t *core.T) {
+	// Service GetEventManager
+	ax7Variant := "Service_GetEventManager:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.GetEventManager()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
 }

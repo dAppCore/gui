@@ -1,10 +1,6 @@
 package preload
 
-import (
-	"strings"
-
-	core "dappco.re/go/core"
-)
+import core "dappco.re/go"
 
 func renderElectronShim(pageURL string) string {
 	meta := map[string]any{
@@ -12,9 +8,9 @@ func renderElectronShim(pageURL string) string {
 		"pageURL": pageURL,
 	}
 
-	return strings.ReplaceAll(
+	return core.Replace(
 		electronShimAsset,
 		"__CORE_PRELOAD_META__",
-		core.JSONMarshalString(meta),
-	)
+		core.JSONMarshalString(meta))
+
 }

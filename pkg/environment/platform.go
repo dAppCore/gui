@@ -13,7 +13,7 @@ type Platform interface {
 
 // EnvironmentInfo contains system environment details.
 type EnvironmentInfo struct {
-	OS       string       `json:"os"`
+	OS       string       `json:"os,omitempty"`
 	Arch     string       `json:"arch"`
 	Debug    bool         `json:"debug"`
 	Platform PlatformInfo `json:"platform"`

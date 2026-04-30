@@ -3,9 +3,8 @@ package mcp
 import (
 	"context"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/p2p"
-	coreerr "dappco.re/go/log"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -31,7 +30,7 @@ func (s *Subsystem) p2pPublish(_ context.Context, _ *mcp.CallToolRequest, input 
 		if err, ok := result.Value.(error); ok {
 			return nil, P2PPublishOutput{}, err
 		}
-		return nil, P2PPublishOutput{}, coreerr.E("mcp.p2pPublish", "p2p.publish failed", nil)
+		return nil, P2PPublishOutput{}, core.E("mcp.p2pPublish", "p2p.publish failed", nil)
 	}
 	return nil, P2PPublishOutput{Success: true}, nil
 }
@@ -48,11 +47,11 @@ func (s *Subsystem) p2pState(_ context.Context, _ *mcp.CallToolRequest, _ P2PSta
 		if err, ok := result.Value.(error); ok {
 			return nil, P2PStateOutput{}, err
 		}
-		return nil, P2PStateOutput{}, coreerr.E("mcp.p2pState", "p2p.state failed", nil)
+		return nil, P2PStateOutput{}, core.E("mcp.p2pState", "p2p.state failed", nil)
 	}
 	state, ok := result.Value.(p2p.State)
 	if !ok {
-		return nil, P2PStateOutput{}, coreerr.E("mcp.p2pState", "unexpected result type", nil)
+		return nil, P2PStateOutput{}, core.E("mcp.p2pState", "unexpected result type", nil)
 	}
 	return nil, P2PStateOutput{State: state}, nil
 }

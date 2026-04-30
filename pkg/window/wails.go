@@ -3,8 +3,8 @@ package window
 
 import (
 	"reflect"
-	"strings"
 
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/preload"
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/events"
@@ -50,8 +50,10 @@ func (wp *WailsPlatform) CreateWindow(options PlatformWindowOptions) PlatformWin
 		if target == nil {
 			return
 		}
-		_ = preload.InjectPreload(target, origin)
-		if extra := postPageLoadWindowJS(options.JS); strings.TrimSpace(extra) != "" {
+		if err := preload.InjectPreload(target, origin); err != nil {
+			return
+		}
+		if extra := postPageLoadWindowJS(options.JS); core.Trim(extra) != "" {
 			target.ExecJS(extra)
 		}
 	}) {
@@ -102,14 +104,14 @@ func extractPageLoadOrigin(args []reflect.Value, fallback string) string {
 		}
 		switch arg.Kind() {
 		case reflect.String:
-			if value := strings.TrimSpace(arg.String()); value != "" {
+			if value := core.Trim(arg.String()); value != "" {
 				return value
 			}
 		case reflect.Struct:
 			for _, name := range []string{"URL", "Url", "Origin", "Location"} {
 				field := arg.FieldByName(name)
 				if field.IsValid() && field.Kind() == reflect.String {
-					if value := strings.TrimSpace(field.String()); value != "" {
+					if value := core.Trim(field.String()); value != "" {
 						return value
 					}
 				}
@@ -150,13 +152,13 @@ func postPageLoadWindowJS(raw string) string {
 }
 
 func looksLikeLegacyDisplayPreload(raw string) bool {
-	trimmed := strings.TrimSpace(raw)
+	trimmed := core.Trim(raw)
 	if trimmed == "" {
 		return false
 	}
-	return strings.Contains(trimmed, "const __corePageURL =") &&
-		strings.Contains(trimmed, "globalThis.core.ml") &&
-		strings.Contains(trimmed, "Document.prototype, 'cookie'")
+	return core.Contains(trimmed, "const __corePageURL =") &&
+		core.Contains(trimmed, "globalThis.core.ml") &&
+		core.Contains(trimmed, "Document.prototype, 'cookie'")
 }
 
 func (wp *WailsPlatform) GetWindows() []PlatformWindow {

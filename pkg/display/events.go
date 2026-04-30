@@ -5,11 +5,10 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/events"
 	"dappco.re/go/gui/pkg/window"
 	"github.com/gorilla/websocket"
@@ -123,7 +122,7 @@ func trustedWebSocketOrigin(r *http.Request) bool {
 	if r.URL == nil {
 		return false
 	}
-	if path := strings.TrimSpace(r.URL.Path); path != "" && path != "/" && path != "/events" {
+	if path := core.Trim(r.URL.Path); path != "" && path != "/" && path != "/events" {
 		return false
 	}
 
@@ -134,8 +133,8 @@ func trustedWebSocketOrigin(r *http.Request) bool {
 		return false
 	}
 
-	origin := strings.TrimSpace(r.Header.Get("Origin"))
-	if origin == "" || strings.EqualFold(origin, "null") {
+	origin := core.Trim(r.Header.Get("Origin"))
+	if origin == "" || equalFold(origin, "null") {
 		return true
 	}
 
@@ -144,7 +143,7 @@ func trustedWebSocketOrigin(r *http.Request) bool {
 		return false
 	}
 
-	switch strings.ToLower(parsed.Scheme) {
+	switch core.Lower(parsed.Scheme) {
 	case "http", "https":
 		return trustedWebSocketHost(parsed.Host)
 	case "wails", "core", "app":
@@ -162,12 +161,12 @@ func trustedWSRequestOrigin(raw string) bool {
 	if parsed, _, err := net.SplitHostPort(raw); err == nil {
 		host = parsed
 	}
-	host = strings.Trim(host, "[]")
+	host = trimRunes(host, "[]")
 	return isLoopbackHost(host)
 }
 
 func isLoopbackHost(host string) bool {
-	host = strings.TrimSpace(strings.ToLower(host))
+	host = core.Trim(core.Lower(host))
 	if host == "" {
 		return false
 	}
@@ -179,7 +178,7 @@ func isLoopbackHost(host string) bool {
 }
 
 func trustedWebSocketHost(host string) bool {
-	host = strings.TrimSpace(host)
+	host = core.Trim(host)
 	if host == "" {
 		return false
 	}
@@ -188,8 +187,8 @@ func trustedWebSocketHost(host string) bool {
 	if parsedHost, _, err := net.SplitHostPort(host); err == nil {
 		name = parsedHost
 	}
-	name = strings.Trim(name, "[]")
-	switch strings.ToLower(name) {
+	name = trimRunes(name, "[]")
+	switch core.Lower(name) {
 	case "localhost", "127.0.0.1", "::1":
 		return true
 	default:
@@ -293,7 +292,9 @@ func (em *WSEventManager) HandleWebSocket(w http.ResponseWriter, r *http.Request
 	em.mu.Lock()
 	if em.closed {
 		em.mu.Unlock()
-		_ = conn.Close()
+		if err := conn.Close(); err != nil {
+			return
+		}
 		return
 	}
 	em.clients[conn] = &clientState{
@@ -316,7 +317,9 @@ func (em *WSEventManager) prepareConnection(conn *websocket.Conn) {
 	}
 	conn.SetReadLimit(64 * 1024)
 	if em.readTimeout > 0 {
-		_ = conn.SetReadDeadline(time.Now().Add(em.readTimeout))
+		if err := conn.SetReadDeadline(time.Now().Add(em.readTimeout)); err != nil {
+			return
+		}
 		conn.SetPongHandler(func(string) error {
 			return conn.SetReadDeadline(time.Now().Add(em.readTimeout))
 		})
@@ -374,7 +377,9 @@ func (em *WSEventManager) handleMessages(conn *websocket.Conn, done chan<- struc
 
 	for {
 		if em.readTimeout > 0 {
-			_ = conn.SetReadDeadline(time.Now().Add(em.readTimeout))
+			if err := conn.SetReadDeadline(time.Now().Add(em.readTimeout)); err != nil {
+				return
+			}
 		}
 		_, message, err := conn.ReadMessage()
 		if err != nil {
@@ -415,12 +420,18 @@ func (em *WSEventManager) closeWithPolicyViolation(conn *websocket.Conn, reason 
 	}
 	state.writeMu.Lock()
 	defer state.writeMu.Unlock()
-	_ = conn.WriteJSON(map[string]any{
+	if err := conn.WriteJSON(map[string]any{
 		"error":  reason,
 		"status": websocket.ClosePolicyViolation,
-	})
-	_ = conn.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.ClosePolicyViolation, reason), time.Now().Add(2*time.Second))
-	_ = conn.Close()
+	}); err != nil {
+		return
+	}
+	if err := conn.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.ClosePolicyViolation, reason), time.Now().Add(2*time.Second)); err != nil {
+		return
+	}
+	if err := conn.Close(); err != nil {
+		return
+	}
 }
 
 // subscribe adds a subscription for a client.
@@ -519,7 +530,9 @@ func (em *WSEventManager) writeClientMessage(state *clientState, conn *websocket
 	state.writeMu.Lock()
 	defer state.writeMu.Unlock()
 	conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-	_ = conn.WriteMessage(websocket.TextMessage, data)
+	if err := conn.WriteMessage(websocket.TextMessage, data); err != nil {
+		return
+	}
 }
 
 // removeClient removes a client and its subscriptions.
@@ -619,7 +632,9 @@ func (em *WSEventManager) Close() {
 	em.mu.Unlock()
 
 	for _, conn := range conns {
-		_ = conn.Close()
+		if err := conn.Close(); err != nil {
+			return
+		}
 	}
 }
 

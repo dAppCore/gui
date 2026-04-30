@@ -4,11 +4,8 @@ import (
 	"io"
 	"net"
 	"net/url"
-	"os" // Note: AX-6 — os.Getenv intrinsic, core.Env(...) preferred where reading config
-	"path/filepath"
 
-	core "dappco.re/go/core"
-	coreerr "dappco.re/go/log"
+	core "dappco.re/go"
 	"gopkg.in/yaml.v3"
 )
 
@@ -24,7 +21,7 @@ type ViewManifest struct {
 }
 
 type ManifestPreload struct {
-	Path    string `yaml:"path" json:"path"`
+	Path    string `yaml:"path,omitempty" json:"path,omitempty"`
 	Inline  string `yaml:"inline" json:"inline"`
 	Enabled *bool  `yaml:"enabled" json:"enabled,omitempty"`
 }
@@ -69,19 +66,19 @@ func (s *Service) loadManifestForOrigin(pageURL string) (*loadedManifest, error)
 	reader, ok := stream.Value.(io.Reader)
 	if !ok {
 		core.CloseStream(stream.Value)
-		return nil, coreerr.E("display.loadManifestForOrigin", "view manifest stream is not readable", nil)
+		return nil, core.E("display.loadManifestForOrigin", "view manifest stream is not readable", nil)
 	}
 	defer core.CloseStream(stream.Value)
 	body, err := io.ReadAll(io.LimitReader(reader, maxViewManifestBytes+1))
 	if err != nil {
-		return nil, coreerr.E("display.loadManifestForOrigin", "failed to read view manifest", err)
+		return nil, core.E("display.loadManifestForOrigin", "failed to read view manifest", err)
 	}
 	if len(body) > maxViewManifestBytes {
-		return nil, coreerr.E("display.loadManifestForOrigin", "view manifest exceeds 1048576 bytes", nil)
+		return nil, core.E("display.loadManifestForOrigin", "view manifest exceeds 1048576 bytes", nil)
 	}
 	var manifest ViewManifest
 	if err := yaml.Unmarshal(body, &manifest); err != nil {
-		return nil, coreerr.E("display.loadManifestForOrigin", "failed to parse view manifest", err)
+		return nil, core.E("display.loadManifestForOrigin", "failed to parse view manifest", err)
 	}
 	loaded := &loadedManifest{
 		Path:     path,
@@ -94,9 +91,9 @@ func (s *Service) loadManifestForOrigin(pageURL string) (*loadedManifest, error)
 }
 
 func manifestBaseDir(manifestPath string) string {
-	baseDir := filepath.Dir(manifestPath)
-	if filepath.Base(baseDir) == ".core" {
-		return filepath.Dir(baseDir)
+	baseDir := core.PathDir(manifestPath)
+	if core.PathBase(baseDir) == ".core" {
+		return core.PathDir(baseDir)
 	}
 	return baseDir
 }
@@ -108,44 +105,44 @@ func safeManifestPreloadPath(baseDir, preloadPath string) (string, error) {
 func safeManifestRelativePath(baseDir, relativePath, label string) (string, error) {
 	trimmed := core.Trim(relativePath)
 	if trimmed == "" {
-		return "", coreerr.E("display.safeManifestRelativePath", label+" is empty", nil)
+		return "", core.E("display.safeManifestRelativePath", label+" is empty", nil)
 	}
-	if filepath.IsAbs(trimmed) {
-		return "", coreerr.E("display.safeManifestRelativePath", label+" must be relative", nil)
+	if core.PathIsAbs(trimmed) {
+		return "", core.E("display.safeManifestRelativePath", label+" must be relative", nil)
 	}
 
-	baseAbs, err := filepath.Abs(baseDir)
+	baseAbs, err := pathAbs(baseDir)
 	if err != nil {
-		return "", coreerr.E("display.safeManifestRelativePath", "failed to resolve manifest base directory", err)
+		return "", core.E("display.safeManifestRelativePath", "failed to resolve manifest base directory", err)
 	}
-	baseResolved, err := filepath.EvalSymlinks(baseAbs)
+	baseResolved, err := pathEvalSymlinks(baseAbs)
 	if err != nil {
-		return "", coreerr.E("display.safeManifestRelativePath", "failed to resolve manifest base symlinks", err)
+		return "", core.E("display.safeManifestRelativePath", "failed to resolve manifest base symlinks", err)
 	}
-	candidateAbs, err := filepath.Abs(filepath.Join(baseAbs, trimmed))
+	candidateAbs, err := pathAbs(core.PathJoin(baseAbs, trimmed))
 	if err != nil {
-		return "", coreerr.E("display.safeManifestRelativePath", "failed to resolve manifest relative path", err)
+		return "", core.E("display.safeManifestRelativePath", "failed to resolve manifest relative path", err)
 	}
-	rel, err := filepath.Rel(baseAbs, candidateAbs)
+	rel, err := pathRel(baseAbs, candidateAbs)
 	if err != nil {
-		return "", coreerr.E("display.safeManifestRelativePath", "failed to compare manifest relative path", err)
+		return "", core.E("display.safeManifestRelativePath", "failed to compare manifest relative path", err)
 	}
-	if rel == ".." || core.HasPrefix(rel, ".."+string(filepath.Separator)) {
-		return "", coreerr.E("display.safeManifestRelativePath", label+" escapes manifest directory", nil)
+	if rel == ".." || core.HasPrefix(rel, ".."+string(core.PathSeparator)) {
+		return "", core.E("display.safeManifestRelativePath", label+" escapes manifest directory", nil)
 	}
 	if !(&core.Fs{}).NewUnrestricted().Exists(candidateAbs) {
-		return "", coreerr.E("display.safeManifestRelativePath", label+" does not exist", os.ErrNotExist)
+		return "", core.E("display.safeManifestRelativePath", label+" does not exist", coreResultError(core.Stat(candidateAbs), label+" does not exist"))
 	}
-	candidateResolved, err := filepath.EvalSymlinks(candidateAbs)
+	candidateResolved, err := pathEvalSymlinks(candidateAbs)
 	if err != nil {
-		return "", coreerr.E("display.safeManifestRelativePath", "failed to resolve manifest relative path symlinks", err)
+		return "", core.E("display.safeManifestRelativePath", "failed to resolve manifest relative path symlinks", err)
 	}
-	rel, err = filepath.Rel(baseResolved, candidateResolved)
+	rel, err = pathRel(baseResolved, candidateResolved)
 	if err != nil {
-		return "", coreerr.E("display.safeManifestRelativePath", "failed to compare resolved manifest relative path", err)
+		return "", core.E("display.safeManifestRelativePath", "failed to compare resolved manifest relative path", err)
 	}
-	if rel == ".." || core.HasPrefix(rel, ".."+string(filepath.Separator)) {
-		return "", coreerr.E("display.safeManifestRelativePath", label+" escapes manifest directory", nil)
+	if rel == ".." || core.HasPrefix(rel, ".."+string(core.PathSeparator)) {
+		return "", core.E("display.safeManifestRelativePath", label+" escapes manifest directory", nil)
 	}
 	return candidateResolved, nil
 }
@@ -154,7 +151,7 @@ func discoverManifestPath(pageURL string) (string, error) {
 	trimmed := core.Trim(pageURL)
 	fsys := (&core.Fs{}).NewUnrestricted()
 	candidates := make([]string, 0, 4)
-	if filepath.VolumeName(trimmed) != "" {
+	if pathVolumeName(trimmed) != "" {
 		appendLocalManifestCandidates(&candidates, fsys, trimmed)
 	} else {
 		parsed, err := url.Parse(trimmed)
@@ -174,12 +171,12 @@ func discoverManifestPath(pageURL string) (string, error) {
 				if err != nil {
 					return "", err
 				}
-				home := core.Trim(os.Getenv("DIR_HOME"))
+				home := core.Trim(core.Getenv("DIR_HOME"))
 				if home == "" {
 					home = core.Trim(core.Env("DIR_HOME"))
 				}
 				if home != "" {
-					candidates = append(candidates, filepath.Join(home, ".core", "apps", host, ".core", "view.yaml"))
+					candidates = append(candidates, core.PathJoin(home, ".core", "apps", host, ".core", "view.yaml"))
 				}
 			}
 		}
@@ -189,7 +186,7 @@ func discoverManifestPath(pageURL string) (string, error) {
 			return candidate, nil
 		}
 	}
-	return "", coreerr.E("display.discoverManifestPath", "view manifest not found", nil)
+	return "", core.E("display.discoverManifestPath", "view manifest not found", nil)
 }
 
 func appendLocalManifestCandidates(candidates *[]string, fsys *core.Fs, path string) {
@@ -197,18 +194,18 @@ func appendLocalManifestCandidates(candidates *[]string, fsys *core.Fs, path str
 		return
 	}
 	if fsys.IsDir(path) {
-		*candidates = append(*candidates, filepath.Join(path, ".core", "view.yaml"))
+		*candidates = append(*candidates, core.PathJoin(path, ".core", "view.yaml"))
 		return
 	}
-	dir := filepath.Dir(path)
-	*candidates = append(*candidates, filepath.Join(dir, ".core", "view.yaml"))
-	*candidates = append(*candidates, filepath.Join(filepath.Dir(dir), ".core", "view.yaml"))
+	dir := core.PathDir(path)
+	*candidates = append(*candidates, core.PathJoin(dir, ".core", "view.yaml"))
+	*candidates = append(*candidates, core.PathJoin(core.PathDir(dir), ".core", "view.yaml"))
 }
 
 func manifestHostPathComponent(parsed *url.URL) (string, error) {
 	host := parsed.Hostname()
 	if host == "" {
-		return "", coreerr.E("display.manifestHostPathComponent", "manifest host is empty", nil)
+		return "", core.E("display.manifestHostPathComponent", "manifest host is empty", nil)
 	}
 	if err := validateManifestHostPathComponent(host); err != nil {
 		return "", err
@@ -219,20 +216,20 @@ func manifestHostPathComponent(parsed *url.URL) (string, error) {
 func validateManifestHostPathComponent(host string) error {
 	for i := 0; i < len(host); i++ {
 		if host[i] < 0x20 || host[i] == 0x7f {
-			return coreerr.E("display.validateManifestHostPathComponent", "manifest host contains control character", nil)
+			return core.E("display.validateManifestHostPathComponent", "manifest host contains control character", nil)
 		}
 	}
 	if containsAny(host, "[]") {
-		return coreerr.E("display.validateManifestHostPathComponent", "manifest host contains IPv6 brackets", nil)
+		return core.E("display.validateManifestHostPathComponent", "manifest host contains IPv6 brackets", nil)
 	}
 	if host == "." || host == ".." || core.HasPrefix(host, "../") || core.Contains(host, "/../") {
-		return coreerr.E("display.validateManifestHostPathComponent", "manifest host contains relative path segment", nil)
+		return core.E("display.validateManifestHostPathComponent", "manifest host contains relative path segment", nil)
 	}
 	if containsAny(host, `/\`) {
-		return coreerr.E("display.validateManifestHostPathComponent", "manifest host contains path separator", nil)
+		return core.E("display.validateManifestHostPathComponent", "manifest host contains path separator", nil)
 	}
 	if core.Contains(host, ":") && net.ParseIP(host) == nil {
-		return coreerr.E("display.validateManifestHostPathComponent", "manifest host contains invalid colon", nil)
+		return core.E("display.validateManifestHostPathComponent", "manifest host contains invalid colon", nil)
 	}
 	return nil
 }
@@ -272,14 +269,7 @@ func (s *Service) readManifestPreload(baseDir, preloadPath string) ([]byte, erro
 	}
 	content, ok := result.Value.(string)
 	if !ok {
-		return nil, coreerr.E("display.readManifestPreload", "manifest preload content is not text", nil)
+		return nil, core.E("display.readManifestPreload", "manifest preload content is not text", nil)
 	}
 	return []byte(content), nil
-}
-
-func coreResultError(result core.Result, fallback string) error {
-	if err, ok := result.Value.(error); ok {
-		return err
-	}
-	return coreerr.E("display.coreResultError", fallback, nil)
 }

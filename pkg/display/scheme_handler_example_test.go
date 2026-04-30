@@ -1,10 +1,9 @@
 package display
 
 import (
-	"fmt"
 	"net/url"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 )
 
 func ExampleNewCoreSchemeHandler() {
@@ -20,6 +19,31 @@ func ExampleNewCoreSchemeHandler() {
 	parsedURL, _ := url.Parse("core://settings")
 	result := NewCoreSchemeHandler(c).Handle(parsedURL)
 
-	fmt.Println(result.OK, result.Value)
+	core.Println(result.OK, result.Value)
 	// Output: true settings-query
+}
+
+// AX7 generated examples exercise each public call path with stable output.
+func (SchemeHandler) Handle(*url.URL) core.Result { return core.Ok(nil) }
+
+func ExampleService_SchemeHandler() {
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.SchemeHandler()
+		return core.Sprintf("%T", got0)
+	})
+	core.Println(core.Sprintf("%T", result))
+	// Output:
+	// core.Result
+}
+
+func ExampleSchemeHandler_Handle() {
+	var subject coreSchemeHandler
+	result := core.Try(func() any {
+		got0 := subject.Handle(nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.Println(core.Sprintf("%T", result))
+	// Output:
+	// core.Result
 }

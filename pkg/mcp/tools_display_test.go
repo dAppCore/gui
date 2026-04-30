@@ -2,16 +2,12 @@ package mcp
 
 import (
 	"context"
-	"errors"
-	"testing"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-func newDisplayToolTestSubsystem(t *testing.T, handler func(core.Options) core.Result) *Subsystem {
+func newDisplayToolTestSubsystem(t *core.T, handler func(core.Options) core.Result) *Subsystem {
 	t.Helper()
 	c := core.New(core.WithServiceLock())
 	if handler != nil {
@@ -22,7 +18,7 @@ func newDisplayToolTestSubsystem(t *testing.T, handler func(core.Options) core.R
 	return New(c)
 }
 
-func TestToolsDisplay_schemeResolve_Good(t *testing.T) {
+func TestToolsDisplay_schemeResolve_GoodCase(t *core.T) {
 	sub := newDisplayToolTestSubsystem(t, func(opts core.Options) core.Result {
 		return core.Result{
 			Value: map[string]any{
@@ -38,23 +34,29 @@ func TestToolsDisplay_schemeResolve_Good(t *testing.T) {
 	sub.registerDisplayTools(server)
 
 	result, err := sub.CallTool(context.Background(), "scheme_resolve", map[string]any{"url": "core://store?q=alpha"})
-	require.NoError(t, err)
-	assert.Contains(t, result, "core://store?q=alpha")
-	assert.Contains(t, result, "\"route\":\"store\"")
-	assert.Contains(t, result, "\"content_type\":\"text/html\"")
+	core.RequireNoError(t, err)
+	core.AssertContains(t, result, "core://store?q=alpha")
+	core.AssertContains(t, result, "\"route\":\"store\"")
+	core.AssertContains(t, result, "\"content_type\":\"text/html\"")
 }
 
-func TestToolsDisplay_schemeResolve_Bad(t *testing.T) {
+func TestToolsDisplay_schemeResolve_Bad(t *core.T) {
+	// schemeResolve
+	ax7Variant := "schemeResolve:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	sub := newDisplayToolTestSubsystem(t, func(core.Options) core.Result {
-		return core.Result{Value: errors.New("display offline"), OK: false}
+		return core.Result{Value: core.NewError("display offline"), OK: false}
 	})
 
 	_, _, err := sub.schemeResolve(context.Background(), nil, SchemeResolveInput{URL: "core://store"})
-	require.Error(t, err)
-	assert.Equal(t, "display offline", err.Error())
+	core.AssertError(t, err)
+	core.AssertEqual(t, "display offline", err.Error())
 }
 
-func TestToolsDisplay_schemeResolve_Ugly(t *testing.T) {
+func TestToolsDisplay_schemeResolve_Ugly(t *core.T) {
+	// schemeResolve
+	ax7Variant := "schemeResolve:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	sub := newDisplayToolTestSubsystem(t, func(core.Options) core.Result {
 		return core.Result{Value: map[string]any{
 			"route":        "store",
@@ -64,7 +66,7 @@ func TestToolsDisplay_schemeResolve_Ugly(t *testing.T) {
 	})
 
 	_, out, err := sub.schemeResolve(context.Background(), nil, SchemeResolveInput{URL: "core://store?q=beta"})
-	require.NoError(t, err)
-	assert.Equal(t, "core://store?q=beta", out.URL)
-	assert.Equal(t, "store", out.Route)
+	core.RequireNoError(t, err)
+	core.AssertEqual(t, "core://store?q=beta", out.URL)
+	core.AssertEqual(t, "store", out.Route)
 }

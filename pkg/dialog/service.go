@@ -3,12 +3,10 @@ package dialog
 
 import (
 	"context"
-	"fmt"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/webview"
 	"dappco.re/go/gui/pkg/window"
-	coreerr "dappco.re/go/log"
 )
 
 type Options struct{}
@@ -123,7 +121,7 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		case string:
 			return core.Result{Value: PromptResult{Value: value, Confirmed: true}, OK: true}
 		default:
-			return core.Result{Value: PromptResult{Value: fmt.Sprint(value), Confirmed: true}, OK: true}
+			return core.Result{Value: PromptResult{Value: core.Sprint(value), Confirmed: true}, OK: true}
 		}
 	}
 	s.Core().Action("dialog.openFile", openFile)
@@ -218,7 +216,7 @@ func infoDialogOptionsFrom(opts core.Options) (MessageDialogOptions, error) {
 			v.Type = DialogInfo
 			return v, nil
 		default:
-			return MessageDialogOptions{}, coreerr.E("dialog.infoDialogOptionsFrom", "failed to decode info dialog options", nil)
+			return MessageDialogOptions{}, core.E("dialog.infoDialogOptionsFrom", "failed to decode info dialog options", nil)
 		}
 	}
 	return typedMessageDialogOptionsFrom(opts, DialogInfo, "dialog.infoDialogOptionsFrom")
@@ -238,7 +236,7 @@ func warningDialogOptionsFrom(opts core.Options) (MessageDialogOptions, error) {
 			v.Type = DialogWarning
 			return v, nil
 		default:
-			return MessageDialogOptions{}, coreerr.E("dialog.warningDialogOptionsFrom", "failed to decode warning dialog options", nil)
+			return MessageDialogOptions{}, core.E("dialog.warningDialogOptionsFrom", "failed to decode warning dialog options", nil)
 		}
 	}
 	return typedMessageDialogOptionsFrom(opts, DialogWarning, "dialog.warningDialogOptionsFrom")
@@ -258,7 +256,7 @@ func errorDialogOptionsFrom(opts core.Options) (MessageDialogOptions, error) {
 			v.Type = DialogError
 			return v, nil
 		default:
-			return MessageDialogOptions{}, coreerr.E("dialog.errorDialogOptionsFrom", "failed to decode error dialog options", nil)
+			return MessageDialogOptions{}, core.E("dialog.errorDialogOptionsFrom", "failed to decode error dialog options", nil)
 		}
 	}
 	return typedMessageDialogOptionsFrom(opts, DialogError, "dialog.errorDialogOptionsFrom")
@@ -266,7 +264,7 @@ func errorDialogOptionsFrom(opts core.Options) (MessageDialogOptions, error) {
 
 func typedMessageDialogOptionsFrom(opts core.Options, dialogType DialogType, op string) (MessageDialogOptions, error) {
 	if !hasDirectDialogOptions(opts) {
-		return MessageDialogOptions{}, coreerr.E(op, "failed to decode dialog options", nil)
+		return MessageDialogOptions{}, core.E(op, "failed to decode dialog options", nil)
 	}
 	decoded, err := decodeOptions[MessageDialogOptions](opts)
 	if err != nil {
@@ -339,7 +337,7 @@ func decodeOptions[T any](opts core.Options) (T, error) {
 		if err, ok := result.Value.(error); ok {
 			return input, err
 		}
-		return input, coreerr.E("dialog.decodeOptions", "failed to decode dialog options", nil)
+		return input, core.E("dialog.decodeOptions", "failed to decode dialog options", nil)
 	}
 	return input, nil
 }
@@ -347,11 +345,11 @@ func decodeOptions[T any](opts core.Options) (T, error) {
 func (s *Service) promptWindowName() (string, error) {
 	r := s.Core().QUERY(window.QueryWindowList{})
 	if !r.OK {
-		return "", coreerr.E("dialog.promptWindowName", "window service unavailable", nil)
+		return "", core.E("dialog.promptWindowName", "window service unavailable", nil)
 	}
 	windows, ok := r.Value.([]window.WindowInfo)
 	if !ok {
-		return "", coreerr.E("dialog.promptWindowName", "unexpected window list result type", nil)
+		return "", core.E("dialog.promptWindowName", "unexpected window list result type", nil)
 	}
 	for _, info := range windows {
 		if info.Focused {
@@ -361,7 +359,7 @@ func (s *Service) promptWindowName() (string, error) {
 	if len(windows) > 0 {
 		return windows[0].Name, nil
 	}
-	return "", coreerr.E("dialog.promptWindowName", "no application window available for prompt", nil)
+	return "", core.E("dialog.promptWindowName", "no application window available for prompt", nil)
 }
 
 func promptScript(title, message, defaultValue string) string {

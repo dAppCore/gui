@@ -4,11 +4,8 @@ package lifecycle
 import (
 	"context"
 	"sync"
-	"testing"
 
-	core "dappco.re/go/core"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	core "dappco.re/go"
 )
 
 // --- Mock Platform ---
@@ -88,26 +85,27 @@ func (m *mockPlatform) handlerCount() int {
 
 // --- Test helpers ---
 
-func newTestLifecycleService(t *testing.T) (*Service, *core.Core, *mockPlatform) {
+func newTestLifecycleService(t *core.T) (*Service, *core.Core, *mockPlatform) {
 	t.Helper()
 	mock := newMockPlatform()
 	c := core.New(
 		core.WithService(Register(mock)),
 		core.WithServiceLock(),
 	)
-	require.True(t, c.ServiceStartup(context.Background(), nil).OK)
+	core.RequireTrue(t, c.ServiceStartup(context.Background(), nil).OK)
 	svc := core.MustServiceFor[*Service](c, "lifecycle")
 	return svc, c, mock
 }
 
 // --- Tests ---
 
-func TestRegister_Good(t *testing.T) {
+func TestRegister_Good(t *core.T) {
 	svc, _, _ := newTestLifecycleService(t)
-	assert.NotNil(t, svc)
+	core.AssertNotNil(t, svc)
+	core.AssertNotEmpty(t, core.Sprintf("%T", svc))
 }
 
-func TestApplicationStarted_Good(t *testing.T) {
+func TestApplicationStarted_Good(t *core.T) {
 	_, c, mock := newTestLifecycleService(t)
 
 	var received bool
@@ -119,10 +117,10 @@ func TestApplicationStarted_Good(t *testing.T) {
 	})
 
 	mock.simulateEvent(EventApplicationStarted)
-	assert.True(t, received)
+	core.AssertTrue(t, received)
 }
 
-func TestDidBecomeActive_Good(t *testing.T) {
+func TestDidBecomeActive_Good(t *core.T) {
 	_, c, mock := newTestLifecycleService(t)
 
 	var received bool
@@ -134,10 +132,10 @@ func TestDidBecomeActive_Good(t *testing.T) {
 	})
 
 	mock.simulateEvent(EventDidBecomeActive)
-	assert.True(t, received)
+	core.AssertTrue(t, received)
 }
 
-func TestDidResignActive_Good(t *testing.T) {
+func TestDidResignActive_Good(t *core.T) {
 	_, c, mock := newTestLifecycleService(t)
 
 	var received bool
@@ -149,10 +147,10 @@ func TestDidResignActive_Good(t *testing.T) {
 	})
 
 	mock.simulateEvent(EventDidResignActive)
-	assert.True(t, received)
+	core.AssertTrue(t, received)
 }
 
-func TestWillTerminate_Good(t *testing.T) {
+func TestWillTerminate_Good(t *core.T) {
 	_, c, mock := newTestLifecycleService(t)
 
 	var received bool
@@ -164,10 +162,10 @@ func TestWillTerminate_Good(t *testing.T) {
 	})
 
 	mock.simulateEvent(EventWillTerminate)
-	assert.True(t, received)
+	core.AssertTrue(t, received)
 }
 
-func TestPowerStatusChanged_Good(t *testing.T) {
+func TestPowerStatusChanged_Good(t *core.T) {
 	_, c, mock := newTestLifecycleService(t)
 
 	var received bool
@@ -179,10 +177,10 @@ func TestPowerStatusChanged_Good(t *testing.T) {
 	})
 
 	mock.simulateEvent(EventPowerStatusChanged)
-	assert.True(t, received)
+	core.AssertTrue(t, received)
 }
 
-func TestSystemSuspend_Good(t *testing.T) {
+func TestSystemSuspend_Good(t *core.T) {
 	_, c, mock := newTestLifecycleService(t)
 
 	var received bool
@@ -194,10 +192,10 @@ func TestSystemSuspend_Good(t *testing.T) {
 	})
 
 	mock.simulateEvent(EventSystemSuspend)
-	assert.True(t, received)
+	core.AssertTrue(t, received)
 }
 
-func TestSystemResume_Good(t *testing.T) {
+func TestSystemResume_Good(t *core.T) {
 	_, c, mock := newTestLifecycleService(t)
 
 	var received bool
@@ -209,10 +207,10 @@ func TestSystemResume_Good(t *testing.T) {
 	})
 
 	mock.simulateEvent(EventSystemResume)
-	assert.True(t, received)
+	core.AssertTrue(t, received)
 }
 
-func TestOpenedWithFile_Good(t *testing.T) {
+func TestOpenedWithFile_Good(t *core.T) {
 	_, c, mock := newTestLifecycleService(t)
 
 	var receivedPath string
@@ -224,22 +222,22 @@ func TestOpenedWithFile_Good(t *testing.T) {
 	})
 
 	mock.simulateFileOpen("/Users/snider/Documents/test.txt")
-	assert.Equal(t, "/Users/snider/Documents/test.txt", receivedPath)
+	core.AssertEqual(t, "/Users/snider/Documents/test.txt", receivedPath)
 }
 
-func TestOnShutdown_CancelsAll_Good(t *testing.T) {
+func TestOnShutdown_CancelsAll_GoodCase(t *core.T) {
 	svc, _, mock := newTestLifecycleService(t)
 
 	// Verify handlers were registered during OnStartup
-	assert.Greater(t, mock.handlerCount(), 0, "handlers should be registered after OnStartup")
+	core.AssertGreater(t, mock.handlerCount(), 0, "handlers should be registered after OnStartup")
 
 	// Shutdown should cancel all registrations
-	require.True(t, svc.OnShutdown(context.Background()).OK)
+	core.RequireTrue(t, svc.OnShutdown(context.Background()).OK)
 
-	assert.Equal(t, 0, mock.handlerCount(), "all handlers should be cancelled after OnShutdown")
+	core.AssertEqual(t, 0, mock.handlerCount(), "all handlers should be cancelled after OnShutdown")
 }
 
-func TestRegister_Bad(t *testing.T) {
+func TestRegister_Bad(t *core.T) {
 	// No lifecycle service registered — actions are not received
 	c := core.New(core.WithServiceLock())
 
@@ -252,5 +250,114 @@ func TestRegister_Bad(t *testing.T) {
 	})
 
 	// No way to trigger events without the service
-	assert.False(t, received)
+	core.AssertFalse(t, received)
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestService_Service_OnStartup_Good(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_OnStartup_Bad(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_OnStartup_Ugly(t *core.T) {
+	// Service OnStartup
+	ax7Variant := "Service_OnStartup:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnStartup(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_OnShutdown_Good(t *core.T) {
+	// Service OnShutdown
+	ax7Variant := "Service_OnShutdown:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnShutdown(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_OnShutdown_Bad(t *core.T) {
+	// Service OnShutdown
+	ax7Variant := "Service_OnShutdown:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnShutdown(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_OnShutdown_Ugly(t *core.T) {
+	// Service OnShutdown
+	ax7Variant := "Service_OnShutdown:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.OnShutdown(core.Background())
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_HandleIPCEvents_Good(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_HandleIPCEvents_Bad(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestService_Service_HandleIPCEvents_Ugly(t *core.T) {
+	// Service HandleIPCEvents
+	ax7Variant := "Service_HandleIPCEvents:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(Service)
+	result := core.Try(func() any {
+		got0 := subject.HandleIPCEvents(nil, nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
 }

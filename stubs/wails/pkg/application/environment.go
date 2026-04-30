@@ -1,9 +1,10 @@
 package application
 
 import (
-	"path/filepath"
 	"runtime"
 	"sync"
+
+	core "dappco.re/go"
 )
 
 // EnvironmentInfo holds information about the host environment.
@@ -116,7 +117,7 @@ func (em *EnvironmentManager) OpenFileManager(path string, selectFile bool) erro
 	if em.platformInfo == nil {
 		em.platformInfo = make(map[string]any)
 	}
-	em.platformInfo["lastOpenFileManagerPath"] = filepath.Clean(path)
+	em.platformInfo["lastOpenFileManagerPath"] = core.CleanPath(path, string(core.PathSeparator))
 	em.platformInfo["lastOpenFileManagerSelect"] = selectFile
 	em.mu.Unlock()
 	return nil

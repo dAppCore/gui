@@ -3,9 +3,9 @@
 package application
 
 import (
-	"fmt"
 	"unsafe"
 
+	core "dappco.re/go"
 	"github.com/wailsapp/wails/v3/pkg/events"
 )
 
@@ -22,7 +22,7 @@ type BrowserWindow struct {
 func NewBrowserWindow(id uint, clientID string) *BrowserWindow {
 	return &BrowserWindow{
 		id:       id,
-		name:     fmt.Sprintf("browser-%d", id),
+		name:     core.Sprintf("browser-%d", id),
 		clientID: clientID,
 	}
 }

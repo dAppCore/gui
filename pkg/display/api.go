@@ -2,16 +2,14 @@ package display
 
 import (
 	"context"
-	"fmt"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/clipboard"
 	"dappco.re/go/gui/pkg/dialog"
 	"dappco.re/go/gui/pkg/environment"
 	"dappco.re/go/gui/pkg/notification"
 	"dappco.re/go/gui/pkg/screen"
 	"dappco.re/go/gui/pkg/systray"
-	coreerr "dappco.re/go/log"
 )
 
 const writeClipboardImageOp = "display.WriteClipboardImage"
@@ -82,11 +80,11 @@ type Theme struct {
 }
 
 func unexpectedResultType(method string) error {
-	return coreerr.E(method, "unexpected result type", nil)
+	return core.E(method, "unexpected result type", nil)
 }
 
 func failedQuery(method, query string) error {
-	return coreerr.E(method, query+" query failed", nil)
+	return core.E(method, query+" query failed", nil)
 }
 
 func (s *Service) GetScreens() []*Screen {
@@ -191,7 +189,7 @@ func (s *Service) OpenFileDialog(opts OpenFileOptions) ([]string, error) {
 		if err, ok := result.Value.(error); ok {
 			return nil, err
 		}
-		return nil, coreerr.E("display.OpenFileDialog", "dialog.openFile action failed", nil)
+		return nil, core.E("display.OpenFileDialog", "dialog.openFile action failed", nil)
 	}
 	paths, ok := result.Value.([]string)
 	if !ok {
@@ -208,7 +206,7 @@ func (s *Service) SaveFileDialog(opts SaveFileOptions) (string, error) {
 		if err, ok := result.Value.(error); ok {
 			return "", err
 		}
-		return "", coreerr.E("display.SaveFileDialog", "dialog.saveFile action failed", nil)
+		return "", core.E("display.SaveFileDialog", "dialog.saveFile action failed", nil)
 	}
 	path, ok := result.Value.(string)
 	if !ok {
@@ -225,7 +223,7 @@ func (s *Service) OpenDirectoryDialog(opts OpenDirectoryOptions) (string, error)
 		if err, ok := result.Value.(error); ok {
 			return "", err
 		}
-		return "", coreerr.E("display.OpenDirectoryDialog", "dialog.openDirectory action failed", nil)
+		return "", core.E("display.OpenDirectoryDialog", "dialog.openDirectory action failed", nil)
 	}
 	path, ok := result.Value.(string)
 	if !ok {
@@ -246,7 +244,7 @@ func (s *Service) ConfirmDialog(title, message string) (bool, error) {
 		if err, ok := result.Value.(error); ok {
 			return false, err
 		}
-		return false, coreerr.E("display.ConfirmDialog", "dialog.question action failed", nil)
+		return false, core.E("display.ConfirmDialog", "dialog.question action failed", nil)
 	}
 	button, ok := result.Value.(string)
 	if !ok {
@@ -263,11 +261,11 @@ func (s *Service) PromptDialog(title, message string) (string, bool, error) {
 		if err, ok := result.Value.(error); ok {
 			return "", false, err
 		}
-		return "", false, coreerr.E("display.PromptDialog", "dialog.prompt action failed", nil)
+		return "", false, core.E("display.PromptDialog", "dialog.prompt action failed", nil)
 	}
 	prompt, ok := result.Value.(dialog.PromptResult)
 	if !ok {
-		return "", false, coreerr.E("display.PromptDialog", "unexpected result type", nil)
+		return "", false, core.E("display.PromptDialog", "unexpected result type", nil)
 	}
 	return prompt.Value, prompt.Confirmed, nil
 }
@@ -280,7 +278,7 @@ func (s *Service) SetTrayIcon(icon []byte) error {
 		if err, ok := result.Value.(error); ok {
 			return err
 		}
-		return coreerr.E("display.SetTrayIcon", "systray.setIcon action failed", nil)
+		return core.E("display.SetTrayIcon", "systray.setIcon action failed", nil)
 	}
 	return nil
 }
@@ -293,7 +291,7 @@ func (s *Service) SetTrayTooltip(tooltip string) error {
 		if err, ok := result.Value.(error); ok {
 			return err
 		}
-		return coreerr.E("display.SetTrayTooltip", "systray.setTooltip action failed", nil)
+		return core.E("display.SetTrayTooltip", "systray.setTooltip action failed", nil)
 	}
 	return nil
 }
@@ -306,7 +304,7 @@ func (s *Service) SetTrayLabel(label string) error {
 		if err, ok := result.Value.(error); ok {
 			return err
 		}
-		return coreerr.E("display.SetTrayLabel", "systray.setLabel action failed", nil)
+		return core.E("display.SetTrayLabel", "systray.setLabel action failed", nil)
 	}
 	return nil
 }
@@ -319,7 +317,7 @@ func (s *Service) SetTrayMenu(items []TrayMenuItem) error {
 		if err, ok := result.Value.(error); ok {
 			return err
 		}
-		return coreerr.E("display.SetTrayMenu", "systray.setMenu action failed", nil)
+		return core.E("display.SetTrayMenu", "systray.setMenu action failed", nil)
 	}
 	return nil
 }
@@ -341,7 +339,7 @@ func (s *Service) ShowTrayMessage(title, message string) error {
 		if err, ok := result.Value.(error); ok {
 			return err
 		}
-		return coreerr.E("display.ShowTrayMessage", "systray.showMessage action failed", nil)
+		return core.E("display.ShowTrayMessage", "systray.showMessage action failed", nil)
 	}
 	return nil
 }
@@ -356,7 +354,7 @@ func (s *Service) ReadClipboard() (string, error) {
 	}
 	content, ok := r.Value.(clipboard.ClipboardContent)
 	if !ok {
-		return "", coreerr.E("display.ReadClipboard", "unexpected result type", nil)
+		return "", core.E("display.ReadClipboard", "unexpected result type", nil)
 	}
 	return content.Text, nil
 }
@@ -369,7 +367,7 @@ func (s *Service) WriteClipboard(text string) error {
 		if err, ok := result.Value.(error); ok {
 			return err
 		}
-		return coreerr.E("display.WriteClipboard", "clipboard.setText action failed", nil)
+		return core.E("display.WriteClipboard", "clipboard.setText action failed", nil)
 	}
 	return nil
 }
@@ -385,7 +383,7 @@ func (s *Service) ClearClipboard() error {
 		if err, ok := result.Value.(error); ok {
 			return err
 		}
-		return coreerr.E("display.ClearClipboard", "clipboard.clear action failed", nil)
+		return core.E("display.ClearClipboard", "clipboard.clear action failed", nil)
 	}
 	return nil
 }
@@ -410,10 +408,10 @@ func (s *Service) ReadClipboardImage() ([]byte, error) {
 
 func (s *Service) WriteClipboardImage(data []byte) error {
 	if len(data) == 0 {
-		return coreerr.E(writeClipboardImageOp, "clipboard image data is required", nil)
+		return core.E(writeClipboardImageOp, "clipboard image data is required", nil)
 	}
 	if len(data) > clipboard.MaxImageBytes {
-		return coreerr.E(writeClipboardImageOp, "clipboard image exceeds maximum size", nil)
+		return core.E(writeClipboardImageOp, "clipboard image exceeds maximum size", nil)
 	}
 	result := s.Core().Action("clipboard.setImage").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "data", Value: append([]byte(nil), data...)},
@@ -422,7 +420,7 @@ func (s *Service) WriteClipboardImage(data []byte) error {
 		if err, ok := result.Value.(error); ok {
 			return err
 		}
-		return coreerr.E(writeClipboardImageOp, "clipboard.setImage action failed", nil)
+		return core.E(writeClipboardImageOp, "clipboard.setImage action failed", nil)
 	}
 	return nil
 }
@@ -462,7 +460,7 @@ func (s *Service) RequestNotificationPermission() (bool, error) {
 		if err, ok := r.Value.(error); ok {
 			return false, err
 		}
-		return false, coreerr.E("display.RequestNotificationPermission", "notification.requestPermission action failed", nil)
+		return false, core.E("display.RequestNotificationPermission", "notification.requestPermission action failed", nil)
 	}
 	granted, ok := r.Value.(bool)
 	if !ok {
@@ -477,7 +475,7 @@ func (s *Service) CheckNotificationPermission() (bool, error) {
 		if err, ok := r.Value.(error); ok {
 			return false, err
 		}
-		return false, coreerr.E("display.CheckNotificationPermission", "notification query failed", nil)
+		return false, core.E("display.CheckNotificationPermission", "notification query failed", nil)
 	}
 	status, ok := r.Value.(notification.PermissionStatus)
 	if !ok {
@@ -494,7 +492,7 @@ func (s *Service) ClearNotifications() error {
 		if err, ok := result.Value.(error); ok {
 			return err
 		}
-		return coreerr.E("display.ClearNotifications", "notification.clear action failed", nil)
+		return core.E("display.ClearNotifications", "notification.clear action failed", nil)
 	}
 	return nil
 }
@@ -507,7 +505,7 @@ func (s *Service) SetTheme(theme string) error {
 		if err, ok := result.Value.(error); ok {
 			return err
 		}
-		return coreerr.E("display.SetTheme", "environment.setTheme action failed", nil)
+		return core.E("display.SetTheme", "environment.setTheme action failed", nil)
 	}
 	return nil
 }
@@ -539,7 +537,7 @@ func themeInfoFromQueryResult(s *Service, method string, r core.Result) (environ
 		return info, true
 	}
 	if s != nil && s.Core() != nil {
-		s.Core().LogWarn(fmt.Errorf("query=environment.QueryTheme value_type=%T", r.Value), method, "malformed theme query payload")
+		s.Core().LogWarn(core.Errorf("query=environment.QueryTheme value_type=%T", r.Value), method, "malformed theme query payload")
 	}
 	return environment.ThemeInfo{}, false
 }
@@ -552,7 +550,7 @@ func (s *Service) sendNotification(opts notification.NotificationOptions) error 
 		if err, ok := result.Value.(error); ok {
 			return err
 		}
-		return coreerr.E("display.sendNotification", "notification.send action failed", nil)
+		return core.E("display.sendNotification", "notification.send action failed", nil)
 	}
 	return nil
 }

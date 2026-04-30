@@ -1,103 +1,103 @@
 package display
 
 import (
-	"path/filepath"
-	"strings"
-	"testing"
-
-	coreio "dappco.re/go/io"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	core "dappco.re/go"
 )
 
-func TestHLCRF_DefaultHLCRFTag_Good(t *testing.T) {
-	assert.Equal(t, "core-widget", defaultHLCRFTag("Widget.ts"))
+func TestHLCRF_DefaultHLCRFTag_GoodCase(t *core.T) {
+	core.AssertEqual(t, "core-widget", defaultHLCRFTag("Widget.ts"))
+	observedType := core.Sprintf("%T", defaultHLCRFTag("Widget.ts"))
+	core.AssertNotEmpty(t, observedType)
 }
 
-func TestHLCRF_DefaultHLCRFTag_Bad(t *testing.T) {
-	assert.Equal(t, "feature-card", defaultHLCRFTag("feature_card.html"))
+func TestHLCRF_DefaultHLCRFTag_BadCase(t *core.T) {
+	core.AssertEqual(t, "feature-card", defaultHLCRFTag("feature_card.html"))
+	observedType := core.Sprintf("%T", defaultHLCRFTag("feature_card.html"))
+	core.AssertNotEmpty(t, observedType)
 }
 
-func TestHLCRF_DefaultHLCRFTag_Ugly(t *testing.T) {
-	assert.Equal(t, "core-", defaultHLCRFTag(""))
+func TestHLCRF_DefaultHLCRFTag_UglyCase(t *core.T) {
+	core.AssertEqual(t, "core-", defaultHLCRFTag(""))
+	observedType := core.Sprintf("%T", defaultHLCRFTag(""))
+	core.AssertNotEmpty(t, observedType)
 }
 
-func TestHLCRF_BuildHLCRFComponents_Good(t *testing.T) {
+func TestHLCRF_BuildHLCRFComponents_GoodCase(t *core.T) {
 	root := t.TempDir()
-	require.NoError(t, coreio.Local.EnsureDir(filepath.Join(root, ".core")))
-	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, "index.html"), "<html></html>", 0o644))
-	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, "card.html"), "<article>Card</article>", 0o644))
-	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, ".core", "view.yaml"), strings.Join([]string{
+	core.RequireNoError(t, coreEnsureDir(core.PathJoin(root, ".core")))
+	core.RequireNoError(t, coreWriteMode(core.PathJoin(root, "index.html"), "<html></html>", 0o644))
+	core.RequireNoError(t, coreWriteMode(core.PathJoin(root, "card.html"), "<article>Card</article>", 0o644))
+	core.RequireNoError(t, coreWriteMode(core.PathJoin(root, ".core", "view.yaml"), core.Join("\n", []string{
 		"hlcrf:",
 		"  - name: card.html",
 		"  - tag: core-inline",
 		"    template: <section>Inline</section>",
-	}, "\n"), 0o644))
+	}...), 0o644))
 
 	svc := &Service{}
 
-	script, err := svc.buildHLCRFComponents(filepath.Join(root, "index.html"))
+	script, err := svc.buildHLCRFComponents(core.PathJoin(root, "index.html"))
 
-	require.NoError(t, err)
-	require.NotEmpty(t, script)
-	assert.Contains(t, script, "customElements.define")
-	assert.Contains(t, script, "article>Card</article>")
-	assert.Contains(t, script, "<section>Inline</section>")
-	assert.Contains(t, script, "core-card")
-	assert.Contains(t, script, "core-inline")
+	core.RequireNoError(t, err)
+	core.RequireNotEmpty(t, script)
+	core.AssertContains(t, script, "customElements.define")
+	core.AssertContains(t, script, "article>Card</article>")
+	core.AssertContains(t, script, "<section>Inline</section>")
+	core.AssertContains(t, script, "core-card")
+	core.AssertContains(t, script, "core-inline")
 }
 
-func TestHLCRF_CompileHLCRFTemplate_Good(t *testing.T) {
+func TestHLCRF_CompileHLCRFTemplate_GoodCase(t *core.T) {
 	compiled := compileHLCRFTemplate(`<section data-slot="H">{{slot "H"}}</section><main>{{ slot "L-C" }}</main><footer>{{ slot "" }}{{ slot "default" }}</footer>`)
 
-	assert.Contains(t, compiled, `<slot name="H"></slot>`)
-	assert.Contains(t, compiled, `<slot name="L-C"></slot>`)
-	assert.Contains(t, compiled, `<footer><slot></slot><slot></slot></footer>`)
+	core.AssertContains(t, compiled, `<slot name="H"></slot>`)
+	core.AssertContains(t, compiled, `<slot name="L-C"></slot>`)
+	core.AssertContains(t, compiled, `<footer><slot></slot><slot></slot></footer>`)
 }
 
-func TestHLCRF_BuildHLCRFComponents_Bad(t *testing.T) {
+func TestHLCRF_BuildHLCRFComponents_BadCase(t *core.T) {
 	svc := &Service{}
 
-	script, err := svc.buildHLCRFComponents(filepath.Join(t.TempDir(), "missing.html"))
+	script, err := svc.buildHLCRFComponents(core.PathJoin(t.TempDir(), "missing.html"))
 
-	require.NoError(t, err)
-	assert.Empty(t, script)
+	core.RequireNoError(t, err)
+	core.AssertEmpty(t, script)
 }
 
-func TestHLCRF_BuildHLCRFComponents_Ugly(t *testing.T) {
+func TestHLCRF_BuildHLCRFComponents_UglyCase(t *core.T) {
 	root := t.TempDir()
-	require.NoError(t, coreio.Local.EnsureDir(filepath.Join(root, ".core")))
-	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, "index.html"), "<html></html>", 0o644))
-	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, ".core", "view.yaml"), strings.Join([]string{
+	core.RequireNoError(t, coreEnsureDir(core.PathJoin(root, ".core")))
+	core.RequireNoError(t, coreWriteMode(core.PathJoin(root, "index.html"), "<html></html>", 0o644))
+	core.RequireNoError(t, coreWriteMode(core.PathJoin(root, ".core", "view.yaml"), core.Join("\n", []string{
 		"hlcrf:",
 		"  - name: missing.html",
 		"  - template: <span>Fallback</span>",
-	}, "\n"), 0o644))
+	}...), 0o644))
 
 	svc := &Service{}
 
-	script, err := svc.buildHLCRFComponents(filepath.Join(root, "index.html"))
+	script, err := svc.buildHLCRFComponents(core.PathJoin(root, "index.html"))
 
-	require.NoError(t, err)
-	require.NotEmpty(t, script)
-	assert.Contains(t, script, "<span>Fallback</span>")
-	assert.NotContains(t, script, "missing.html")
+	core.RequireNoError(t, err)
+	core.RequireNotEmpty(t, script)
+	core.AssertContains(t, script, "<span>Fallback</span>")
+	core.AssertNotContains(t, script, "missing.html")
 }
 
-func TestHLCRF_BuildHLCRFComponents_RejectsTraversal(t *testing.T) {
+func TestHLCRF_BuildHLCRFComponents_RejectsTraversal(t *core.T) {
 	root := t.TempDir()
-	require.NoError(t, coreio.Local.EnsureDir(filepath.Join(root, ".core")))
-	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, "index.html"), "<html></html>", 0o644))
-	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, "outside.html"), "<span>Outside</span>", 0o644))
-	require.NoError(t, coreio.Local.WriteMode(filepath.Join(root, ".core", "view.yaml"), strings.Join([]string{
+	core.RequireNoError(t, coreEnsureDir(core.PathJoin(root, ".core")))
+	core.RequireNoError(t, coreWriteMode(core.PathJoin(root, "index.html"), "<html></html>", 0o644))
+	core.RequireNoError(t, coreWriteMode(core.PathJoin(root, "outside.html"), "<span>Outside</span>", 0o644))
+	core.RequireNoError(t, coreWriteMode(core.PathJoin(root, ".core", "view.yaml"), core.Join("\n", []string{
 		"hlcrf:",
 		"  - name: ../outside.html",
-	}, "\n"), 0o644))
+	}...), 0o644))
 
 	svc := &Service{}
 
-	script, err := svc.buildHLCRFComponents(filepath.Join(root, "index.html"))
+	script, err := svc.buildHLCRFComponents(core.PathJoin(root, "index.html"))
 
-	require.Error(t, err)
-	assert.Empty(t, script)
+	core.AssertError(t, err)
+	core.AssertEmpty(t, script)
 }

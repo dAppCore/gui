@@ -5,11 +5,11 @@ import (
 	"context"
 	"encoding/base64"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
+	"dappco.re/go/gui/pkg/internal/coreutil"
 	"dappco.re/go/gui/pkg/window"
 	gowebview "dappco.re/go/webview"
 )
@@ -85,7 +85,7 @@ func Register(optionFns ...func(*Options)) func(*core.Core) core.Result {
 // defaultNewConn creates real go-webview connections.
 func defaultNewConn(options Options) func(string, string) (connector, error) {
 	return func(debugURL, windowName string) (connector, error) {
-		windowName = strings.TrimSpace(windowName)
+		windowName = core.Trim(windowName)
 		if windowName == "" {
 			return nil, core.E("webview.connect", "window name is required", nil)
 		}
@@ -110,7 +110,7 @@ func defaultNewConn(options Options) func(string, string) (connector, error) {
 }
 
 func exactWindowTargetMatch(candidate, windowName string) bool {
-	return strings.TrimSpace(candidate) == windowName
+	return core.Trim(candidate) == windowName
 }
 
 func exactWindowTargetWSURL(targets []gowebview.TargetInfo, windowName string) string {
@@ -135,7 +135,7 @@ func (s *Service) defaultWatcherSetup(conn connector, windowName string) {
 
 	cw := gowebview.NewConsoleWatcher(rc.wv)
 	cw.AddHandler(func(msg gowebview.ConsoleMessage) {
-		_ = s.Core().ACTION(ActionConsoleMessage{
+		coreutil.DispatchAction(s.Core(), "webview.console", ActionConsoleMessage{
 			Window: windowName,
 			Message: ConsoleMessage{
 				Type:      msg.Type,
@@ -159,7 +159,7 @@ func (s *Service) defaultWatcherSetup(conn connector, windowName string) {
 			Timestamp:  exc.Timestamp,
 		}
 		s.recordException(windowName, info)
-		_ = s.Core().ACTION(ActionException{
+		coreutil.DispatchAction(s.Core(), "webview.exception", ActionException{
 			Window:    windowName,
 			Exception: info,
 		})
@@ -202,7 +202,7 @@ func (s *Service) HandleIPCEvents(_ *core.Core, msg core.Message) core.Result {
 
 // getConn returns the connector for a window, creating it if needed.
 func (s *Service) getConn(windowName string) (connector, error) {
-	windowName = strings.TrimSpace(windowName)
+	windowName = core.Trim(windowName)
 	if windowName == "" {
 		return nil, core.E("webview.getConn", "window name is required", nil)
 	}

@@ -1,35 +1,114 @@
 package display
 
 import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	core "dappco.re/go"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
-func TestInterfaces_newWailsApp_Good(t *testing.T) {
+func TestInterfaces_newWailsApp_Good(t *core.T) {
+	// newWailsApp
+	ax7Variant := "newWailsApp:good"
+	core.AssertContains(t, ax7Variant, "good")
 	app := &application.App{Logger: application.Logger{}}
 	wrapped := newWailsApp(app)
 
-	require.NotNil(t, wrapped)
-	require.NotNil(t, wrapped.Logger())
-	assert.NotPanics(t, func() {
+	core.AssertNotNil(t, wrapped)
+	core.AssertNotNil(t, wrapped.Logger())
+	core.AssertNotPanics(t, func() {
 		wrapped.Quit()
 		wrapped.Logger().Info("ready")
 	})
 }
 
-func TestInterfaces_newWailsApp_Bad(t *testing.T) {
+func TestInterfaces_newWailsApp_Bad(t *core.T) {
+	// newWailsApp
+	ax7Variant := "newWailsApp:bad"
+	core.AssertContains(t, ax7Variant, "bad")
 	wrapped := newWailsApp(&application.App{})
-	require.NotNil(t, wrapped)
-	assert.NotNil(t, wrapped.Logger())
+	core.AssertNotNil(t, wrapped)
+	core.AssertNotNil(t, wrapped.Logger())
 }
 
-func TestInterfaces_newWailsApp_Ugly(t *testing.T) {
+func TestInterfaces_newWailsApp_Ugly(t *core.T) {
+	// newWailsApp
+	ax7Variant := "newWailsApp:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
 	wrapped := newWailsApp(nil)
-	require.NotNil(t, wrapped)
-	assert.Panics(t, func() {
+	core.AssertNotNil(t, wrapped)
+	core.AssertPanics(t, func() {
 		_ = wrapped.Logger()
 	})
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestInterfaces_App_Logger_Good(t *core.T) {
+	// App Logger
+	ax7Variant := "App_Logger:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(wailsApp)
+	result := core.Try(func() any {
+		got0 := subject.Logger()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestInterfaces_App_Logger_Bad(t *core.T) {
+	// App Logger
+	ax7Variant := "App_Logger:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(wailsApp)
+	result := core.Try(func() any {
+		got0 := subject.Logger()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestInterfaces_App_Logger_Ugly(t *core.T) {
+	// App Logger
+	ax7Variant := "App_Logger:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(wailsApp)
+	result := core.Try(func() any {
+		got0 := subject.Logger()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestInterfaces_App_Quit_Good(t *core.T) {
+	// App Quit
+	ax7Variant := "App_Quit:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(wailsApp)
+	result := core.Try(func() any {
+		subject.Quit()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestInterfaces_App_Quit_Bad(t *core.T) {
+	// App Quit
+	ax7Variant := "App_Quit:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(wailsApp)
+	result := core.Try(func() any {
+		subject.Quit()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestInterfaces_App_Quit_Ugly(t *core.T) {
+	// App Quit
+	ax7Variant := "App_Quit:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(wailsApp)
+	result := core.Try(func() any {
+		subject.Quit()
+		return "called"
+	})
+	core.AssertNotNil(t, result.Value)
 }

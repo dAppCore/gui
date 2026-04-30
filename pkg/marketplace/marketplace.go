@@ -6,19 +6,13 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
-	"encoding/json"
-	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
-	"os"
-	"os/exec"
-	"path/filepath"
 	"regexp"
-	"strings"
 	"unicode"
 
+	core "dappco.re/go"
 	"gopkg.in/yaml.v3"
 )
 
@@ -64,14 +58,14 @@ func (i Installer) FetchManifest(ctx context.Context, manifestURL string) (Manif
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode >= http.StatusBadRequest {
-		return Manifest{}, fmt.Errorf("manifest fetch failed: %s", resp.Status)
+		return Manifest{}, core.Errorf("manifest fetch failed: %s", resp.Status)
 	}
 	body, err := io.ReadAll(io.LimitReader(resp.Body, maxManifestBytes+1))
 	if err != nil {
 		return Manifest{}, err
 	}
 	if len(body) > maxManifestBytes {
-		return Manifest{}, fmt.Errorf("manifest fetch failed: manifest exceeds %d bytes", maxManifestBytes)
+		return Manifest{}, core.Errorf("manifest fetch failed: manifest exceeds %d bytes", maxManifestBytes)
 	}
 	var manifest Manifest
 	if err := yaml.Unmarshal(body, &manifest); err != nil {
@@ -84,11 +78,11 @@ func (i Installer) FetchManifest(ctx context.Context, manifestURL string) (Manif
 }
 
 func VerifyManifest(manifest Manifest) error {
-	if strings.ToLower(strings.TrimSpace(manifest.Signature.Algorithm)) != "ed25519" {
-		return errors.New("manifest signature algorithm must be ed25519")
+	if core.Lower(core.Trim(manifest.Signature.Algorithm)) != "ed25519" {
+		return core.NewError("manifest signature algorithm must be ed25519")
 	}
 	if manifest.Signature.Value == "" || manifest.Signature.PublicKey == "" {
-		return errors.New("manifest signature is required")
+		return core.NewError("manifest signature is required")
 	}
 	payload := manifest.Name + "\n" + manifest.Version + "\n" + manifest.Repository + "\n" + manifest.Ref
 	signature, err := base64.StdEncoding.DecodeString(manifest.Signature.Value)
@@ -100,13 +94,13 @@ func VerifyManifest(manifest Manifest) error {
 		return err
 	}
 	if len(signature) != ed25519.SignatureSize {
-		return errors.New("manifest signature has invalid size")
+		return core.NewError("manifest signature has invalid size")
 	}
 	if len(publicKey) != ed25519.PublicKeySize {
-		return errors.New("manifest public key has invalid size")
+		return core.NewError("manifest public key has invalid size")
 	}
 	if !ed25519.Verify(ed25519.PublicKey(publicKey), []byte(payload), signature) {
-		return errors.New("manifest signature verification failed")
+		return core.NewError("manifest signature verification failed")
 	}
 	return nil
 }
@@ -123,8 +117,8 @@ func (i Installer) Verify(ctx context.Context, manifestURL string) (Manifest, er
 }
 
 func (i Installer) Install(ctx context.Context, manifest Manifest) (string, error) {
-	if strings.TrimSpace(i.InstallDir) == "" {
-		return "", errors.New("install dir is required")
+	if core.Trim(i.InstallDir) == "" {
+		return "", core.NewError("install dir is required")
 	}
 	if err := VerifyManifest(manifest); err != nil {
 		return "", err
@@ -138,37 +132,39 @@ func (i Installer) Install(ctx context.Context, manifest Manifest) (string, erro
 	if err := validateCloneArgOptional("ref", manifest.Ref); err != nil {
 		return "", err
 	}
-	if err := os.MkdirAll(i.InstallDir, 0o755); err != nil {
+	if err := coreMkdirAll(i.InstallDir, 0o755); err != nil {
 		return "", err
 	}
-	rootAbs, err := filepath.Abs(i.InstallDir)
+	rootAbs, err := pathAbs(i.InstallDir)
 	if err != nil {
 		return "", err
 	}
-	rootResolved, err := filepath.EvalSymlinks(rootAbs)
+	rootResolved, err := pathEvalSymlinks(rootAbs)
 	if err != nil {
 		return "", err
 	}
-	targetDir := filepath.Join(rootResolved, safeName(manifest.Name))
-	targetAbs, err := filepath.Abs(targetDir)
+	targetDir := core.PathJoin(rootResolved, safeName(manifest.Name))
+	targetAbs, err := pathAbs(targetDir)
 	if err != nil {
 		return "", err
 	}
 	cleanupTarget := true
 	defer func() {
 		if cleanupTarget {
-			_ = os.RemoveAll(targetDir)
+			if err := coreRemoveAll(targetDir); err != nil {
+				return
+			}
 		}
 	}()
 
-	rel, err := filepath.Rel(rootResolved, targetAbs)
+	rel, err := pathRel(rootResolved, targetAbs)
 	if err != nil {
 		return "", err
 	}
-	if rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
-		return "", errors.New("install path escapes install dir")
+	if rel == ".." || core.HasPrefix(rel, ".."+string(core.PathSeparator)) {
+		return "", core.NewError("install path escapes install dir")
 	}
-	if err := os.RemoveAll(targetDir); err != nil {
+	if err := coreRemoveAll(targetDir); err != nil {
 		return "", err
 	}
 	args := []string{"clone", "--depth", "1"}
@@ -177,7 +173,7 @@ func (i Installer) Install(ctx context.Context, manifest Manifest) (string, erro
 	}
 	args = append(args, "--", manifest.Repository, targetDir)
 	binary := i.GitBinary
-	if strings.TrimSpace(binary) == "" {
+	if core.Trim(binary) == "" {
 		binary = "git"
 	}
 	runGit := i.GitRunner
@@ -185,7 +181,7 @@ func (i Installer) Install(ctx context.Context, manifest Manifest) (string, erro
 		runGit = runGitCommand
 	}
 	if output, err := runGit(ctx, binary, args...); err != nil {
-		return "", fmt.Errorf("git clone failed: %w: %s", err, sanitizeCommandOutput(output))
+		return "", core.Errorf("git clone failed: %w: %s", err, sanitizeCommandOutput(output))
 	}
 	if err := writeInstalledManifest(targetDir, manifest); err != nil {
 		return "", err
@@ -195,7 +191,7 @@ func (i Installer) Install(ctx context.Context, manifest Manifest) (string, erro
 }
 
 func runGitCommand(ctx context.Context, binary string, args ...string) ([]byte, error) {
-	cmd := exec.CommandContext(ctx, binary, args...)
+	cmd := commandContext(ctx, binary, args...)
 	return cmd.CombinedOutput()
 }
 
@@ -214,48 +210,48 @@ func (i Installer) List(ctx context.Context, registryURL string) ([]Manifest, er
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode >= http.StatusBadRequest {
-		return nil, fmt.Errorf("marketplace list failed: %s", resp.Status)
+		return nil, core.Errorf("marketplace list failed: %s", resp.Status)
 	}
 	body, err := io.ReadAll(io.LimitReader(resp.Body, maxManifestBytes+1))
 	if err != nil {
 		return nil, err
 	}
 	if len(body) > maxManifestBytes {
-		return nil, fmt.Errorf("marketplace list failed: payload exceeds %d bytes", maxManifestBytes)
+		return nil, core.Errorf("marketplace list failed: payload exceeds %d bytes", maxManifestBytes)
 	}
 	return decodeManifestList(body)
 }
 
 func validateManifestName(value string) error {
-	trimmed := strings.TrimSpace(value)
+	trimmed := core.Trim(value)
 	if trimmed == "" {
-		return errors.New("manifest name is required")
+		return core.NewError("manifest name is required")
 	}
-	if strings.ContainsAny(trimmed, `/\`) {
-		return errors.New("manifest name must not contain path separators")
+	if containsAny(trimmed, `/\`) {
+		return core.NewError("manifest name must not contain path separators")
 	}
-	if strings.Contains(trimmed, "..") {
-		return errors.New("manifest name must not contain path traversal segments")
+	if core.Contains(trimmed, "..") {
+		return core.NewError("manifest name must not contain path traversal segments")
 	}
 	return nil
 }
 
 func validateCloneArg(label, value string) error {
-	trimmed := strings.TrimSpace(value)
+	trimmed := core.Trim(value)
 	if trimmed == "" {
-		return fmt.Errorf("%s is required", label)
+		return core.Errorf("%s is required", label)
 	}
-	if strings.HasPrefix(trimmed, "-") {
-		return fmt.Errorf("%s must not begin with a dash", label)
+	if core.HasPrefix(trimmed, "-") {
+		return core.Errorf("%s must not begin with a dash", label)
 	}
-	if strings.ContainsAny(trimmed, "\x00\r\n") {
-		return fmt.Errorf("%s contains invalid control characters", label)
+	if containsAny(trimmed, "\x00\r\n") {
+		return core.Errorf("%s contains invalid control characters", label)
 	}
 	return nil
 }
 
 func validateCloneArgOptional(label, value string) error {
-	trimmed := strings.TrimSpace(value)
+	trimmed := core.Trim(value)
 	if trimmed == "" {
 		return nil
 	}
@@ -263,36 +259,36 @@ func validateCloneArgOptional(label, value string) error {
 }
 
 func validateRepositorySource(value string) error {
-	trimmed := strings.TrimSpace(value)
+	trimmed := core.Trim(value)
 	if trimmed == "" {
-		return errors.New("repository is required")
+		return core.NewError("repository is required")
 	}
-	if strings.ContainsAny(trimmed, "\x00\r\n") {
-		return errors.New("repository contains invalid control characters")
+	if containsAny(trimmed, "\x00\r\n") {
+		return core.NewError("repository contains invalid control characters")
 	}
-	if strings.HasPrefix(strings.ToLower(trimmed), "ext::") {
-		return errors.New("repository must not use git remote helper protocols")
+	if core.HasPrefix(core.Lower(trimmed), "ext::") {
+		return core.NewError("repository must not use git remote helper protocols")
 	}
-	if strings.HasPrefix(trimmed, "-") {
-		return errors.New("repository must not begin with a dash")
+	if core.HasPrefix(trimmed, "-") {
+		return core.NewError("repository must not begin with a dash")
 	}
-	if strings.Contains(trimmed, "://") {
+	if core.Contains(trimmed, "://") {
 		parsed, err := url.Parse(trimmed)
 		if err != nil {
 			return err
 		}
-		switch strings.ToLower(parsed.Scheme) {
+		switch core.Lower(parsed.Scheme) {
 		case "http", "https", "ssh", "git":
 		default:
-			return fmt.Errorf("repository scheme %q is not allowed", parsed.Scheme)
+			return core.Errorf("repository scheme %q is not allowed", parsed.Scheme)
 		}
 		return nil
 	}
-	if strings.Contains(trimmed, string(filepath.Separator)) || filepath.IsAbs(trimmed) {
-		return errors.New("repository path clones are not allowed")
+	if core.Contains(trimmed, string(core.PathSeparator)) || core.PathIsAbs(trimmed) {
+		return core.NewError("repository path clones are not allowed")
 	}
-	if !strings.Contains(trimmed, ":") {
-		return errors.New("repository must be a URL or scp-style remote")
+	if !core.Contains(trimmed, ":") {
+		return core.NewError("repository must be a URL or scp-style remote")
 	}
 	return nil
 }
@@ -304,11 +300,11 @@ func DigestManifest(manifest Manifest) string {
 
 func safeName(value string) string {
 	original := value
-	value = strings.TrimSpace(strings.ToLower(value))
+	value = core.Trim(core.Lower(value))
 	if value == "" {
 		return fallbackSafeName(original)
 	}
-	var builder strings.Builder
+	builder := core.NewBuilder()
 	lastDash := false
 	for _, r := range value {
 		switch {
@@ -325,7 +321,7 @@ func safeName(value string) string {
 			}
 		}
 	}
-	cleaned := strings.Trim(builder.String(), "-._")
+	cleaned := trimRunes(builder.String(), "-._")
 	if cleaned == "" {
 		return fallbackSafeName(original)
 	}
@@ -338,13 +334,13 @@ func fallbackSafeName(value string) string {
 }
 
 func decodeManifestList(body []byte) ([]Manifest, error) {
-	trimmed := strings.TrimSpace(string(body))
+	trimmed := core.Trim(string(body))
 	if trimmed == "" {
 		return nil, nil
 	}
 	var manifests []Manifest
-	if strings.HasPrefix(trimmed, "[") {
-		if err := json.Unmarshal(body, &manifests); err != nil {
+	if core.HasPrefix(trimmed, "[") {
+		if err := jsonUnmarshal(body, &manifests); err != nil {
 			return nil, err
 		}
 		return manifests, nil
@@ -362,19 +358,19 @@ func decodeManifestList(body []byte) ([]Manifest, error) {
 }
 
 func writeInstalledManifest(targetDir string, manifest Manifest) error {
-	manifestDir := filepath.Join(targetDir, ".core")
-	if err := os.MkdirAll(manifestDir, 0o755); err != nil {
+	manifestDir := core.PathJoin(targetDir, ".core")
+	if err := coreMkdirAll(manifestDir, 0o755); err != nil {
 		return err
 	}
 	data, err := yaml.Marshal(manifest)
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(filepath.Join(manifestDir, "marketplace.yaml"), data, 0o644)
+	return coreWriteFile(core.PathJoin(manifestDir, "marketplace.yaml"), data, 0o644)
 }
 
 func sanitizeCommandOutput(output []byte) string {
-	trimmed := strings.TrimSpace(string(output))
+	trimmed := core.Trim(string(output))
 	if trimmed == "" {
 		return "command produced no output"
 	}

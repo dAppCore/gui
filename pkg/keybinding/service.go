@@ -5,8 +5,8 @@ import (
 	"context"
 	"sync"
 
-	core "dappco.re/go/core"
-	coreerr "dappco.re/go/log"
+	core "dappco.re/go"
+	"dappco.re/go/gui/pkg/internal/coreutil"
 )
 
 type Options struct{}
@@ -69,10 +69,10 @@ func (s *Service) taskAdd(t TaskAdd) error {
 
 	// Register on platform with a callback that broadcasts ActionTriggered
 	err := s.platform.Add(t.Accelerator, func() {
-		_ = s.Core().ACTION(ActionTriggered{Accelerator: t.Accelerator})
+		coreutil.DispatchAction(s.Core(), "keybinding.taskAdd", ActionTriggered{Accelerator: t.Accelerator})
 	})
 	if err != nil {
-		return coreerr.E("keybinding.taskAdd", "platform add failed", err)
+		return core.E("keybinding.taskAdd", "platform add failed", err)
 	}
 
 	s.registeredBindings[t.Accelerator] = BindingInfo{
@@ -86,12 +86,12 @@ func (s *Service) taskRemove(t TaskRemove) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if _, exists := s.registeredBindings[t.Accelerator]; !exists {
-		return coreerr.E("keybinding.taskRemove", "not registered: "+t.Accelerator, ErrorNotRegistered)
+		return core.E("keybinding.taskRemove", "not registered: "+t.Accelerator, ErrorNotRegistered)
 	}
 
 	err := s.platform.Remove(t.Accelerator)
 	if err != nil {
-		return coreerr.E("keybinding.taskRemove", "platform remove failed", err)
+		return core.E("keybinding.taskRemove", "platform remove failed", err)
 	}
 
 	delete(s.registeredBindings, t.Accelerator)
@@ -107,12 +107,12 @@ func (s *Service) taskProcess(t TaskProcess) error {
 	_, exists := s.registeredBindings[t.Accelerator]
 	s.mu.RUnlock()
 	if !exists {
-		return coreerr.E("keybinding.taskProcess", "not registered: "+t.Accelerator, ErrorNotRegistered)
+		return core.E("keybinding.taskProcess", "not registered: "+t.Accelerator, ErrorNotRegistered)
 	}
 
 	handled := s.platform.Process(t.Accelerator)
 	if !handled {
-		return coreerr.E("keybinding.taskProcess", "platform did not handle: "+t.Accelerator, nil)
+		return core.E("keybinding.taskProcess", "platform did not handle: "+t.Accelerator, nil)
 	}
 
 	return nil

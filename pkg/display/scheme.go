@@ -7,10 +7,9 @@ import (
 	"sort"    // Note: AX-6 — slice sorting is structural; core has no sort wrapper
 	"time"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/chat"
 	"dappco.re/go/gui/pkg/internal/textutil"
-	coreerr "dappco.re/go/log"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
@@ -66,7 +65,7 @@ func (s *Service) resolveCoreRoute(ctx context.Context, route string, query url.
 	segment, subpath := splitCoreRoute(route)
 	if segment == "" {
 		return core.Result{
-			Value: coreerr.E("display.resolveCoreRoute", "core route is required", nil),
+			Value: core.E("display.resolveCoreRoute", "core route is required", nil),
 			OK:    false,
 		}
 	}
@@ -90,7 +89,7 @@ func (s *Service) resolveCoreRoute(ctx context.Context, route string, query url.
 		return s.resolveServiceBackedCoreRoute("identity", subpath, query, "identity", "tim", "TIM")
 	default:
 		return core.Result{
-			Value: coreerr.E("display.resolveCoreRoute", "unknown core route: "+segment, nil),
+			Value: core.E("display.resolveCoreRoute", "unknown core route: "+segment, nil),
 			OK:    false,
 		}
 	}
@@ -117,10 +116,6 @@ func trimPathSlashes(value string) string {
 		value = core.TrimSuffix(value, "/")
 	}
 	return value
-}
-
-func equalFold(left, right string) bool {
-	return core.Lower(left) == core.Lower(right)
 }
 
 func (s *Service) resolveSettingsRoute(subpath string, query url.Values) core.Result {
@@ -325,7 +320,7 @@ func (s *Service) actionsForService(serviceName string) []string {
 func (s *Service) currentSettingsSnapshot() map[string]any {
 	if s.configFile != nil {
 		var snapshot map[string]any
-		if err := s.configFile.Get("", &snapshot); err == nil && snapshot != nil {
+		if result := s.configFile.Get("", &snapshot); result.OK && snapshot != nil {
 			snapshot["app_mode"] = string(s.mode)
 			return snapshot
 		}
@@ -344,7 +339,7 @@ func (s *Service) currentSettingsSnapshot() map[string]any {
 func (s *Service) currentSettingValue(key string) (any, bool) {
 	if s.configFile != nil {
 		var value any
-		if err := s.configFile.Get(key, &value); err == nil {
+		if result := s.configFile.Get(key, &value); result.OK {
 			return value, true
 		}
 	}
@@ -380,15 +375,15 @@ func (s *Service) ResolveScheme(ctx context.Context, rawURL string) core.Result 
 //	// Routes that accept query semantics can use the request body when the caller submits a form or POST payload.
 func (s *Service) ResolveSchemeRequest(ctx context.Context, rawURL, method string, headers map[string][]string, body []byte) core.Result {
 	if core.Trim(rawURL) == "" {
-		return core.Result{Value: coreerr.E("display.ResolveScheme", "scheme URL is required", nil), OK: false}
+		return core.Result{Value: core.E("display.ResolveScheme", "scheme URL is required", nil), OK: false}
 	}
 	if len(body) > maxSchemeRequestBodyBytes {
 		return core.Result{
-			Value: coreerr.E(
+			Value: core.E(
 				"display.ResolveScheme",
 				core.Sprintf("request body exceeds %d bytes", maxSchemeRequestBodyBytes),
-				nil,
-			),
+				nil),
+
 			OK: false,
 		}
 	}
@@ -398,11 +393,11 @@ func (s *Service) ResolveSchemeRequest(ctx context.Context, rawURL, method strin
 	}
 	parsed, ok := parseResult.Value.(*url.URL)
 	if !ok || parsed == nil {
-		return core.Result{Value: coreerr.E("display.ResolveScheme", "scheme URL parse returned an invalid URL", nil), OK: false}
+		return core.Result{Value: core.E("display.ResolveScheme", "scheme URL parse returned an invalid URL", nil), OK: false}
 	}
 	handler, ok := s.schemeHandlers[core.Lower(parsed.Scheme)]
 	if !ok {
-		return core.Result{Value: coreerr.E("display.ResolveScheme", "no handler registered for scheme "+parsed.Scheme, nil), OK: false}
+		return core.Result{Value: core.E("display.ResolveScheme", "no handler registered for scheme "+parsed.Scheme, nil), OK: false}
 	}
 
 	query := cloneURLValues(parsed.Query())

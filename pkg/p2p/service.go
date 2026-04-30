@@ -2,9 +2,8 @@ package p2p
 
 import (
 	"context"
-	"strings"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 )
 
 type Options struct {
@@ -45,18 +44,18 @@ func NewServiceWithDriver(c *core.Core, options Options, driver Driver) *Service
 }
 
 func OptionsFromEnv() Options {
-	peers := strings.Split(strings.TrimSpace(core.Env("CORE_P2P_PEERS")), ",")
+	peers := core.Split(core.Trim(core.Env("CORE_P2P_PEERS")), ",")
 	filtered := make([]string, 0, len(peers))
 	for _, peer := range peers {
-		peer = strings.TrimSpace(peer)
+		peer = core.Trim(peer)
 		if peer != "" {
 			filtered = append(filtered, peer)
 		}
 	}
 	return Options{
-		ListenAddr: strings.TrimSpace(core.Env("CORE_P2P_ADDR")),
+		ListenAddr: core.Trim(core.Env("CORE_P2P_ADDR")),
 		PeerAddrs:  filtered,
-		NodeID:     strings.TrimSpace(core.Env("CORE_P2P_NODE_ID")),
+		NodeID:     core.Trim(core.Env("CORE_P2P_NODE_ID")),
 	}
 }
 
@@ -128,7 +127,7 @@ func mapValue(opts core.Options, key string) map[string]any {
 
 func coalesce(values ...string) string {
 	for _, value := range values {
-		if strings.TrimSpace(value) != "" {
+		if core.Trim(value) != "" {
 			return value
 		}
 	}

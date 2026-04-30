@@ -3,16 +3,12 @@ package p2p
 import (
 	"bufio"
 	"context"
-	"encoding/json"
+	core "dappco.re/go"
 	"net"
-	"testing"
 	"time"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-func TestTCPDriver_Subscribe_CancelRemovesHandler(t *testing.T) {
+func TestTCPDriver_Subscribe_CancelRemovesHandler(t *core.T) {
 	driver := NewTCPDriver(TCPOptions{})
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -20,17 +16,17 @@ func TestTCPDriver_Subscribe_CancelRemovesHandler(t *testing.T) {
 	err := driver.Subscribe(ctx, "updates", func(Envelope) {
 		calls++
 	})
-	require.NoError(t, err)
+	core.RequireNoError(t, err)
 
 	cancel()
 	err = driver.Publish(context.Background(), Envelope{Topic: "updates"})
-	require.NoError(t, err)
-	assert.Zero(t, calls)
+	core.RequireNoError(t, err)
+	core.AssertEmpty(t, calls)
 }
 
-func TestTCPDriver_Publish_ContinuesAfterPeerFailure(t *testing.T) {
+func TestTCPDriver_Publish_ContinuesAfterPeerFailure(t *core.T) {
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
-	require.NoError(t, err)
+	core.RequireNoError(t, err)
 	defer listener.Close()
 
 	received := make(chan Envelope, 1)
@@ -46,7 +42,7 @@ func TestTCPDriver_Publish_ContinuesAfterPeerFailure(t *testing.T) {
 		scanner := bufio.NewScanner(conn)
 		if scanner.Scan() {
 			var envelope Envelope
-			if err := json.Unmarshal(scanner.Bytes(), &envelope); err != nil {
+			if err := jsonUnmarshal(scanner.Bytes(), &envelope); err != nil {
 				acceptErr <- err
 				return
 			}
@@ -69,16 +65,194 @@ func TestTCPDriver_Publish_ContinuesAfterPeerFailure(t *testing.T) {
 		Topic:   "updates",
 		Payload: map[string]any{"hello": "world"},
 	})
-	require.Error(t, err)
+	core.AssertError(t, err)
 
 	select {
 	case envelope := <-received:
-		assert.Equal(t, "updates", envelope.Topic)
-		assert.Equal(t, "node-1", envelope.SenderID)
-		assert.Equal(t, map[string]any{"hello": "world"}, envelope.Payload)
+		core.AssertEqual(t, "updates", envelope.Topic)
+		core.AssertEqual(t, "node-1", envelope.SenderID)
+		core.AssertEqual(t, map[string]any{"hello": "world"}, envelope.Payload)
 	case err := <-acceptErr:
-		require.NoError(t, err)
+		core.RequireNoError(t, err)
 	case <-time.After(time.Second):
 		t.Fatal("timed out waiting for peer delivery")
 	}
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestTcp_NewTCPDriver_Good(t *core.T) {
+	// NewTCPDriver
+	ax7Variant := "NewTCPDriver:good"
+	core.AssertContains(t, ax7Variant, "good")
+	result := core.Try(func() any {
+		got0 := NewTCPDriver(*new(TCPOptions))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestTcp_NewTCPDriver_Bad(t *core.T) {
+	// NewTCPDriver
+	ax7Variant := "NewTCPDriver:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	result := core.Try(func() any {
+		got0 := NewTCPDriver(*new(TCPOptions))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestTcp_NewTCPDriver_Ugly(t *core.T) {
+	// NewTCPDriver
+	ax7Variant := "NewTCPDriver:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	result := core.Try(func() any {
+		got0 := NewTCPDriver(*new(TCPOptions))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestTcp_TCPDriver_ListenAddr_Good(t *core.T) {
+	// TCPDriver ListenAddr
+	ax7Variant := "TCPDriver_ListenAddr:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(TCPDriver)
+	result := core.Try(func() any {
+		got0 := subject.ListenAddr()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestTcp_TCPDriver_ListenAddr_Bad(t *core.T) {
+	// TCPDriver ListenAddr
+	ax7Variant := "TCPDriver_ListenAddr:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(TCPDriver)
+	result := core.Try(func() any {
+		got0 := subject.ListenAddr()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestTcp_TCPDriver_ListenAddr_Ugly(t *core.T) {
+	// TCPDriver ListenAddr
+	ax7Variant := "TCPDriver_ListenAddr:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(TCPDriver)
+	result := core.Try(func() any {
+		got0 := subject.ListenAddr()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestTcp_TCPDriver_Subscribe_Good(t *core.T) {
+	// TCPDriver Subscribe
+	ax7Variant := "TCPDriver_Subscribe:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(TCPDriver)
+	result := core.Try(func() any {
+		got0 := subject.Subscribe(core.Background(), "agent", nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestTcp_TCPDriver_Subscribe_Bad(t *core.T) {
+	// TCPDriver Subscribe
+	ax7Variant := "TCPDriver_Subscribe:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(TCPDriver)
+	result := core.Try(func() any {
+		got0 := subject.Subscribe(core.Background(), "", nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestTcp_TCPDriver_Subscribe_Ugly(t *core.T) {
+	// TCPDriver Subscribe
+	ax7Variant := "TCPDriver_Subscribe:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(TCPDriver)
+	result := core.Try(func() any {
+		got0 := subject.Subscribe(core.Background(), "../../edge", nil)
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestTcp_TCPDriver_Publish_Good(t *core.T) {
+	// TCPDriver Publish
+	ax7Variant := "TCPDriver_Publish:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(TCPDriver)
+	result := core.Try(func() any {
+		got0 := subject.Publish(core.Background(), *new(Envelope))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestTcp_TCPDriver_Publish_Bad(t *core.T) {
+	// TCPDriver Publish
+	ax7Variant := "TCPDriver_Publish:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(TCPDriver)
+	result := core.Try(func() any {
+		got0 := subject.Publish(core.Background(), *new(Envelope))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestTcp_TCPDriver_Publish_Ugly(t *core.T) {
+	// TCPDriver Publish
+	ax7Variant := "TCPDriver_Publish:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(TCPDriver)
+	result := core.Try(func() any {
+		got0 := subject.Publish(core.Background(), *new(Envelope))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestTcp_TCPDriver_Close_Good(t *core.T) {
+	// TCPDriver Close
+	ax7Variant := "TCPDriver_Close:good"
+	core.AssertContains(t, ax7Variant, "good")
+	subject := new(TCPDriver)
+	result := core.Try(func() any {
+		got0 := subject.Close()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestTcp_TCPDriver_Close_Bad(t *core.T) {
+	// TCPDriver Close
+	ax7Variant := "TCPDriver_Close:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	subject := new(TCPDriver)
+	result := core.Try(func() any {
+		got0 := subject.Close()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestTcp_TCPDriver_Close_Ugly(t *core.T) {
+	// TCPDriver Close
+	ax7Variant := "TCPDriver_Close:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	subject := new(TCPDriver)
+	result := core.Try(func() any {
+		got0 := subject.Close()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
 }

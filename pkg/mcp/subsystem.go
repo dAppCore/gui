@@ -5,11 +5,10 @@ import (
 	"context"
 	"reflect"
 	"sort"
-	"strings"
 	"sync"
 	"time"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -90,7 +89,7 @@ func (s *Subsystem) ManifestText() string {
 		return ""
 	}
 
-	var builder strings.Builder
+	builder := core.NewBuilder()
 	builder.WriteString("Available MCP tools:\n")
 	for _, tool := range manifest {
 		builder.WriteString("- ")
@@ -107,7 +106,7 @@ func (s *Subsystem) ManifestText() string {
 		builder.WriteString(core.JSONMarshalString(schema))
 		builder.WriteString("\n")
 	}
-	return strings.TrimSpace(builder.String())
+	return core.Trim(builder.String())
 }
 
 // CallTool executes a recorded GUI MCP tool directly by name.
@@ -186,7 +185,7 @@ func renderCallToolResult(result *mcp.CallToolResult) string {
 	if len(parts) == 0 {
 		return core.JSONMarshalString(result)
 	}
-	return strings.Join(parts, "\n")
+	return core.Join("\n", parts...)
 }
 
 func normalizeSchema(schema any) map[string]any {
@@ -283,7 +282,7 @@ func schemaFieldName(fallback, tag string) (string, bool) {
 	if tag == "" {
 		return fallback, false
 	}
-	parts := strings.Split(tag, ",")
+	parts := core.Split(tag, ",")
 	name := parts[0]
 	if name == "" {
 		name = fallback

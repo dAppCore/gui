@@ -2,12 +2,10 @@
 package window
 
 import (
-	"io/fs"
 	"sync"
 	"time"
 
-	core "dappco.re/go/core"
-	coreio "dappco.re/go/io"
+	core "dappco.re/go"
 )
 
 const windowStateFileEnv = "WINDOW_STATE_FILE"
@@ -102,25 +100,25 @@ func (sm *StateManager) load() {
 	if sm.configDir == "" && sm.statePath == "" {
 		return
 	}
-	content, err := coreio.Local.Read(sm.filePath())
+	content, err := coreReadFile(sm.filePath())
 	if err != nil {
-		if core.Is(err, fs.ErrNotExist) {
+		if core.IsNotExist(err) {
 			return
 		}
 		core.Error(
 			"window state load failed",
-			"path", sm.filePath(),
+			"file_path", sm.filePath(),
 			"err", core.E("window.StateManager.load", "failed to read window state", err),
 		)
 		return
 	}
 	loaded := make(map[string]WindowState)
-	result := core.JSONUnmarshalString(content, &loaded)
+	result := core.JSONUnmarshal(content, &loaded)
 	if !result.OK {
 		if decodeErr, ok := result.Value.(error); ok {
 			core.Error(
 				"window state load failed",
-				"path", sm.filePath(),
+				"file_path", sm.filePath(),
 				"err", core.E("window.StateManager.load", "failed to decode window state", decodeErr),
 			)
 		}
@@ -147,26 +145,26 @@ func (sm *StateManager) save() error {
 		marshalErr, _ := result.Value.(error)
 		core.Error(
 			"window state save failed",
-			"path", filePath,
+			"file_path", filePath,
 			"err", core.E("window.StateManager.save", "failed to encode window state", marshalErr),
 		)
 		return core.E("window.StateManager.save", "failed to encode window state", marshalErr)
 	}
 	data := result.Value.([]byte)
 	if dir := core.PathDir(filePath); dir != "" {
-		if err := coreio.Local.EnsureDir(dir); err != nil {
+		if err := coreMkdirAll(dir, 0o755); err != nil {
 			core.Error(
 				"window state save failed",
-				"path", filePath,
+				"file_path", filePath,
 				"err", core.E("window.StateManager.save", "failed to create window state directory", err),
 			)
 			return core.E("window.StateManager.save", "failed to create window state directory", err)
 		}
 	}
-	if err := coreio.Local.Write(filePath, string(data)); err != nil {
+	if err := coreWriteFile(filePath, data, 0o644); err != nil {
 		core.Error(
 			"window state save failed",
-			"path", filePath,
+			"file_path", filePath,
 			"err", core.E("window.StateManager.save", "failed to write window state", err),
 		)
 		return core.E("window.StateManager.save", "failed to write window state", err)
@@ -178,7 +176,9 @@ func (sm *StateManager) scheduleSave() {
 	sm.mu.Lock()
 	sm.stopSaveTimerLocked()
 	sm.saveTimer = time.AfterFunc(500*time.Millisecond, func() {
-		_ = sm.save()
+		if err := sm.save(); err != nil {
+			return
+		}
 	})
 	sm.mu.Unlock()
 }

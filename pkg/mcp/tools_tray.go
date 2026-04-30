@@ -5,9 +5,8 @@ import (
 	"context"
 	"encoding/base64"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/systray"
-	coreerr "dappco.re/go/log"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -22,11 +21,11 @@ type TraySetIconOutput struct {
 
 func (s *Subsystem) traySetIcon(_ context.Context, _ *mcp.CallToolRequest, input TraySetIconInput) (*mcp.CallToolResult, TraySetIconOutput, error) {
 	if input.Base64 == "" {
-		return nil, TraySetIconOutput{}, coreerr.E("mcp.traySetIcon", "base64 icon data is required", nil)
+		return nil, TraySetIconOutput{}, core.E("mcp.traySetIcon", "base64 icon data is required", nil)
 	}
 	data, err := base64.StdEncoding.DecodeString(input.Base64)
 	if err != nil {
-		return nil, TraySetIconOutput{}, coreerr.E("mcp.traySetIcon", "invalid base64 icon data", err)
+		return nil, TraySetIconOutput{}, core.E("mcp.traySetIcon", "invalid base64 icon data", err)
 	}
 	r := s.core.Action("systray.setIcon").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: systray.TaskSetTrayIcon{Data: data}},
@@ -148,7 +147,7 @@ func (s *Subsystem) trayInfo(_ context.Context, _ *mcp.CallToolRequest, _ TrayIn
 	}
 	config, ok := r.Value.(map[string]any)
 	if !ok {
-		return nil, TrayInfoOutput{}, coreerr.E("mcp.trayInfo", "unexpected result type", nil)
+		return nil, TrayInfoOutput{}, core.E("mcp.trayInfo", "unexpected result type", nil)
 	}
 	return nil, TrayInfoOutput{Config: config}, nil
 }

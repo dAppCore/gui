@@ -4,7 +4,7 @@ package display
 import (
 	"net/url"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 

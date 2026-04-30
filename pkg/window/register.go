@@ -1,7 +1,7 @@
 // pkg/window/register.go
 package window
 
-import core "dappco.re/go/core"
+import core "dappco.re/go"
 
 // Register(p) binds the window service to a Core instance.
 // core.WithService(window.Register(window.NewWailsPlatform(app)))

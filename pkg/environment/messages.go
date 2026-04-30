@@ -12,7 +12,7 @@ type QueryAccentColour struct{}
 
 // TaskOpenFileManager opens the system file manager. Result: error only
 type TaskOpenFileManager struct {
-	Path   string `json:"path"`
+	Path   string `json:"path,omitempty"`
 	Select bool   `json:"select"`
 }
 

@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/dialog"
-	coreerr "dappco.re/go/log"
+	"dappco.re/go/gui/pkg/internal/coreutil"
 )
 
 type Options struct{}
@@ -177,7 +177,7 @@ func (s *Service) clear(id string) error {
 
 	ids := s.removeActive(id)
 	for _, notificationID := range ids {
-		_ = s.Core().ACTION(ActionNotificationDismissed{ID: notificationID})
+		coreutil.DispatchAction(s.Core(), "notification.dismiss", ActionNotificationDismissed{ID: notificationID})
 	}
 	return nil
 }
@@ -228,7 +228,7 @@ func decodeOptions[T any](opts core.Options) (T, error) {
 		if err, ok := result.Value.(error); ok {
 			return input, err
 		}
-		return input, coreerr.E("notification.decodeOptions", "failed to decode notification options", nil)
+		return input, core.E("notification.decodeOptions", "failed to decode notification options", nil)
 	}
 	return input, nil
 }

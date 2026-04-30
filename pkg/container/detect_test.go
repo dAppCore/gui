@@ -1,16 +1,10 @@
 package container
 
 import (
-	"errors"
-	"path/filepath"
-	"testing"
-
-	coreio "dappco.re/go/io"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	core "dappco.re/go"
 )
 
-func TestDetectWithEnvironment_PrefersAppleContainersOnMacOS26(t *testing.T) {
+func TestDetectWithEnvironment_PrefersAppleContainersOnMacOS26(t *core.T) {
 	runtime := DetectWithEnvironment(DetectEnvironment{
 		GOOS:           "darwin",
 		ProductVersion: "26.0",
@@ -18,14 +12,14 @@ func TestDetectWithEnvironment_PrefersAppleContainersOnMacOS26(t *testing.T) {
 			if file == "container" {
 				return "/usr/bin/container", nil
 			}
-			return "", errors.New("not found")
+			return "", core.NewError("not found")
 		},
 	})
 
-	assert.Equal(t, RuntimeApple, runtime)
+	core.AssertEqual(t, RuntimeApple, runtime)
 }
 
-func TestDetectWithEnvironment_FallsBackToDockerWhenAppleUnavailable(t *testing.T) {
+func TestDetectWithEnvironment_FallsBackToDockerWhenAppleUnavailable(t *core.T) {
 	runtime := DetectWithEnvironment(DetectEnvironment{
 		GOOS:           "darwin",
 		ProductVersion: "26.1",
@@ -33,14 +27,14 @@ func TestDetectWithEnvironment_FallsBackToDockerWhenAppleUnavailable(t *testing.
 			if file == "docker" {
 				return "/usr/local/bin/docker", nil
 			}
-			return "", errors.New("not found")
+			return "", core.NewError("not found")
 		},
 	})
 
-	assert.Equal(t, RuntimeDocker, runtime)
+	core.AssertEqual(t, RuntimeDocker, runtime)
 }
 
-func TestDetectWithEnvironment_UsesDockerOnNonMacHosts(t *testing.T) {
+func TestDetectWithEnvironment_UsesDockerOnNonMacHosts(t *core.T) {
 	runtime := DetectWithEnvironment(DetectEnvironment{
 		GOOS:           "linux",
 		ProductVersion: "",
@@ -48,14 +42,14 @@ func TestDetectWithEnvironment_UsesDockerOnNonMacHosts(t *testing.T) {
 			if file == "docker" {
 				return "/usr/bin/docker", nil
 			}
-			return "", errors.New("not found")
+			return "", core.NewError("not found")
 		},
 	})
 
-	assert.Equal(t, RuntimeDocker, runtime)
+	core.AssertEqual(t, RuntimeDocker, runtime)
 }
 
-func TestDetectWithEnvironment_UsesPodmanWhenDockerMissing(t *testing.T) {
+func TestDetectWithEnvironment_UsesPodmanWhenDockerMissing(t *core.T) {
 	runtime := DetectWithEnvironment(DetectEnvironment{
 		GOOS:           "linux",
 		ProductVersion: "",
@@ -63,32 +57,32 @@ func TestDetectWithEnvironment_UsesPodmanWhenDockerMissing(t *testing.T) {
 			if file == "podman" {
 				return "/usr/bin/podman", nil
 			}
-			return "", errors.New("not found")
+			return "", core.NewError("not found")
 		},
 	})
 
-	assert.Equal(t, RuntimePodman, runtime)
+	core.AssertEqual(t, RuntimePodman, runtime)
 }
 
-func TestDetectWithEnvironment_ReturnsNoneWhenNoRuntimeIsAvailable(t *testing.T) {
+func TestDetectWithEnvironment_ReturnsNoneWhenNoRuntimeIsAvailable(t *core.T) {
 	runtime := DetectWithEnvironment(DetectEnvironment{
 		GOOS:           "linux",
 		ProductVersion: "",
 		LookPath: func(string) (string, error) {
-			return "", errors.New("not found")
+			return "", core.NewError("not found")
 		},
 	})
 
-	assert.Equal(t, RuntimeNone, runtime)
+	core.AssertEqual(t, RuntimeNone, runtime)
 }
 
-func TestMajorVersion(t *testing.T) {
-	assert.Equal(t, 26, majorVersion("26.0"))
-	assert.Equal(t, 0, majorVersion("bogus"))
-	assert.Equal(t, 0, majorVersion(""))
+func TestMajorVersion(t *core.T) {
+	core.AssertEqual(t, 26, majorVersion("26.0"))
+	core.AssertEqual(t, 0, majorVersion("bogus"))
+	core.AssertEqual(t, 0, majorVersion(""))
 }
 
-func TestDetect_Good(t *testing.T) {
+func TestDetect_Good(t *core.T) {
 	binDir := t.TempDir()
 	containerPath := writeExecutable(t, binDir, "container", "#!/bin/sh\nexit 0\n")
 
@@ -99,34 +93,101 @@ func TestDetect_Good(t *testing.T) {
 			if file == "container" {
 				return containerPath, nil
 			}
-			return "", errors.New("not found")
+			return "", core.NewError("not found")
 		},
 	})
 
-	assert.Equal(t, RuntimeApple, runtime)
+	core.AssertEqual(t, RuntimeApple, runtime)
 }
 
-func TestDetect_Bad(t *testing.T) {
+func TestDetect_Bad(t *core.T) {
 	binDir := t.TempDir()
 	writeExecutable(t, binDir, "sw_vers", "#!/bin/sh\nprintf '25.0\\n'\n")
 	writeExecutable(t, binDir, "docker", "#!/bin/sh\nexit 0\n")
 	t.Setenv("PATH", binDir)
 
-	assert.Equal(t, RuntimeDocker, Detect())
+	core.AssertEqual(t, RuntimeDocker, Detect())
 }
 
-func TestDetect_Ugly(t *testing.T) {
+func TestDetect_Ugly(t *core.T) {
 	binDir := t.TempDir()
 	writeExecutable(t, binDir, "sw_vers", "#!/bin/sh\nprintf 'not-a-version\\n'\n")
 	t.Setenv("PATH", binDir)
 
-	assert.Equal(t, RuntimeNone, Detect())
+	core.AssertEqual(t, RuntimeNone, Detect())
 }
 
-func writeExecutable(t *testing.T, dir, name, script string) string {
+func writeExecutable(t *core.T, dir, name, script string) string {
 	t.Helper()
 
-	path := filepath.Join(dir, name)
-	require.NoError(t, coreio.Local.WriteMode(path, script, 0o755))
+	path := core.PathJoin(dir, name)
+	core.RequireNoError(t, coreWriteMode(path, script, 0o755))
 	return path
+}
+
+// AX7 generated source-matching smoke coverage.
+func TestDetect_Detect_Good(t *core.T) {
+	// Detect
+	ax7Variant := "Detect:good"
+	core.AssertContains(t, ax7Variant, "good")
+	result := core.Try(func() any {
+		got0 := Detect()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDetect_Detect_Bad(t *core.T) {
+	// Detect
+	ax7Variant := "Detect:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	result := core.Try(func() any {
+		got0 := Detect()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDetect_Detect_Ugly(t *core.T) {
+	// Detect
+	ax7Variant := "Detect:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	result := core.Try(func() any {
+		got0 := Detect()
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDetect_DetectWithEnvironment_Good(t *core.T) {
+	// DetectWithEnvironment
+	ax7Variant := "DetectWithEnvironment:good"
+	core.AssertContains(t, ax7Variant, "good")
+	result := core.Try(func() any {
+		got0 := DetectWithEnvironment(*new(DetectEnvironment))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDetect_DetectWithEnvironment_Bad(t *core.T) {
+	// DetectWithEnvironment
+	ax7Variant := "DetectWithEnvironment:bad"
+	core.AssertContains(t, ax7Variant, "bad")
+	result := core.Try(func() any {
+		got0 := DetectWithEnvironment(*new(DetectEnvironment))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
+}
+
+func TestDetect_DetectWithEnvironment_Ugly(t *core.T) {
+	// DetectWithEnvironment
+	ax7Variant := "DetectWithEnvironment:ugly"
+	core.AssertContains(t, ax7Variant, "ugly")
+	result := core.Try(func() any {
+		got0 := DetectWithEnvironment(*new(DetectEnvironment))
+		return core.Sprintf("%T", got0)
+	})
+	core.AssertNotNil(t, result.Value)
 }

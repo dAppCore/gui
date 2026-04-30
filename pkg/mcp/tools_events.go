@@ -4,9 +4,8 @@ package mcp
 import (
 	"context"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/events"
-	coreerr "dappco.re/go/log"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -32,7 +31,7 @@ func (s *Subsystem) eventEmit(_ context.Context, _ *mcp.CallToolRequest, input E
 	}
 	cancelled, ok := r.Value.(bool)
 	if !ok {
-		return nil, EventEmitOutput{}, coreerr.E("mcp.eventEmit", "unexpected result type", nil)
+		return nil, EventEmitOutput{}, core.E("mcp.eventEmit", "unexpected result type", nil)
 	}
 	return nil, EventEmitOutput{Cancelled: cancelled}, nil
 }
@@ -138,7 +137,7 @@ func (s *Subsystem) eventList(_ context.Context, _ *mcp.CallToolRequest, _ Event
 	}
 	listenerInfos, ok := r.Value.([]events.ListenerInfo)
 	if !ok {
-		return nil, EventListOutput{}, coreerr.E("mcp.eventList", "unexpected result type", nil)
+		return nil, EventListOutput{}, core.E("mcp.eventList", "unexpected result type", nil)
 	}
 	return nil, EventListOutput{Listeners: listenerInfos}, nil
 }
@@ -157,7 +156,7 @@ func (s *Subsystem) eventInfo(_ context.Context, _ *mcp.CallToolRequest, _ Event
 	}
 	info, ok := r.Value.(events.ServerInfo)
 	if !ok {
-		return nil, EventInfoOutput{}, coreerr.E("mcp.eventInfo", "unexpected result type", nil)
+		return nil, EventInfoOutput{}, core.E("mcp.eventInfo", "unexpected result type", nil)
 	}
 	return nil, EventInfoOutput{Info: info}, nil
 }

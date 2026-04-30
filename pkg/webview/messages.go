@@ -18,7 +18,7 @@ type QueryTitle struct {
 // QueryConsole gets captured console messages. Result: []ConsoleMessage
 type QueryConsole struct {
 	Window string `json:"window"`
-	Level  string `json:"level,omitempty"` // filter by type: "log", "warn", "error", "info", "debug"
+	Level  string `json:"level,omitempty"` // filter by type: log, warn, error, info, debug
 	Limit  int    `json:"limit,omitempty"` // max messages (0 = all)
 }
 
@@ -180,7 +180,7 @@ type ActionException struct {
 
 // ConsoleMessage represents a browser console message.
 type ConsoleMessage struct {
-	Type      string    `json:"type"` // "log", "warn", "error", "info", "debug"
+	Type      string    `json:"type"` // log, warn, error, info, debug
 	Text      string    `json:"text"`
 	Timestamp time.Time `json:"timestamp"`
 	URL       string    `json:"url,omitempty"`

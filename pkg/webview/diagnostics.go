@@ -2,7 +2,7 @@
 package webview
 
 import (
-	corego "dappco.re/go/core"
+	corego "dappco.re/go"
 )
 
 func jsQuote(v string) string {

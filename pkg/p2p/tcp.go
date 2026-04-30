@@ -3,11 +3,10 @@ package p2p
 import (
 	"bufio"
 	"context"
-	"encoding/json"
-	"errors"
 	"net"
-	"strings"
 	"sync"
+
+	core "dappco.re/go"
 )
 
 type TCPOptions struct {
@@ -26,9 +25,9 @@ type TCPDriver struct {
 func NewTCPDriver(options TCPOptions) *TCPDriver {
 	return &TCPDriver{
 		options: TCPOptions{
-			ListenAddr: strings.TrimSpace(options.ListenAddr),
+			ListenAddr: core.Trim(options.ListenAddr),
 			PeerAddrs:  append([]string(nil), options.PeerAddrs...),
-			NodeID:     strings.TrimSpace(options.NodeID),
+			NodeID:     core.Trim(options.NodeID),
 		},
 		subscriptions: make(map[string][]*subscription),
 	}
@@ -50,12 +49,12 @@ func (d *TCPDriver) Subscribe(ctx context.Context, topic string, handler func(En
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	topic = strings.TrimSpace(topic)
+	topic = core.Trim(topic)
 	if topic == "" {
-		return errors.New("topic is required")
+		return core.NewError("topic is required")
 	}
 	if handler == nil {
-		return errors.New("handler is required")
+		return core.NewError("handler is required")
 	}
 	if err := d.ensureListener(); err != nil {
 		return err
@@ -84,34 +83,38 @@ func (d *TCPDriver) Subscribe(ctx context.Context, topic string, handler func(En
 }
 
 func (d *TCPDriver) Publish(ctx context.Context, envelope Envelope) error {
-	if strings.TrimSpace(envelope.Topic) == "" {
-		return errors.New("topic is required")
+	if core.Trim(envelope.Topic) == "" {
+		return core.NewError("topic is required")
 	}
-	if strings.TrimSpace(envelope.SenderID) == "" {
+	if core.Trim(envelope.SenderID) == "" {
 		envelope.SenderID = d.options.NodeID
 	}
 	d.dispatch(envelope)
-	payload, err := json.Marshal(envelope)
+	payload, err := jsonMarshal(envelope)
 	if err != nil {
 		return err
 	}
 	var publishErr error
 	for _, peer := range d.options.PeerAddrs {
-		peer = strings.TrimSpace(peer)
+		peer = core.Trim(peer)
 		if peer == "" {
 			continue
 		}
 		conn, err := (&net.Dialer{}).DialContext(ctx, "tcp", peer)
 		if err != nil {
-			publishErr = errors.Join(publishErr, err)
+			publishErr = core.ErrorJoin(publishErr, err)
 			continue
 		}
 		if _, err := conn.Write(append(payload, '\n')); err != nil {
-			publishErr = errors.Join(publishErr, err)
-			_ = conn.Close()
+			publishErr = core.ErrorJoin(publishErr, err)
+			if closeErr := conn.Close(); closeErr != nil {
+				publishErr = core.ErrorJoin(publishErr, closeErr)
+			}
 			continue
 		}
-		_ = conn.Close()
+		if closeErr := conn.Close(); closeErr != nil {
+			publishErr = core.ErrorJoin(publishErr, closeErr)
+		}
 	}
 	return publishErr
 }
@@ -132,7 +135,7 @@ func (d *TCPDriver) Close() error {
 func (d *TCPDriver) ensureListener() error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	if d.listener != nil || strings.TrimSpace(d.options.ListenAddr) == "" {
+	if d.listener != nil || core.Trim(d.options.ListenAddr) == "" {
 		return nil
 	}
 	listener, err := net.Listen("tcp", d.options.ListenAddr)
@@ -160,7 +163,7 @@ func (d *TCPDriver) readConn(conn net.Conn) {
 	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
 	for scanner.Scan() {
 		var envelope Envelope
-		if err := json.Unmarshal(scanner.Bytes(), &envelope); err != nil {
+		if err := jsonUnmarshal(scanner.Bytes(), &envelope); err != nil {
 			continue
 		}
 		d.dispatch(envelope)

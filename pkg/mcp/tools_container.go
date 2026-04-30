@@ -3,9 +3,8 @@ package mcp
 import (
 	"context"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/container"
-	coreerr "dappco.re/go/log"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -20,11 +19,11 @@ func (s *Subsystem) containerDetect(_ context.Context, _ *mcp.CallToolRequest, _
 		if err, ok := result.Value.(error); ok {
 			return nil, ContainerDetectOutput{}, err
 		}
-		return nil, ContainerDetectOutput{}, coreerr.E("mcp.containerDetect", "container.runtime.detect failed", nil)
+		return nil, ContainerDetectOutput{}, core.E("mcp.containerDetect", "container.runtime.detect failed", nil)
 	}
 	runtime, ok := result.Value.(container.ContainerRuntime)
 	if !ok {
-		return nil, ContainerDetectOutput{}, coreerr.E("mcp.containerDetect", "unexpected result type", nil)
+		return nil, ContainerDetectOutput{}, core.E("mcp.containerDetect", "unexpected result type", nil)
 	}
 	return nil, ContainerDetectOutput{Runtime: runtime}, nil
 }
@@ -40,11 +39,11 @@ func (s *Subsystem) timStatus(_ context.Context, _ *mcp.CallToolRequest, _ TIMSt
 		if err, ok := result.Value.(error); ok {
 			return nil, TIMStateOutput{}, err
 		}
-		return nil, TIMStateOutput{}, coreerr.E("mcp.timStatus", "tim.status failed", nil)
+		return nil, TIMStateOutput{}, core.E("mcp.timStatus", "tim.status failed", nil)
 	}
 	state, ok := result.Value.(container.TIMState)
 	if !ok {
-		return nil, TIMStateOutput{}, coreerr.E("mcp.timStatus", "unexpected result type", nil)
+		return nil, TIMStateOutput{}, core.E("mcp.timStatus", "unexpected result type", nil)
 	}
 	return nil, TIMStateOutput{State: state}, nil
 }
@@ -60,11 +59,11 @@ func (s *Subsystem) timStart(_ context.Context, _ *mcp.CallToolRequest, _ TIMSta
 		if err, ok := result.Value.(error); ok {
 			return nil, TIMStartOutput{}, err
 		}
-		return nil, TIMStartOutput{}, coreerr.E("mcp.timStart", "tim.start failed", nil)
+		return nil, TIMStartOutput{}, core.E("mcp.timStart", "tim.start failed", nil)
 	}
 	state, ok := result.Value.(container.TIMState)
 	if !ok {
-		return nil, TIMStartOutput{}, coreerr.E("mcp.timStart", "unexpected result type", nil)
+		return nil, TIMStartOutput{}, core.E("mcp.timStart", "unexpected result type", nil)
 	}
 	return nil, TIMStartOutput{State: state}, nil
 }
@@ -80,11 +79,11 @@ func (s *Subsystem) timStop(_ context.Context, _ *mcp.CallToolRequest, _ TIMStop
 		if err, ok := result.Value.(error); ok {
 			return nil, TIMStopOutput{}, err
 		}
-		return nil, TIMStopOutput{}, coreerr.E("mcp.timStop", "tim.stop failed", nil)
+		return nil, TIMStopOutput{}, core.E("mcp.timStop", "tim.stop failed", nil)
 	}
 	state, ok := result.Value.(container.TIMState)
 	if !ok {
-		return nil, TIMStopOutput{}, coreerr.E("mcp.timStop", "unexpected result type", nil)
+		return nil, TIMStopOutput{}, core.E("mcp.timStop", "unexpected result type", nil)
 	}
 	return nil, TIMStopOutput{State: state}, nil
 }

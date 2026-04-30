@@ -1,27 +1,20 @@
 package chat
 
 import (
-	"bytes"
 	"context"
 	"encoding/base64"
 	"image"
 	"io"
 	"net/http"
-	"os"
-	"path/filepath"
 	"slices"
 	"sort"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
-	core "dappco.re/go/core"
+	core "dappco.re/go"
+	"dappco.re/go/gui/pkg/internal/coreutil"
 	guimcp "dappco.re/go/gui/pkg/mcp"
-	"dappco.re/go/inference"
-	coreio "dappco.re/go/io"
-	coreerr "dappco.re/go/log"
-	"dappco.re/go/store"
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -65,7 +58,7 @@ var _ contract = (*Service)(nil)
 type Service struct {
 	*core.ServiceRuntime[Options]
 	options            Options
-	store              *store.Store
+	store              *chatStore
 	httpClient         *http.Client
 	toolExecutor       ToolExecutor
 	toolHandler        ToolCallHandler
@@ -127,7 +120,7 @@ type removeImageInput struct {
 
 type attachImageFileInput struct {
 	ConversationID string `json:"conversation_id,omitempty"`
-	Path           string `json:"path"`
+	Path           string `json:"path,omitempty"`
 }
 
 type openAIRequest struct {
@@ -176,11 +169,18 @@ type configuredModels struct {
 	DefaultModel string `yaml:"default_model"`
 	Models       []struct {
 		Name           string `yaml:"name"`
-		Path           string `yaml:"path"`
+		Path           string `yaml:"path,omitempty"`
 		Architecture   string `yaml:"architecture"`
 		Backend        string `yaml:"backend"`
 		SupportsVision *bool  `yaml:"supports_vision"`
 	} `yaml:"models"`
+}
+
+type modelConfig struct {
+	ModelType    string `json:"model_type"`
+	Quantization struct {
+		Bits int `json:"bits"`
+	} `json:"quantization"`
 }
 
 var supportedImageMimeTypes = map[string]struct{}{
@@ -193,7 +193,7 @@ var supportedImageMimeTypes = map[string]struct{}{
 func Register(optionFns ...func(*Options)) func(*core.Core) core.Result {
 	options := Options{
 		APIURL:     "http://localhost:8090",
-		StorePath:  filepath.Join(core.Env("DIR_HOME"), ".core", "gui", "chat.db"),
+		StorePath:  core.PathJoin(core.Env("DIR_HOME"), ".core", "gui", "chat.db"),
 		HTTPClient: &http.Client{Timeout: 5 * time.Minute},
 		ModelRoots: defaultModelRoots(),
 		Now:        time.Now,
@@ -214,11 +214,7 @@ func Register(optionFns ...func(*Options)) func(*core.Core) core.Result {
 }
 
 func (s *Service) OnStartup(_ context.Context) core.Result {
-	if err := coreio.Local.EnsureDir(filepath.Dir(s.options.StorePath)); err != nil {
-		return core.Result{Value: err, OK: false}
-	}
-
-	keyValueStore, err := store.NewConfigured(store.StoreConfig{DatabasePath: s.options.StorePath})
+	keyValueStore, err := newChatStore(s.options.StorePath)
 	if err != nil {
 		return core.Result{Value: err, OK: false}
 	}
@@ -363,8 +359,8 @@ func (s *Service) registerActions() {
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
-		if strings.TrimSpace(conv.ID) == "" {
-			return core.Result{Value: coreerr.E("chat.conversation.save", "conversation id is required", nil), OK: false}
+		if core.Trim(conv.ID) == "" {
+			return core.Result{Value: core.E("chat.conversation.save", "conversation id is required", nil), OK: false}
 		}
 		saved, err := s.saveConversation(conv)
 		if err != nil {
@@ -433,8 +429,8 @@ func (s *Service) registerActions() {
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
-		if strings.TrimSpace(input.ConversationID) == "" {
-			return core.Result{Value: coreerr.E("chat.thinking.append", "conversation id is required", nil), OK: false}
+		if core.Trim(input.ConversationID) == "" {
+			return core.Result{Value: core.E("chat.thinking.append", "conversation id is required", nil), OK: false}
 		}
 		s.emit(ActionThinkingAppended{
 			ConversationID: input.ConversationID,
@@ -477,14 +473,14 @@ func decodeInput[T any](opts core.Options) (T, error) {
 		if err, ok := result.Value.(error); ok {
 			return input, err
 		}
-		return input, coreerr.E("chat.decodeInput", "failed to decode action input", nil)
+		return input, core.E("chat.decodeInput", "failed to decode action input", nil)
 	}
 	return input, nil
 }
 
 func defaultModelRoots() []string {
-	roots := []string{filepath.Join(core.Env("DIR_HOME"), ".core", "models")}
-	if env := strings.TrimSpace(core.Env("CORE_MODELS_DIR")); env != "" {
+	roots := []string{core.PathJoin(core.Env("DIR_HOME"), ".core", "models")}
+	if env := core.Trim(core.Env("CORE_MODELS_DIR")); env != "" {
 		roots = append(roots, env)
 	}
 	return roots
@@ -503,7 +499,7 @@ func (s *Service) Send(ctx context.Context, input sendInput) (string, error) {
 
 func (s *Service) History(conversationID string, limit int) ([]Message, error) {
 	if limit < 0 {
-		return nil, coreerr.E("chat.history", "limit must be greater than or equal to zero", nil)
+		return nil, core.E("chat.history", "limit must be greater than or equal to zero", nil)
 	}
 	conv, err := s.LoadConversation(conversationID)
 	if err != nil {
@@ -530,7 +526,7 @@ func (s *Service) Models() []ModelEntry {
 	for index := range models {
 		models[index].Size = models[index].SizeBytes
 		switch {
-		case strings.EqualFold(models[index].Name, activeName):
+		case equalFold(models[index].Name, activeName):
 			models[index].Loaded = true
 			models[index].Status = "active"
 		case models[index].Loaded:
@@ -547,7 +543,7 @@ func (s *Service) saveSettings(settings ChatSettings) error {
 		return err
 	}
 	payload := core.JSONMarshalString(settings)
-	return s.store.Set(settingsGroup, settingsKey, payload)
+	return s.store.set(settingsGroup, settingsKey, payload)
 }
 
 func (s *Service) loadSettings() ChatSettings {
@@ -555,11 +551,13 @@ func (s *Service) loadSettings() ChatSettings {
 	if s.store == nil {
 		return settings
 	}
-	payload, err := s.store.Get(settingsGroup, settingsKey)
+	payload, err := s.store.get(settingsGroup, settingsKey)
 	if err != nil {
 		return settings
 	}
-	_ = core.JSONUnmarshalString(payload, &settings)
+	if r := core.JSONUnmarshalString(payload, &settings); !r.OK {
+		return DefaultSettings()
+	}
 	return settings
 }
 
@@ -605,8 +603,8 @@ func (s *Service) DeleteConversation(id string) error {
 }
 
 func (s *Service) StartThinking(input thinkingInput) (ThinkingState, error) {
-	if strings.TrimSpace(input.ConversationID) == "" {
-		return ThinkingState{}, coreerr.E("chat.thinking.start", "conversation id is required", nil)
+	if core.Trim(input.ConversationID) == "" {
+		return ThinkingState{}, core.E("chat.thinking.start", "conversation id is required", nil)
 	}
 
 	state := ThinkingState{
@@ -630,8 +628,8 @@ func (s *Service) StartThinking(input thinkingInput) (ThinkingState, error) {
 }
 
 func (s *Service) StopThinking(input thinkingInput) (ThinkingState, error) {
-	if strings.TrimSpace(input.ConversationID) == "" {
-		return ThinkingState{}, coreerr.E("chat.thinking.stop", "conversation id is required", nil)
+	if core.Trim(input.ConversationID) == "" {
+		return ThinkingState{}, core.E("chat.thinking.stop", "conversation id is required", nil)
 	}
 
 	s.mu.Lock()
@@ -647,7 +645,7 @@ func (s *Service) StopThinking(input thinkingInput) (ThinkingState, error) {
 	}
 
 	state.Active = false
-	state.Content = strings.TrimSpace(state.Content)
+	state.Content = core.Trim(state.Content)
 	state.EndedAt = s.now()
 	state.DurationMS = input.DurationMS
 	if state.DurationMS == 0 {
@@ -666,8 +664,8 @@ func (s *Service) StopThinking(input thinkingInput) (ThinkingState, error) {
 }
 
 func (s *Service) appendThinking(conversationID, content string) {
-	key := strings.TrimSpace(conversationID)
-	if key == "" || strings.TrimSpace(content) == "" {
+	key := core.Trim(conversationID)
+	if key == "" || core.Trim(content) == "" {
 		return
 	}
 
@@ -690,8 +688,8 @@ func (s *Service) saveConversation(conv Conversation) (Conversation, error) {
 	if conv.CreatedAt.IsZero() {
 		conv.CreatedAt = s.now()
 	}
-	if strings.TrimSpace(conv.Title) == "" {
-		if len(conv.Messages) > 0 && strings.TrimSpace(conv.Messages[0].Content) != "" {
+	if core.Trim(conv.Title) == "" {
+		if len(conv.Messages) > 0 && core.Trim(conv.Messages[0].Content) != "" {
 			conv.Title = titleFrom(conv.Messages[0].Content)
 		} else {
 			conv.Title = "New Chat"
@@ -699,11 +697,11 @@ func (s *Service) saveConversation(conv Conversation) (Conversation, error) {
 	}
 	conv.UpdatedAt = s.now()
 	payload := core.JSONMarshalString(conv)
-	return conv, s.store.Set(conversationsGroup, conv.ID, payload)
+	return conv, s.store.set(conversationsGroup, conv.ID, payload)
 }
 
 func (s *Service) loadConversation(id string) (Conversation, error) {
-	payload, err := s.store.Get(conversationsGroup, id)
+	payload, err := s.store.get(conversationsGroup, id)
 	if err != nil {
 		return Conversation{}, err
 	}
@@ -713,7 +711,7 @@ func (s *Service) loadConversation(id string) (Conversation, error) {
 		if decodeErr, ok := result.Value.(error); ok {
 			return Conversation{}, decodeErr
 		}
-		return Conversation{}, coreerr.E("chat.loadConversation", "failed to decode conversation", nil)
+		return Conversation{}, core.E("chat.loadConversation", "failed to decode conversation", nil)
 	}
 	return conv, nil
 }
@@ -722,7 +720,7 @@ func (s *Service) listConversations() ([]Conversation, error) {
 	if s.store == nil {
 		return nil, nil
 	}
-	items, err := s.store.GetAll(conversationsGroup)
+	items, err := s.store.getAll(conversationsGroup)
 	if err != nil {
 		return nil, err
 	}
@@ -757,13 +755,13 @@ func (s *Service) listConversationSummaries() ([]ConversationSummary, error) {
 }
 
 func (s *Service) searchConversationSummaries(query string) ([]ConversationSummary, error) {
-	query = strings.TrimSpace(strings.ToLower(query))
+	query = core.Trim(core.Lower(query))
 	summaries, err := s.listConversationSummaries()
 	if err != nil || query == "" {
 		return summaries, err
 	}
 
-	items, err := s.store.GetAll(conversationsGroup)
+	items, err := s.store.getAll(conversationsGroup)
 	if err != nil {
 		return nil, err
 	}
@@ -773,7 +771,7 @@ func (s *Service) searchConversationSummaries(query string) ([]ConversationSumma
 		if result := core.JSONUnmarshalString(payload, &conv); !result.OK {
 			continue
 		}
-		if strings.Contains(conversationSearchText(conv), query) {
+		if core.Contains(conversationSearchText(conv), query) {
 			matches = append(matches, conv.Summary())
 			continue
 		}
@@ -785,16 +783,16 @@ func (s *Service) searchConversationSummaries(query string) ([]ConversationSumma
 }
 
 func conversationSearchText(conv Conversation) string {
-	var builder strings.Builder
+	builder := core.NewBuilder()
 	appendText := func(value string) {
-		trimmed := strings.TrimSpace(value)
+		trimmed := core.Trim(value)
 		if trimmed == "" {
 			return
 		}
 		if builder.Len() > 0 {
 			builder.WriteString("\n")
 		}
-		builder.WriteString(strings.ToLower(trimmed))
+		builder.WriteString(core.Lower(trimmed))
 	}
 
 	appendText(conv.Title)
@@ -850,7 +848,7 @@ func (s *Service) createConversation() (Conversation, error) {
 func (s *Service) getConversation(id, conversationID string) (Conversation, error) {
 	target := coalesce(id, conversationID)
 	if target == "" {
-		return Conversation{}, coreerr.E("chat.getConversation", "conversation id is required", nil)
+		return Conversation{}, core.E("chat.getConversation", "conversation id is required", nil)
 	}
 	return s.loadConversation(target)
 }
@@ -860,7 +858,7 @@ func (s *Service) renameConversation(id, title string) (Conversation, error) {
 	if err != nil {
 		return Conversation{}, err
 	}
-	conv.Title = strings.TrimSpace(title)
+	conv.Title = core.Trim(title)
 	if conv.Title == "" {
 		conv.Title = "New Chat"
 	}
@@ -891,9 +889,9 @@ func (s *Service) clearConversation(id, conversationID string) (Conversation, er
 
 func (s *Service) deleteConversation(id string) error {
 	if id == "" {
-		return coreerr.E("chat.deleteConversation", "conversation id is required", nil)
+		return core.E("chat.deleteConversation", "conversation id is required", nil)
 	}
-	if err := s.store.Delete(conversationsGroup, id); err != nil {
+	if err := s.store.delete(conversationsGroup, id); err != nil {
 		return err
 	}
 	s.clearQueuedAttachments(id)
@@ -906,7 +904,7 @@ func (s *Service) exportConversation(id string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	var builder strings.Builder
+	builder := core.NewBuilder()
 	builder.WriteString("# ")
 	builder.WriteString(conv.Title)
 	builder.WriteString("\n\n")
@@ -923,7 +921,7 @@ func (s *Service) exportConversation(id string) (string, error) {
 			builder.WriteString("> Tool Result (`")
 			builder.WriteString(result.ToolCallID)
 			builder.WriteString("`)\n>\n> ")
-			builder.WriteString(strings.ReplaceAll(result.Content, "\n", "\n> "))
+			builder.WriteString(core.Replace(result.Content, "\n", "\n> "))
 			builder.WriteString("\n\n")
 		}
 	}
@@ -961,7 +959,7 @@ func (s *Service) drainAttachments(conversationID string) []ImageAttachment {
 func (s *Service) removeAttachment(conversationID string, index int) (ImageAttachment, error) {
 	key := coalesce(conversationID, "draft")
 	if index < 0 {
-		return ImageAttachment{}, coreerr.E("chat.removeAttachment", "attachment index must be non-negative", nil)
+		return ImageAttachment{}, core.E("chat.removeAttachment", "attachment index must be non-negative", nil)
 	}
 
 	s.mu.Lock()
@@ -969,7 +967,7 @@ func (s *Service) removeAttachment(conversationID string, index int) (ImageAttac
 
 	attachments := s.pendingAttachments[key]
 	if index >= len(attachments) {
-		return ImageAttachment{}, coreerr.E("chat.removeAttachment", "attachment index is out of range", nil)
+		return ImageAttachment{}, core.E("chat.removeAttachment", "attachment index is out of range", nil)
 	}
 
 	removed := attachments[index]
@@ -1021,8 +1019,8 @@ func (s *Service) mergedSettings(global ChatSettings, override *ChatSettings) Ch
 }
 
 func (s *Service) send(ctx context.Context, input sendInput) (string, error) {
-	if strings.TrimSpace(input.Content) == "" && !s.hasPendingAttachments(input.ConversationID) {
-		return "", coreerr.E("chat.send", "message content is required", nil)
+	if core.Trim(input.Content) == "" && !s.hasPendingAttachments(input.ConversationID) {
+		return "", core.E("chat.send", "message content is required", nil)
 	}
 
 	settings := s.loadSettings()
@@ -1048,7 +1046,7 @@ func (s *Service) send(ctx context.Context, input sendInput) (string, error) {
 	}
 
 	now := s.now()
-	if modelName := strings.TrimSpace(input.Model); modelName != "" {
+	if modelName := core.Trim(input.Model); modelName != "" {
 		if err := s.validateModelName(modelName); err != nil {
 			return "", err
 		}
@@ -1157,7 +1155,7 @@ func (s *Service) streamAssistant(ctx context.Context, conv Conversation, settin
 	requestBody := s.buildCompletionRequest(conv, settings)
 	payload := core.JSONMarshalString(requestBody)
 
-	request, err := http.NewRequestWithContext(ctx, http.MethodPost, strings.TrimRight(s.options.APIURL, "/")+"/v1/chat/completions", bytes.NewBufferString(payload))
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, trimRight(s.options.APIURL, "/")+"/v1/chat/completions", core.NewBufferString(payload))
 	if err != nil {
 		return ChatMessage{}, err
 	}
@@ -1170,7 +1168,7 @@ func (s *Service) streamAssistant(ctx context.Context, conv Conversation, settin
 	defer response.Body.Close()
 	if response.StatusCode >= http.StatusBadRequest {
 		body, _ := io.ReadAll(response.Body)
-		return ChatMessage{}, coreerr.E("chat.streamAssistant", strings.TrimSpace(string(body)), nil)
+		return ChatMessage{}, core.E("chat.streamAssistant", core.Trim(string(body)), nil)
 	}
 
 	// TODO(mantis-14): switch these callbacks to a dedicated GUI stream group when one exists.
@@ -1210,7 +1208,7 @@ func (s *Service) withInlineToolCall(conversationID string, message ChatMessage)
 
 	call, ok, err := parseInlineToolCall(message.Content)
 	if err != nil {
-		_ = s.Core().LogWarn(err, "chat.tool_call", "malformed inline tool_call ignored")
+		coreutil.LogWarn(s.Core(), err, "chat.tool_call", "malformed inline tool_call ignored")
 		return message
 	}
 	if !ok {
@@ -1257,7 +1255,7 @@ func (s *Service) buildCompletionRequest(conv Conversation, settings ChatSetting
 }
 
 func (s *Service) buildSystemPrompt(settings ChatSettings) string {
-	systemPrompt := strings.TrimSpace(settings.SystemPrompt)
+	systemPrompt := core.Trim(settings.SystemPrompt)
 	if s.toolHandler == nil {
 		return systemPrompt
 	}
@@ -1323,10 +1321,10 @@ func buildAPIMessage(message ChatMessage) openAIMessage {
 }
 
 func (s *Service) resolveModel(current, configured string) string {
-	if current = strings.TrimSpace(current); current != "" {
+	if current = core.Trim(current); current != "" {
 		return current
 	}
-	if configured = strings.TrimSpace(configured); configured != "" {
+	if configured = core.Trim(configured); configured != "" {
 		return configured
 	}
 	models := s.discoverModels()
@@ -1355,11 +1353,11 @@ func renderUserContent(message ChatMessage) any {
 }
 
 func hasRenderableContent(message ChatMessage) bool {
-	return strings.TrimSpace(message.Content) != "" || message.Thinking != nil || len(message.ToolCalls) > 0
+	return core.Trim(message.Content) != "" || message.Thinking != nil || len(message.ToolCalls) > 0
 }
 
 func titleFrom(content string) string {
-	title := strings.TrimSpace(content)
+	title := core.Trim(content)
 	if title == "" {
 		return "New Chat"
 	}
@@ -1372,7 +1370,7 @@ func titleFrom(content string) string {
 
 func coalesce(values ...string) string {
 	for _, value := range values {
-		if strings.TrimSpace(value) != "" {
+		if core.Trim(value) != "" {
 			return value
 		}
 	}
@@ -1383,7 +1381,7 @@ func (s *Service) emit(message any) {
 	if message == nil {
 		return
 	}
-	_ = s.Core().ACTION(message)
+	coreutil.DispatchAction(s.Core(), "chat.emit", message)
 }
 
 func (s *Service) discoverModels() []ModelEntry {
@@ -1395,13 +1393,13 @@ func (s *Service) discoverModels() []ModelEntry {
 		}
 	}
 
-	configPath := filepath.Join(core.Env("DIR_HOME"), ".core", "models.yaml")
-	if payload, err := coreio.Local.Read(configPath); err == nil {
+	configPath := core.PathJoin(core.Env("DIR_HOME"), ".core", "models.yaml")
+	if payload, err := coreReadFile(configPath); err == nil {
 		var configured configuredModels
-		if err := yaml.Unmarshal([]byte(payload), &configured); err == nil {
+		if err := yaml.Unmarshal(payload, &configured); err == nil {
 			defaultModel := coalesce(configured.DefaultModel, configured.Default, settings.DefaultModel)
 			for _, item := range configured.Models {
-				name := coalesce(item.Name, filepath.Base(item.Path))
+				name := coalesce(item.Name, core.PathBase(item.Path))
 				entry := models[name]
 				entry.Name = name
 				entry.Architecture = coalesce(item.Architecture, entry.Architecture)
@@ -1425,7 +1423,7 @@ func (s *Service) discoverModels() []ModelEntry {
 		names = append(names, name)
 	}
 	slices.Sort(names)
-	activeModel := strings.TrimSpace(settings.DefaultModel)
+	activeModel := core.Trim(settings.DefaultModel)
 	if activeModel == "" && len(names) > 0 {
 		activeModel = names[0]
 	}
@@ -1434,7 +1432,7 @@ func (s *Service) discoverModels() []ModelEntry {
 		entry := models[name]
 		entry.Size = entry.SizeBytes
 		switch {
-		case strings.EqualFold(entry.Name, activeModel):
+		case equalFold(entry.Name, activeModel):
 			entry.Loaded = true
 			entry.Status = "active"
 		case entry.Loaded:
@@ -1449,19 +1447,19 @@ func (s *Service) discoverModels() []ModelEntry {
 
 func (s *Service) validateSettings(settings ChatSettings) error {
 	if settings.Temperature < 0 || settings.Temperature > 2 {
-		return coreerr.E("chat.settings.save", "temperature must be between 0.0 and 2.0", nil)
+		return core.E("chat.settings.save", "temperature must be between 0.0 and 2.0", nil)
 	}
 	if settings.TopP < 0 || settings.TopP > 1 {
-		return coreerr.E("chat.settings.save", "top_p must be between 0.0 and 1.0", nil)
+		return core.E("chat.settings.save", "top_p must be between 0.0 and 1.0", nil)
 	}
 	if settings.TopK < 0 || settings.TopK > 200 {
-		return coreerr.E("chat.settings.save", "top_k must be between 0 and 200", nil)
+		return core.E("chat.settings.save", "top_k must be between 0 and 200", nil)
 	}
 	if settings.MaxTokens < 64 || settings.MaxTokens > 32768 {
-		return coreerr.E("chat.settings.save", "max_tokens must be between 64 and 32768", nil)
+		return core.E("chat.settings.save", "max_tokens must be between 64 and 32768", nil)
 	}
 	if !validContextWindow(settings.ContextWindow) {
-		return coreerr.E("chat.settings.save", "context_window must be one of 2048, 4096, 8192, 16384, or 32768", nil)
+		return core.E("chat.settings.save", "context_window must be one of 2048, 4096, 8192, 16384, or 32768", nil)
 	}
 	if err := s.validateOptionalModelName(settings.DefaultModel); err != nil {
 		return err
@@ -1479,8 +1477,8 @@ func validContextWindow(value int) bool {
 }
 
 func (s *Service) validateConversation(conv Conversation) error {
-	if strings.TrimSpace(conv.ID) == "" {
-		return coreerr.E("chat.saveConversation", "conversation id is required", nil)
+	if core.Trim(conv.ID) == "" {
+		return core.E("chat.saveConversation", "conversation id is required", nil)
 	}
 	if err := s.validateOptionalModelName(conv.Model); err != nil {
 		return err
@@ -1502,8 +1500,8 @@ func (s *Service) validateConversation(conv Conversation) error {
 }
 
 func (s *Service) validateModelName(name string) error {
-	if strings.TrimSpace(name) == "" {
-		return coreerr.E("chat.selectModel", "model is required", nil)
+	if core.Trim(name) == "" {
+		return core.E("chat.selectModel", "model is required", nil)
 	}
 	if len(s.discoverModels()) == 0 {
 		return nil
@@ -1511,25 +1509,25 @@ func (s *Service) validateModelName(name string) error {
 	if _, ok := s.findModel(name); ok {
 		return nil
 	}
-	return coreerr.E("chat.selectModel", "model is not available: "+name, nil)
+	return core.E("chat.selectModel", "model is not available: "+name, nil)
 }
 
 func (s *Service) validateOptionalModelName(name string) error {
-	if strings.TrimSpace(name) == "" {
+	if core.Trim(name) == "" {
 		return nil
 	}
-	if len(s.discoverModels()) == 0 || strings.EqualFold(strings.TrimSpace(name), "default") {
+	if len(s.discoverModels()) == 0 || equalFold(core.Trim(name), "default") {
 		return nil
 	}
 	if _, ok := s.findModel(name); ok {
 		return nil
 	}
-	return coreerr.E("chat.model", "model is not available: "+name, nil)
+	return core.E("chat.model", "model is not available: "+name, nil)
 }
 
 func (s *Service) findModel(name string) (ModelEntry, bool) {
 	for _, model := range s.discoverModels() {
-		if strings.EqualFold(model.Name, strings.TrimSpace(name)) {
+		if equalFold(model.Name, core.Trim(name)) {
 			return model, true
 		}
 	}
@@ -1542,10 +1540,10 @@ func (s *Service) validateAttachmentsForModel(modelName string, attachments []Im
 	}
 	model, ok := s.findModel(modelName)
 	if !ok {
-		return coreerr.E("chat.send", "image attachments require a discovered vision-capable model", nil)
+		return core.E("chat.send", "image attachments require a discovered vision-capable model", nil)
 	}
 	if !model.SupportsVision {
-		return coreerr.E("chat.send", "selected model does not support image input: "+model.Name, nil)
+		return core.E("chat.send", "selected model does not support image input: "+model.Name, nil)
 	}
 	return nil
 }
@@ -1573,37 +1571,63 @@ func attachmentsForConversationTurn(messages []ChatMessage) []ImageAttachment {
 }
 
 func discoverModelsOnDisk(root string) []ModelEntry {
-	if strings.TrimSpace(root) == "" {
+	if core.Trim(root) == "" {
 		return nil
 	}
 	var results []ModelEntry
-	for discovered := range inference.Discover(root) {
-		modelPath := discovered.Path
-		name := filepath.Base(modelPath)
+	entries := core.ReadDir(core.DirFS(root), ".")
+	if !entries.OK {
+		return nil
+	}
+	for _, entry := range entries.Value.([]core.FsDirEntry) {
+		if !entry.IsDir() {
+			continue
+		}
+		modelPath := core.PathJoin(root, entry.Name())
+		config, ok := readModelConfig(modelPath)
+		if !ok {
+			continue
+		}
+		name := core.PathBase(modelPath)
 		size := directorySize(modelPath)
 		results = append(results, ModelEntry{
 			Name:           name,
 			Size:           size,
-			Architecture:   strings.ToLower(discovered.ModelType),
-			QuantBits:      coalesceQuantBits(discovered.QuantBits, quantBitsFromName(name)),
+			Architecture:   core.Lower(config.ModelType),
+			QuantBits:      coalesceQuantBits(config.Quantization.Bits, quantBitsFromName(name)),
 			SizeBytes:      size,
 			Backend:        "local",
-			SupportsVision: architectureSupportsVision(discovered.ModelType),
+			SupportsVision: architectureSupportsVision(config.ModelType),
 		})
 	}
 	return results
 }
 
+func readModelConfig(modelPath string) (modelConfig, bool) {
+	var config modelConfig
+	body, err := coreReadFile(core.PathJoin(modelPath, "config.json"))
+	if err != nil {
+		return config, false
+	}
+	if result := core.JSONUnmarshal(body, &config); !result.OK {
+		return config, false
+	}
+	if core.Trim(config.ModelType) == "" {
+		config.ModelType = core.PathBase(modelPath)
+	}
+	return config, true
+}
+
 func validateImageAttachment(attachment ImageAttachment) error {
-	if strings.TrimSpace(attachment.Filename) == "" {
-		return coreerr.E("chat.attachImage", "attachment filename is required", nil)
+	if core.Trim(attachment.Filename) == "" {
+		return core.E("chat.attachImage", "attachment filename is required", nil)
 	}
-	mimeType := strings.ToLower(strings.TrimSpace(attachment.MimeType))
+	mimeType := core.Lower(core.Trim(attachment.MimeType))
 	if _, ok := supportedImageMimeTypes[mimeType]; !ok {
-		return coreerr.E("chat.attachImage", "unsupported image format: expected PNG, JPEG, WebP, or GIF", nil)
+		return core.E("chat.attachImage", "unsupported image format: expected PNG, JPEG, WebP, or GIF", nil)
 	}
-	if strings.TrimSpace(attachment.Data) == "" {
-		return coreerr.E("chat.attachImage", "attachment data is required", nil)
+	if core.Trim(attachment.Data) == "" {
+		return core.E("chat.attachImage", "attachment data is required", nil)
 	}
 	return nil
 }
@@ -1613,18 +1637,18 @@ func imageAttachmentFromFile(rawPath string) (ImageAttachment, error) {
 	if err != nil {
 		return ImageAttachment{}, err
 	}
-	content, err := coreio.Local.Read(path)
+	content, err := coreReadFile(path)
 	if err != nil {
-		return ImageAttachment{}, coreerr.E("chat.attachImageFile", "failed to read image file", err)
+		return ImageAttachment{}, core.E("chat.attachImageFile", "failed to read image file", err)
 	}
-	data := []byte(content)
+	data := content
 	mimeType, err := detectImageMimeType(path, data)
 	if err != nil {
 		return ImageAttachment{}, err
 	}
 	width, height := imageDimensionsFromBytes(data)
 	attachment := ImageAttachment{
-		Filename: filepath.Base(path),
+		Filename: core.PathBase(path),
 		MimeType: mimeType,
 		Data:     base64.StdEncoding.EncodeToString(data),
 		Width:    width,
@@ -1637,27 +1661,27 @@ func imageAttachmentFromFile(rawPath string) (ImageAttachment, error) {
 }
 
 func validatedImageFilePath(rawPath string) (string, error) {
-	trimmed := strings.TrimSpace(rawPath)
+	trimmed := core.Trim(rawPath)
 	if trimmed == "" {
-		return "", coreerr.E("chat.attachImageFile", "path is required", nil)
+		return "", core.E("chat.attachImageFile", "path is required", nil)
 	}
-	if strings.ContainsRune(trimmed, '\x00') {
-		return "", coreerr.E("chat.attachImageFile", "path contains a null byte", nil)
+	if core.Contains(trimmed, "\x00") {
+		return "", core.E("chat.attachImageFile", "path contains a null byte", nil)
 	}
-	cleaned := filepath.Clean(trimmed)
-	if !filepath.IsAbs(cleaned) {
-		return "", coreerr.E("chat.attachImageFile", "path must be absolute", nil)
+	cleaned := core.CleanPath(trimmed, string(core.PathSeparator))
+	if !core.PathIsAbs(cleaned) {
+		return "", core.E("chat.attachImageFile", "path must be absolute", nil)
 	}
 	return cleaned, nil
 }
 
 func detectImageMimeType(path string, data []byte) (string, error) {
-	mimeType := strings.ToLower(strings.TrimSpace(http.DetectContentType(data)))
+	mimeType := core.Lower(core.Trim(http.DetectContentType(data)))
 	if _, ok := supportedImageMimeTypes[mimeType]; ok {
 		return mimeType, nil
 	}
 
-	switch strings.ToLower(filepath.Ext(path)) {
+	switch core.Lower(core.PathExt(path)) {
 	case ".png":
 		return "image/png", nil
 	case ".jpg", ".jpeg":
@@ -1667,12 +1691,12 @@ func detectImageMimeType(path string, data []byte) (string, error) {
 	case ".gif":
 		return "image/gif", nil
 	default:
-		return "", coreerr.E("chat.attachImageFile", "unsupported image format: expected PNG, JPEG, WebP, or GIF", nil)
+		return "", core.E("chat.attachImageFile", "unsupported image format: expected PNG, JPEG, WebP, or GIF", nil)
 	}
 }
 
 func imageDimensionsFromBytes(data []byte) (int, int) {
-	config, _, err := image.DecodeConfig(bytes.NewReader(data))
+	config, _, err := image.DecodeConfig(core.NewBuffer(data))
 	if err != nil {
 		return 0, 0
 	}
@@ -1680,8 +1704,8 @@ func imageDimensionsFromBytes(data []byte) (int, int) {
 }
 
 func architectureSupportsVision(architecture string) bool {
-	lower := strings.ToLower(strings.TrimSpace(architecture))
-	return strings.HasPrefix(lower, "gemma3") || strings.HasPrefix(lower, "gemma4")
+	lower := core.Lower(core.Trim(architecture))
+	return core.HasPrefix(lower, "gemma3") || core.HasPrefix(lower, "gemma4")
 }
 
 func coalesceQuantBits(values ...int) int {
@@ -1694,11 +1718,11 @@ func coalesceQuantBits(values ...int) int {
 }
 
 func quantBitsFromName(name string) int {
-	lower := strings.ToLower(name)
+	lower := core.Lower(name)
 	switch {
-	case strings.Contains(lower, "q4"), strings.Contains(lower, "4bit"):
+	case core.Contains(lower, "q4"), core.Contains(lower, "4bit"):
 		return 4
-	case strings.Contains(lower, "q8"), strings.Contains(lower, "8bit"):
+	case core.Contains(lower, "q8"), core.Contains(lower, "8bit"):
 		return 8
 	default:
 		return 0
@@ -1707,14 +1731,16 @@ func quantBitsFromName(name string) int {
 
 func directorySize(root string) int64 {
 	var total int64
-	_ = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+	if err := core.PathWalk(root, func(path string, info core.FsFileInfo, err error) error {
 		if err != nil || info == nil || info.IsDir() {
 			return nil
 		}
-		if strings.HasSuffix(info.Name(), ".safetensors") || strings.HasSuffix(info.Name(), ".gguf") || strings.HasSuffix(info.Name(), ".bin") {
+		if core.HasSuffix(info.Name(), ".safetensors") || core.HasSuffix(info.Name(), ".gguf") || core.HasSuffix(info.Name(), ".bin") {
 			total += info.Size()
 		}
 		return nil
-	})
+	}); err != nil {
+		return total
+	}
 	return total
 }
