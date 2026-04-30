@@ -32,7 +32,7 @@ func newLoopbackP2PDriver() *loopbackP2PDriver {
 	return &loopbackP2PDriver{handlers: make(map[string]func(p2p.Envelope))}
 }
 
-func (d *loopbackP2PDriver) Publish(_ context.Context, envelope p2p.Envelope) error {
+func (d *loopbackP2PDriver) Publish(_ context.Context, envelope p2p.Envelope) resultFailure {
 	d.mu.Lock()
 	handler := d.handlers[envelope.Topic]
 	d.mu.Unlock()
@@ -42,7 +42,7 @@ func (d *loopbackP2PDriver) Publish(_ context.Context, envelope p2p.Envelope) er
 	return nil
 }
 
-func (d *loopbackP2PDriver) Subscribe(_ context.Context, topic string, handler func(p2p.Envelope)) error {
+func (d *loopbackP2PDriver) Subscribe(_ context.Context, topic string, handler func(p2p.Envelope)) resultFailure {
 	d.mu.Lock()
 	d.handlers[topic] = handler
 	d.mu.Unlock()
@@ -53,11 +53,11 @@ type immediateP2PDriver struct {
 	envelope p2p.Envelope
 }
 
-func (d *immediateP2PDriver) Publish(context.Context, p2p.Envelope) error {
+func (d *immediateP2PDriver) Publish(context.Context, p2p.Envelope) resultFailure {
 	return nil
 }
 
-func (d *immediateP2PDriver) Subscribe(_ context.Context, topic string, handler func(p2p.Envelope)) error {
+func (d *immediateP2PDriver) Subscribe(_ context.Context, topic string, handler func(p2p.Envelope)) resultFailure {
 	if handler != nil {
 		handler(p2p.Envelope{
 			Topic:    topic,

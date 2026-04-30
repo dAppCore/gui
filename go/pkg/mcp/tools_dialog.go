@@ -24,7 +24,7 @@ type DialogOpenFileOutput struct {
 	Paths []string `json:"paths"`
 }
 
-func (s *Subsystem) dialogOpenFile(_ context.Context, _ *mcp.CallToolRequest, input DialogOpenFileInput) (*mcp.CallToolResult, DialogOpenFileOutput, error) {
+func (s *Subsystem) dialogOpenFile(_ context.Context, _ *mcp.CallToolRequest, input DialogOpenFileInput) (*mcp.CallToolResult, DialogOpenFileOutput, resultFailure) {
 	r := s.core.Action("dialog.openFile").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: dialog.TaskOpenFile{Options: dialog.OpenFileOptions{
 			Title:                input.Title,
@@ -62,7 +62,7 @@ type DialogSaveFileOutput struct {
 	Path string `json:"path,omitempty"`
 }
 
-func (s *Subsystem) dialogSaveFile(_ context.Context, _ *mcp.CallToolRequest, input DialogSaveFileInput) (*mcp.CallToolResult, DialogSaveFileOutput, error) {
+func (s *Subsystem) dialogSaveFile(_ context.Context, _ *mcp.CallToolRequest, input DialogSaveFileInput) (*mcp.CallToolResult, DialogSaveFileOutput, resultFailure) {
 	r := s.core.Action("dialog.saveFile").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: dialog.TaskSaveFile{Options: dialog.SaveFileOptions{
 			Title:           input.Title,
@@ -96,7 +96,7 @@ type DialogOpenDirectoryOutput struct {
 	Path string `json:"path,omitempty"`
 }
 
-func (s *Subsystem) dialogOpenDirectory(_ context.Context, _ *mcp.CallToolRequest, input DialogOpenDirectoryInput) (*mcp.CallToolResult, DialogOpenDirectoryOutput, error) {
+func (s *Subsystem) dialogOpenDirectory(_ context.Context, _ *mcp.CallToolRequest, input DialogOpenDirectoryInput) (*mcp.CallToolResult, DialogOpenDirectoryOutput, resultFailure) {
 	r := s.core.Action("dialog.openDirectory").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: dialog.TaskOpenDirectory{Options: dialog.OpenDirectoryOptions{
 			Title:           input.Title,
@@ -128,7 +128,7 @@ type DialogConfirmOutput struct {
 	Button string `json:"button"`
 }
 
-func (s *Subsystem) dialogConfirm(_ context.Context, _ *mcp.CallToolRequest, input DialogConfirmInput) (*mcp.CallToolResult, DialogConfirmOutput, error) {
+func (s *Subsystem) dialogConfirm(_ context.Context, _ *mcp.CallToolRequest, input DialogConfirmInput) (*mcp.CallToolResult, DialogConfirmOutput, resultFailure) {
 	r := s.core.Action("dialog.question").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: dialog.TaskQuestion{
 			Title:   input.Title,
@@ -161,7 +161,7 @@ type DialogMessageOutput struct {
 	Button string `json:"button"`
 }
 
-func (s *Subsystem) dialogMessage(_ context.Context, _ *mcp.CallToolRequest, input DialogMessageInput) (*mcp.CallToolResult, DialogMessageOutput, error) {
+func (s *Subsystem) dialogMessage(_ context.Context, _ *mcp.CallToolRequest, input DialogMessageInput) (*mcp.CallToolResult, DialogMessageOutput, resultFailure) {
 	dialogType := dialog.DialogInfo
 	switch input.Type {
 	case "", "info":
@@ -211,7 +211,7 @@ type DialogPromptOutput struct {
 	Confirmed bool   `json:"confirmed"`
 }
 
-func (s *Subsystem) dialogPrompt(_ context.Context, _ *mcp.CallToolRequest, input DialogPromptInput) (*mcp.CallToolResult, DialogPromptOutput, error) {
+func (s *Subsystem) dialogPrompt(_ context.Context, _ *mcp.CallToolRequest, input DialogPromptInput) (*mcp.CallToolResult, DialogPromptOutput, resultFailure) {
 	r := s.core.Action("dialog.prompt").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: dialog.TaskPrompt{
 			Title:        input.Title,
@@ -243,7 +243,7 @@ type DialogInfoOutput struct {
 	Button string `json:"button"`
 }
 
-func (s *Subsystem) dialogInfo(_ context.Context, _ *mcp.CallToolRequest, input DialogInfoInput) (*mcp.CallToolResult, DialogInfoOutput, error) {
+func (s *Subsystem) dialogInfo(_ context.Context, _ *mcp.CallToolRequest, input DialogInfoInput) (*mcp.CallToolResult, DialogInfoOutput, resultFailure) {
 	r := s.core.Action("dialog.info").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: dialog.TaskInfo{
 			Title:   input.Title,
@@ -275,7 +275,7 @@ type DialogWarningOutput struct {
 	Button string `json:"button"`
 }
 
-func (s *Subsystem) dialogWarning(_ context.Context, _ *mcp.CallToolRequest, input DialogWarningInput) (*mcp.CallToolResult, DialogWarningOutput, error) {
+func (s *Subsystem) dialogWarning(_ context.Context, _ *mcp.CallToolRequest, input DialogWarningInput) (*mcp.CallToolResult, DialogWarningOutput, resultFailure) {
 	r := s.core.Action("dialog.warning").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: dialog.TaskWarning{
 			Title:   input.Title,
@@ -307,7 +307,7 @@ type DialogErrorOutput struct {
 	Button string `json:"button"`
 }
 
-func (s *Subsystem) dialogError(_ context.Context, _ *mcp.CallToolRequest, input DialogErrorInput) (*mcp.CallToolResult, DialogErrorOutput, error) {
+func (s *Subsystem) dialogError(_ context.Context, _ *mcp.CallToolRequest, input DialogErrorInput) (*mcp.CallToolResult, DialogErrorOutput, resultFailure) {
 	r := s.core.Action("dialog.error").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: dialog.TaskError{
 			Title:   input.Title,

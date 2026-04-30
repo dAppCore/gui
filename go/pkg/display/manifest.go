@@ -45,7 +45,7 @@ type loadedManifest struct {
 	Manifest ViewManifest
 }
 
-func (s *Service) loadManifestForOrigin(pageURL string) (*loadedManifest, error) {
+func (s *Service) loadManifestForOrigin(pageURL string) (*loadedManifest, resultFailure) {
 	s.manifestMu.Lock()
 	defer s.manifestMu.Unlock()
 	if s.manifestCache == nil {
@@ -98,11 +98,11 @@ func manifestBaseDir(manifestPath string) string {
 	return baseDir
 }
 
-func safeManifestPreloadPath(baseDir, preloadPath string) (string, error) {
+func safeManifestPreloadPath(baseDir, preloadPath string) (string, resultFailure) {
 	return safeManifestRelativePath(baseDir, preloadPath, "preload path")
 }
 
-func safeManifestRelativePath(baseDir, relativePath, label string) (string, error) {
+func safeManifestRelativePath(baseDir, relativePath, label string) (string, resultFailure) {
 	trimmed := core.Trim(relativePath)
 	if trimmed == "" {
 		return "", core.E("display.safeManifestRelativePath", label+" is empty", nil)
@@ -147,7 +147,7 @@ func safeManifestRelativePath(baseDir, relativePath, label string) (string, erro
 	return candidateResolved, nil
 }
 
-func discoverManifestPath(pageURL string) (string, error) {
+func discoverManifestPath(pageURL string) (string, resultFailure) {
 	trimmed := core.Trim(pageURL)
 	fsys := (&core.Fs{}).NewUnrestricted()
 	candidates := make([]string, 0, 4)
@@ -202,7 +202,7 @@ func appendLocalManifestCandidates(candidates *[]string, fsys *core.Fs, path str
 	*candidates = append(*candidates, core.PathJoin(core.PathDir(dir), ".core", "view.yaml"))
 }
 
-func manifestHostPathComponent(parsed *url.URL) (string, error) {
+func manifestHostPathComponent(parsed *url.URL) (string, resultFailure) {
 	host := parsed.Hostname()
 	if host == "" {
 		return "", core.E("display.manifestHostPathComponent", "manifest host is empty", nil)
@@ -213,7 +213,7 @@ func manifestHostPathComponent(parsed *url.URL) (string, error) {
 	return host, nil
 }
 
-func validateManifestHostPathComponent(host string) error {
+func validateManifestHostPathComponent(host string) resultFailure {
 	for i := 0; i < len(host); i++ {
 		if host[i] < 0x20 || host[i] == 0x7f {
 			return core.E("display.validateManifestHostPathComponent", "manifest host contains control character", nil)
@@ -258,7 +258,7 @@ func (s *Service) manifestWindowConfig(pageURL string) map[string]ManifestWindow
 	return windows
 }
 
-func (s *Service) readManifestPreload(baseDir, preloadPath string) ([]byte, error) {
+func (s *Service) readManifestPreload(baseDir, preloadPath string) ([]byte, resultFailure) {
 	resolvedPath, err := safeManifestPreloadPath(baseDir, preloadPath)
 	if err != nil {
 		return nil, err

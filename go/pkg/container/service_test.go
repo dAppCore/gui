@@ -23,7 +23,7 @@ func newTestContainerService(t *core.T, options TIMOptions) (*Service, *core.Cor
 	return svc, c
 }
 
-func newInvalidTestContainerService(t *core.T, options TIMOptions) (*Service, *core.Core, error) {
+func newInvalidTestContainerService(t *core.T, options TIMOptions) (*Service, *core.Core, resultFailure) {
 	t.Helper()
 
 	if options.Detect == nil {
@@ -43,7 +43,7 @@ func newInvalidTestContainerService(t *core.T, options TIMOptions) (*Service, *c
 	result := c.ServiceStartup(context.Background(), nil)
 	core.AssertFalse(t, result.OK)
 	core.AssertNotNil(t, svc)
-	err, ok := result.Value.(error)
+	err, ok := result.Value.(resultFailure)
 	core.RequireTrue(t, ok)
 	return svc, c, err
 }
@@ -238,7 +238,7 @@ func TestService_OnStartup_GoodCase(t *core.T) {
 		Detect: func() ContainerRuntime {
 			return RuntimeDocker
 		},
-		Exec: func(_ context.Context, name string, args ...string) error {
+		Exec: func(_ context.Context, name string, args ...string) resultFailure {
 			calls = append(calls, append([]string{name}, args...)...)
 			return nil
 		},
@@ -291,8 +291,8 @@ func TestService_OnStartup_BadCase(t *core.T) {
 	result := c.Action("tim.start").Run(context.Background(), core.NewOptions())
 
 	core.AssertFalse(t, result.OK)
-	core.AssertError(t, result.Value.(error))
-	core.AssertContains(t, result.Value.(error).Error(), "no supported container runtime detected")
+	core.AssertError(t, result.Value.(resultFailure))
+	core.AssertContains(t, result.Value.(resultFailure).Error(), "no supported container runtime detected")
 }
 
 func TestService_OnStartup_UglyCase(t *core.T) {
@@ -300,7 +300,7 @@ func TestService_OnStartup_UglyCase(t *core.T) {
 		Detect: func() ContainerRuntime {
 			return RuntimeDocker
 		},
-		Exec: func(context.Context, string, ...string) error {
+		Exec: func(context.Context, string, ...string) resultFailure {
 			return core.NewError("boom")
 		},
 	})
@@ -308,8 +308,8 @@ func TestService_OnStartup_UglyCase(t *core.T) {
 	result := c.Action("tim.start").Run(context.Background(), core.NewOptions())
 
 	core.AssertFalse(t, result.OK)
-	core.AssertError(t, result.Value.(error))
-	core.AssertContains(t, result.Value.(error).Error(), "boom")
+	core.AssertError(t, result.Value.(resultFailure))
+	core.AssertContains(t, result.Value.(resultFailure).Error(), "boom")
 
 	status := c.Action("tim.status").Run(context.Background(), core.NewOptions())
 	core.RequireTrue(t, status.OK)

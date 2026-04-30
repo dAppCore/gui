@@ -142,7 +142,7 @@ func (browserWindow *BrowserWindow) Fullscreen() Window {
 	return browserWindow
 }
 func (browserWindow *BrowserWindow) GetBorderSizes() *LRTB { return &LRTB{} }
-func (browserWindow *BrowserWindow) GetScreen() (*Screen, error) {
+func (browserWindow *BrowserWindow) GetScreen() (*Screen, resultFailure) {
 	return &Screen{}, nil
 }
 func (browserWindow *BrowserWindow) GetZoom() float64 {
@@ -543,7 +543,7 @@ func (browserWindow *BrowserWindow) SetContentProtection(protection bool) Window
 }
 func (browserWindow *BrowserWindow) SetEnabled(enabled bool) {}
 func (browserWindow *BrowserWindow) Flash(enabled bool)      {}
-func (browserWindow *BrowserWindow) Print() error            { return nil }
+func (browserWindow *BrowserWindow) Print() resultFailure    { return nil }
 func (browserWindow *BrowserWindow) RegisterHook(eventType events.WindowEventType, callback func(event *WindowEvent)) func() {
 	return func() {}
 }

@@ -21,7 +21,7 @@ func (exampleToolExecutor) ManifestText() string {
 	return "Available MCP tools:\n- layout_suggest: Suggest a layout"
 }
 
-func (exampleToolExecutor) CallTool(_ context.Context, name string, _ map[string]any) (string, error) {
+func (exampleToolExecutor) CallTool(_ context.Context, name string, _ map[string]any) (string, resultFailure) {
 	if name == "layout_suggest" {
 		return `{"mode":"left-right"}`, nil
 	}

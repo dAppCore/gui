@@ -2,7 +2,7 @@ package window
 
 import core "dappco.re/go"
 
-func coreResultError(result core.Result, fallback string) error {
+func coreResultError(result core.Result, fallback string) resultFailure {
 	if result.OK {
 		return nil
 	}
@@ -15,7 +15,7 @@ func coreResultError(result core.Result, fallback string) error {
 	return core.NewError(fallback)
 }
 
-func coreReadFile(path string) ([]byte, error) {
+func coreReadFile(path string) ([]byte, resultFailure) {
 	result := core.ReadFile(path)
 	if !result.OK {
 		return nil, coreResultError(result, "failed to read file")
@@ -23,11 +23,11 @@ func coreReadFile(path string) ([]byte, error) {
 	return result.Value.([]byte), nil
 }
 
-func coreWriteFile(path string, data []byte, mode core.FileMode) error {
+func coreWriteFile(path string, data []byte, mode core.FileMode) resultFailure {
 	return coreResultError(core.WriteFile(path, data, mode), "failed to write file")
 }
 
-func coreMkdirAll(path string, mode core.FileMode) error {
+func coreMkdirAll(path string, mode core.FileMode) resultFailure {
 	return coreResultError(core.MkdirAll(path, mode), "failed to create directory")
 }
 

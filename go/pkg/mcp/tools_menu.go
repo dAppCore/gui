@@ -18,7 +18,7 @@ type MenuSetInput struct {
 	Items []map[string]any `json:"items"`
 }
 
-func (s *Subsystem) menuGet(_ context.Context, _ *mcp.CallToolRequest, _ MenuGetInput) (*mcp.CallToolResult, MenuOutput, error) {
+func (s *Subsystem) menuGet(_ context.Context, _ *mcp.CallToolRequest, _ MenuGetInput) (*mcp.CallToolResult, MenuOutput, resultFailure) {
 	items, err := s.queryMenuItems()
 	if err != nil {
 		return nil, MenuOutput{}, err
@@ -26,7 +26,7 @@ func (s *Subsystem) menuGet(_ context.Context, _ *mcp.CallToolRequest, _ MenuGet
 	return nil, MenuOutput{Items: items}, nil
 }
 
-func (s *Subsystem) menuSet(_ context.Context, _ *mcp.CallToolRequest, input MenuSetInput) (*mcp.CallToolResult, MenuOutput, error) {
+func (s *Subsystem) menuSet(_ context.Context, _ *mcp.CallToolRequest, input MenuSetInput) (*mcp.CallToolResult, MenuOutput, resultFailure) {
 	items, err := decodeMenuItems(input.Items)
 	if err != nil {
 		return nil, MenuOutput{}, err
@@ -47,7 +47,7 @@ func (s *Subsystem) menuSet(_ context.Context, _ *mcp.CallToolRequest, input Men
 	return nil, MenuOutput{Items: snapshot}, nil
 }
 
-func (s *Subsystem) queryMenuItems() ([]map[string]any, error) {
+func (s *Subsystem) queryMenuItems() ([]map[string]any, resultFailure) {
 	r := s.core.QUERY(menu.QueryGetAppMenu{})
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {
@@ -102,7 +102,7 @@ func encodeMenuItems(items []menu.MenuItem) []map[string]any {
 	return out
 }
 
-func decodeMenuItems(items []map[string]any) ([]menu.MenuItem, error) {
+func decodeMenuItems(items []map[string]any) ([]menu.MenuItem, resultFailure) {
 	if len(items) == 0 {
 		return nil, nil
 	}
@@ -131,7 +131,7 @@ func decodeMenuItems(items []map[string]any) ([]menu.MenuItem, error) {
 	return out, nil
 }
 
-func decodeMenuChildren(value any) ([]menu.MenuItem, error) {
+func decodeMenuChildren(value any) ([]menu.MenuItem, resultFailure) {
 	switch children := value.(type) {
 	case nil:
 		return nil, nil
@@ -181,7 +181,7 @@ func encodeMenuRole(role menu.MenuRole) string {
 	}
 }
 
-func decodeMenuRole(role string) (*menu.MenuRole, error) {
+func decodeMenuRole(role string) (*menu.MenuRole, resultFailure) {
 	switch core.Trim(core.Lower(role)) {
 	case "":
 		return nil, nil

@@ -58,7 +58,7 @@ func TestSidecar_LaunchOptions_Good_EmptyEnv(t *core.T) {
 
 	var options deno.Options
 	output := captureStderr(t, func() {
-		var err error
+		var err resultFailure
 		options, err = sidecarLaunchOptions(nil)
 		core.RequireNoError(t, err)
 	})
@@ -119,7 +119,7 @@ func TestSidecar_StartAction_Bad_RefusesPermissionArgs(t *core.T) {
 	result := c.Action("display.sidecar.start").Run(context.Background(), core.Options{})
 
 	core.AssertFalse(t, result.OK)
-	err, ok := result.Value.(error)
+	err, ok := result.Value.(resultFailure)
 	core.RequireTrue(t, ok)
 	core.AssertContains(t, err.Error(), "--allow-all")
 	core.AssertNil(t, svc.sidecar)

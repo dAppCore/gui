@@ -97,7 +97,7 @@ func (s *Service) handleQuery(_ *core.Core, q core.Query) core.Result {
 }
 
 // send attempts native notification, falls back to dialog via IPC.
-func (s *Service) send(options NotificationOptions) error {
+func (s *Service) send(options NotificationOptions) resultFailure {
 	// Generate ID if not provided
 	if options.ID == "" {
 		options.ID = "core-" + strconv.FormatInt(time.Now().UnixNano(), 10)
@@ -133,7 +133,7 @@ func (s *Service) applyCategoryActions(options NotificationOptions) Notification
 }
 
 // fallbackDialog shows a dialog via IPC when native notifications fail.
-func (s *Service) fallbackDialog(options NotificationOptions) error {
+func (s *Service) fallbackDialog(options NotificationOptions) resultFailure {
 	// Map severity to dialog type
 	var dt dialog.DialogType
 	switch options.Severity {
@@ -168,7 +168,7 @@ func (s *Service) fallbackDialog(options NotificationOptions) error {
 	return nil
 }
 
-func (s *Service) clear(id string) error {
+func (s *Service) clear(id string) resultFailure {
 	if clearer, ok := s.platform.(ClearPlatform); ok {
 		if err := clearer.Clear(id); err != nil {
 			return err
@@ -202,7 +202,7 @@ func (s *Service) removeActive(id string) []string {
 	return ids
 }
 
-func notificationOptionsFrom(opts core.Options) (NotificationOptions, error) {
+func notificationOptionsFrom(opts core.Options) (NotificationOptions, resultFailure) {
 	if task := opts.Get("task"); task.OK {
 		switch v := task.Value.(type) {
 		case TaskSend:
@@ -214,7 +214,7 @@ func notificationOptionsFrom(opts core.Options) (NotificationOptions, error) {
 	return decodeOptions[NotificationOptions](opts)
 }
 
-func decodeOptions[T any](opts core.Options) (T, error) {
+func decodeOptions[T any](opts core.Options) (T, resultFailure) {
 	var input T
 	items := make(map[string]any, opts.Len())
 	for _, item := range opts.Items() {

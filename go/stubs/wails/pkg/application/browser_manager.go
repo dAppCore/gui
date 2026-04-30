@@ -17,7 +17,7 @@ type BrowserManager struct {
 //
 //	manager.OpenURL("https://lthn.io")
 //	_ = manager.LastURL // "https://lthn.io"
-func (bm *BrowserManager) OpenURL(url string) error {
+func (bm *BrowserManager) OpenURL(url string) resultFailure {
 	if bm == nil {
 		return nil
 	}
@@ -31,7 +31,7 @@ func (bm *BrowserManager) OpenURL(url string) error {
 //
 //	manager.OpenFile("/home/user/report.pdf")
 //	_ = manager.LastFile // "/home/user/report.pdf"
-func (bm *BrowserManager) OpenFile(path string) error {
+func (bm *BrowserManager) OpenFile(path string) resultFailure {
 	if bm == nil {
 		return nil
 	}

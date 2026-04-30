@@ -9,30 +9,30 @@ import (
 )
 
 type mockPlatform struct {
-	sendErr      error
+	sendErr      resultFailure
 	permGranted  bool
-	permErr      error
-	revokeErr    error
+	permErr      resultFailure
+	revokeErr    resultFailure
 	revokeCalled bool
-	clearErr     error
+	clearErr     resultFailure
 	clearCalled  bool
 	clearID      string
 	lastOpts     NotificationOptions
 	sendCalled   bool
 }
 
-func (m *mockPlatform) Send(opts NotificationOptions) error {
+func (m *mockPlatform) Send(opts NotificationOptions) resultFailure {
 	m.sendCalled = true
 	m.lastOpts = opts
 	return m.sendErr
 }
-func (m *mockPlatform) RequestPermission() (bool, error) { return m.permGranted, m.permErr }
-func (m *mockPlatform) CheckPermission() (bool, error)   { return m.permGranted, m.permErr }
-func (m *mockPlatform) RevokePermission() error {
+func (m *mockPlatform) RequestPermission() (bool, resultFailure) { return m.permGranted, m.permErr }
+func (m *mockPlatform) CheckPermission() (bool, resultFailure)   { return m.permGranted, m.permErr }
+func (m *mockPlatform) RevokePermission() resultFailure {
 	m.revokeCalled = true
 	return m.revokeErr
 }
-func (m *mockPlatform) Clear(id string) error {
+func (m *mockPlatform) Clear(id string) resultFailure {
 	m.clearCalled = true
 	m.clearID = id
 	return m.clearErr
@@ -44,12 +44,16 @@ type mockDialogPlatform struct {
 	lastMsgOpts   dialog.MessageDialogOptions
 }
 
-func (m *mockDialogPlatform) OpenFile(opts dialog.OpenFileOptions) ([]string, error) { return nil, nil }
-func (m *mockDialogPlatform) SaveFile(opts dialog.SaveFileOptions) (string, error)   { return "", nil }
-func (m *mockDialogPlatform) OpenDirectory(opts dialog.OpenDirectoryOptions) (string, error) {
+func (m *mockDialogPlatform) OpenFile(opts dialog.OpenFileOptions) ([]string, resultFailure) {
+	return nil, nil
+}
+func (m *mockDialogPlatform) SaveFile(opts dialog.SaveFileOptions) (string, resultFailure) {
 	return "", nil
 }
-func (m *mockDialogPlatform) MessageDialog(opts dialog.MessageDialogOptions) (string, error) {
+func (m *mockDialogPlatform) OpenDirectory(opts dialog.OpenDirectoryOptions) (string, resultFailure) {
+	return "", nil
+}
+func (m *mockDialogPlatform) MessageDialog(opts dialog.MessageDialogOptions) (string, resultFailure) {
 	m.messageCalled = true
 	m.lastMsgOpts = opts
 	return "OK", nil
@@ -307,8 +311,8 @@ func TestQueryPermission_Bad(t *core.T) {
 }
 
 func TestQueryPermission_Ugly(t *core.T) {
-	// Platform returns error — QUERY returns OK=false (framework does not propagate Value for failed queries)
-	mock := &mockPlatform{permErr: core.NewError("platform error")}
+	// Platform returns resultFailure — QUERY returns OK=false (framework does not propagate Value for failed queries)
+	mock := &mockPlatform{permErr: core.NewError("platform resultFailure")}
 	c := core.New(
 		core.WithService(Register(mock)),
 		core.WithServiceLock(),

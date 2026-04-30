@@ -99,7 +99,7 @@ func (w *MockWindow) ToggleFullscreen()                    { w.fullscreened = !w
 func (w *MockWindow) ToggleMaximise()                      { w.maximised = !w.maximised }
 func (w *MockWindow) ExecJS(js string)                     { w.execJSCalls = append(w.execJSCalls, js) }
 func (w *MockWindow) Flash(enabled bool)                   { w.flashed = enabled }
-func (w *MockWindow) Print() error                         { return nil }
+func (w *MockWindow) Print() resultFailure                 { return nil }
 func (w *MockWindow) OpenDevTools()                        { w.devToolsOpen = true }
 func (w *MockWindow) CloseDevTools()                       { w.devToolsOpen = false }
 func (w *MockWindow) OnWindowEvent(handler func(WindowEvent)) {

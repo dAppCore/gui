@@ -371,7 +371,7 @@ func storageEqualFold(left, right string) bool {
 	return core.Lower(left) == core.Lower(right)
 }
 
-func (r *StorageRegistry) Close() error {
+func (r *StorageRegistry) Close() resultFailure {
 	if r == nil || r.store == nil {
 		return nil
 	}

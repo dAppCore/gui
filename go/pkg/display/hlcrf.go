@@ -8,7 +8,7 @@ import (
 
 var hlcrfSlotPattern = regexp.MustCompile(`\{\{\s*slot\s+"([^"]*)"\s*\}\}`)
 
-func (s *Service) buildHLCRFComponents(pageURL string) (string, error) {
+func (s *Service) buildHLCRFComponents(pageURL string) (string, resultFailure) {
 	loaded, err := s.loadManifestForOrigin(pageURL)
 	if err != nil || loaded == nil {
 		if err != nil && core.Contains(err.Error(), "view manifest not found") {

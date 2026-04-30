@@ -47,11 +47,11 @@ var (
 	electronShimAsset     = mustReadAsset("assets/electron_shim.js")
 )
 
-func InjectPreload(webview Webview, origin string) error {
+func InjectPreload(webview Webview, origin string) resultFailure {
 	return InjectPreloadWithTrustedOriginPolicy(webview, origin, DefaultTrustedOriginPolicy())
 }
 
-func InjectPreloadWithTrustedOriginPolicy(webview Webview, origin string, policy TrustedOriginPolicy) error {
+func InjectPreloadWithTrustedOriginPolicy(webview Webview, origin string, policy TrustedOriginPolicy) resultFailure {
 	if isNilWebview(webview) {
 		return core.NewError("preload target is required")
 	}
@@ -68,11 +68,11 @@ func InjectPreloadWithTrustedOriginPolicy(webview Webview, origin string, policy
 	return nil
 }
 
-func buildScript(pageURL string) (string, error) {
+func buildScript(pageURL string) (string, resultFailure) {
 	return buildScriptWithTrustedOriginPolicy(pageURL, DefaultTrustedOriginPolicy())
 }
 
-func buildScriptWithTrustedOriginPolicy(pageURL string, policy TrustedOriginPolicy) (string, error) {
+func buildScriptWithTrustedOriginPolicy(pageURL string, policy TrustedOriginPolicy) (string, resultFailure) {
 	var loaded *loadedManifest
 	manifestAllowed := manifestBackedPreloadOriginAllowedByPolicy(pageURL, policy)
 	if manifestAllowed {
@@ -141,7 +141,7 @@ func mustReadAsset(name string) string {
 	return string(body)
 }
 
-func renderAppPreloads(loaded *loadedManifest) (string, error) {
+func renderAppPreloads(loaded *loadedManifest) (string, resultFailure) {
 	if loaded == nil || len(loaded.Preloads) == 0 {
 		return "", nil
 	}
@@ -167,7 +167,7 @@ func renderAppPreloads(loaded *loadedManifest) (string, error) {
 	return core.Join("\n", scripts...), nil
 }
 
-func loadManifestForOrigin(pageURL string) (*loadedManifest, error) {
+func loadManifestForOrigin(pageURL string) (*loadedManifest, resultFailure) {
 	path, err := discoverManifestPath(pageURL)
 	if err != nil {
 		return nil, err
@@ -206,7 +206,7 @@ func collectManifestPreloads(manifest viewManifest) []ManifestPreload {
 	return out
 }
 
-func discoverManifestPath(pageURL string) (string, error) {
+func discoverManifestPath(pageURL string) (string, resultFailure) {
 	trimmed := core.Trim(pageURL)
 	if trimmed == "" {
 		return "", errViewManifestNotFound
@@ -263,7 +263,7 @@ func manifestBaseDir(manifestPath string) string {
 	return baseDir
 }
 
-func readManifestPreload(baseDir, preloadPath string) ([]byte, error) {
+func readManifestPreload(baseDir, preloadPath string) ([]byte, resultFailure) {
 	resolvedPath, err := safeManifestRelativePath(baseDir, preloadPath)
 	if err != nil {
 		return nil, err
@@ -271,7 +271,7 @@ func readManifestPreload(baseDir, preloadPath string) ([]byte, error) {
 	return coreReadFile(resolvedPath)
 }
 
-func safeManifestRelativePath(baseDir, relativePath string) (string, error) {
+func safeManifestRelativePath(baseDir, relativePath string) (string, resultFailure) {
 	trimmed := core.Trim(relativePath)
 	if trimmed == "" {
 		return "", core.NewError("preload path is empty")

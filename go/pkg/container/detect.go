@@ -29,7 +29,7 @@ const (
 type DetectEnvironment struct {
 	GOOS           string
 	ProductVersion string
-	LookPath       func(file string) (string, error)
+	LookPath       func(file string) (string, resultFailure)
 }
 
 // Detect prefers Apple Containers on macOS 26+, then Docker, then Podman.
@@ -71,7 +71,7 @@ func DetectWithEnvironment(environment DetectEnvironment) ContainerRuntime {
 	return RuntimeNone
 }
 
-func hasBinary(lookPath func(string) (string, error), binary string) bool {
+func hasBinary(lookPath func(string) (string, resultFailure), binary string) bool {
 	if core.Trim(binary) == "" {
 		return false
 	}

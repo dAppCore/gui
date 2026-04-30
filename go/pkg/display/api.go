@@ -79,11 +79,11 @@ type Theme struct {
 	IsDark bool `json:"isDark"`
 }
 
-func unexpectedResultType(method string) error {
+func unexpectedResultType(method string) resultFailure {
 	return core.E(method, "unexpected result type", nil)
 }
 
-func failedQuery(method, query string) error {
+func failedQuery(method, query string) resultFailure {
 	return core.E(method, query+" query failed", nil)
 }
 
@@ -103,7 +103,7 @@ func (s *Service) GetScreens() []*Screen {
 	return result
 }
 
-func (s *Service) GetScreen(id string) (*Screen, error) {
+func (s *Service) GetScreen(id string) (*Screen, resultFailure) {
 	r := s.Core().QUERY(screen.QueryByID{ID: id})
 	if !r.OK {
 		if err, ok := r.Value.(error); ok {
@@ -118,7 +118,7 @@ func (s *Service) GetScreen(id string) (*Screen, error) {
 	return screenToDisplay(scr), nil
 }
 
-func (s *Service) GetPrimaryScreen() (*Screen, error) {
+func (s *Service) GetPrimaryScreen() (*Screen, resultFailure) {
 	r := s.Core().QUERY(screen.QueryPrimary{})
 	if !r.OK {
 		if err, ok := r.Value.(error); ok {
@@ -133,7 +133,7 @@ func (s *Service) GetPrimaryScreen() (*Screen, error) {
 	return screenToDisplay(scr), nil
 }
 
-func (s *Service) GetScreenAtPoint(x, y int) (*Screen, error) {
+func (s *Service) GetScreenAtPoint(x, y int) (*Screen, resultFailure) {
 	r := s.Core().QUERY(screen.QueryAtPoint{X: x, Y: y})
 	if !r.OK {
 		if err, ok := r.Value.(error); ok {
@@ -148,7 +148,7 @@ func (s *Service) GetScreenAtPoint(x, y int) (*Screen, error) {
 	return screenToDisplay(scr), nil
 }
 
-func (s *Service) GetScreenForWindow(name string) (*Screen, error) {
+func (s *Service) GetScreenForWindow(name string) (*Screen, resultFailure) {
 	info, err := s.GetWindowInfo(name)
 	if err != nil || info == nil {
 		return nil, err
@@ -173,7 +173,7 @@ func (s *Service) GetWorkAreas() []*WorkArea {
 	return result
 }
 
-func (s *Service) OpenSingleFileDialog(opts OpenFileOptions) (string, error) {
+func (s *Service) OpenSingleFileDialog(opts OpenFileOptions) (string, resultFailure) {
 	paths, err := s.OpenFileDialog(opts)
 	if err != nil || len(paths) == 0 {
 		return "", err
@@ -181,7 +181,7 @@ func (s *Service) OpenSingleFileDialog(opts OpenFileOptions) (string, error) {
 	return paths[0], nil
 }
 
-func (s *Service) OpenFileDialog(opts OpenFileOptions) ([]string, error) {
+func (s *Service) OpenFileDialog(opts OpenFileOptions) ([]string, resultFailure) {
 	result := s.Core().Action("dialog.openFile").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: dialog.TaskOpenFile{Options: toDialogOpenFileOptions(opts)}},
 	))
@@ -198,7 +198,7 @@ func (s *Service) OpenFileDialog(opts OpenFileOptions) ([]string, error) {
 	return paths, nil
 }
 
-func (s *Service) SaveFileDialog(opts SaveFileOptions) (string, error) {
+func (s *Service) SaveFileDialog(opts SaveFileOptions) (string, resultFailure) {
 	result := s.Core().Action("dialog.saveFile").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: dialog.TaskSaveFile{Options: toDialogSaveFileOptions(opts)}},
 	))
@@ -215,7 +215,7 @@ func (s *Service) SaveFileDialog(opts SaveFileOptions) (string, error) {
 	return path, nil
 }
 
-func (s *Service) OpenDirectoryDialog(opts OpenDirectoryOptions) (string, error) {
+func (s *Service) OpenDirectoryDialog(opts OpenDirectoryOptions) (string, resultFailure) {
 	result := s.Core().Action("dialog.openDirectory").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: dialog.TaskOpenDirectory{Options: toDialogOpenDirectoryOptions(opts)}},
 	))
@@ -232,7 +232,7 @@ func (s *Service) OpenDirectoryDialog(opts OpenDirectoryOptions) (string, error)
 	return path, nil
 }
 
-func (s *Service) ConfirmDialog(title, message string) (bool, error) {
+func (s *Service) ConfirmDialog(title, message string) (bool, resultFailure) {
 	result := s.Core().Action("dialog.question").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: dialog.TaskQuestion{
 			Title:   title,
@@ -253,7 +253,7 @@ func (s *Service) ConfirmDialog(title, message string) (bool, error) {
 	return button == "Yes", nil
 }
 
-func (s *Service) PromptDialog(title, message string) (string, bool, error) {
+func (s *Service) PromptDialog(title, message string) (string, bool, resultFailure) {
 	result := s.Core().Action("dialog.prompt").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: dialog.TaskPrompt{Title: title, Message: message}},
 	))
@@ -270,7 +270,7 @@ func (s *Service) PromptDialog(title, message string) (string, bool, error) {
 	return prompt.Value, prompt.Confirmed, nil
 }
 
-func (s *Service) SetTrayIcon(icon []byte) error {
+func (s *Service) SetTrayIcon(icon []byte) resultFailure {
 	result := s.Core().Action("systray.setIcon").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: systray.TaskSetTrayIcon{Data: icon}},
 	))
@@ -283,7 +283,7 @@ func (s *Service) SetTrayIcon(icon []byte) error {
 	return nil
 }
 
-func (s *Service) SetTrayTooltip(tooltip string) error {
+func (s *Service) SetTrayTooltip(tooltip string) resultFailure {
 	result := s.Core().Action("systray.setTooltip").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: systray.TaskSetTrayTooltip{Tooltip: tooltip}},
 	))
@@ -296,7 +296,7 @@ func (s *Service) SetTrayTooltip(tooltip string) error {
 	return nil
 }
 
-func (s *Service) SetTrayLabel(label string) error {
+func (s *Service) SetTrayLabel(label string) resultFailure {
 	result := s.Core().Action("systray.setLabel").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: systray.TaskSetTrayLabel{Label: label}},
 	))
@@ -309,7 +309,7 @@ func (s *Service) SetTrayLabel(label string) error {
 	return nil
 }
 
-func (s *Service) SetTrayMenu(items []TrayMenuItem) error {
+func (s *Service) SetTrayMenu(items []TrayMenuItem) resultFailure {
 	result := s.Core().Action("systray.setMenu").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: systray.TaskSetTrayMenu{Items: trayMenuItemsToSystray(items)}},
 	))
@@ -331,7 +331,7 @@ func (s *Service) GetTrayInfo() map[string]any {
 	return info
 }
 
-func (s *Service) ShowTrayMessage(title, message string) error {
+func (s *Service) ShowTrayMessage(title, message string) resultFailure {
 	result := s.Core().Action("systray.showMessage").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: systray.TaskShowMessage{Title: title, Message: message}},
 	))
@@ -344,7 +344,7 @@ func (s *Service) ShowTrayMessage(title, message string) error {
 	return nil
 }
 
-func (s *Service) ReadClipboard() (string, error) {
+func (s *Service) ReadClipboard() (string, resultFailure) {
 	r := s.Core().QUERY(clipboard.QueryText{})
 	if !r.OK {
 		if err, ok := r.Value.(error); ok {
@@ -359,7 +359,7 @@ func (s *Service) ReadClipboard() (string, error) {
 	return content.Text, nil
 }
 
-func (s *Service) WriteClipboard(text string) error {
+func (s *Service) WriteClipboard(text string) resultFailure {
 	result := s.Core().Action("clipboard.setText").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: clipboard.TaskSetText{Text: text}},
 	))
@@ -377,7 +377,7 @@ func (s *Service) HasClipboard() bool {
 	return err == nil && text != ""
 }
 
-func (s *Service) ClearClipboard() error {
+func (s *Service) ClearClipboard() resultFailure {
 	result := s.Core().Action("clipboard.clear").Run(context.Background(), core.NewOptions())
 	if !result.OK {
 		if err, ok := result.Value.(error); ok {
@@ -388,7 +388,7 @@ func (s *Service) ClearClipboard() error {
 	return nil
 }
 
-func (s *Service) ReadClipboardImage() ([]byte, error) {
+func (s *Service) ReadClipboardImage() ([]byte, resultFailure) {
 	r := s.Core().QUERY(clipboard.QueryImage{})
 	if !r.OK {
 		if err, ok := r.Value.(error); ok {
@@ -406,7 +406,7 @@ func (s *Service) ReadClipboardImage() ([]byte, error) {
 	return append([]byte(nil), content.Data...), nil
 }
 
-func (s *Service) WriteClipboardImage(data []byte) error {
+func (s *Service) WriteClipboardImage(data []byte) resultFailure {
 	if len(data) == 0 {
 		return core.E(writeClipboardImageOp, "clipboard image data is required", nil)
 	}
@@ -425,7 +425,7 @@ func (s *Service) WriteClipboardImage(data []byte) error {
 	return nil
 }
 
-func (s *Service) ShowNotification(opts NotificationOptions) error {
+func (s *Service) ShowNotification(opts NotificationOptions) resultFailure {
 	return s.sendNotification(notification.NotificationOptions{
 		ID:       opts.ID,
 		Title:    opts.Title,
@@ -434,11 +434,11 @@ func (s *Service) ShowNotification(opts NotificationOptions) error {
 	})
 }
 
-func (s *Service) ShowInfoNotification(title, message string) error {
+func (s *Service) ShowInfoNotification(title, message string) resultFailure {
 	return s.sendNotification(notification.NotificationOptions{Title: title, Message: message})
 }
 
-func (s *Service) ShowWarningNotification(title, message string) error {
+func (s *Service) ShowWarningNotification(title, message string) resultFailure {
 	return s.sendNotification(notification.NotificationOptions{
 		Title:    title,
 		Message:  message,
@@ -446,7 +446,7 @@ func (s *Service) ShowWarningNotification(title, message string) error {
 	})
 }
 
-func (s *Service) ShowErrorNotification(title, message string) error {
+func (s *Service) ShowErrorNotification(title, message string) resultFailure {
 	return s.sendNotification(notification.NotificationOptions{
 		Title:    title,
 		Message:  message,
@@ -454,7 +454,7 @@ func (s *Service) ShowErrorNotification(title, message string) error {
 	})
 }
 
-func (s *Service) RequestNotificationPermission() (bool, error) {
+func (s *Service) RequestNotificationPermission() (bool, resultFailure) {
 	r := s.Core().Action("notification.requestPermission").Run(context.Background(), core.NewOptions())
 	if !r.OK {
 		if err, ok := r.Value.(error); ok {
@@ -469,7 +469,7 @@ func (s *Service) RequestNotificationPermission() (bool, error) {
 	return granted, nil
 }
 
-func (s *Service) CheckNotificationPermission() (bool, error) {
+func (s *Service) CheckNotificationPermission() (bool, resultFailure) {
 	r := s.Core().QUERY(notification.QueryPermission{})
 	if !r.OK {
 		if err, ok := r.Value.(error); ok {
@@ -484,7 +484,7 @@ func (s *Service) CheckNotificationPermission() (bool, error) {
 	return status.Granted, nil
 }
 
-func (s *Service) ClearNotifications() error {
+func (s *Service) ClearNotifications() resultFailure {
 	result := s.Core().Action("notification.clear").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: notification.TaskClear{}},
 	))
@@ -497,7 +497,7 @@ func (s *Service) ClearNotifications() error {
 	return nil
 }
 
-func (s *Service) SetTheme(theme string) error {
+func (s *Service) SetTheme(theme string) resultFailure {
 	result := s.Core().Action("environment.setTheme").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: environment.TaskSetTheme{Theme: theme}},
 	))
@@ -542,7 +542,7 @@ func themeInfoFromQueryResult(s *Service, method string, r core.Result) (environ
 	return environment.ThemeInfo{}, false
 }
 
-func (s *Service) sendNotification(opts notification.NotificationOptions) error {
+func (s *Service) sendNotification(opts notification.NotificationOptions) resultFailure {
 	result := s.Core().Action("notification.send").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: notification.TaskSend{Options: opts}},
 	))

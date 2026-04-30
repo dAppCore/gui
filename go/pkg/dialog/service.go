@@ -146,7 +146,7 @@ func (s *Service) HandleIPCEvents(_ *core.Core, _ core.Message) core.Result {
 	return core.Result{OK: true}
 }
 
-func openFileOptionsFrom(opts core.Options) (OpenFileOptions, error) {
+func openFileOptionsFrom(opts core.Options) (OpenFileOptions, resultFailure) {
 	if task := opts.Get("task"); task.OK {
 		switch v := task.Value.(type) {
 		case TaskOpenFile:
@@ -162,7 +162,7 @@ func openFileOptionsFrom(opts core.Options) (OpenFileOptions, error) {
 	return decodeOptions[OpenFileOptions](opts)
 }
 
-func saveFileOptionsFrom(opts core.Options) (SaveFileOptions, error) {
+func saveFileOptionsFrom(opts core.Options) (SaveFileOptions, resultFailure) {
 	if task := opts.Get("task"); task.OK {
 		switch v := task.Value.(type) {
 		case TaskSaveFile:
@@ -178,7 +178,7 @@ func saveFileOptionsFrom(opts core.Options) (SaveFileOptions, error) {
 	return decodeOptions[SaveFileOptions](opts)
 }
 
-func openDirectoryOptionsFrom(opts core.Options) (OpenDirectoryOptions, error) {
+func openDirectoryOptionsFrom(opts core.Options) (OpenDirectoryOptions, resultFailure) {
 	if task := opts.Get("task"); task.OK {
 		switch v := task.Value.(type) {
 		case TaskOpenDirectory:
@@ -190,7 +190,7 @@ func openDirectoryOptionsFrom(opts core.Options) (OpenDirectoryOptions, error) {
 	return decodeOptions[OpenDirectoryOptions](opts)
 }
 
-func messageDialogOptionsFrom(opts core.Options) (MessageDialogOptions, error) {
+func messageDialogOptionsFrom(opts core.Options) (MessageDialogOptions, resultFailure) {
 	if task := opts.Get("task"); task.OK {
 		switch v := task.Value.(type) {
 		case TaskMessageDialog:
@@ -202,7 +202,7 @@ func messageDialogOptionsFrom(opts core.Options) (MessageDialogOptions, error) {
 	return decodeOptions[MessageDialogOptions](opts)
 }
 
-func infoDialogOptionsFrom(opts core.Options) (MessageDialogOptions, error) {
+func infoDialogOptionsFrom(opts core.Options) (MessageDialogOptions, resultFailure) {
 	if task := opts.Get("task"); task.OK {
 		switch v := task.Value.(type) {
 		case TaskInfo:
@@ -222,7 +222,7 @@ func infoDialogOptionsFrom(opts core.Options) (MessageDialogOptions, error) {
 	return typedMessageDialogOptionsFrom(opts, DialogInfo, "dialog.infoDialogOptionsFrom")
 }
 
-func warningDialogOptionsFrom(opts core.Options) (MessageDialogOptions, error) {
+func warningDialogOptionsFrom(opts core.Options) (MessageDialogOptions, resultFailure) {
 	if task := opts.Get("task"); task.OK {
 		switch v := task.Value.(type) {
 		case TaskWarning:
@@ -242,7 +242,7 @@ func warningDialogOptionsFrom(opts core.Options) (MessageDialogOptions, error) {
 	return typedMessageDialogOptionsFrom(opts, DialogWarning, "dialog.warningDialogOptionsFrom")
 }
 
-func errorDialogOptionsFrom(opts core.Options) (MessageDialogOptions, error) {
+func errorDialogOptionsFrom(opts core.Options) (MessageDialogOptions, resultFailure) {
 	if task := opts.Get("task"); task.OK {
 		switch v := task.Value.(type) {
 		case TaskError:
@@ -262,7 +262,7 @@ func errorDialogOptionsFrom(opts core.Options) (MessageDialogOptions, error) {
 	return typedMessageDialogOptionsFrom(opts, DialogError, "dialog.errorDialogOptionsFrom")
 }
 
-func typedMessageDialogOptionsFrom(opts core.Options, dialogType DialogType, op string) (MessageDialogOptions, error) {
+func typedMessageDialogOptionsFrom(opts core.Options, dialogType DialogType, op string) (MessageDialogOptions, resultFailure) {
 	if !hasDirectDialogOptions(opts) {
 		return MessageDialogOptions{}, core.E(op, "failed to decode dialog options", nil)
 	}
@@ -283,7 +283,7 @@ func hasDirectDialogOptions(opts core.Options) bool {
 	return false
 }
 
-func questionDialogOptionsFrom(opts core.Options) (MessageDialogOptions, error) {
+func questionDialogOptionsFrom(opts core.Options) (MessageDialogOptions, resultFailure) {
 	if task := opts.Get("task"); task.OK {
 		switch v := task.Value.(type) {
 		case TaskQuestion:
@@ -314,7 +314,7 @@ func questionDialogOptionsFrom(opts core.Options) (MessageDialogOptions, error) 
 	return decoded, nil
 }
 
-func promptOptionsFrom(opts core.Options) (TaskPrompt, error) {
+func promptOptionsFrom(opts core.Options) (TaskPrompt, resultFailure) {
 	if task := opts.Get("task"); task.OK {
 		if v, ok := task.Value.(TaskPrompt); ok {
 			return v, nil
@@ -323,7 +323,7 @@ func promptOptionsFrom(opts core.Options) (TaskPrompt, error) {
 	return decodeOptions[TaskPrompt](opts)
 }
 
-func decodeOptions[T any](opts core.Options) (T, error) {
+func decodeOptions[T any](opts core.Options) (T, resultFailure) {
 	var input T
 	items := make(map[string]any, opts.Len())
 	for _, item := range opts.Items() {
@@ -342,7 +342,7 @@ func decodeOptions[T any](opts core.Options) (T, error) {
 	return input, nil
 }
 
-func (s *Service) promptWindowName() (string, error) {
+func (s *Service) promptWindowName() (string, resultFailure) {
 	r := s.Core().QUERY(window.QueryWindowList{})
 	if !r.OK {
 		return "", core.E("dialog.promptWindowName", "window service unavailable", nil)

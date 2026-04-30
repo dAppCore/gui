@@ -12,7 +12,7 @@ type storageStore struct {
 	data map[string]map[string]string
 }
 
-func newStorageStore(path string) (*storageStore, error) {
+func newStorageStore(path string) (*storageStore, resultFailure) {
 	store := &storageStore{
 		path: path,
 		data: make(map[string]map[string]string),
@@ -39,7 +39,7 @@ func newStorageStore(path string) (*storageStore, error) {
 	return store, nil
 }
 
-func (s *storageStore) set(group, key, value string) error {
+func (s *storageStore) set(group, key, value string) resultFailure {
 	if s == nil {
 		return core.NewError("storage store is nil")
 	}
@@ -57,7 +57,7 @@ func (s *storageStore) set(group, key, value string) error {
 	return s.persistLocked()
 }
 
-func (s *storageStore) delete(group, key string) error {
+func (s *storageStore) delete(group, key string) resultFailure {
 	if s == nil {
 		return core.NewError("storage store is nil")
 	}
@@ -72,7 +72,7 @@ func (s *storageStore) delete(group, key string) error {
 	return s.persistLocked()
 }
 
-func (s *storageStore) getAll(group string) (map[string]string, error) {
+func (s *storageStore) getAll(group string) (map[string]string, resultFailure) {
 	if s == nil {
 		return nil, core.NewError("storage store is nil")
 	}
@@ -85,7 +85,7 @@ func (s *storageStore) getAll(group string) (map[string]string, error) {
 	return copy, nil
 }
 
-func (s *storageStore) close() error {
+func (s *storageStore) close() resultFailure {
 	if s == nil {
 		return nil
 	}
@@ -94,7 +94,7 @@ func (s *storageStore) close() error {
 	return s.persistLocked()
 }
 
-func (s *storageStore) persistLocked() error {
+func (s *storageStore) persistLocked() resultFailure {
 	if s.path == "" || s.path == ":memory:" {
 		return nil
 	}

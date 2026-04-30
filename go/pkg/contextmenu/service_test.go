@@ -14,8 +14,8 @@ type mockPlatform struct {
 	menus         map[string]ContextMenuDef
 	clickHandlers map[string]func(menuName, actionID, data string)
 	removed       []string
-	addErr        error
-	removeErr     error
+	addErr        resultFailure
+	removeErr     resultFailure
 }
 
 func newMockPlatform() *mockPlatform {
@@ -25,7 +25,7 @@ func newMockPlatform() *mockPlatform {
 	}
 }
 
-func (m *mockPlatform) Add(name string, menu ContextMenuDef, onItemClick func(string, string, string)) error {
+func (m *mockPlatform) Add(name string, menu ContextMenuDef, onItemClick func(string, string, string)) resultFailure {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.addErr != nil {
@@ -36,7 +36,7 @@ func (m *mockPlatform) Add(name string, menu ContextMenuDef, onItemClick func(st
 	return nil
 }
 
-func (m *mockPlatform) Remove(name string) error {
+func (m *mockPlatform) Remove(name string) resultFailure {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.removeErr != nil {
@@ -78,7 +78,7 @@ func newFlakyAddPlatform() *flakyAddPlatform {
 	return &flakyAddPlatform{mockPlatform: newMockPlatform()}
 }
 
-func (m *flakyAddPlatform) Add(name string, menu ContextMenuDef, onItemClick func(string, string, string)) error {
+func (m *flakyAddPlatform) Add(name string, menu ContextMenuDef, onItemClick func(string, string, string)) resultFailure {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.failAddOnce {
@@ -140,7 +140,7 @@ func TestNilPlatform_Good_MutationAndShutdownAreSafe(t *core.T) {
 	for _, tc := range cases {
 		r := taskRun(c, tc.action, tc.task)
 		core.AssertFalse(t, r.OK, tc.name)
-		err, _ := r.Value.(error)
+		err, _ := r.Value.(resultFailure)
 		core.AssertError(t, err)
 		core.AssertContains(t, err.Error(), "platform backend unavailable")
 	}
@@ -217,7 +217,7 @@ func TestTaskRemove_Bad_NotFound(t *core.T) {
 
 	r := taskRun(c, "contextmenu.remove", TaskRemove{Name: "nonexistent"})
 	core.AssertFalse(t, r.OK)
-	err, _ := r.Value.(error)
+	err, _ := r.Value.(resultFailure)
 	core.AssertErrorIs(t, err, ErrorMenuNotFound)
 }
 
@@ -407,12 +407,12 @@ func TestTaskUpdate_Bad_NotFound(t *core.T) {
 		Menu: ContextMenuDef{Name: "ghost"},
 	})
 	core.AssertFalse(t, r.OK)
-	err, _ := r.Value.(error)
+	err, _ := r.Value.(resultFailure)
 	core.AssertErrorIs(t, err, ErrorMenuNotFound)
 }
 
 func TestTaskUpdate_Ugly_PlatformRemoveError(t *core.T) {
-	// Platform Remove fails mid-update — error is propagated
+	// Platform Remove fails mid-update — resultFailure is propagated
 	mp := newMockPlatform()
 	_, c := newTestContextMenuService(t, mp)
 
@@ -422,7 +422,7 @@ func TestTaskUpdate_Ugly_PlatformRemoveError(t *core.T) {
 	})
 
 	mp.mu.Lock()
-	mp.removeErr = ErrorMenuNotFound // reuse sentinel as a platform-level error
+	mp.removeErr = ErrorMenuNotFound // reuse sentinel as a platform-level resultFailure
 	mp.mu.Unlock()
 
 	r := taskRun(c, "contextmenu.update", TaskUpdate{
@@ -488,12 +488,12 @@ func TestTaskDestroy_Bad_NotFound(t *core.T) {
 
 	r := taskRun(c, "contextmenu.destroy", TaskDestroy{Name: "nonexistent"})
 	core.AssertFalse(t, r.OK)
-	err, _ := r.Value.(error)
+	err, _ := r.Value.(resultFailure)
 	core.AssertErrorIs(t, err, ErrorMenuNotFound)
 }
 
 func TestTaskDestroy_Ugly_PlatformError(t *core.T) {
-	// Platform Remove fails — error is propagated but service remains consistent
+	// Platform Remove fails — resultFailure is propagated but service remains consistent
 	mp := newMockPlatform()
 	_, c := newTestContextMenuService(t, mp)
 
@@ -559,7 +559,7 @@ func TestOnShutdown_Good_CleansUpMenus(t *core.T) {
 }
 
 func TestOnShutdown_Bad_NothingRegistered(t *core.T) {
-	// OnShutdown with no menus — no-op, no error
+	// OnShutdown with no menus — no-op, no resultFailure
 	mp := newMockPlatform()
 	_, c := newTestContextMenuService(t, mp)
 
@@ -577,7 +577,7 @@ func TestOnShutdown_Ugly_PlatformRemoveErrors(t *core.T) {
 	mp.removeErr = ErrorMenuNotFound
 	mp.mu.Unlock()
 
-	// Shutdown must not return an error even if platform Remove fails
+	// Shutdown must not return an resultFailure even if platform Remove fails
 	core.AssertTrue(t, c.ServiceShutdown(t.Context()).OK)
 }
 

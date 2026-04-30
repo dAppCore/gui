@@ -137,7 +137,7 @@ func TestSchemeHandler_Handle_Bad(t *core.T) {
 
 	result := handler.Handle(parsedURL)
 	core.AssertFalse(t, result.OK)
-	core.AssertError(t, result.Value.(error), "unknown core route: missing")
+	core.AssertError(t, result.Value.(resultFailure), "unknown core route: missing")
 }
 
 func TestSchemeHandler_Handle_Ugly(t *core.T) {
@@ -151,7 +151,7 @@ func TestSchemeHandler_Handle_Ugly(t *core.T) {
 
 	result := handler.Handle(parsedURL)
 	core.AssertFalse(t, result.OK)
-	core.AssertError(t, result.Value.(error), "malformed core URL")
+	core.AssertError(t, result.Value.(resultFailure), "malformed core URL")
 }
 
 // AX7 generated source-matching smoke coverage.

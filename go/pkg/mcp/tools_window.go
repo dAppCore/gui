@@ -16,7 +16,7 @@ type WindowListOutput struct {
 	Windows []window.WindowInfo `json:"windows"`
 }
 
-func (s *Subsystem) windowList(_ context.Context, _ *mcp.CallToolRequest, _ WindowListInput) (*mcp.CallToolResult, WindowListOutput, error) {
+func (s *Subsystem) windowList(_ context.Context, _ *mcp.CallToolRequest, _ WindowListInput) (*mcp.CallToolResult, WindowListOutput, resultFailure) {
 	r := s.core.QUERY(window.QueryWindowList{})
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {
@@ -40,7 +40,7 @@ type WindowGetOutput struct {
 	Window *window.WindowInfo `json:"window"`
 }
 
-func (s *Subsystem) windowGet(_ context.Context, _ *mcp.CallToolRequest, input WindowGetInput) (*mcp.CallToolResult, WindowGetOutput, error) {
+func (s *Subsystem) windowGet(_ context.Context, _ *mcp.CallToolRequest, input WindowGetInput) (*mcp.CallToolResult, WindowGetOutput, resultFailure) {
 	r := s.core.QUERY(window.QueryWindowByName{Name: input.Name})
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {
@@ -62,7 +62,7 @@ type WindowFocusedOutput struct {
 	Window string `json:"window"`
 }
 
-func (s *Subsystem) windowFocused(_ context.Context, _ *mcp.CallToolRequest, _ WindowFocusedInput) (*mcp.CallToolResult, WindowFocusedOutput, error) {
+func (s *Subsystem) windowFocused(_ context.Context, _ *mcp.CallToolRequest, _ WindowFocusedInput) (*mcp.CallToolResult, WindowFocusedOutput, resultFailure) {
 	r := s.core.QUERY(window.QueryWindowList{})
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {
@@ -97,7 +97,7 @@ type WindowCreateOutput struct {
 	Window window.WindowInfo `json:"window"`
 }
 
-func (s *Subsystem) windowCreate(_ context.Context, _ *mcp.CallToolRequest, input WindowCreateInput) (*mcp.CallToolResult, WindowCreateOutput, error) {
+func (s *Subsystem) windowCreate(_ context.Context, _ *mcp.CallToolRequest, input WindowCreateInput) (*mcp.CallToolResult, WindowCreateOutput, resultFailure) {
 	r := s.core.Action("window.open").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskOpenWindow{
 			Window: &window.Window{
@@ -133,7 +133,7 @@ type WindowCloseOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) windowClose(_ context.Context, _ *mcp.CallToolRequest, input WindowCloseInput) (*mcp.CallToolResult, WindowCloseOutput, error) {
+func (s *Subsystem) windowClose(_ context.Context, _ *mcp.CallToolRequest, input WindowCloseInput) (*mcp.CallToolResult, WindowCloseOutput, resultFailure) {
 	r := s.core.Action("window.close").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskCloseWindow{Name: input.Name}},
 	))
@@ -157,7 +157,7 @@ type WindowPositionOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) windowPosition(_ context.Context, _ *mcp.CallToolRequest, input WindowPositionInput) (*mcp.CallToolResult, WindowPositionOutput, error) {
+func (s *Subsystem) windowPosition(_ context.Context, _ *mcp.CallToolRequest, input WindowPositionInput) (*mcp.CallToolResult, WindowPositionOutput, resultFailure) {
 	r := s.core.Action("window.setPosition").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetPosition{Name: input.Name, X: input.X, Y: input.Y}},
 	))
@@ -181,7 +181,7 @@ type WindowSizeOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) windowSize(_ context.Context, _ *mcp.CallToolRequest, input WindowSizeInput) (*mcp.CallToolResult, WindowSizeOutput, error) {
+func (s *Subsystem) windowSize(_ context.Context, _ *mcp.CallToolRequest, input WindowSizeInput) (*mcp.CallToolResult, WindowSizeOutput, resultFailure) {
 	r := s.core.Action("window.setSize").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetSize{Name: input.Name, Width: input.Width, Height: input.Height}},
 	))
@@ -207,7 +207,7 @@ type WindowBoundsOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) windowBounds(_ context.Context, _ *mcp.CallToolRequest, input WindowBoundsInput) (*mcp.CallToolResult, WindowBoundsOutput, error) {
+func (s *Subsystem) windowBounds(_ context.Context, _ *mcp.CallToolRequest, input WindowBoundsInput) (*mcp.CallToolResult, WindowBoundsOutput, resultFailure) {
 	r := s.core.Action("window.setBounds").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetBounds{
 			Name: input.Name, X: input.X, Y: input.Y, Width: input.Width, Height: input.Height,
@@ -231,7 +231,7 @@ type WindowMaximizeOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) windowMaximize(_ context.Context, _ *mcp.CallToolRequest, input WindowMaximizeInput) (*mcp.CallToolResult, WindowMaximizeOutput, error) {
+func (s *Subsystem) windowMaximize(_ context.Context, _ *mcp.CallToolRequest, input WindowMaximizeInput) (*mcp.CallToolResult, WindowMaximizeOutput, resultFailure) {
 	r := s.core.Action("window.maximise").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskMaximise{Name: input.Name}},
 	))
@@ -253,7 +253,7 @@ type WindowMinimizeOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) windowMinimize(_ context.Context, _ *mcp.CallToolRequest, input WindowMinimizeInput) (*mcp.CallToolResult, WindowMinimizeOutput, error) {
+func (s *Subsystem) windowMinimize(_ context.Context, _ *mcp.CallToolRequest, input WindowMinimizeInput) (*mcp.CallToolResult, WindowMinimizeOutput, resultFailure) {
 	r := s.core.Action("window.minimise").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskMinimise{Name: input.Name}},
 	))
@@ -275,7 +275,7 @@ type WindowRestoreOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) windowRestore(_ context.Context, _ *mcp.CallToolRequest, input WindowRestoreInput) (*mcp.CallToolResult, WindowRestoreOutput, error) {
+func (s *Subsystem) windowRestore(_ context.Context, _ *mcp.CallToolRequest, input WindowRestoreInput) (*mcp.CallToolResult, WindowRestoreOutput, resultFailure) {
 	r := s.core.Action("window.restore").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskRestore{Name: input.Name}},
 	))
@@ -297,7 +297,7 @@ type WindowFocusOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) windowFocus(_ context.Context, _ *mcp.CallToolRequest, input WindowFocusInput) (*mcp.CallToolResult, WindowFocusOutput, error) {
+func (s *Subsystem) windowFocus(_ context.Context, _ *mcp.CallToolRequest, input WindowFocusInput) (*mcp.CallToolResult, WindowFocusOutput, resultFailure) {
 	r := s.core.Action("window.focus").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskFocus{Name: input.Name}},
 	))
@@ -319,7 +319,7 @@ type FocusSetOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) focusSet(ctx context.Context, req *mcp.CallToolRequest, input FocusSetInput) (*mcp.CallToolResult, FocusSetOutput, error) {
+func (s *Subsystem) focusSet(ctx context.Context, req *mcp.CallToolRequest, input FocusSetInput) (*mcp.CallToolResult, FocusSetOutput, resultFailure) {
 	result, output, err := s.windowFocus(ctx, req, WindowFocusInput{Name: input.Name})
 	if err != nil {
 		return nil, FocusSetOutput{}, err
@@ -340,7 +340,7 @@ type WindowTitleOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) windowTitle(_ context.Context, _ *mcp.CallToolRequest, input WindowTitleInput) (*mcp.CallToolResult, WindowTitleOutput, error) {
+func (s *Subsystem) windowTitle(_ context.Context, _ *mcp.CallToolRequest, input WindowTitleInput) (*mcp.CallToolResult, WindowTitleOutput, resultFailure) {
 	r := s.core.Action("window.setTitle").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetTitle{Name: input.Name, Title: input.Title}},
 	))
@@ -363,7 +363,7 @@ type WindowTitleSetOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) windowTitleSet(ctx context.Context, req *mcp.CallToolRequest, input WindowTitleSetInput) (*mcp.CallToolResult, WindowTitleSetOutput, error) {
+func (s *Subsystem) windowTitleSet(ctx context.Context, req *mcp.CallToolRequest, input WindowTitleSetInput) (*mcp.CallToolResult, WindowTitleSetOutput, resultFailure) {
 	result, output, err := s.windowTitle(ctx, req, WindowTitleInput{Name: input.Name, Title: input.Title})
 	if err != nil {
 		return nil, WindowTitleSetOutput{}, err
@@ -383,7 +383,7 @@ type WindowTitleGetOutput struct {
 	Title string `json:"title"`
 }
 
-func (s *Subsystem) windowTitleGet(_ context.Context, _ *mcp.CallToolRequest, input WindowTitleGetInput) (*mcp.CallToolResult, WindowTitleGetOutput, error) {
+func (s *Subsystem) windowTitleGet(_ context.Context, _ *mcp.CallToolRequest, input WindowTitleGetInput) (*mcp.CallToolResult, WindowTitleGetOutput, resultFailure) {
 	r := s.core.QUERY(window.QueryWindowByName{Name: input.Name})
 	if !r.OK {
 		return nil, WindowTitleGetOutput{}, nil
@@ -405,7 +405,7 @@ type WindowVisibilityOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) windowVisibility(_ context.Context, _ *mcp.CallToolRequest, input WindowVisibilityInput) (*mcp.CallToolResult, WindowVisibilityOutput, error) {
+func (s *Subsystem) windowVisibility(_ context.Context, _ *mcp.CallToolRequest, input WindowVisibilityInput) (*mcp.CallToolResult, WindowVisibilityOutput, resultFailure) {
 	r := s.core.Action("window.setVisibility").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetVisibility{Name: input.Name, Visible: input.Visible}},
 	))
@@ -428,7 +428,7 @@ type WindowAlwaysOnTopOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) windowAlwaysOnTop(_ context.Context, _ *mcp.CallToolRequest, input WindowAlwaysOnTopInput) (*mcp.CallToolResult, WindowAlwaysOnTopOutput, error) {
+func (s *Subsystem) windowAlwaysOnTop(_ context.Context, _ *mcp.CallToolRequest, input WindowAlwaysOnTopInput) (*mcp.CallToolResult, WindowAlwaysOnTopOutput, resultFailure) {
 	r := s.core.Action("window.setAlwaysOnTop").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetAlwaysOnTop{Name: input.Name, AlwaysOnTop: input.AlwaysOnTop}},
 	))
@@ -451,7 +451,7 @@ type WindowOpacityOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) windowOpacity(_ context.Context, _ *mcp.CallToolRequest, input WindowOpacityInput) (*mcp.CallToolResult, WindowOpacityOutput, error) {
+func (s *Subsystem) windowOpacity(_ context.Context, _ *mcp.CallToolRequest, input WindowOpacityInput) (*mcp.CallToolResult, WindowOpacityOutput, resultFailure) {
 	r := s.core.Action("window.setOpacity").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetOpacity{Name: input.Name, Opacity: input.Opacity}},
 	))
@@ -477,7 +477,7 @@ type WindowBackgroundColourOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) windowBackgroundColour(_ context.Context, _ *mcp.CallToolRequest, input WindowBackgroundColourInput) (*mcp.CallToolResult, WindowBackgroundColourOutput, error) {
+func (s *Subsystem) windowBackgroundColour(_ context.Context, _ *mcp.CallToolRequest, input WindowBackgroundColourInput) (*mcp.CallToolResult, WindowBackgroundColourOutput, resultFailure) {
 	r := s.core.Action("window.setBackgroundColour").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetBackgroundColour{
 			Name: input.Name, Red: input.Red, Green: input.Green, Blue: input.Blue, Alpha: input.Alpha,
@@ -502,7 +502,7 @@ type WindowFullscreenOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) windowFullscreen(_ context.Context, _ *mcp.CallToolRequest, input WindowFullscreenInput) (*mcp.CallToolResult, WindowFullscreenOutput, error) {
+func (s *Subsystem) windowFullscreen(_ context.Context, _ *mcp.CallToolRequest, input WindowFullscreenInput) (*mcp.CallToolResult, WindowFullscreenOutput, resultFailure) {
 	r := s.core.Action("window.fullscreen").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskFullscreen{Name: input.Name, Fullscreen: input.Fullscreen}},
 	))
@@ -525,7 +525,7 @@ type WindowZoomSetOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) windowZoomSet(_ context.Context, _ *mcp.CallToolRequest, input WindowZoomSetInput) (*mcp.CallToolResult, WindowZoomSetOutput, error) {
+func (s *Subsystem) windowZoomSet(_ context.Context, _ *mcp.CallToolRequest, input WindowZoomSetInput) (*mcp.CallToolResult, WindowZoomSetOutput, resultFailure) {
 	r := s.core.Action("window.setZoom").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetZoom{Name: input.Name, Magnification: input.Magnification}},
 	))
@@ -547,7 +547,7 @@ type WindowZoomInOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) windowZoomIn(_ context.Context, _ *mcp.CallToolRequest, input WindowZoomInInput) (*mcp.CallToolResult, WindowZoomInOutput, error) {
+func (s *Subsystem) windowZoomIn(_ context.Context, _ *mcp.CallToolRequest, input WindowZoomInInput) (*mcp.CallToolResult, WindowZoomInOutput, resultFailure) {
 	r := s.core.Action("window.zoomIn").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskZoomIn{Name: input.Name}},
 	))
@@ -569,7 +569,7 @@ type WindowZoomOutOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) windowZoomOut(_ context.Context, _ *mcp.CallToolRequest, input WindowZoomOutInput) (*mcp.CallToolResult, WindowZoomOutOutput, error) {
+func (s *Subsystem) windowZoomOut(_ context.Context, _ *mcp.CallToolRequest, input WindowZoomOutInput) (*mcp.CallToolResult, WindowZoomOutOutput, resultFailure) {
 	r := s.core.Action("window.zoomOut").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskZoomOut{Name: input.Name}},
 	))
@@ -591,7 +591,7 @@ type WindowZoomResetOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) windowZoomReset(_ context.Context, _ *mcp.CallToolRequest, input WindowZoomResetInput) (*mcp.CallToolResult, WindowZoomResetOutput, error) {
+func (s *Subsystem) windowZoomReset(_ context.Context, _ *mcp.CallToolRequest, input WindowZoomResetInput) (*mcp.CallToolResult, WindowZoomResetOutput, resultFailure) {
 	r := s.core.Action("window.zoomReset").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskZoomReset{Name: input.Name}},
 	))
@@ -614,7 +614,7 @@ type WindowURLSetOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) windowURLSet(_ context.Context, _ *mcp.CallToolRequest, input WindowURLSetInput) (*mcp.CallToolResult, WindowURLSetOutput, error) {
+func (s *Subsystem) windowURLSet(_ context.Context, _ *mcp.CallToolRequest, input WindowURLSetInput) (*mcp.CallToolResult, WindowURLSetOutput, resultFailure) {
 	r := s.core.Action("window.setURL").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetURL{Name: input.Name, URL: input.URL}},
 	))
@@ -637,7 +637,7 @@ type WindowHTMLSetOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) windowHTMLSet(_ context.Context, _ *mcp.CallToolRequest, input WindowHTMLSetInput) (*mcp.CallToolResult, WindowHTMLSetOutput, error) {
+func (s *Subsystem) windowHTMLSet(_ context.Context, _ *mcp.CallToolRequest, input WindowHTMLSetInput) (*mcp.CallToolResult, WindowHTMLSetOutput, resultFailure) {
 	r := s.core.Action("window.setHTML").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetHTML{Name: input.Name, HTML: input.HTML}},
 	))
@@ -660,7 +660,7 @@ type WindowExecJSOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) windowExecJS(_ context.Context, _ *mcp.CallToolRequest, input WindowExecJSInput) (*mcp.CallToolResult, WindowExecJSOutput, error) {
+func (s *Subsystem) windowExecJS(_ context.Context, _ *mcp.CallToolRequest, input WindowExecJSInput) (*mcp.CallToolResult, WindowExecJSOutput, resultFailure) {
 	r := s.core.Action("window.execJS").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskExecJS{Name: input.Name, JS: input.JS}},
 	))
@@ -682,7 +682,7 @@ type WindowToggleFullscreenOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) windowToggleFullscreen(_ context.Context, _ *mcp.CallToolRequest, input WindowToggleFullscreenInput) (*mcp.CallToolResult, WindowToggleFullscreenOutput, error) {
+func (s *Subsystem) windowToggleFullscreen(_ context.Context, _ *mcp.CallToolRequest, input WindowToggleFullscreenInput) (*mcp.CallToolResult, WindowToggleFullscreenOutput, resultFailure) {
 	r := s.core.Action("window.toggleFullscreen").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskToggleFullscreen{Name: input.Name}},
 	))
@@ -704,7 +704,7 @@ type WindowToggleMaximiseOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) windowToggleMaximise(_ context.Context, _ *mcp.CallToolRequest, input WindowToggleMaximiseInput) (*mcp.CallToolResult, WindowToggleMaximiseOutput, error) {
+func (s *Subsystem) windowToggleMaximise(_ context.Context, _ *mcp.CallToolRequest, input WindowToggleMaximiseInput) (*mcp.CallToolResult, WindowToggleMaximiseOutput, resultFailure) {
 	r := s.core.Action("window.toggleMaximise").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskToggleMaximise{Name: input.Name}},
 	))
@@ -727,7 +727,7 @@ type WindowSetContentProtectionOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) windowSetContentProtection(_ context.Context, _ *mcp.CallToolRequest, input WindowSetContentProtectionInput) (*mcp.CallToolResult, WindowSetContentProtectionOutput, error) {
+func (s *Subsystem) windowSetContentProtection(_ context.Context, _ *mcp.CallToolRequest, input WindowSetContentProtectionInput) (*mcp.CallToolResult, WindowSetContentProtectionOutput, resultFailure) {
 	r := s.core.Action("window.setContentProtection").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetContentProtection{Name: input.Name, Protection: input.Protection}},
 	))
@@ -750,7 +750,7 @@ type WindowFlashOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) windowFlash(_ context.Context, _ *mcp.CallToolRequest, input WindowFlashInput) (*mcp.CallToolResult, WindowFlashOutput, error) {
+func (s *Subsystem) windowFlash(_ context.Context, _ *mcp.CallToolRequest, input WindowFlashInput) (*mcp.CallToolResult, WindowFlashOutput, resultFailure) {
 	r := s.core.Action("window.flash").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskFlash{Name: input.Name, Enabled: input.Enabled}},
 	))
@@ -772,7 +772,7 @@ type WindowPrintOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) windowPrint(_ context.Context, _ *mcp.CallToolRequest, input WindowPrintInput) (*mcp.CallToolResult, WindowPrintOutput, error) {
+func (s *Subsystem) windowPrint(_ context.Context, _ *mcp.CallToolRequest, input WindowPrintInput) (*mcp.CallToolResult, WindowPrintOutput, resultFailure) {
 	r := s.core.Action("window.print").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskPrint{Name: input.Name}},
 	))

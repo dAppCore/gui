@@ -11,7 +11,7 @@ type layoutResultWrapperCase struct {
 	name      string
 	action    string
 	zero      any
-	call      func(*Service) (any, error)
+	call      func(*Service) (any, resultFailure)
 	setupGood func(*core.T, *core.Core)
 	wantGood  func(*core.T, any)
 }
@@ -72,7 +72,7 @@ func TestDisplay_LayoutDelegationWrappers(t *core.T) {
 		{
 			name:   "DeleteLayout",
 			action: "window.deleteLayout",
-			call: func(svc *Service) error {
+			call: func(svc *Service) resultFailure {
 				return svc.DeleteLayout("development")
 			},
 			setupGood: func(t *core.T, c *core.Core) {
@@ -87,7 +87,7 @@ func TestDisplay_LayoutDelegationWrappers(t *core.T) {
 		{
 			name:   "TileWindows",
 			action: "window.tileWindows",
-			call: func(svc *Service) error {
+			call: func(svc *Service) resultFailure {
 				return svc.TileWindows(window.TileModeGrid, []string{"editor", "terminal"})
 			},
 			setupGood: func(t *core.T, c *core.Core) {
@@ -103,7 +103,7 @@ func TestDisplay_LayoutDelegationWrappers(t *core.T) {
 		{
 			name:   "SnapWindow",
 			action: "window.snapWindow",
-			call: func(svc *Service) error {
+			call: func(svc *Service) resultFailure {
 				return svc.SnapWindow("preview", window.SnapCenter)
 			},
 			setupGood: func(t *core.T, c *core.Core) {
@@ -119,7 +119,7 @@ func TestDisplay_LayoutDelegationWrappers(t *core.T) {
 		{
 			name:   "StackWindows",
 			action: "window.stackWindows",
-			call: func(svc *Service) error {
+			call: func(svc *Service) resultFailure {
 				return svc.StackWindows([]string{"editor", "preview"}, 24, 18)
 			},
 			setupGood: func(t *core.T, c *core.Core) {
@@ -136,7 +136,7 @@ func TestDisplay_LayoutDelegationWrappers(t *core.T) {
 		{
 			name:   "ApplyWorkflowLayout",
 			action: "window.applyWorkflow",
-			call: func(svc *Service) error {
+			call: func(svc *Service) resultFailure {
 				return svc.ApplyWorkflowLayout(window.WorkflowCoding)
 			},
 			setupGood: func(t *core.T, c *core.Core) {
@@ -160,7 +160,7 @@ func TestDisplay_LayoutDelegationWrappers(t *core.T) {
 		name:   "LayoutBesideEditor",
 		action: "window.layoutBesideEditor",
 		zero:   window.LayoutBesideEditorResult{},
-		call: func(svc *Service) (any, error) {
+		call: func(svc *Service) (any, resultFailure) {
 			return svc.LayoutBesideEditor("preview", "code", "right", 0.62)
 		},
 		setupGood: func(t *core.T, c *core.Core) {
@@ -200,7 +200,7 @@ func TestDisplay_LayoutDelegationWrappers(t *core.T) {
 		name:   "FindScreenSpace",
 		action: "window.findSpace",
 		zero:   window.ScreenSpace{},
-		call: func(svc *Service) (any, error) {
+		call: func(svc *Service) (any, resultFailure) {
 			return svc.FindScreenSpace("screen-1", 800, 600, 24)
 		},
 		setupGood: func(t *core.T, c *core.Core) {
@@ -238,7 +238,7 @@ func TestDisplay_LayoutDelegationWrappers(t *core.T) {
 		name:   "ArrangeWindowPair",
 		action: "window.arrangePair",
 		zero:   window.PairArrangement{},
-		call: func(svc *Service) (any, error) {
+		call: func(svc *Service) (any, resultFailure) {
 			return svc.ArrangeWindowPair("editor", "preview", "screen-1", 0.55)
 		},
 		setupGood: func(t *core.T, c *core.Core) {

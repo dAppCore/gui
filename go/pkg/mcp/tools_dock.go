@@ -16,7 +16,7 @@ type DockShowOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) dockShow(_ context.Context, _ *mcp.CallToolRequest, _ DockShowInput) (*mcp.CallToolResult, DockShowOutput, error) {
+func (s *Subsystem) dockShow(_ context.Context, _ *mcp.CallToolRequest, _ DockShowInput) (*mcp.CallToolResult, DockShowOutput, resultFailure) {
 	r := s.core.Action("dock.showIcon").Run(context.Background(), core.NewOptions())
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {
@@ -34,7 +34,7 @@ type DockHideOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) dockHide(_ context.Context, _ *mcp.CallToolRequest, _ DockHideInput) (*mcp.CallToolResult, DockHideOutput, error) {
+func (s *Subsystem) dockHide(_ context.Context, _ *mcp.CallToolRequest, _ DockHideInput) (*mcp.CallToolResult, DockHideOutput, resultFailure) {
 	r := s.core.Action("dock.hideIcon").Run(context.Background(), core.NewOptions())
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {
@@ -54,7 +54,7 @@ type DockBadgeOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) dockBadge(_ context.Context, _ *mcp.CallToolRequest, input DockBadgeInput) (*mcp.CallToolResult, DockBadgeOutput, error) {
+func (s *Subsystem) dockBadge(_ context.Context, _ *mcp.CallToolRequest, input DockBadgeInput) (*mcp.CallToolResult, DockBadgeOutput, resultFailure) {
 	r := s.core.Action("dock.setBadge").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: dock.TaskSetBadge{Label: input.Label}},
 	))
@@ -75,7 +75,7 @@ type DockRemoveBadgeOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) dockRemoveBadge(_ context.Context, _ *mcp.CallToolRequest, _ DockRemoveBadgeInput) (*mcp.CallToolResult, DockRemoveBadgeOutput, error) {
+func (s *Subsystem) dockRemoveBadge(_ context.Context, _ *mcp.CallToolRequest, _ DockRemoveBadgeInput) (*mcp.CallToolResult, DockRemoveBadgeOutput, resultFailure) {
 	r := s.core.Action("dock.removeBadge").Run(context.Background(), core.NewOptions())
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {
@@ -94,7 +94,7 @@ type DockInfoOutput struct {
 	Visible bool `json:"visible"`
 }
 
-func (s *Subsystem) dockInfo(_ context.Context, _ *mcp.CallToolRequest, _ DockInfoInput) (*mcp.CallToolResult, DockInfoOutput, error) {
+func (s *Subsystem) dockInfo(_ context.Context, _ *mcp.CallToolRequest, _ DockInfoInput) (*mcp.CallToolResult, DockInfoOutput, resultFailure) {
 	r := s.core.QUERY(dock.QueryVisible{})
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {
@@ -119,7 +119,7 @@ type DockSetProgressBarOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) dockSetProgressBar(_ context.Context, _ *mcp.CallToolRequest, input DockSetProgressBarInput) (*mcp.CallToolResult, DockSetProgressBarOutput, error) {
+func (s *Subsystem) dockSetProgressBar(_ context.Context, _ *mcp.CallToolRequest, input DockSetProgressBarInput) (*mcp.CallToolResult, DockSetProgressBarOutput, resultFailure) {
 	r := s.core.Action("dock.setProgressBar").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: dock.TaskSetProgressBar{Progress: input.Progress}},
 	))
@@ -142,7 +142,7 @@ type DockBounceOutput struct {
 	RequestID int `json:"requestId"`
 }
 
-func (s *Subsystem) dockBounce(_ context.Context, _ *mcp.CallToolRequest, input DockBounceInput) (*mcp.CallToolResult, DockBounceOutput, error) {
+func (s *Subsystem) dockBounce(_ context.Context, _ *mcp.CallToolRequest, input DockBounceInput) (*mcp.CallToolResult, DockBounceOutput, resultFailure) {
 	r := s.core.Action("dock.bounce").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: dock.TaskBounce{BounceType: input.BounceType}},
 	))
@@ -169,7 +169,7 @@ type DockStopBounceOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) dockStopBounce(_ context.Context, _ *mcp.CallToolRequest, input DockStopBounceInput) (*mcp.CallToolResult, DockStopBounceOutput, error) {
+func (s *Subsystem) dockStopBounce(_ context.Context, _ *mcp.CallToolRequest, input DockStopBounceInput) (*mcp.CallToolResult, DockStopBounceOutput, resultFailure) {
 	r := s.core.Action("dock.stopBounce").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: dock.TaskStopBounce{RequestID: input.RequestID}},
 	))

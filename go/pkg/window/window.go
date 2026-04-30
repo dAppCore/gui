@@ -85,7 +85,7 @@ func (m *Manager) SetDefaultHeight(height int) {
 
 // Open creates a window from compatibility options.
 // Use: manager.Open(window.WithName("main"), window.WithURL("/"), window.WithSize(1280, 800))
-func (m *Manager) Open(options ...WindowOption) (PlatformWindow, error) {
+func (m *Manager) Open(options ...WindowOption) (PlatformWindow, resultFailure) {
 	windowSpec, err := ApplyOptions(options...)
 	if err != nil {
 		return nil, core.E("window.Manager.Open", "failed to apply options", err)
@@ -94,7 +94,7 @@ func (m *Manager) Open(options ...WindowOption) (PlatformWindow, error) {
 }
 
 // Create creates a window from a Window descriptor.
-func (m *Manager) Create(w *Window) (PlatformWindow, error) {
+func (m *Manager) Create(w *Window) (PlatformWindow, resultFailure) {
 	if w.Name == "" {
 		w.Name = "main"
 	}

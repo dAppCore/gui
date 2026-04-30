@@ -3,16 +3,16 @@ package notification
 
 // Platform abstracts the native notification backend.
 type Platform interface {
-	Send(options NotificationOptions) error
-	RequestPermission() (bool, error)
-	CheckPermission() (bool, error)
-	RevokePermission() error
+	Send(options NotificationOptions) resultFailure
+	RequestPermission() (bool, resultFailure)
+	CheckPermission() (bool, resultFailure)
+	RevokePermission() resultFailure
 }
 
 // ClearPlatform is an optional extension for backends that can dismiss
 // notifications after they have been shown. An empty id means "clear all".
 type ClearPlatform interface {
-	Clear(id string) error
+	Clear(id string) resultFailure
 }
 
 // NotificationSeverity indicates the severity for dialog fallback.

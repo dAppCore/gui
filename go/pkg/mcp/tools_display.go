@@ -21,7 +21,7 @@ type SchemeResolveOutput struct {
 	Body        string `json:"body"`
 }
 
-func (s *Subsystem) schemeResolve(_ context.Context, _ *mcp.CallToolRequest, input SchemeResolveInput) (*mcp.CallToolResult, SchemeResolveOutput, error) {
+func (s *Subsystem) schemeResolve(_ context.Context, _ *mcp.CallToolRequest, input SchemeResolveInput) (*mcp.CallToolResult, SchemeResolveOutput, resultFailure) {
 	result := s.core.Action("display.resolveScheme").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "url", Value: input.URL},
 	))

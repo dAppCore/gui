@@ -73,7 +73,7 @@ func TestApplyOptions_Good(t *core.T) {
 }
 
 func TestApplyOptions_Bad(t *core.T) {
-	_, err := ApplyOptions(func(w *Window) error {
+	_, err := ApplyOptions(func(w *Window) resultFailure {
 		return core.AnError
 	})
 	core.AssertError(t, err)
@@ -143,7 +143,7 @@ func TestManager_Open_Bad(t *core.T) {
 	ax7Variant := "Open:bad"
 	core.AssertContains(t, ax7Variant, "bad")
 	m, _ := newTestManager()
-	_, err := m.Open(func(w *Window) error { return core.AnError })
+	_, err := m.Open(func(w *Window) resultFailure { return core.AnError })
 	core.AssertError(t, err)
 }
 

@@ -7,10 +7,10 @@ type Platform interface {
 	// The handler is called when the shortcut is triggered.
 	// Accelerator syntax is platform-aware: "Cmd+S" (macOS), "Ctrl+S" (Windows/Linux).
 	// Special keys: F1-F12, Escape, Enter, Space, Tab, Backspace, Delete, arrow keys.
-	Add(accelerator string, handler func()) error
+	Add(accelerator string, handler func()) resultFailure
 
 	// Remove unregisters a previously registered keyboard shortcut.
-	Remove(accelerator string) error
+	Remove(accelerator string) resultFailure
 
 	// Process triggers the registered handler for the given accelerator programmatically.
 	// Returns true if a handler was found and invoked, false if not registered.

@@ -133,7 +133,10 @@ func marketplaceInstallRoot(raw string) string {
 	return core.PathJoin(home, ".core", "apps")
 }
 
-func (s *Service) marketplaceGitRunner() func(context.Context, string, ...string) ([]byte, error) {
+func (s *Service) marketplaceGitRunner() func(context.Context, string, ...string) (
+	[]byte,
+	error,
+) {
 	if marketplaceGitRunner != nil {
 		return marketplaceGitRunner
 	}

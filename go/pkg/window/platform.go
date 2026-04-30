@@ -76,7 +76,7 @@ type PlatformWindow interface {
 
 	// Utilities
 	Flash(enabled bool)
-	Print() error
+	Print() resultFailure
 
 	// Events
 	OnWindowEvent(handler func(event WindowEvent))

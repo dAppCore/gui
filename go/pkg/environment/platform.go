@@ -6,7 +6,7 @@ type Platform interface {
 	IsDarkMode() bool
 	Info() EnvironmentInfo
 	AccentColour() string
-	OpenFileManager(path string, selectFile bool) error
+	OpenFileManager(path string, selectFile bool) resultFailure
 	HasFocusFollowsMouse() bool
 	OnThemeChange(handler func(isDark bool)) func() // returns cancel func
 }

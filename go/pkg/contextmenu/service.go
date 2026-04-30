@@ -18,7 +18,7 @@ type Service struct {
 	registeredMenus map[string]ContextMenuDef
 }
 
-func platformUnavailableError(op string) error {
+func platformUnavailableError(op string) resultFailure {
 	return core.E("contextmenu."+op, "platform backend unavailable", nil)
 }
 
@@ -118,7 +118,7 @@ func (s *Service) queryList() map[string]ContextMenuDef {
 	return result
 }
 
-func (s *Service) taskAdd(t TaskAdd) error {
+func (s *Service) taskAdd(t TaskAdd) resultFailure {
 	if s.platform == nil {
 		return platformUnavailableError("taskAdd")
 	}
@@ -146,7 +146,7 @@ func (s *Service) taskAdd(t TaskAdd) error {
 	return nil
 }
 
-func (s *Service) taskRemove(t TaskRemove) error {
+func (s *Service) taskRemove(t TaskRemove) resultFailure {
 	if s.platform == nil {
 		return platformUnavailableError("taskRemove")
 	}
@@ -165,7 +165,7 @@ func (s *Service) taskRemove(t TaskRemove) error {
 	return nil
 }
 
-func (s *Service) taskUpdate(t TaskUpdate) error {
+func (s *Service) taskUpdate(t TaskUpdate) resultFailure {
 	if s.platform == nil {
 		return platformUnavailableError("taskUpdate")
 	}
@@ -191,7 +191,7 @@ func (s *Service) taskUpdate(t TaskUpdate) error {
 	return nil
 }
 
-func (s *Service) taskDestroy(t TaskDestroy) error {
+func (s *Service) taskDestroy(t TaskDestroy) resultFailure {
 	if s.platform == nil {
 		return platformUnavailableError("taskDestroy")
 	}

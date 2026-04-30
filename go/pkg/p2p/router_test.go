@@ -8,16 +8,16 @@ import (
 
 type fakeDriver struct {
 	published    []Envelope
-	publishErr   error
-	subscribeErr error
+	publishErr   resultFailure
+	subscribeErr resultFailure
 }
 
-func (d *fakeDriver) Publish(_ context.Context, envelope Envelope) error {
+func (d *fakeDriver) Publish(_ context.Context, envelope Envelope) resultFailure {
 	d.published = append(d.published, envelope)
 	return d.publishErr
 }
 
-func (d *fakeDriver) Subscribe(_ context.Context, topic string, handler func(Envelope)) error {
+func (d *fakeDriver) Subscribe(_ context.Context, topic string, handler func(Envelope)) resultFailure {
 	if d.subscribeErr != nil {
 		return d.subscribeErr
 	}

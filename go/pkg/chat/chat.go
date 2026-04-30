@@ -88,7 +88,7 @@ func NewStreamRenderer(callbacks StreamCallbacks) *StreamRenderer {
 	}
 }
 
-func (r *StreamRenderer) Render(reader io.Reader) error {
+func (r *StreamRenderer) Render(reader io.Reader) resultFailure {
 	scanner := bufio.NewScanner(reader)
 	scanner.Buffer(make([]byte, 0, 4096), 1024*1024)
 
@@ -133,7 +133,7 @@ func (r *StreamRenderer) Render(reader io.Reader) error {
 	return nil
 }
 
-func (r *StreamRenderer) handleData(payload string) error {
+func (r *StreamRenderer) handleData(payload string) resultFailure {
 	if payload == "" {
 		return nil
 	}

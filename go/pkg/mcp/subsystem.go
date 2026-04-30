@@ -28,7 +28,7 @@ type ToolDescriptor struct {
 
 type toolRecord struct {
 	descriptor ToolDescriptor
-	call       func(context.Context, map[string]any) (string, error)
+	call       func(context.Context, map[string]any) (string, resultFailure)
 }
 
 // New(c) creates a display MCP subsystem backed by a Core instance.
@@ -110,7 +110,7 @@ func (s *Subsystem) ManifestText() string {
 }
 
 // CallTool executes a recorded GUI MCP tool directly by name.
-func (s *Subsystem) CallTool(ctx context.Context, name string, arguments map[string]any) (string, error) {
+func (s *Subsystem) CallTool(ctx context.Context, name string, arguments map[string]any) (string, resultFailure) {
 	s.mu.RLock()
 	record, ok := s.tools[name]
 	s.mu.RUnlock()
@@ -123,7 +123,12 @@ func (s *Subsystem) CallTool(ctx context.Context, name string, arguments map[str
 	return record.call(ctx, arguments)
 }
 
-func addTool[In, Out any](s *Subsystem, server *mcp.Server, tool *mcp.Tool, handler mcp.ToolHandlerFor[In, Out]) {
+func addTool[In, Out any](
+	s *Subsystem,
+	server *mcp.Server,
+	tool *mcp.Tool,
+	handler func(context.Context, *mcp.CallToolRequest, In) (*mcp.CallToolResult, Out, resultFailure),
+) {
 	if tool.InputSchema == nil {
 		tool.InputSchema = schemaForValue(new(In))
 		if tool.InputSchema == nil {
@@ -131,13 +136,19 @@ func addTool[In, Out any](s *Subsystem, server *mcp.Server, tool *mcp.Tool, hand
 		}
 	}
 
-	mcp.AddTool(server, tool, handler)
-	s.recordTool(tool, func(ctx context.Context, arguments map[string]any) (string, error) {
+	mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, input In) (*mcp.CallToolResult, Out, error) {
+		result, output, err := handler(ctx, req, input)
+		if err != nil {
+			return nil, output, err
+		}
+		return result, output, nil
+	})
+	s.recordTool(tool, func(ctx context.Context, arguments map[string]any) (string, resultFailure) {
 		var input In
 		if len(arguments) > 0 {
 			result := core.JSONUnmarshalString(core.JSONMarshalString(arguments), &input)
 			if !result.OK {
-				if err, ok := result.Value.(error); ok {
+				if err, ok := result.Value.(resultFailure); ok {
 					return "", err
 				}
 				return "", core.E("mcp.addTool", "failed to decode tool input", nil)
@@ -155,7 +166,7 @@ func addTool[In, Out any](s *Subsystem, server *mcp.Server, tool *mcp.Tool, hand
 	})
 }
 
-func (s *Subsystem) recordTool(tool *mcp.Tool, call func(context.Context, map[string]any) (string, error)) {
+func (s *Subsystem) recordTool(tool *mcp.Tool, call func(context.Context, map[string]any) (string, resultFailure)) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.tools[tool.Name] = toolRecord{

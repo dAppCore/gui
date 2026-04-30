@@ -12,7 +12,7 @@ type chatStore struct {
 	data map[string]map[string]string
 }
 
-func newChatStore(path string) (*chatStore, error) {
+func newChatStore(path string) (*chatStore, resultFailure) {
 	store := &chatStore{
 		path: path,
 		data: make(map[string]map[string]string),
@@ -39,7 +39,7 @@ func newChatStore(path string) (*chatStore, error) {
 	return store, nil
 }
 
-func (s *chatStore) set(group, key, value string) error {
+func (s *chatStore) set(group, key, value string) resultFailure {
 	if s == nil {
 		return core.NewError("chat store is nil")
 	}
@@ -57,7 +57,7 @@ func (s *chatStore) set(group, key, value string) error {
 	return s.persistLocked()
 }
 
-func (s *chatStore) get(group, key string) (string, error) {
+func (s *chatStore) get(group, key string) (string, resultFailure) {
 	if s == nil {
 		return "", core.NewError("chat store is nil")
 	}
@@ -69,7 +69,7 @@ func (s *chatStore) get(group, key string) (string, error) {
 	return "", core.NewError("not found")
 }
 
-func (s *chatStore) getAll(group string) (map[string]string, error) {
+func (s *chatStore) getAll(group string) (map[string]string, resultFailure) {
 	if s == nil {
 		return nil, core.NewError("chat store is nil")
 	}
@@ -82,7 +82,7 @@ func (s *chatStore) getAll(group string) (map[string]string, error) {
 	return copy, nil
 }
 
-func (s *chatStore) delete(group, key string) error {
+func (s *chatStore) delete(group, key string) resultFailure {
 	if s == nil {
 		return core.NewError("chat store is nil")
 	}
@@ -97,7 +97,7 @@ func (s *chatStore) delete(group, key string) error {
 	return s.persistLocked()
 }
 
-func (s *chatStore) persistLocked() error {
+func (s *chatStore) persistLocked() resultFailure {
 	if s.path == "" || s.path == ":memory:" {
 		return nil
 	}

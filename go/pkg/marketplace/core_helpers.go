@@ -6,7 +6,7 @@ import (
 	core "dappco.re/go"
 )
 
-func coreResultError(result core.Result, fallback string) error {
+func coreResultError(result core.Result, fallback string) resultFailure {
 	if result.OK {
 		return nil
 	}
@@ -19,19 +19,19 @@ func coreResultError(result core.Result, fallback string) error {
 	return core.NewError(fallback)
 }
 
-func coreMkdirAll(path string, mode core.FileMode) error {
+func coreMkdirAll(path string, mode core.FileMode) resultFailure {
 	return coreResultError(core.MkdirAll(path, mode), "failed to create directory")
 }
 
-func coreRemoveAll(path string) error {
+func coreRemoveAll(path string) resultFailure {
 	return coreResultError(core.RemoveAll(path), "failed to remove path")
 }
 
-func coreWriteFile(path string, data []byte, mode core.FileMode) error {
+func coreWriteFile(path string, data []byte, mode core.FileMode) resultFailure {
 	return coreResultError(core.WriteFile(path, data, mode), "failed to write file")
 }
 
-func coreReadFile(path string) ([]byte, error) {
+func coreReadFile(path string) ([]byte, resultFailure) {
 	result := core.ReadFile(path)
 	if !result.OK {
 		return nil, coreResultError(result, "failed to read file")
@@ -39,7 +39,7 @@ func coreReadFile(path string) ([]byte, error) {
 	return result.Value.([]byte), nil
 }
 
-func coreStat(path string) (core.FsFileInfo, error) {
+func coreStat(path string) (core.FsFileInfo, resultFailure) {
 	result := core.Stat(path)
 	if !result.OK {
 		return nil, coreResultError(result, "failed to stat path")
@@ -47,7 +47,7 @@ func coreStat(path string) (core.FsFileInfo, error) {
 	return result.Value.(core.FsFileInfo), nil
 }
 
-func pathAbs(path string) (string, error) {
+func pathAbs(path string) (string, resultFailure) {
 	result := core.PathAbs(path)
 	if !result.OK {
 		return "", coreResultError(result, "failed to make path absolute")
@@ -55,7 +55,7 @@ func pathAbs(path string) (string, error) {
 	return result.Value.(string), nil
 }
 
-func pathEvalSymlinks(path string) (string, error) {
+func pathEvalSymlinks(path string) (string, resultFailure) {
 	result := core.PathEvalSymlinks(path)
 	if !result.OK {
 		return "", coreResultError(result, "failed to resolve symlinks")
@@ -63,7 +63,7 @@ func pathEvalSymlinks(path string) (string, error) {
 	return result.Value.(string), nil
 }
 
-func pathRel(base, target string) (string, error) {
+func pathRel(base, target string) (string, resultFailure) {
 	result := core.PathRel(base, target)
 	if !result.OK {
 		return "", coreResultError(result, "failed to compare paths")
@@ -71,7 +71,7 @@ func pathRel(base, target string) (string, error) {
 	return result.Value.(string), nil
 }
 
-func jsonUnmarshal(data []byte, target any) error {
+func jsonUnmarshal(data []byte, target any) resultFailure {
 	return coreResultError(core.JSONUnmarshal(data, target), "failed to decode JSON")
 }
 

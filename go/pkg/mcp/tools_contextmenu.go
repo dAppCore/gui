@@ -22,7 +22,7 @@ type ContextMenuAddOutput struct {
 	Success bool `json:"success"`
 }
 
-func jsonBytesFromResult(op, message string, result core.Result) ([]byte, error) {
+func jsonBytesFromResult(op, message string, result core.Result) ([]byte, resultFailure) {
 	if !result.OK {
 		if err, ok := result.Value.(error); ok && err != nil {
 			return nil, core.E(op, message, err)
@@ -37,14 +37,14 @@ func jsonBytesFromResult(op, message string, result core.Result) ([]byte, error)
 	return data, nil
 }
 
-func resultError(result core.Result) error {
+func resultError(result core.Result) resultFailure {
 	if err, ok := result.Value.(error); ok && err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *Subsystem) contextMenuAdd(_ context.Context, _ *mcp.CallToolRequest, input ContextMenuAddInput) (*mcp.CallToolResult, ContextMenuAddOutput, error) {
+func (s *Subsystem) contextMenuAdd(_ context.Context, _ *mcp.CallToolRequest, input ContextMenuAddInput) (*mcp.CallToolResult, ContextMenuAddOutput, resultFailure) {
 	// Convert map[string]any to ContextMenuDef via JSON round-trip
 	menuJSON, err := jsonBytesFromResult("mcp.contextMenuAdd", "failed to marshal menu definition", core.JSONMarshal(input.Menu))
 	if err != nil {
@@ -77,7 +77,7 @@ type ContextMenuRemoveOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) contextMenuRemove(_ context.Context, _ *mcp.CallToolRequest, input ContextMenuRemoveInput) (*mcp.CallToolResult, ContextMenuRemoveOutput, error) {
+func (s *Subsystem) contextMenuRemove(_ context.Context, _ *mcp.CallToolRequest, input ContextMenuRemoveInput) (*mcp.CallToolResult, ContextMenuRemoveOutput, resultFailure) {
 	r := s.core.Action("contextmenu.remove").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: contextmenu.TaskRemove{Name: input.Name}},
 	))
@@ -99,7 +99,7 @@ type ContextMenuGetOutput struct {
 	Menu map[string]any `json:"menu"`
 }
 
-func (s *Subsystem) contextMenuGet(_ context.Context, _ *mcp.CallToolRequest, input ContextMenuGetInput) (*mcp.CallToolResult, ContextMenuGetOutput, error) {
+func (s *Subsystem) contextMenuGet(_ context.Context, _ *mcp.CallToolRequest, input ContextMenuGetInput) (*mcp.CallToolResult, ContextMenuGetOutput, resultFailure) {
 	r := s.core.QUERY(contextmenu.QueryGet{Name: input.Name})
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {
@@ -135,7 +135,7 @@ type ContextMenuListOutput struct {
 	Menus map[string]any `json:"menus"`
 }
 
-func (s *Subsystem) contextMenuList(_ context.Context, _ *mcp.CallToolRequest, _ ContextMenuListInput) (*mcp.CallToolResult, ContextMenuListOutput, error) {
+func (s *Subsystem) contextMenuList(_ context.Context, _ *mcp.CallToolRequest, _ ContextMenuListInput) (*mcp.CallToolResult, ContextMenuListOutput, resultFailure) {
 	r := s.core.QUERY(contextmenu.QueryList{})
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {

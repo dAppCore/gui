@@ -46,7 +46,7 @@ func (s *Service) HandleIPCEvents(_ *core.Core, _ core.Message) core.Result {
 	return core.Result{OK: true}
 }
 
-func validatedOpenURL(raw string) (string, error) {
+func validatedOpenURL(raw string) (string, resultFailure) {
 	trimmed := core.Trim(raw)
 	if trimmed == "" {
 		return "", core.E("browser.openURL", "url is required", nil)
@@ -67,7 +67,7 @@ func validatedOpenURL(raw string) (string, error) {
 	return parsed.String(), nil
 }
 
-func validatedOpenFilePath(raw string) (string, error) {
+func validatedOpenFilePath(raw string) (string, resultFailure) {
 	trimmed := core.Trim(raw)
 	if trimmed == "" {
 		return "", core.E("browser.openFile", "path is required", nil)

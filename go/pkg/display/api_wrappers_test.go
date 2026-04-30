@@ -13,7 +13,7 @@ import (
 type errorOnlyWrapperCase struct {
 	name      string
 	action    string
-	call      func(*Service) error
+	call      func(*Service) resultFailure
 	setupGood func(*core.T, *core.Core)
 }
 
@@ -56,7 +56,7 @@ func TestDisplayAPI_TrayWrappers(t *core.T) {
 		{
 			name:   "SetTrayTooltip",
 			action: "systray.setTooltip",
-			call: func(svc *Service) error {
+			call: func(svc *Service) resultFailure {
 				return svc.SetTrayTooltip("Helper tooltip")
 			},
 			setupGood: func(t *core.T, c *core.Core) {
@@ -71,7 +71,7 @@ func TestDisplayAPI_TrayWrappers(t *core.T) {
 		{
 			name:   "SetTrayLabel",
 			action: "systray.setLabel",
-			call: func(svc *Service) error {
+			call: func(svc *Service) resultFailure {
 				return svc.SetTrayLabel("Launcher")
 			},
 			setupGood: func(t *core.T, c *core.Core) {
@@ -86,7 +86,7 @@ func TestDisplayAPI_TrayWrappers(t *core.T) {
 		{
 			name:   "SetTrayMenu",
 			action: "systray.setMenu",
-			call: func(svc *Service) error {
+			call: func(svc *Service) resultFailure {
 				return svc.SetTrayMenu([]TrayMenuItem{
 					{Label: "Open", ActionID: "open"},
 					{
@@ -111,7 +111,7 @@ func TestDisplayAPI_TrayWrappers(t *core.T) {
 		{
 			name:   "ShowTrayMessage",
 			action: "systray.showMessage",
-			call: func(svc *Service) error {
+			call: func(svc *Service) resultFailure {
 				return svc.ShowTrayMessage("Status", "Task complete")
 			},
 			setupGood: func(t *core.T, c *core.Core) {
@@ -138,7 +138,7 @@ func TestDisplayAPI_ClipboardWrappers(t *core.T) {
 		runErrorOnlyWrapperCase(t, errorOnlyWrapperCase{
 			name:   "ClearClipboard",
 			action: "clipboard.clear",
-			call: func(svc *Service) error {
+			call: func(svc *Service) resultFailure {
 				return svc.ClearClipboard()
 			},
 			setupGood: func(t *core.T, c *core.Core) {
@@ -204,7 +204,7 @@ func TestDisplayAPI_NotificationWrappers(t *core.T) {
 		{
 			name:   "ShowNotification",
 			action: "notification.send",
-			call: func(svc *Service) error {
+			call: func(svc *Service) resultFailure {
 				return svc.ShowNotification(NotificationOptions{
 					ID:       "alert-1",
 					Title:    "Deploy",
@@ -229,7 +229,7 @@ func TestDisplayAPI_NotificationWrappers(t *core.T) {
 		{
 			name:   "ShowInfoNotification",
 			action: "notification.send",
-			call: func(svc *Service) error {
+			call: func(svc *Service) resultFailure {
 				return svc.ShowInfoNotification("Info", "Ready")
 			},
 			setupGood: func(t *core.T, c *core.Core) {
@@ -247,7 +247,7 @@ func TestDisplayAPI_NotificationWrappers(t *core.T) {
 		{
 			name:   "ShowWarningNotification",
 			action: "notification.send",
-			call: func(svc *Service) error {
+			call: func(svc *Service) resultFailure {
 				return svc.ShowWarningNotification("Warn", "Careful")
 			},
 			setupGood: func(t *core.T, c *core.Core) {
@@ -266,7 +266,7 @@ func TestDisplayAPI_NotificationWrappers(t *core.T) {
 		{
 			name:   "ShowErrorNotification",
 			action: "notification.send",
-			call: func(svc *Service) error {
+			call: func(svc *Service) resultFailure {
 				return svc.ShowErrorNotification("Error", "Failed")
 			},
 			setupGood: func(t *core.T, c *core.Core) {
@@ -285,7 +285,7 @@ func TestDisplayAPI_NotificationWrappers(t *core.T) {
 		{
 			name:   "ClearNotifications",
 			action: "notification.clear",
-			call: func(svc *Service) error {
+			call: func(svc *Service) resultFailure {
 				return svc.ClearNotifications()
 			},
 			setupGood: func(t *core.T, c *core.Core) {
@@ -310,7 +310,7 @@ func TestDisplayAPI_ThemeWrapper(t *core.T) {
 	runErrorOnlyWrapperCase(t, errorOnlyWrapperCase{
 		name:   "SetTheme",
 		action: "environment.setTheme",
-		call: func(svc *Service) error {
+		call: func(svc *Service) resultFailure {
 			return svc.SetTheme("system")
 		},
 		setupGood: func(t *core.T, c *core.Core) {

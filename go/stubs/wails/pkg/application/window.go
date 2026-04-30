@@ -190,7 +190,7 @@ type Window interface {
 	// Screen and display
 
 	// screen, err := w.GetScreen()
-	GetScreen() (*Screen, error)
+	GetScreen() (*Screen, resultFailure)
 	// borders := w.GetBorderSizes()
 	GetBorderSizes() *LRTB
 
@@ -211,7 +211,7 @@ type Window interface {
 	// w.Flash(true)
 	Flash(enabled bool)
 	// err := w.Print()
-	Print() error
+	Print() resultFailure
 	// w.Error("something went wrong: %s", details)
 	Error(message string, args ...any)
 	// w.Info("window ready")

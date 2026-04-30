@@ -18,7 +18,7 @@ type TIMOptions struct {
 	DataDir   string
 	Runtime   ContainerRuntime
 	Detect    func() ContainerRuntime
-	Exec      func(context.Context, string, ...string) error
+	Exec      func(context.Context, string, ...string) resultFailure
 	Now       func() time.Time
 	Resources TIMResources
 }
@@ -57,7 +57,7 @@ func NewTIMManager(options TIMOptions) *TIMManager {
 		options.Detect = Detect
 	}
 	if options.Exec == nil {
-		options.Exec = func(ctx context.Context, name string, args ...string) error {
+		options.Exec = func(ctx context.Context, name string, args ...string) resultFailure {
 			cmd := commandContext(ctx, name, args...)
 			return cmd.Run()
 		}
@@ -85,7 +85,7 @@ func (m *TIMManager) State() TIMState {
 	return cloneTIMState(m.state)
 }
 
-func (m *TIMManager) Start(ctx context.Context) (TIMState, error) {
+func (m *TIMManager) Start(ctx context.Context) (TIMState, resultFailure) {
 	m.mu.Lock()
 	runtime := coalesceRuntime(m.options.Runtime, m.options.Detect())
 	m.state.Runtime = runtime
@@ -114,7 +114,7 @@ func (m *TIMManager) Start(ctx context.Context) (TIMState, error) {
 	return state, nil
 }
 
-func (m *TIMManager) Stop(ctx context.Context) (TIMState, error) {
+func (m *TIMManager) Stop(ctx context.Context) (TIMState, resultFailure) {
 	m.mu.Lock()
 	if m.state.Runtime == RuntimeNone {
 		m.state.Status = "stopped"

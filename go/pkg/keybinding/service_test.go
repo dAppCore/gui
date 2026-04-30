@@ -19,14 +19,14 @@ func newMockPlatform() *mockPlatform {
 	return &mockPlatform{handlers: make(map[string]func())}
 }
 
-func (m *mockPlatform) Add(accelerator string, handler func()) error {
+func (m *mockPlatform) Add(accelerator string, handler func()) resultFailure {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.handlers[accelerator] = handler
 	return nil
 }
 
-func (m *mockPlatform) Remove(accelerator string) error {
+func (m *mockPlatform) Remove(accelerator string) resultFailure {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	delete(m.handlers, accelerator)
@@ -111,7 +111,7 @@ func TestTaskAdd_Bad_Duplicate(t *core.T) {
 	// Second add with same accelerator should fail
 	r := taskRun(c, "keybinding.add", TaskAdd{Accelerator: "Ctrl+S", Description: "Save Again"})
 	core.AssertFalse(t, r.OK)
-	err, _ := r.Value.(error)
+	err, _ := r.Value.(resultFailure)
 	core.AssertErrorIs(t, err, ErrorAlreadyRegistered)
 }
 
@@ -241,7 +241,7 @@ func TestTaskProcess_Bad_NotRegistered(t *core.T) {
 
 	r := taskRun(c, "keybinding.process", TaskProcess{Accelerator: "Ctrl+P"})
 	core.AssertFalse(t, r.OK)
-	err, _ := r.Value.(error)
+	err, _ := r.Value.(resultFailure)
 	core.AssertErrorIs(t, err, ErrorNotRegistered)
 }
 
@@ -255,7 +255,7 @@ func TestTaskProcess_Ugly_RemovedBinding(t *core.T) {
 	// After remove, process should fail with ErrorNotRegistered
 	r := taskRun(c, "keybinding.process", TaskProcess{Accelerator: "Ctrl+P"})
 	core.AssertFalse(t, r.OK)
-	err, _ := r.Value.(error)
+	err, _ := r.Value.(resultFailure)
 	core.AssertErrorIs(t, err, ErrorNotRegistered)
 }
 
@@ -267,7 +267,7 @@ func TestTaskRemove_Bad_ErrorSentinel(t *core.T) {
 
 	r := taskRun(c, "keybinding.remove", TaskRemove{Accelerator: "Ctrl+X"})
 	core.AssertFalse(t, r.OK)
-	err, _ := r.Value.(error)
+	err, _ := r.Value.(resultFailure)
 	core.AssertErrorIs(t, err, ErrorNotRegistered)
 }
 

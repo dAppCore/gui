@@ -10,10 +10,10 @@ type Platform interface {
 	// The onItemClick callback is called with (menuName, actionID, data)
 	// when any item in the menu is clicked. The adapter creates per-item
 	// OnClick handlers that call this with the appropriate ActionID.
-	Add(name string, menu ContextMenuDef, onItemClick func(menuName, actionID, data string)) error
+	Add(name string, menu ContextMenuDef, onItemClick func(menuName, actionID, data string)) resultFailure
 
 	// Remove unregisters a context menu by name.
-	Remove(name string) error
+	Remove(name string) resultFailure
 
 	// Get returns a context menu definition by name, or false if not found.
 	Get(name string) (*ContextMenuDef, bool)

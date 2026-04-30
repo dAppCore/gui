@@ -130,7 +130,7 @@ func (lm *LayoutManager) load() {
 	lm.mu.Unlock()
 }
 
-func (lm *LayoutManager) save() error {
+func (lm *LayoutManager) save() resultFailure {
 	if lm.configDir == "" && lm.layoutPath == "" {
 		return nil
 	}
@@ -174,7 +174,7 @@ func (lm *LayoutManager) save() error {
 }
 
 // SaveLayout creates or updates a named layout.
-func (lm *LayoutManager) SaveLayout(name string, windowStates map[string]WindowState) error {
+func (lm *LayoutManager) SaveLayout(name string, windowStates map[string]WindowState) resultFailure {
 	if name == "" {
 		return core.E("window.LayoutManager.SaveLayout", "layout name cannot be empty", nil)
 	}

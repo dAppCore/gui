@@ -12,7 +12,7 @@ type mockPlatform struct {
 	isDark            bool
 	info              EnvironmentInfo
 	accentColour      string
-	openFMErr         error
+	openFMErr         resultFailure
 	openFMPath        string
 	openFMSelect      bool
 	focusFollowsMouse bool
@@ -24,7 +24,7 @@ func (m *mockPlatform) IsDarkMode() bool           { return m.isDark }
 func (m *mockPlatform) Info() EnvironmentInfo      { return m.info }
 func (m *mockPlatform) AccentColour() string       { return m.accentColour }
 func (m *mockPlatform) HasFocusFollowsMouse() bool { return m.focusFollowsMouse }
-func (m *mockPlatform) OpenFileManager(path string, selectFile bool) error {
+func (m *mockPlatform) OpenFileManager(path string, selectFile bool) resultFailure {
 	m.openFMPath = path
 	m.openFMSelect = selectFile
 	return m.openFMErr
@@ -115,7 +115,7 @@ func TestTaskOpenFileManager_Bad_InvalidPath(t *core.T) {
 		core.Option{Key: "task", Value: TaskOpenFileManager{Path: "../tmp", Select: false}},
 	))
 	core.AssertFalse(t, r.OK)
-	core.AssertContains(t, r.Value.(error).Error(), "path must be absolute")
+	core.AssertContains(t, r.Value.(resultFailure).Error(), "path must be absolute")
 }
 
 func TestThemeChange_ActionBroadcast_GoodCase(t *core.T) {
@@ -205,7 +205,7 @@ func TestQueryAccentColour_Ugly_NoService(t *core.T) {
 // --- OpenFileManager ---
 
 func TestTaskOpenFileManager_Bad_Error(t *core.T) {
-	// platform returns an error on open
+	// platform returns an resultFailure on open
 	openErr := core.E("test", "file manager unavailable", nil)
 	mock := &mockPlatform{openFMErr: openErr}
 	c := core.New(core.WithService(Register(mock)), core.WithServiceLock())
@@ -215,7 +215,7 @@ func TestTaskOpenFileManager_Bad_Error(t *core.T) {
 		core.Option{Key: "task", Value: TaskOpenFileManager{Path: "/missing", Select: false}},
 	))
 	core.AssertFalse(t, r.OK)
-	err, _ := r.Value.(error)
+	err, _ := r.Value.(resultFailure)
 	core.AssertErrorIs(t, err, openErr)
 }
 

@@ -16,7 +16,7 @@ type ThemeGetOutput struct {
 	Theme environment.ThemeInfo `json:"theme"`
 }
 
-func (s *Subsystem) themeGet(_ context.Context, _ *mcp.CallToolRequest, _ ThemeGetInput) (*mcp.CallToolResult, ThemeGetOutput, error) {
+func (s *Subsystem) themeGet(_ context.Context, _ *mcp.CallToolRequest, _ ThemeGetInput) (*mcp.CallToolResult, ThemeGetOutput, resultFailure) {
 	result := s.core.QUERY(environment.QueryTheme{})
 	if !result.OK {
 		if err, ok := result.Value.(error); ok {
@@ -38,7 +38,7 @@ type ThemeSystemOutput struct {
 	Info environment.EnvironmentInfo `json:"info"`
 }
 
-func (s *Subsystem) themeSystem(_ context.Context, _ *mcp.CallToolRequest, _ ThemeSystemInput) (*mcp.CallToolResult, ThemeSystemOutput, error) {
+func (s *Subsystem) themeSystem(_ context.Context, _ *mcp.CallToolRequest, _ ThemeSystemInput) (*mcp.CallToolResult, ThemeSystemOutput, resultFailure) {
 	result := s.core.QUERY(environment.QueryInfo{})
 	if !result.OK {
 		if err, ok := result.Value.(error); ok {
@@ -63,7 +63,7 @@ type ThemeSetOutput struct {
 	Theme environment.ThemeInfo `json:"theme"`
 }
 
-func (s *Subsystem) themeSet(_ context.Context, _ *mcp.CallToolRequest, input ThemeSetInput) (*mcp.CallToolResult, ThemeSetOutput, error) {
+func (s *Subsystem) themeSet(_ context.Context, _ *mcp.CallToolRequest, input ThemeSetInput) (*mcp.CallToolResult, ThemeSetOutput, resultFailure) {
 	result := s.core.Action("environment.setTheme").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: environment.TaskSetTheme{Theme: input.Theme}},
 	))

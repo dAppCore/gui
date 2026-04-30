@@ -5,7 +5,7 @@ import core "dappco.re/go"
 
 // SetMenu sets a dynamic menu on the tray from TrayMenuItem descriptors.
 // Use: _ = m.SetMenu([]TrayMenuItem{{Label: "Quit", ActionID: "quit"}})
-func (m *Manager) SetMenu(items []TrayMenuItem) error {
+func (m *Manager) SetMenu(items []TrayMenuItem) resultFailure {
 	if m.tray == nil {
 		return core.E("systray.SetMenu", "tray not initialised", nil)
 	}

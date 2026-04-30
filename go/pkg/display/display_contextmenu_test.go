@@ -18,14 +18,14 @@ func newWSContextMenuPlatform() *wsContextMenuPlatform {
 	}
 }
 
-func (m *wsContextMenuPlatform) Add(name string, menu contextmenu.ContextMenuDef, _ func(string, string, string)) error {
+func (m *wsContextMenuPlatform) Add(name string, menu contextmenu.ContextMenuDef, _ func(string, string, string)) resultFailure {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.menus[name] = menu
 	return nil
 }
 
-func (m *wsContextMenuPlatform) Remove(name string) error {
+func (m *wsContextMenuPlatform) Remove(name string) resultFailure {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	delete(m.menus, name)
@@ -70,7 +70,7 @@ func TestDisplay_handleWSMessage_ContextMenuAdd_MissingMenu(t *core.T) {
 	})
 
 	core.AssertFalse(t, result.OK)
-	err, ok := result.Value.(error)
+	err, ok := result.Value.(resultFailure)
 	core.RequireTrue(t, ok)
 	core.AssertContains(t, err.Error(), `missing required field "menu"`)
 	_, ok = platform.Get("menu")

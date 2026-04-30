@@ -13,7 +13,7 @@ type schemeResponse struct {
 	Body        string
 }
 
-func (s *Service) buildWindowSpec(t TaskOpenWindow) (*Window, error) {
+func (s *Service) buildWindowSpec(t TaskOpenWindow) (*Window, resultFailure) {
 	if t.Window != nil {
 		spec := *t.Window
 		return &spec, nil
@@ -21,7 +21,7 @@ func (s *Service) buildWindowSpec(t TaskOpenWindow) (*Window, error) {
 	return ApplyOptions(t.Options...)
 }
 
-func (s *Service) prepareWindowSpec(spec *Window) error {
+func (s *Service) prepareWindowSpec(spec *Window) resultFailure {
 	if spec == nil {
 		return core.E("window.prepareWindowSpec", "window spec is nil", nil)
 	}
@@ -66,7 +66,7 @@ func (s *Service) buildPreload(rawURL string) string {
 	return script
 }
 
-func (s *Service) resolveCoreScheme(rawURL string) (schemeResponse, bool, error) {
+func (s *Service) resolveCoreScheme(rawURL string) (schemeResponse, bool, resultFailure) {
 	result := s.Core().Action("display.resolveScheme").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "url", Value: rawURL},
 	))
@@ -87,7 +87,7 @@ func (s *Service) resolveCoreScheme(rawURL string) (schemeResponse, bool, error)
 	}
 }
 
-func (s *Service) applyWindowBounds(name string, bounds WindowBounds) error {
+func (s *Service) applyWindowBounds(name string, bounds WindowBounds) resultFailure {
 	pw, ok := s.manager.Get(name)
 	if !ok {
 		return core.E("window.applyWindowBounds", "window not found: "+name, nil)
@@ -216,7 +216,7 @@ func preferredEditorWindow(windows []WindowInfo, target string, explicit string)
 	return nil
 }
 
-func (s *Service) taskLayoutBesideEditor(task TaskLayoutBesideEditor) (LayoutBesideEditorResult, error) {
+func (s *Service) taskLayoutBesideEditor(task TaskLayoutBesideEditor) (LayoutBesideEditorResult, resultFailure) {
 	target := s.queryWindowByName(task.Name)
 	if target == nil {
 		return LayoutBesideEditorResult{}, core.E("window.taskLayoutBesideEditor", "window not found: "+task.Name, nil)
@@ -467,7 +467,7 @@ func (s *Service) taskScreenFindSpace(task TaskScreenFindSpace) ScreenSpace {
 	return best
 }
 
-func (s *Service) taskWindowArrangePair(task TaskWindowArrangePair) (PairArrangement, error) {
+func (s *Service) taskWindowArrangePair(task TaskWindowArrangePair) (PairArrangement, resultFailure) {
 	if task.Primary == "" || task.Secondary == "" {
 		return PairArrangement{}, core.E("window.taskWindowArrangePair", "primary and secondary windows are required", nil)
 	}

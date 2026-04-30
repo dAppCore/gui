@@ -18,7 +18,7 @@ type MarketplaceListOutput struct {
 	Manifests   []marketplace.Manifest `json:"manifests"`
 }
 
-func (s *Subsystem) marketplaceList(_ context.Context, _ *mcp.CallToolRequest, input MarketplaceListInput) (*mcp.CallToolResult, MarketplaceListOutput, error) {
+func (s *Subsystem) marketplaceList(_ context.Context, _ *mcp.CallToolRequest, input MarketplaceListInput) (*mcp.CallToolResult, MarketplaceListOutput, resultFailure) {
 	r := s.core.Action("display.marketplace.list").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "url", Value: input.URL},
 	))
@@ -43,7 +43,7 @@ type MarketplaceFetchInput struct {
 	URL string `json:"url"`
 }
 
-func (s *Subsystem) marketplaceFetch(_ context.Context, _ *mcp.CallToolRequest, input MarketplaceFetchInput) (*mcp.CallToolResult, marketplace.Manifest, error) {
+func (s *Subsystem) marketplaceFetch(_ context.Context, _ *mcp.CallToolRequest, input MarketplaceFetchInput) (*mcp.CallToolResult, marketplace.Manifest, resultFailure) {
 	r := s.core.Action("display.marketplace.fetch").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "url", Value: input.URL},
 	))
@@ -69,7 +69,7 @@ type MarketplaceVerifyOutput struct {
 	Digest   string               `json:"digest"`
 }
 
-func (s *Subsystem) marketplaceVerify(_ context.Context, _ *mcp.CallToolRequest, input MarketplaceVerifyInput) (*mcp.CallToolResult, MarketplaceVerifyOutput, error) {
+func (s *Subsystem) marketplaceVerify(_ context.Context, _ *mcp.CallToolRequest, input MarketplaceVerifyInput) (*mcp.CallToolResult, MarketplaceVerifyOutput, resultFailure) {
 	r := s.core.Action("display.marketplace.verify").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "url", Value: input.URL},
 	))
@@ -103,7 +103,7 @@ type MarketplaceInstallOutput struct {
 	InstallDir string               `json:"install_dir"`
 }
 
-func (s *Subsystem) marketplaceInstall(_ context.Context, _ *mcp.CallToolRequest, input MarketplaceInstallInput) (*mcp.CallToolResult, MarketplaceInstallOutput, error) {
+func (s *Subsystem) marketplaceInstall(_ context.Context, _ *mcp.CallToolRequest, input MarketplaceInstallInput) (*mcp.CallToolResult, MarketplaceInstallOutput, resultFailure) {
 	r := s.core.Action("display.marketplace.install").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "url", Value: input.URL},
 		core.Option{Key: "install_dir", Value: input.InstallDir},

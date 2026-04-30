@@ -766,7 +766,7 @@ func (w *WebviewWindow) HandleMessage(message string) {
 	}
 }
 
-func (w *WebviewWindow) startResize(border string) error {
+func (w *WebviewWindow) startResize(border string) resultFailure {
 	if w.impl == nil || w.isDestroyed() {
 		return nil
 	}
@@ -1193,7 +1193,7 @@ func (w *WebviewWindow) EnableSizeConstraints() {
 }
 
 // GetScreen returns the screen that the window is on
-func (w *WebviewWindow) GetScreen() (*Screen, error) {
+func (w *WebviewWindow) GetScreen() (*Screen, resultFailure) {
 	if w.impl == nil || w.isDestroyed() {
 		return nil, nil
 	}
@@ -1317,14 +1317,14 @@ func (w *WebviewWindow) emit(eventType events.WindowEventType) {
 	}
 }
 
-func (w *WebviewWindow) startDrag() error {
+func (w *WebviewWindow) startDrag() resultFailure {
 	if w.impl == nil || w.isDestroyed() {
 		return nil
 	}
 	return InvokeSyncWithError(w.impl.startDrag)
 }
 
-func (w *WebviewWindow) Print() error {
+func (w *WebviewWindow) Print() resultFailure {
 	if w.impl == nil || w.isDestroyed() {
 		return nil
 	}

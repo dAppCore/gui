@@ -6,7 +6,7 @@ import (
 	core "dappco.re/go"
 )
 
-func lookPath(file string) (string, error) {
+func lookPath(file string) (string, resultFailure) {
 	name := core.Trim(file)
 	if name == "" {
 		return "", core.NewError("executable name is empty")
@@ -57,7 +57,7 @@ func command(binary string, args ...string) *core.Cmd {
 	return commandContext(nil, binary, args...)
 }
 
-func coreWriteMode(path, content string, mode core.FileMode) error {
+func coreWriteMode(path, content string, mode core.FileMode) resultFailure {
 	result := core.WriteFile(path, []byte(content), mode)
 	if result.OK {
 		return nil

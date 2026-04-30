@@ -19,7 +19,7 @@ type KeybindingAddOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) keybindingAdd(_ context.Context, _ *mcp.CallToolRequest, input KeybindingAddInput) (*mcp.CallToolResult, KeybindingAddOutput, error) {
+func (s *Subsystem) keybindingAdd(_ context.Context, _ *mcp.CallToolRequest, input KeybindingAddInput) (*mcp.CallToolResult, KeybindingAddOutput, resultFailure) {
 	r := s.core.Action("keybinding.add").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: keybinding.TaskAdd{Accelerator: input.Accelerator, Description: input.Description}},
 	))
@@ -41,7 +41,7 @@ type KeybindingRemoveOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) keybindingRemove(_ context.Context, _ *mcp.CallToolRequest, input KeybindingRemoveInput) (*mcp.CallToolResult, KeybindingRemoveOutput, error) {
+func (s *Subsystem) keybindingRemove(_ context.Context, _ *mcp.CallToolRequest, input KeybindingRemoveInput) (*mcp.CallToolResult, KeybindingRemoveOutput, resultFailure) {
 	r := s.core.Action("keybinding.remove").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: keybinding.TaskRemove{Accelerator: input.Accelerator}},
 	))

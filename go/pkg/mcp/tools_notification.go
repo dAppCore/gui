@@ -20,7 +20,7 @@ type NotificationShowOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) notificationShow(_ context.Context, _ *mcp.CallToolRequest, input NotificationShowInput) (*mcp.CallToolResult, NotificationShowOutput, error) {
+func (s *Subsystem) notificationShow(_ context.Context, _ *mcp.CallToolRequest, input NotificationShowInput) (*mcp.CallToolResult, NotificationShowOutput, resultFailure) {
 	result := s.core.Action("notification.send").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: notification.TaskSend{Options: notification.NotificationOptions{
 			Title:    input.Title,
@@ -44,7 +44,7 @@ type NotificationPermissionRequestOutput struct {
 	Granted bool `json:"granted"`
 }
 
-func (s *Subsystem) notificationPermissionRequest(_ context.Context, _ *mcp.CallToolRequest, _ NotificationPermissionRequestInput) (*mcp.CallToolResult, NotificationPermissionRequestOutput, error) {
+func (s *Subsystem) notificationPermissionRequest(_ context.Context, _ *mcp.CallToolRequest, _ NotificationPermissionRequestInput) (*mcp.CallToolResult, NotificationPermissionRequestOutput, resultFailure) {
 	result := s.core.Action("notification.requestPermission").Run(context.Background(), core.NewOptions())
 	if !result.OK {
 		if err, ok := result.Value.(error); ok {
@@ -66,7 +66,7 @@ type NotificationPermissionCheckOutput struct {
 	Granted bool `json:"granted"`
 }
 
-func (s *Subsystem) notificationPermissionCheck(_ context.Context, _ *mcp.CallToolRequest, _ NotificationPermissionCheckInput) (*mcp.CallToolResult, NotificationPermissionCheckOutput, error) {
+func (s *Subsystem) notificationPermissionCheck(_ context.Context, _ *mcp.CallToolRequest, _ NotificationPermissionCheckInput) (*mcp.CallToolResult, NotificationPermissionCheckOutput, resultFailure) {
 	result := s.core.QUERY(notification.QueryPermission{})
 	if !result.OK {
 		if err, ok := result.Value.(error); ok {
@@ -91,7 +91,7 @@ type NotificationClearOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) notificationClear(_ context.Context, _ *mcp.CallToolRequest, input NotificationClearInput) (*mcp.CallToolResult, NotificationClearOutput, error) {
+func (s *Subsystem) notificationClear(_ context.Context, _ *mcp.CallToolRequest, input NotificationClearInput) (*mcp.CallToolResult, NotificationClearOutput, resultFailure) {
 	result := s.core.Action("notification.clear").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: notification.TaskClear{ID: input.ID}},
 	))
@@ -118,7 +118,7 @@ type NotificationWithActionsOutput struct {
 	Success bool `json:"success"`
 }
 
-func (s *Subsystem) notificationWithActions(_ context.Context, _ *mcp.CallToolRequest, input NotificationWithActionsInput) (*mcp.CallToolResult, NotificationWithActionsOutput, error) {
+func (s *Subsystem) notificationWithActions(_ context.Context, _ *mcp.CallToolRequest, input NotificationWithActionsInput) (*mcp.CallToolResult, NotificationWithActionsOutput, resultFailure) {
 	result := s.core.Action("notification.send").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: notification.TaskSend{Options: notification.NotificationOptions{
 			Title:      input.Title,

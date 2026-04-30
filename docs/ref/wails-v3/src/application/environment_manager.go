@@ -49,7 +49,7 @@ func (em *EnvironmentManager) GetAccentColor() string {
 }
 
 // OpenFileManager opens the file manager at the specified path, optionally selecting the file
-func (em *EnvironmentManager) OpenFileManager(path string, selectFile bool) error {
+func (em *EnvironmentManager) OpenFileManager(path string, selectFile bool) resultFailure {
 	return InvokeSyncWithError(func() error {
 		return fileexplorer.OpenFileManager(path, selectFile)
 	})

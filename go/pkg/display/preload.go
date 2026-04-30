@@ -15,7 +15,7 @@ type PreloadTarget interface {
 
 // InjectPreload injects the page preload script into a live webview.
 // Use: _ = display.InjectPreload(webview, "https://example.com")
-func (s *Service) InjectPreload(webview PreloadTarget, origin string) error {
+func (s *Service) InjectPreload(webview PreloadTarget, origin string) resultFailure {
 	script, err := s.BuildPreloadScript(origin)
 	if err != nil {
 		return err
@@ -30,13 +30,13 @@ func (s *Service) InjectPreload(webview PreloadTarget, origin string) error {
 // BuildPreloadScript returns the JavaScript bootstrap that CoreGUI injects
 // before page code runs.
 // Use: script, _ := display.BuildPreloadScript("https://example.com")
-func (s *Service) BuildPreloadScript(pageURL string) (string, error) {
+func (s *Service) BuildPreloadScript(pageURL string) (string, resultFailure) {
 	return s.BuildPreloadScriptWithTrustedOriginPolicy(pageURL, DefaultTrustedOriginPolicy())
 }
 
 // BuildPreloadScriptWithTrustedOriginPolicy builds the preload script using
 // the caller-provided scheme-origin allow-list.
-func (s *Service) BuildPreloadScriptWithTrustedOriginPolicy(pageURL string, policy TrustedOriginPolicy) (string, error) {
+func (s *Service) BuildPreloadScriptWithTrustedOriginPolicy(pageURL string, policy TrustedOriginPolicy) (string, resultFailure) {
 	trustedOrigin := trustedPreloadOrigin(pageURL, policy)
 	manifestAllowed := manifestBackedPreloadOriginAllowedByPolicy(pageURL, policy)
 	manifestBackedAllowed := manifestAllowed && s.manifestBackedPreloadOrigin(pageURL, policy)
@@ -1331,7 +1331,7 @@ func (s *Service) injectCoreMLShim(trustedOrigin bool) string {
 })();`
 }
 
-func (s *Service) injectAppPreloads(pageURL string) (string, error) {
+func (s *Service) injectAppPreloads(pageURL string) (string, resultFailure) {
 	loaded, err := s.loadManifestForOrigin(pageURL)
 	if err != nil || loaded == nil {
 		return "", err

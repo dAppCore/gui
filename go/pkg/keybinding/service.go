@@ -60,7 +60,7 @@ func (s *Service) queryList() []BindingInfo {
 	return result
 }
 
-func (s *Service) taskAdd(t TaskAdd) error {
+func (s *Service) taskAdd(t TaskAdd) resultFailure {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if _, exists := s.registeredBindings[t.Accelerator]; exists {
@@ -82,7 +82,7 @@ func (s *Service) taskAdd(t TaskAdd) error {
 	return nil
 }
 
-func (s *Service) taskRemove(t TaskRemove) error {
+func (s *Service) taskRemove(t TaskRemove) resultFailure {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if _, exists := s.registeredBindings[t.Accelerator]; !exists {
@@ -102,7 +102,7 @@ func (s *Service) taskRemove(t TaskRemove) error {
 // Broadcasts ActionTriggered if handled; returns ErrorNotRegistered if the accelerator is unknown.
 //
 //	c.Action("keybinding.process").Run(ctx, core.NewOptions(core.Option{Key:"task", Value:keybinding.TaskProcess{Accelerator:"Ctrl+S"}}))
-func (s *Service) taskProcess(t TaskProcess) error {
+func (s *Service) taskProcess(t TaskProcess) resultFailure {
 	s.mu.RLock()
 	_, exists := s.registeredBindings[t.Accelerator]
 	s.mu.RUnlock()

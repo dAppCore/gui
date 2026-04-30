@@ -14,29 +14,29 @@ type mockPlatform struct {
 	saveFilePath  string
 	openDirPath   string
 	messageButton string
-	openFileErr   error
-	saveFileErr   error
-	openDirErr    error
-	messageErr    error
+	openFileErr   resultFailure
+	saveFileErr   resultFailure
+	openDirErr    resultFailure
+	messageErr    resultFailure
 	lastOpenOpts  OpenFileOptions
 	lastSaveOpts  SaveFileOptions
 	lastDirOpts   OpenDirectoryOptions
 	lastMsgOpts   MessageDialogOptions
 }
 
-func (m *mockPlatform) OpenFile(opts OpenFileOptions) ([]string, error) {
+func (m *mockPlatform) OpenFile(opts OpenFileOptions) ([]string, resultFailure) {
 	m.lastOpenOpts = opts
 	return m.openFilePaths, m.openFileErr
 }
-func (m *mockPlatform) SaveFile(opts SaveFileOptions) (string, error) {
+func (m *mockPlatform) SaveFile(opts SaveFileOptions) (string, resultFailure) {
 	m.lastSaveOpts = opts
 	return m.saveFilePath, m.saveFileErr
 }
-func (m *mockPlatform) OpenDirectory(opts OpenDirectoryOptions) (string, error) {
+func (m *mockPlatform) OpenDirectory(opts OpenDirectoryOptions) (string, resultFailure) {
 	m.lastDirOpts = opts
 	return m.openDirPath, m.openDirErr
 }
-func (m *mockPlatform) MessageDialog(opts MessageDialogOptions) (string, error) {
+func (m *mockPlatform) MessageDialog(opts MessageDialogOptions) (string, resultFailure) {
 	m.lastMsgOpts = opts
 	return m.messageButton, m.messageErr
 }

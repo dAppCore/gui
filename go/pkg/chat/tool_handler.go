@@ -14,14 +14,30 @@ const mcpToolActionPrefix = "mcp.tool."
 type ToolExecutor interface {
 	Manifest() []guimcp.ToolDescriptor
 	ManifestText() string
-	CallTool(ctx context.Context, name string, arguments map[string]any) (string, error)
+	CallTool(ctx context.Context, name string, arguments map[string]any) (string, resultFailure)
 }
 
 // ToolCallHandler intercepts model-emitted tool calls and renders the tool
 // manifest that is injected into the system prompt.
 type ToolCallHandler interface {
-	OnToolCall(ctx context.Context, call ToolCall) (result any, err error)
+	OnToolCall(ctx context.Context, call ToolCall) (result any, err resultFailure)
 	BuildToolManifest() string
+}
+
+type adapter struct {
+	subsystem *guimcp.Subsystem
+}
+
+func (e adapter) Manifest() []guimcp.ToolDescriptor {
+	return e.subsystem.Manifest()
+}
+
+func (e adapter) ManifestText() string {
+	return e.subsystem.ManifestText()
+}
+
+func (e adapter) CallTool(ctx context.Context, name string, arguments map[string]any) (string, resultFailure) {
+	return e.subsystem.CallTool(ctx, name, arguments)
 }
 
 type mcpToolCallHandler struct {
@@ -37,7 +53,7 @@ func NewToolCallHandler(executor ToolExecutor) ToolCallHandler {
 
 type noopToolCallHandler struct{}
 
-func (noopToolCallHandler) OnToolCall(context.Context, ToolCall) (any, error) {
+func (noopToolCallHandler) OnToolCall(context.Context, ToolCall) (any, resultFailure) {
 	return nil, core.E("chat.tool_call", "tool execution unavailable", nil)
 }
 
@@ -45,7 +61,7 @@ func (noopToolCallHandler) BuildToolManifest() string {
 	return ""
 }
 
-func (h *mcpToolCallHandler) OnToolCall(ctx context.Context, call ToolCall) (any, error) {
+func (h *mcpToolCallHandler) OnToolCall(ctx context.Context, call ToolCall) (any, resultFailure) {
 	if h == nil || h.executor == nil {
 		return nil, core.E("chat.tool_call", "tool execution unavailable", nil)
 	}
@@ -142,7 +158,7 @@ func (e *actionToolExecutor) ManifestText() string {
 	return e.fallback.ManifestText()
 }
 
-func (e *actionToolExecutor) CallTool(ctx context.Context, name string, arguments map[string]any) (string, error) {
+func (e *actionToolExecutor) CallTool(ctx context.Context, name string, arguments map[string]any) (string, resultFailure) {
 	if e == nil || e.fallback == nil {
 		return "", core.E("chat.tool_call", "tool execution unavailable", nil)
 	}
@@ -163,7 +179,7 @@ type inlineToolCallEnvelope struct {
 	ToolCall *ToolCall `json:"tool_call"`
 }
 
-func parseInlineToolCall(content string) (ToolCall, bool, error) {
+func parseInlineToolCall(content string) (ToolCall, bool, resultFailure) {
 	trimmed := core.Trim(content)
 	if trimmed == "" || !core.Contains(trimmed, "tool_call") {
 		return ToolCall{}, false, nil
@@ -252,8 +268,8 @@ func jsonString(value any) string {
 	return "{}"
 }
 
-func resultError(result core.Result) error {
-	if err, ok := result.Value.(error); ok {
+func resultError(result core.Result) resultFailure {
+	if err, ok := result.Value.(resultFailure); ok {
 		return err
 	}
 	return core.E("chat.tool_call", "unexpected result type", nil)

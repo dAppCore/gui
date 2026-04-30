@@ -370,7 +370,7 @@ func normalizeWindowForLayout(pw PlatformWindow) {
 }
 
 // TileWindows arranges the named windows in the given mode across the screen area.
-func (m *Manager) TileWindows(mode TileMode, names []string, screenW, screenH int, origin ...int) error {
+func (m *Manager) TileWindows(mode TileMode, names []string, screenW, screenH int, origin ...int) resultFailure {
 	originX, originY := layoutOrigin(origin)
 	windows := make([]PlatformWindow, 0, len(names))
 	for _, name := range names {
@@ -465,7 +465,7 @@ func (m *Manager) TileWindows(mode TileMode, names []string, screenW, screenH in
 }
 
 // SnapWindow snaps a window to a screen edge/corner/centre.
-func (m *Manager) SnapWindow(name string, pos SnapPosition, screenW, screenH int, origin ...int) error {
+func (m *Manager) SnapWindow(name string, pos SnapPosition, screenW, screenH int, origin ...int) resultFailure {
 	originX, originY := layoutOrigin(origin)
 	pw, ok := m.Get(name)
 	if !ok {
@@ -509,7 +509,7 @@ func (m *Manager) SnapWindow(name string, pos SnapPosition, screenW, screenH int
 }
 
 // StackWindows cascades windows with an offset.
-func (m *Manager) StackWindows(names []string, offsetX, offsetY int, origin ...int) error {
+func (m *Manager) StackWindows(names []string, offsetX, offsetY int, origin ...int) resultFailure {
 	originX, originY := layoutOrigin(origin)
 	for i, name := range names {
 		pw, ok := m.Get(name)
@@ -523,7 +523,7 @@ func (m *Manager) StackWindows(names []string, offsetX, offsetY int, origin ...i
 }
 
 // ApplyWorkflow arranges windows in a predefined workflow layout.
-func (m *Manager) ApplyWorkflow(workflow WorkflowLayout, names []string, screenW, screenH int, origin ...int) error {
+func (m *Manager) ApplyWorkflow(workflow WorkflowLayout, names []string, screenW, screenH int, origin ...int) resultFailure {
 	originX, originY := layoutOrigin(origin)
 	if len(names) == 0 {
 		return core.E("window.Manager.ApplyWorkflow", "no windows for workflow", nil)
