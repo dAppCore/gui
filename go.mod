@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	dappco.re/go/config v0.3.0
-	dappco.re/go/webview v0.8.0-alpha.1
+	dappco.re/go/webview v0.9.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/modelcontextprotocol/go-sdk v1.4.1
 	github.com/wailsapp/wails/v3 v3.0.0-alpha.74
