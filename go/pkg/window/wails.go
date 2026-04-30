@@ -211,7 +211,9 @@ func (ww *wailsWindow) SetVisibility(visible bool) {
 func (ww *wailsWindow) SetAlwaysOnTop(alwaysOnTop bool) { ww.w.SetAlwaysOnTop(alwaysOnTop) }
 func (ww *wailsWindow) SetOpacity(opacity float64) {
 	ww.opacity = opacity
-	ww.w.SetOpacity(opacity)
+	if setter, ok := any(ww.w).(interface{ SetOpacity(float64) }); ok {
+		setter.SetOpacity(opacity)
+	}
 }
 func (ww *wailsWindow) SetBounds(x, y, width, height int) {
 	ww.w.SetBounds(application.Rect{X: x, Y: y, Width: width, Height: height})
