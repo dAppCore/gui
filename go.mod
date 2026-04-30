@@ -13,9 +13,12 @@ require (
 )
 
 require (
-	dappco.re/go/core v0.8.0-alpha.1 // indirect
 	dappco.re/go/io v0.9.0 // indirect
 	dappco.re/go/log v0.9.0 // indirect
+	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
+	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
+	github.com/rogpeppe/go-internal v1.14.1 // indirect
+	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )
 
 replace github.com/wailsapp/wails/v3 => ./stubs/wails
