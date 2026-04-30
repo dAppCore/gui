@@ -2,7 +2,6 @@ package mcp
 
 import (
 	"context"
-	errors "dappco.re/go/gui/compat/errors"
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/webview"
@@ -66,7 +65,7 @@ func TestToolsWebview_webviewDevToolsOpen_Bad(t *core.T) {
 		core.RequireTrue(t, ok)
 		core.AssertEqual(t, "main", task.Window)
 		core.AssertEqual(t, "webview.devtoolsOpen", name)
-		return core.Result{Value: errors.New("devtools unavailable"), OK: false}
+		return core.Result{Value: core.NewError("devtools unavailable"), OK: false}
 	})
 
 	_, _, err := sub.webviewDevToolsOpen(context.Background(), nil, WebviewDevToolsOpenInput{Window: "main"})

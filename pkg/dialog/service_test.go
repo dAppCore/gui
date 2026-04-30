@@ -3,7 +3,6 @@ package dialog
 
 import (
 	"context"
-	strings "dappco.re/go/gui/compat/strings"
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/webview"
@@ -631,7 +630,7 @@ func TestService_promptScript_Ugly(t *core.T) {
 	core.AssertContains(t, script, "Line 1")
 	core.AssertContains(t, script, "Line 2")
 	core.AssertContains(t, script, "quoted")
-	core.AssertTrue(t, strings.Contains(script, "window.prompt("))
+	core.AssertTrue(t, core.Contains(script, "window.prompt("))
 }
 
 // AX7 generated source-matching smoke coverage.

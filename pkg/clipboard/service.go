@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 
 	core "dappco.re/go"
-	coreerr "dappco.re/go/log"
 )
 
 type Options struct{}
@@ -131,7 +130,7 @@ func clipboardImageData(opts core.Options) ([]byte, error) {
 	}
 	data, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {
-		return nil, coreerr.E("clipboard.imageData", "invalid base64 image data", err)
+		return nil, core.E("clipboard.imageData", "invalid base64 image data", err)
 	}
 	return data, nil
 }

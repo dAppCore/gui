@@ -1,16 +1,13 @@
 package application
 
 import (
-	fmt "dappco.re/go/gui/compat/fmt"
-	strings "dappco.re/go/gui/compat/strings"
 	"runtime"
 	"slices"
 	"sync"
 	"sync/atomic"
 	"unsafe"
 
-	json "dappco.re/go/gui/compat/json"
-
+	core "dappco.re/go"
 	"github.com/leaanthony/u"
 	"github.com/wailsapp/wails/v3/internal/assetserver"
 	"github.com/wailsapp/wails/v3/pkg/events"
@@ -281,7 +278,7 @@ func NewWindow(options WebviewWindowOptions) *WebviewWindow {
 	}
 
 	if options.Name == "" {
-		options.Name = fmt.Sprintf("window-%d", thisWindowID)
+		options.Name = core.Sprintf("window-%d", thisWindowID)
 	}
 
 	result := &WebviewWindow{
@@ -739,9 +736,9 @@ func (w *WebviewWindow) HandleMessage(message string) {
 				}
 			})
 		}
-	case strings.HasPrefix(message, "wails:resize:"):
+	case core.HasPrefix(message, "wails:resize:"):
 		if !w.IsFullscreen() {
-			sl := strings.Split(message, ":")
+			sl := core.Split(message, ":")
 			if len(sl) != 3 {
 				w.Error("unknown message returned from dispatcher: %s", message)
 				return
@@ -1218,7 +1215,7 @@ func (w *WebviewWindow) DispatchWailsEvent(event *CustomEvent) {
 	// Guard against race condition where event fires before runtime is initialized
 	// This can happen during page reload when WindowLoadFinished fires before
 	// the JavaScript runtime has mounted dispatchWailsEvent on window._wails
-	msg := fmt.Sprintf("if(window._wails&&window._wails.dispatchWailsEvent){window._wails.dispatchWailsEvent(%s);}", event.ToJSON())
+	msg := core.Sprintf("if(window._wails&&window._wails.dispatchWailsEvent){window._wails.dispatchWailsEvent(%s);}", event.ToJSON())
 	w.ExecJS(msg)
 }
 
@@ -1509,13 +1506,13 @@ func (w *WebviewWindow) InitiateFrontendDropProcessing(filenames []string, x int
 		return
 	}
 
-	filenamesJSON, err := json.Marshal(filenames)
+	filenamesJSON, err := jsonMarshal(filenames)
 	if err != nil {
 		w.Error("Error marshalling filenames for drop processing: %s", err)
 		return
 	}
 
-	jsCall := fmt.Sprintf(
+	jsCall := core.Sprintf(
 		"window._wails.handlePlatformFileDrop(%s, %d, %d);",
 		string(filenamesJSON),
 		x,
@@ -1580,7 +1577,7 @@ func (w *WebviewWindow) HandleDragOver(x int, y int) {
 	if impl, ok := w.impl.(interface{ execJSDragOver(x, y int) }); ok {
 		impl.execJSDragOver(x, y)
 	} else {
-		w.impl.execJS(fmt.Sprintf("window._wails.handleDragOver(%d,%d)", x, y))
+		w.impl.execJS(core.Sprintf("window._wails.handleDragOver(%d,%d)", x, y))
 	}
 }
 

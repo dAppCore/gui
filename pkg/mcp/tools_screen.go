@@ -7,7 +7,6 @@ import (
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/screen"
 	"dappco.re/go/gui/pkg/window"
-	coreerr "dappco.re/go/log"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -24,11 +23,11 @@ func (s *Subsystem) screenList(_ context.Context, _ *mcp.CallToolRequest, _ Scre
 		if e, ok := r.Value.(error); ok {
 			return nil, ScreenListOutput{}, e
 		}
-		return nil, ScreenListOutput{}, coreerr.E("mcp.screenList", "screen query failed", nil)
+		return nil, ScreenListOutput{}, core.E("mcp.screenList", "screen query failed", nil)
 	}
 	screens, ok := r.Value.([]screen.Screen)
 	if !ok {
-		return nil, ScreenListOutput{}, coreerr.E("mcp.screenList", "unexpected result type", nil)
+		return nil, ScreenListOutput{}, core.E("mcp.screenList", "unexpected result type", nil)
 	}
 	return nil, ScreenListOutput{Screens: screens}, nil
 }
@@ -48,11 +47,11 @@ func (s *Subsystem) screenGet(_ context.Context, _ *mcp.CallToolRequest, input S
 		if e, ok := r.Value.(error); ok {
 			return nil, ScreenGetOutput{}, e
 		}
-		return nil, ScreenGetOutput{}, coreerr.E("mcp.screenGet", "screen query failed", nil)
+		return nil, ScreenGetOutput{}, core.E("mcp.screenGet", "screen query failed", nil)
 	}
 	scr, ok := r.Value.(*screen.Screen)
 	if !ok {
-		return nil, ScreenGetOutput{}, coreerr.E("mcp.screenGet", "unexpected result type", nil)
+		return nil, ScreenGetOutput{}, core.E("mcp.screenGet", "unexpected result type", nil)
 	}
 	return nil, ScreenGetOutput{Screen: scr}, nil
 }
@@ -74,7 +73,7 @@ func (s *Subsystem) screenPrimary(_ context.Context, _ *mcp.CallToolRequest, _ S
 	}
 	scr, ok := r.Value.(*screen.Screen)
 	if !ok {
-		return nil, ScreenPrimaryOutput{}, coreerr.E("mcp.screenPrimary", "unexpected result type", nil)
+		return nil, ScreenPrimaryOutput{}, core.E("mcp.screenPrimary", "unexpected result type", nil)
 	}
 	return nil, ScreenPrimaryOutput{Screen: scr}, nil
 }
@@ -99,7 +98,7 @@ func (s *Subsystem) screenAtPoint(_ context.Context, _ *mcp.CallToolRequest, inp
 	}
 	scr, ok := r.Value.(*screen.Screen)
 	if !ok {
-		return nil, ScreenAtPointOutput{}, coreerr.E("mcp.screenAtPoint", "unexpected result type", nil)
+		return nil, ScreenAtPointOutput{}, core.E("mcp.screenAtPoint", "unexpected result type", nil)
 	}
 	return nil, ScreenAtPointOutput{Screen: scr}, nil
 }
@@ -121,7 +120,7 @@ func (s *Subsystem) screenWorkAreas(_ context.Context, _ *mcp.CallToolRequest, _
 	}
 	areas, ok := r.Value.([]screen.Rect)
 	if !ok {
-		return nil, ScreenWorkAreasOutput{}, coreerr.E("mcp.screenWorkAreas", "unexpected result type", nil)
+		return nil, ScreenWorkAreasOutput{}, core.E("mcp.screenWorkAreas", "unexpected result type", nil)
 	}
 	return nil, ScreenWorkAreasOutput{WorkAreas: areas}, nil
 }

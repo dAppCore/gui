@@ -3,11 +3,9 @@ package deno
 import (
 	"bufio" // AX-6-exception: streaming stdout framing for the long-lived Deno sidecar.
 	"context"
-	exec "dappco.re/go/gui/compat/exec" // AX-6-exception: long-lived interactive child process with pipes; core.Process is action-based.
-	os "dappco.re/go/gui/compat/os"     // AX-6-exception: sidecar inherits host env and compares os.ErrProcessDone.
-	"io"                                // AX-6-exception: stdin/stdout pipe interfaces from exec.Cmd.
-	"sync"                              // AX-6-exception: manager protects live process and pending RPC state across goroutines.
-	"syscall"                           // AX-6-exception: graceful sidecar shutdown sends SIGTERM.
+	"io"      // AX-6-exception: stdin/stdout pipe interfaces from exec.Cmd.
+	"sync"    // AX-6-exception: manager protects live process and pending RPC state across goroutines.
+	"syscall" // AX-6-exception: graceful sidecar shutdown sends SIGTERM.
 
 	core "dappco.re/go"
 )
@@ -39,7 +37,7 @@ type Event struct {
 type Manager struct {
 	options  Options
 	mu       sync.Mutex
-	cmd      *exec.Cmd
+	cmd      *core.Cmd
 	stdin    io.WriteCloser
 	ctx      context.Context
 	cancel   context.CancelFunc
@@ -69,9 +67,9 @@ func (m *Manager) Start(ctx context.Context) (Status, error) {
 	}
 
 	sidecarCtx, cancel := context.WithCancel(ctx)
-	cmd := exec.CommandContext(sidecarCtx, m.options.Binary, m.options.Args...)
+	cmd := commandContext(sidecarCtx, m.options.Binary, m.options.Args...)
 	cmd.Dir = m.options.Dir
-	cmd.Env = append(os.Environ(), m.options.Env...)
+	cmd.Env = append(core.Environ(), m.options.Env...)
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
@@ -107,7 +105,7 @@ func (m *Manager) Stop(context.Context) (Status, error) {
 	done := m.readDone
 	cancel := m.cancel
 	err := cmd.Process.Signal(syscall.SIGTERM)
-	if err != nil && !core.Is(err, os.ErrProcessDone) {
+	if err != nil && !isProcessDone(err) {
 		status := m.statusLocked()
 		m.mu.Unlock()
 		return status, err

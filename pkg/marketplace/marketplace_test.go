@@ -6,9 +6,6 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	core "dappco.re/go"
-	filepath "dappco.re/go/gui/compat/filepath"
-	os "dappco.re/go/gui/compat/os"
-	strings "dappco.re/go/gui/compat/strings"
 	"encoding/base64"
 	"encoding/hex"
 	"gopkg.in/yaml.v3"
@@ -83,7 +80,7 @@ func TestMarketplace_FetchManifest_Ugly(t *core.T) {
 
 	t.Run("size limit", func(t *core.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-			_, _ = w.Write([]byte("name: " + strings.Repeat("x", maxManifestBytes)))
+			_, _ = w.Write([]byte("name: " + repeatString("x", maxManifestBytes)))
 		}))
 		t.Cleanup(server.Close)
 
@@ -115,7 +112,7 @@ func TestMarketplace_List_Ugly(t *core.T) {
 	ax7Variant := "List:ugly"
 	core.AssertContains(t, ax7Variant, "ugly")
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		_, _ = w.Write([]byte(strings.Repeat("a", maxManifestBytes+1)))
+		_, _ = w.Write([]byte(repeatString("a", maxManifestBytes+1)))
 	}))
 	t.Cleanup(server.Close)
 
@@ -191,11 +188,11 @@ func TestMarketplace_Install_Good(t *core.T) {
 	ax7Variant := "Install:good"
 	core.AssertContains(t, ax7Variant, "good")
 	scriptDir := t.TempDir()
-	logFile := filepath.Join(scriptDir, "git.log")
+	logFile := core.PathJoin(scriptDir, "git.log")
 	targetRoot := t.TempDir()
-	scriptPath := filepath.Join(scriptDir, "git")
+	scriptPath := core.PathJoin(scriptDir, "git")
 	script := "#!/bin/sh\nprintf '%s\\n' \"$@\" > " + shellQuote(logFile) + "\nlast=''\nfor arg in \"$@\"; do last=\"$arg\"; done\nmkdir -p \"$last\"\nexit 0\n"
-	core.RequireNoError(t, os.WriteFile(scriptPath, []byte(script), 0o755))
+	core.RequireNoError(t, coreWriteFile(scriptPath, []byte(script), 0o755))
 
 	installer := Installer{
 		GitBinary:  scriptPath,
@@ -209,20 +206,20 @@ func TestMarketplace_Install_Good(t *core.T) {
 		Ref:        "main",
 	}))
 	core.RequireNoError(t, err)
-	resolvedRoot, err := filepath.EvalSymlinks(targetRoot)
+	resolvedRoot, err := pathEvalSymlinks(targetRoot)
 	core.RequireNoError(t, err)
-	core.AssertEqual(t, filepath.Join(resolvedRoot, "core-ui"), targetDir)
-	_, err = os.Stat(targetDir)
+	core.AssertEqual(t, core.PathJoin(resolvedRoot, "core-ui"), targetDir)
+	_, err = coreStat(targetDir)
 	core.RequireNoError(t, err)
 
-	contents, err := os.ReadFile(logFile)
+	contents, err := coreReadFile(logFile)
 	core.RequireNoError(t, err)
 	core.AssertContains(t, string(contents), "clone")
 	core.AssertContains(t, string(contents), "--branch")
 	core.AssertContains(t, string(contents), "main")
 	core.AssertContains(t, string(contents), "--")
 
-	installedManifest, err := os.ReadFile(filepath.Join(targetDir, ".core", "marketplace.yaml"))
+	installedManifest, err := coreReadFile(core.PathJoin(targetDir, ".core", "marketplace.yaml"))
 	core.RequireNoError(t, err)
 	core.AssertContains(t, string(installedManifest), "name: Core UI")
 }
@@ -278,8 +275,8 @@ func TestMarketplace_Install_Ugly(t *core.T) {
 	ax7Variant := "Install:ugly"
 	core.AssertContains(t, ax7Variant, "ugly")
 	scriptDir := t.TempDir()
-	scriptPath := filepath.Join(scriptDir, "git")
-	core.RequireNoError(t, os.WriteFile(scriptPath, []byte("#!/bin/sh\nprintf '%s\\n' 'fatal: https://token:secret@example.com/repo.git' >&2\nexit 1\n"), 0o755))
+	scriptPath := core.PathJoin(scriptDir, "git")
+	core.RequireNoError(t, coreWriteFile(scriptPath, []byte("#!/bin/sh\nprintf '%s\\n' 'fatal: https://token:secret@example.com/repo.git' >&2\nexit 1\n"), 0o755))
 
 	installer := Installer{
 		GitBinary:  scriptPath,
@@ -298,10 +295,10 @@ func TestMarketplace_Install_Ugly(t *core.T) {
 
 func TestMarketplace_Install_CleansUpOnCloneFailure(t *core.T) {
 	scriptDir := t.TempDir()
-	scriptPath := filepath.Join(scriptDir, "git")
+	scriptPath := core.PathJoin(scriptDir, "git")
 	targetRoot := t.TempDir()
 	script := "#!/bin/sh\nlast=''\nfor arg in \"$@\"; do last=\"$arg\"; done\nmkdir -p \"$last\"\ntouch \"$last/partial\"\nexit 1\n"
-	core.RequireNoError(t, os.WriteFile(scriptPath, []byte(script), 0o755))
+	core.RequireNoError(t, coreWriteFile(scriptPath, []byte(script), 0o755))
 
 	installer := Installer{
 		GitBinary:  scriptPath,
@@ -317,10 +314,10 @@ func TestMarketplace_Install_CleansUpOnCloneFailure(t *core.T) {
 	_, err := installer.Install(context.Background(), manifest)
 	core.AssertError(t, err)
 
-	targetDir := filepath.Join(targetRoot, "core-ui")
-	_, statErr := os.Stat(targetDir)
+	targetDir := core.PathJoin(targetRoot, "core-ui")
+	_, statErr := coreStat(targetDir)
 	core.AssertError(t, statErr)
-	core.AssertTrue(t, os.IsNotExist(statErr))
+	core.AssertTrue(t, core.IsNotExist(statErr))
 }
 
 func TestMarketplace_Verify_Good(t *core.T) {
@@ -559,14 +556,14 @@ func TestMarketplace_sanitizeCommandOutput_Ugly(t *core.T) {
 	// sanitizeCommandOutput
 	ax7Variant := "sanitizeCommandOutput:ugly"
 	core.AssertContains(t, ax7Variant, "ugly")
-	got := sanitizeCommandOutput([]byte(strings.Repeat("a", 1024)))
+	got := sanitizeCommandOutput([]byte(repeatString("a", 1024)))
 
 	core.AssertLen(t, got, 515)
-	core.AssertTrue(t, strings.HasSuffix(got, "..."))
+	core.AssertTrue(t, core.HasSuffix(got, "..."))
 }
 
 func shellQuote(value string) string {
-	return "'" + strings.ReplaceAll(value, "'", "'\\''") + "'"
+	return "'" + core.Replace(value, "'", "'\\''") + "'"
 }
 
 func assertSafeModuleName(t *core.T, value string) {

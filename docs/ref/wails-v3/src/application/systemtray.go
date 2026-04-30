@@ -1,7 +1,6 @@
 package application
 
 import (
-	errors "dappco.re/go/gui/compat/errors"
 	"runtime"
 	"sync"
 	"time"
@@ -189,7 +188,7 @@ func (s *SystemTray) HideWindow() {
 
 func (s *SystemTray) PositionWindow(window Window, offset int) error {
 	if s.impl == nil {
-		return errors.New("system tray not running")
+		return core.NewError("system tray not running")
 	}
 	return InvokeSyncWithError(func() error {
 		return s.impl.positionWindow(window, offset)

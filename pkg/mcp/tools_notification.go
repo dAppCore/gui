@@ -6,7 +6,6 @@ import (
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/notification"
-	coreerr "dappco.re/go/log"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -55,7 +54,7 @@ func (s *Subsystem) notificationPermissionRequest(_ context.Context, _ *mcp.Call
 	}
 	granted, ok := result.Value.(bool)
 	if !ok {
-		return nil, NotificationPermissionRequestOutput{}, coreerr.E("mcp.notificationPermissionRequest", "unexpected result type", nil)
+		return nil, NotificationPermissionRequestOutput{}, core.E("mcp.notificationPermissionRequest", "unexpected result type", nil)
 	}
 	return nil, NotificationPermissionRequestOutput{Granted: granted}, nil
 }
@@ -77,7 +76,7 @@ func (s *Subsystem) notificationPermissionCheck(_ context.Context, _ *mcp.CallTo
 	}
 	status, ok := result.Value.(notification.PermissionStatus)
 	if !ok {
-		return nil, NotificationPermissionCheckOutput{}, coreerr.E("mcp.notificationPermissionCheck", "unexpected result type", nil)
+		return nil, NotificationPermissionCheckOutput{}, core.E("mcp.notificationPermissionCheck", "unexpected result type", nil)
 	}
 	return nil, NotificationPermissionCheckOutput{Granted: status.Granted}, nil
 }

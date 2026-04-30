@@ -2,12 +2,11 @@ package chat
 
 import (
 	core "dappco.re/go"
-	strings "dappco.re/go/gui/compat/strings"
 	"time"
 )
 
 func TestStreamRenderer_Good_ParsesThinkingContentAndToolCalls(t *core.T) {
-	stream := strings.Join([]string{
+	stream := core.Join("\n", []string{
 		`data: {"id":"chatcmpl-1","choices":[{"delta":{"thinking":"Let me think"}}]}`,
 		"",
 		`data: {"id":"chatcmpl-1","choices":[{"delta":{"content":"Hello"}}]}`,
@@ -18,10 +17,10 @@ func TestStreamRenderer_Good_ParsesThinkingContentAndToolCalls(t *core.T) {
 		"",
 		`data: [DONE]`,
 		"",
-	}, "\n")
+	}...)
 
 	renderer := NewStreamRenderer(StreamCallbacks{})
-	core.RequireNoError(t, renderer.Render(strings.NewReader(stream)))
+	core.RequireNoError(t, renderer.Render(core.NewReader(stream)))
 
 	message := renderer.Message("msg-1", "lemer", testTime())
 	core.AssertNotNil(t, message.Thinking)

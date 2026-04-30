@@ -2,8 +2,6 @@ package display
 
 import (
 	"context"
-	os "dappco.re/go/gui/compat/os"
-	strings "dappco.re/go/gui/compat/strings"
 	"math"
 	"net/http"
 	"net/http/httptest"
@@ -141,8 +139,8 @@ func writeMenuConfig(t *core.T, showDevTools bool) string {
 
 	dir := t.TempDir()
 	cfgPath := core.JoinPath(dir, ".core", "gui", "config.yaml")
-	core.RequireNoError(t, os.MkdirAll(core.PathDir(cfgPath), 0o755))
-	core.RequireNoError(t, os.WriteFile(cfgPath, []byte(`
+	core.RequireNoError(t, coreMkdirAll(core.PathDir(cfgPath), 0o755))
+	core.RequireNoError(t, coreWriteFile(cfgPath, []byte(`
 menu:
   show_dev_tools: `+map[bool]string{true: "true", false: "false"}[showDevTools]+`
 `), 0o644))
@@ -332,7 +330,7 @@ func TestStorageTask_Bad(t *core.T) {
 	r := c.Action("display.storage.set").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "origin", Value: "core://settings"},
 		core.Option{Key: "bucket", Value: "localStorage"},
-		core.Option{Key: "key", Value: strings.Repeat("k", maxStorageKeyBytes+1)},
+		core.Option{Key: "key", Value: repeatString("k", maxStorageKeyBytes+1)},
 		core.Option{Key: "value", Value: "dark"},
 	))
 
@@ -1387,7 +1385,7 @@ func TestService_OnShutdown_ClosesEventManager(t *core.T) {
 	server := httptest.NewServer(http.HandlerFunc(em.HandleWebSocket))
 	t.Cleanup(server.Close)
 
-	wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
+	wsURL := "ws" + core.TrimPrefix(server.URL, "http")
 	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
 	core.RequireNoError(t, err)
 	defer func() { _ = conn.Close() }()
@@ -1411,8 +1409,8 @@ func TestLoadConfig_Good(t *core.T) {
 	// Create temp config file
 	dir := t.TempDir()
 	cfgPath := core.JoinPath(dir, ".core", "gui", "config.yaml")
-	core.RequireNoError(t, os.MkdirAll(core.PathDir(cfgPath), 0o755))
-	core.RequireNoError(t, os.WriteFile(cfgPath, []byte(`
+	core.RequireNoError(t, coreMkdirAll(core.PathDir(cfgPath), 0o755))
+	core.RequireNoError(t, coreWriteFile(cfgPath, []byte(`
 window:
   default_width: 1280
   default_height: 720
@@ -1464,7 +1462,7 @@ func TestHandleConfigTask_Persists_GoodCase(t *core.T) {
 	core.RequireTrue(t, r.OK)
 
 	// Verify file was written
-	data, err := os.ReadFile(cfgPath)
+	data, err := coreReadFile(cfgPath)
 	core.RequireNoError(t, err)
 	core.AssertContains(t, string(data), "default_width")
 }

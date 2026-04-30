@@ -2,13 +2,10 @@
 package window
 
 import (
-	"io/fs"
 	"sync"
 	"time"
 
 	core "dappco.re/go"
-	coreio "dappco.re/go/io"
-	coreerr "dappco.re/go/log"
 )
 
 const layoutFileEnv = "WINDOW_LAYOUT_FILE"
@@ -105,9 +102,9 @@ func (lm *LayoutManager) load() {
 	if lm.configDir == "" && lm.layoutPath == "" {
 		return
 	}
-	content, err := coreio.Local.Read(lm.filePath())
+	content, err := coreReadFile(lm.filePath())
 	if err != nil {
-		if core.Is(err, fs.ErrNotExist) {
+		if core.IsNotExist(err) {
 			return
 		}
 		core.Error(
@@ -118,7 +115,7 @@ func (lm *LayoutManager) load() {
 		return
 	}
 	loaded := make(map[string]Layout)
-	if result := core.JSONUnmarshalString(content, &loaded); !result.OK {
+	if result := core.JSONUnmarshal(content, &loaded); !result.OK {
 		if decodeErr, ok := result.Value.(error); ok {
 			core.Error(
 				"window layout load failed",
@@ -156,7 +153,7 @@ func (lm *LayoutManager) save() error {
 	}
 	data := result.Value.([]byte)
 	if dir := lm.dataDir(); dir != "" {
-		if err := coreio.Local.EnsureDir(dir); err != nil {
+		if err := coreMkdirAll(dir, 0o755); err != nil {
 			core.Error(
 				"window layout save failed",
 				"file_path", filePath,
@@ -165,7 +162,7 @@ func (lm *LayoutManager) save() error {
 			return core.E("window.LayoutManager.save", "failed to create window layout directory", err)
 		}
 	}
-	if err := coreio.Local.Write(filePath, string(data)); err != nil {
+	if err := coreWriteFile(filePath, data, 0o644); err != nil {
 		core.Error(
 			"window layout save failed",
 			"file_path", filePath,
@@ -179,7 +176,7 @@ func (lm *LayoutManager) save() error {
 // SaveLayout creates or updates a named layout.
 func (lm *LayoutManager) SaveLayout(name string, windowStates map[string]WindowState) error {
 	if name == "" {
-		return coreerr.E("window.LayoutManager.SaveLayout", "layout name cannot be empty", nil)
+		return core.E("window.LayoutManager.SaveLayout", "layout name cannot be empty", nil)
 	}
 	now := time.Now().UnixMilli()
 	lm.mu.Lock()

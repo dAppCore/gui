@@ -6,7 +6,6 @@ import (
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/internal/coreutil"
 	"dappco.re/go/gui/pkg/notification"
-	coreerr "dappco.re/go/log"
 )
 
 type Options struct{}
@@ -57,7 +56,7 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 				return core.Result{OK: true}
 			}
 			if fallbackErr, ok := fallback.Value.(error); ok {
-				return core.Result{Value: coreerr.E("systray.showMessage", "tray message failed and notification fallback failed", fallbackErr), OK: false}
+				return core.Result{Value: core.E("systray.showMessage", "tray message failed and notification fallback failed", fallbackErr), OK: false}
 			}
 			return core.Result{Value: err, OK: false}
 		}
@@ -77,7 +76,7 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 				return core.Result{OK: true}
 			}
 			if fallbackErr, ok := fallback.Value.(error); ok {
-				return core.Result{Value: coreerr.E("systray.showMessage", "tray message failed and notification fallback failed", fallbackErr), OK: false}
+				return core.Result{Value: core.E("systray.showMessage", "tray message failed and notification fallback failed", fallbackErr), OK: false}
 			}
 			return core.Result{Value: err, OK: false}
 		}

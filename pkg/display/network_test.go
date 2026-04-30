@@ -2,7 +2,6 @@ package display
 
 import (
 	core "dappco.re/go"
-	strings "dappco.re/go/gui/compat/strings"
 	"net"
 	"time"
 )
@@ -71,7 +70,7 @@ func TestNetwork_RenderNetworkPage_UglyCase(t *core.T) {
 	svc := &Service{}
 
 	body := svc.renderNetworkPage(NetworkState{
-		Hostname:   strings.Repeat("x", 128),
+		Hostname:   repeatString("x", 128),
 		ObservedAt: time.Unix(1, 0).UTC(),
 		Interfaces: []NetworkInterfaceState{
 			{Name: "\"quoted\"", Index: 99, MTU: 9, Addresses: []string{"<addr>"}, Up: false, Loopback: true},

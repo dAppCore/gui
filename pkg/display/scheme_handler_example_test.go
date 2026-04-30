@@ -1,7 +1,6 @@
 package display
 
 import (
-	fmt "dappco.re/go/gui/compat/fmt"
 	"net/url"
 
 	core "dappco.re/go"
@@ -20,7 +19,7 @@ func ExampleNewCoreSchemeHandler() {
 	parsedURL, _ := url.Parse("core://settings")
 	result := NewCoreSchemeHandler(c).Handle(parsedURL)
 
-	fmt.Println(result.OK, result.Value)
+	core.Println(result.OK, result.Value)
 	// Output: true settings-query
 }
 

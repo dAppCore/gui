@@ -5,7 +5,6 @@ import (
 	"context"
 
 	core "dappco.re/go"
-	coreerr "dappco.re/go/log"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -30,12 +29,12 @@ func (s *Subsystem) schemeResolve(_ context.Context, _ *mcp.CallToolRequest, inp
 		if err, ok := result.Value.(error); ok {
 			return nil, SchemeResolveOutput{}, err
 		}
-		return nil, SchemeResolveOutput{}, coreerr.E("mcp.schemeResolve", "display.resolveScheme failed", nil)
+		return nil, SchemeResolveOutput{}, core.E("mcp.schemeResolve", "display.resolveScheme failed", nil)
 	}
 
 	payload, ok := result.Value.(map[string]any)
 	if !ok {
-		return nil, SchemeResolveOutput{}, coreerr.E("mcp.schemeResolve", "unexpected result type", nil)
+		return nil, SchemeResolveOutput{}, core.E("mcp.schemeResolve", "unexpected result type", nil)
 	}
 
 	output := SchemeResolveOutput{

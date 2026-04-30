@@ -3,8 +3,6 @@ package window
 
 import (
 	core "dappco.re/go"
-	filepath "dappco.re/go/gui/compat/filepath"
-	os "dappco.re/go/gui/compat/os"
 )
 
 func newConfigTestWindowService(t *core.T) (*Service, *Manager) {
@@ -26,7 +24,7 @@ func TestServiceConfig_applyConfig_Good(t *core.T) {
 	core.AssertContains(t, ax7Variant, "good")
 	svc, mgr := newConfigTestWindowService(t)
 
-	stateFile := filepath.Join(t.TempDir(), "window-state.json")
+	stateFile := core.PathJoin(t.TempDir(), "window-state.json")
 	svc.applyConfig(map[string]any{
 		"default_width":  1440,
 		"default_height": 900,
@@ -45,7 +43,7 @@ func TestServiceConfig_applyConfig_Good(t *core.T) {
 	mgr.State().SetState("main", WindowState{Width: width, Height: height})
 	mgr.State().ForceSync()
 
-	content, err := os.ReadFile(stateFile)
+	content, err := coreReadFile(stateFile)
 	core.RequireNoError(t, err)
 	core.AssertContains(t, string(content), `"main"`)
 }

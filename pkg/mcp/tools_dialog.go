@@ -6,7 +6,6 @@ import (
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/dialog"
-	coreerr "dappco.re/go/log"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -45,7 +44,7 @@ func (s *Subsystem) dialogOpenFile(_ context.Context, _ *mcp.CallToolRequest, in
 	}
 	paths, ok := r.Value.([]string)
 	if !ok {
-		return nil, DialogOpenFileOutput{}, coreerr.E("mcp.dialogOpenFile", "unexpected result type", nil)
+		return nil, DialogOpenFileOutput{}, core.E("mcp.dialogOpenFile", "unexpected result type", nil)
 	}
 	return nil, DialogOpenFileOutput{Paths: paths}, nil
 }
@@ -81,7 +80,7 @@ func (s *Subsystem) dialogSaveFile(_ context.Context, _ *mcp.CallToolRequest, in
 	}
 	path, ok := r.Value.(string)
 	if !ok {
-		return nil, DialogSaveFileOutput{}, coreerr.E("mcp.dialogSaveFile", "unexpected result type", nil)
+		return nil, DialogSaveFileOutput{}, core.E("mcp.dialogSaveFile", "unexpected result type", nil)
 	}
 	return nil, DialogSaveFileOutput{Path: path}, nil
 }
@@ -113,7 +112,7 @@ func (s *Subsystem) dialogOpenDirectory(_ context.Context, _ *mcp.CallToolReques
 	}
 	path, ok := r.Value.(string)
 	if !ok {
-		return nil, DialogOpenDirectoryOutput{}, coreerr.E("mcp.dialogOpenDirectory", "unexpected result type", nil)
+		return nil, DialogOpenDirectoryOutput{}, core.E("mcp.dialogOpenDirectory", "unexpected result type", nil)
 	}
 	return nil, DialogOpenDirectoryOutput{Path: path}, nil
 }
@@ -145,7 +144,7 @@ func (s *Subsystem) dialogConfirm(_ context.Context, _ *mcp.CallToolRequest, inp
 	}
 	button, ok := r.Value.(string)
 	if !ok {
-		return nil, DialogConfirmOutput{}, coreerr.E("mcp.dialogConfirm", "unexpected result type", nil)
+		return nil, DialogConfirmOutput{}, core.E("mcp.dialogConfirm", "unexpected result type", nil)
 	}
 	return nil, DialogConfirmOutput{Button: button}, nil
 }
@@ -174,7 +173,7 @@ func (s *Subsystem) dialogMessage(_ context.Context, _ *mcp.CallToolRequest, inp
 	case "error":
 		dialogType = dialog.DialogError
 	default:
-		return nil, DialogMessageOutput{}, coreerr.E("mcp.dialogMessage", "invalid dialog type: "+input.Type, nil)
+		return nil, DialogMessageOutput{}, core.E("mcp.dialogMessage", "invalid dialog type: "+input.Type, nil)
 	}
 
 	r := s.core.Action("dialog.message").Run(context.Background(), core.NewOptions(
@@ -195,7 +194,7 @@ func (s *Subsystem) dialogMessage(_ context.Context, _ *mcp.CallToolRequest, inp
 	}
 	button, ok := r.Value.(string)
 	if !ok {
-		return nil, DialogMessageOutput{}, coreerr.E("mcp.dialogMessage", "unexpected result type", nil)
+		return nil, DialogMessageOutput{}, core.E("mcp.dialogMessage", "unexpected result type", nil)
 	}
 	return nil, DialogMessageOutput{Button: button}, nil
 }
@@ -228,7 +227,7 @@ func (s *Subsystem) dialogPrompt(_ context.Context, _ *mcp.CallToolRequest, inpu
 	}
 	result, ok := r.Value.(dialog.PromptResult)
 	if !ok {
-		return nil, DialogPromptOutput{}, coreerr.E("mcp.dialogPrompt", "unexpected result type", nil)
+		return nil, DialogPromptOutput{}, core.E("mcp.dialogPrompt", "unexpected result type", nil)
 	}
 	return nil, DialogPromptOutput{Value: result.Value, Confirmed: result.Confirmed}, nil
 }
@@ -260,7 +259,7 @@ func (s *Subsystem) dialogInfo(_ context.Context, _ *mcp.CallToolRequest, input 
 	}
 	button, ok := r.Value.(string)
 	if !ok {
-		return nil, DialogInfoOutput{}, coreerr.E("mcp.dialogInfo", "unexpected result type", nil)
+		return nil, DialogInfoOutput{}, core.E("mcp.dialogInfo", "unexpected result type", nil)
 	}
 	return nil, DialogInfoOutput{Button: button}, nil
 }
@@ -292,7 +291,7 @@ func (s *Subsystem) dialogWarning(_ context.Context, _ *mcp.CallToolRequest, inp
 	}
 	button, ok := r.Value.(string)
 	if !ok {
-		return nil, DialogWarningOutput{}, coreerr.E("mcp.dialogWarning", "unexpected result type", nil)
+		return nil, DialogWarningOutput{}, core.E("mcp.dialogWarning", "unexpected result type", nil)
 	}
 	return nil, DialogWarningOutput{Button: button}, nil
 }
@@ -324,7 +323,7 @@ func (s *Subsystem) dialogError(_ context.Context, _ *mcp.CallToolRequest, input
 	}
 	button, ok := r.Value.(string)
 	if !ok {
-		return nil, DialogErrorOutput{}, coreerr.E("mcp.dialogError", "unexpected result type", nil)
+		return nil, DialogErrorOutput{}, core.E("mcp.dialogError", "unexpected result type", nil)
 	}
 	return nil, DialogErrorOutput{Button: button}, nil
 }

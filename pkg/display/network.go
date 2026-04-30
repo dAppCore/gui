@@ -1,14 +1,12 @@
 package display
 
 import (
-	fmt "dappco.re/go/gui/compat/fmt"
-	os "dappco.re/go/gui/compat/os"
-	strings "dappco.re/go/gui/compat/strings"
 	"html"
 	"net"
 	"sort"
 	"time"
 
+	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/p2p"
 )
 
@@ -50,7 +48,7 @@ func (s *Service) networkState() NetworkState {
 	}
 
 	sort.Slice(interfaces, func(i, j int) bool {
-		return strings.ToLower(interfaces[i].Name) < strings.ToLower(interfaces[j].Name)
+		return core.Lower(interfaces[i].Name) < core.Lower(interfaces[j].Name)
 	})
 
 	for _, iface := range interfaces {
@@ -113,7 +111,7 @@ func (s *Service) p2pPeers() []NetworkPeerState {
 		}
 		sort.Slice(peerStates, func(i, j int) bool {
 			if peerStates[i].SeenAt.Equal(peerStates[j].SeenAt) {
-				return strings.ToLower(peerStates[i].ID) < strings.ToLower(peerStates[j].ID)
+				return core.Lower(peerStates[i].ID) < core.Lower(peerStates[j].ID)
 			}
 			return peerStates[i].SeenAt.After(peerStates[j].SeenAt)
 		})
@@ -124,7 +122,7 @@ func (s *Service) p2pPeers() []NetworkPeerState {
 }
 
 func (s *Service) renderNetworkPage(state NetworkState) string {
-	var builder strings.Builder
+	builder := core.NewBuilder()
 	builder.WriteString("<!doctype html><html><head><meta charset=\"utf-8\"><title>core://network</title><style>")
 	builder.WriteString("body{font:14px/1.5 ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;background:#07111f;color:#e2e8f0;margin:0}")
 	builder.WriteString("header{padding:20px;border-bottom:1px solid #203047;background:linear-gradient(180deg,#0f172a,#07111f)}")
@@ -144,9 +142,9 @@ func (s *Service) renderNetworkPage(state NetworkState) string {
 			builder.WriteString("<li class=\"iface\"><div class=\"name\">")
 			builder.WriteString(html.EscapeString(iface.Name))
 			builder.WriteString("</div><div class=\"meta\">Index ")
-			builder.WriteString(fmt.Sprintf("%d", iface.Index))
+			builder.WriteString(core.Sprintf("%d", iface.Index))
 			builder.WriteString(" · MTU ")
-			builder.WriteString(fmt.Sprintf("%d", iface.MTU))
+			builder.WriteString(core.Sprintf("%d", iface.MTU))
 			builder.WriteString(" · ")
 			if iface.Up {
 				builder.WriteString("up")
@@ -159,7 +157,7 @@ func (s *Service) renderNetworkPage(state NetworkState) string {
 			builder.WriteString("</div>")
 			if len(iface.Addresses) > 0 {
 				builder.WriteString("<pre>")
-				builder.WriteString(html.EscapeString(strings.Join(iface.Addresses, "\n")))
+				builder.WriteString(html.EscapeString(core.Join("\n", iface.Addresses...)))
 				builder.WriteString("</pre>")
 			}
 			builder.WriteString("</li>")
@@ -194,7 +192,7 @@ func (s *Service) renderNetworkPage(state NetworkState) string {
 }
 
 func (s *Service) renderNetworkInterfacePage(state NetworkState, iface NetworkInterfaceState) string {
-	var builder strings.Builder
+	builder := core.NewBuilder()
 	builder.WriteString("<!doctype html><html><head><meta charset=\"utf-8\"><title>core://network/")
 	builder.WriteString(html.EscapeString(iface.Name))
 	builder.WriteString("</title><style>")
@@ -210,9 +208,9 @@ func (s *Service) renderNetworkInterfacePage(state NetworkState, iface NetworkIn
 	builder.WriteString("</div></header><main><section><div class=\"name\">")
 	builder.WriteString(html.EscapeString(iface.Name))
 	builder.WriteString("</div><div class=\"meta\">Index ")
-	builder.WriteString(fmt.Sprintf("%d", iface.Index))
+	builder.WriteString(core.Sprintf("%d", iface.Index))
 	builder.WriteString(" · MTU ")
-	builder.WriteString(fmt.Sprintf("%d", iface.MTU))
+	builder.WriteString(core.Sprintf("%d", iface.MTU))
 	builder.WriteString(" · ")
 	if iface.Up {
 		builder.WriteString("up")
@@ -223,12 +221,12 @@ func (s *Service) renderNetworkInterfacePage(state NetworkState, iface NetworkIn
 		builder.WriteString(" · loopback")
 	}
 	builder.WriteString("</div><pre>")
-	builder.WriteString(html.EscapeString(strings.Join(iface.Addresses, "\n")))
+	builder.WriteString(html.EscapeString(core.Join("\n", iface.Addresses...)))
 	builder.WriteString("</pre><div class=\"meta\">Flags: ")
 	if len(iface.Flags) == 0 {
 		builder.WriteString("none")
 	} else {
-		builder.WriteString(html.EscapeString(strings.Join(iface.Flags, ", ")))
+		builder.WriteString(html.EscapeString(core.Join(", ", iface.Flags...)))
 	}
 	builder.WriteString("</div></section>")
 	if len(state.Peers) > 0 {
@@ -280,8 +278,8 @@ func interfaceFlags(flags net.Flags) []string {
 }
 
 func hostname() string {
-	name, err := os.Hostname()
-	if err != nil || strings.TrimSpace(name) == "" {
+	name, err := coreHostname()
+	if err != nil || core.Trim(name) == "" {
 		return "localhost"
 	}
 	return name

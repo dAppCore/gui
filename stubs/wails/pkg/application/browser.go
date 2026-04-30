@@ -1,6 +1,6 @@
 package application
 
-import strings "dappco.re/go/gui/compat/strings"
+import core "dappco.re/go"
 
 func newBrowserManager() *BrowserManager {
 	return &BrowserManager{}
@@ -11,7 +11,7 @@ func (bm *BrowserManager) Open(target string) error {
 		return nil
 	}
 
-	if strings.Contains(target, "://") || strings.HasPrefix(target, "mailto:") {
+	if core.Contains(target, "://") || core.HasPrefix(target, "mailto:") {
 		return bm.OpenURL(target)
 	}
 

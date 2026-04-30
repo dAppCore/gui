@@ -2,11 +2,9 @@ package display
 
 import (
 	"context"
-	strings "dappco.re/go/gui/compat/strings"
 	"net/url"
 
 	core "dappco.re/go"
-	coreerr "dappco.re/go/log"
 )
 
 type routeDispatchKind uint8
@@ -56,7 +54,7 @@ func (s *Service) SchemeHandler() RouteSchemeHandler {
 func (h coreSchemeHandler) Handle(rawURL *url.URL) core.Result {
 	if h.core == nil {
 		return core.Result{
-			Value: coreerr.E("display.coreSchemeHandler.Handle", "core runtime unavailable", nil),
+			Value: core.E("display.coreSchemeHandler.Handle", "core runtime unavailable", nil),
 			OK:    false,
 		}
 	}
@@ -83,12 +81,12 @@ func (h coreSchemeHandler) Handle(rawURL *url.URL) core.Result {
 			return result
 		}
 		return core.Result{
-			Value: coreerr.E("display.coreSchemeHandler.Handle", "query not handled: "+target, nil),
+			Value: core.E("display.coreSchemeHandler.Handle", "query not handled: "+target, nil),
 			OK:    false,
 		}
 	default:
 		return core.Result{
-			Value: coreerr.E("display.coreSchemeHandler.Handle", "unsupported dispatch kind", nil),
+			Value: core.E("display.coreSchemeHandler.Handle", "unsupported dispatch kind", nil),
 			OK:    false,
 		}
 	}
@@ -97,39 +95,39 @@ func (h coreSchemeHandler) Handle(rawURL *url.URL) core.Result {
 func resolveCoreSchemeRoute(rawURL *url.URL) (string, routeDispatchKind, core.Result) {
 	if rawURL == nil {
 		return "", routeDispatchQuery, core.Result{
-			Value: coreerr.E("display.resolveCoreSchemeRoute", "scheme URL is required", nil),
+			Value: core.E("display.resolveCoreSchemeRoute", "scheme URL is required", nil),
 			OK:    false,
 		}
 	}
-	if !strings.EqualFold(strings.TrimSpace(rawURL.Scheme), "core") {
+	if !equalFold(core.Trim(rawURL.Scheme), "core") {
 		return "", routeDispatchQuery, core.Result{
-			Value: coreerr.E("display.resolveCoreSchemeRoute", "unsupported scheme: "+rawURL.Scheme, nil),
+			Value: core.E("display.resolveCoreSchemeRoute", "unsupported scheme: "+rawURL.Scheme, nil),
 			OK:    false,
 		}
 	}
-	if strings.TrimSpace(rawURL.Opaque) != "" {
+	if core.Trim(rawURL.Opaque) != "" {
 		return "", routeDispatchQuery, core.Result{
-			Value: coreerr.E("display.resolveCoreSchemeRoute", malformedCoreURL, nil),
+			Value: core.E("display.resolveCoreSchemeRoute", malformedCoreURL, nil),
 			OK:    false,
 		}
 	}
-	if rawURL.User != nil || strings.TrimSpace(rawURL.Fragment) != "" || rawURL.Port() != "" {
+	if rawURL.User != nil || core.Trim(rawURL.Fragment) != "" || rawURL.Port() != "" {
 		return "", routeDispatchQuery, core.Result{
-			Value: coreerr.E("display.resolveCoreSchemeRoute", malformedCoreURL, nil),
+			Value: core.E("display.resolveCoreSchemeRoute", malformedCoreURL, nil),
 			OK:    false,
 		}
 	}
-	if path := strings.TrimSpace(rawURL.Path); path != "" && path != "/" {
+	if path := core.Trim(rawURL.Path); path != "" && path != "/" {
 		return "", routeDispatchQuery, core.Result{
-			Value: coreerr.E("display.resolveCoreSchemeRoute", malformedCoreURL, nil),
+			Value: core.E("display.resolveCoreSchemeRoute", malformedCoreURL, nil),
 			OK:    false,
 		}
 	}
 
-	route := strings.ToLower(strings.TrimSpace(rawURL.Hostname()))
+	route := core.Lower(core.Trim(rawURL.Hostname()))
 	if route == "" {
 		return "", routeDispatchQuery, core.Result{
-			Value: coreerr.E("display.resolveCoreSchemeRoute", malformedCoreURL, nil),
+			Value: core.E("display.resolveCoreSchemeRoute", malformedCoreURL, nil),
 			OK:    false,
 		}
 	}
@@ -137,7 +135,7 @@ func resolveCoreSchemeRoute(rawURL *url.URL) (string, routeDispatchKind, core.Re
 	dispatch, ok := coreRouteDispatch[route]
 	if !ok {
 		return "", routeDispatchQuery, core.Result{
-			Value: coreerr.E("display.resolveCoreSchemeRoute", "unknown core route: "+route, nil),
+			Value: core.E("display.resolveCoreSchemeRoute", "unknown core route: "+route, nil),
 			OK:    false,
 		}
 	}

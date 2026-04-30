@@ -5,7 +5,6 @@ import (
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/deno"
-	coreerr "dappco.re/go/log"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -21,11 +20,11 @@ func (s *Subsystem) denoStatus(_ context.Context, _ *mcp.CallToolRequest, _ Deno
 		if err, ok := result.Value.(error); ok {
 			return nil, DenoStatusOutput{}, err
 		}
-		return nil, DenoStatusOutput{}, coreerr.E("mcp.denoStatus", "core.deno.sidecar.status failed", nil)
+		return nil, DenoStatusOutput{}, core.E("mcp.denoStatus", "core.deno.sidecar.status failed", nil)
 	}
 	status, ok := result.Value.(deno.Status)
 	if !ok {
-		return nil, DenoStatusOutput{}, coreerr.E("mcp.denoStatus", "unexpected result type", nil)
+		return nil, DenoStatusOutput{}, core.E("mcp.denoStatus", "unexpected result type", nil)
 	}
 	return nil, DenoStatusOutput{Status: status}, nil
 }
@@ -41,11 +40,11 @@ func (s *Subsystem) denoStart(_ context.Context, _ *mcp.CallToolRequest, _ DenoS
 		if err, ok := result.Value.(error); ok {
 			return nil, DenoStartOutput{}, err
 		}
-		return nil, DenoStartOutput{}, coreerr.E("mcp.denoStart", "core.deno.sidecar.start failed", nil)
+		return nil, DenoStartOutput{}, core.E("mcp.denoStart", "core.deno.sidecar.start failed", nil)
 	}
 	status, ok := result.Value.(deno.Status)
 	if !ok {
-		return nil, DenoStartOutput{}, coreerr.E("mcp.denoStart", "unexpected result type", nil)
+		return nil, DenoStartOutput{}, core.E("mcp.denoStart", "unexpected result type", nil)
 	}
 	return nil, DenoStartOutput{Status: status}, nil
 }
@@ -61,11 +60,11 @@ func (s *Subsystem) denoStop(_ context.Context, _ *mcp.CallToolRequest, _ DenoSt
 		if err, ok := result.Value.(error); ok {
 			return nil, DenoStopOutput{}, err
 		}
-		return nil, DenoStopOutput{}, coreerr.E("mcp.denoStop", "core.deno.sidecar.stop failed", nil)
+		return nil, DenoStopOutput{}, core.E("mcp.denoStop", "core.deno.sidecar.stop failed", nil)
 	}
 	status, ok := result.Value.(deno.Status)
 	if !ok {
-		return nil, DenoStopOutput{}, coreerr.E("mcp.denoStop", "unexpected result type", nil)
+		return nil, DenoStopOutput{}, core.E("mcp.denoStop", "unexpected result type", nil)
 	}
 	return nil, DenoStopOutput{Status: status}, nil
 }
@@ -86,11 +85,11 @@ func (s *Subsystem) denoEval(_ context.Context, _ *mcp.CallToolRequest, input De
 		if err, ok := result.Value.(error); ok {
 			return nil, DenoEvalOutput{}, err
 		}
-		return nil, DenoEvalOutput{}, coreerr.E("mcp.denoEval", "core.deno.sidecar.eval failed", nil)
+		return nil, DenoEvalOutput{}, core.E("mcp.denoEval", "core.deno.sidecar.eval failed", nil)
 	}
 	value, ok := result.Value.(deno.EvalResult)
 	if !ok {
-		return nil, DenoEvalOutput{}, coreerr.E("mcp.denoEval", "unexpected result type", nil)
+		return nil, DenoEvalOutput{}, core.E("mcp.denoEval", "unexpected result type", nil)
 	}
 	return nil, DenoEvalOutput{Result: value}, nil
 }

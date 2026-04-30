@@ -2,14 +2,11 @@ package container
 
 import (
 	"context"
-	exec "dappco.re/go/gui/compat/exec"
-	fmt "dappco.re/go/gui/compat/fmt"
-	strings "dappco.re/go/gui/compat/strings"
 	"sort"
 	"sync"
 	"time"
 
-	coreerr "dappco.re/go/log"
+	core "dappco.re/go"
 )
 
 type TIMOptions struct {
@@ -50,10 +47,10 @@ type TIMManager struct {
 }
 
 func NewTIMManager(options TIMOptions) *TIMManager {
-	if strings.TrimSpace(options.Name) == "" {
+	if core.Trim(options.Name) == "" {
 		options.Name = "coregui-tim"
 	}
-	if strings.TrimSpace(options.Image) == "" {
+	if core.Trim(options.Image) == "" {
 		options.Image = "ghcr.io/lthn/core/tim:latest"
 	}
 	if options.Detect == nil {
@@ -61,7 +58,7 @@ func NewTIMManager(options TIMOptions) *TIMManager {
 	}
 	if options.Exec == nil {
 		options.Exec = func(ctx context.Context, name string, args ...string) error {
-			cmd := exec.CommandContext(ctx, name, args...)
+			cmd := commandContext(ctx, name, args...)
 			return cmd.Run()
 		}
 	}
@@ -95,7 +92,7 @@ func (m *TIMManager) Start(ctx context.Context) (TIMState, error) {
 	if runtime == RuntimeNone {
 		state := cloneTIMState(m.state)
 		m.mu.Unlock()
-		return state, coreerr.E("container.TIMManager.Start", "no supported container runtime detected", nil)
+		return state, core.E("container.TIMManager.Start", "no supported container runtime detected", nil)
 	}
 
 	command, args := m.runtimeCommand(runtime, "run")
@@ -106,7 +103,7 @@ func (m *TIMManager) Start(ctx context.Context) (TIMState, error) {
 		m.state.Status = "error"
 		state := cloneTIMState(m.state)
 		m.mu.Unlock()
-		return state, coreerr.E("container.TIMManager.Start", "failed to execute runtime start command", err)
+		return state, core.E("container.TIMManager.Start", "failed to execute runtime start command", err)
 	}
 
 	m.mu.Lock()
@@ -134,7 +131,7 @@ func (m *TIMManager) Stop(ctx context.Context) (TIMState, error) {
 		m.state.Status = "error"
 		state := cloneTIMState(m.state)
 		m.mu.Unlock()
-		return state, coreerr.E("container.TIMManager.Stop", "failed to execute runtime stop command", err)
+		return state, core.E("container.TIMManager.Stop", "failed to execute runtime stop command", err)
 	}
 
 	m.mu.Lock()
@@ -182,16 +179,16 @@ func (m *TIMManager) runtimeCommand(runtime ContainerRuntime, verb string) (stri
 
 func (m *TIMManager) containerRunArgs() []string {
 	var args []string
-	if dataDir := strings.TrimSpace(m.options.DataDir); dataDir != "" {
+	if dataDir := core.Trim(m.options.DataDir); dataDir != "" {
 		args = append(args, "-v", dataDir+":"+dataDir)
 	}
-	if workDir := strings.TrimSpace(m.options.WorkDir); workDir != "" {
+	if workDir := core.Trim(m.options.WorkDir); workDir != "" {
 		args = append(args, "-w", workDir)
 	}
 	env := make(map[string]string, len(m.options.Env))
 	envKeys := make([]string, 0, len(m.options.Env))
 	for key, value := range m.options.Env {
-		trimmedKey := strings.TrimSpace(key)
+		trimmedKey := core.Trim(key)
 		if trimmedKey != "" {
 			env[trimmedKey] = value
 			envKeys = append(envKeys, trimmedKey)
@@ -207,12 +204,12 @@ func (m *TIMManager) containerRunArgs() []string {
 func resourceArgs(resources TIMResources) []string {
 	var args []string
 	if resources.CPUCores > 0 {
-		args = append(args, "--cpus", fmt.Sprintf("%d", resources.CPUCores))
+		args = append(args, "--cpus", core.Sprintf("%d", resources.CPUCores))
 	}
 	if resources.MemoryMB > 0 {
-		args = append(args, "--memory", fmt.Sprintf("%dm", resources.MemoryMB))
+		args = append(args, "--memory", core.Sprintf("%dm", resources.MemoryMB))
 	}
-	if strings.TrimSpace(resources.GPU) != "" {
+	if core.Trim(resources.GPU) != "" {
 		args = append(args, "--gpus", resources.GPU)
 	}
 	return args

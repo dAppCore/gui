@@ -2,7 +2,6 @@ package mcp
 
 import (
 	"context"
-	errors "dappco.re/go/gui/compat/errors"
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/environment"
@@ -65,7 +64,7 @@ func TestToolsEnvironment_themeGet_Ugly(t *core.T) {
 	core.AssertContains(t, ax7Variant, "ugly")
 	sub := newEnvironmentToolsTestSubsystem(t, func(q core.Query) core.Result {
 		if _, ok := q.(environment.QueryTheme); ok {
-			return core.Result{OK: true, Value: errors.New("unexpected payload")}
+			return core.Result{OK: true, Value: core.NewError("unexpected payload")}
 		}
 		return core.Result{}
 	})

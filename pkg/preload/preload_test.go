@@ -2,8 +2,6 @@ package preload
 
 import (
 	core "dappco.re/go"
-	filepath "dappco.re/go/gui/compat/filepath"
-	os "dappco.re/go/gui/compat/os"
 )
 
 type captureWebview struct {
@@ -16,21 +14,19 @@ func (c *captureWebview) ExecJS(script string) {
 
 func TestInjectPreload_Good(t *core.T) {
 	root := t.TempDir()
-	core.RequireNoError(t, os.MkdirAll(filepath.Join(root, ".core"), 0o755))
-	core.RequireNoError(t, os.WriteFile(filepath.Join(root, "index.html"), []byte("<html></html>"), 0o644))
-	core.RequireNoError(t, os.WriteFile(
-		filepath.Join(root, ".core", "view.yaml"),
+	core.RequireNoError(t, coreMkdirAll(core.PathJoin(root, ".core"), 0o755))
+	core.RequireNoError(t, coreWriteFile(core.PathJoin(root, "index.html"), []byte("<html></html>"), 0o644))
+	core.RequireNoError(t, coreWriteFile(
+		core.PathJoin(root, ".core", "view.yaml"),
 		[]byte("manifest:\n  preloads:\n    - path: preload.js\n"),
-		0o644,
-	))
-	core.RequireNoError(t, os.WriteFile(
-		filepath.Join(root, "preload.js"),
+		0o644))
+	core.RequireNoError(t, coreWriteFile(
+		core.PathJoin(root, "preload.js"),
 		[]byte("globalThis.__manifestPreloadLoaded = true;"),
-		0o644,
-	))
+		0o644))
 
 	target := &captureWebview{}
-	err := InjectPreload(target, "file://"+filepath.ToSlash(filepath.Join(root, "index.html")))
+	err := InjectPreload(target, "file://"+core.PathToSlash(core.PathJoin(root, "index.html")))
 	core.RequireNoError(t, err)
 	core.AssertLen(t, target.scripts, 1)
 
@@ -148,9 +144,9 @@ func TestManifestBackedPreloadOrigin_DeniesListedHTTPSOriginWithoutManifest(t *c
 
 func writeMarketplaceViewManifest(t *core.T, home, host string) {
 	t.Helper()
-	dir := filepath.Join(home, ".core", "apps", host, ".core")
-	core.RequireNoError(t, os.MkdirAll(dir, 0o755))
-	core.RequireNoError(t, os.WriteFile(filepath.Join(dir, "view.yaml"), []byte("name: "+host+"\n"), 0o644))
+	dir := core.PathJoin(home, ".core", "apps", host, ".core")
+	core.RequireNoError(t, coreMkdirAll(dir, 0o755))
+	core.RequireNoError(t, coreWriteFile(core.PathJoin(dir, "view.yaml"), []byte("name: "+host+"\n"), 0o644))
 }
 
 // AX7 generated source-matching smoke coverage.

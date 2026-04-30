@@ -3,7 +3,6 @@ package window
 
 import (
 	core "dappco.re/go"
-	filepath "dappco.re/go/gui/compat/filepath"
 )
 
 func TestWindowDefaults_Good(t *core.T) {
@@ -204,7 +203,7 @@ func TestManager_NewManagerWithDir_Good(t *core.T) {
 	core.AssertNotNil(t, m)
 	core.AssertSame(t, p, m.Platform())
 	core.AssertEqual(t, dir, m.State().dataDir())
-	core.AssertEqual(t, filepath.Join(dir, "layouts.json"), m.Layout().filePath())
+	core.AssertEqual(t, core.PathJoin(dir, "layouts.json"), m.Layout().filePath())
 }
 
 func TestManager_NewManagerWithDir_Bad(t *core.T) {
@@ -222,7 +221,7 @@ func TestManager_NewManagerWithDir_Ugly(t *core.T) {
 	// NewManagerWithDir
 	ax7Variant := "NewManagerWithDir:ugly"
 	core.AssertContains(t, ax7Variant, "ugly")
-	dir := filepath.Join(t.TempDir(), "..", "workspace")
+	dir := core.PathJoin(t.TempDir(), "..", "workspace")
 	m := NewManagerWithDir(nil, dir)
 
 	core.AssertNotNil(t, m)

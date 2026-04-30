@@ -10,7 +10,6 @@ import (
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/dialog"
 	"dappco.re/go/gui/pkg/internal/coreutil"
-	coreerr "dappco.re/go/log"
 )
 
 type Options struct{}
@@ -229,7 +228,7 @@ func decodeOptions[T any](opts core.Options) (T, error) {
 		if err, ok := result.Value.(error); ok {
 			return input, err
 		}
-		return input, coreerr.E("notification.decodeOptions", "failed to decode notification options", nil)
+		return input, core.E("notification.decodeOptions", "failed to decode notification options", nil)
 	}
 	return input, nil
 }

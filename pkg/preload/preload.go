@@ -1,10 +1,6 @@
 package preload
 
 import (
-	errors "dappco.re/go/gui/compat/errors"
-	filepath "dappco.re/go/gui/compat/filepath"
-	os "dappco.re/go/gui/compat/os"
-	strings "dappco.re/go/gui/compat/strings"
 	"embed"
 	"io"
 	"net"
@@ -18,7 +14,7 @@ import (
 
 const maxViewManifestBytes = 1 << 20
 
-var errViewManifestNotFound = errors.New("view manifest not found")
+var errViewManifestNotFound = core.NewError("view manifest not found")
 
 type Webview interface {
 	ExecJS(string)
@@ -57,14 +53,14 @@ func InjectPreload(webview Webview, origin string) error {
 
 func InjectPreloadWithTrustedOriginPolicy(webview Webview, origin string, policy TrustedOriginPolicy) error {
 	if isNilWebview(webview) {
-		return errors.New("preload target is required")
+		return core.NewError("preload target is required")
 	}
 
 	script, err := buildScriptWithTrustedOriginPolicy(origin, policy)
 	if err != nil {
 		return err
 	}
-	if strings.TrimSpace(script) == "" {
+	if core.Trim(script) == "" {
 		return nil
 	}
 
@@ -84,7 +80,7 @@ func buildScriptWithTrustedOriginPolicy(pageURL string, policy TrustedOriginPoli
 		loaded, manifestErr = loadManifestForOrigin(pageURL)
 		switch {
 		case manifestErr == nil:
-		case errors.Is(manifestErr, errViewManifestNotFound):
+		case core.Is(manifestErr, errViewManifestNotFound):
 			loaded = nil
 		default:
 			return "", manifestErr
@@ -102,11 +98,11 @@ func buildScriptWithTrustedOriginPolicy(pageURL string, policy TrustedOriginPoli
 	}
 	if appPreloads, err := renderAppPreloads(loaded); err != nil {
 		return "", err
-	} else if strings.TrimSpace(appPreloads) != "" {
+	} else if core.Trim(appPreloads) != "" {
 		parts = append(parts, appPreloads)
 	}
 
-	return strings.Join(filterEmpty(parts), "\n"), nil
+	return core.Join("\n", filterEmpty(parts)...), nil
 }
 
 func manifestBackedPreloadOrigin(pageURL string, policy TrustedOriginPolicy) bool {
@@ -118,7 +114,7 @@ func manifestBackedPreloadOrigin(pageURL string, policy TrustedOriginPolicy) boo
 }
 
 func manifestBackedPreloadOriginAllowedByPolicy(pageURL string, policy TrustedOriginPolicy) bool {
-	trimmed := strings.TrimSpace(pageURL)
+	trimmed := core.Trim(pageURL)
 	if trimmed == "" {
 		return false
 	}
@@ -126,11 +122,11 @@ func manifestBackedPreloadOriginAllowedByPolicy(pageURL string, policy TrustedOr
 	if err != nil {
 		return false
 	}
-	switch strings.ToLower(strings.TrimSpace(parsed.Scheme)) {
+	switch core.Lower(core.Trim(parsed.Scheme)) {
 	case "", "file":
 		return true
 	default:
-		if strings.TrimSpace(parsed.Host) == "" {
+		if core.Trim(parsed.Host) == "" {
 			return false
 		}
 		return policy.Allows(parsed)
@@ -155,11 +151,11 @@ func renderAppPreloads(loaded *loadedManifest) (string, error) {
 		if preload.Enabled != nil && !*preload.Enabled {
 			continue
 		}
-		if inline := strings.TrimSpace(preload.Inline); inline != "" {
+		if inline := core.Trim(preload.Inline); inline != "" {
 			scripts = append(scripts, inline)
 			continue
 		}
-		if path := strings.TrimSpace(preload.Path); path != "" {
+		if path := core.Trim(preload.Path); path != "" {
 			body, err := readManifestPreload(loaded.BaseDir, path)
 			if err != nil {
 				return "", err
@@ -168,7 +164,7 @@ func renderAppPreloads(loaded *loadedManifest) (string, error) {
 		}
 	}
 
-	return strings.Join(scripts, "\n"), nil
+	return core.Join("\n", scripts...), nil
 }
 
 func loadManifestForOrigin(pageURL string) (*loadedManifest, error) {
@@ -177,7 +173,7 @@ func loadManifestForOrigin(pageURL string) (*loadedManifest, error) {
 		return nil, err
 	}
 
-	file, err := os.Open(path)
+	file, err := coreOpen(path)
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +184,7 @@ func loadManifestForOrigin(pageURL string) (*loadedManifest, error) {
 		return nil, err
 	}
 	if len(body) > maxViewManifestBytes {
-		return nil, errors.New("view manifest exceeds 1048576 bytes")
+		return nil, core.NewError("view manifest exceeds 1048576 bytes")
 	}
 
 	var manifest viewManifest
@@ -211,7 +207,7 @@ func collectManifestPreloads(manifest viewManifest) []ManifestPreload {
 }
 
 func discoverManifestPath(pageURL string) (string, error) {
-	trimmed := strings.TrimSpace(pageURL)
+	trimmed := core.Trim(pageURL)
 	if trimmed == "" {
 		return "", errViewManifestNotFound
 	}
@@ -228,30 +224,30 @@ func discoverManifestPath(pageURL string) (string, error) {
 		if path == "" {
 			path = trimmed
 		}
-		path = filepath.FromSlash(path)
-		if info, err := os.Stat(path); err == nil {
+		path = pathFromSlash(path)
+		if info, err := coreStat(path); err == nil {
 			if info.IsDir() {
-				candidates = append(candidates, filepath.Join(path, ".core", "view.yaml"))
+				candidates = append(candidates, core.PathJoin(path, ".core", "view.yaml"))
 			} else {
-				dir := filepath.Dir(path)
-				candidates = append(candidates, filepath.Join(dir, ".core", "view.yaml"))
-				candidates = append(candidates, filepath.Join(filepath.Dir(dir), ".core", "view.yaml"))
+				dir := core.PathDir(path)
+				candidates = append(candidates, core.PathJoin(dir, ".core", "view.yaml"))
+				candidates = append(candidates, core.PathJoin(core.PathDir(dir), ".core", "view.yaml"))
 			}
 		}
 	default:
-		if host := strings.TrimSpace(parsed.Host); host != "" {
-			home := strings.TrimSpace(os.Getenv("DIR_HOME"))
+		if host := core.Trim(parsed.Host); host != "" {
+			home := core.Trim(core.Getenv("DIR_HOME"))
 			if home == "" {
-				home = strings.TrimSpace(core.Env("DIR_HOME"))
+				home = core.Trim(core.Env("DIR_HOME"))
 			}
 			if home != "" {
-				candidates = append(candidates, filepath.Join(home, ".core", "apps", host, ".core", "view.yaml"))
+				candidates = append(candidates, core.PathJoin(home, ".core", "apps", host, ".core", "view.yaml"))
 			}
 		}
 	}
 
 	for _, candidate := range candidates {
-		if _, err := os.Stat(candidate); err == nil {
+		if _, err := coreStat(candidate); err == nil {
 			return candidate, nil
 		}
 	}
@@ -260,9 +256,9 @@ func discoverManifestPath(pageURL string) (string, error) {
 }
 
 func manifestBaseDir(manifestPath string) string {
-	baseDir := filepath.Dir(manifestPath)
-	if filepath.Base(baseDir) == ".core" {
-		return filepath.Dir(baseDir)
+	baseDir := core.PathDir(manifestPath)
+	if core.PathBase(baseDir) == ".core" {
+		return core.PathDir(baseDir)
 	}
 	return baseDir
 }
@@ -272,48 +268,48 @@ func readManifestPreload(baseDir, preloadPath string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return os.ReadFile(resolvedPath)
+	return coreReadFile(resolvedPath)
 }
 
 func safeManifestRelativePath(baseDir, relativePath string) (string, error) {
-	trimmed := strings.TrimSpace(relativePath)
+	trimmed := core.Trim(relativePath)
 	if trimmed == "" {
-		return "", errors.New("preload path is empty")
+		return "", core.NewError("preload path is empty")
 	}
-	if filepath.IsAbs(trimmed) {
-		return "", errors.New("preload path must be relative")
-	}
-
-	baseAbs, err := filepath.Abs(baseDir)
-	if err != nil {
-		return "", err
-	}
-	baseResolved, err := filepath.EvalSymlinks(baseAbs)
-	if err != nil {
-		return "", err
+	if core.PathIsAbs(trimmed) {
+		return "", core.NewError("preload path must be relative")
 	}
 
-	candidateAbs, err := filepath.Abs(filepath.Join(baseAbs, trimmed))
+	baseAbs, err := pathAbs(baseDir)
 	if err != nil {
 		return "", err
 	}
-	if rel, err := filepath.Rel(baseAbs, candidateAbs); err != nil {
+	baseResolved, err := pathEvalSymlinks(baseAbs)
+	if err != nil {
 		return "", err
-	} else if rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
-		return "", errors.New("preload path escapes manifest directory")
 	}
 
-	if _, err := os.Lstat(candidateAbs); err != nil {
-		return "", err
-	}
-	candidateResolved, err := filepath.EvalSymlinks(candidateAbs)
+	candidateAbs, err := pathAbs(core.PathJoin(baseAbs, trimmed))
 	if err != nil {
 		return "", err
 	}
-	if rel, err := filepath.Rel(baseResolved, candidateResolved); err != nil {
+	if rel, err := pathRel(baseAbs, candidateAbs); err != nil {
 		return "", err
-	} else if rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
-		return "", errors.New("preload path escapes manifest directory")
+	} else if rel == ".." || core.HasPrefix(rel, ".."+string(core.PathSeparator)) {
+		return "", core.NewError("preload path escapes manifest directory")
+	}
+
+	if _, err := coreLstat(candidateAbs); err != nil {
+		return "", err
+	}
+	candidateResolved, err := pathEvalSymlinks(candidateAbs)
+	if err != nil {
+		return "", err
+	}
+	if rel, err := pathRel(baseResolved, candidateResolved); err != nil {
+		return "", err
+	} else if rel == ".." || core.HasPrefix(rel, ".."+string(core.PathSeparator)) {
+		return "", core.NewError("preload path escapes manifest directory")
 	}
 
 	return candidateResolved, nil
@@ -382,7 +378,7 @@ func DefaultTrustedOriginPolicy() TrustedOriginPolicy {
 }
 
 func trustedOrigin(pageURL string, policy TrustedOriginPolicy) bool {
-	trimmed := strings.TrimSpace(pageURL)
+	trimmed := core.Trim(pageURL)
 	if trimmed == "" {
 		return false
 	}
@@ -392,7 +388,7 @@ func trustedOrigin(pageURL string, policy TrustedOriginPolicy) bool {
 		return false
 	}
 
-	switch strings.ToLower(parsed.Scheme) {
+	switch core.Lower(parsed.Scheme) {
 	case "core", "wails", "app":
 		return policy.Allows(parsed)
 	default:
@@ -401,7 +397,7 @@ func trustedOrigin(pageURL string, policy TrustedOriginPolicy) bool {
 }
 
 func (p TrustedOriginPolicy) AllowsURL(raw string) bool {
-	trimmed := strings.TrimSpace(raw)
+	trimmed := core.Trim(raw)
 	if trimmed == "" {
 		return false
 	}
@@ -426,7 +422,7 @@ func (p TrustedOriginPolicy) Allows(parsed *url.URL) bool {
 }
 
 func (p TrustedOriginPolicy) AllowsActionURL(raw, action string) bool {
-	trimmed := strings.TrimSpace(raw)
+	trimmed := core.Trim(raw)
 	if trimmed == "" {
 		return false
 	}
@@ -457,7 +453,7 @@ func (p TrustedOriginPolicy) AllowsAction(parsed *url.URL, action string) bool {
 }
 
 func (p TrustedOriginPolicy) AllowedActionsForURL(raw string) []string {
-	trimmed := strings.TrimSpace(raw)
+	trimmed := core.Trim(raw)
 	if trimmed == "" {
 		return nil
 	}
@@ -516,8 +512,8 @@ func trustedOriginParts(parsed *url.URL) (scheme, host, path string, ok bool) {
 	if parsed == nil {
 		return "", "", "", false
 	}
-	scheme = strings.ToLower(strings.TrimSpace(parsed.Scheme))
-	host = strings.ToLower(strings.TrimSpace(parsed.Host))
+	scheme = core.Lower(core.Trim(parsed.Scheme))
+	host = core.Lower(core.Trim(parsed.Host))
 	if scheme == "" || host == "" {
 		return "", "", "", false
 	}
@@ -536,7 +532,7 @@ func trustedActionSet(actions []string) map[string]struct{} {
 }
 
 func normalizeTrustedAction(action string) string {
-	return strings.TrimSpace(action)
+	return core.Trim(action)
 }
 
 func bridgeActionList(actions []string) []string {
@@ -555,7 +551,7 @@ func bridgeActionList(actions []string) []string {
 }
 
 func parseTrustedOriginRule(raw string) (trustedOriginRule, bool) {
-	trimmed := strings.TrimSpace(raw)
+	trimmed := core.Trim(raw)
 	if trimmed == "" {
 		return trustedOriginRule{}, false
 	}
@@ -563,13 +559,13 @@ func parseTrustedOriginRule(raw string) (trustedOriginRule, bool) {
 	if err != nil {
 		return trustedOriginRule{}, false
 	}
-	scheme := strings.ToLower(strings.TrimSpace(parsed.Scheme))
+	scheme := core.Lower(core.Trim(parsed.Scheme))
 	switch scheme {
 	case "core", "wails", "app", "http", "https":
 	default:
 		return trustedOriginRule{}, false
 	}
-	host := strings.ToLower(strings.TrimSpace(parsed.Host))
+	host := core.Lower(core.Trim(parsed.Host))
 	if host == "" {
 		return trustedOriginRule{}, false
 	}
@@ -589,7 +585,7 @@ func trustedOriginPath(parsed *url.URL) string {
 	if path == "" {
 		return "/"
 	}
-	if !strings.HasPrefix(path, "/") {
+	if !core.HasPrefix(path, "/") {
 		return "/" + path
 	}
 	return path
@@ -602,14 +598,14 @@ func trustedOriginPathMatches(path, prefix string) bool {
 	if path == prefix {
 		return true
 	}
-	if strings.HasSuffix(prefix, "/") {
-		return strings.HasPrefix(path, prefix)
+	if core.HasSuffix(prefix, "/") {
+		return core.HasPrefix(path, prefix)
 	}
-	return strings.HasPrefix(path, prefix+"/")
+	return core.HasPrefix(path, prefix+"/")
 }
 
 func loadTrustedOriginPolicy(path string) (TrustedOriginPolicy, bool) {
-	body, err := os.ReadFile(path)
+	body, err := coreReadFile(path)
 	if err != nil {
 		return TrustedOriginPolicy{}, false
 	}
@@ -631,31 +627,31 @@ func loadTrustedOriginPolicy(path string) (TrustedOriginPolicy, bool) {
 }
 
 func defaultTrustedOriginPolicyPath() string {
-	home := strings.TrimSpace(os.Getenv("DIR_HOME"))
+	home := core.Trim(core.Getenv("DIR_HOME"))
 	if home == "" {
-		home = strings.TrimSpace(core.Env("DIR_HOME"))
+		home = core.Trim(core.Env("DIR_HOME"))
 	}
 	if home == "" {
-		home = strings.TrimSpace(core.Env("HOME"))
+		home = core.Trim(core.Env("HOME"))
 	}
 	if home == "" {
-		return filepath.Join(".core", trustedPreloadOriginsConfigFile)
+		return core.PathJoin(".core", trustedPreloadOriginsConfigFile)
 	}
-	return filepath.Join(home, ".core", trustedPreloadOriginsConfigFile)
+	return core.PathJoin(home, ".core", trustedPreloadOriginsConfigFile)
 }
 
 func storageOriginForPageURL(pageURL string) string {
-	trimmed := strings.TrimSpace(pageURL)
+	trimmed := core.Trim(pageURL)
 	if trimmed == "" {
 		return ""
 	}
 
 	parsed, err := url.Parse(trimmed)
-	if err != nil || strings.TrimSpace(parsed.Scheme) == "" {
+	if err != nil || core.Trim(parsed.Scheme) == "" {
 		return ""
 	}
 
-	switch strings.ToLower(parsed.Scheme) {
+	switch core.Lower(parsed.Scheme) {
 	case "http", "https":
 		if parsed.Host == "" {
 			return ""
@@ -679,12 +675,12 @@ func storageOriginForPageURL(pageURL string) string {
 		if parsed.Path != "" {
 			origin += parsed.Path
 		}
-		return strings.TrimRight(origin, "/")
+		return trimRight(origin, "/")
 	}
 }
 
 func validatedLocalMLAPIURL(raw string) string {
-	trimmed := strings.TrimSpace(raw)
+	trimmed := core.Trim(raw)
 	if trimmed == "" {
 		return "http://localhost:8090"
 	}
@@ -693,13 +689,13 @@ func validatedLocalMLAPIURL(raw string) string {
 	if err != nil {
 		return "http://localhost:8090"
 	}
-	switch strings.ToLower(parsed.Scheme) {
+	switch core.Lower(parsed.Scheme) {
 	case "http", "https":
 	default:
 		return "http://localhost:8090"
 	}
 
-	host := strings.TrimSpace(parsed.Host)
+	host := core.Trim(parsed.Host)
 	if host == "" {
 		return "http://localhost:8090"
 	}
@@ -707,10 +703,10 @@ func validatedLocalMLAPIURL(raw string) string {
 	if parsedHost, _, err := net.SplitHostPort(host); err == nil {
 		name = parsedHost
 	}
-	name = strings.Trim(strings.ToLower(name), "[]")
+	name = trimRunes(core.Lower(name), "[]")
 	switch name {
 	case "localhost", "127.0.0.1", "::1":
-		return strings.TrimRight(parsed.String(), "/")
+		return trimRight(parsed.String(), "/")
 	default:
 		return "http://localhost:8090"
 	}
@@ -840,7 +836,7 @@ func renderCoreMLShim() string {
 func filterEmpty(parts []string) []string {
 	out := make([]string, 0, len(parts))
 	for _, part := range parts {
-		if strings.TrimSpace(part) != "" {
+		if core.Trim(part) != "" {
 			out = append(out, part)
 		}
 	}

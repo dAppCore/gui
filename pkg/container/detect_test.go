@@ -2,10 +2,6 @@ package container
 
 import (
 	core "dappco.re/go"
-	errors "dappco.re/go/gui/compat/errors"
-	filepath "dappco.re/go/gui/compat/filepath"
-
-	coreio "dappco.re/go/io"
 )
 
 func TestDetectWithEnvironment_PrefersAppleContainersOnMacOS26(t *core.T) {
@@ -16,7 +12,7 @@ func TestDetectWithEnvironment_PrefersAppleContainersOnMacOS26(t *core.T) {
 			if file == "container" {
 				return "/usr/bin/container", nil
 			}
-			return "", errors.New("not found")
+			return "", core.NewError("not found")
 		},
 	})
 
@@ -31,7 +27,7 @@ func TestDetectWithEnvironment_FallsBackToDockerWhenAppleUnavailable(t *core.T) 
 			if file == "docker" {
 				return "/usr/local/bin/docker", nil
 			}
-			return "", errors.New("not found")
+			return "", core.NewError("not found")
 		},
 	})
 
@@ -46,7 +42,7 @@ func TestDetectWithEnvironment_UsesDockerOnNonMacHosts(t *core.T) {
 			if file == "docker" {
 				return "/usr/bin/docker", nil
 			}
-			return "", errors.New("not found")
+			return "", core.NewError("not found")
 		},
 	})
 
@@ -61,7 +57,7 @@ func TestDetectWithEnvironment_UsesPodmanWhenDockerMissing(t *core.T) {
 			if file == "podman" {
 				return "/usr/bin/podman", nil
 			}
-			return "", errors.New("not found")
+			return "", core.NewError("not found")
 		},
 	})
 
@@ -73,7 +69,7 @@ func TestDetectWithEnvironment_ReturnsNoneWhenNoRuntimeIsAvailable(t *core.T) {
 		GOOS:           "linux",
 		ProductVersion: "",
 		LookPath: func(string) (string, error) {
-			return "", errors.New("not found")
+			return "", core.NewError("not found")
 		},
 	})
 
@@ -97,7 +93,7 @@ func TestDetect_Good(t *core.T) {
 			if file == "container" {
 				return containerPath, nil
 			}
-			return "", errors.New("not found")
+			return "", core.NewError("not found")
 		},
 	})
 
@@ -124,8 +120,8 @@ func TestDetect_Ugly(t *core.T) {
 func writeExecutable(t *core.T, dir, name, script string) string {
 	t.Helper()
 
-	path := filepath.Join(dir, name)
-	core.RequireNoError(t, coreio.Local.WriteMode(path, script, 0o755))
+	path := core.PathJoin(dir, name)
+	core.RequireNoError(t, coreWriteMode(path, script, 0o755))
 	return path
 }
 

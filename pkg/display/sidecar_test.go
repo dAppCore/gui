@@ -2,10 +2,7 @@ package display
 
 import (
 	"context"
-	bytes "dappco.re/go/gui/compat/bytes"
-	filepath "dappco.re/go/gui/compat/filepath"
-	os "dappco.re/go/gui/compat/os"
-	strings "dappco.re/go/gui/compat/strings"
+	"syscall"
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/deno"
@@ -14,15 +11,15 @@ import (
 func captureStderr(t *core.T, fn func()) string {
 	t.Helper()
 
-	original := os.Stderr
-	var output bytes.Buffer
+	original := sidecarWarningWriter
+	output := core.NewBuffer()
 	defer func() {
-		os.Stderr = original
+		sidecarWarningWriter = original
 	}()
 
-	os.Stderr = &output
+	sidecarWarningWriter = output
 	fn()
-	os.Stderr = original
+	sidecarWarningWriter = original
 
 	return output.String()
 }
@@ -51,7 +48,7 @@ func TestSidecar_ValidateArgs_GoodCase(t *core.T) {
 		core.AssertNoError(t, validateSidecarArgs(splitCommandArgs("   "), nil))
 	})
 
-	core.AssertEmpty(t, strings.TrimSpace(output))
+	core.AssertEmpty(t, core.Trim(output))
 }
 
 func TestSidecar_LaunchOptions_Good_EmptyEnv(t *core.T) {
@@ -69,7 +66,7 @@ func TestSidecar_LaunchOptions_Good_EmptyEnv(t *core.T) {
 	core.AssertNil(t, options.Args)
 	core.AssertEmpty(t, options.Binary)
 	core.AssertEmpty(t, options.Dir)
-	core.AssertEmpty(t, strings.TrimSpace(output))
+	core.AssertEmpty(t, core.Trim(output))
 }
 
 func TestSidecar_ValidateArgs_Good_Unstable(t *core.T) {
@@ -77,7 +74,7 @@ func TestSidecar_ValidateArgs_Good_Unstable(t *core.T) {
 		core.AssertNoError(t, validateSidecarArgs(splitCommandArgs("--unstable"), nil))
 	})
 
-	core.AssertEmpty(t, strings.TrimSpace(output))
+	core.AssertEmpty(t, core.Trim(output))
 }
 
 func TestSidecar_ValidateArgs_Bad_PermissionFlags(t *core.T) {
@@ -129,9 +126,9 @@ func TestSidecar_StartAction_Bad_RefusesPermissionArgs(t *core.T) {
 }
 
 func TestSidecar_ValidateBinary_GoodCase(t *core.T) {
-	binary := filepath.Join(t.TempDir(), "deno")
-	core.RequireNoError(t, os.WriteFile(binary, []byte("#!/bin/sh\n"), 0o755))
-	expected, err := filepath.EvalSymlinks(binary)
+	binary := core.PathJoin(t.TempDir(), "deno")
+	core.RequireNoError(t, coreWriteFile(binary, []byte("#!/bin/sh\n"), 0o755))
+	expected, err := pathEvalSymlinks(binary)
 	core.RequireNoError(t, err)
 
 	actual, err := validateSidecarBinary(binary)
@@ -141,8 +138,8 @@ func TestSidecar_ValidateBinary_GoodCase(t *core.T) {
 }
 
 func TestSidecar_ValidateBinary_BadCase(t *core.T) {
-	customBinary := filepath.Join(t.TempDir(), "deno-custom")
-	core.RequireNoError(t, os.WriteFile(customBinary, []byte("#!/bin/sh\n"), 0o755))
+	customBinary := core.PathJoin(t.TempDir(), "deno-custom")
+	core.RequireNoError(t, coreWriteFile(customBinary, []byte("#!/bin/sh\n"), 0o755))
 
 	tests := []struct {
 		name  string
@@ -150,7 +147,7 @@ func TestSidecar_ValidateBinary_BadCase(t *core.T) {
 		want  string
 	}{
 		{name: "relative", value: "deno", want: "absolute"},
-		{name: "missing", value: filepath.Join(t.TempDir(), "deno"), want: "does not exist"},
+		{name: "missing", value: core.PathJoin(t.TempDir(), "deno"), want: "does not exist"},
 		{name: "custom-name", value: customBinary, want: "named deno"},
 	}
 
@@ -175,14 +172,14 @@ func TestSidecar_ValidateDir_GoodCase(t *core.T) {
 
 func TestSidecar_ValidateDir_BadCase(t *core.T) {
 	base := canonicalTempDir(t)
-	child := filepath.Join(base, "child")
-	core.RequireNoError(t, os.Mkdir(child, 0o755))
-	file := filepath.Join(base, "not-a-dir")
-	core.RequireNoError(t, os.WriteFile(file, []byte("x"), 0o644))
-	target := filepath.Join(base, "target")
-	core.RequireNoError(t, os.Mkdir(target, 0o755))
-	link := filepath.Join(base, "link")
-	if err := os.Symlink(target, link); err != nil {
+	child := core.PathJoin(base, "child")
+	core.RequireNoError(t, coreMkdir(child, 0o755))
+	file := core.PathJoin(base, "not-a-dir")
+	core.RequireNoError(t, coreWriteFile(file, []byte("x"), 0o644))
+	target := core.PathJoin(base, "target")
+	core.RequireNoError(t, coreMkdir(target, 0o755))
+	link := core.PathJoin(base, "link")
+	if err := syscall.Symlink(target, link); err != nil {
 		t.Skipf("symlink creation unavailable: %v", err)
 	}
 
@@ -191,7 +188,7 @@ func TestSidecar_ValidateDir_BadCase(t *core.T) {
 		value string
 		want  string
 	}{
-		{name: "parent-component", value: child + string(filepath.Separator) + ".." + string(filepath.Separator) + "child", want: ".."},
+		{name: "parent-component", value: child + string(core.PathSeparator) + ".." + string(core.PathSeparator) + "child", want: ".."},
 		{name: "file", value: file, want: "directory"},
 		{name: "symlink", value: link, want: "symlink"},
 	}
@@ -209,7 +206,7 @@ func TestSidecar_ValidateDir_BadCase(t *core.T) {
 func canonicalTempDir(t *core.T) string {
 	t.Helper()
 
-	dir, err := filepath.EvalSymlinks(t.TempDir())
+	dir, err := pathEvalSymlinks(t.TempDir())
 	core.RequireNoError(t, err)
 	return dir
 }

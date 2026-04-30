@@ -1,10 +1,6 @@
 package preload
 
-import (
-	strings "dappco.re/go/gui/compat/strings"
-
-	core "dappco.re/go"
-)
+import core "dappco.re/go"
 
 func renderStoragePolyfills(pageURL string, canPersist bool) string {
 	meta := map[string]any{
@@ -14,9 +10,9 @@ func renderStoragePolyfills(pageURL string, canPersist bool) string {
 		"canPersist":    canPersist,
 	}
 
-	return strings.ReplaceAll(
+	return core.Replace(
 		storagePolyfillsAsset,
 		"__CORE_PRELOAD_META__",
-		core.JSONMarshalString(meta),
-	)
+		core.JSONMarshalString(meta))
+
 }

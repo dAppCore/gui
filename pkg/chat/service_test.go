@@ -2,7 +2,6 @@ package chat
 
 import (
 	"context"
-	filepath "dappco.re/go/gui/compat/filepath"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -10,7 +9,6 @@ import (
 
 	core "dappco.re/go"
 	guimcp "dappco.re/go/gui/pkg/mcp"
-	coreio "dappco.re/go/io"
 )
 
 type mockToolExecutor struct {
@@ -41,7 +39,7 @@ func newChatCore(t *core.T, handler http.HandlerFunc, toolExecutor ToolExecutor,
 
 	options := []func(*Options){
 		func(o *Options) { o.APIURL = server.URL },
-		func(o *Options) { o.StorePath = filepath.Join(t.TempDir(), "chat.db") },
+		func(o *Options) { o.StorePath = core.PathJoin(t.TempDir(), "chat.db") },
 		func(o *Options) { o.ToolExecutor = toolExecutor },
 		func(o *Options) { o.Now = func() time.Time { return time.Unix(1_700_000_000, 0).UTC() } },
 		func(o *Options) { o.ModelRoots = nil },
@@ -59,11 +57,11 @@ func newChatCore(t *core.T, handler http.HandlerFunc, toolExecutor ToolExecutor,
 func createDiscoveredModelRoot(t *core.T, name, architecture string) string {
 	t.Helper()
 	root := t.TempDir()
-	modelDir := filepath.Join(root, name)
-	core.RequireNoError(t, coreio.Local.EnsureDir(modelDir))
+	modelDir := core.PathJoin(root, name)
+	core.RequireNoError(t, coreEnsureDir(modelDir))
 	configJSON := `{"model_type":"` + architecture + `","quantization":{"bits":4,"group_size":32}}`
-	core.RequireNoError(t, coreio.Local.WriteMode(filepath.Join(modelDir, "config.json"), configJSON, 0o644))
-	core.RequireNoError(t, coreio.Local.WriteMode(filepath.Join(modelDir, "weights.safetensors"), "fake", 0o644))
+	core.RequireNoError(t, coreWriteMode(core.PathJoin(modelDir, "config.json"), configJSON, 0o644))
+	core.RequireNoError(t, coreWriteMode(core.PathJoin(modelDir, "weights.safetensors"), "fake", 0o644))
 	return root
 }
 
@@ -364,7 +362,7 @@ func TestActionConversationsList_Ugly_IgnoresCorruptRows(t *core.T) {
 	)).OK)
 
 	svc := core.MustServiceFor[*Service](c, "chat")
-	core.RequireNoError(t, svc.store.Set(conversationsGroup, "broken", "{"))
+	core.RequireNoError(t, svc.store.set(conversationsGroup, "broken", "{"))
 
 	result := c.Action("gui.chat.conversations.list").Run(context.Background(), core.NewOptions())
 	core.RequireTrue(t, result.OK)

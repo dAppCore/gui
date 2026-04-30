@@ -6,7 +6,6 @@ import (
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/window"
-	coreerr "dappco.re/go/log"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -27,7 +26,7 @@ func (s *Subsystem) windowList(_ context.Context, _ *mcp.CallToolRequest, _ Wind
 	}
 	windows, ok := r.Value.([]window.WindowInfo)
 	if !ok {
-		return nil, WindowListOutput{}, coreerr.E("mcp.windowList", "unexpected result type", nil)
+		return nil, WindowListOutput{}, core.E("mcp.windowList", "unexpected result type", nil)
 	}
 	return nil, WindowListOutput{Windows: windows}, nil
 }
@@ -51,7 +50,7 @@ func (s *Subsystem) windowGet(_ context.Context, _ *mcp.CallToolRequest, input W
 	}
 	info, ok := r.Value.(*window.WindowInfo)
 	if !ok {
-		return nil, WindowGetOutput{}, coreerr.E("mcp.windowGet", "unexpected result type", nil)
+		return nil, WindowGetOutput{}, core.E("mcp.windowGet", "unexpected result type", nil)
 	}
 	return nil, WindowGetOutput{Window: info}, nil
 }
@@ -73,7 +72,7 @@ func (s *Subsystem) windowFocused(_ context.Context, _ *mcp.CallToolRequest, _ W
 	}
 	windows, ok := r.Value.([]window.WindowInfo)
 	if !ok {
-		return nil, WindowFocusedOutput{}, coreerr.E("mcp.windowFocused", "unexpected result type", nil)
+		return nil, WindowFocusedOutput{}, core.E("mcp.windowFocused", "unexpected result type", nil)
 	}
 	for _, w := range windows {
 		if w.Focused {
@@ -116,11 +115,11 @@ func (s *Subsystem) windowCreate(_ context.Context, _ *mcp.CallToolRequest, inpu
 		if e, ok := r.Value.(error); ok {
 			return nil, WindowCreateOutput{}, e
 		}
-		return nil, WindowCreateOutput{}, coreerr.E("mcp.windowCreate", "window.open failed", nil)
+		return nil, WindowCreateOutput{}, core.E("mcp.windowCreate", "window.open failed", nil)
 	}
 	info, ok := r.Value.(window.WindowInfo)
 	if !ok {
-		return nil, WindowCreateOutput{}, coreerr.E("mcp.windowCreate", "unexpected result type", nil)
+		return nil, WindowCreateOutput{}, core.E("mcp.windowCreate", "unexpected result type", nil)
 	}
 	return nil, WindowCreateOutput{Window: info}, nil
 }

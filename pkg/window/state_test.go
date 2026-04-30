@@ -2,8 +2,6 @@ package window
 
 import (
 	core "dappco.re/go"
-	filepath "dappco.re/go/gui/compat/filepath"
-	os "dappco.re/go/gui/compat/os"
 	"time"
 )
 
@@ -16,19 +14,19 @@ func TestStateManagerState_NewStateManagerWithDir_Good(t *core.T) {
 
 	core.AssertNotNil(t, sm)
 	core.AssertEqual(t, dir, sm.dataDir())
-	core.AssertEqual(t, filepath.Join(dir, "window_state.json"), sm.filePath())
+	core.AssertEqual(t, core.PathJoin(dir, "window_state.json"), sm.filePath())
 	core.AssertEmpty(t, sm.ListStates())
 }
 
 func TestStateManagerState_NewStateManagerWithPathEnv_GoodCase(t *core.T) {
-	path := filepath.Join(t.TempDir(), "custom", "window_state.json")
+	path := core.PathJoin(t.TempDir(), "custom", "window_state.json")
 	t.Setenv(windowStateFileEnv, path)
 
 	sm := NewStateManager()
 
 	core.AssertNotNil(t, sm)
 	core.AssertEqual(t, path, sm.filePath())
-	core.AssertEqual(t, filepath.Dir(path), sm.dataDir())
+	core.AssertEqual(t, core.PathDir(path), sm.dataDir())
 }
 
 func TestStateManagerState_NewStateManagerWithDir_Bad(t *core.T) {
@@ -46,7 +44,7 @@ func TestStateManagerState_NewStateManagerWithDir_InvalidFile_Good(t *core.T) {
 	ax7Variant := "NewStateManagerWithDir_InvalidFile:good"
 	core.AssertContains(t, ax7Variant, "good")
 	dir := t.TempDir()
-	core.RequireNoError(t, os.WriteFile(filepath.Join(dir, "window_state.json"), []byte("{invalid"), 0o644))
+	core.RequireNoError(t, coreWriteFile(core.PathJoin(dir, "window_state.json"), []byte("{invalid"), 0o644))
 
 	sm := NewStateManagerWithDir(dir)
 
@@ -60,17 +58,17 @@ func TestStateManagerState_SetPath_Good(t *core.T) {
 	core.AssertContains(t, ax7Variant, "good")
 	dir := t.TempDir()
 	sm := NewStateManagerWithDir(dir)
-	path := filepath.Join(dir, "custom", "window-state.json")
+	path := core.PathJoin(dir, "custom", "window-state.json")
 
 	sm.SetPath(path)
 	sm.SetState("main", WindowState{X: 10, Y: 20, Width: 300, Height: 200})
 	sm.ForceSync()
 
-	content, err := os.ReadFile(path)
+	content, err := coreReadFile(path)
 	core.RequireNoError(t, err)
 	core.AssertContains(t, string(content), `"main"`)
 	core.AssertEqual(t, path, sm.filePath())
-	core.AssertEqual(t, filepath.Dir(path), sm.dataDir())
+	core.AssertEqual(t, core.PathDir(path), sm.dataDir())
 }
 
 func TestStateManagerState_SetPath_Ugly(t *core.T) {
@@ -226,7 +224,7 @@ func TestStateManagerState_ForceSync_Good(t *core.T) {
 
 	sm.ForceSync()
 
-	content, err := os.ReadFile(filepath.Join(dir, "window_state.json"))
+	content, err := coreReadFile(core.PathJoin(dir, "window_state.json"))
 	core.RequireNoError(t, err)
 	core.AssertContains(t, string(content), `"main"`)
 }

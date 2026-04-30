@@ -2,12 +2,10 @@ package container
 
 import (
 	"context"
-	strings "dappco.re/go/gui/compat/strings"
 	"regexp"
 	"unicode"
 
 	core "dappco.re/go"
-	coreerr "dappco.re/go/log"
 )
 
 type Service struct {
@@ -34,12 +32,12 @@ func OptionsFromEnv() TIMOptions {
 
 func OptionsFromEnvValidated() (TIMOptions, error) {
 	return TIMOptions{
-		Name:    strings.TrimSpace(core.Env("CORE_TIM_NAME")),
-		Image:   strings.TrimSpace(core.Env("CORE_TIM_IMAGE")),
-		Command: splitCSV(strings.TrimSpace(core.Env("CORE_TIM_COMMAND"))),
-		DataDir: strings.TrimSpace(core.Env("CORE_TIM_DATA_DIR")),
+		Name:    core.Trim(core.Env("CORE_TIM_NAME")),
+		Image:   core.Trim(core.Env("CORE_TIM_IMAGE")),
+		Command: splitCSV(core.Trim(core.Env("CORE_TIM_COMMAND"))),
+		DataDir: core.Trim(core.Env("CORE_TIM_DATA_DIR")),
 		Resources: TIMResources{
-			GPU: strings.TrimSpace(core.Env("CORE_TIM_GPU")),
+			GPU: core.Trim(core.Env("CORE_TIM_GPU")),
 		},
 	}.Validate()
 }
@@ -70,10 +68,10 @@ func (options TIMOptions) Validate() (TIMOptions, error) {
 }
 
 func normalizeTIMOptions(options TIMOptions) (TIMOptions, error) {
-	options.Name = strings.TrimSpace(options.Name)
-	options.Image = strings.TrimSpace(options.Image)
-	options.DataDir = strings.TrimSpace(options.DataDir)
-	options.Resources.GPU = strings.TrimSpace(options.Resources.GPU)
+	options.Name = core.Trim(options.Name)
+	options.Image = core.Trim(options.Image)
+	options.DataDir = core.Trim(options.DataDir)
+	options.Resources.GPU = core.Trim(options.Resources.GPU)
 
 	if err := validateTIMContainerName(options.Name); err != nil {
 		return options, err
@@ -91,14 +89,14 @@ func validateTIMContainerName(value string) error {
 	if value == "" {
 		return nil
 	}
-	if strings.HasPrefix(value, "-") {
-		return coreerr.E("container.validateTIMOptions", "name cannot start with -", nil)
+	if core.HasPrefix(value, "-") {
+		return core.E("container.validateTIMOptions", "name cannot start with -", nil)
 	}
-	if strings.HasPrefix(value, ".") {
-		return coreerr.E("container.validateTIMOptions", "name cannot start with .", nil)
+	if core.HasPrefix(value, ".") {
+		return core.E("container.validateTIMOptions", "name cannot start with .", nil)
 	}
 	if !timContainerNamePattern.MatchString(value) {
-		return coreerr.E("container.validateTIMOptions", "name must contain only letters, digits, underscores, dots, and hyphens", nil)
+		return core.E("container.validateTIMOptions", "name must contain only letters, digits, underscores, dots, and hyphens", nil)
 	}
 	return nil
 }
@@ -107,15 +105,15 @@ func validateTIMArgValue(label, value string) error {
 	if value == "" {
 		return nil
 	}
-	if strings.HasPrefix(value, "-") {
-		return coreerr.E("container.validateTIMOptions", label+" cannot start with -", nil)
+	if core.HasPrefix(value, "-") {
+		return core.E("container.validateTIMOptions", label+" cannot start with -", nil)
 	}
 	for _, r := range value {
 		if unicode.IsControl(r) {
-			return coreerr.E("container.validateTIMOptions", label+" contains invalid control characters", nil)
+			return core.E("container.validateTIMOptions", label+" contains invalid control characters", nil)
 		}
 		if unicode.IsSpace(r) {
-			return coreerr.E("container.validateTIMOptions", label+" cannot contain whitespace", nil)
+			return core.E("container.validateTIMOptions", label+" cannot contain whitespace", nil)
 		}
 	}
 	return nil
@@ -126,13 +124,13 @@ func (s *Service) State() TIMState {
 }
 
 func splitCSV(value string) []string {
-	if strings.TrimSpace(value) == "" {
+	if core.Trim(value) == "" {
 		return nil
 	}
-	parts := strings.Split(value, ",")
+	parts := core.Split(value, ",")
 	result := make([]string, 0, len(parts))
 	for _, part := range parts {
-		part = strings.TrimSpace(part)
+		part = core.Trim(part)
 		if part != "" {
 			result = append(result, part)
 		}

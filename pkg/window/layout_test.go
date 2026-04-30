@@ -2,8 +2,6 @@ package window
 
 import (
 	core "dappco.re/go"
-	filepath "dappco.re/go/gui/compat/filepath"
-	os "dappco.re/go/gui/compat/os"
 	"time"
 )
 
@@ -67,20 +65,20 @@ func TestLayoutManager_SaveLayout_Ugly(t *core.T) {
 }
 
 func TestLayoutManager_NewLayoutManagerWithPathEnv_GoodCase(t *core.T) {
-	path := filepath.Join(t.TempDir(), "custom", "layouts.json")
+	path := core.PathJoin(t.TempDir(), "custom", "layouts.json")
 	t.Setenv(layoutFileEnv, path)
 
 	lm := NewLayoutManager()
 
 	core.AssertNotNil(t, lm)
 	core.AssertEqual(t, path, lm.filePath())
-	core.AssertEqual(t, filepath.Dir(path), lm.dataDir())
+	core.AssertEqual(t, core.PathDir(path), lm.dataDir())
 
 	core.RequireNoError(t, lm.SaveLayout("coding", map[string]WindowState{
 		"main": {Width: 800, Height: 600},
 	}))
 
-	content, err := os.ReadFile(path)
+	content, err := coreReadFile(path)
 	core.RequireNoError(t, err)
 	core.AssertContains(t, string(content), `"coding"`)
 }

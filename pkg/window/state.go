@@ -2,12 +2,10 @@
 package window
 
 import (
-	"io/fs"
 	"sync"
 	"time"
 
 	core "dappco.re/go"
-	coreio "dappco.re/go/io"
 )
 
 const windowStateFileEnv = "WINDOW_STATE_FILE"
@@ -102,9 +100,9 @@ func (sm *StateManager) load() {
 	if sm.configDir == "" && sm.statePath == "" {
 		return
 	}
-	content, err := coreio.Local.Read(sm.filePath())
+	content, err := coreReadFile(sm.filePath())
 	if err != nil {
-		if core.Is(err, fs.ErrNotExist) {
+		if core.IsNotExist(err) {
 			return
 		}
 		core.Error(
@@ -115,7 +113,7 @@ func (sm *StateManager) load() {
 		return
 	}
 	loaded := make(map[string]WindowState)
-	result := core.JSONUnmarshalString(content, &loaded)
+	result := core.JSONUnmarshal(content, &loaded)
 	if !result.OK {
 		if decodeErr, ok := result.Value.(error); ok {
 			core.Error(
@@ -154,7 +152,7 @@ func (sm *StateManager) save() error {
 	}
 	data := result.Value.([]byte)
 	if dir := core.PathDir(filePath); dir != "" {
-		if err := coreio.Local.EnsureDir(dir); err != nil {
+		if err := coreMkdirAll(dir, 0o755); err != nil {
 			core.Error(
 				"window state save failed",
 				"file_path", filePath,
@@ -163,7 +161,7 @@ func (sm *StateManager) save() error {
 			return core.E("window.StateManager.save", "failed to create window state directory", err)
 		}
 	}
-	if err := coreio.Local.Write(filePath, string(data)); err != nil {
+	if err := coreWriteFile(filePath, data, 0o644); err != nil {
 		core.Error(
 			"window state save failed",
 			"file_path", filePath,

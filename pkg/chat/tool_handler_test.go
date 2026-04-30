@@ -2,7 +2,6 @@ package chat
 
 import (
 	"context"
-	strings "dappco.re/go/gui/compat/strings"
 	"io"
 	"net/http"
 	"sync"
@@ -121,7 +120,7 @@ func TestToolCallHandler_Good_ServiceDispatchesInlineToolCall(t *core.T) {
 	core.RequireNotEmpty(t, requests[0].Messages)
 	systemPrompt, ok := requests[0].Messages[0].Content.(string)
 	core.RequireTrue(t, ok)
-	core.AssertTrue(t, strings.HasPrefix(systemPrompt, "Available MCP tools:"))
+	core.AssertTrue(t, core.HasPrefix(systemPrompt, "Available MCP tools:"))
 	core.AssertContains(t, systemPrompt, "layout_suggest")
 	core.AssertContains(t, systemPrompt, "You are a helpful assistant.")
 }

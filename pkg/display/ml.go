@@ -2,8 +2,6 @@ package display
 
 import (
 	"context"
-	os "dappco.re/go/gui/compat/os"
-	strings "dappco.re/go/gui/compat/strings"
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/chat"
@@ -19,7 +17,7 @@ type ModelRuntimeState struct {
 }
 
 func (s *Service) modelState() ModelRuntimeState {
-	apiURL := strings.TrimRight(strings.TrimSpace(os.Getenv("CORE_ML_API_URL")), "/")
+	apiURL := trimRight(core.Trim(core.Getenv("CORE_ML_API_URL")), "/")
 	if apiURL == "" {
 		apiURL = "http://localhost:8090"
 	}
@@ -64,7 +62,7 @@ func estimateVRAM(models []chat.ModelEntry) int64 {
 
 func dominantBackend(models []chat.ModelEntry) string {
 	for _, model := range models {
-		if strings.TrimSpace(model.Backend) != "" {
+		if core.Trim(model.Backend) != "" {
 			return model.Backend
 		}
 	}
@@ -72,18 +70,18 @@ func dominantBackend(models []chat.ModelEntry) string {
 }
 
 func quoteJS(value string) string {
-	escaped := strings.ReplaceAll(value, `\`, `\\`)
-	escaped = strings.ReplaceAll(escaped, "\n", `\n`)
-	escaped = strings.ReplaceAll(escaped, "\u2028", `\u2028`)
-	escaped = strings.ReplaceAll(escaped, "\u2029", `\u2029`)
-	escaped = strings.ReplaceAll(escaped, `"`, `\"`)
+	escaped := core.Replace(value, `\`, `\\`)
+	escaped = core.Replace(escaped, "\n", `\n`)
+	escaped = core.Replace(escaped, "\u2028", `\u2028`)
+	escaped = core.Replace(escaped, "\u2029", `\u2029`)
+	escaped = core.Replace(escaped, `"`, `\"`)
 	escaped = escapeClosingScriptTag(escaped)
 	return `"` + escaped + `"`
 }
 
 func escapeClosingScriptTag(value string) string {
 	for {
-		index := strings.Index(strings.ToLower(value), "</script>")
+		index := indexString(core.Lower(value), "</script>")
 		if index < 0 {
 			return value
 		}

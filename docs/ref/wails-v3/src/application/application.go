@@ -2,10 +2,6 @@ package application
 
 import (
 	"context"
-	errors "dappco.re/go/gui/compat/errors"
-	fmt "dappco.re/go/gui/compat/fmt"
-	os "dappco.re/go/gui/compat/os"
-	strings "dappco.re/go/gui/compat/strings"
 	"embed"
 	"io"
 	"log/slog"
@@ -15,6 +11,7 @@ import (
 	"strconv"
 	"sync"
 
+	core "dappco.re/go"
 	"github.com/wailsapp/wails/v3/internal/assetserver"
 	"github.com/wailsapp/wails/v3/internal/assetserver/bundledassets"
 	"github.com/wailsapp/wails/v3/internal/assetserver/webview"
@@ -170,12 +167,12 @@ func New(appOptions Options) *App {
 	if appOptions.SingleInstance != nil {
 		manager, err := newSingleInstanceManager(result, appOptions.SingleInstance)
 		if err != nil {
-			if errors.Is(err, alreadyRunningError) && manager != nil {
+			if core.Is(err, alreadyRunningError) && manager != nil {
 				err = manager.notifyFirstInstance()
 				if err != nil {
 					globalApplication.error("failed to notify first instance: %w", err)
 				}
-				os.Exit(appOptions.SingleInstance.ExitCode)
+				core.Exit(appOptions.SingleInstance.ExitCode)
 			}
 			result.fatal("failed to initialize single instance manager: %w", err)
 		} else {
@@ -468,7 +465,7 @@ func (a *App) RegisterService(service Service) {
 
 func (a *App) handleFatalError(err error) {
 	a.handleError(&FatalError{err: err})
-	os.Exit(1)
+	core.Exit(1)
 }
 
 func (a *App) init() {
@@ -480,7 +477,7 @@ func (a *App) init() {
 	a.contextMenus = make(map[string]*ContextMenu)
 	a.keyBindings = make(map[string]func(window Window))
 	a.Logger = a.options.Logger
-	a.pid = os.Getpid()
+	a.pid = core.Getpid()
 	a.wailsEventListeners = make([]WailsEventListener, 0)
 
 	// Initialize managers
@@ -524,16 +521,16 @@ func (a *App) debug(message string, args ...any) {
 }
 
 func (a *App) fatal(message string, args ...any) {
-	err := fmt.Errorf(message, args...)
+	err := core.Errorf(message, args...)
 	a.handleFatalError(err)
 }
 func (a *App) warning(message string, args ...any) {
-	msg := fmt.Sprintf(message, args...)
+	msg := core.Sprintf(message, args...)
 	a.handleWarning(msg)
 }
 
 func (a *App) error(message string, args ...any) {
-	a.handleError(fmt.Errorf(message, args...))
+	a.handleError(core.Errorf(message, args...))
 }
 
 func (a *App) Run() error {
@@ -541,7 +538,7 @@ func (a *App) Run() error {
 	// Prevent double invocations.
 	if a.starting || a.running {
 		a.runLock.Unlock()
-		return errors.New("application is running or a previous run has failed")
+		return core.NewError("application is running or a previous run has failed")
 	}
 	// Block further service registrations.
 	a.starting = true
@@ -570,7 +567,7 @@ func (a *App) Run() error {
 	a.options.Services = nil
 	for i, service := range services {
 		if err := a.startupService(service); err != nil {
-			return fmt.Errorf("error starting service '%s': %w", getServiceName(service), err)
+			return core.Errorf("error starting service '%s': %w", getServiceName(service), err)
 		}
 		// Schedule started services for shutdown.
 		a.options.Services = services[:i+1]
@@ -649,7 +646,7 @@ func (a *App) Run() error {
 func (a *App) startupService(service Service) error {
 	err := a.bindings.Add(service)
 	if err != nil {
-		return fmt.Errorf("cannot bind service methods: %w", err)
+		return core.Errorf("cannot bind service methods: %w", err)
 	}
 
 	if service.options.Route != "" {
@@ -658,7 +655,7 @@ func (a *App) startupService(service Service) error {
 			handler = http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				http.Error(
 					rw,
-					fmt.Sprintf(
+					core.Sprintf(
 						"Service '%s' does not handle HTTP requests",
 						getServiceName(service),
 					),
@@ -730,7 +727,7 @@ func (a *App) handleWindowMessage(event *windowMessage) {
 		return
 	}
 	// Check if the message starts with "wails:"
-	if strings.HasPrefix(event.message, "wails:") {
+	if core.HasPrefix(event.message, "wails:") {
 		a.debug("handleWindowMessage: Processing wails message", "message", event.message)
 		window.HandleMessage(event.message)
 	} else {

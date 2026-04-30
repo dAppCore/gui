@@ -3,7 +3,6 @@ package window
 
 import (
 	core "dappco.re/go"
-	os "dappco.re/go/gui/compat/os"
 	"time"
 )
 
@@ -208,7 +207,7 @@ func TestStateManager_SetPath_Good(t *core.T) {
 	sm.SetState("custom", WindowState{Width: 640, Height: 480})
 	sm.ForceSync()
 
-	content, err := os.ReadFile(path)
+	content, err := coreReadFile(path)
 	core.RequireNoError(t, err)
 	core.AssertContains(t, string(content), "custom")
 }

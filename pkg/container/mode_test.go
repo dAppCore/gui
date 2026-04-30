@@ -1,9 +1,6 @@
 package container
 
-import (
-	core "dappco.re/go"
-	os "dappco.re/go/gui/compat/os"
-)
+import core "dappco.re/go"
 
 func TestDetectModeWithEnvironment(t *core.T) {
 	mode := DetectModeWithEnvironment(ModeEnvironment{
@@ -42,9 +39,9 @@ func TestMode_DetectMode_Good(t *core.T) {
 	// DetectMode
 	ax7Variant := "DetectMode:good"
 	core.AssertContains(t, ax7Variant, "good")
-	oldArgs := os.Args
-	os.Args = []string{"core-gui", "--mode=worker"}
-	t.Cleanup(func() { os.Args = oldArgs })
+	oldArgsFunc := argsFunc
+	argsFunc = func() []string { return []string{"core-gui", "--mode=worker"} }
+	t.Cleanup(func() { argsFunc = oldArgsFunc })
 	t.Setenv("CORE_GUI_MODE", "manager")
 
 	mode := DetectMode()
@@ -57,9 +54,9 @@ func TestMode_DetectMode_Bad(t *core.T) {
 	// DetectMode
 	ax7Variant := "DetectMode:bad"
 	core.AssertContains(t, ax7Variant, "bad")
-	oldArgs := os.Args
-	os.Args = []string{"core-gui"}
-	t.Cleanup(func() { os.Args = oldArgs })
+	oldArgsFunc := argsFunc
+	argsFunc = func() []string { return []string{"core-gui"} }
+	t.Cleanup(func() { argsFunc = oldArgsFunc })
 	t.Setenv("CORE_GUI_MODE", "bogus")
 
 	mode := DetectMode()
@@ -72,9 +69,9 @@ func TestMode_DetectMode_Ugly(t *core.T) {
 	// DetectMode
 	ax7Variant := "DetectMode:ugly"
 	core.AssertContains(t, ax7Variant, "ugly")
-	oldArgs := os.Args
-	os.Args = []string{"core-gui", "--unexpected=flag"}
-	t.Cleanup(func() { os.Args = oldArgs })
+	oldArgsFunc := argsFunc
+	argsFunc = func() []string { return []string{"core-gui", "--unexpected=flag"} }
+	t.Cleanup(func() { argsFunc = oldArgsFunc })
 	t.Setenv("CORE_GUI_MODE", " \tbogus\n")
 
 	mode := DetectMode()

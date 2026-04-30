@@ -6,7 +6,6 @@ import (
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/dock"
-	coreerr "dappco.re/go/log"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -105,7 +104,7 @@ func (s *Subsystem) dockInfo(_ context.Context, _ *mcp.CallToolRequest, _ DockIn
 	}
 	visible, ok := r.Value.(bool)
 	if !ok {
-		return nil, DockInfoOutput{}, coreerr.E("mcp.dockInfo", "unexpected result type", nil)
+		return nil, DockInfoOutput{}, core.E("mcp.dockInfo", "unexpected result type", nil)
 	}
 	return nil, DockInfoOutput{Visible: visible}, nil
 }
@@ -155,7 +154,7 @@ func (s *Subsystem) dockBounce(_ context.Context, _ *mcp.CallToolRequest, input 
 	}
 	requestID, ok := r.Value.(int)
 	if !ok {
-		return nil, DockBounceOutput{}, coreerr.E("mcp.dockBounce", "unexpected result type", nil)
+		return nil, DockBounceOutput{}, core.E("mcp.dockBounce", "unexpected result type", nil)
 	}
 	return nil, DockBounceOutput{RequestID: requestID}, nil
 }

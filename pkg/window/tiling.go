@@ -2,8 +2,9 @@
 package window
 
 import (
+	core "dappco.re/go"
+
 	"dappco.re/go/gui/pkg/screen"
-	coreerr "dappco.re/go/log"
 )
 
 // TileMode defines how windows are arranged.
@@ -375,12 +376,12 @@ func (m *Manager) TileWindows(mode TileMode, names []string, screenW, screenH in
 	for _, name := range names {
 		pw, ok := m.Get(name)
 		if !ok {
-			return coreerr.E("window.Manager.TileWindows", "window not found: "+name, nil)
+			return core.E("window.Manager.TileWindows", "window not found: "+name, nil)
 		}
 		windows = append(windows, pw)
 	}
 	if len(windows) == 0 {
-		return coreerr.E("window.Manager.TileWindows", "no windows to tile", nil)
+		return core.E("window.Manager.TileWindows", "no windows to tile", nil)
 	}
 	for _, pw := range windows {
 		normalizeWindowForLayout(pw)
@@ -468,7 +469,7 @@ func (m *Manager) SnapWindow(name string, pos SnapPosition, screenW, screenH int
 	originX, originY := layoutOrigin(origin)
 	pw, ok := m.Get(name)
 	if !ok {
-		return coreerr.E("window.Manager.SnapWindow", "window not found: "+name, nil)
+		return core.E("window.Manager.SnapWindow", "window not found: "+name, nil)
 	}
 
 	halfW, halfH := screenW/2, screenH/2
@@ -513,7 +514,7 @@ func (m *Manager) StackWindows(names []string, offsetX, offsetY int, origin ...i
 	for i, name := range names {
 		pw, ok := m.Get(name)
 		if !ok {
-			return coreerr.E("window.Manager.StackWindows", "window not found: "+name, nil)
+			return core.E("window.Manager.StackWindows", "window not found: "+name, nil)
 		}
 		pw.SetPosition(originX+i*offsetX, originY+i*offsetY)
 		m.captureState(pw)
@@ -525,7 +526,7 @@ func (m *Manager) StackWindows(names []string, offsetX, offsetY int, origin ...i
 func (m *Manager) ApplyWorkflow(workflow WorkflowLayout, names []string, screenW, screenH int, origin ...int) error {
 	originX, originY := layoutOrigin(origin)
 	if len(names) == 0 {
-		return coreerr.E("window.Manager.ApplyWorkflow", "no windows for workflow", nil)
+		return core.E("window.Manager.ApplyWorkflow", "no windows for workflow", nil)
 	}
 
 	switch workflow {

@@ -2,10 +2,6 @@ package display
 
 import (
 	core "dappco.re/go"
-	filepath "dappco.re/go/gui/compat/filepath"
-	strings "dappco.re/go/gui/compat/strings"
-
-	coreio "dappco.re/go/io"
 )
 
 func TestHLCRF_DefaultHLCRFTag_GoodCase(t *core.T) {
@@ -28,19 +24,19 @@ func TestHLCRF_DefaultHLCRFTag_UglyCase(t *core.T) {
 
 func TestHLCRF_BuildHLCRFComponents_GoodCase(t *core.T) {
 	root := t.TempDir()
-	core.RequireNoError(t, coreio.Local.EnsureDir(filepath.Join(root, ".core")))
-	core.RequireNoError(t, coreio.Local.WriteMode(filepath.Join(root, "index.html"), "<html></html>", 0o644))
-	core.RequireNoError(t, coreio.Local.WriteMode(filepath.Join(root, "card.html"), "<article>Card</article>", 0o644))
-	core.RequireNoError(t, coreio.Local.WriteMode(filepath.Join(root, ".core", "view.yaml"), strings.Join([]string{
+	core.RequireNoError(t, coreEnsureDir(core.PathJoin(root, ".core")))
+	core.RequireNoError(t, coreWriteMode(core.PathJoin(root, "index.html"), "<html></html>", 0o644))
+	core.RequireNoError(t, coreWriteMode(core.PathJoin(root, "card.html"), "<article>Card</article>", 0o644))
+	core.RequireNoError(t, coreWriteMode(core.PathJoin(root, ".core", "view.yaml"), core.Join("\n", []string{
 		"hlcrf:",
 		"  - name: card.html",
 		"  - tag: core-inline",
 		"    template: <section>Inline</section>",
-	}, "\n"), 0o644))
+	}...), 0o644))
 
 	svc := &Service{}
 
-	script, err := svc.buildHLCRFComponents(filepath.Join(root, "index.html"))
+	script, err := svc.buildHLCRFComponents(core.PathJoin(root, "index.html"))
 
 	core.RequireNoError(t, err)
 	core.RequireNotEmpty(t, script)
@@ -62,7 +58,7 @@ func TestHLCRF_CompileHLCRFTemplate_GoodCase(t *core.T) {
 func TestHLCRF_BuildHLCRFComponents_BadCase(t *core.T) {
 	svc := &Service{}
 
-	script, err := svc.buildHLCRFComponents(filepath.Join(t.TempDir(), "missing.html"))
+	script, err := svc.buildHLCRFComponents(core.PathJoin(t.TempDir(), "missing.html"))
 
 	core.RequireNoError(t, err)
 	core.AssertEmpty(t, script)
@@ -70,17 +66,17 @@ func TestHLCRF_BuildHLCRFComponents_BadCase(t *core.T) {
 
 func TestHLCRF_BuildHLCRFComponents_UglyCase(t *core.T) {
 	root := t.TempDir()
-	core.RequireNoError(t, coreio.Local.EnsureDir(filepath.Join(root, ".core")))
-	core.RequireNoError(t, coreio.Local.WriteMode(filepath.Join(root, "index.html"), "<html></html>", 0o644))
-	core.RequireNoError(t, coreio.Local.WriteMode(filepath.Join(root, ".core", "view.yaml"), strings.Join([]string{
+	core.RequireNoError(t, coreEnsureDir(core.PathJoin(root, ".core")))
+	core.RequireNoError(t, coreWriteMode(core.PathJoin(root, "index.html"), "<html></html>", 0o644))
+	core.RequireNoError(t, coreWriteMode(core.PathJoin(root, ".core", "view.yaml"), core.Join("\n", []string{
 		"hlcrf:",
 		"  - name: missing.html",
 		"  - template: <span>Fallback</span>",
-	}, "\n"), 0o644))
+	}...), 0o644))
 
 	svc := &Service{}
 
-	script, err := svc.buildHLCRFComponents(filepath.Join(root, "index.html"))
+	script, err := svc.buildHLCRFComponents(core.PathJoin(root, "index.html"))
 
 	core.RequireNoError(t, err)
 	core.RequireNotEmpty(t, script)
@@ -90,17 +86,17 @@ func TestHLCRF_BuildHLCRFComponents_UglyCase(t *core.T) {
 
 func TestHLCRF_BuildHLCRFComponents_RejectsTraversal(t *core.T) {
 	root := t.TempDir()
-	core.RequireNoError(t, coreio.Local.EnsureDir(filepath.Join(root, ".core")))
-	core.RequireNoError(t, coreio.Local.WriteMode(filepath.Join(root, "index.html"), "<html></html>", 0o644))
-	core.RequireNoError(t, coreio.Local.WriteMode(filepath.Join(root, "outside.html"), "<span>Outside</span>", 0o644))
-	core.RequireNoError(t, coreio.Local.WriteMode(filepath.Join(root, ".core", "view.yaml"), strings.Join([]string{
+	core.RequireNoError(t, coreEnsureDir(core.PathJoin(root, ".core")))
+	core.RequireNoError(t, coreWriteMode(core.PathJoin(root, "index.html"), "<html></html>", 0o644))
+	core.RequireNoError(t, coreWriteMode(core.PathJoin(root, "outside.html"), "<span>Outside</span>", 0o644))
+	core.RequireNoError(t, coreWriteMode(core.PathJoin(root, ".core", "view.yaml"), core.Join("\n", []string{
 		"hlcrf:",
 		"  - name: ../outside.html",
-	}, "\n"), 0o644))
+	}...), 0o644))
 
 	svc := &Service{}
 
-	script, err := svc.buildHLCRFComponents(filepath.Join(root, "index.html"))
+	script, err := svc.buildHLCRFComponents(core.PathJoin(root, "index.html"))
 
 	core.AssertError(t, err)
 	core.AssertEmpty(t, script)

@@ -3,7 +3,6 @@ package p2p
 import (
 	"context"
 	core "dappco.re/go"
-	errors "dappco.re/go/gui/compat/errors"
 	"time"
 )
 
@@ -60,7 +59,7 @@ func TestRouter_Publish_Ugly(t *core.T) {
 	// Publish
 	ax7Variant := "Publish:ugly"
 	core.AssertContains(t, ax7Variant, "ugly")
-	driver := &fakeDriver{publishErr: errors.New("publish failed")}
+	driver := &fakeDriver{publishErr: core.NewError("publish failed")}
 	router := New(driver)
 
 	err := router.Publish(context.Background(), Envelope{Topic: "updates"})
@@ -109,7 +108,7 @@ func TestRouter_Subscribe_Ugly(t *core.T) {
 	// Subscribe
 	ax7Variant := "Subscribe:ugly"
 	core.AssertContains(t, ax7Variant, "ugly")
-	driver := &fakeDriver{subscribeErr: errors.New("subscribe failed")}
+	driver := &fakeDriver{subscribeErr: core.NewError("subscribe failed")}
 	router := New(driver)
 
 	err := router.Subscribe(context.Background(), "timeline", func(Envelope) {})

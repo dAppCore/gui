@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	core "dappco.re/go"
-	json "dappco.re/go/gui/compat/json"
 	"net"
 	"time"
 )
@@ -43,7 +42,7 @@ func TestTCPDriver_Publish_ContinuesAfterPeerFailure(t *core.T) {
 		scanner := bufio.NewScanner(conn)
 		if scanner.Scan() {
 			var envelope Envelope
-			if err := json.Unmarshal(scanner.Bytes(), &envelope); err != nil {
+			if err := jsonUnmarshal(scanner.Bytes(), &envelope); err != nil {
 				acceptErr <- err
 				return
 			}

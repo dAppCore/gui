@@ -3,13 +3,10 @@ package environment
 
 import (
 	"context"
-	filepath "dappco.re/go/gui/compat/filepath"
-	strings "dappco.re/go/gui/compat/strings"
 	"sync"
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/internal/coreutil"
-	coreerr "dappco.re/go/log"
 )
 
 type Options struct{}
@@ -154,7 +151,7 @@ func (s *Service) setThemeOverride(theme string) (bool, error) {
 }
 
 func normalizeTheme(theme string) (string, error) {
-	switch strings.ToLower(strings.TrimSpace(theme)) {
+	switch core.Lower(core.Trim(theme)) {
 	case "", "system":
 		return "", nil
 	case "dark":
@@ -162,21 +159,21 @@ func normalizeTheme(theme string) (string, error) {
 	case "light":
 		return "light", nil
 	default:
-		return "", coreerr.E("environment.normalizeTheme", "invalid theme: "+theme, nil)
+		return "", core.E("environment.normalizeTheme", "invalid theme: "+theme, nil)
 	}
 }
 
 func validatedOpenFileManagerPath(raw string) (string, error) {
-	trimmed := strings.TrimSpace(raw)
+	trimmed := core.Trim(raw)
 	if trimmed == "" {
-		return "", coreerr.E("environment.openFileManager", "path is required", nil)
+		return "", core.E("environment.openFileManager", "path is required", nil)
 	}
-	if strings.ContainsRune(trimmed, '\x00') {
-		return "", coreerr.E("environment.openFileManager", "path contains a null byte", nil)
+	if core.Contains(trimmed, "\x00") {
+		return "", core.E("environment.openFileManager", "path contains a null byte", nil)
 	}
-	cleaned := filepath.Clean(trimmed)
-	if !filepath.IsAbs(cleaned) {
-		return "", coreerr.E("environment.openFileManager", "path must be absolute", nil)
+	cleaned := core.CleanPath(trimmed, string(core.PathSeparator))
+	if !core.PathIsAbs(cleaned) {
+		return "", core.E("environment.openFileManager", "path must be absolute", nil)
 	}
 	return cleaned, nil
 }

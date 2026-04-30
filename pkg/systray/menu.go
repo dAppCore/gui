@@ -1,13 +1,13 @@
 // pkg/systray/menu.go
 package systray
 
-import coreerr "dappco.re/go/log"
+import core "dappco.re/go"
 
 // SetMenu sets a dynamic menu on the tray from TrayMenuItem descriptors.
 // Use: _ = m.SetMenu([]TrayMenuItem{{Label: "Quit", ActionID: "quit"}})
 func (m *Manager) SetMenu(items []TrayMenuItem) error {
 	if m.tray == nil {
-		return coreerr.E("systray.SetMenu", "tray not initialised", nil)
+		return core.E("systray.SetMenu", "tray not initialised", nil)
 	}
 	m.mu.Lock()
 	m.menuItems = append([]TrayMenuItem(nil), items...)

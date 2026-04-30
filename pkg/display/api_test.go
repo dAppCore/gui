@@ -2,7 +2,6 @@ package display
 
 import (
 	"context"
-	bytes "dappco.re/go/gui/compat/bytes"
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/clipboard"
@@ -737,7 +736,7 @@ func TestDisplayAPI_WriteClipboardImage_Good(t *core.T) {
 
 	core.RequireNoError(t, err)
 	input[0] = 9
-	core.AssertTrue(t, bytes.Equal([]byte{4, 5, 6}, got))
+	core.AssertTrue(t, bytesEqual([]byte{4, 5, 6}, got))
 }
 
 func TestDisplayAPI_WriteClipboardImage_Bad(t *core.T) {

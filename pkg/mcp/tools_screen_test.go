@@ -2,7 +2,6 @@ package mcp
 
 import (
 	"context"
-	errors "dappco.re/go/gui/compat/errors"
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/screen"
@@ -74,7 +73,7 @@ func TestToolsScreen_screenGet_Ugly(t *core.T) {
 	core.AssertContains(t, ax7Variant, "ugly")
 	sub := newScreenToolsTestSubsystem(t, func(q core.Query) core.Result {
 		if _, ok := q.(screen.QueryByID); ok {
-			return core.Result{OK: true, Value: errors.New("unexpected payload")}
+			return core.Result{OK: true, Value: core.NewError("unexpected payload")}
 		}
 		return core.Result{}
 	})

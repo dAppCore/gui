@@ -3,7 +3,6 @@ package container
 import (
 	"context"
 	core "dappco.re/go"
-	errors "dappco.re/go/gui/compat/errors"
 	"time"
 )
 
@@ -128,7 +127,7 @@ func TestTIMManager_Start_Ugly(t *core.T) {
 			return RuntimeDocker
 		},
 		Exec: func(context.Context, string, ...string) error {
-			return errors.New("docker failed")
+			return core.NewError("docker failed")
 		},
 	})
 
@@ -176,7 +175,7 @@ func TestTIMManager_Stop_Bad(t *core.T) {
 			return RuntimeDocker
 		},
 		Exec: func(context.Context, string, ...string) error {
-			return errors.New("stop failed")
+			return core.NewError("stop failed")
 		},
 	})
 

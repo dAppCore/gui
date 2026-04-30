@@ -2,9 +2,6 @@ package chat
 
 import (
 	"context"
-	filepath "dappco.re/go/gui/compat/filepath"
-	fmt "dappco.re/go/gui/compat/fmt"
-	os "dappco.re/go/gui/compat/os"
 	"net/http"
 	"net/http/httptest"
 	"time"
@@ -22,16 +19,16 @@ func ExampleRegister() {
 	}))
 	defer server.Close()
 
-	storeDir, err := os.MkdirTemp("", "chat-example-*")
+	storeDir, err := coreMkdirTemp("", "chat-example-*")
 	if err != nil {
 		panic(err)
 	}
-	defer os.RemoveAll(storeDir)
+	defer coreRemoveAll(storeDir)
 
 	c := core.New(
 		core.WithService(Register(
 			func(o *Options) { o.APIURL = server.URL },
-			func(o *Options) { o.StorePath = filepath.Join(storeDir, "chat.db") },
+			func(o *Options) { o.StorePath = core.PathJoin(storeDir, "chat.db") },
 			func(o *Options) { o.ToolExecutor = &mockToolExecutor{} },
 			func(o *Options) { o.Now = func() time.Time { return time.Unix(1_700_000_000, 0).UTC() } },
 		)),
@@ -53,8 +50,8 @@ func ExampleRegister() {
 		core.Option{Key: "conversation_id", Value: conversations.Value.([]Conversation)[0].ID},
 	))
 
-	fmt.Println(len(history.Value.([]Message)))
-	fmt.Println(history.Value.([]Message)[1].Content)
+	core.Println(len(history.Value.([]Message)))
+	core.Println(history.Value.([]Message)[1].Content)
 	// Output:
 	// 2
 	// Hello from chat

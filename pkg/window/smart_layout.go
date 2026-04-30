@@ -2,12 +2,10 @@ package window
 
 import (
 	"context"
-	strings "dappco.re/go/gui/compat/strings"
 	"sort"
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/screen"
-	coreerr "dappco.re/go/log"
 )
 
 type schemeResponse struct {
@@ -25,7 +23,7 @@ func (s *Service) buildWindowSpec(t TaskOpenWindow) (*Window, error) {
 
 func (s *Service) prepareWindowSpec(spec *Window) error {
 	if spec == nil {
-		return coreerr.E("window.prepareWindowSpec", "window spec is nil", nil)
+		return core.E("window.prepareWindowSpec", "window spec is nil", nil)
 	}
 
 	rawURL := spec.URL
@@ -38,7 +36,7 @@ func (s *Service) prepareWindowSpec(spec *Window) error {
 		}
 	}
 
-	if !strings.HasPrefix(rawURL, "core://") {
+	if !core.HasPrefix(rawURL, "core://") {
 		return nil
 	}
 
@@ -47,7 +45,7 @@ func (s *Service) prepareWindowSpec(spec *Window) error {
 		return err
 	}
 	if !ok {
-		return coreerr.E("window.prepareWindowSpec", "core scheme handler unavailable for "+rawURL, nil)
+		return core.E("window.prepareWindowSpec", "core scheme handler unavailable for "+rawURL, nil)
 	}
 	spec.HTML = resolved.Body
 	spec.URL = "about:blank"
@@ -92,7 +90,7 @@ func (s *Service) resolveCoreScheme(rawURL string) (schemeResponse, bool, error)
 func (s *Service) applyWindowBounds(name string, bounds WindowBounds) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return coreerr.E("window.applyWindowBounds", "window not found: "+name, nil)
+		return core.E("window.applyWindowBounds", "window not found: "+name, nil)
 	}
 	pw.SetBounds(bounds.X, bounds.Y, bounds.Width, bounds.Height)
 	s.manager.State().UpdatePosition(name, bounds.X, bounds.Y)
@@ -171,7 +169,7 @@ func screenID(scr *screen.Screen) string {
 }
 
 func normalizeSide(side string) string {
-	switch strings.ToLower(strings.TrimSpace(side)) {
+	switch core.Lower(core.Trim(side)) {
 	case "left":
 		return "left"
 	case "right":
@@ -195,9 +193,9 @@ func preferredEditorWindow(windows []WindowInfo, target string, explicit string)
 		if windows[i].Name == target {
 			continue
 		}
-		haystack := strings.ToLower(windows[i].Name + " " + windows[i].Title)
+		haystack := core.Lower(windows[i].Name + " " + windows[i].Title)
 		for _, hint := range editorHints {
-			if strings.Contains(haystack, hint) {
+			if core.Contains(haystack, hint) {
 				return &windows[i]
 			}
 		}
@@ -221,12 +219,12 @@ func preferredEditorWindow(windows []WindowInfo, target string, explicit string)
 func (s *Service) taskLayoutBesideEditor(task TaskLayoutBesideEditor) (LayoutBesideEditorResult, error) {
 	target := s.queryWindowByName(task.Name)
 	if target == nil {
-		return LayoutBesideEditorResult{}, coreerr.E("window.taskLayoutBesideEditor", "window not found: "+task.Name, nil)
+		return LayoutBesideEditorResult{}, core.E("window.taskLayoutBesideEditor", "window not found: "+task.Name, nil)
 	}
 
 	editor := preferredEditorWindow(s.queryWindowList(), task.Name, task.Editor)
 	if editor == nil {
-		return LayoutBesideEditorResult{}, coreerr.E("window.taskLayoutBesideEditor", "no editor window detected", nil)
+		return LayoutBesideEditorResult{}, core.E("window.taskLayoutBesideEditor", "no editor window detected", nil)
 	}
 
 	scr := s.screenForWindow(editor.Name)
@@ -471,13 +469,13 @@ func (s *Service) taskScreenFindSpace(task TaskScreenFindSpace) ScreenSpace {
 
 func (s *Service) taskWindowArrangePair(task TaskWindowArrangePair) (PairArrangement, error) {
 	if task.Primary == "" || task.Secondary == "" {
-		return PairArrangement{}, coreerr.E("window.taskWindowArrangePair", "primary and secondary windows are required", nil)
+		return PairArrangement{}, core.E("window.taskWindowArrangePair", "primary and secondary windows are required", nil)
 	}
 	if _, ok := s.manager.Get(task.Primary); !ok {
-		return PairArrangement{}, coreerr.E("window.taskWindowArrangePair", "window not found: "+task.Primary, nil)
+		return PairArrangement{}, core.E("window.taskWindowArrangePair", "window not found: "+task.Primary, nil)
 	}
 	if _, ok := s.manager.Get(task.Secondary); !ok {
-		return PairArrangement{}, coreerr.E("window.taskWindowArrangePair", "window not found: "+task.Secondary, nil)
+		return PairArrangement{}, core.E("window.taskWindowArrangePair", "window not found: "+task.Secondary, nil)
 	}
 
 	scr := s.screenByID(task.ScreenID)

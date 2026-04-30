@@ -4,9 +4,6 @@ import (
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
-	filepath "dappco.re/go/gui/compat/filepath"
-	os "dappco.re/go/gui/compat/os"
-	strings "dappco.re/go/gui/compat/strings"
 	"encoding/base64"
 	"net/http"
 	"net/http/httptest"
@@ -66,8 +63,8 @@ func TestMarketplace_marketplaceInstallRoot_Bad(t *core.T) {
 	t.Setenv("DIR_HOME", "")
 
 	root := marketplaceInstallRoot("")
-	core.AssertNotContains(t, root, os.TempDir())
-	core.RequireTrue(t, strings.HasSuffix(root, filepath.Join("core", "apps")) || strings.HasSuffix(root, filepath.Join(".core", "apps")))
+	core.AssertNotContains(t, root, core.TempDir())
+	core.RequireTrue(t, core.HasSuffix(root, core.PathJoin("core", "apps")) || core.HasSuffix(root, core.PathJoin(".core", "apps")))
 }
 
 func TestMarketplace_marketplaceInstallRoot_Ugly(t *core.T) {
@@ -76,8 +73,8 @@ func TestMarketplace_marketplaceInstallRoot_Ugly(t *core.T) {
 	core.AssertContains(t, ax7Variant, "ugly")
 	t.Setenv("DIR_HOME", "  /Users/tester  ")
 
-	core.RequireTrue(t, strings.HasSuffix(marketplaceInstallRoot(""), filepath.Join(".core", "apps")))
-	core.AssertNotEmpty(t, core.Sprintf("%T", strings.HasSuffix(marketplaceInstallRoot(""), filepath.Join(".core", "apps"))))
+	core.RequireTrue(t, core.HasSuffix(marketplaceInstallRoot(""), core.PathJoin(".core", "apps")))
+	core.AssertNotEmpty(t, core.Sprintf("%T", core.HasSuffix(marketplaceInstallRoot(""), core.PathJoin(".core", "apps"))))
 }
 
 func TestMarketplace_registerMarketplaceActions_GoodCase(t *core.T) {
@@ -136,7 +133,7 @@ func TestMarketplace_registerMarketplaceActions_GoodCase(t *core.T) {
 	marketplaceGitRunner = func(_ context.Context, _ string, args ...string) ([]byte, error) {
 		gitArgs = append([]string(nil), args...)
 		core.RequireNotEmpty(t, args)
-		core.RequireNoError(t, os.MkdirAll(args[len(args)-1], 0o755))
+		core.RequireNoError(t, coreMkdirAll(args[len(args)-1], 0o755))
 		return nil, nil
 	}
 	t.Cleanup(func() { marketplaceGitRunner = previousGitRunner })
@@ -150,9 +147,9 @@ func TestMarketplace_registerMarketplaceActions_GoodCase(t *core.T) {
 	installed, ok := installResult.Value.(map[string]any)
 	core.RequireTrue(t, ok)
 	core.AssertEqual(t, installDir, installed["install_dir"])
-	resolvedInstallDir, err := filepath.EvalSymlinks(installDir)
+	resolvedInstallDir, err := pathEvalSymlinks(installDir)
 	core.RequireNoError(t, err)
-	core.AssertEqual(t, filepath.Join(resolvedInstallDir, "core-ui"), installed["target_dir"])
+	core.AssertEqual(t, core.PathJoin(resolvedInstallDir, "core-ui"), installed["target_dir"])
 
 	core.AssertContains(t, gitArgs, "clone")
 	core.AssertContains(t, gitArgs, "--branch")

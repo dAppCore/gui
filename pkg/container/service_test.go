@@ -2,7 +2,6 @@ package container
 
 import (
 	"context"
-	errors "dappco.re/go/gui/compat/errors"
 	"time"
 
 	core "dappco.re/go"
@@ -302,7 +301,7 @@ func TestService_OnStartup_UglyCase(t *core.T) {
 			return RuntimeDocker
 		},
 		Exec: func(context.Context, string, ...string) error {
-			return errors.New("boom")
+			return core.NewError("boom")
 		},
 	})
 

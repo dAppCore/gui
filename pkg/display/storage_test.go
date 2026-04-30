@@ -2,8 +2,6 @@ package display
 
 import (
 	core "dappco.re/go"
-	fmt "dappco.re/go/gui/compat/fmt"
-	strings "dappco.re/go/gui/compat/strings"
 	"time"
 )
 
@@ -136,7 +134,7 @@ func TestStorageRegistry_Set_Bad(t *core.T) {
 	core.AssertFalse(t, r.Set("", "localStorage", "theme", "dark"))
 	core.AssertFalse(t, r.Set("core://settings", "", "theme", "dark"))
 	core.AssertFalse(t, r.Set("core://settings", "localStorage", "", "dark"))
-	core.AssertFalse(t, r.Set("core://settings", "localStorage", "theme", strings.Repeat("x", maxStorageValueBytes+1)))
+	core.AssertFalse(t, r.Set("core://settings", "localStorage", "theme", repeatString("x", maxStorageValueBytes+1)))
 }
 
 func TestStorageRegistry_Delete_Good(t *core.T) {
@@ -154,7 +152,7 @@ func TestStorageRegistry_Delete_Good(t *core.T) {
 func TestStorageRegistry_Set_RejectsQuotaOverflow(t *core.T) {
 	r := NewStorageRegistry()
 	for i := 0; i < maxStorageEntriesPerOrigin; i++ {
-		core.RequireTrue(t, r.Set("core://settings", "localStorage", fmt.Sprintf("key-%d", i), "v"))
+		core.RequireTrue(t, r.Set("core://settings", "localStorage", core.Sprintf("key-%d", i), "v"))
 	}
 	core.AssertFalse(t, r.Set("core://settings", "localStorage", "overflow", "v"))
 }

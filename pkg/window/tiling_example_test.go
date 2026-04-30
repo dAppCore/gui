@@ -1,9 +1,6 @@
 package window
 
-import (
-	core "dappco.re/go"
-	fmt "dappco.re/go/gui/compat/fmt"
-)
+import core "dappco.re/go"
 
 func ExampleBesideEditor() {
 	rect := BesideEditor(
@@ -11,7 +8,7 @@ func ExampleBesideEditor() {
 		Size{Width: 1600, Height: 900},
 	)
 
-	fmt.Printf("%d,%d %dx%d\n", rect.X, rect.Y, rect.Width, rect.Height)
+	core.WriteString(core.Stdout(), core.Sprintf("%d,%d %dx%d\n", rect.X, rect.Y, rect.Width, rect.Height))
 	// Output:
 	// 1200,40 400x720
 }
@@ -23,11 +20,10 @@ func ExampleSuggestLayout() {
 	)
 
 	for _, placement := range placements {
-		fmt.Printf("%s:%d,%d %dx%d\n", placement.Name, placement.Bounds.X, placement.Bounds.Y, placement.Bounds.Width, placement.Bounds.Height)
+		core.WriteString(core.Stdout(), core.Sprintf("%s:%d,%d %dx%d\n", placement.Name, placement.Bounds.X, placement.Bounds.Y, placement.Bounds.Width, placement.Bounds.Height))
 	}
 	// Output:
 	// editor:0,0 989x900
-	//
 	// preview:989,0 611x900
 }
 
@@ -38,7 +34,7 @@ func ExampleFindEmptySpace() {
 		Size{Width: 300, Height: 300},
 	)
 
-	fmt.Printf("%t %d,%d %dx%d\n", ok, rect.X, rect.Y, rect.Width, rect.Height)
+	core.WriteString(core.Stdout(), core.Sprintf("%t %d,%d %dx%d\n", ok, rect.X, rect.Y, rect.Width, rect.Height))
 	// Output:
 	// true 1000,0 600x900
 }
@@ -50,7 +46,7 @@ func ExampleArrangePair() {
 		Rect{X: 0, Y: 0, Width: 2000, Height: 1000},
 	)
 
-	fmt.Printf("%dx%d | %dx%d\n", left.Width, left.Height, right.Width, right.Height)
+	core.WriteString(core.Stdout(), core.Sprintf("%dx%d | %dx%d\n", left.Width, left.Height, right.Width, right.Height))
 	// Output:
 	// 1200x1000 | 800x1000
 }

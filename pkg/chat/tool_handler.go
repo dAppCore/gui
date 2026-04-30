@@ -2,7 +2,6 @@ package chat
 
 import (
 	"context"
-	strings "dappco.re/go/gui/compat/strings"
 	"sort"
 
 	core "dappco.re/go"
@@ -50,7 +49,7 @@ func (h *mcpToolCallHandler) OnToolCall(ctx context.Context, call ToolCall) (any
 	if h == nil || h.executor == nil {
 		return nil, core.E("chat.tool_call", "tool execution unavailable", nil)
 	}
-	call.Name = strings.TrimSpace(call.Name)
+	call.Name = core.Trim(call.Name)
 	if call.Name == "" {
 		return nil, core.E("chat.tool_call", "tool name is required", nil)
 	}
@@ -67,21 +66,21 @@ func (h *mcpToolCallHandler) BuildToolManifest() string {
 
 	tools := h.executor.Manifest()
 	if len(tools) == 0 {
-		return strings.TrimSpace(h.executor.ManifestText())
+		return core.Trim(h.executor.ManifestText())
 	}
 	tools = append([]guimcp.ToolDescriptor(nil), tools...)
 	sort.Slice(tools, func(i, j int) bool {
 		return tools[i].Name < tools[j].Name
 	})
 
-	var builder strings.Builder
+	builder := core.NewBuilder()
 	builder.WriteString("Available MCP tools:\n")
 	for _, tool := range tools {
 		builder.WriteString("- ")
 		builder.WriteString(tool.Name)
-		if strings.TrimSpace(tool.Description) != "" {
+		if core.Trim(tool.Description) != "" {
 			builder.WriteString(": ")
-			builder.WriteString(strings.TrimSpace(tool.Description))
+			builder.WriteString(core.Trim(tool.Description))
 		}
 		schema := tool.InputSchema
 		if schema == nil {
@@ -94,7 +93,7 @@ func (h *mcpToolCallHandler) BuildToolManifest() string {
 	builder.WriteString("\nWhen a tool is needed, emit exactly one JSON object in this shape: ")
 	builder.WriteString(`{"tool_call":{"name":"tool_name","arguments":{}}}`)
 	builder.WriteString(".")
-	return strings.TrimSpace(builder.String())
+	return core.Trim(builder.String())
 }
 
 type actionToolExecutor struct {
@@ -114,7 +113,7 @@ func registerMCPToolActions(c *core.Core, executor ToolExecutor) {
 		return
 	}
 	for _, tool := range executor.Manifest() {
-		name := strings.TrimSpace(tool.Name)
+		name := core.Trim(tool.Name)
 		if name == "" {
 			continue
 		}
@@ -148,7 +147,7 @@ func (e *actionToolExecutor) CallTool(ctx context.Context, name string, argument
 		return "", core.E("chat.tool_call", "tool execution unavailable", nil)
 	}
 	if e.core != nil {
-		result := e.core.Action(mcpToolActionPrefix+strings.TrimSpace(name)).Run(ctx, core.NewOptions(core.Option{
+		result := e.core.Action(mcpToolActionPrefix+core.Trim(name)).Run(ctx, core.NewOptions(core.Option{
 			Key:   "arguments",
 			Value: arguments,
 		}))
@@ -165,8 +164,8 @@ type inlineToolCallEnvelope struct {
 }
 
 func parseInlineToolCall(content string) (ToolCall, bool, error) {
-	trimmed := strings.TrimSpace(content)
-	if trimmed == "" || !strings.Contains(trimmed, "tool_call") {
+	trimmed := core.Trim(content)
+	if trimmed == "" || !core.Contains(trimmed, "tool_call") {
 		return ToolCall{}, false, nil
 	}
 
@@ -178,7 +177,7 @@ func parseInlineToolCall(content string) (ToolCall, bool, error) {
 		return ToolCall{}, false, nil
 	}
 	call := *envelope.ToolCall
-	call.Name = strings.TrimSpace(call.Name)
+	call.Name = core.Trim(call.Name)
 	if call.Arguments == nil {
 		call.Arguments = map[string]any{}
 	}

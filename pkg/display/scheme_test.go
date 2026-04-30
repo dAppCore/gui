@@ -2,7 +2,6 @@ package display
 
 import (
 	"context"
-	strings "dappco.re/go/gui/compat/strings"
 	"net/url"
 
 	core "dappco.re/go"
@@ -199,7 +198,7 @@ func TestScheme_ResolveSchemeRequest_BodyQuery_Bad(t *core.T) {
 		"core://store",
 		"POST",
 		nil,
-		[]byte(strings.Repeat("a", maxSchemeRequestBodyBytes+1)),
+		[]byte(repeatString("a", maxSchemeRequestBodyBytes+1)),
 	)
 	core.AssertFalse(t, result.OK)
 	core.AssertContains(t, result.Value.(error).Error(), "request body exceeds")

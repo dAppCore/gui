@@ -1,9 +1,7 @@
 package container
 
 import (
-	os "dappco.re/go/gui/compat/os"
-	strings "dappco.re/go/gui/compat/strings"
-
+	core "dappco.re/go"
 	"dappco.re/go/config"
 )
 
@@ -20,18 +18,20 @@ type ModeEnvironment struct {
 	ConfigValue func(string) string
 }
 
+var argsFunc = core.Args
+
 // DetectMode resolves the RFC startup mode from CLI flags first, then config/env.
 func DetectMode() AppMode {
-	cfg, _ := config.New()
+	cfg, _ := core.Cast[*config.Config](config.New())
 	return DetectModeWithEnvironment(ModeEnvironment{
-		Args:      os.Args[1:],
-		LookupEnv: os.LookupEnv,
+		Args:      argsFunc()[1:],
+		LookupEnv: core.LookupEnv,
 		ConfigValue: func(key string) string {
 			if cfg == nil {
 				return ""
 			}
 			var value string
-			if err := cfg.Get(key, &value); err != nil {
+			if !cfg.Get(key, &value).OK {
 				return ""
 			}
 			return value
@@ -42,7 +42,7 @@ func DetectMode() AppMode {
 func DetectModeWithEnvironment(environment ModeEnvironment) AppMode {
 	args := environment.Args
 	if args == nil {
-		args = os.Args[1:]
+		args = argsFunc()[1:]
 	}
 
 	if value, found := modeArgValue(args); found {
@@ -72,17 +72,17 @@ func DetectModeWithEnvironment(environment ModeEnvironment) AppMode {
 
 func modeArgValue(args []string) (string, bool) {
 	for i := 0; i < len(args); i++ {
-		arg := strings.TrimSpace(args[i])
+		arg := core.Trim(args[i])
 		if arg == "--mode" || arg == "-mode" {
 			if i+1 < len(args) {
 				return args[i+1], true
 			}
 			return "", true
 		}
-		if value, ok := strings.CutPrefix(arg, "--mode="); ok {
+		if value, ok := cutPrefix(arg, "--mode="); ok {
 			return value, true
 		}
-		if value, ok := strings.CutPrefix(arg, "-mode="); ok {
+		if value, ok := cutPrefix(arg, "-mode="); ok {
 			return value, true
 		}
 	}
@@ -90,7 +90,7 @@ func modeArgValue(args []string) (string, bool) {
 }
 
 func parseMode(value string) (AppMode, bool) {
-	switch strings.ToLower(strings.TrimSpace(value)) {
+	switch core.Lower(core.Trim(value)) {
 	case string(ModeWorker):
 		return ModeWorker, true
 	case string(ModeManager):

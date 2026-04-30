@@ -3,7 +3,6 @@ package mcp
 
 import (
 	"context"
-	bytes "dappco.re/go/gui/compat/bytes"
 	"encoding/base64"
 	"image"
 	"image/draw"
@@ -13,7 +12,6 @@ import (
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/webview"
 	"dappco.re/go/gui/pkg/window"
-	coreerr "dappco.re/go/log"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -138,7 +136,7 @@ func (s *Subsystem) webviewScreenshot(_ context.Context, _ *mcp.CallToolRequest,
 	}
 	sr, ok := r.Value.(webview.ScreenshotResult)
 	if !ok {
-		return nil, WebviewScreenshotOutput{}, coreerr.E("mcp.webviewScreenshot", "unexpected result type", nil)
+		return nil, WebviewScreenshotOutput{}, core.E("mcp.webviewScreenshot", "unexpected result type", nil)
 	}
 	return nil, WebviewScreenshotOutput{Base64: sr.Base64, MimeType: sr.MimeType}, nil
 }
@@ -314,7 +312,7 @@ func (s *Subsystem) webviewConsole(_ context.Context, _ *mcp.CallToolRequest, in
 	}
 	msgs, ok := r.Value.([]webview.ConsoleMessage)
 	if !ok {
-		return nil, WebviewConsoleOutput{}, coreerr.E("mcp.webviewConsole", "unexpected result type", nil)
+		return nil, WebviewConsoleOutput{}, core.E("mcp.webviewConsole", "unexpected result type", nil)
 	}
 	return nil, WebviewConsoleOutput{Messages: msgs}, nil
 }
@@ -363,7 +361,7 @@ func (s *Subsystem) webviewQuery(_ context.Context, _ *mcp.CallToolRequest, inpu
 	}
 	el, ok := r.Value.(*webview.ElementInfo)
 	if !ok {
-		return nil, WebviewQueryOutput{}, coreerr.E("mcp.webviewQuery", "unexpected result type", nil)
+		return nil, WebviewQueryOutput{}, core.E("mcp.webviewQuery", "unexpected result type", nil)
 	}
 	return nil, WebviewQueryOutput{Element: el}, nil
 }
@@ -389,7 +387,7 @@ func (s *Subsystem) webviewQueryAll(_ context.Context, _ *mcp.CallToolRequest, i
 	}
 	els, ok := r.Value.([]*webview.ElementInfo)
 	if !ok {
-		return nil, WebviewQueryAllOutput{}, coreerr.E("mcp.webviewQueryAll", "unexpected result type", nil)
+		return nil, WebviewQueryAllOutput{}, core.E("mcp.webviewQueryAll", "unexpected result type", nil)
 	}
 	return nil, WebviewQueryAllOutput{Elements: els}, nil
 }
@@ -415,7 +413,7 @@ func (s *Subsystem) webviewDOMTree(_ context.Context, _ *mcp.CallToolRequest, in
 	}
 	html, ok := r.Value.(string)
 	if !ok {
-		return nil, WebviewDOMTreeOutput{}, coreerr.E("mcp.webviewDOMTree", "unexpected result type", nil)
+		return nil, WebviewDOMTreeOutput{}, core.E("mcp.webviewDOMTree", "unexpected result type", nil)
 	}
 	return nil, WebviewDOMTreeOutput{HTML: html}, nil
 }
@@ -440,7 +438,7 @@ func (s *Subsystem) webviewURL(_ context.Context, _ *mcp.CallToolRequest, input 
 	}
 	url, ok := r.Value.(string)
 	if !ok {
-		return nil, WebviewURLOutput{}, coreerr.E("mcp.webviewURL", "unexpected result type", nil)
+		return nil, WebviewURLOutput{}, core.E("mcp.webviewURL", "unexpected result type", nil)
 	}
 	return nil, WebviewURLOutput{URL: url}, nil
 }
@@ -465,7 +463,7 @@ func (s *Subsystem) webviewTitle(_ context.Context, _ *mcp.CallToolRequest, inpu
 	}
 	title, ok := r.Value.(string)
 	if !ok {
-		return nil, WebviewTitleOutput{}, coreerr.E("mcp.webviewTitle", "unexpected result type", nil)
+		return nil, WebviewTitleOutput{}, core.E("mcp.webviewTitle", "unexpected result type", nil)
 	}
 	return nil, WebviewTitleOutput{Title: title}, nil
 }
@@ -488,7 +486,7 @@ func (s *Subsystem) webviewList(_ context.Context, _ *mcp.CallToolRequest, _ Web
 	}
 	windows, ok := r.Value.([]window.WindowInfo)
 	if !ok {
-		return nil, WebviewListOutput{}, coreerr.E("mcp.webviewList", "unexpected result type", nil)
+		return nil, WebviewListOutput{}, core.E("mcp.webviewList", "unexpected result type", nil)
 	}
 	return nil, WebviewListOutput{Windows: windows}, nil
 }
@@ -514,7 +512,7 @@ func (s *Subsystem) webviewErrors(_ context.Context, _ *mcp.CallToolRequest, inp
 	}
 	errors, ok := r.Value.([]webview.ExceptionInfo)
 	if !ok {
-		return nil, WebviewErrorsOutput{}, coreerr.E("mcp.webviewErrors", "unexpected result type", nil)
+		return nil, WebviewErrorsOutput{}, core.E("mcp.webviewErrors", "unexpected result type", nil)
 	}
 	return nil, WebviewErrorsOutput{Errors: errors}, nil
 }
@@ -614,7 +612,7 @@ func (s *Subsystem) webviewSource(_ context.Context, _ *mcp.CallToolRequest, inp
 	}
 	html, ok := r.Value.(string)
 	if !ok {
-		return nil, WebviewSourceOutput{}, coreerr.E("mcp.webviewSource", "unexpected result type", nil)
+		return nil, WebviewSourceOutput{}, core.E("mcp.webviewSource", "unexpected result type", nil)
 	}
 	return nil, WebviewSourceOutput{HTML: html}, nil
 }
@@ -641,10 +639,10 @@ func (s *Subsystem) webviewScreenshotElement(_ context.Context, _ *mcp.CallToolR
 	}
 	element, ok := r.Value.(*webview.ElementInfo)
 	if !ok {
-		return nil, WebviewScreenshotElementOutput{}, coreerr.E("mcp.webviewScreenshotElement", "unexpected result type", nil)
+		return nil, WebviewScreenshotElementOutput{}, core.E("mcp.webviewScreenshotElement", "unexpected result type", nil)
 	}
 	if element == nil || element.BoundingBox == nil {
-		return nil, WebviewScreenshotElementOutput{}, coreerr.E("mcp.webviewScreenshotElement", "element not found or has no bounding box", nil)
+		return nil, WebviewScreenshotElementOutput{}, core.E("mcp.webviewScreenshotElement", "element not found or has no bounding box", nil)
 	}
 
 	r = s.core.Action("webview.screenshot").Run(context.Background(), core.NewOptions(
@@ -658,7 +656,7 @@ func (s *Subsystem) webviewScreenshotElement(_ context.Context, _ *mcp.CallToolR
 	}
 	screenshotResult, ok := r.Value.(webview.ScreenshotResult)
 	if !ok {
-		return nil, WebviewScreenshotElementOutput{}, coreerr.E("mcp.webviewScreenshotElement", "unexpected screenshot result type", nil)
+		return nil, WebviewScreenshotElementOutput{}, core.E("mcp.webviewScreenshotElement", "unexpected screenshot result type", nil)
 	}
 
 	imageBytes, err := base64.StdEncoding.DecodeString(screenshotResult.Base64)
@@ -698,7 +696,7 @@ func (s *Subsystem) webviewPDF(_ context.Context, _ *mcp.CallToolRequest, input 
 	}
 	result, ok := r.Value.(webview.PrintResult)
 	if !ok {
-		return nil, WebviewPDFOutput{}, coreerr.E("mcp.webviewPDF", "unexpected result type", nil)
+		return nil, WebviewPDFOutput{}, core.E("mcp.webviewPDF", "unexpected result type", nil)
 	}
 	return nil, WebviewPDFOutput{Base64: result.Base64, MimeType: result.MimeType}, nil
 }
@@ -883,7 +881,7 @@ func (s *Subsystem) evaluateWebview(windowName, script string) (any, error) {
 		if e, ok := r.Value.(error); ok {
 			return nil, e
 		}
-		return nil, coreerr.E("mcp.evaluateWebview", "webview evaluation failed", nil)
+		return nil, core.E("mcp.evaluateWebview", "webview evaluation failed", nil)
 	}
 	return r.Value, nil
 }
@@ -895,13 +893,13 @@ func decodeJSONLike[T any](value any) (T, error) {
 		if err, ok := result.Value.(error); ok {
 			return out, err
 		}
-		return out, coreerr.E("mcp.decodeJSONLike", "failed to decode result", nil)
+		return out, core.E("mcp.decodeJSONLike", "failed to decode result", nil)
 	}
 	return out, nil
 }
 
 func cropPNGToBoundingBox(pngData []byte, bbox *webview.BoundingBox) ([]byte, error) {
-	img, err := png.Decode(bytes.NewReader(pngData))
+	img, err := png.Decode(core.NewBuffer(pngData))
 	if err != nil {
 		return nil, err
 	}
@@ -914,7 +912,7 @@ func cropPNGToBoundingBox(pngData []byte, bbox *webview.BoundingBox) ([]byte, er
 		minInt(bounds.Max.Y, int(math.Ceil(bbox.Y+bbox.Height))),
 	)
 	if rect.Empty() {
-		return nil, coreerr.E("mcp.cropPNGToBoundingBox", "element bounding box is empty", nil)
+		return nil, core.E("mcp.cropPNGToBoundingBox", "element bounding box is empty", nil)
 	}
 
 	var cropped image.Image
@@ -928,8 +926,8 @@ func cropPNGToBoundingBox(pngData []byte, bbox *webview.BoundingBox) ([]byte, er
 		cropped = target
 	}
 
-	var out bytes.Buffer
-	if err := png.Encode(&out, cropped); err != nil {
+	out := core.NewBuffer()
+	if err := png.Encode(out, cropped); err != nil {
 		return nil, err
 	}
 	return out.Bytes(), nil

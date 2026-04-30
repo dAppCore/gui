@@ -5,7 +5,6 @@ import (
 	"time"
 
 	core "dappco.re/go"
-	coreerr "dappco.re/go/log"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -102,11 +101,11 @@ func (s *Subsystem) chatSend(_ context.Context, _ *mcp.CallToolRequest, input Ch
 		if err, ok := result.Value.(error); ok {
 			return nil, ChatSendOutput{}, err
 		}
-		return nil, ChatSendOutput{}, coreerr.E("mcp.chatSend", "chat send failed", nil)
+		return nil, ChatSendOutput{}, core.E("mcp.chatSend", "chat send failed", nil)
 	}
 	messageID, ok := result.Value.(string)
 	if !ok {
-		return nil, ChatSendOutput{}, coreerr.E("mcp.chatSend", "unexpected result type", nil)
+		return nil, ChatSendOutput{}, core.E("mcp.chatSend", "unexpected result type", nil)
 	}
 	return nil, ChatSendOutput{MessageID: messageID}, nil
 }
@@ -131,7 +130,7 @@ func (s *Subsystem) chatHistory(_ context.Context, _ *mcp.CallToolRequest, input
 		if err, ok := result.Value.(error); ok {
 			return nil, ChatHistoryOutput{}, err
 		}
-		return nil, ChatHistoryOutput{}, coreerr.E("mcp.chatHistory", "chat history failed", nil)
+		return nil, ChatHistoryOutput{}, core.E("mcp.chatHistory", "chat history failed", nil)
 	}
 	messages, err := decodeChatValue[[]ChatMessage](result.Value)
 	if err != nil {
@@ -152,7 +151,7 @@ func (s *Subsystem) chatModels(_ context.Context, _ *mcp.CallToolRequest, _ Chat
 		if err, ok := result.Value.(error); ok {
 			return nil, ChatModelsOutput{}, err
 		}
-		return nil, ChatModelsOutput{}, coreerr.E("mcp.chatModels", "chat models failed", nil)
+		return nil, ChatModelsOutput{}, core.E("mcp.chatModels", "chat models failed", nil)
 	}
 	models, err := decodeChatValue[[]ChatModel](result.Value)
 	if err != nil {
@@ -183,7 +182,7 @@ func (s *Subsystem) chatSelectModel(_ context.Context, _ *mcp.CallToolRequest, i
 		if err, ok := result.Value.(error); ok {
 			return nil, ChatSelectModelOutput{}, err
 		}
-		return nil, ChatSelectModelOutput{}, coreerr.E("mcp.chatSelectModel", "select model failed", nil)
+		return nil, ChatSelectModelOutput{}, core.E("mcp.chatSelectModel", "select model failed", nil)
 	}
 	settings, err := decodeChatValue[ChatSettings](result.Value)
 	if err != nil {
@@ -204,7 +203,7 @@ func (s *Subsystem) chatConversationsList(_ context.Context, _ *mcp.CallToolRequ
 		if err, ok := result.Value.(error); ok {
 			return nil, ChatConversationsListOutput{}, err
 		}
-		return nil, ChatConversationsListOutput{}, coreerr.E("mcp.chatConversationsList", "list conversations failed", nil)
+		return nil, ChatConversationsListOutput{}, core.E("mcp.chatConversationsList", "list conversations failed", nil)
 	}
 	conversations, err := decodeChatValue[[]ChatConversation](result.Value)
 	if err != nil {
@@ -231,7 +230,7 @@ func (s *Subsystem) chatConversationsLoad(_ context.Context, _ *mcp.CallToolRequ
 		if err, ok := result.Value.(error); ok {
 			return nil, ChatConversationsLoadOutput{}, err
 		}
-		return nil, ChatConversationsLoadOutput{}, coreerr.E("mcp.chatConversationsLoad", "load conversation failed", nil)
+		return nil, ChatConversationsLoadOutput{}, core.E("mcp.chatConversationsLoad", "load conversation failed", nil)
 	}
 	conversation, err := decodeChatValue[ChatConversation](result.Value)
 	if err != nil {
@@ -258,11 +257,11 @@ func (s *Subsystem) chatConversationsDelete(_ context.Context, _ *mcp.CallToolRe
 		if err, ok := result.Value.(error); ok {
 			return nil, ChatConversationsDeleteOutput{}, err
 		}
-		return nil, ChatConversationsDeleteOutput{}, coreerr.E("mcp.chatConversationsDelete", "delete conversation failed", nil)
+		return nil, ChatConversationsDeleteOutput{}, core.E("mcp.chatConversationsDelete", "delete conversation failed", nil)
 	}
 	success, ok := result.Value.(bool)
 	if !ok {
-		return nil, ChatConversationsDeleteOutput{}, coreerr.E("mcp.chatConversationsDelete", "unexpected result type", nil)
+		return nil, ChatConversationsDeleteOutput{}, core.E("mcp.chatConversationsDelete", "unexpected result type", nil)
 	}
 	return nil, ChatConversationsDeleteOutput{Success: success}, nil
 }
@@ -287,7 +286,7 @@ func (s *Subsystem) chatThinkingStart(_ context.Context, _ *mcp.CallToolRequest,
 		if err, ok := result.Value.(error); ok {
 			return nil, ChatThinkingStartOutput{}, err
 		}
-		return nil, ChatThinkingStartOutput{}, coreerr.E("mcp.chatThinkingStart", "thinking start failed", nil)
+		return nil, ChatThinkingStartOutput{}, core.E("mcp.chatThinkingStart", "thinking start failed", nil)
 	}
 	state, err := decodeChatValue[ChatThinkingState](result.Value)
 	if err != nil {
@@ -318,7 +317,7 @@ func (s *Subsystem) chatThinkingStop(_ context.Context, _ *mcp.CallToolRequest, 
 		if err, ok := result.Value.(error); ok {
 			return nil, ChatThinkingStopOutput{}, err
 		}
-		return nil, ChatThinkingStopOutput{}, coreerr.E("mcp.chatThinkingStop", "thinking stop failed", nil)
+		return nil, ChatThinkingStopOutput{}, core.E("mcp.chatThinkingStop", "thinking stop failed", nil)
 	}
 	state, err := decodeChatValue[ChatThinkingState](result.Value)
 	if err != nil {
@@ -336,7 +335,7 @@ func decodeChatValue[T any](value any) (T, error) {
 	if err, ok := result.Value.(error); ok {
 		return output, err
 	}
-	return output, coreerr.E("mcp.decodeChatValue", "failed to decode chat value", nil)
+	return output, core.E("mcp.decodeChatValue", "failed to decode chat value", nil)
 }
 
 func (s *Subsystem) registerChatTools(server *mcp.Server) {

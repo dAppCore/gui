@@ -6,7 +6,6 @@ import (
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/window"
-	coreerr "dappco.re/go/log"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -71,7 +70,7 @@ func (s *Subsystem) layoutList(_ context.Context, _ *mcp.CallToolRequest, _ Layo
 	}
 	layouts, ok := result.Value.([]window.LayoutInfo)
 	if !ok {
-		return nil, LayoutListOutput{}, coreerr.E("mcp.layoutList", "unexpected result type", nil)
+		return nil, LayoutListOutput{}, core.E("mcp.layoutList", "unexpected result type", nil)
 	}
 	return nil, LayoutListOutput{Layouts: layouts}, nil
 }
@@ -117,7 +116,7 @@ func (s *Subsystem) layoutGet(_ context.Context, _ *mcp.CallToolRequest, input L
 	}
 	layout, ok := result.Value.(*window.Layout)
 	if !ok {
-		return nil, LayoutGetOutput{}, coreerr.E("mcp.layoutGet", "unexpected result type", nil)
+		return nil, LayoutGetOutput{}, core.E("mcp.layoutGet", "unexpected result type", nil)
 	}
 	return nil, LayoutGetOutput{Layout: layout}, nil
 }
@@ -242,7 +241,7 @@ func (s *Subsystem) layoutBesideEditor(_ context.Context, _ *mcp.CallToolRequest
 	}
 	layoutResult, ok := result.Value.(window.LayoutBesideEditorResult)
 	if !ok {
-		return nil, LayoutBesideEditorOutput{}, coreerr.E("mcp.layoutBesideEditor", "unexpected result type", nil)
+		return nil, LayoutBesideEditorOutput{}, core.E("mcp.layoutBesideEditor", "unexpected result type", nil)
 	}
 	return nil, LayoutBesideEditorOutput{Result: layoutResult}, nil
 }
@@ -270,7 +269,7 @@ func (s *Subsystem) layoutSuggest(_ context.Context, _ *mcp.CallToolRequest, inp
 	}
 	layoutSuggestion, ok := result.Value.(window.LayoutSuggestion)
 	if !ok {
-		return nil, LayoutSuggestOutput{}, coreerr.E("mcp.layoutSuggest", "unexpected result type", nil)
+		return nil, LayoutSuggestOutput{}, core.E("mcp.layoutSuggest", "unexpected result type", nil)
 	}
 	return nil, LayoutSuggestOutput{Suggestion: layoutSuggestion}, nil
 }
@@ -302,7 +301,7 @@ func (s *Subsystem) screenFindSpace(_ context.Context, _ *mcp.CallToolRequest, i
 	}
 	screenSpace, ok := result.Value.(window.ScreenSpace)
 	if !ok {
-		return nil, ScreenFindSpaceOutput{}, coreerr.E("mcp.screenFindSpace", "unexpected result type", nil)
+		return nil, ScreenFindSpaceOutput{}, core.E("mcp.screenFindSpace", "unexpected result type", nil)
 	}
 	return nil, ScreenFindSpaceOutput{Space: screenSpace}, nil
 }
@@ -334,7 +333,7 @@ func (s *Subsystem) windowArrangePair(_ context.Context, _ *mcp.CallToolRequest,
 	}
 	arrangement, ok := result.Value.(window.PairArrangement)
 	if !ok {
-		return nil, WindowArrangePairOutput{}, coreerr.E("mcp.windowArrangePair", "unexpected result type", nil)
+		return nil, WindowArrangePairOutput{}, core.E("mcp.windowArrangePair", "unexpected result type", nil)
 	}
 	return nil, WindowArrangePairOutput{Arrangement: arrangement}, nil
 }

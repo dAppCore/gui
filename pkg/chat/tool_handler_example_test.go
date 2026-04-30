@@ -3,8 +3,6 @@ package chat
 import (
 	"context"
 	core "dappco.re/go"
-	fmt "dappco.re/go/gui/compat/fmt"
-	strings "dappco.re/go/gui/compat/strings"
 
 	guimcp "dappco.re/go/gui/pkg/mcp"
 )
@@ -38,9 +36,9 @@ func ExampleNewToolCallHandler() {
 		Arguments: map[string]any{"window_count": 2},
 	})
 
-	fmt.Println(err == nil)
-	fmt.Println(result)
-	fmt.Println(strings.Contains(handler.BuildToolManifest(), "layout_suggest"))
+	core.Println(err == nil)
+	core.Println(result)
+	core.Println(core.Contains(handler.BuildToolManifest(), "layout_suggest"))
 	// Output:
 	// true
 	// {"mode":"left-right"}

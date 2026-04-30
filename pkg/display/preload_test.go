@@ -2,13 +2,10 @@ package display
 
 import (
 	"context"
-	filepath "dappco.re/go/gui/compat/filepath"
-	strings "dappco.re/go/gui/compat/strings"
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/chat"
 	"dappco.re/go/gui/pkg/window"
-	coreio "dappco.re/go/io"
 )
 
 func TestDisplay_Good_WindowOpenIncludesPreload(t *core.T) {
@@ -59,11 +56,11 @@ func TestPreload_Good_TrustedOriginIncludesPrivilegedBridge(t *core.T) {
 
 func TestDisplay_Good_WindowOpenManifestBackedOriginIncludesManifestPreloadOnly(t *core.T) {
 	home := t.TempDir()
-	core.RequireNoError(t, coreio.Local.EnsureDir(filepath.Join(home, ".core", "apps", "example.com", ".core")))
-	core.RequireNoError(t, coreio.Local.WriteMode(filepath.Join(home, ".core", "apps", "example.com", "preload.js"), "globalThis.__manifestLoaded = true;", 0o644))
-	core.RequireNoError(t, coreio.Local.WriteMode(filepath.Join(home, ".core", "apps", "example.com", ".core", "view.yaml"), "name: example\npreloads:\n  - path: preload.js\n", 0o644))
-	core.RequireNoError(t, coreio.Local.WriteMode(
-		filepath.Join(home, ".core", "preload-origins.yaml"),
+	core.RequireNoError(t, coreEnsureDir(core.PathJoin(home, ".core", "apps", "example.com", ".core")))
+	core.RequireNoError(t, coreWriteMode(core.PathJoin(home, ".core", "apps", "example.com", "preload.js"), "globalThis.__manifestLoaded = true;", 0o644))
+	core.RequireNoError(t, coreWriteMode(core.PathJoin(home, ".core", "apps", "example.com", ".core", "view.yaml"), "name: example\npreloads:\n  - path: preload.js\n", 0o644))
+	core.RequireNoError(t, coreWriteMode(
+		core.PathJoin(home, ".core", "preload-origins.yaml"),
 		"origins:\n  - https://example.com/\n",
 		0o644,
 	))
@@ -98,7 +95,7 @@ func TestDisplay_Good_CoreSchemeRoutesThroughBackend(t *core.T) {
 	platform := window.NewMockPlatform()
 	c := core.New(
 		core.WithService(Register(nil)),
-		core.WithService(chat.Register(func(o *chat.Options) { o.StorePath = filepath.Join(t.TempDir(), "chat.db") })),
+		core.WithService(chat.Register(func(o *chat.Options) { o.StorePath = core.PathJoin(t.TempDir(), "chat.db") })),
 		core.WithService(window.Register(platform)),
 		core.WithServiceLock(),
 	)
@@ -115,7 +112,7 @@ func TestDisplay_Good_CoreSchemeRoutesThroughBackend(t *core.T) {
 	)).OK)
 
 	core.AssertLen(t, platform.Windows, 1)
-	core.AssertTrue(t, strings.Contains(platform.Windows[0].HTMLContent(), "core://settings"))
+	core.AssertTrue(t, core.Contains(platform.Windows[0].HTMLContent(), "core://settings"))
 }
 
 func TestPreload_ValidatedLocalMLAPIURL_GoodCase(t *core.T) {
@@ -247,9 +244,9 @@ func TestPreload_ManifestBackedPreloadOrigin_DeniesListedHTTPSOriginWithoutManif
 
 func TestPreload_DefaultTrustedOriginPolicy_LoadsConfig(t *core.T) {
 	home := t.TempDir()
-	core.RequireNoError(t, coreio.Local.EnsureDir(filepath.Join(home, ".core")))
-	core.RequireNoError(t, coreio.Local.WriteMode(
-		filepath.Join(home, ".core", "preload-origins.yaml"),
+	core.RequireNoError(t, coreEnsureDir(core.PathJoin(home, ".core")))
+	core.RequireNoError(t, coreWriteMode(
+		core.PathJoin(home, ".core", "preload-origins.yaml"),
 		"origins:\n  - core://app/\n",
 		0o644,
 	))
@@ -272,9 +269,9 @@ func (p *preloadCapture) ExecJS(script string) {
 
 func writeMarketplaceViewManifest(t *core.T, home, host string) {
 	t.Helper()
-	dir := filepath.Join(home, ".core", "apps", host, ".core")
-	core.RequireNoError(t, coreio.Local.EnsureDir(dir))
-	core.RequireNoError(t, coreio.Local.WriteMode(filepath.Join(dir, "view.yaml"), "name: "+host+"\n", 0o644))
+	dir := core.PathJoin(home, ".core", "apps", host, ".core")
+	core.RequireNoError(t, coreEnsureDir(dir))
+	core.RequireNoError(t, coreWriteMode(core.PathJoin(dir, "view.yaml"), "name: "+host+"\n", 0o644))
 }
 
 func TestPreload_InjectPreload_Good(t *core.T) {
@@ -282,16 +279,16 @@ func TestPreload_InjectPreload_Good(t *core.T) {
 	ax7Variant := "InjectPreload:good"
 	core.AssertContains(t, ax7Variant, "good")
 	root := t.TempDir()
-	core.RequireNoError(t, coreio.Local.EnsureDir(filepath.Join(root, ".core")))
-	core.RequireNoError(t, coreio.Local.WriteMode(filepath.Join(root, "index.html"), "<html></html>", 0o644))
-	core.RequireNoError(t, coreio.Local.WriteMode(filepath.Join(root, "preload.js"), "globalThis.__manifestLoaded = true;", 0o644))
-	core.RequireNoError(t, coreio.Local.WriteMode(filepath.Join(root, ".core", "view.yaml"), "preloads:\n  - path: preload.js\n", 0o644))
+	core.RequireNoError(t, coreEnsureDir(core.PathJoin(root, ".core")))
+	core.RequireNoError(t, coreWriteMode(core.PathJoin(root, "index.html"), "<html></html>", 0o644))
+	core.RequireNoError(t, coreWriteMode(core.PathJoin(root, "preload.js"), "globalThis.__manifestLoaded = true;", 0o644))
+	core.RequireNoError(t, coreWriteMode(core.PathJoin(root, ".core", "view.yaml"), "preloads:\n  - path: preload.js\n", 0o644))
 
 	svc, err := New()
 	core.RequireNoError(t, err)
 	target := &preloadCapture{}
 
-	err = svc.InjectPreload(target, "file://"+filepath.ToSlash(filepath.Join(root, "index.html")))
+	err = svc.InjectPreload(target, "file://"+core.PathToSlash(core.PathJoin(root, "index.html")))
 	core.RequireNoError(t, err)
 	core.AssertLen(t, target.scripts, 1)
 	core.AssertContains(t, target.scripts[0], "globalThis.core.ml")
@@ -320,15 +317,15 @@ func TestPreload_InjectPreload_Ugly(t *core.T) {
 	ax7Variant := "InjectPreload:ugly"
 	core.AssertContains(t, ax7Variant, "ugly")
 	root := t.TempDir()
-	core.RequireNoError(t, coreio.Local.EnsureDir(filepath.Join(root, ".core")))
-	core.RequireNoError(t, coreio.Local.WriteMode(filepath.Join(root, "index.html"), "<html></html>", 0o644))
-	core.RequireNoError(t, coreio.Local.WriteMode(filepath.Join(root, ".core", "view.yaml"), "preloads: [\n", 0o644))
+	core.RequireNoError(t, coreEnsureDir(core.PathJoin(root, ".core")))
+	core.RequireNoError(t, coreWriteMode(core.PathJoin(root, "index.html"), "<html></html>", 0o644))
+	core.RequireNoError(t, coreWriteMode(core.PathJoin(root, ".core", "view.yaml"), "preloads: [\n", 0o644))
 
 	svc, err := New()
 	core.RequireNoError(t, err)
 	target := &preloadCapture{}
 
-	err = svc.InjectPreload(target, "file://"+filepath.ToSlash(filepath.Join(root, "index.html")))
+	err = svc.InjectPreload(target, "file://"+core.PathToSlash(core.PathJoin(root, "index.html")))
 	core.AssertError(t, err)
 	core.AssertEmpty(t, target.scripts)
 }

@@ -4,7 +4,6 @@ package browser
 import (
 	"context"
 	core "dappco.re/go"
-	filepath "dappco.re/go/gui/compat/filepath"
 )
 
 type mockPlatform struct {
@@ -191,7 +190,7 @@ func TestService_validatedOpenFilePath_Good(t *core.T) {
 	core.AssertContains(t, ax7Variant, "good")
 	got, err := validatedOpenFilePath("/tmp/../tmp/report.txt")
 	core.RequireNoError(t, err)
-	core.AssertEqual(t, filepath.Clean("/tmp/report.txt"), got)
+	core.AssertEqual(t, core.CleanPath("/tmp/report.txt", string(core.PathSeparator)), got)
 }
 
 func TestService_validatedOpenFilePath_Bad(t *core.T) {

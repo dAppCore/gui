@@ -1,8 +1,7 @@
 package lifecycle
 
 import (
-	os "dappco.re/go/gui/compat/os"
-	strings "dappco.re/go/gui/compat/strings"
+	core "dappco.re/go"
 )
 
 type AppMode string
@@ -21,13 +20,13 @@ const (
 //
 //	mode := DetectMode()
 func DetectMode() AppMode {
-	if value, ok := os.LookupEnv(appModeEnv); ok {
+	if value, ok := core.LookupEnv(appModeEnv); ok {
 		if mode, valid := parseAppMode(value); valid {
 			return mode
 		}
 	}
 
-	if value, ok := os.LookupEnv(ciEnv); ok && isTrue(value) {
+	if value, ok := core.LookupEnv(ciEnv); ok && isTrue(value) {
 		return ModeWorker
 	}
 
@@ -35,7 +34,7 @@ func DetectMode() AppMode {
 }
 
 func parseAppMode(value string) (AppMode, bool) {
-	switch strings.ToLower(strings.TrimSpace(value)) {
+	switch core.Lower(core.Trim(value)) {
 	case string(ModeManager):
 		return ModeManager, true
 	case string(ModeWorker):
@@ -48,5 +47,5 @@ func parseAppMode(value string) (AppMode, bool) {
 }
 
 func isTrue(value string) bool {
-	return strings.EqualFold(strings.TrimSpace(value), "true")
+	return core.Lower(core.Trim(value)) == "true"
 }

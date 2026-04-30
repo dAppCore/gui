@@ -3,7 +3,6 @@ package webview
 
 import (
 	"context"
-	strings "dappco.re/go/gui/compat/strings"
 	"encoding/base64"
 	"strconv"
 	"sync"
@@ -86,7 +85,7 @@ func Register(optionFns ...func(*Options)) func(*core.Core) core.Result {
 // defaultNewConn creates real go-webview connections.
 func defaultNewConn(options Options) func(string, string) (connector, error) {
 	return func(debugURL, windowName string) (connector, error) {
-		windowName = strings.TrimSpace(windowName)
+		windowName = core.Trim(windowName)
 		if windowName == "" {
 			return nil, core.E("webview.connect", "window name is required", nil)
 		}
@@ -111,7 +110,7 @@ func defaultNewConn(options Options) func(string, string) (connector, error) {
 }
 
 func exactWindowTargetMatch(candidate, windowName string) bool {
-	return strings.TrimSpace(candidate) == windowName
+	return core.Trim(candidate) == windowName
 }
 
 func exactWindowTargetWSURL(targets []gowebview.TargetInfo, windowName string) string {
@@ -203,7 +202,7 @@ func (s *Service) HandleIPCEvents(_ *core.Core, msg core.Message) core.Result {
 
 // getConn returns the connector for a window, creating it if needed.
 func (s *Service) getConn(windowName string) (connector, error) {
-	windowName = strings.TrimSpace(windowName)
+	windowName = core.Trim(windowName)
 	if windowName == "" {
 		return nil, core.E("webview.getConn", "window name is required", nil)
 	}

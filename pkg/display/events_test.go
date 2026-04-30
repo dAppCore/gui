@@ -2,8 +2,6 @@ package display
 
 import (
 	core "dappco.re/go"
-	json "dappco.re/go/gui/compat/json"
-	strings "dappco.re/go/gui/compat/strings"
 	"net/http"
 	"net/http/httptest"
 	"time"
@@ -84,7 +82,7 @@ func dialWSEventManager(t *core.T, em *WSEventManager) (*websocket.Conn, func())
 	server := httptest.NewServer(http.HandlerFunc(em.HandleWebSocket))
 	t.Cleanup(server.Close)
 
-	wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
+	wsURL := "ws" + core.TrimPrefix(server.URL, "http")
 	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
 	core.RequireNoError(t, err)
 
@@ -101,7 +99,7 @@ func readJSONMessage(t *core.T, conn *websocket.Conn) map[string]any {
 	core.RequireNoError(t, err)
 
 	var payload map[string]any
-	core.RequireNoError(t, json.Unmarshal(data, &payload))
+	core.RequireNoError(t, jsonUnmarshal(data, &payload))
 	return payload
 }
 

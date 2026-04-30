@@ -2,7 +2,6 @@ package webview
 
 import (
 	core "dappco.re/go"
-	json "dappco.re/go/gui/compat/json"
 )
 
 func TestDiagnostics_ComputedStyleScript_Good(t *core.T) {
@@ -126,7 +125,7 @@ func TestDiagnostics_normalizeWhitespace_Ugly(t *core.T) {
 }
 
 func mustJSON(v any) string {
-	data, err := json.Marshal(v)
+	data, err := jsonMarshal(v)
 	if err != nil {
 		panic(err)
 	}

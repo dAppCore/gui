@@ -6,7 +6,6 @@ import (
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/environment"
-	coreerr "dappco.re/go/log"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -23,11 +22,11 @@ func (s *Subsystem) themeGet(_ context.Context, _ *mcp.CallToolRequest, _ ThemeG
 		if err, ok := result.Value.(error); ok {
 			return nil, ThemeGetOutput{}, err
 		}
-		return nil, ThemeGetOutput{}, coreerr.E("mcp.themeGet", "theme query failed", nil)
+		return nil, ThemeGetOutput{}, core.E("mcp.themeGet", "theme query failed", nil)
 	}
 	theme, ok := result.Value.(environment.ThemeInfo)
 	if !ok {
-		return nil, ThemeGetOutput{}, coreerr.E("mcp.themeGet", "unexpected result type", nil)
+		return nil, ThemeGetOutput{}, core.E("mcp.themeGet", "unexpected result type", nil)
 	}
 	return nil, ThemeGetOutput{Theme: theme}, nil
 }
@@ -49,7 +48,7 @@ func (s *Subsystem) themeSystem(_ context.Context, _ *mcp.CallToolRequest, _ The
 	}
 	info, ok := result.Value.(environment.EnvironmentInfo)
 	if !ok {
-		return nil, ThemeSystemOutput{}, coreerr.E("mcp.themeSystem", "unexpected result type", nil)
+		return nil, ThemeSystemOutput{}, core.E("mcp.themeSystem", "unexpected result type", nil)
 	}
 	return nil, ThemeSystemOutput{Info: info}, nil
 }
@@ -76,7 +75,7 @@ func (s *Subsystem) themeSet(_ context.Context, _ *mcp.CallToolRequest, input Th
 	}
 	theme, ok := result.Value.(environment.ThemeInfo)
 	if !ok {
-		return nil, ThemeSetOutput{}, coreerr.E("mcp.themeSet", "unexpected result type", nil)
+		return nil, ThemeSetOutput{}, core.E("mcp.themeSet", "unexpected result type", nil)
 	}
 	return nil, ThemeSetOutput{Theme: theme}, nil
 }

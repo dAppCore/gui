@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"sync"
 
-	coreerr "dappco.re/go/log"
+	core "dappco.re/go"
 )
 
 //go:embed assets/apptray.png
@@ -41,7 +41,7 @@ func NewManager(platform Platform) *Manager {
 func (m *Manager) Setup(tooltip, label string) error {
 	m.tray = m.platform.NewTray()
 	if m.tray == nil {
-		return coreerr.E("systray.Setup", "platform returned nil tray", nil)
+		return core.E("systray.Setup", "platform returned nil tray", nil)
 	}
 	m.tray.SetTemplateIcon(defaultIcon)
 	m.tray.SetTooltip(tooltip)
@@ -56,7 +56,7 @@ func (m *Manager) Setup(tooltip, label string) error {
 // Use: _ = manager.SetIcon(iconBytes)
 func (m *Manager) SetIcon(data []byte) error {
 	if m.tray == nil {
-		return coreerr.E("systray.SetIcon", "tray not initialised", nil)
+		return core.E("systray.SetIcon", "tray not initialised", nil)
 	}
 	m.tray.SetIcon(data)
 	m.hasIcon = len(data) > 0
@@ -67,7 +67,7 @@ func (m *Manager) SetIcon(data []byte) error {
 // Use: _ = manager.SetTemplateIcon(iconBytes)
 func (m *Manager) SetTemplateIcon(data []byte) error {
 	if m.tray == nil {
-		return coreerr.E("systray.SetTemplateIcon", "tray not initialised", nil)
+		return core.E("systray.SetTemplateIcon", "tray not initialised", nil)
 	}
 	m.tray.SetTemplateIcon(data)
 	m.hasTemplateIcon = len(data) > 0
@@ -78,7 +78,7 @@ func (m *Manager) SetTemplateIcon(data []byte) error {
 // Use: _ = manager.SetTooltip("Core is ready")
 func (m *Manager) SetTooltip(text string) error {
 	if m.tray == nil {
-		return coreerr.E("systray.SetTooltip", "tray not initialised", nil)
+		return core.E("systray.SetTooltip", "tray not initialised", nil)
 	}
 	m.tray.SetTooltip(text)
 	m.tooltip = text
@@ -89,7 +89,7 @@ func (m *Manager) SetTooltip(text string) error {
 // Use: _ = manager.SetLabel("Core")
 func (m *Manager) SetLabel(text string) error {
 	if m.tray == nil {
-		return coreerr.E("systray.SetLabel", "tray not initialised", nil)
+		return core.E("systray.SetLabel", "tray not initialised", nil)
 	}
 	m.tray.SetLabel(text)
 	m.label = text
@@ -100,7 +100,7 @@ func (m *Manager) SetLabel(text string) error {
 // Use: _ = manager.AttachWindow(windowHandle)
 func (m *Manager) AttachWindow(w WindowHandle) error {
 	if m.tray == nil {
-		return coreerr.E("systray.AttachWindow", "tray not initialised", nil)
+		return core.E("systray.AttachWindow", "tray not initialised", nil)
 	}
 	m.mu.Lock()
 	m.panelWindow = w
@@ -112,7 +112,7 @@ func (m *Manager) AttachWindow(w WindowHandle) error {
 // ShowMessage displays a tray message if the backend supports it.
 func (m *Manager) ShowMessage(title, message string) error {
 	if m.tray == nil {
-		return coreerr.E("systray.ShowMessage", "tray not initialised", nil)
+		return core.E("systray.ShowMessage", "tray not initialised", nil)
 	}
 	return m.tray.ShowMessage(title, message)
 }
@@ -123,7 +123,7 @@ func (m *Manager) ShowPanel() error {
 	panel := m.panelWindow
 	m.mu.RUnlock()
 	if panel == nil {
-		return coreerr.E("systray.ShowPanel", "panel window not attached", nil)
+		return core.E("systray.ShowPanel", "panel window not attached", nil)
 	}
 	return invokePanelMethod(panel, "Show")
 }
@@ -134,7 +134,7 @@ func (m *Manager) HidePanel() error {
 	panel := m.panelWindow
 	m.mu.RUnlock()
 	if panel == nil {
-		return coreerr.E("systray.HidePanel", "panel window not attached", nil)
+		return core.E("systray.HidePanel", "panel window not attached", nil)
 	}
 	return invokePanelMethod(panel, "Hide")
 }
@@ -154,12 +154,12 @@ func (m *Manager) IsActive() bool {
 func invokePanelMethod(panel WindowHandle, method string) error {
 	value := reflect.ValueOf(panel)
 	if !value.IsValid() {
-		return coreerr.E("systray.invokePanelMethod", "panel window is invalid", nil)
+		return core.E("systray.invokePanelMethod", "panel window is invalid", nil)
 	}
 
 	target := value.MethodByName(method)
 	if !target.IsValid() {
-		return coreerr.E("systray.invokePanelMethod", "panel window does not support "+method, nil)
+		return core.E("systray.invokePanelMethod", "panel window does not support "+method, nil)
 	}
 
 	target.Call(nil)

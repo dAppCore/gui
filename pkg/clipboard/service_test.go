@@ -3,7 +3,6 @@ package clipboard
 
 import (
 	"context"
-	bytes "dappco.re/go/gui/compat/bytes"
 
 	core "dappco.re/go"
 )
@@ -103,7 +102,7 @@ func TestQueryImage_Good(t *core.T) {
 func TestTaskSetImage_RejectsOversize(t *core.T) {
 	_, c := newTestService(t)
 	r := c.Action("clipboard.setImage").Run(context.Background(), core.NewOptions(
-		core.Option{Key: "data", Value: bytes.Repeat([]byte("x"), MaxImageBytes+1)},
+		core.Option{Key: "data", Value: bytesRepeat([]byte("x"), MaxImageBytes+1)},
 	))
 	core.RequireTrue(t, r.OK)
 	core.AssertEqual(t, false, r.Value)

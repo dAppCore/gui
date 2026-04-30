@@ -2,7 +2,6 @@ package mcp
 
 import (
 	"context"
-	errors "dappco.re/go/gui/compat/errors"
 
 	core "dappco.re/go"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -46,7 +45,7 @@ func TestToolsDisplay_schemeResolve_Bad(t *core.T) {
 	ax7Variant := "schemeResolve:bad"
 	core.AssertContains(t, ax7Variant, "bad")
 	sub := newDisplayToolTestSubsystem(t, func(core.Options) core.Result {
-		return core.Result{Value: errors.New("display offline"), OK: false}
+		return core.Result{Value: core.NewError("display offline"), OK: false}
 	})
 
 	_, _, err := sub.schemeResolve(context.Background(), nil, SchemeResolveInput{URL: "core://store"})

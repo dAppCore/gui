@@ -1,13 +1,9 @@
 package display
 
 import (
-	errors "dappco.re/go/gui/compat/errors"
-	filepath "dappco.re/go/gui/compat/filepath"
-	os "dappco.re/go/gui/compat/os"
-	strings "dappco.re/go/gui/compat/strings"
 	"regexp"
 
-	coreio "dappco.re/go/io"
+	core "dappco.re/go"
 )
 
 var hlcrfSlotPattern = regexp.MustCompile(`\{\{\s*slot\s+"([^"]*)"\s*\}\}`)
@@ -15,41 +11,48 @@ var hlcrfSlotPattern = regexp.MustCompile(`\{\{\s*slot\s+"([^"]*)"\s*\}\}`)
 func (s *Service) buildHLCRFComponents(pageURL string) (string, error) {
 	loaded, err := s.loadManifestForOrigin(pageURL)
 	if err != nil || loaded == nil {
-		if err != nil && strings.Contains(err.Error(), "view manifest not found") {
+		if err != nil && core.Contains(err.Error(), "view manifest not found") {
 			return "", nil
 		}
 		return "", err
 	}
 	var scripts []string
 	for _, component := range loaded.Manifest.HLCRF {
-		templateBody := strings.TrimSpace(component.Template)
-		if templateBody == "" && strings.TrimSpace(component.Name) != "" {
+		templateBody := core.Trim(component.Template)
+		if templateBody == "" && core.Trim(component.Name) != "" {
 			resolvedPath, pathErr := safeManifestRelativePath(loaded.BaseDir, component.Name, "hlcrf component path")
 			if pathErr != nil {
-				if errors.Is(pathErr, os.ErrNotExist) {
+				if isMissingManifestPath(pathErr) {
 					continue
 				}
 				return "", pathErr
 			}
-			body, readErr := coreio.Local.Read(resolvedPath)
+			body, readErr := coreReadFile(resolvedPath)
 			if readErr != nil {
-				if errors.Is(readErr, os.ErrNotExist) {
+				if isMissingManifestPath(readErr) {
 					continue
 				}
 				return "", readErr
 			}
-			templateBody = body
+			templateBody = string(body)
 		}
 		if templateBody == "" {
 			continue
 		}
-		tag := strings.TrimSpace(component.Tag)
+		tag := core.Trim(component.Tag)
 		if tag == "" {
 			tag = defaultHLCRFTag(component.Name)
 		}
 		scripts = append(scripts, renderHLCRFComponent(tag, templateBody))
 	}
-	return strings.Join(scripts, "\n"), nil
+	return core.Join("\n", scripts...), nil
+}
+
+func isMissingManifestPath(err error) bool {
+	if err == nil {
+		return false
+	}
+	return core.IsNotExist(err) || core.Contains(err.Error(), "does not exist") || core.Contains(err.Error(), "no such file")
 }
 
 func renderHLCRFComponent(tag, templateBody string) string {
@@ -67,8 +70,8 @@ func compileHLCRFTemplate(templateBody string) string {
 		if len(match) < 2 {
 			return source
 		}
-		slotName := strings.TrimSpace(match[1])
-		if slotName == "" || strings.EqualFold(slotName, "default") {
+		slotName := core.Trim(match[1])
+		if slotName == "" || equalFold(slotName, "default") {
 			return "<slot></slot>"
 		}
 		return `<slot name="` + slotName + `"></slot>`
@@ -76,11 +79,11 @@ func compileHLCRFTemplate(templateBody string) string {
 }
 
 func defaultHLCRFTag(name string) string {
-	name = strings.TrimSpace(strings.ToLower(name))
-	name = strings.TrimSuffix(name, filepath.Ext(name))
-	name = strings.ReplaceAll(name, "_", "-")
-	name = strings.ReplaceAll(name, " ", "-")
-	if !strings.Contains(name, "-") {
+	name = core.Trim(core.Lower(name))
+	name = core.TrimSuffix(name, core.PathExt(name))
+	name = core.Replace(name, "_", "-")
+	name = core.Replace(name, " ", "-")
+	if !core.Contains(name, "-") {
 		name = "core-" + name
 	}
 	return name

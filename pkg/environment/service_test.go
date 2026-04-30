@@ -3,11 +3,9 @@ package environment
 
 import (
 	"context"
-	filepath "dappco.re/go/gui/compat/filepath"
 	"sync"
 
 	core "dappco.re/go"
-	coreerr "dappco.re/go/log"
 )
 
 type mockPlatform struct {
@@ -107,7 +105,7 @@ func TestTaskOpenFileManager_Good(t *core.T) {
 		core.Option{Key: "task", Value: TaskOpenFileManager{Path: "/tmp", Select: true}},
 	))
 	core.RequireTrue(t, r.OK)
-	core.AssertEqual(t, filepath.Clean("/tmp"), mock.openFMPath)
+	core.AssertEqual(t, core.CleanPath("/tmp", string(core.PathSeparator)), mock.openFMPath)
 	core.AssertTrue(t, mock.openFMSelect)
 }
 
@@ -208,7 +206,7 @@ func TestQueryAccentColour_Ugly_NoService(t *core.T) {
 
 func TestTaskOpenFileManager_Bad_Error(t *core.T) {
 	// platform returns an error on open
-	openErr := coreerr.E("test", "file manager unavailable", nil)
+	openErr := core.E("test", "file manager unavailable", nil)
 	mock := &mockPlatform{openFMErr: openErr}
 	c := core.New(core.WithService(Register(mock)), core.WithServiceLock())
 	core.RequireTrue(t, c.ServiceStartup(t.Context(), nil).OK)

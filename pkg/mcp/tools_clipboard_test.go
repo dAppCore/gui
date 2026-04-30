@@ -2,7 +2,6 @@ package mcp
 
 import (
 	"context"
-	errors "dappco.re/go/gui/compat/errors"
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/clipboard"
@@ -64,7 +63,7 @@ func TestToolsClipboard_clipboardRead_Ugly(t *core.T) {
 	core.AssertContains(t, ax7Variant, "ugly")
 	sub := newClipboardToolsTestSubsystem(t, func(q core.Query) core.Result {
 		if _, ok := q.(clipboard.QueryText); ok {
-			return core.Result{OK: true, Value: errors.New("unexpected payload")}
+			return core.Result{OK: true, Value: core.NewError("unexpected payload")}
 		}
 		return core.Result{}
 	})

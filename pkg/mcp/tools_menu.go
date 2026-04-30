@@ -2,11 +2,9 @@ package mcp
 
 import (
 	"context"
-	strings "dappco.re/go/gui/compat/strings"
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/menu"
-	coreerr "dappco.re/go/log"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -40,7 +38,7 @@ func (s *Subsystem) menuSet(_ context.Context, _ *mcp.CallToolRequest, input Men
 		if e, ok := r.Value.(error); ok {
 			return nil, MenuOutput{}, e
 		}
-		return nil, MenuOutput{}, coreerr.E("mcp.menuSet", "menu.setAppMenu failed", nil)
+		return nil, MenuOutput{}, core.E("mcp.menuSet", "menu.setAppMenu failed", nil)
 	}
 	snapshot, err := s.queryMenuItems()
 	if err != nil {
@@ -55,11 +53,11 @@ func (s *Subsystem) queryMenuItems() ([]map[string]any, error) {
 		if e, ok := r.Value.(error); ok {
 			return nil, e
 		}
-		return nil, coreerr.E("mcp.menuGet", "menu query failed", nil)
+		return nil, core.E("mcp.menuGet", "menu query failed", nil)
 	}
 	items, ok := r.Value.([]menu.MenuItem)
 	if !ok {
-		return nil, coreerr.E("mcp.menuGet", "unexpected result type", nil)
+		return nil, core.E("mcp.menuGet", "unexpected result type", nil)
 	}
 	return encodeMenuItems(items), nil
 }
@@ -142,7 +140,7 @@ func decodeMenuChildren(value any) ([]menu.MenuItem, error) {
 		for _, child := range children {
 			childMap, ok := child.(map[string]any)
 			if !ok {
-				return nil, coreerr.E("mcp.decodeMenuChildren", "child menu item must be an object", nil)
+				return nil, core.E("mcp.decodeMenuChildren", "child menu item must be an object", nil)
 			}
 			items = append(items, childMap)
 		}
@@ -150,7 +148,7 @@ func decodeMenuChildren(value any) ([]menu.MenuItem, error) {
 	case []map[string]any:
 		return decodeMenuItems(children)
 	default:
-		return nil, coreerr.E("mcp.decodeMenuChildren", "children must be an array", nil)
+		return nil, core.E("mcp.decodeMenuChildren", "children must be an array", nil)
 	}
 }
 
@@ -184,7 +182,7 @@ func encodeMenuRole(role menu.MenuRole) string {
 }
 
 func decodeMenuRole(role string) (*menu.MenuRole, error) {
-	switch strings.TrimSpace(strings.ToLower(role)) {
+	switch core.Trim(core.Lower(role)) {
 	case "":
 		return nil, nil
 	case "app":
@@ -206,7 +204,7 @@ func decodeMenuRole(role string) (*menu.MenuRole, error) {
 		value := menu.RoleHelpMenu
 		return &value, nil
 	default:
-		return nil, coreerr.E("mcp.decodeMenuRole", "unknown menu role: "+role, nil)
+		return nil, core.E("mcp.decodeMenuRole", "unknown menu role: "+role, nil)
 	}
 }
 

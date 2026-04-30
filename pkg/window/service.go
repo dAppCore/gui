@@ -2,12 +2,10 @@ package window
 
 import (
 	"context"
-	strings "dappco.re/go/gui/compat/strings"
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/internal/coreutil"
 	"dappco.re/go/gui/pkg/screen"
-	coreerr "dappco.re/go/log"
 )
 
 type Options struct{}
@@ -396,7 +394,7 @@ func taskFromOptions[T any](action string, opts core.Options) (T, error) {
 	var zero T
 	task := opts.Get("task")
 	if !task.OK {
-		return zero, coreerr.E(action, "missing task payload", nil)
+		return zero, core.E(action, "missing task payload", nil)
 	}
 	switch value := task.Value.(type) {
 	case T:
@@ -407,7 +405,7 @@ func taskFromOptions[T any](action string, opts core.Options) (T, error) {
 			return decoded, nil
 		}
 	}
-	return zero, coreerr.E(action, "invalid task payload", nil)
+	return zero, core.E(action, "invalid task payload", nil)
 }
 
 func taskOpenWindowFromOptions(opts core.Options) TaskOpenWindow {
@@ -532,7 +530,7 @@ func (s *Service) trackWindow(pw PlatformWindow) {
 func (s *Service) taskCloseWindow(name string) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return coreerr.E("window.taskClose", "window not found: "+name, nil)
+		return core.E("window.taskClose", "window not found: "+name, nil)
 	}
 	// Persist state BEFORE closing (spec requirement)
 	s.manager.State().CaptureState(pw)
@@ -545,7 +543,7 @@ func (s *Service) taskCloseWindow(name string) error {
 func (s *Service) taskSetPosition(name string, x, y int) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return coreerr.E("window.taskSetPosition", "window not found: "+name, nil)
+		return core.E("window.taskSetPosition", "window not found: "+name, nil)
 	}
 	pw.SetPosition(x, y)
 	s.manager.State().UpdatePosition(name, x, y)
@@ -555,7 +553,7 @@ func (s *Service) taskSetPosition(name string, x, y int) error {
 func (s *Service) taskSetSize(name string, width, height int) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return coreerr.E("window.taskSetSize", "window not found: "+name, nil)
+		return core.E("window.taskSetSize", "window not found: "+name, nil)
 	}
 	pw.SetSize(width, height)
 	s.manager.State().UpdateSize(name, width, height)
@@ -565,7 +563,7 @@ func (s *Service) taskSetSize(name string, width, height int) error {
 func (s *Service) taskMaximise(name string) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return coreerr.E("window.taskMaximise", "window not found: "+name, nil)
+		return core.E("window.taskMaximise", "window not found: "+name, nil)
 	}
 	pw.Maximise()
 	s.manager.State().UpdateMaximized(name, true)
@@ -575,7 +573,7 @@ func (s *Service) taskMaximise(name string) error {
 func (s *Service) taskMinimise(name string) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return coreerr.E("window.taskMinimise", "window not found: "+name, nil)
+		return core.E("window.taskMinimise", "window not found: "+name, nil)
 	}
 	pw.Minimise()
 	return nil
@@ -584,7 +582,7 @@ func (s *Service) taskMinimise(name string) error {
 func (s *Service) taskFocus(name string) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return coreerr.E("window.taskFocus", "window not found: "+name, nil)
+		return core.E("window.taskFocus", "window not found: "+name, nil)
 	}
 	pw.Focus()
 	return nil
@@ -593,7 +591,7 @@ func (s *Service) taskFocus(name string) error {
 func (s *Service) taskRestore(name string) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return coreerr.E("window.taskRestore", "window not found: "+name, nil)
+		return core.E("window.taskRestore", "window not found: "+name, nil)
 	}
 	pw.Restore()
 	s.manager.State().UpdateMaximized(name, false)
@@ -603,7 +601,7 @@ func (s *Service) taskRestore(name string) error {
 func (s *Service) taskSetTitle(name, title string) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return coreerr.E("window.taskSetTitle", "window not found: "+name, nil)
+		return core.E("window.taskSetTitle", "window not found: "+name, nil)
 	}
 	pw.SetTitle(title)
 	return nil
@@ -612,7 +610,7 @@ func (s *Service) taskSetTitle(name, title string) error {
 func (s *Service) taskSetAlwaysOnTop(name string, alwaysOnTop bool) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return coreerr.E("window.taskSetAlwaysOnTop", "window not found: "+name, nil)
+		return core.E("window.taskSetAlwaysOnTop", "window not found: "+name, nil)
 	}
 	pw.SetAlwaysOnTop(alwaysOnTop)
 	return nil
@@ -621,7 +619,7 @@ func (s *Service) taskSetAlwaysOnTop(name string, alwaysOnTop bool) error {
 func (s *Service) taskSetOpacity(name string, opacity float64) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return coreerr.E("window.taskSetOpacity", "window not found: "+name, nil)
+		return core.E("window.taskSetOpacity", "window not found: "+name, nil)
 	}
 	if opacity < 0 {
 		opacity = 0
@@ -636,7 +634,7 @@ func (s *Service) taskSetOpacity(name string, opacity float64) error {
 func (s *Service) taskSetBackgroundColour(name string, red, green, blue, alpha uint8) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return coreerr.E("window.taskSetBackgroundColour", "window not found: "+name, nil)
+		return core.E("window.taskSetBackgroundColour", "window not found: "+name, nil)
 	}
 	pw.SetBackgroundColour(red, green, blue, alpha)
 	return nil
@@ -645,7 +643,7 @@ func (s *Service) taskSetBackgroundColour(name string, red, green, blue, alpha u
 func (s *Service) taskSetVisibility(name string, visible bool) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return coreerr.E("window.taskSetVisibility", "window not found: "+name, nil)
+		return core.E("window.taskSetVisibility", "window not found: "+name, nil)
 	}
 	pw.SetVisibility(visible)
 	return nil
@@ -654,7 +652,7 @@ func (s *Service) taskSetVisibility(name string, visible bool) error {
 func (s *Service) taskFullscreen(name string, fullscreen bool) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return coreerr.E("window.taskFullscreen", "window not found: "+name, nil)
+		return core.E("window.taskFullscreen", "window not found: "+name, nil)
 	}
 	if fullscreen {
 		pw.Fullscreen()
@@ -679,7 +677,7 @@ func (s *Service) taskSaveLayout(name string) error {
 func (s *Service) taskRestoreLayout(name string) error {
 	layout, ok := s.manager.Layout().GetLayout(name)
 	if !ok {
-		return coreerr.E("window.taskRestoreLayout", "layout not found: "+name, nil)
+		return core.E("window.taskRestoreLayout", "layout not found: "+name, nil)
 	}
 	for winName, state := range layout.Windows {
 		pw, found := s.manager.Get(winName)
@@ -709,7 +707,7 @@ var tileModeMap = map[string]TileMode{
 func (s *Service) taskTileWindows(mode string, names []string) error {
 	tm, ok := tileModeMap[mode]
 	if !ok {
-		return coreerr.E("window.taskTileWindows", "unknown tile mode: "+mode, nil)
+		return core.E("window.taskTileWindows", "unknown tile mode: "+mode, nil)
 	}
 	if len(names) == 0 {
 		names = s.manager.List()
@@ -737,7 +735,7 @@ var snapPosMap = map[string]SnapPosition{
 func (s *Service) taskSnapWindow(name, position string) error {
 	pos, ok := snapPosMap[position]
 	if !ok {
-		return coreerr.E("window.taskSnapWindow", "unknown snap position: "+position, nil)
+		return core.E("window.taskSnapWindow", "unknown snap position: "+position, nil)
 	}
 	originX, originY, screenWidth, screenHeight := s.primaryScreenArea()
 	return s.manager.SnapWindow(name, pos, screenWidth, screenHeight, originX, originY)
@@ -753,7 +751,7 @@ var workflowLayoutMap = map[string]WorkflowLayout{
 func (s *Service) taskApplyWorkflow(workflow string, names []string) error {
 	layout, ok := workflowLayoutMap[workflow]
 	if !ok {
-		return coreerr.E("window.taskApplyWorkflow", "unknown workflow layout: "+workflow, nil)
+		return core.E("window.taskApplyWorkflow", "unknown workflow layout: "+workflow, nil)
 	}
 	if len(names) == 0 {
 		names = s.manager.List()
@@ -767,7 +765,7 @@ func (s *Service) taskApplyWorkflow(workflow string, names []string) error {
 func (s *Service) queryWindowZoom(name string) core.Result {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return core.Result{Value: coreerr.E("window.queryWindowZoom", "window not found: "+name, nil), OK: false}
+		return core.Result{Value: core.E("window.queryWindowZoom", "window not found: "+name, nil), OK: false}
 	}
 	return core.Result{Value: pw.GetZoom(), OK: true}
 }
@@ -775,7 +773,7 @@ func (s *Service) queryWindowZoom(name string) core.Result {
 func (s *Service) taskSetZoom(name string, magnification float64) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return coreerr.E("window.taskSetZoom", "window not found: "+name, nil)
+		return core.E("window.taskSetZoom", "window not found: "+name, nil)
 	}
 	pw.SetZoom(magnification)
 	return nil
@@ -784,7 +782,7 @@ func (s *Service) taskSetZoom(name string, magnification float64) error {
 func (s *Service) taskZoomIn(name string) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return coreerr.E("window.taskZoomIn", "window not found: "+name, nil)
+		return core.E("window.taskZoomIn", "window not found: "+name, nil)
 	}
 	current := pw.GetZoom()
 	pw.SetZoom(current + 0.1)
@@ -794,7 +792,7 @@ func (s *Service) taskZoomIn(name string) error {
 func (s *Service) taskZoomOut(name string) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return coreerr.E("window.taskZoomOut", "window not found: "+name, nil)
+		return core.E("window.taskZoomOut", "window not found: "+name, nil)
 	}
 	current := pw.GetZoom()
 	next := current - 0.1
@@ -808,7 +806,7 @@ func (s *Service) taskZoomOut(name string) error {
 func (s *Service) taskZoomReset(name string) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return coreerr.E("window.taskZoomReset", "window not found: "+name, nil)
+		return core.E("window.taskZoomReset", "window not found: "+name, nil)
 	}
 	pw.SetZoom(1.0)
 	return nil
@@ -819,15 +817,15 @@ func (s *Service) taskZoomReset(name string) error {
 func (s *Service) taskSetURL(name, url string) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return coreerr.E("window.taskSetURL", "window not found: "+name, nil)
+		return core.E("window.taskSetURL", "window not found: "+name, nil)
 	}
-	if strings.HasPrefix(url, "core://") {
+	if core.HasPrefix(url, "core://") {
 		resolved, ok, err := s.resolveCoreScheme(url)
 		if err != nil {
 			return err
 		}
 		if !ok {
-			return coreerr.E("window.taskSetURL", "core scheme handler unavailable for "+url, nil)
+			return core.E("window.taskSetURL", "core scheme handler unavailable for "+url, nil)
 		}
 		pw.SetHTML(resolved.Body)
 		preload := s.buildPreload(url)
@@ -847,7 +845,7 @@ func (s *Service) taskSetURL(name, url string) error {
 func (s *Service) taskSetHTML(name, html string) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return coreerr.E("window.taskSetHTML", "window not found: "+name, nil)
+		return core.E("window.taskSetHTML", "window not found: "+name, nil)
 	}
 	pw.SetHTML(html)
 	return nil
@@ -856,7 +854,7 @@ func (s *Service) taskSetHTML(name, html string) error {
 func (s *Service) taskExecJS(name, js string) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return coreerr.E("window.taskExecJS", "window not found: "+name, nil)
+		return core.E("window.taskExecJS", "window not found: "+name, nil)
 	}
 	pw.ExecJS(js)
 	return nil
@@ -867,7 +865,7 @@ func (s *Service) taskExecJS(name, js string) error {
 func (s *Service) taskToggleFullscreen(name string) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return coreerr.E("window.taskToggleFullscreen", "window not found: "+name, nil)
+		return core.E("window.taskToggleFullscreen", "window not found: "+name, nil)
 	}
 	pw.ToggleFullscreen()
 	return nil
@@ -876,7 +874,7 @@ func (s *Service) taskToggleFullscreen(name string) error {
 func (s *Service) taskToggleMaximise(name string) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return coreerr.E("window.taskToggleMaximise", "window not found: "+name, nil)
+		return core.E("window.taskToggleMaximise", "window not found: "+name, nil)
 	}
 	pw.ToggleMaximise()
 	return nil
@@ -887,7 +885,7 @@ func (s *Service) taskToggleMaximise(name string) error {
 func (s *Service) queryWindowBounds(name string) core.Result {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return core.Result{Value: coreerr.E("window.queryWindowBounds", "window not found: "+name, nil), OK: false}
+		return core.Result{Value: core.E("window.queryWindowBounds", "window not found: "+name, nil), OK: false}
 	}
 	x, y, width, height := pw.GetBounds()
 	return core.Result{Value: WindowBounds{X: x, Y: y, Width: width, Height: height}, OK: true}
@@ -896,7 +894,7 @@ func (s *Service) queryWindowBounds(name string) core.Result {
 func (s *Service) taskSetBounds(name string, x, y, width, height int) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return coreerr.E("window.taskSetBounds", "window not found: "+name, nil)
+		return core.E("window.taskSetBounds", "window not found: "+name, nil)
 	}
 	pw.SetBounds(x, y, width, height)
 	s.manager.State().UpdatePosition(name, x, y)
@@ -909,7 +907,7 @@ func (s *Service) taskSetBounds(name string, x, y, width, height int) error {
 func (s *Service) taskSetContentProtection(name string, protection bool) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return coreerr.E("window.taskSetContentProtection", "window not found: "+name, nil)
+		return core.E("window.taskSetContentProtection", "window not found: "+name, nil)
 	}
 	pw.SetContentProtection(protection)
 	return nil
@@ -920,7 +918,7 @@ func (s *Service) taskSetContentProtection(name string, protection bool) error {
 func (s *Service) taskFlash(name string, enabled bool) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return coreerr.E("window.taskFlash", "window not found: "+name, nil)
+		return core.E("window.taskFlash", "window not found: "+name, nil)
 	}
 	pw.Flash(enabled)
 	return nil
@@ -931,7 +929,7 @@ func (s *Service) taskFlash(name string, enabled bool) error {
 func (s *Service) taskPrint(name string) error {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return coreerr.E("window.taskPrint", "window not found: "+name, nil)
+		return core.E("window.taskPrint", "window not found: "+name, nil)
 	}
 	return pw.Print()
 }

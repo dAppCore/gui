@@ -7,7 +7,6 @@ import (
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/internal/coreutil"
-	coreerr "dappco.re/go/log"
 )
 
 type Options struct{}
@@ -20,7 +19,7 @@ type Service struct {
 }
 
 func platformUnavailableError(op string) error {
-	return coreerr.E("contextmenu."+op, "platform backend unavailable", nil)
+	return core.E("contextmenu."+op, "platform backend unavailable", nil)
 }
 
 func (s *Service) OnStartup(_ context.Context) core.Result {
@@ -58,7 +57,7 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 
 func invalidTaskResult(op string) core.Result {
 	return core.Result{
-		Value: coreerr.E("contextmenu."+op, "invalid task payload", nil),
+		Value: core.E("contextmenu."+op, "invalid task payload", nil),
 		OK:    false,
 	}
 }
@@ -129,7 +128,7 @@ func (s *Service) taskAdd(t TaskAdd) error {
 	oldMenu, existed := s.registeredMenus[t.Name]
 	if existed {
 		if err := s.platform.Remove(t.Name); err != nil {
-			return coreerr.E("contextmenu.taskAdd", "platform remove failed", err)
+			return core.E("contextmenu.taskAdd", "platform remove failed", err)
 		}
 		delete(s.registeredMenus, t.Name)
 	}
@@ -140,7 +139,7 @@ func (s *Service) taskAdd(t TaskAdd) error {
 		if existed {
 			s.tryRestoreMenu(t.Name, oldMenu)
 		}
-		return coreerr.E("contextmenu.taskAdd", "platform add failed", err)
+		return core.E("contextmenu.taskAdd", "platform add failed", err)
 	}
 
 	s.registeredMenus[t.Name] = t.Menu
@@ -159,7 +158,7 @@ func (s *Service) taskRemove(t TaskRemove) error {
 
 	err := s.platform.Remove(t.Name)
 	if err != nil {
-		return coreerr.E("contextmenu.taskRemove", "platform remove failed", err)
+		return core.E("contextmenu.taskRemove", "platform remove failed", err)
 	}
 
 	delete(s.registeredMenus, t.Name)
@@ -179,13 +178,13 @@ func (s *Service) taskUpdate(t TaskUpdate) error {
 
 	// Re-register with updated definition — remove then add
 	if err := s.platform.Remove(t.Name); err != nil {
-		return coreerr.E("contextmenu.taskUpdate", "platform remove failed", err)
+		return core.E("contextmenu.taskUpdate", "platform remove failed", err)
 	}
 
 	err := s.platform.Add(t.Name, t.Menu, s.menuCallback())
 	if err != nil {
 		s.tryRestoreMenu(t.Name, oldMenu)
-		return coreerr.E("contextmenu.taskUpdate", "platform add failed", err)
+		return core.E("contextmenu.taskUpdate", "platform add failed", err)
 	}
 
 	s.registeredMenus[t.Name] = t.Menu
@@ -203,7 +202,7 @@ func (s *Service) taskDestroy(t TaskDestroy) error {
 	}
 
 	if err := s.platform.Remove(t.Name); err != nil {
-		return coreerr.E("contextmenu.taskDestroy", "platform remove failed", err)
+		return core.E("contextmenu.taskDestroy", "platform remove failed", err)
 	}
 
 	delete(s.registeredMenus, t.Name)

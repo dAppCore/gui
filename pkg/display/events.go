@@ -1,7 +1,6 @@
 package display
 
 import (
-	strings "dappco.re/go/gui/compat/strings"
 	"net"
 	"net/http"
 	"net/url"
@@ -123,7 +122,7 @@ func trustedWebSocketOrigin(r *http.Request) bool {
 	if r.URL == nil {
 		return false
 	}
-	if path := strings.TrimSpace(r.URL.Path); path != "" && path != "/" && path != "/events" {
+	if path := core.Trim(r.URL.Path); path != "" && path != "/" && path != "/events" {
 		return false
 	}
 
@@ -134,8 +133,8 @@ func trustedWebSocketOrigin(r *http.Request) bool {
 		return false
 	}
 
-	origin := strings.TrimSpace(r.Header.Get("Origin"))
-	if origin == "" || strings.EqualFold(origin, "null") {
+	origin := core.Trim(r.Header.Get("Origin"))
+	if origin == "" || equalFold(origin, "null") {
 		return true
 	}
 
@@ -144,7 +143,7 @@ func trustedWebSocketOrigin(r *http.Request) bool {
 		return false
 	}
 
-	switch strings.ToLower(parsed.Scheme) {
+	switch core.Lower(parsed.Scheme) {
 	case "http", "https":
 		return trustedWebSocketHost(parsed.Host)
 	case "wails", "core", "app":
@@ -162,12 +161,12 @@ func trustedWSRequestOrigin(raw string) bool {
 	if parsed, _, err := net.SplitHostPort(raw); err == nil {
 		host = parsed
 	}
-	host = strings.Trim(host, "[]")
+	host = trimRunes(host, "[]")
 	return isLoopbackHost(host)
 }
 
 func isLoopbackHost(host string) bool {
-	host = strings.TrimSpace(strings.ToLower(host))
+	host = core.Trim(core.Lower(host))
 	if host == "" {
 		return false
 	}
@@ -179,7 +178,7 @@ func isLoopbackHost(host string) bool {
 }
 
 func trustedWebSocketHost(host string) bool {
-	host = strings.TrimSpace(host)
+	host = core.Trim(host)
 	if host == "" {
 		return false
 	}
@@ -188,8 +187,8 @@ func trustedWebSocketHost(host string) bool {
 	if parsedHost, _, err := net.SplitHostPort(host); err == nil {
 		name = parsedHost
 	}
-	name = strings.Trim(name, "[]")
-	switch strings.ToLower(name) {
+	name = trimRunes(name, "[]")
+	switch core.Lower(name) {
 	case "localhost", "127.0.0.1", "::1":
 		return true
 	default:
