@@ -7,7 +7,7 @@ use (
 	./go
 	./external/go
 	./external/config/go
-	./external/webview
-	./external/io
-	./external/log
+	./external/webview/go
+	./external/io/go
+	./external/log/go
 )
