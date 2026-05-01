@@ -241,7 +241,7 @@ func TestActionModels_Ugly_ReflectsSelectedModelStatus(t *core.T) {
 		writeSSE(w, `[DONE]`)
 	}, &mockToolExecutor{}, func(o *Options) { o.ModelRoots = []string{rootA, rootB} })
 
-	selected := c.Action("gui.chat.selectModel").Run(context.Background(), core.NewOptions(
+	selected := c.Action("gui.chat.select_model").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "model", Value: "beta"},
 	))
 	core.RequireTrue(t, selected.OK)
@@ -270,7 +270,7 @@ func TestActionSelectModel_Good_UpdatesConversationAndSettings(t *core.T) {
 	core.RequireTrue(t, created.OK)
 	conv := created.Value.(Conversation)
 
-	selected := c.Action("gui.chat.selectModel").Run(context.Background(), core.NewOptions(
+	selected := c.Action("gui.chat.select_model").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "model", Value: "lemma"},
 		core.Option{Key: "conversation_id", Value: conv.ID},
 	))
@@ -291,7 +291,7 @@ func TestActionSelectModel_Bad_RequiresModelName(t *core.T) {
 		writeSSE(w, `[DONE]`)
 	}, &mockToolExecutor{})
 
-	result := c.Action("gui.chat.selectModel").Run(context.Background(), core.NewOptions())
+	result := c.Action("gui.chat.select_model").Run(context.Background(), core.NewOptions())
 	core.AssertFalse(t, result.OK)
 	core.AssertError(t, result.Value.(resultFailure))
 	core.AssertContains(t, result.Value.(resultFailure).Error(), "model is required")
@@ -303,7 +303,7 @@ func TestActionSelectModel_Ugly_RejectsUnknownDiscoveredModel(t *core.T) {
 		writeSSE(w, `[DONE]`)
 	}, &mockToolExecutor{}, func(o *Options) { o.ModelRoots = []string{modelRoot} })
 
-	result := c.Action("gui.chat.selectModel").Run(context.Background(), core.NewOptions(
+	result := c.Action("gui.chat.select_model").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "model", Value: "missing"},
 	))
 	core.AssertFalse(t, result.OK)

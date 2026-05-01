@@ -293,7 +293,7 @@ func (s *Service) registerActions() {
 	c.Action("gui.chat.models", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: s.Models(), OK: true}
 	})
-	c.Action("gui.chat.selectModel", func(_ context.Context, opts core.Options) core.Result {
+	c.Action("gui.chat.select_model", func(_ context.Context, opts core.Options) core.Result {
 		input, err := decodeInput[selectModelInput](opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
@@ -385,7 +385,7 @@ func (s *Service) registerActions() {
 		markdown, err := s.exportConversation(coalesce(input.ID, input.ConversationID))
 		return core.Result{}.New(markdown, err)
 	})
-	c.Action("gui.chat.attachImage", func(_ context.Context, opts core.Options) core.Result {
+	c.Action("gui.chat.attach_image", func(_ context.Context, opts core.Options) core.Result {
 		input, err := decodeInput[attachImageInput](opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
@@ -396,7 +396,7 @@ func (s *Service) registerActions() {
 		s.queueAttachment(coalesce(input.ConversationID, "draft"), input.ImageAttachment)
 		return core.Result{Value: input.ImageAttachment, OK: true}
 	})
-	c.Action("gui.chat.attachImageFile", func(_ context.Context, opts core.Options) core.Result {
+	c.Action("gui.chat.attach_image_file", func(_ context.Context, opts core.Options) core.Result {
 		input, err := decodeInput[attachImageFileInput](opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
@@ -408,7 +408,7 @@ func (s *Service) registerActions() {
 		s.queueAttachment(coalesce(input.ConversationID, "draft"), attachment)
 		return core.Result{Value: attachment, OK: true}
 	})
-	c.Action("gui.chat.removeImage", func(_ context.Context, opts core.Options) core.Result {
+	c.Action("gui.chat.remove_image", func(_ context.Context, opts core.Options) core.Result {
 		input, err := decodeInput[removeImageInput](opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}

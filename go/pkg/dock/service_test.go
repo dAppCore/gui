@@ -110,7 +110,7 @@ func taskRun(c *core.Core, name string, task any) core.Result {
 }
 
 func setBadge(c *core.Core, label string) core.Result {
-	return c.Action("dock.setBadge").Run(context.Background(), core.NewOptions(
+	return c.Action("dock.set_badge").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "label", Value: label},
 	))
 }
@@ -149,7 +149,7 @@ func TestTaskShowIcon_Good(t *core.T) {
 		return core.Result{OK: true}
 	})
 
-	r := taskRun(c, "dock.showIcon", TaskShowIcon{})
+	r := taskRun(c, "dock.show_icon", TaskShowIcon{})
 	core.RequireTrue(t, r.OK)
 	core.AssertTrue(t, mock.visible)
 	core.AssertNotNil(t, received)
@@ -168,7 +168,7 @@ func TestTaskHideIcon_Good(t *core.T) {
 		return core.Result{OK: true}
 	})
 
-	r := taskRun(c, "dock.hideIcon", TaskHideIcon{})
+	r := taskRun(c, "dock.hide_icon", TaskHideIcon{})
 	core.RequireTrue(t, r.OK)
 	core.AssertFalse(t, mock.visible)
 	core.AssertNotNil(t, received)
@@ -196,7 +196,7 @@ func TestTaskRemoveBadge_Good(t *core.T) {
 	// Set a badge first
 	_ = setBadge(c, "5")
 
-	r := taskRun(c, "dock.removeBadge", TaskRemoveBadge{})
+	r := taskRun(c, "dock.remove_badge", TaskRemoveBadge{})
 	core.RequireTrue(t, r.OK)
 	core.AssertEqual(t, "", mock.badge)
 	core.AssertFalse(t, mock.hasBadge)
@@ -206,7 +206,7 @@ func TestTaskShowIcon_Bad(t *core.T) {
 	_, c, mock := newTestDockService(t)
 	mock.showErr = core.AnError
 
-	r := taskRun(c, "dock.showIcon", TaskShowIcon{})
+	r := taskRun(c, "dock.show_icon", TaskShowIcon{})
 	core.AssertFalse(t, r.OK)
 }
 
@@ -214,7 +214,7 @@ func TestTaskHideIcon_Bad(t *core.T) {
 	_, c, mock := newTestDockService(t)
 	mock.hideErr = core.AnError
 
-	r := taskRun(c, "dock.hideIcon", TaskHideIcon{})
+	r := taskRun(c, "dock.hide_icon", TaskHideIcon{})
 	core.AssertFalse(t, r.OK)
 }
 
@@ -239,7 +239,7 @@ func TestTaskSetProgressBar_Good(t *core.T) {
 		return core.Result{OK: true}
 	})
 
-	r := taskRun(c, "dock.setProgressBar", TaskSetProgressBar{Progress: 0.5})
+	r := taskRun(c, "dock.set_progress_bar", TaskSetProgressBar{Progress: 0.5})
 	core.RequireTrue(t, r.OK)
 	core.AssertEqual(t, 0.5, mock.progress)
 	core.AssertNotNil(t, received)
@@ -249,7 +249,7 @@ func TestTaskSetProgressBar_Good(t *core.T) {
 func TestTaskSetProgressBar_Hide_GoodCase(t *core.T) {
 	// Progress -1.0 hides the indicator
 	_, c, mock := newTestDockService(t)
-	r := taskRun(c, "dock.setProgressBar", TaskSetProgressBar{Progress: -1.0})
+	r := taskRun(c, "dock.set_progress_bar", TaskSetProgressBar{Progress: -1.0})
 	core.RequireTrue(t, r.OK)
 	core.AssertEqual(t, -1.0, mock.progress)
 }
@@ -258,14 +258,14 @@ func TestTaskSetProgressBar_Bad(t *core.T) {
 	_, c, mock := newTestDockService(t)
 	mock.progressErr = core.AnError
 
-	r := taskRun(c, "dock.setProgressBar", TaskSetProgressBar{Progress: 0.5})
+	r := taskRun(c, "dock.set_progress_bar", TaskSetProgressBar{Progress: 0.5})
 	core.AssertFalse(t, r.OK)
 }
 
 func TestTaskSetProgressBar_Ugly(t *core.T) {
 	// No dock service — action is not registered
 	c := core.New(core.WithServiceLock())
-	r := c.Action("dock.setProgressBar").Run(context.Background(), core.NewOptions())
+	r := c.Action("dock.set_progress_bar").Run(context.Background(), core.NewOptions())
 	core.AssertFalse(t, r.OK)
 }
 
@@ -328,7 +328,7 @@ func TestTaskStopBounce_Good(t *core.T) {
 	core.RequireTrue(t, r.OK)
 	requestID := r.Value.(int)
 
-	r2 := taskRun(c, "dock.stopBounce", TaskStopBounce{RequestID: requestID})
+	r2 := taskRun(c, "dock.stop_bounce", TaskStopBounce{RequestID: requestID})
 	core.RequireTrue(t, r2.OK)
 	core.AssertTrue(t, mock.stopBounceCalled)
 }
@@ -337,14 +337,14 @@ func TestTaskStopBounce_Bad(t *core.T) {
 	_, c, mock := newTestDockService(t)
 	mock.stopBounceErr = core.AnError
 
-	r := taskRun(c, "dock.stopBounce", TaskStopBounce{RequestID: 1})
+	r := taskRun(c, "dock.stop_bounce", TaskStopBounce{RequestID: 1})
 	core.AssertFalse(t, r.OK)
 }
 
 func TestTaskStopBounce_Ugly(t *core.T) {
 	// No dock service — action is not registered
 	c := core.New(core.WithServiceLock())
-	r := c.Action("dock.stopBounce").Run(context.Background(), core.NewOptions())
+	r := c.Action("dock.stop_bounce").Run(context.Background(), core.NewOptions())
 	core.AssertFalse(t, r.OK)
 }
 
@@ -352,7 +352,7 @@ func TestTaskRemoveBadge_Bad(t *core.T) {
 	_, c, mock := newTestDockService(t)
 	mock.removeErr = core.AnError
 
-	r := taskRun(c, "dock.removeBadge", TaskRemoveBadge{})
+	r := taskRun(c, "dock.remove_badge", TaskRemoveBadge{})
 	core.AssertFalse(t, r.OK)
 }
 

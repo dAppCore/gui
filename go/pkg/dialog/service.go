@@ -124,11 +124,11 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 			return core.Result{Value: PromptResult{Value: core.Sprint(value), Confirmed: true}, OK: true}
 		}
 	}
-	s.Core().Action("dialog.openFile", openFile)
+	s.Core().Action("dialog.open_file", openFile)
 	s.Core().Action("gui.dialog.open", openFile)
-	s.Core().Action("dialog.saveFile", saveFile)
+	s.Core().Action("dialog.save_file", saveFile)
 	s.Core().Action("gui.dialog.save", saveFile)
-	s.Core().Action("dialog.openDirectory", openDirectory)
+	s.Core().Action("dialog.open_directory", openDirectory)
 	s.Core().Action("gui.dialog.openDirectory", openDirectory)
 	s.Core().Action("dialog.message", messageDialog)
 	s.Core().Action("gui.dialog.message", messageDialog)

@@ -32,7 +32,7 @@ func TestDisplay_Good_WindowOpenIncludesPreload(t *core.T) {
 	core.AssertContains(t, platform.Windows[0].ExecJSCalls()[0], "globalThis.core.storage.cookies")
 	core.AssertContains(t, platform.Windows[0].ExecJSCalls()[0], "Document.prototype, 'cookie'")
 	core.AssertNotContains(t, platform.Windows[0].ExecJSCalls()[0], "globalThis.electron")
-	core.AssertNotContains(t, platform.Windows[0].ExecJSCalls()[0], "core.background.serviceWorker.register")
+	core.AssertNotContains(t, platform.Windows[0].ExecJSCalls()[0], "core.background.service_worker.register")
 }
 
 func TestPreload_Good_TrustedOriginIncludesPrivilegedBridge(t *core.T) {
@@ -46,12 +46,12 @@ func TestPreload_Good_TrustedOriginIncludesPrivilegedBridge(t *core.T) {
 	core.RequireNoError(t, err)
 
 	core.AssertContains(t, script, "globalThis.electron")
-	core.AssertContains(t, script, "core.background.serviceWorker.register")
+	core.AssertContains(t, script, "core.background.service_worker.register")
 	core.AssertContains(t, script, "globalThis.core.ml")
 	core.AssertContains(t, script, "gui.notification.requestPermission")
 	core.AssertContains(t, script, "gui.notification.clear")
-	core.AssertContains(t, script, "systray.showMessage")
-	core.AssertContains(t, script, "webview.devtoolsOpen")
+	core.AssertContains(t, script, "systray.show_message")
+	core.AssertContains(t, script, "webview.devtools_open")
 }
 
 func TestDisplay_Good_WindowOpenManifestBackedOriginIncludesManifestPreloadOnly(t *core.T) {
@@ -88,7 +88,7 @@ func TestDisplay_Good_WindowOpenManifestBackedOriginIncludesManifestPreloadOnly(
 	core.AssertContains(t, script, "__manifestLoaded")
 	core.AssertContains(t, script, "globalThis.core.ml")
 	core.AssertNotContains(t, script, "globalThis.electron")
-	core.AssertNotContains(t, script, "core.background.serviceWorker.register")
+	core.AssertNotContains(t, script, "core.background.service_worker.register")
 }
 
 func TestDisplay_Good_CoreSchemeRoutesThroughBackend(t *core.T) {
@@ -107,7 +107,7 @@ func TestDisplay_Good_CoreSchemeRoutesThroughBackend(t *core.T) {
 		}},
 	)).OK)
 
-	core.RequireTrue(t, c.Action("window.setURL").Run(context.Background(), core.NewOptions(
+	core.RequireTrue(t, c.Action("window.set_url").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetURL{Name: "settings", URL: "core://settings"}},
 	)).OK)
 
@@ -309,7 +309,7 @@ func TestPreload_InjectPreload_Bad(t *core.T) {
 	core.AssertLen(t, target.scripts, 1)
 	core.AssertContains(t, target.scripts[0], "globalThis.core.ml")
 	core.AssertNotContains(t, target.scripts[0], "globalThis.electron")
-	core.AssertNotContains(t, target.scripts[0], "core.background.serviceWorker.register")
+	core.AssertNotContains(t, target.scripts[0], "core.background.service_worker.register")
 }
 
 func TestPreload_InjectPreload_Ugly(t *core.T) {

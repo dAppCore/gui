@@ -31,7 +31,7 @@ func (s *Subsystem) menuSet(_ context.Context, _ *mcp.CallToolRequest, input Men
 	if err != nil {
 		return nil, MenuOutput{}, err
 	}
-	r := s.core.Action("menu.setAppMenu").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("menu.set_app_menu").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: menu.TaskSetAppMenu{Items: items}},
 	))
 	if !r.OK {

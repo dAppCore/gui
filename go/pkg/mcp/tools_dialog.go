@@ -25,7 +25,7 @@ type DialogOpenFileOutput struct {
 }
 
 func (s *Subsystem) dialogOpenFile(_ context.Context, _ *mcp.CallToolRequest, input DialogOpenFileInput) (*mcp.CallToolResult, DialogOpenFileOutput, resultFailure) {
-	r := s.core.Action("dialog.openFile").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("dialog.open_file").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: dialog.TaskOpenFile{Options: dialog.OpenFileOptions{
 			Title:                input.Title,
 			Directory:            input.Directory,
@@ -63,7 +63,7 @@ type DialogSaveFileOutput struct {
 }
 
 func (s *Subsystem) dialogSaveFile(_ context.Context, _ *mcp.CallToolRequest, input DialogSaveFileInput) (*mcp.CallToolResult, DialogSaveFileOutput, resultFailure) {
-	r := s.core.Action("dialog.saveFile").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("dialog.save_file").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: dialog.TaskSaveFile{Options: dialog.SaveFileOptions{
 			Title:           input.Title,
 			Directory:       input.Directory,
@@ -97,7 +97,7 @@ type DialogOpenDirectoryOutput struct {
 }
 
 func (s *Subsystem) dialogOpenDirectory(_ context.Context, _ *mcp.CallToolRequest, input DialogOpenDirectoryInput) (*mcp.CallToolResult, DialogOpenDirectoryOutput, resultFailure) {
-	r := s.core.Action("dialog.openDirectory").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("dialog.open_directory").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: dialog.TaskOpenDirectory{Options: dialog.OpenDirectoryOptions{
 			Title:           input.Title,
 			Directory:       input.Directory,

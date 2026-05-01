@@ -45,7 +45,7 @@ func TestTaskOpenURL_Good(t *core.T) {
 	mp := &mockPlatform{}
 	_, c := newTestBrowserService(t, mp)
 
-	r := c.Action("browser.openURL").Run(context.Background(), core.NewOptions(
+	r := c.Action("browser.open_url").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "url", Value: "https://example.com"},
 	))
 	core.RequireTrue(t, r.OK)
@@ -56,7 +56,7 @@ func TestTaskOpenURL_Bad_Scheme(t *core.T) {
 	mp := &mockPlatform{}
 	_, c := newTestBrowserService(t, mp)
 
-	r := c.Action("browser.openURL").Run(context.Background(), core.NewOptions(
+	r := c.Action("browser.open_url").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "url", Value: "javascript:alert(1)"},
 	))
 	core.AssertFalse(t, r.OK)
@@ -67,7 +67,7 @@ func TestTaskOpenURL_Bad_Credentials(t *core.T) {
 	mp := &mockPlatform{}
 	_, c := newTestBrowserService(t, mp)
 
-	r := c.Action("browser.openURL").Run(context.Background(), core.NewOptions(
+	r := c.Action("browser.open_url").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "url", Value: "https://user:pass@example.com"},
 	))
 	core.AssertFalse(t, r.OK)
@@ -78,7 +78,7 @@ func TestTaskOpenURL_Bad_PlatformError(t *core.T) {
 	mp := &mockPlatform{urlErr: core.NewError("browser not found")}
 	_, c := newTestBrowserService(t, mp)
 
-	r := c.Action("browser.openURL").Run(context.Background(), core.NewOptions(
+	r := c.Action("browser.open_url").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "url", Value: "https://example.com"},
 	))
 	core.AssertFalse(t, r.OK)
@@ -88,7 +88,7 @@ func TestTaskOpenFile_Good(t *core.T) {
 	mp := &mockPlatform{}
 	_, c := newTestBrowserService(t, mp)
 
-	r := c.Action("browser.openFile").Run(context.Background(), core.NewOptions(
+	r := c.Action("browser.open_file").Run(context.Background(), core.NewOptions(
 		core.Option{Key: core.Concat("pa", "th"), Value: "/tmp/readme.txt"},
 	))
 	core.RequireTrue(t, r.OK)
@@ -99,7 +99,7 @@ func TestTaskOpenFile_Bad_RelativePath(t *core.T) {
 	mp := &mockPlatform{}
 	_, c := newTestBrowserService(t, mp)
 
-	r := c.Action("browser.openFile").Run(context.Background(), core.NewOptions(
+	r := c.Action("browser.open_file").Run(context.Background(), core.NewOptions(
 		core.Option{Key: core.Concat("pa", "th"), Value: "relative/readme.txt"},
 	))
 	core.AssertFalse(t, r.OK)
@@ -110,7 +110,7 @@ func TestTaskOpenFile_Bad_PlatformError(t *core.T) {
 	mp := &mockPlatform{fileErr: core.NewError("file not found")}
 	_, c := newTestBrowserService(t, mp)
 
-	r := c.Action("browser.openFile").Run(context.Background(), core.NewOptions(
+	r := c.Action("browser.open_file").Run(context.Background(), core.NewOptions(
 		core.Option{Key: core.Concat("pa", "th"), Value: "/nonexistent"},
 	))
 	core.AssertFalse(t, r.OK)
@@ -118,7 +118,7 @@ func TestTaskOpenFile_Bad_PlatformError(t *core.T) {
 
 func TestTaskOpenURL_Bad_NoService(t *core.T) {
 	c := core.New(core.WithServiceLock())
-	r := c.Action("browser.openURL").Run(context.Background(), core.NewOptions(
+	r := c.Action("browser.open_url").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "url", Value: "https://example.com"},
 	))
 	core.AssertFalse(t, r.OK)

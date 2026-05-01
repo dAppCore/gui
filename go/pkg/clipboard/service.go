@@ -79,9 +79,9 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		text, ok := s.platform.Text()
 		return core.Result{Value: ClipboardContent{Text: text, HasContent: ok && text != ""}, OK: true}
 	}
-	s.Core().Action("clipboard.setText", setText)
+	s.Core().Action("clipboard.set_text", setText)
 	s.Core().Action("gui.clipboard.write", setText)
-	s.Core().Action("clipboard.setImage", setImage)
+	s.Core().Action("clipboard.set_image", setImage)
 	s.Core().Action("gui.clipboard.writeImage", setImage)
 	s.Core().Action("gui.clipboard.readImage", func(_ context.Context, _ core.Options) core.Result {
 		imgPlatform, ok := s.platform.(ImagePlatform)

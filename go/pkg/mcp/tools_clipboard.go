@@ -42,7 +42,7 @@ type ClipboardWriteOutput struct {
 }
 
 func (s *Subsystem) clipboardWrite(_ context.Context, _ *mcp.CallToolRequest, input ClipboardWriteInput) (*mcp.CallToolResult, ClipboardWriteOutput, resultFailure) {
-	r := s.core.Action("clipboard.setText").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("clipboard.set_text").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: clipboard.TaskSetText{Text: input.Text}},
 	))
 	if !r.OK {
@@ -134,7 +134,7 @@ func (s *Subsystem) clipboardWriteImage(_ context.Context, _ *mcp.CallToolReques
 	if err != nil {
 		return nil, ClipboardWriteImageOutput{}, core.E("mcp.clipboardWriteImage", "invalid base64 image data", err)
 	}
-	r := s.core.Action("clipboard.setImage").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("clipboard.set_image").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "data", Value: data},
 	))
 	if !r.OK {

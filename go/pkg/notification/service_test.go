@@ -121,7 +121,7 @@ func TestQueryPermission_Good(t *core.T) {
 
 func TestTaskRequestPermission_Good(t *core.T) {
 	_, c := newTestService(t)
-	r := c.Action("notification.requestPermission").Run(context.Background(), core.NewOptions())
+	r := c.Action("notification.request_permission").Run(context.Background(), core.NewOptions())
 	core.RequireTrue(t, r.OK)
 	core.AssertEqual(t, true, r.Value)
 }
@@ -136,7 +136,7 @@ func TestTaskSend_Bad(t *core.T) {
 
 func TestTaskRevokePermission_Good(t *core.T) {
 	mock, c := newTestService(t)
-	r := c.Action("notification.revokePermission").Run(context.Background(), core.NewOptions())
+	r := c.Action("notification.revoke_permission").Run(context.Background(), core.NewOptions())
 	core.RequireTrue(t, r.OK)
 	core.AssertTrue(t, mock.revokeCalled)
 }
@@ -144,14 +144,14 @@ func TestTaskRevokePermission_Good(t *core.T) {
 func TestTaskRevokePermission_Bad(t *core.T) {
 	mock, c := newTestService(t)
 	mock.revokeErr = core.NewError("cannot revoke")
-	r := c.Action("notification.revokePermission").Run(context.Background(), core.NewOptions())
+	r := c.Action("notification.revoke_permission").Run(context.Background(), core.NewOptions())
 	core.AssertFalse(t, r.OK)
 }
 
 func TestTaskRevokePermission_Ugly(t *core.T) {
 	// No service registered — action is not registered
 	c := core.New(core.WithServiceLock())
-	r := c.Action("notification.revokePermission").Run(context.Background(), core.NewOptions())
+	r := c.Action("notification.revoke_permission").Run(context.Background(), core.NewOptions())
 	core.AssertFalse(t, r.OK)
 }
 

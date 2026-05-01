@@ -37,7 +37,7 @@ func TestTaskSetTrayIcon_Good(t *core.T) {
 	core.RequireNoError(t, svc.manager.Setup("Test", "Test"))
 
 	icon := []byte{0x89, 0x50, 0x4E, 0x47} // PNG header
-	r := taskRun(c, "systray.setIcon", TaskSetTrayIcon{Data: icon})
+	r := taskRun(c, "systray.set_icon", TaskSetTrayIcon{Data: icon})
 	core.RequireTrue(t, r.OK)
 }
 
@@ -51,7 +51,7 @@ func TestTaskSetTrayMenu_Good(t *core.T) {
 		{Type: "separator"},
 		{Label: "Quit", ActionID: "quit"},
 	}
-	r := taskRun(c, "systray.setMenu", TaskSetTrayMenu{Items: items})
+	r := taskRun(c, "systray.set_menu", TaskSetTrayMenu{Items: items})
 	core.RequireTrue(t, r.OK)
 }
 
@@ -59,7 +59,7 @@ func TestTaskSetTrayTooltip_Good(t *core.T) {
 	svc, c := newTestSystrayService(t)
 	core.RequireNoError(t, svc.manager.Setup("Test", "Test"))
 
-	r := taskRun(c, "systray.setTooltip", TaskSetTrayTooltip{Tooltip: "New Tooltip"})
+	r := taskRun(c, "systray.set_tooltip", TaskSetTrayTooltip{Tooltip: "New Tooltip"})
 	core.RequireTrue(t, r.OK)
 	core.AssertEqual(t, "New Tooltip", svc.manager.GetInfo()["tooltip"])
 }
@@ -68,7 +68,7 @@ func TestTaskSetTrayLabel_Good(t *core.T) {
 	svc, c := newTestSystrayService(t)
 	core.RequireNoError(t, svc.manager.Setup("Test", "Test"))
 
-	r := taskRun(c, "systray.setLabel", TaskSetTrayLabel{Label: "Ready"})
+	r := taskRun(c, "systray.set_label", TaskSetTrayLabel{Label: "Ready"})
 	core.RequireTrue(t, r.OK)
 	core.AssertEqual(t, "Ready", svc.manager.GetInfo()["label"])
 }
@@ -77,7 +77,7 @@ func TestTaskShowMessage_Good(t *core.T) {
 	svc, c := newTestSystrayService(t)
 	core.RequireNoError(t, svc.manager.Setup("Test", "Test"))
 
-	r := taskRun(c, "systray.showMessage", TaskShowMessage{Title: "Core", Message: "Up"})
+	r := taskRun(c, "systray.show_message", TaskShowMessage{Title: "Core", Message: "Up"})
 	core.RequireTrue(t, r.OK)
 
 	mockTray := svc.manager.Tray().(*mockTray)
@@ -123,7 +123,7 @@ func TestTaskShowMessage_FallbackToNotification_GoodCase(t *core.T) {
 	svc := core.MustServiceFor[*Service](c, "systray")
 	core.RequireNoError(t, svc.manager.Setup("Test", "Test"))
 
-	r := taskRun(c, "systray.showMessage", TaskShowMessage{Title: "Core", Message: "Up"})
+	r := taskRun(c, "systray.show_message", TaskShowMessage{Title: "Core", Message: "Up"})
 	core.RequireTrue(t, r.OK)
 	core.AssertTrue(t, notifPlatform.sent)
 	core.AssertEqual(t, "Core", notifPlatform.opts.Title)
@@ -144,7 +144,7 @@ func TestQueryInfo_Good(t *core.T) {
 func TestTaskSetTrayIcon_Bad(t *core.T) {
 	// No systray service — action is not registered
 	c := core.New(core.WithServiceLock())
-	r := c.Action("systray.setIcon").Run(context.Background(), core.NewOptions())
+	r := c.Action("systray.set_icon").Run(context.Background(), core.NewOptions())
 	core.AssertFalse(t, r.OK)
 }
 

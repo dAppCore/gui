@@ -16,38 +16,38 @@ type Service struct {
 
 func (s *Service) OnStartup(_ context.Context) core.Result {
 	s.Core().RegisterQuery(s.handleQuery)
-	s.Core().Action("dock.showIcon", func(_ context.Context, _ core.Options) core.Result {
+	s.Core().Action("dock.show_icon", func(_ context.Context, _ core.Options) core.Result {
 		if err := s.platform.ShowIcon(); err != nil {
 			return core.Result{Value: err, OK: false}
 		}
-		coreutil.DispatchAction(s.Core(), "dock.showIcon", ActionVisibilityChanged{Visible: true})
+		coreutil.DispatchAction(s.Core(), "dock.show_icon", ActionVisibilityChanged{Visible: true})
 		return core.Result{OK: true}
 	})
-	s.Core().Action("dock.hideIcon", func(_ context.Context, _ core.Options) core.Result {
+	s.Core().Action("dock.hide_icon", func(_ context.Context, _ core.Options) core.Result {
 		if err := s.platform.HideIcon(); err != nil {
 			return core.Result{Value: err, OK: false}
 		}
-		coreutil.DispatchAction(s.Core(), "dock.hideIcon", ActionVisibilityChanged{Visible: false})
+		coreutil.DispatchAction(s.Core(), "dock.hide_icon", ActionVisibilityChanged{Visible: false})
 		return core.Result{OK: true}
 	})
-	s.Core().Action("dock.setBadge", func(_ context.Context, opts core.Options) core.Result {
+	s.Core().Action("dock.set_badge", func(_ context.Context, opts core.Options) core.Result {
 		if err := s.platform.SetBadge(opts.String("label")); err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{OK: true}
 	})
-	s.Core().Action("dock.removeBadge", func(_ context.Context, _ core.Options) core.Result {
+	s.Core().Action("dock.remove_badge", func(_ context.Context, _ core.Options) core.Result {
 		if err := s.platform.RemoveBadge(); err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{OK: true}
 	})
-	s.Core().Action("dock.setProgressBar", func(_ context.Context, opts core.Options) core.Result {
+	s.Core().Action("dock.set_progress_bar", func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskSetProgressBar)
 		if err := s.platform.SetProgressBar(t.Progress); err != nil {
 			return core.Result{Value: err, OK: false}
 		}
-		coreutil.DispatchAction(s.Core(), "dock.setProgressBar", ActionProgressChanged{Progress: t.Progress})
+		coreutil.DispatchAction(s.Core(), "dock.set_progress_bar", ActionProgressChanged{Progress: t.Progress})
 		return core.Result{OK: true}
 	})
 	s.Core().Action("dock.bounce", func(_ context.Context, opts core.Options) core.Result {
@@ -59,7 +59,7 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		coreutil.DispatchAction(s.Core(), "dock.bounce", ActionBounceStarted{RequestID: requestID, BounceType: t.BounceType})
 		return core.Result{Value: requestID, OK: true}
 	})
-	s.Core().Action("dock.stopBounce", func(_ context.Context, opts core.Options) core.Result {
+	s.Core().Action("dock.stop_bounce", func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskStopBounce)
 		if err := s.platform.StopBounce(t.RequestID); err != nil {
 			return core.Result{Value: err, OK: false}

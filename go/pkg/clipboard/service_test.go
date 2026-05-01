@@ -62,7 +62,7 @@ func TestQueryText_Bad(t *core.T) {
 
 func TestTaskSetText_Good(t *core.T) {
 	_, c := newTestService(t)
-	r := c.Action("clipboard.setText").Run(context.Background(), core.NewOptions(
+	r := c.Action("clipboard.set_text").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "text", Value: "world"},
 	))
 	core.RequireTrue(t, r.OK)
@@ -86,7 +86,7 @@ func TestTaskClear_Good(t *core.T) {
 
 func TestQueryImage_Good(t *core.T) {
 	_, c := newTestService(t)
-	r := c.Action("clipboard.setImage").Run(context.Background(), core.NewOptions(
+	r := c.Action("clipboard.set_image").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "data", Value: []byte{0x89, 0x50, 0x4e, 0x47}},
 	))
 	core.RequireTrue(t, r.OK)
@@ -101,7 +101,7 @@ func TestQueryImage_Good(t *core.T) {
 
 func TestTaskSetImage_RejectsOversize(t *core.T) {
 	_, c := newTestService(t)
-	r := c.Action("clipboard.setImage").Run(context.Background(), core.NewOptions(
+	r := c.Action("clipboard.set_image").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "data", Value: bytesRepeat([]byte("x"), MaxImageBytes+1)},
 	))
 	core.RequireTrue(t, r.OK)

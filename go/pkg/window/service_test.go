@@ -129,7 +129,7 @@ func TestTaskSetPosition_Good(t *core.T) {
 	_, c := newTestWindowService(t)
 	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
-	r := taskRun(c, "window.setPosition", TaskSetPosition{Name: "test", X: 100, Y: 200})
+	r := taskRun(c, "window.set_position", TaskSetPosition{Name: "test", X: 100, Y: 200})
 	core.RequireTrue(t, r.OK)
 
 	r2 := c.QUERY(QueryWindowByName{Name: "test"})
@@ -142,7 +142,7 @@ func TestTaskSetSize_Good(t *core.T) {
 	_, c := newTestWindowService(t)
 	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
-	r := taskRun(c, "window.setSize", TaskSetSize{Name: "test", Width: 800, Height: 600})
+	r := taskRun(c, "window.set_size", TaskSetSize{Name: "test", Width: 800, Height: 600})
 	core.RequireTrue(t, r.OK)
 
 	r2 := c.QUERY(QueryWindowByName{Name: "test"})
@@ -276,7 +276,7 @@ func TestTaskSetTitle_Good(t *core.T) {
 	svc, c := newTestWindowService(t)
 	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
-	r := taskRun(c, "window.setTitle", TaskSetTitle{Name: "test", Title: "New Title"})
+	r := taskRun(c, "window.set_title", TaskSetTitle{Name: "test", Title: "New Title"})
 	core.RequireTrue(t, r.OK)
 
 	pw, ok := svc.Manager().Get("test")
@@ -286,7 +286,7 @@ func TestTaskSetTitle_Good(t *core.T) {
 
 func TestTaskSetTitle_Bad(t *core.T) {
 	_, c := newTestWindowService(t)
-	r := taskRun(c, "window.setTitle", TaskSetTitle{Name: "nonexistent", Title: "Nope"})
+	r := taskRun(c, "window.set_title", TaskSetTitle{Name: "nonexistent", Title: "Nope"})
 	core.AssertFalse(t, r.OK)
 }
 
@@ -296,7 +296,7 @@ func TestTaskSetAlwaysOnTop_Good(t *core.T) {
 	svc, c := newTestWindowService(t)
 	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
-	r := taskRun(c, "window.setAlwaysOnTop", TaskSetAlwaysOnTop{Name: "test", AlwaysOnTop: true})
+	r := taskRun(c, "window.set_always_on_top", TaskSetAlwaysOnTop{Name: "test", AlwaysOnTop: true})
 	core.RequireTrue(t, r.OK)
 
 	pw, ok := svc.Manager().Get("test")
@@ -307,7 +307,7 @@ func TestTaskSetAlwaysOnTop_Good(t *core.T) {
 
 func TestTaskSetAlwaysOnTop_Bad(t *core.T) {
 	_, c := newTestWindowService(t)
-	r := taskRun(c, "window.setAlwaysOnTop", TaskSetAlwaysOnTop{Name: "nonexistent", AlwaysOnTop: true})
+	r := taskRun(c, "window.set_always_on_top", TaskSetAlwaysOnTop{Name: "nonexistent", AlwaysOnTop: true})
 	core.AssertFalse(t, r.OK)
 }
 
@@ -317,7 +317,7 @@ func TestTaskSetBackgroundColour_Good(t *core.T) {
 	svc, c := newTestWindowService(t)
 	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
-	r := taskRun(c, "window.setBackgroundColour", TaskSetBackgroundColour{
+	r := taskRun(c, "window.set_background_colour", TaskSetBackgroundColour{
 		Name: "test", Red: 10, Green: 20, Blue: 30, Alpha: 40,
 	})
 	core.RequireTrue(t, r.OK)
@@ -330,7 +330,7 @@ func TestTaskSetBackgroundColour_Good(t *core.T) {
 
 func TestTaskSetBackgroundColour_Bad(t *core.T) {
 	_, c := newTestWindowService(t)
-	r := taskRun(c, "window.setBackgroundColour", TaskSetBackgroundColour{Name: "nonexistent", Red: 1, Green: 2, Blue: 3, Alpha: 4})
+	r := taskRun(c, "window.set_background_colour", TaskSetBackgroundColour{Name: "nonexistent", Red: 1, Green: 2, Blue: 3, Alpha: 4})
 	core.AssertFalse(t, r.OK)
 }
 
@@ -340,7 +340,7 @@ func TestTaskSetVisibility_Good(t *core.T) {
 	svc, c := newTestWindowService(t)
 	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
-	r := taskRun(c, "window.setVisibility", TaskSetVisibility{Name: "test", Visible: true})
+	r := taskRun(c, "window.set_visibility", TaskSetVisibility{Name: "test", Visible: true})
 	core.RequireTrue(t, r.OK)
 
 	pw, ok := svc.Manager().Get("test")
@@ -349,14 +349,14 @@ func TestTaskSetVisibility_Good(t *core.T) {
 	core.AssertTrue(t, mw.visible)
 
 	// Now hide it
-	r2 := taskRun(c, "window.setVisibility", TaskSetVisibility{Name: "test", Visible: false})
+	r2 := taskRun(c, "window.set_visibility", TaskSetVisibility{Name: "test", Visible: false})
 	core.RequireTrue(t, r2.OK)
 	core.AssertFalse(t, mw.visible)
 }
 
 func TestTaskSetVisibility_Bad(t *core.T) {
 	_, c := newTestWindowService(t)
-	r := taskRun(c, "window.setVisibility", TaskSetVisibility{Name: "nonexistent", Visible: true})
+	r := taskRun(c, "window.set_visibility", TaskSetVisibility{Name: "nonexistent", Visible: true})
 	core.AssertFalse(t, r.OK)
 }
 
@@ -394,7 +394,7 @@ func TestTaskSaveLayout_Good(t *core.T) {
 	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("editor"), WithSize(960, 1080), WithPosition(0, 0)}})
 	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("terminal"), WithSize(960, 1080), WithPosition(960, 0)}})
 
-	r := taskRun(c, "window.saveLayout", TaskSaveLayout{Name: "coding"})
+	r := taskRun(c, "window.save_layout", TaskSaveLayout{Name: "coding"})
 	core.RequireTrue(t, r.OK)
 
 	// Verify layout was saved with correct window states
@@ -417,7 +417,7 @@ func TestTaskSaveLayout_Good(t *core.T) {
 func TestTaskSaveLayout_Bad(t *core.T) {
 	_, c := newTestWindowService(t)
 	// Saving an empty layout with empty name returns an resultFailure from LayoutManager
-	r := taskRun(c, "window.saveLayout", TaskSaveLayout{Name: ""})
+	r := taskRun(c, "window.save_layout", TaskSaveLayout{Name: ""})
 	core.AssertFalse(t, r.OK)
 }
 
@@ -430,14 +430,14 @@ func TestTaskRestoreLayout_Good(t *core.T) {
 	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("terminal"), WithSize(800, 600), WithPosition(0, 0)}})
 
 	// Save a layout with specific positions
-	taskRun(c, "window.saveLayout", TaskSaveLayout{Name: "coding"})
+	taskRun(c, "window.save_layout", TaskSaveLayout{Name: "coding"})
 
 	// Move the windows to different positions
-	taskRun(c, "window.setPosition", TaskSetPosition{Name: "editor", X: 500, Y: 500})
-	taskRun(c, "window.setPosition", TaskSetPosition{Name: "terminal", X: 600, Y: 600})
+	taskRun(c, "window.set_position", TaskSetPosition{Name: "editor", X: 500, Y: 500})
+	taskRun(c, "window.set_position", TaskSetPosition{Name: "terminal", X: 600, Y: 600})
 
 	// Restore the layout
-	r := taskRun(c, "window.restoreLayout", TaskRestoreLayout{Name: "coding"})
+	r := taskRun(c, "window.restore_layout", TaskRestoreLayout{Name: "coding"})
 	core.RequireTrue(t, r.OK)
 
 	// Verify windows were moved back to saved positions
@@ -466,7 +466,7 @@ func TestTaskRestoreLayout_Good(t *core.T) {
 
 func TestTaskRestoreLayout_Bad(t *core.T) {
 	_, c := newTestWindowService(t)
-	r := taskRun(c, "window.restoreLayout", TaskRestoreLayout{Name: "nonexistent"})
+	r := taskRun(c, "window.restore_layout", TaskRestoreLayout{Name: "nonexistent"})
 	core.AssertFalse(t, r.OK)
 }
 
@@ -477,7 +477,7 @@ func TestTaskStackWindows_Good(t *core.T) {
 	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("s1"), WithSize(800, 600)}})
 	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("s2"), WithSize(800, 600)}})
 
-	r := taskRun(c, "window.stackWindows", TaskStackWindows{Windows: []string{"s1", "s2"}, OffsetX: 25, OffsetY: 35})
+	r := taskRun(c, "window.stack_windows", TaskStackWindows{Windows: []string{"s1", "s2"}, OffsetX: 25, OffsetY: 35})
 	core.RequireTrue(t, r.OK)
 
 	pw, ok := svc.Manager().Get("s2")
@@ -494,7 +494,7 @@ func TestTaskApplyWorkflow_Good(t *core.T) {
 	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("editor"), WithSize(800, 600)}})
 	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("terminal"), WithSize(800, 600)}})
 
-	r := taskRun(c, "window.applyWorkflow", TaskApplyWorkflow{Workflow: "side-by-side"})
+	r := taskRun(c, "window.apply_workflow", TaskApplyWorkflow{Workflow: "side-by-side"})
 	core.RequireTrue(t, r.OK)
 
 	editor, ok := svc.Manager().Get("editor")
@@ -535,7 +535,7 @@ func TestTaskSetZoom_Good(t *core.T) {
 	svc, c := newTestWindowService(t)
 	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
-	r := taskRun(c, "window.setZoom", TaskSetZoom{Name: "test", Magnification: 1.5})
+	r := taskRun(c, "window.set_zoom", TaskSetZoom{Name: "test", Magnification: 1.5})
 	core.RequireTrue(t, r.OK)
 
 	pw, ok := svc.Manager().Get("test")
@@ -546,7 +546,7 @@ func TestTaskSetZoom_Good(t *core.T) {
 
 func TestTaskSetZoom_Bad(t *core.T) {
 	_, c := newTestWindowService(t)
-	r := taskRun(c, "window.setZoom", TaskSetZoom{Name: "nonexistent", Magnification: 1.5})
+	r := taskRun(c, "window.set_zoom", TaskSetZoom{Name: "nonexistent", Magnification: 1.5})
 	core.AssertFalse(t, r.OK)
 }
 
@@ -554,7 +554,7 @@ func TestTaskZoomIn_Good(t *core.T) {
 	svc, c := newTestWindowService(t)
 	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
-	r := taskRun(c, "window.zoomIn", TaskZoomIn{Name: "test"})
+	r := taskRun(c, "window.zoom_in", TaskZoomIn{Name: "test"})
 	core.RequireTrue(t, r.OK)
 
 	pw, ok := svc.Manager().Get("test")
@@ -565,7 +565,7 @@ func TestTaskZoomIn_Good(t *core.T) {
 
 func TestTaskZoomIn_Bad(t *core.T) {
 	_, c := newTestWindowService(t)
-	r := taskRun(c, "window.zoomIn", TaskZoomIn{Name: "nonexistent"})
+	r := taskRun(c, "window.zoom_in", TaskZoomIn{Name: "nonexistent"})
 	core.AssertFalse(t, r.OK)
 }
 
@@ -573,9 +573,9 @@ func TestTaskZoomOut_Good(t *core.T) {
 	svc, c := newTestWindowService(t)
 	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 	// Set zoom to 1.5 first so we can decrease it
-	taskRun(c, "window.setZoom", TaskSetZoom{Name: "test", Magnification: 1.5})
+	taskRun(c, "window.set_zoom", TaskSetZoom{Name: "test", Magnification: 1.5})
 
-	r := taskRun(c, "window.zoomOut", TaskZoomOut{Name: "test"})
+	r := taskRun(c, "window.zoom_out", TaskZoomOut{Name: "test"})
 	core.RequireTrue(t, r.OK)
 
 	pw, ok := svc.Manager().Get("test")
@@ -586,16 +586,16 @@ func TestTaskZoomOut_Good(t *core.T) {
 
 func TestTaskZoomOut_Bad(t *core.T) {
 	_, c := newTestWindowService(t)
-	r := taskRun(c, "window.zoomOut", TaskZoomOut{Name: "nonexistent"})
+	r := taskRun(c, "window.zoom_out", TaskZoomOut{Name: "nonexistent"})
 	core.AssertFalse(t, r.OK)
 }
 
 func TestTaskZoomReset_Good(t *core.T) {
 	svc, c := newTestWindowService(t)
 	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
-	taskRun(c, "window.setZoom", TaskSetZoom{Name: "test", Magnification: 2.0})
+	taskRun(c, "window.set_zoom", TaskSetZoom{Name: "test", Magnification: 2.0})
 
-	r := taskRun(c, "window.zoomReset", TaskZoomReset{Name: "test"})
+	r := taskRun(c, "window.zoom_reset", TaskZoomReset{Name: "test"})
 	core.RequireTrue(t, r.OK)
 
 	pw, ok := svc.Manager().Get("test")
@@ -606,7 +606,7 @@ func TestTaskZoomReset_Good(t *core.T) {
 
 func TestTaskZoomReset_Bad(t *core.T) {
 	_, c := newTestWindowService(t)
-	r := taskRun(c, "window.zoomReset", TaskZoomReset{Name: "nonexistent"})
+	r := taskRun(c, "window.zoom_reset", TaskZoomReset{Name: "nonexistent"})
 	core.AssertFalse(t, r.OK)
 }
 
@@ -616,7 +616,7 @@ func TestTaskSetURL_Good(t *core.T) {
 	svc, c := newTestWindowService(t)
 	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
-	r := taskRun(c, "window.setURL", TaskSetURL{Name: "test", URL: "https://example.com"})
+	r := taskRun(c, "window.set_url", TaskSetURL{Name: "test", URL: "https://example.com"})
 	core.RequireTrue(t, r.OK)
 
 	pw, ok := svc.Manager().Get("test")
@@ -627,7 +627,7 @@ func TestTaskSetURL_Good(t *core.T) {
 
 func TestTaskSetURL_Bad(t *core.T) {
 	_, c := newTestWindowService(t)
-	r := taskRun(c, "window.setURL", TaskSetURL{Name: "nonexistent", URL: "https://example.com"})
+	r := taskRun(c, "window.set_url", TaskSetURL{Name: "nonexistent", URL: "https://example.com"})
 	core.AssertFalse(t, r.OK)
 }
 
@@ -635,7 +635,7 @@ func TestTaskSetHTML_Good(t *core.T) {
 	svc, c := newTestWindowService(t)
 	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
-	r := taskRun(c, "window.setHTML", TaskSetHTML{Name: "test", HTML: "<h1>Hello</h1>"})
+	r := taskRun(c, "window.set_html", TaskSetHTML{Name: "test", HTML: "<h1>Hello</h1>"})
 	core.RequireTrue(t, r.OK)
 
 	pw, ok := svc.Manager().Get("test")
@@ -646,7 +646,7 @@ func TestTaskSetHTML_Good(t *core.T) {
 
 func TestTaskSetHTML_Bad(t *core.T) {
 	_, c := newTestWindowService(t)
-	r := taskRun(c, "window.setHTML", TaskSetHTML{Name: "nonexistent", HTML: "<h1>Hello</h1>"})
+	r := taskRun(c, "window.set_html", TaskSetHTML{Name: "nonexistent", HTML: "<h1>Hello</h1>"})
 	core.AssertFalse(t, r.OK)
 }
 
@@ -654,7 +654,7 @@ func TestTaskExecJS_Good(t *core.T) {
 	svc, c := newTestWindowService(t)
 	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
-	r := taskRun(c, "window.execJS", TaskExecJS{Name: "test", JS: "document.title = 'Ready'"})
+	r := taskRun(c, "window.exec_js", TaskExecJS{Name: "test", JS: "document.title = 'Ready'"})
 	core.RequireTrue(t, r.OK)
 
 	pw, ok := svc.Manager().Get("test")
@@ -665,7 +665,7 @@ func TestTaskExecJS_Good(t *core.T) {
 
 func TestTaskExecJS_Bad(t *core.T) {
 	_, c := newTestWindowService(t)
-	r := taskRun(c, "window.execJS", TaskExecJS{Name: "nonexistent", JS: "alert(1)"})
+	r := taskRun(c, "window.exec_js", TaskExecJS{Name: "nonexistent", JS: "alert(1)"})
 	core.AssertFalse(t, r.OK)
 }
 
@@ -676,7 +676,7 @@ func TestTaskToggleFullscreen_Good(t *core.T) {
 	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
 	// Toggle on
-	r := taskRun(c, "window.toggleFullscreen", TaskToggleFullscreen{Name: "test"})
+	r := taskRun(c, "window.toggle_fullscreen", TaskToggleFullscreen{Name: "test"})
 	core.RequireTrue(t, r.OK)
 
 	pw, ok := svc.Manager().Get("test")
@@ -685,13 +685,13 @@ func TestTaskToggleFullscreen_Good(t *core.T) {
 	core.AssertTrue(t, mw.fullscreened)
 
 	// Toggle off
-	taskRun(c, "window.toggleFullscreen", TaskToggleFullscreen{Name: "test"})
+	taskRun(c, "window.toggle_fullscreen", TaskToggleFullscreen{Name: "test"})
 	core.AssertFalse(t, mw.fullscreened)
 }
 
 func TestTaskToggleFullscreen_Bad(t *core.T) {
 	_, c := newTestWindowService(t)
-	r := taskRun(c, "window.toggleFullscreen", TaskToggleFullscreen{Name: "nonexistent"})
+	r := taskRun(c, "window.toggle_fullscreen", TaskToggleFullscreen{Name: "nonexistent"})
 	core.AssertFalse(t, r.OK)
 }
 
@@ -700,7 +700,7 @@ func TestTaskToggleMaximise_Good(t *core.T) {
 	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
 	// Toggle on
-	r := taskRun(c, "window.toggleMaximise", TaskToggleMaximise{Name: "test"})
+	r := taskRun(c, "window.toggle_maximise", TaskToggleMaximise{Name: "test"})
 	core.RequireTrue(t, r.OK)
 
 	pw, ok := svc.Manager().Get("test")
@@ -709,13 +709,13 @@ func TestTaskToggleMaximise_Good(t *core.T) {
 	core.AssertTrue(t, mw.maximised)
 
 	// Toggle off
-	taskRun(c, "window.toggleMaximise", TaskToggleMaximise{Name: "test"})
+	taskRun(c, "window.toggle_maximise", TaskToggleMaximise{Name: "test"})
 	core.AssertFalse(t, mw.maximised)
 }
 
 func TestTaskToggleMaximise_Bad(t *core.T) {
 	_, c := newTestWindowService(t)
-	r := taskRun(c, "window.toggleMaximise", TaskToggleMaximise{Name: "nonexistent"})
+	r := taskRun(c, "window.toggle_maximise", TaskToggleMaximise{Name: "nonexistent"})
 	core.AssertFalse(t, r.OK)
 }
 
@@ -747,7 +747,7 @@ func TestTaskSetBounds_Good(t *core.T) {
 	svc, c := newTestWindowService(t)
 	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
-	r := taskRun(c, "window.setBounds", TaskSetBounds{Name: "test", X: 50, Y: 75, Width: 1024, Height: 768})
+	r := taskRun(c, "window.set_bounds", TaskSetBounds{Name: "test", X: 50, Y: 75, Width: 1024, Height: 768})
 	core.RequireTrue(t, r.OK)
 
 	pw, ok := svc.Manager().Get("test")
@@ -761,7 +761,7 @@ func TestTaskSetBounds_Good(t *core.T) {
 
 func TestTaskSetBounds_Bad(t *core.T) {
 	_, c := newTestWindowService(t)
-	r := taskRun(c, "window.setBounds", TaskSetBounds{Name: "nonexistent", X: 0, Y: 0, Width: 800, Height: 600})
+	r := taskRun(c, "window.set_bounds", TaskSetBounds{Name: "nonexistent", X: 0, Y: 0, Width: 800, Height: 600})
 	core.AssertFalse(t, r.OK)
 }
 
@@ -771,7 +771,7 @@ func TestTaskSetContentProtection_Good(t *core.T) {
 	svc, c := newTestWindowService(t)
 	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
 
-	r := taskRun(c, "window.setContentProtection", TaskSetContentProtection{Name: "test", Protection: true})
+	r := taskRun(c, "window.set_content_protection", TaskSetContentProtection{Name: "test", Protection: true})
 	core.RequireTrue(t, r.OK)
 
 	pw, ok := svc.Manager().Get("test")
@@ -782,7 +782,7 @@ func TestTaskSetContentProtection_Good(t *core.T) {
 
 func TestTaskSetContentProtection_Bad(t *core.T) {
 	_, c := newTestWindowService(t)
-	r := taskRun(c, "window.setContentProtection", TaskSetContentProtection{Name: "nonexistent", Protection: true})
+	r := taskRun(c, "window.set_content_protection", TaskSetContentProtection{Name: "nonexistent", Protection: true})
 	core.AssertFalse(t, r.OK)
 }
 
@@ -829,7 +829,7 @@ func TestQueryWindowBounds_Ugly(t *core.T) {
 	// Verify bounds reflect position and size changes
 	_, c := newTestWindowService(t)
 	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test"), WithSize(1280, 800)}})
-	taskRun(c, "window.setBounds", TaskSetBounds{Name: "test", X: 10, Y: 20, Width: 640, Height: 480})
+	taskRun(c, "window.set_bounds", TaskSetBounds{Name: "test", X: 10, Y: 20, Width: 640, Height: 480})
 
 	r := c.QUERY(QueryWindowBounds{Name: "test"})
 	core.RequireTrue(t, r.OK)

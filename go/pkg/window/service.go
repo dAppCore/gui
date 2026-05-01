@@ -133,15 +133,15 @@ func (s *Service) registerTaskActions() {
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskCloseWindow(t.Name))
 	})
-	c.Action("window.setPosition", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskSetPosition]("window.setPosition", opts)
+	c.Action("window.set_position", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskSetPosition]("window.set_position", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskSetPosition(t.Name, t.X, t.Y))
 	})
-	c.Action("window.setSize", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskSetSize]("window.setSize", opts)
+	c.Action("window.set_size", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskSetSize]("window.set_size", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
@@ -175,36 +175,36 @@ func (s *Service) registerTaskActions() {
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskRestore(t.Name))
 	})
-	c.Action("window.setTitle", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskSetTitle]("window.setTitle", opts)
+	c.Action("window.set_title", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskSetTitle]("window.set_title", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskSetTitle(t.Name, t.Title))
 	})
-	c.Action("window.setAlwaysOnTop", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskSetAlwaysOnTop]("window.setAlwaysOnTop", opts)
+	c.Action("window.set_always_on_top", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskSetAlwaysOnTop]("window.set_always_on_top", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskSetAlwaysOnTop(t.Name, t.AlwaysOnTop))
 	})
-	c.Action("window.setOpacity", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskSetOpacity]("window.setOpacity", opts)
+	c.Action("window.set_opacity", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskSetOpacity]("window.set_opacity", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskSetOpacity(t.Name, t.Opacity))
 	})
-	c.Action("window.setBackgroundColour", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskSetBackgroundColour]("window.setBackgroundColour", opts)
+	c.Action("window.set_background_colour", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskSetBackgroundColour]("window.set_background_colour", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskSetBackgroundColour(t.Name, t.Red, t.Green, t.Blue, t.Alpha))
 	})
-	c.Action("window.setVisibility", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskSetVisibility]("window.setVisibility", opts)
+	c.Action("window.set_visibility", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskSetVisibility]("window.set_visibility", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
@@ -217,158 +217,158 @@ func (s *Service) registerTaskActions() {
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskFullscreen(t.Name, t.Fullscreen))
 	})
-	c.Action("window.saveLayout", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskSaveLayout]("window.saveLayout", opts)
+	c.Action("window.save_layout", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskSaveLayout]("window.save_layout", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskSaveLayout(t.Name))
 	})
-	c.Action("window.restoreLayout", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskRestoreLayout]("window.restoreLayout", opts)
+	c.Action("window.restore_layout", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskRestoreLayout]("window.restore_layout", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskRestoreLayout(t.Name))
 	})
-	c.Action("window.deleteLayout", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskDeleteLayout]("window.deleteLayout", opts)
+	c.Action("window.delete_layout", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskDeleteLayout]("window.delete_layout", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		s.manager.Layout().DeleteLayout(t.Name)
 		return core.Result{OK: true}
 	})
-	c.Action("window.tileWindows", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskTileWindows]("window.tileWindows", opts)
+	c.Action("window.tile_windows", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskTileWindows]("window.tile_windows", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskTileWindows(t.Mode, t.Windows))
 	})
-	c.Action("window.stackWindows", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskStackWindows]("window.stackWindows", opts)
+	c.Action("window.stack_windows", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskStackWindows]("window.stack_windows", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskStackWindows(t.Windows, t.OffsetX, t.OffsetY))
 	})
-	c.Action("window.snapWindow", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskSnapWindow]("window.snapWindow", opts)
+	c.Action("window.snap_window", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskSnapWindow]("window.snap_window", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskSnapWindow(t.Name, t.Position))
 	})
-	c.Action("window.applyWorkflow", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskApplyWorkflow]("window.applyWorkflow", opts)
+	c.Action("window.apply_workflow", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskApplyWorkflow]("window.apply_workflow", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskApplyWorkflow(t.Workflow, t.Windows))
 	})
-	c.Action("window.layoutBesideEditor", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskLayoutBesideEditor]("window.layoutBesideEditor", opts)
+	c.Action("window.layout_beside_editor", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskLayoutBesideEditor]("window.layout_beside_editor", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		result, err := s.taskLayoutBesideEditor(t)
 		return core.Result{}.New(result, err)
 	})
-	c.Action("window.layoutSuggest", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskLayoutSuggest]("window.layoutSuggest", opts)
+	c.Action("window.layout_suggest", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskLayoutSuggest]("window.layout_suggest", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: s.taskLayoutSuggest(t), OK: true}
 	})
-	c.Action("window.findSpace", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskScreenFindSpace]("window.findSpace", opts)
+	c.Action("window.find_space", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskScreenFindSpace]("window.find_space", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: s.taskScreenFindSpace(t), OK: true}
 	})
-	c.Action("window.arrangePair", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskWindowArrangePair]("window.arrangePair", opts)
+	c.Action("window.arrange_pair", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskWindowArrangePair]("window.arrange_pair", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		result, err := s.taskWindowArrangePair(t)
 		return core.Result{}.New(result, err)
 	})
-	c.Action("window.setZoom", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskSetZoom]("window.setZoom", opts)
+	c.Action("window.set_zoom", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskSetZoom]("window.set_zoom", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskSetZoom(t.Name, t.Magnification))
 	})
-	c.Action("window.zoomIn", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskZoomIn]("window.zoomIn", opts)
+	c.Action("window.zoom_in", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskZoomIn]("window.zoom_in", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskZoomIn(t.Name))
 	})
-	c.Action("window.zoomOut", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskZoomOut]("window.zoomOut", opts)
+	c.Action("window.zoom_out", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskZoomOut]("window.zoom_out", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskZoomOut(t.Name))
 	})
-	c.Action("window.zoomReset", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskZoomReset]("window.zoomReset", opts)
+	c.Action("window.zoom_reset", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskZoomReset]("window.zoom_reset", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskZoomReset(t.Name))
 	})
-	c.Action("window.setURL", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskSetURL]("window.setURL", opts)
+	c.Action("window.set_url", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskSetURL]("window.set_url", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskSetURL(t.Name, t.URL))
 	})
-	c.Action("window.setHTML", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskSetHTML]("window.setHTML", opts)
+	c.Action("window.set_html", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskSetHTML]("window.set_html", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskSetHTML(t.Name, t.HTML))
 	})
-	c.Action("window.execJS", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskExecJS]("window.execJS", opts)
+	c.Action("window.exec_js", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskExecJS]("window.exec_js", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskExecJS(t.Name, t.JS))
 	})
-	c.Action("window.toggleFullscreen", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskToggleFullscreen]("window.toggleFullscreen", opts)
+	c.Action("window.toggle_fullscreen", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskToggleFullscreen]("window.toggle_fullscreen", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskToggleFullscreen(t.Name))
 	})
-	c.Action("window.toggleMaximise", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskToggleMaximise]("window.toggleMaximise", opts)
+	c.Action("window.toggle_maximise", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskToggleMaximise]("window.toggle_maximise", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskToggleMaximise(t.Name))
 	})
-	c.Action("window.setBounds", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskSetBounds]("window.setBounds", opts)
+	c.Action("window.set_bounds", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskSetBounds]("window.set_bounds", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskSetBounds(t.Name, t.X, t.Y, t.Width, t.Height))
 	})
-	c.Action("window.setContentProtection", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskSetContentProtection]("window.setContentProtection", opts)
+	c.Action("window.set_content_protection", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskSetContentProtection]("window.set_content_protection", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}

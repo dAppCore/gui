@@ -355,7 +355,7 @@ func TestDisplayAPI_OpenFileDialog_Good(t *core.T) {
 	ax7Variant := "OpenFileDialog:good"
 	core.AssertContains(t, ax7Variant, "good")
 	svc, c := newTestDisplayAPIService(t)
-	c.Action("dialog.openFile", func(_ context.Context, opts core.Options) core.Result {
+	c.Action("dialog.open_file", func(_ context.Context, opts core.Options) core.Result {
 		task := opts.Get("task").Value.(dialog.TaskOpenFile)
 		core.AssertEqual(t, "Pick file", task.Options.Title)
 		core.AssertTrue(t, task.Options.AllowMultiple)
@@ -373,7 +373,7 @@ func TestDisplayAPI_OpenFileDialog_Good(t *core.T) {
 
 func TestDisplayAPI_OpenFileDialog_BadType(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
-	c.Action("dialog.openFile", func(_ context.Context, _ core.Options) core.Result {
+	c.Action("dialog.open_file", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: 42, OK: true}
 	})
 
@@ -388,7 +388,7 @@ func TestDisplayAPI_OpenFileDialog_Bad(t *core.T) {
 	ax7Variant := "OpenFileDialog:bad"
 	core.AssertContains(t, ax7Variant, "bad")
 	svc, c := newTestDisplayAPIService(t)
-	c.Action("dialog.openFile", func(_ context.Context, _ core.Options) core.Result {
+	c.Action("dialog.open_file", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: core.AnError, OK: false}
 	})
 
@@ -403,7 +403,7 @@ func TestDisplayAPI_OpenFileDialog_Ugly(t *core.T) {
 	ax7Variant := "OpenFileDialog:ugly"
 	core.AssertContains(t, ax7Variant, "ugly")
 	svc, c := newTestDisplayAPIService(t)
-	c.Action("dialog.openFile", func(_ context.Context, _ core.Options) core.Result {
+	c.Action("dialog.open_file", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{OK: true}
 	})
 
@@ -415,7 +415,7 @@ func TestDisplayAPI_OpenFileDialog_Ugly(t *core.T) {
 
 func TestDisplayAPI_RequestNotificationPermission_BadType(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
-	c.Action("notification.requestPermission", func(_ context.Context, _ core.Options) core.Result {
+	c.Action("notification.request_permission", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: "unexpected", OK: true}
 	})
 
@@ -487,7 +487,7 @@ func TestDisplayAPI_SaveFileDialog_Good(t *core.T) {
 	ax7Variant := "SaveFileDialog:good"
 	core.AssertContains(t, ax7Variant, "good")
 	svc, c := newTestDisplayAPIService(t)
-	c.Action("dialog.saveFile", func(_ context.Context, opts core.Options) core.Result {
+	c.Action("dialog.save_file", func(_ context.Context, opts core.Options) core.Result {
 		task := opts.Get("task").Value.(dialog.TaskSaveFile)
 		core.AssertEqual(t, "Export", task.Options.Title)
 		core.AssertEqual(t, "/tmp", task.Options.Directory)
@@ -513,7 +513,7 @@ func TestDisplayAPI_SaveFileDialog_Bad(t *core.T) {
 	ax7Variant := "SaveFileDialog:bad"
 	core.AssertContains(t, ax7Variant, "bad")
 	svc, c := newTestDisplayAPIService(t)
-	c.Action("dialog.saveFile", func(_ context.Context, _ core.Options) core.Result {
+	c.Action("dialog.save_file", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: core.AnError, OK: false}
 	})
 
@@ -528,7 +528,7 @@ func TestDisplayAPI_SaveFileDialog_Ugly(t *core.T) {
 	ax7Variant := "SaveFileDialog:ugly"
 	core.AssertContains(t, ax7Variant, "ugly")
 	svc, c := newTestDisplayAPIService(t)
-	c.Action("dialog.saveFile", func(_ context.Context, _ core.Options) core.Result {
+	c.Action("dialog.save_file", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: 42, OK: true}
 	})
 
@@ -543,7 +543,7 @@ func TestDisplayAPI_OpenDirectoryDialog_Good(t *core.T) {
 	ax7Variant := "OpenDirectoryDialog:good"
 	core.AssertContains(t, ax7Variant, "good")
 	svc, c := newTestDisplayAPIService(t)
-	c.Action("dialog.openDirectory", func(_ context.Context, opts core.Options) core.Result {
+	c.Action("dialog.open_directory", func(_ context.Context, opts core.Options) core.Result {
 		task := opts.Get("task").Value.(dialog.TaskOpenDirectory)
 		core.AssertEqual(t, "Choose", task.Options.Title)
 		core.AssertEqual(t, "/var", task.Options.Directory)
@@ -564,7 +564,7 @@ func TestDisplayAPI_OpenDirectoryDialog_Bad(t *core.T) {
 	ax7Variant := "OpenDirectoryDialog:bad"
 	core.AssertContains(t, ax7Variant, "bad")
 	svc, c := newTestDisplayAPIService(t)
-	c.Action("dialog.openDirectory", func(_ context.Context, _ core.Options) core.Result {
+	c.Action("dialog.open_directory", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: core.AnError, OK: false}
 	})
 
@@ -579,7 +579,7 @@ func TestDisplayAPI_OpenDirectoryDialog_Ugly(t *core.T) {
 	ax7Variant := "OpenDirectoryDialog:ugly"
 	core.AssertContains(t, ax7Variant, "ugly")
 	svc, c := newTestDisplayAPIService(t)
-	c.Action("dialog.openDirectory", func(_ context.Context, _ core.Options) core.Result {
+	c.Action("dialog.open_directory", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: 42, OK: true}
 	})
 
@@ -726,7 +726,7 @@ func TestDisplayAPI_WriteClipboardImage_Good(t *core.T) {
 	core.AssertContains(t, ax7Variant, "good")
 	svc, c := newTestDisplayAPIService(t)
 	var got []byte
-	c.Action("clipboard.setImage", func(_ context.Context, opts core.Options) core.Result {
+	c.Action("clipboard.set_image", func(_ context.Context, opts core.Options) core.Result {
 		got = append([]byte(nil), opts.Get("data").Value.([]byte)...)
 		return core.Result{OK: true}
 	})
@@ -755,7 +755,7 @@ func TestDisplayAPI_WriteClipboardImage_Ugly(t *core.T) {
 	ax7Variant := "WriteClipboardImage:ugly"
 	core.AssertContains(t, ax7Variant, "ugly")
 	svc, c := newTestDisplayAPIService(t)
-	c.Action("clipboard.setImage", func(_ context.Context, _ core.Options) core.Result {
+	c.Action("clipboard.set_image", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: core.AnError, OK: false}
 	})
 
@@ -875,7 +875,7 @@ func TestDisplayAPI_OpenSingleFileDialog_Good(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 
 	var task dialog.TaskOpenFile
-	c.Action("dialog.openFile", func(_ context.Context, opts core.Options) core.Result {
+	c.Action("dialog.open_file", func(_ context.Context, opts core.Options) core.Result {
 		task = opts.Get("task").Value.(dialog.TaskOpenFile)
 		return core.Result{Value: []string{"/tmp/report.csv"}, OK: true}
 	})
@@ -897,7 +897,7 @@ func TestDisplayAPI_OpenSingleFileDialog_Bad(t *core.T) {
 	core.AssertContains(t, ax7Variant, "bad")
 	svc, c := newTestDisplayAPIService(t)
 
-	c.Action("dialog.openFile", func(_ context.Context, _ core.Options) core.Result {
+	c.Action("dialog.open_file", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: []string{}, OK: true}
 	})
 
@@ -913,7 +913,7 @@ func TestDisplayAPI_OpenSingleFileDialog_Ugly(t *core.T) {
 	core.AssertContains(t, ax7Variant, "ugly")
 	svc, c := newTestDisplayAPIService(t)
 
-	c.Action("dialog.openFile", func(_ context.Context, _ core.Options) core.Result {
+	c.Action("dialog.open_file", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: "unexpected", OK: false}
 	})
 
@@ -1121,7 +1121,7 @@ func TestDisplayAPI_WriteClipboard_Good(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 
 	var gotText string
-	c.Action("clipboard.setText", func(_ context.Context, opts core.Options) core.Result {
+	c.Action("clipboard.set_text", func(_ context.Context, opts core.Options) core.Result {
 		gotText = opts.Get("task").Value.(clipboard.TaskSetText).Text
 		return core.Result{OK: true}
 	})
@@ -1138,7 +1138,7 @@ func TestDisplayAPI_WriteClipboard_Bad(t *core.T) {
 	core.AssertContains(t, ax7Variant, "bad")
 	svc, c := newTestDisplayAPIService(t)
 
-	c.Action("clipboard.setText", func(_ context.Context, _ core.Options) core.Result {
+	c.Action("clipboard.set_text", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: core.AnError, OK: false}
 	})
 
@@ -1154,14 +1154,14 @@ func TestDisplayAPI_WriteClipboard_Ugly(t *core.T) {
 	core.AssertContains(t, ax7Variant, "ugly")
 	svc, c := newTestDisplayAPIService(t)
 
-	c.Action("clipboard.setText", func(_ context.Context, _ core.Options) core.Result {
+	c.Action("clipboard.set_text", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: "unexpected", OK: false}
 	})
 
 	err := svc.WriteClipboard("")
 
 	core.AssertError(t, err)
-	core.AssertContains(t, err.Error(), "clipboard.setText")
+	core.AssertContains(t, err.Error(), "clipboard.set_text")
 }
 
 func TestDisplayAPI_SetTrayIcon_Good(t *core.T) {
@@ -1171,7 +1171,7 @@ func TestDisplayAPI_SetTrayIcon_Good(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 
 	var got []byte
-	c.Action("systray.setIcon", func(_ context.Context, opts core.Options) core.Result {
+	c.Action("systray.set_icon", func(_ context.Context, opts core.Options) core.Result {
 		got = append([]byte(nil), opts.Get("task").Value.(systray.TaskSetTrayIcon).Data...)
 		return core.Result{OK: true}
 	})
@@ -1188,7 +1188,7 @@ func TestDisplayAPI_SetTrayIcon_Bad(t *core.T) {
 	core.AssertContains(t, ax7Variant, "bad")
 	svc, c := newTestDisplayAPIService(t)
 
-	c.Action("systray.setIcon", func(_ context.Context, _ core.Options) core.Result {
+	c.Action("systray.set_icon", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: core.AnError, OK: false}
 	})
 
@@ -1204,14 +1204,14 @@ func TestDisplayAPI_SetTrayIcon_Ugly(t *core.T) {
 	core.AssertContains(t, ax7Variant, "ugly")
 	svc, c := newTestDisplayAPIService(t)
 
-	c.Action("systray.setIcon", func(_ context.Context, _ core.Options) core.Result {
+	c.Action("systray.set_icon", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: "unexpected", OK: false}
 	})
 
 	err := svc.SetTrayIcon(nil)
 
 	core.AssertError(t, err)
-	core.AssertContains(t, err.Error(), "systray.setIcon")
+	core.AssertContains(t, err.Error(), "systray.set_icon")
 }
 
 // AX7 generated source-matching smoke coverage.

@@ -25,23 +25,23 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		}
 	}
 	s.Core().RegisterQuery(s.handleQuery)
-	s.Core().Action("systray.setIcon", func(_ context.Context, opts core.Options) core.Result {
+	s.Core().Action("systray.set_icon", func(_ context.Context, opts core.Options) core.Result {
 		t := taskSetTrayIconFromOptions(opts)
 		return core.Result{Value: nil, OK: true}.New(s.manager.SetIcon(t.Data))
 	})
-	s.Core().Action("systray.setTooltip", func(_ context.Context, opts core.Options) core.Result {
+	s.Core().Action("systray.set_tooltip", func(_ context.Context, opts core.Options) core.Result {
 		t := taskSetTrayTooltipFromOptions(opts)
 		return core.Result{Value: nil, OK: true}.New(s.manager.SetTooltip(t.Tooltip))
 	})
-	s.Core().Action("systray.setLabel", func(_ context.Context, opts core.Options) core.Result {
+	s.Core().Action("systray.set_label", func(_ context.Context, opts core.Options) core.Result {
 		t := taskSetTrayLabelFromOptions(opts)
 		return core.Result{Value: nil, OK: true}.New(s.manager.SetLabel(t.Label))
 	})
-	s.Core().Action("systray.setMenu", func(_ context.Context, opts core.Options) core.Result {
+	s.Core().Action("systray.set_menu", func(_ context.Context, opts core.Options) core.Result {
 		t := taskSetTrayMenuFromOptions(opts)
 		return core.Result{Value: nil, OK: true}.New(s.taskSetTrayMenu(t))
 	})
-	s.Core().Action("systray.showMessage", func(_ context.Context, opts core.Options) core.Result {
+	s.Core().Action("systray.show_message", func(_ context.Context, opts core.Options) core.Result {
 		t := taskShowMessageFromOptions(opts)
 		if err := s.manager.ShowMessage(t.Title, t.Message); err == nil {
 			return core.Result{OK: true}
@@ -56,7 +56,7 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 				return core.Result{OK: true}
 			}
 			if fallbackErr, ok := fallback.Value.(error); ok {
-				return core.Result{Value: core.E("systray.showMessage", "tray message failed and notification fallback failed", fallbackErr), OK: false}
+				return core.Result{Value: core.E("systray.show_message", "tray message failed and notification fallback failed", fallbackErr), OK: false}
 			}
 			return core.Result{Value: err, OK: false}
 		}
@@ -76,7 +76,7 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 				return core.Result{OK: true}
 			}
 			if fallbackErr, ok := fallback.Value.(error); ok {
-				return core.Result{Value: core.E("systray.showMessage", "tray message failed and notification fallback failed", fallbackErr), OK: false}
+				return core.Result{Value: core.E("systray.show_message", "tray message failed and notification fallback failed", fallbackErr), OK: false}
 			}
 			return core.Result{Value: err, OK: false}
 		}

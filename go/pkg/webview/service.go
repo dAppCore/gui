@@ -395,7 +395,7 @@ func (s *Service) registerTaskActions() {
 		}
 		return core.Result{Value: nil, OK: true}.New(conn.Check(t.Selector, t.Checked))
 	})
-	register([]string{"webview.uploadFile", "gui.webview.uploadFile"}, func(_ context.Context, opts core.Options) core.Result {
+	register([]string{"webview.upload_file", "gui.webview.uploadFile"}, func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskUploadFile)
 		conn, err := s.getConn(t.Window)
 		if err != nil {
@@ -403,7 +403,7 @@ func (s *Service) registerTaskActions() {
 		}
 		return core.Result{Value: nil, OK: true}.New(conn.UploadFile(t.Selector, t.Paths))
 	})
-	register([]string{"webview.setViewport", "gui.webview.setViewport"}, func(_ context.Context, opts core.Options) core.Result {
+	register([]string{"webview.set_viewport", "gui.webview.setViewport"}, func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskSetViewport)
 		conn, err := s.getConn(t.Window)
 		if err != nil {
@@ -411,7 +411,7 @@ func (s *Service) registerTaskActions() {
 		}
 		return core.Result{Value: nil, OK: true}.New(conn.SetViewport(t.Width, t.Height))
 	})
-	register([]string{"webview.clearConsole", "gui.webview.clearConsole"}, func(_ context.Context, opts core.Options) core.Result {
+	register([]string{"webview.clear_console", "gui.webview.clearConsole"}, func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskClearConsole)
 		conn, err := s.getConn(t.Window)
 		if err != nil {
@@ -428,7 +428,7 @@ func (s *Service) registerTaskActions() {
 		}
 		return core.Result{Value: nil, OK: true}.New(conn.Navigate(t.URL))
 	})
-	register([]string{"webview.setZoom", "gui.webview.setZoom"}, func(_ context.Context, opts core.Options) core.Result {
+	register([]string{"webview.set_zoom", "gui.webview.setZoom"}, func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskSetZoom)
 		conn, err := s.getConn(t.Window)
 		if err != nil {
@@ -454,11 +454,11 @@ func (s *Service) registerTaskActions() {
 			MimeType: "application/pdf",
 		}, OK: true}
 	})
-	register([]string{"webview.devtoolsOpen", "gui.webview.devtoolsOpen"}, func(_ context.Context, opts core.Options) core.Result {
+	register([]string{"webview.devtools_open", "gui.webview.devtoolsOpen"}, func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskDevToolsOpen)
 		return core.Result{Value: nil, OK: true}.New(s.devToolsOpen(t.Window))
 	})
-	register([]string{"webview.devtoolsClose", "gui.webview.devtoolsClose"}, func(_ context.Context, opts core.Options) core.Result {
+	register([]string{"webview.devtools_close", "gui.webview.devtoolsClose"}, func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskDevToolsClose)
 		return core.Result{Value: nil, OK: true}.New(s.devToolsClose(t.Window))
 	})

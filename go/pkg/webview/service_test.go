@@ -252,7 +252,7 @@ func TestTaskScreenshot_Good(t *core.T) {
 func TestTaskClearConsole_Good(t *core.T) {
 	mock := &mockConnector{}
 	_, c := newTestService(t, mock)
-	r := taskRun(c, "webview.clearConsole", TaskClearConsole{Window: "main"})
+	r := taskRun(c, "webview.clear_console", TaskClearConsole{Window: "main"})
 	core.RequireTrue(t, r.OK)
 	core.AssertTrue(t, mock.consoleClearCalled)
 }
@@ -330,7 +330,7 @@ func TestQueryZoom_Bad_NoService(t *core.T) {
 func TestTaskSetZoom_Good(t *core.T) {
 	mock := &mockConnector{}
 	_, c := newTestService(t, mock)
-	r := taskRun(c, "webview.setZoom", TaskSetZoom{Window: "main", Zoom: 2.0})
+	r := taskRun(c, "webview.set_zoom", TaskSetZoom{Window: "main", Zoom: 2.0})
 	core.RequireTrue(t, r.OK)
 	core.AssertInDelta(t, 2.0, mock.lastZoomSet, 0.001)
 }
@@ -338,14 +338,14 @@ func TestTaskSetZoom_Good(t *core.T) {
 func TestTaskSetZoom_Good_Reset(t *core.T) {
 	mock := &mockConnector{zoom: 1.5}
 	_, c := newTestService(t, mock)
-	r := taskRun(c, "webview.setZoom", TaskSetZoom{Window: "main", Zoom: 1.0})
+	r := taskRun(c, "webview.set_zoom", TaskSetZoom{Window: "main", Zoom: 1.0})
 	core.RequireTrue(t, r.OK)
 	core.AssertInDelta(t, 1.0, mock.zoom, 0.001)
 }
 
 func TestTaskSetZoom_Bad_NoService(t *core.T) {
 	c := core.New(core.WithServiceLock())
-	r := c.Action("webview.setZoom").Run(context.Background(), core.NewOptions())
+	r := c.Action("webview.set_zoom").Run(context.Background(), core.NewOptions())
 	core.AssertFalse(t, r.OK)
 }
 
@@ -353,7 +353,7 @@ func TestTaskSetZoom_Ugly_ZeroZoom(t *core.T) {
 	mock := &mockConnector{}
 	_, c := newTestService(t, mock)
 	// Zero zoom is technically valid input; the connector accepts it.
-	r := taskRun(c, "webview.setZoom", TaskSetZoom{Window: "main", Zoom: 0})
+	r := taskRun(c, "webview.set_zoom", TaskSetZoom{Window: "main", Zoom: 0})
 	core.RequireTrue(t, r.OK)
 	core.AssertInDelta(t, 0.0, mock.lastZoomSet, 0.001)
 }
@@ -423,11 +423,11 @@ func TestQueryExceptions_Good(t *core.T) {
 func TestTaskDevTools_Good(t *core.T) {
 	_, windowPlatform, c := newTestServiceWithWindow(t, &mockConnector{})
 
-	r := taskRun(c, "webview.devtoolsOpen", TaskDevToolsOpen{Window: "main"})
+	r := taskRun(c, "webview.devtools_open", TaskDevToolsOpen{Window: "main"})
 	core.RequireTrue(t, r.OK)
 	core.AssertTrue(t, windowPlatform.Windows[0].DevToolsOpen())
 
-	r = taskRun(c, "webview.devtoolsClose", TaskDevToolsClose{Window: "main"})
+	r = taskRun(c, "webview.devtools_close", TaskDevToolsClose{Window: "main"})
 	core.RequireTrue(t, r.OK)
 	core.AssertFalse(t, windowPlatform.Windows[0].DevToolsOpen())
 }

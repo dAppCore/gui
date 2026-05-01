@@ -158,7 +158,7 @@ type WindowPositionOutput struct {
 }
 
 func (s *Subsystem) windowPosition(_ context.Context, _ *mcp.CallToolRequest, input WindowPositionInput) (*mcp.CallToolResult, WindowPositionOutput, resultFailure) {
-	r := s.core.Action("window.setPosition").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("window.set_position").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetPosition{Name: input.Name, X: input.X, Y: input.Y}},
 	))
 	if !r.OK {
@@ -182,7 +182,7 @@ type WindowSizeOutput struct {
 }
 
 func (s *Subsystem) windowSize(_ context.Context, _ *mcp.CallToolRequest, input WindowSizeInput) (*mcp.CallToolResult, WindowSizeOutput, resultFailure) {
-	r := s.core.Action("window.setSize").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("window.set_size").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetSize{Name: input.Name, Width: input.Width, Height: input.Height}},
 	))
 	if !r.OK {
@@ -208,7 +208,7 @@ type WindowBoundsOutput struct {
 }
 
 func (s *Subsystem) windowBounds(_ context.Context, _ *mcp.CallToolRequest, input WindowBoundsInput) (*mcp.CallToolResult, WindowBoundsOutput, resultFailure) {
-	r := s.core.Action("window.setBounds").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("window.set_bounds").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetBounds{
 			Name: input.Name, X: input.X, Y: input.Y, Width: input.Width, Height: input.Height,
 		}},
@@ -341,7 +341,7 @@ type WindowTitleOutput struct {
 }
 
 func (s *Subsystem) windowTitle(_ context.Context, _ *mcp.CallToolRequest, input WindowTitleInput) (*mcp.CallToolResult, WindowTitleOutput, resultFailure) {
-	r := s.core.Action("window.setTitle").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("window.set_title").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetTitle{Name: input.Name, Title: input.Title}},
 	))
 	if !r.OK {
@@ -406,7 +406,7 @@ type WindowVisibilityOutput struct {
 }
 
 func (s *Subsystem) windowVisibility(_ context.Context, _ *mcp.CallToolRequest, input WindowVisibilityInput) (*mcp.CallToolResult, WindowVisibilityOutput, resultFailure) {
-	r := s.core.Action("window.setVisibility").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("window.set_visibility").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetVisibility{Name: input.Name, Visible: input.Visible}},
 	))
 	if !r.OK {
@@ -429,7 +429,7 @@ type WindowAlwaysOnTopOutput struct {
 }
 
 func (s *Subsystem) windowAlwaysOnTop(_ context.Context, _ *mcp.CallToolRequest, input WindowAlwaysOnTopInput) (*mcp.CallToolResult, WindowAlwaysOnTopOutput, resultFailure) {
-	r := s.core.Action("window.setAlwaysOnTop").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("window.set_always_on_top").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetAlwaysOnTop{Name: input.Name, AlwaysOnTop: input.AlwaysOnTop}},
 	))
 	if !r.OK {
@@ -452,7 +452,7 @@ type WindowOpacityOutput struct {
 }
 
 func (s *Subsystem) windowOpacity(_ context.Context, _ *mcp.CallToolRequest, input WindowOpacityInput) (*mcp.CallToolResult, WindowOpacityOutput, resultFailure) {
-	r := s.core.Action("window.setOpacity").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("window.set_opacity").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetOpacity{Name: input.Name, Opacity: input.Opacity}},
 	))
 	if !r.OK {
@@ -478,7 +478,7 @@ type WindowBackgroundColourOutput struct {
 }
 
 func (s *Subsystem) windowBackgroundColour(_ context.Context, _ *mcp.CallToolRequest, input WindowBackgroundColourInput) (*mcp.CallToolResult, WindowBackgroundColourOutput, resultFailure) {
-	r := s.core.Action("window.setBackgroundColour").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("window.set_background_colour").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetBackgroundColour{
 			Name: input.Name, Red: input.Red, Green: input.Green, Blue: input.Blue, Alpha: input.Alpha,
 		}},
@@ -526,7 +526,7 @@ type WindowZoomSetOutput struct {
 }
 
 func (s *Subsystem) windowZoomSet(_ context.Context, _ *mcp.CallToolRequest, input WindowZoomSetInput) (*mcp.CallToolResult, WindowZoomSetOutput, resultFailure) {
-	r := s.core.Action("window.setZoom").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("window.set_zoom").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetZoom{Name: input.Name, Magnification: input.Magnification}},
 	))
 	if !r.OK {
@@ -548,7 +548,7 @@ type WindowZoomInOutput struct {
 }
 
 func (s *Subsystem) windowZoomIn(_ context.Context, _ *mcp.CallToolRequest, input WindowZoomInInput) (*mcp.CallToolResult, WindowZoomInOutput, resultFailure) {
-	r := s.core.Action("window.zoomIn").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("window.zoom_in").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskZoomIn{Name: input.Name}},
 	))
 	if !r.OK {
@@ -570,7 +570,7 @@ type WindowZoomOutOutput struct {
 }
 
 func (s *Subsystem) windowZoomOut(_ context.Context, _ *mcp.CallToolRequest, input WindowZoomOutInput) (*mcp.CallToolResult, WindowZoomOutOutput, resultFailure) {
-	r := s.core.Action("window.zoomOut").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("window.zoom_out").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskZoomOut{Name: input.Name}},
 	))
 	if !r.OK {
@@ -592,7 +592,7 @@ type WindowZoomResetOutput struct {
 }
 
 func (s *Subsystem) windowZoomReset(_ context.Context, _ *mcp.CallToolRequest, input WindowZoomResetInput) (*mcp.CallToolResult, WindowZoomResetOutput, resultFailure) {
-	r := s.core.Action("window.zoomReset").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("window.zoom_reset").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskZoomReset{Name: input.Name}},
 	))
 	if !r.OK {
@@ -615,7 +615,7 @@ type WindowURLSetOutput struct {
 }
 
 func (s *Subsystem) windowURLSet(_ context.Context, _ *mcp.CallToolRequest, input WindowURLSetInput) (*mcp.CallToolResult, WindowURLSetOutput, resultFailure) {
-	r := s.core.Action("window.setURL").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("window.set_url").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetURL{Name: input.Name, URL: input.URL}},
 	))
 	if !r.OK {
@@ -638,7 +638,7 @@ type WindowHTMLSetOutput struct {
 }
 
 func (s *Subsystem) windowHTMLSet(_ context.Context, _ *mcp.CallToolRequest, input WindowHTMLSetInput) (*mcp.CallToolResult, WindowHTMLSetOutput, resultFailure) {
-	r := s.core.Action("window.setHTML").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("window.set_html").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetHTML{Name: input.Name, HTML: input.HTML}},
 	))
 	if !r.OK {
@@ -661,7 +661,7 @@ type WindowExecJSOutput struct {
 }
 
 func (s *Subsystem) windowExecJS(_ context.Context, _ *mcp.CallToolRequest, input WindowExecJSInput) (*mcp.CallToolResult, WindowExecJSOutput, resultFailure) {
-	r := s.core.Action("window.execJS").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("window.exec_js").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskExecJS{Name: input.Name, JS: input.JS}},
 	))
 	if !r.OK {
@@ -683,7 +683,7 @@ type WindowToggleFullscreenOutput struct {
 }
 
 func (s *Subsystem) windowToggleFullscreen(_ context.Context, _ *mcp.CallToolRequest, input WindowToggleFullscreenInput) (*mcp.CallToolResult, WindowToggleFullscreenOutput, resultFailure) {
-	r := s.core.Action("window.toggleFullscreen").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("window.toggle_fullscreen").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskToggleFullscreen{Name: input.Name}},
 	))
 	if !r.OK {
@@ -705,7 +705,7 @@ type WindowToggleMaximiseOutput struct {
 }
 
 func (s *Subsystem) windowToggleMaximise(_ context.Context, _ *mcp.CallToolRequest, input WindowToggleMaximiseInput) (*mcp.CallToolResult, WindowToggleMaximiseOutput, resultFailure) {
-	r := s.core.Action("window.toggleMaximise").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("window.toggle_maximise").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskToggleMaximise{Name: input.Name}},
 	))
 	if !r.OK {
@@ -728,7 +728,7 @@ type WindowSetContentProtectionOutput struct {
 }
 
 func (s *Subsystem) windowSetContentProtection(_ context.Context, _ *mcp.CallToolRequest, input WindowSetContentProtectionInput) (*mcp.CallToolResult, WindowSetContentProtectionOutput, resultFailure) {
-	r := s.core.Action("window.setContentProtection").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("window.set_content_protection").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetContentProtection{Name: input.Name, Protection: input.Protection}},
 	))
 	if !r.OK {

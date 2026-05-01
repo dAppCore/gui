@@ -92,7 +92,7 @@ func TestSubsystem_Bad_CallTool_MenuGetQueryFailure(t *core.T) {
 
 func TestSubsystem_Bad_CallTool_MenuSetActionFailure(t *core.T) {
 	c := core.New(core.WithServiceLock())
-	c.Action("menu.setAppMenu", func(_ context.Context, _ core.Options) core.Result {
+	c.Action("menu.set_app_menu", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: "menu update failed", OK: false}
 	})
 
@@ -196,7 +196,7 @@ func TestSubsystem_Good_CallTool_SchemeResolve(t *core.T) {
 	c := core.New(
 		core.WithServiceLock(),
 	)
-	c.Action("display.resolveScheme", func(_ context.Context, opts core.Options) core.Result {
+	c.Action("display.resolve_scheme", func(_ context.Context, opts core.Options) core.Result {
 		return core.Result{
 			Value: map[string]any{
 				"content_type": "text/html",

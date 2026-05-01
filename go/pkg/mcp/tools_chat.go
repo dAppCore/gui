@@ -172,7 +172,7 @@ type ChatSelectModelOutput struct {
 }
 
 func (s *Subsystem) chatSelectModel(_ context.Context, _ *mcp.CallToolRequest, input ChatSelectModelInput) (*mcp.CallToolResult, ChatSelectModelOutput, resultFailure) {
-	result := s.core.Action("gui.chat.selectModel").Run(context.Background(), core.NewOptions(
+	result := s.core.Action("gui.chat.select_model").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "name", Value: input.Name},
 		core.Option{Key: "model", Value: input.Model},
 		core.Option{Key: "conversation_id", Value: input.ConversationID},

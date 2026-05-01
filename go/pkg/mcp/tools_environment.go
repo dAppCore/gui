@@ -64,7 +64,7 @@ type ThemeSetOutput struct {
 }
 
 func (s *Subsystem) themeSet(_ context.Context, _ *mcp.CallToolRequest, input ThemeSetInput) (*mcp.CallToolResult, ThemeSetOutput, resultFailure) {
-	result := s.core.Action("environment.setTheme").Run(context.Background(), core.NewOptions(
+	result := s.core.Action("environment.set_theme").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: environment.TaskSetTheme{Theme: input.Theme}},
 	))
 	if !result.OK {

@@ -39,7 +39,7 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 	s.Core().Action("theme.system", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: s.platform.Info(), OK: true}
 	})
-	s.Core().Action("environment.openFileManager", func(_ context.Context, opts core.Options) core.Result {
+	s.Core().Action("environment.open_file_manager", func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskOpenFileManager)
 		path, err := validatedOpenFileManagerPath(t.Path)
 		if err != nil {
@@ -58,7 +58,7 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		}
 		return core.Result{Value: ThemeInfo{IsDark: isDark, Theme: themeName(isDark)}, OK: true}
 	})
-	s.Core().Action("environment.setTheme", func(_ context.Context, opts core.Options) core.Result {
+	s.Core().Action("environment.set_theme", func(_ context.Context, opts core.Options) core.Result {
 		t, _ := opts.Get("task").Value.(TaskSetTheme)
 		isDark, err := s.setThemeOverride(t.Theme)
 		if err != nil {
@@ -166,14 +166,14 @@ func normalizeTheme(theme string) (string, resultFailure) {
 func validatedOpenFileManagerPath(raw string) (string, resultFailure) {
 	trimmed := core.Trim(raw)
 	if trimmed == "" {
-		return "", core.E("environment.openFileManager", "path is required", nil)
+		return "", core.E("environment.open_file_manager", "path is required", nil)
 	}
 	if core.Contains(trimmed, "\x00") {
-		return "", core.E("environment.openFileManager", "path contains a null byte", nil)
+		return "", core.E("environment.open_file_manager", "path contains a null byte", nil)
 	}
 	cleaned := core.CleanPath(trimmed, string(core.PathSeparator))
 	if !core.PathIsAbs(cleaned) {
-		return "", core.E("environment.openFileManager", "path must be absolute", nil)
+		return "", core.E("environment.open_file_manager", "path must be absolute", nil)
 	}
 	return cleaned, nil
 }
