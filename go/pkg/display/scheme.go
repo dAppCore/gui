@@ -3,6 +3,8 @@ package display
 import (
 	"context"
 	"html"    // Note: AX-6 — html.EscapeString is the structural HTML escape primitive; no core wrapper
+	"io"      // Note: AX-6 — io.ReadAll is the structural body-drain primitive
+	"net/http"
 	"net/url" // Note: AX-6 — url.Values and ParseQuery are structural URL primitives; core has parse/escape wrappers only
 	"sort"    // Note: AX-6 — slice sorting is structural; core has no sort wrapper
 	"time"
@@ -18,14 +20,15 @@ type SchemeHandler func(context.Context, string, url.Values) core.Result
 const maxSchemeRequestBodyBytes = 1 << 20
 
 type assetMiddlewareHandler struct {
-	next    application.Handler
+	next    http.Handler
 	service *Service
 }
 
-func (h assetMiddlewareHandler) ServeHTTP(w application.ResponseWriter, r *application.Request) {
-	rawURL := r.URL
+func (h assetMiddlewareHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	rawURL := r.URL.String()
 	if core.HasPrefix(core.Lower(core.Trim(rawURL)), "core://") {
-		result := h.service.ResolveSchemeRequest(context.Background(), rawURL, r.Method, r.Header, r.Body)
+		reqBody, _ := io.ReadAll(http.MaxBytesReader(w, r.Body, maxSchemeRequestBodyBytes))
+		result := h.service.ResolveSchemeRequest(context.Background(), rawURL, r.Method, r.Header, reqBody)
 		if !result.OK {
 			w.WriteHeader(404)
 			_, _ = w.Write([]byte("core route not found"))
@@ -751,7 +754,7 @@ func anchorHTML(href, text string) string {
 }
 
 func (s *Service) AssetMiddleware() application.Middleware {
-	return func(next application.Handler) application.Handler {
+	return func(next http.Handler) http.Handler {
 		return assetMiddlewareHandler{service: s, next: next}
 	}
 }
