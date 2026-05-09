@@ -5,7 +5,9 @@ package gui
 import (
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/browser"
+	"dappco.re/go/gui/pkg/chat"
 	"dappco.re/go/gui/pkg/clipboard"
+	"dappco.re/go/gui/pkg/container"
 	"dappco.re/go/gui/pkg/contextmenu"
 	"dappco.re/go/gui/pkg/dialog"
 	"dappco.re/go/gui/pkg/display"
@@ -16,6 +18,7 @@ import (
 	"dappco.re/go/gui/pkg/lifecycle"
 	"dappco.re/go/gui/pkg/menu"
 	"dappco.re/go/gui/pkg/notification"
+	"dappco.re/go/gui/pkg/p2p"
 	"dappco.re/go/gui/pkg/screen"
 	"dappco.re/go/gui/pkg/systray"
 	"dappco.re/go/gui/pkg/webview"
@@ -70,6 +73,18 @@ import (
 //   - "events"       — Wails custom event bus: Emit / On / Off /
 //     OnMultiple / Reset. CustomEvent translates between gui and Wails
 //     types so consumers never see Wails directly.
+//   - "chat"         — LLM chat surface. Defaults: APIURL
+//     "http://localhost:8090", store at $DIR_HOME/.core/gui/chat.db.
+//     Auto-builds its own gui_mcp subsystem as ToolExecutor if no
+//     consumer-supplied one. Override defaults via chat.Register(opts...).
+//   - "container"    — TIM (Trusted In-Memory) container manager.
+//     Wired with empty TIMOptions; container Image/Name configured at
+//     runtime via the core config service. Operations on an unconfigured
+//     manager surface clear "no image" errors.
+//   - "p2p"          — peer-to-peer routing service with TCP driver.
+//     Wired with empty Options (no listen address, no peers); add
+//     bootstrap peers at runtime via the p2p config service. Subscribe/
+//     Publish are no-ops until ListenAddr is set.
 //
 // The wails [*application.App] is the only boundary the consumer touches —
 // after that, everything runs through the canonical Core IPC pattern
@@ -80,11 +95,20 @@ import (
 //	coreOpts = append(coreOpts, gui.Bootstrap(app)...)
 //	c, _ := core.New(coreOpts...)
 //
-// More gui sub-services (chat, container, deno, mcp, p2p, preload) can
-// be added to this Bootstrap as the desktop surface needs them — this
-// is the single point to extend. Marketplace actions are already
-// available via the display service (display.marketplace.list/fetch/
-// verify/install + matching MCP tools); no separate Bootstrap entry.
+// Packages NOT wired into Bootstrap (deliberately):
+//   - mcp — already wired by the IDE consumer as "gui_mcp"; that
+//     subsystem is what surfaces every other service's MCP tools and
+//     must be owned by the consumer (it attaches to the IDE's MCP
+//     bridge service, not to the gui shell).
+//   - marketplace — pure library; the marketplace_list / fetch /
+//     verify / install MCP tools delegate to display.marketplace.*
+//     actions registered by the display service above.
+//   - deno — sidecar Manager (deno.New(Options) *Manager), not a Core
+//     service. Used by feature code that wants to spawn a deno
+//     subprocess (typed extensions, plugin runtime). Wire per-use, not
+//     globally.
+//   - preload — JS-injection assets + TrustedOriginPolicy helpers used
+//     by the window service. Not a registerable service.
 func Bootstrap(app *application.App) []core.CoreOption {
 	if app == nil {
 		return nil
@@ -107,5 +131,12 @@ func Bootstrap(app *application.App) []core.CoreOption {
 		core.WithService(screen.Register(screen.NewWailsPlatform(app))),
 		core.WithService(clipboard.Register(clipboard.NewWailsPlatform(app))),
 		core.WithService(events.Register(events.NewWailsPlatform(app))),
+		core.WithService(chat.Register()),
+		core.WithService(func(c *core.Core) core.Result {
+			return core.Result{Value: container.NewService(c, container.TIMOptions{}), OK: true}
+		}),
+		core.WithService(func(c *core.Core) core.Result {
+			return core.Result{Value: p2p.NewService(c, p2p.Options{}), OK: true}
+		}),
 	}
 }
