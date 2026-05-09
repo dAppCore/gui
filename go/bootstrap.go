@@ -5,6 +5,7 @@ package gui
 import (
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/browser"
+	"dappco.re/go/gui/pkg/dialog"
 	"dappco.re/go/gui/pkg/display"
 	"dappco.re/go/gui/pkg/lifecycle"
 	"dappco.re/go/gui/pkg/menu"
@@ -34,6 +35,11 @@ import (
 //   - "lifecycle"    — app lifecycle events (started, will-terminate,
 //     did-become-active, did-resign-active, opened-with-file). Subscribers
 //     receive the corresponding c.Action dispatches.
+//   - "dialog"       — native file open/save/directory pickers + info/
+//     warning/error/question message dialogs. File pickers block until
+//     the user resolves the dialog; message dialogs adapt Wails's async
+//     button-callback model to a synchronous "which label was clicked"
+//     return.
 //
 // The wails [*application.App] is the only boundary the consumer touches —
 // after that, everything runs through the canonical Core IPC pattern
@@ -44,9 +50,9 @@ import (
 //	coreOpts = append(coreOpts, gui.Bootstrap(app)...)
 //	c, _ := core.New(coreOpts...)
 //
-// More gui sub-services (clipboard-as-service, dialog, contextmenu,
-// keybinding, dock, etc.) can be added to this Bootstrap as the desktop
-// surface needs them — this is the single point to extend.
+// More gui sub-services (clipboard-as-service, contextmenu, keybinding,
+// dock, etc.) can be added to this Bootstrap as the desktop surface
+// needs them — this is the single point to extend.
 func Bootstrap(app *application.App) []core.CoreOption {
 	if app == nil {
 		return nil
@@ -61,5 +67,6 @@ func Bootstrap(app *application.App) []core.CoreOption {
 		core.WithService(browser.Register(browser.NewWailsPlatform(app))),
 		core.WithService(notification.Register(notification.NewWailsPlatform(app))),
 		core.WithService(lifecycle.Register(lifecycle.NewWailsPlatform(app))),
+		core.WithService(dialog.Register(dialog.NewWailsPlatform(app))),
 	}
 }
