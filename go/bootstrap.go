@@ -8,6 +8,7 @@ import (
 	"dappco.re/go/gui/pkg/contextmenu"
 	"dappco.re/go/gui/pkg/dialog"
 	"dappco.re/go/gui/pkg/display"
+	"dappco.re/go/gui/pkg/dock"
 	"dappco.re/go/gui/pkg/keybinding"
 	"dappco.re/go/gui/pkg/lifecycle"
 	"dappco.re/go/gui/pkg/menu"
@@ -51,6 +52,9 @@ import (
 //     (Cmd+S, Ctrl+P, F1, etc.). Shares the same Wails key-binding map
 //     as application.Options.KeyBindings — runtime registration wins
 //     over boot-time when accelerators collide.
+//   - "dock"         — macOS dock + Windows taskbar icon visibility +
+//     badge label. Progress bar / bounce are accepted but no-op until
+//     Wails exposes them upstream.
 //
 // The wails [*application.App] is the only boundary the consumer touches —
 // after that, everything runs through the canonical Core IPC pattern
@@ -61,8 +65,8 @@ import (
 //	coreOpts = append(coreOpts, gui.Bootstrap(app)...)
 //	c, _ := core.New(coreOpts...)
 //
-// More gui sub-services (clipboard-as-service, dock, etc.) can be added
-// to this Bootstrap as the desktop surface needs them — this is the
+// More gui sub-services (clipboard-as-service, etc.) can be added to
+// this Bootstrap as the desktop surface needs them — this is the
 // single point to extend.
 func Bootstrap(app *application.App) []core.CoreOption {
 	if app == nil {
@@ -81,5 +85,6 @@ func Bootstrap(app *application.App) []core.CoreOption {
 		core.WithService(dialog.Register(dialog.NewWailsPlatform(app))),
 		core.WithService(contextmenu.Register(contextmenu.NewWailsPlatform(app))),
 		core.WithService(keybinding.Register(keybinding.NewWailsPlatform(app))),
+		core.WithService(dock.Register(dock.NewWailsPlatform(app))),
 	}
 }
