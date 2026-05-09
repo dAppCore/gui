@@ -3,6 +3,7 @@ package window
 
 import (
 	"reflect"
+	"unsafe"
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/preload"
@@ -43,25 +44,123 @@ func (wp *WailsPlatform) CreateWindow(options PlatformWindowOptions) PlatformWin
 		BackgroundColour: application.NewRGBA(options.BackgroundColour[0], options.BackgroundColour[1], options.BackgroundColour[2], options.BackgroundColour[3]),
 	}
 	var windowHandle *application.WebviewWindow
-	if wirePreloadOnPageLoad(&wOpts, options.URL, func(origin string, target preload.Webview) {
+	preloadHook := func(origin string, target preload.Webview) {
 		if target == nil {
 			target = windowHandle
 		}
 		if target == nil {
 			return
 		}
+		// Wails 3 gates ExecJS on a runtimeLoaded flag that only flips when
+		// the page emits 'wails:runtime:ready' via its injected runtime —
+		// foreign pages (anthropic.com, wikipedia.org, plugin shells served
+		// from /plugin/<code>/, etc.) never ship that runtime, so every
+		// ExecJS for those windows queues forever.
+		//
+		// Flipping the flag here unblocks ExecJS for any origin, making
+		// every webview agent-addressable (same dispatch as our own
+		// index.html). Reflection is the only path because runtimeLoaded
+		// is unexported on Wails's WebviewWindow; we set it once per page
+		// load and any pending or future ExecJS goes straight through to
+		// the platform.
+		unblockWailsRuntime(windowHandle)
 		if err := preload.InjectPreload(target, origin); err != nil {
 			return
 		}
 		if extra := postPageLoadWindowJS(options.JS); core.Trim(extra) != "" {
 			target.ExecJS(extra)
 		}
-	}) {
+	}
+	preloadHookOrigin := options.URL
+	hasOnPageLoad := wirePreloadOnPageLoad(&wOpts, preloadHookOrigin, preloadHook)
+	if hasOnPageLoad {
 		wOpts.JS = ""
 	}
 	w := wp.app.Window.NewWithOptions(wOpts)
 	windowHandle = w
+	// Wails 3 alpha.83 doesn't expose OnPageLoad on WebviewWindowOptions
+	// (so wirePreloadOnPageLoad returns false), but it does emit a per-
+	// window navigation-finished event we can subscribe to. Wire that as
+	// the fallback path so plugin shells / foreign URLs still get the
+	// runtime gate flipped after the page lands.
+	if !hasOnPageLoad {
+		subscribeToNavigationFinished(w, preloadHookOrigin, preloadHook)
+	}
 	return &wailsWindow{w: w, title: options.Title, opacity: 1.0}
+}
+
+// subscribeToNavigationFinished wires a handler that runs on each page-load
+// completion via Wails's per-window event system. Used when OnPageLoad isn't
+// available on WebviewWindowOptions (Wails 3 alpha.83). Picks the right
+// platform event by trying common candidates; the unknown ones are no-ops
+// because Wails ignores unregistered event types.
+func subscribeToNavigationFinished(window *application.WebviewWindow, origin string, hook func(origin string, target preload.Webview)) {
+	if window == nil || hook == nil {
+		return
+	}
+	handler := func(_ *application.WindowEvent) {
+		hook(origin, window)
+	}
+	// Try every known event that signals "page finished loading" across
+	// platforms — only one will actually fire on the running OS, the rest
+	// stay dormant. Belt-and-braces.
+	for _, evt := range []events.WindowEventType{
+		events.Mac.WebViewDidFinishNavigation,
+		events.Windows.WebViewNavigationCompleted,
+		events.Linux.WindowLoadFinished,
+	} {
+		window.OnWindowEvent(evt, handler)
+	}
+}
+
+// unblockWailsRuntime force-flips Wails's per-window runtimeLoaded flag and
+// drains any queued ExecJS calls. Called from OnPageLoad so foreign pages
+// don't sit forever waiting for a wails:runtime:ready signal that they were
+// never going to send. No-op on builds where the field isn't accessible
+// (future Wails refactors) — degraded behaviour is just the existing queue.
+func unblockWailsRuntime(window *application.WebviewWindow) {
+	if window == nil {
+		return
+	}
+	value := reflect.ValueOf(window)
+	if value.Kind() != reflect.Pointer || value.IsNil() {
+		return
+	}
+	struc := value.Elem()
+	if struc.Kind() != reflect.Struct {
+		return
+	}
+	flagField := struc.FieldByName("runtimeLoaded")
+	if !flagField.IsValid() {
+		return
+	}
+	// Already set — nothing to do.
+	if flagField.Kind() == reflect.Bool {
+		flagAddr := unsafe.Pointer(flagField.UnsafeAddr())
+		// safe: flag is bool, single byte
+		flagWritable := reflect.NewAt(flagField.Type(), flagAddr).Elem()
+		if flagWritable.Bool() {
+			return
+		}
+		flagWritable.SetBool(true)
+	}
+
+	// Drain any ExecJS calls that queued before the flag flipped — they
+	// were waiting for runtimeLoaded; now they need to actually run.
+	pendingField := struc.FieldByName("pendingJS")
+	if !pendingField.IsValid() || pendingField.Kind() != reflect.Slice {
+		return
+	}
+	pendingAddr := unsafe.Pointer(pendingField.UnsafeAddr())
+	pendingWritable := reflect.NewAt(pendingField.Type(), pendingAddr).Elem()
+	pending := make([]string, pendingWritable.Len())
+	for i := 0; i < pendingWritable.Len(); i++ {
+		pending[i] = pendingWritable.Index(i).String()
+	}
+	pendingWritable.SetLen(0)
+	for _, js := range pending {
+		window.ExecJS(js)
+	}
 }
 
 func wirePreloadOnPageLoad(options *application.WebviewWindowOptions, fallbackOrigin string, inject func(origin string, target preload.Webview)) bool {

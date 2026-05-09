@@ -1,0 +1,65 @@
+// SPDX-License-Identifier: EUPL-1.2
+
+package gui
+
+import (
+	core "dappco.re/go"
+	"dappco.re/go/gui/pkg/browser"
+	"dappco.re/go/gui/pkg/display"
+	"dappco.re/go/gui/pkg/lifecycle"
+	"dappco.re/go/gui/pkg/menu"
+	"dappco.re/go/gui/pkg/notification"
+	"dappco.re/go/gui/pkg/systray"
+	"dappco.re/go/gui/pkg/webview"
+	"dappco.re/go/gui/pkg/window"
+	"github.com/wailsapp/wails/v3/pkg/application"
+)
+
+// Bootstrap returns the full set of [core.CoreOption] a desktop consumer
+// needs to wire the GUI service stack in one append, instead of hand-wiring
+// every sub-service.
+//
+// What's included:
+//   - "gui"          — the top-level gui shell service
+//   - "window"       — window manager + layout/state persistence (NewLayoutManager
+//     uses DIR_CONFIG / Core/layouts.json by default)
+//   - "display"      — screens, work areas, dialogs, clipboard, system tray
+//   - "webview"      — JS evaluation, console capture, DOM queries (CDP-backed)
+//   - "menu"         — native application menu
+//   - "systray"      — system tray icon + menu
+//   - "browser"      — open external URLs/files in the OS default app
+//     (forge/mantis/docs links; native target=_blank replacement)
+//   - "notification" — native OS notifications (macOS Notification Center,
+//     Windows Toast, Linux D-Bus). macOS requires bundle+sign to fire.
+//   - "lifecycle"    — app lifecycle events (started, will-terminate,
+//     did-become-active, did-resign-active, opened-with-file). Subscribers
+//     receive the corresponding c.Action dispatches.
+//
+// The wails [*application.App] is the only boundary the consumer touches —
+// after that, everything runs through the canonical Core IPC pattern
+// (c.Action/c.QUERY) so consumers don't need direct wails imports.
+//
+//	app := application.New(opts) // consumer creates the app
+//	coreOpts := []core.CoreOption{ /* your services */ }
+//	coreOpts = append(coreOpts, gui.Bootstrap(app)...)
+//	c, _ := core.New(coreOpts...)
+//
+// More gui sub-services (clipboard-as-service, dialog, contextmenu,
+// keybinding, dock, etc.) can be added to this Bootstrap as the desktop
+// surface needs them — this is the single point to extend.
+func Bootstrap(app *application.App) []core.CoreOption {
+	if app == nil {
+		return nil
+	}
+	return []core.CoreOption{
+		core.WithName("gui", NewService(GuiConfig{})),
+		core.WithService(window.Register(window.NewWailsPlatform(app))),
+		core.WithService(display.Register(app)),
+		core.WithService(webview.Register()),
+		core.WithService(menu.Register(menu.NewWailsPlatform(app))),
+		core.WithService(systray.Register(systray.NewWailsPlatform(app))),
+		core.WithService(browser.Register(browser.NewWailsPlatform(app))),
+		core.WithService(notification.Register(notification.NewWailsPlatform(app))),
+		core.WithService(lifecycle.Register(lifecycle.NewWailsPlatform(app))),
+	}
+}
