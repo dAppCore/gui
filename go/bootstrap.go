@@ -5,11 +5,13 @@ package gui
 import (
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/browser"
+	"dappco.re/go/gui/pkg/clipboard"
 	"dappco.re/go/gui/pkg/contextmenu"
 	"dappco.re/go/gui/pkg/dialog"
 	"dappco.re/go/gui/pkg/display"
 	"dappco.re/go/gui/pkg/dock"
 	"dappco.re/go/gui/pkg/environment"
+	"dappco.re/go/gui/pkg/events"
 	"dappco.re/go/gui/pkg/keybinding"
 	"dappco.re/go/gui/pkg/lifecycle"
 	"dappco.re/go/gui/pkg/menu"
@@ -62,6 +64,12 @@ import (
 //     focus-follows-mouse (Linux).
 //   - "screen"       — multi-monitor info: GetAll / GetPrimary /
 //     GetCurrent (containing-window fallback to primary).
+//   - "clipboard"    — system clipboard text read/write. Wails alpha.83
+//     does not expose an image clipboard API; image ops fall through
+//     to the gui Service's "platform unavailable" branch.
+//   - "events"       — Wails custom event bus: Emit / On / Off /
+//     OnMultiple / Reset. CustomEvent translates between gui and Wails
+//     types so consumers never see Wails directly.
 //
 // The wails [*application.App] is the only boundary the consumer touches —
 // after that, everything runs through the canonical Core IPC pattern
@@ -72,9 +80,11 @@ import (
 //	coreOpts = append(coreOpts, gui.Bootstrap(app)...)
 //	c, _ := core.New(coreOpts...)
 //
-// More gui sub-services (clipboard-as-service, etc.) can be added to
-// this Bootstrap as the desktop surface needs them — this is the
-// single point to extend.
+// More gui sub-services (chat, container, deno, mcp, p2p, preload) can
+// be added to this Bootstrap as the desktop surface needs them — this
+// is the single point to extend. Marketplace actions are already
+// available via the display service (display.marketplace.list/fetch/
+// verify/install + matching MCP tools); no separate Bootstrap entry.
 func Bootstrap(app *application.App) []core.CoreOption {
 	if app == nil {
 		return nil
@@ -95,5 +105,7 @@ func Bootstrap(app *application.App) []core.CoreOption {
 		core.WithService(dock.Register(dock.NewWailsPlatform(app))),
 		core.WithService(environment.Register(environment.NewWailsPlatform(app))),
 		core.WithService(screen.Register(screen.NewWailsPlatform(app))),
+		core.WithService(clipboard.Register(clipboard.NewWailsPlatform(app))),
+		core.WithService(events.Register(events.NewWailsPlatform(app))),
 	}
 }
