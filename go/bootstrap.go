@@ -9,10 +9,12 @@ import (
 	"dappco.re/go/gui/pkg/dialog"
 	"dappco.re/go/gui/pkg/display"
 	"dappco.re/go/gui/pkg/dock"
+	"dappco.re/go/gui/pkg/environment"
 	"dappco.re/go/gui/pkg/keybinding"
 	"dappco.re/go/gui/pkg/lifecycle"
 	"dappco.re/go/gui/pkg/menu"
 	"dappco.re/go/gui/pkg/notification"
+	"dappco.re/go/gui/pkg/screen"
 	"dappco.re/go/gui/pkg/systray"
 	"dappco.re/go/gui/pkg/webview"
 	"dappco.re/go/gui/pkg/window"
@@ -55,6 +57,11 @@ import (
 //   - "dock"         — macOS dock + Windows taskbar icon visibility +
 //     badge label. Progress bar / bounce are accepted but no-op until
 //     Wails exposes them upstream.
+//   - "environment"  — OS / arch / debug / platform info, dark-mode
+//     query + ThemeChanged subscription, accent colour, OpenFileManager,
+//     focus-follows-mouse (Linux).
+//   - "screen"       — multi-monitor info: GetAll / GetPrimary /
+//     GetCurrent (containing-window fallback to primary).
 //
 // The wails [*application.App] is the only boundary the consumer touches —
 // after that, everything runs through the canonical Core IPC pattern
@@ -86,5 +93,7 @@ func Bootstrap(app *application.App) []core.CoreOption {
 		core.WithService(contextmenu.Register(contextmenu.NewWailsPlatform(app))),
 		core.WithService(keybinding.Register(keybinding.NewWailsPlatform(app))),
 		core.WithService(dock.Register(dock.NewWailsPlatform(app))),
+		core.WithService(environment.Register(environment.NewWailsPlatform(app))),
+		core.WithService(screen.Register(screen.NewWailsPlatform(app))),
 	}
 }
