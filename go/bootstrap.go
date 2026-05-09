@@ -110,6 +110,65 @@ import (
 //   - preload — JS-injection assets + TrustedOriginPolicy helpers used
 //     by the window service. Not a registerable service.
 func Bootstrap(app *application.App) []core.CoreOption {
+	return BootstrapWithConfig(app, BootstrapConfig{})
+}
+
+// BootstrapConfig lets the consumer override the chat / container / p2p
+// service options without rewriting the rest of Bootstrap. Pass blank
+// values to keep package defaults; only set the fields you actually
+// want to override (the IDE's settings panel writes here).
+type BootstrapConfig struct {
+	Chat      ChatConfig
+	Container ContainerConfig
+	P2P       P2PConfig
+}
+
+// ChatConfig — overrides for the gui chat service.
+//
+// APIURL blank → http://localhost:8090. StorePath blank → package default
+// $DIR_HOME/.core/gui/chat.db. ToolExecutor stays auto-built (gui_mcp
+// subsystem) when nil; that's what the IDE wants 99% of the time.
+type ChatConfig struct {
+	APIURL    string
+	StorePath string
+}
+
+// ContainerConfig — overrides for the gui container service (TIM).
+//
+// All-blank means the manager starts in "no container configured" mode;
+// /dev/tim surfaces this as empty state. The Exec field is wired by
+// the container service itself when nil — it falls back to the core
+// process service.
+type ContainerConfig struct {
+	Image   string
+	Name    string
+	DataDir string
+	Command []string
+}
+
+// P2PConfig — overrides for the gui p2p service (TCP driver).
+//
+// All-blank means no listener bound, no peers — Subscribe/Publish are
+// no-ops and /dev/p2p surfaces "no listener" empty state. NodeID is
+// auto-assigned by the TCP driver when blank.
+type P2PConfig struct {
+	ListenAddr string
+	PeerAddrs  []string
+	NodeID     string
+}
+
+// BootstrapWithConfig is Bootstrap with consumer-supplied overrides for
+// chat / container / p2p. Use this when the consumer (e.g. core/ide)
+// wants to drive those services from its own config layer rather than
+// take package defaults.
+//
+//	cfg := gui.BootstrapConfig{
+//	    Chat:      gui.ChatConfig{APIURL: "http://localhost:11434"},
+//	    Container: gui.ContainerConfig{Image: "alpine", Name: "tim-1"},
+//	    P2P:       gui.P2PConfig{ListenAddr: "127.0.0.1:9100"},
+//	}
+//	coreOpts = append(coreOpts, gui.BootstrapWithConfig(app, cfg)...)
+func BootstrapWithConfig(app *application.App, cfg BootstrapConfig) []core.CoreOption {
 	if app == nil {
 		return nil
 	}
@@ -131,12 +190,38 @@ func Bootstrap(app *application.App) []core.CoreOption {
 		core.WithService(screen.Register(screen.NewWailsPlatform(app))),
 		core.WithService(clipboard.Register(clipboard.NewWailsPlatform(app))),
 		core.WithService(events.Register(events.NewWailsPlatform(app))),
-		core.WithService(chat.Register()),
+		core.WithService(chat.Register(applyChatConfig(cfg.Chat)...)),
 		core.WithService(func(c *core.Core) core.Result {
-			return core.Result{Value: container.NewService(c, container.TIMOptions{}), OK: true}
+			return core.Result{Value: container.NewService(c, container.TIMOptions{
+				Image:   cfg.Container.Image,
+				Name:    cfg.Container.Name,
+				DataDir: cfg.Container.DataDir,
+				Command: cfg.Container.Command,
+			}), OK: true}
 		}),
 		core.WithService(func(c *core.Core) core.Result {
-			return core.Result{Value: p2p.NewService(c, p2p.Options{}), OK: true}
+			return core.Result{Value: p2p.NewService(c, p2p.Options{
+				ListenAddr: cfg.P2P.ListenAddr,
+				PeerAddrs:  cfg.P2P.PeerAddrs,
+				NodeID:     cfg.P2P.NodeID,
+			}), OK: true}
 		}),
 	}
+}
+
+// applyChatConfig translates the consumer's ChatConfig into the chat
+// package's optional-fn slice. Only emits an opt fn for non-blank
+// fields so package defaults stay in effect for anything the consumer
+// didn't override.
+func applyChatConfig(cfg ChatConfig) []func(*chat.Options) {
+	var fns []func(*chat.Options)
+	if cfg.APIURL != "" {
+		apiURL := cfg.APIURL
+		fns = append(fns, func(o *chat.Options) { o.APIURL = apiURL })
+	}
+	if cfg.StorePath != "" {
+		storePath := cfg.StorePath
+		fns = append(fns, func(o *chat.Options) { o.StorePath = storePath })
+	}
+	return fns
 }
