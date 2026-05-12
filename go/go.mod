@@ -7,7 +7,7 @@ require (
 	dappco.re/go/webview v0.9.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/modelcontextprotocol/go-sdk v1.4.1
-	github.com/wailsapp/wails/v3 v3.0.0-alpha.74
+	github.com/wailsapp/wails/v3 v3.0.0-alpha.90
 	golang.org/x/text v0.36.0
 	gopkg.in/yaml.v3 v3.0.1
 )
