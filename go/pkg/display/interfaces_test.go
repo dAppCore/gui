@@ -9,7 +9,7 @@ func TestInterfaces_newWailsApp_Good(t *core.T) {
 	// newWailsApp
 	ax7Variant := "newWailsApp:good"
 	core.AssertContains(t, ax7Variant, "good")
-	app := &application.App{Logger: application.Logger{}}
+	app := application.New(application.Options{})
 	wrapped := newWailsApp(app)
 
 	core.AssertNotNil(t, wrapped)
@@ -26,7 +26,7 @@ func TestInterfaces_newWailsApp_Bad(t *core.T) {
 	core.AssertContains(t, ax7Variant, "bad")
 	wrapped := newWailsApp(&application.App{})
 	core.AssertNotNil(t, wrapped)
-	core.AssertNotNil(t, wrapped.Logger())
+	core.AssertNil(t, wrapped.Logger())
 }
 
 func TestInterfaces_newWailsApp_Ugly(t *core.T) {

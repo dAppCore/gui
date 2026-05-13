@@ -11,7 +11,7 @@ func TestWailsPlatform_NewTray_Good(t *core.T) {
 	// NewTray
 	ax7Variant := "NewTray:good"
 	core.AssertContains(t, ax7Variant, "good")
-	app := &application.App{}
+	app := application.New(application.Options{})
 	platform := NewWailsPlatform(app)
 
 	tray := platform.NewTray()
@@ -27,11 +27,11 @@ func TestWailsPlatform_NewTray_Good(t *core.T) {
 	wtray.AttachWindow(windowHandleStub{name: "panel"})
 
 	trayValue := reflect.ValueOf(wtray.tray).Elem()
-	core.AssertEqual(t, []byte{1, 2, 3}, trayValue.FieldByName("icon").Bytes())
-	core.AssertEqual(t, []byte{4, 5, 6}, trayValue.FieldByName("templateIcon").Bytes())
+	core.AssertEqual(t, []byte{4, 5, 6}, trayValue.FieldByName("icon").Bytes())
+	core.AssertTrue(t, trayValue.FieldByName("isTemplateIcon").Bool())
 	core.AssertEqual(t, "Core", trayValue.FieldByName("tooltip").String())
 	core.AssertEqual(t, "Ready", trayValue.FieldByName("label").String())
-	core.AssertTrue(t, trayValue.FieldByName("attachedWindow").IsNil())
+	core.AssertFalse(t, trayValue.FieldByName("menu").IsNil())
 
 	err := wtray.ShowMessage("Title", "Body")
 	core.AssertError(t, err)
@@ -42,7 +42,7 @@ func TestWailsPlatform_NewMenu_Good(t *core.T) {
 	// NewMenu
 	ax7Variant := "NewMenu:good"
 	core.AssertContains(t, ax7Variant, "good")
-	app := &application.App{}
+	app := application.New(application.Options{})
 	platform := NewWailsPlatform(app)
 	menu := platform.NewMenu()
 	core.AssertNotNil(t, menu)
@@ -55,23 +55,25 @@ func TestWailsPlatform_NewMenu_Good(t *core.T) {
 	item.SetChecked(true)
 	item.SetEnabled(false)
 	item.OnClick(func() { clicked = true })
-	onClickField := reflect.ValueOf(item.item).Elem().FieldByName("onClick")
+	onClickField := reflect.ValueOf(item.item).Elem().FieldByName("callback")
 	core.RequireTrue(t, onClickField.IsValid())
 	onClick := reflect.NewAt(onClickField.Type(), unsafe.Pointer(onClickField.UnsafeAddr())).Elem().Interface().(func(*application.Context))
 	onClick(&application.Context{})
 
 	core.AssertTrue(t, clicked)
-	core.AssertEqual(t, "Open", wmenu.menu.Items[0].Label)
-	core.AssertEqual(t, "open", wmenu.menu.Items[0].Tooltip)
-	core.AssertTrue(t, wmenu.menu.Items[0].Checked)
-	core.AssertFalse(t, wmenu.menu.Items[0].Enabled)
+	open := wmenu.menu.ItemAt(0)
+	core.RequireTrue(t, open != nil)
+	core.AssertEqual(t, "Open", open.Label())
+	core.AssertEqual(t, "open", open.Tooltip())
+	core.AssertTrue(t, open.Checked())
+	core.AssertFalse(t, open.Enabled())
 }
 
 func TestWailsPlatform_SetMenu_Bad(t *core.T) {
 	// SetMenu
 	ax7Variant := "SetMenu:bad"
 	core.AssertContains(t, ax7Variant, "bad")
-	app := &application.App{}
+	app := application.New(application.Options{})
 	platform := NewWailsPlatform(app)
 	tray := platform.NewTray().(*wailsTray)
 

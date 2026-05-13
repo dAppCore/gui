@@ -11,7 +11,7 @@ func TestWailsPlatform_NewMenu_Good(t *core.T) {
 	// NewMenu
 	ax7Variant := "NewMenu:good"
 	core.AssertContains(t, ax7Variant, "good")
-	app := &application.App{}
+	app := application.New(application.Options{})
 	platform := NewWailsPlatform(app)
 
 	menu := platform.NewMenu()
@@ -35,35 +35,38 @@ func TestWailsPlatform_NewMenu_Good(t *core.T) {
 
 	platform.SetApplicationMenu(root)
 
-	menuField := reflect.ValueOf(&app.Menu).Elem().FieldByName("applicationMenu")
-	core.RequireTrue(t, menuField.IsValid())
-	core.AssertEqual(t, reflect.ValueOf(root.menu).Pointer(), menuField.Pointer())
+	core.AssertEqual(t, root.menu, app.Menu.GetApplicationMenu())
 
-	onClickField := reflect.ValueOf(item.item).Elem().FieldByName("onClick")
+	onClickField := reflect.ValueOf(item.item).Elem().FieldByName("callback")
 	core.RequireTrue(t, onClickField.IsValid())
 	onClick := reflect.NewAt(onClickField.Type(), unsafe.Pointer(onClickField.UnsafeAddr())).Elem().Interface().(func(*application.Context))
 	onClick(&application.Context{})
 	core.AssertTrue(t, clicked)
 
-	core.AssertEqual(t, "Open", root.menu.Items[0].Label)
-	core.AssertEqual(t, "Cmd+O", root.menu.Items[0].Accelerator)
-	core.AssertEqual(t, "open", root.menu.Items[0].Tooltip)
-	core.AssertTrue(t, root.menu.Items[0].Checked)
-	core.AssertFalse(t, root.menu.Items[0].Enabled)
-	core.AssertLen(t, sub.menu.Items, 6)
+	open := root.menu.ItemAt(0)
+	core.RequireTrue(t, open != nil)
+	core.AssertEqual(t, "Open", open.Label())
+	core.AssertEqual(t, "Cmd+O", open.GetAccelerator())
+	core.AssertEqual(t, "open", open.Tooltip())
+	core.AssertTrue(t, open.Checked())
+	core.AssertFalse(t, open.Enabled())
+	core.AssertNotNil(t, root.menu.ItemAt(1))
+	core.AssertNotNil(t, root.menu.ItemAt(2))
+	core.AssertNil(t, root.menu.ItemAt(3))
+	core.AssertNotNil(t, sub.menu.ItemAt(5))
+	core.AssertNil(t, sub.menu.ItemAt(6))
 }
 
 func TestWailsPlatform_SetApplicationMenu_Bad(t *core.T) {
 	// SetApplicationMenu
 	ax7Variant := "SetApplicationMenu:bad"
 	core.AssertContains(t, ax7Variant, "bad")
-	app := &application.App{}
+	app := application.New(application.Options{})
 	platform := NewWailsPlatform(app)
+	before := app.Menu.GetApplicationMenu()
 	platform.SetApplicationMenu(newMockPlatform().NewMenu())
 
-	menuField := reflect.ValueOf(&app.Menu).Elem().FieldByName("applicationMenu")
-	core.RequireTrue(t, menuField.IsValid())
-	core.AssertTrue(t, menuField.IsNil())
+	core.AssertEqual(t, before, app.Menu.GetApplicationMenu())
 }
 
 func TestWailsPlatform_SetApplicationMenu_NilReceiver_Good(t *core.T) {
@@ -80,7 +83,7 @@ func TestWailsPlatform_NewMenu_Ugly(t *core.T) {
 	// NewMenu
 	ax7Variant := "NewMenu:ugly"
 	core.AssertContains(t, ax7Variant, "ugly")
-	app := &application.App{}
+	app := application.New(application.Options{})
 	platform := NewWailsPlatform(app)
 	menu := platform.NewMenu().(*wailsMenu)
 

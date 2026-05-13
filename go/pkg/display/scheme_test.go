@@ -2,27 +2,28 @@ package display
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
 	"net/url"
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/chat"
 	"dappco.re/go/gui/pkg/p2p"
-	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 type testApplicationResponseWriter struct {
-	header map[string][]string
+	header http.Header
 	body   []byte
 	status int
 }
 
 func newTestApplicationResponseWriter() *testApplicationResponseWriter {
-	return &testApplicationResponseWriter{header: map[string][]string{}}
+	return &testApplicationResponseWriter{header: http.Header{}}
 }
 
-func (w *testApplicationResponseWriter) Header() map[string][]string {
+func (w *testApplicationResponseWriter) Header() http.Header {
 	if w.header == nil {
-		w.header = map[string][]string{}
+		w.header = http.Header{}
 	}
 	return w.header
 }
@@ -40,7 +41,7 @@ type testApplicationHandler struct {
 	called bool
 }
 
-func (h *testApplicationHandler) ServeHTTP(_ application.ResponseWriter, _ *application.Request) {
+func (h *testApplicationHandler) ServeHTTP(_ http.ResponseWriter, _ *http.Request) {
 	h.called = true
 }
 
@@ -308,7 +309,7 @@ func TestScheme_AssetMiddleware_Good(t *core.T) {
 	svc.registerDefaultSchemes()
 
 	recorder := newTestApplicationResponseWriter()
-	request := &application.Request{Method: "GET", URL: "core://store?q=theme"}
+	request := httptest.NewRequest("GET", "core://store?q=theme", nil)
 
 	svc.AssetMiddleware()(&testApplicationHandler{}).ServeHTTP(recorder, request)
 
@@ -325,7 +326,7 @@ func TestScheme_AssetMiddleware_Bad(t *core.T) {
 	svc.registerDefaultSchemes()
 
 	recorder := newTestApplicationResponseWriter()
-	request := &application.Request{Method: "GET", URL: "https://example.com/app"}
+	request := httptest.NewRequest("GET", "https://example.com/app", nil)
 	next := &testApplicationHandler{}
 
 	svc.AssetMiddleware()(next).ServeHTTP(recorder, request)
@@ -342,7 +343,7 @@ func TestScheme_AssetMiddleware_Ugly(t *core.T) {
 	svc, _ := New()
 
 	recorder := newTestApplicationResponseWriter()
-	request := &application.Request{Method: "GET", URL: "core://missing"}
+	request := httptest.NewRequest("GET", "core://missing", nil)
 
 	svc.AssetMiddleware()(&testApplicationHandler{}).ServeHTTP(recorder, request)
 
