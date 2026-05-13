@@ -278,7 +278,7 @@ func (s *Service) SetTrayIcon(icon []byte) resultFailure {
 		if err, ok := result.Value.(error); ok {
 			return err
 		}
-		return core.E("display.SetTrayIcon", "systray.setIcon action failed", nil)
+		return core.E("display.SetTrayIcon", "systray.set_icon action failed", nil)
 	}
 	return nil
 }
@@ -291,7 +291,7 @@ func (s *Service) SetTrayTooltip(tooltip string) resultFailure {
 		if err, ok := result.Value.(error); ok {
 			return err
 		}
-		return core.E("display.SetTrayTooltip", "systray.setTooltip action failed", nil)
+		return core.E("display.SetTrayTooltip", "systray.set_tooltip action failed", nil)
 	}
 	return nil
 }
@@ -304,7 +304,7 @@ func (s *Service) SetTrayLabel(label string) resultFailure {
 		if err, ok := result.Value.(error); ok {
 			return err
 		}
-		return core.E("display.SetTrayLabel", "systray.setLabel action failed", nil)
+		return core.E("display.SetTrayLabel", "systray.set_label action failed", nil)
 	}
 	return nil
 }
@@ -317,7 +317,7 @@ func (s *Service) SetTrayMenu(items []TrayMenuItem) resultFailure {
 		if err, ok := result.Value.(error); ok {
 			return err
 		}
-		return core.E("display.SetTrayMenu", "systray.setMenu action failed", nil)
+		return core.E("display.SetTrayMenu", "systray.set_menu action failed", nil)
 	}
 	return nil
 }
@@ -339,7 +339,7 @@ func (s *Service) ShowTrayMessage(title, message string) resultFailure {
 		if err, ok := result.Value.(error); ok {
 			return err
 		}
-		return core.E("display.ShowTrayMessage", "systray.showMessage action failed", nil)
+		return core.E("display.ShowTrayMessage", "systray.show_message action failed", nil)
 	}
 	return nil
 }
@@ -367,7 +367,7 @@ func (s *Service) WriteClipboard(text string) resultFailure {
 		if err, ok := result.Value.(error); ok {
 			return err
 		}
-		return core.E("display.WriteClipboard", "clipboard.setText action failed", nil)
+		return core.E("display.WriteClipboard", "clipboard.set_text action failed", nil)
 	}
 	return nil
 }
@@ -505,7 +505,7 @@ func (s *Service) SetTheme(theme string) resultFailure {
 		if err, ok := result.Value.(error); ok {
 			return err
 		}
-		return core.E("display.SetTheme", "environment.setTheme action failed", nil)
+		return core.E("display.SetTheme", "environment.set_theme action failed", nil)
 	}
 	return nil
 }
