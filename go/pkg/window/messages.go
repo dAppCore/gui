@@ -71,6 +71,38 @@ type TaskSetVisibility struct {
 	Visible bool
 }
 
+// CloseBehavior governs what happens when the OS / user requests a
+// window close (window-control button, Cmd+W, Alt+F4). One of:
+//
+//	CloseBehaviorDestroy — let the close proceed (default).
+//	CloseBehaviorHide    — intercept, hide the window, cancel the
+//	                       close. Window stays registered so it can
+//	                       be shown again later. Tray-rooted apps use
+//	                       this so the popover survives clicking 'x'.
+//	CloseBehaviorQuit    — intercept and call app.Quit() instead.
+type CloseBehavior string
+
+const (
+	CloseBehaviorDestroy CloseBehavior = "destroy"
+	CloseBehaviorHide    CloseBehavior = "hide"
+	CloseBehaviorQuit    CloseBehavior = "quit"
+)
+
+// TaskSetCloseBehavior installs a behaviour-bearing hook on a
+// previously-registered window's close event. Declarative — the
+// behaviour intent is the payload; the platform decides whether to
+// wire RegisterHook, observers, or platform-native cancel surfaces.
+//
+//	c.Action("window.set_close_behavior").Run(ctx, NewOptions(
+//	    Option{Key: "task", Value: TaskSetCloseBehavior{
+//	        Name: "tray", Behavior: CloseBehaviorHide,
+//	    }},
+//	))
+type TaskSetCloseBehavior struct {
+	Name     string
+	Behavior CloseBehavior
+}
+
 type TaskFullscreen struct {
 	Name       string
 	Fullscreen bool

@@ -106,7 +106,7 @@ func (wp *WailsPlatform) CreateWindow(options PlatformWindowOptions) PlatformWin
 	if !hasOnPageLoad {
 		subscribeToNavigationFinished(w, preloadHookOrigin, preloadHook)
 	}
-	return &wailsWindow{w: w, title: options.Title, opacity: 1.0}
+	return &wailsWindow{w: w, app: wp.app, title: options.Title, opacity: 1.0}
 }
 
 // subscribeToNavigationFinished wires a handler that runs on each page-load
@@ -285,7 +285,7 @@ func (wp *WailsPlatform) GetWindows() []PlatformWindow {
 	out := make([]PlatformWindow, 0, len(all))
 	for _, w := range all {
 		if wv, ok := w.(*application.WebviewWindow); ok {
-			out = append(out, &wailsWindow{w: wv})
+			out = append(out, &wailsWindow{w: wv, app: wp.app})
 		}
 	}
 	return out
@@ -293,8 +293,10 @@ func (wp *WailsPlatform) GetWindows() []PlatformWindow {
 
 // wailsWindow wraps *application.WebviewWindow to implement PlatformWindow.
 // It stores the title and opacity locally because Wails v3 does not expose getters for both.
+// The app reference enables behaviours that span the application (e.g. CloseBehaviorQuit).
 type wailsWindow struct {
 	w       *application.WebviewWindow
+	app     *application.App
 	title   string
 	opacity float64
 }
@@ -409,6 +411,35 @@ func (ww *wailsWindow) OnFileDrop(handler func(paths []string, targetID string))
 		}
 		handler(files, targetID)
 	})
+}
+
+// SetCloseBehavior wires a RegisterHook on the wails close event
+// implementing the requested behaviour. Default (Destroy) detaches
+// any prior hook so the close proceeds naturally.
+func (ww *wailsWindow) SetCloseBehavior(behavior CloseBehavior) {
+	if ww == nil || ww.w == nil {
+		return
+	}
+	switch behavior {
+	case CloseBehaviorHide:
+		ww.w.RegisterHook(events.Common.WindowClosing, func(e *application.WindowEvent) {
+			ww.w.Hide()
+			e.Cancel()
+		})
+	case CloseBehaviorQuit:
+		ww.w.RegisterHook(events.Common.WindowClosing, func(e *application.WindowEvent) {
+			if ww.app != nil {
+				ww.app.Quit()
+			}
+		})
+	case CloseBehaviorDestroy, "":
+		// Default — no hook; the wails default close path runs.
+		// Wails alpha.91 has no public Unhook API, so once a hook is
+		// installed the consumer can only replace it, not remove it.
+		// Calling with Destroy after Hide installs a pass-through
+		// hook that simply returns without cancelling.
+		ww.w.RegisterHook(events.Common.WindowClosing, func(_ *application.WindowEvent) {})
+	}
 }
 
 // Ensure wailsWindow satisfies PlatformWindow at compile time.

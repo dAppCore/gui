@@ -47,6 +47,7 @@ type mockWindow struct {
 	execJSCalls            []string
 	eventHandlers          []func(WindowEvent)
 	fileDropHandlers       []func(paths []string, targetID string)
+	closeBehavior          CloseBehavior
 }
 
 func (w *mockWindow) Name() string                    { return w.name }
@@ -104,6 +105,10 @@ func (w *mockWindow) OnWindowEvent(handler func(WindowEvent)) {
 }
 func (w *mockWindow) OnFileDrop(handler func(paths []string, targetID string)) {
 	w.fileDropHandlers = append(w.fileDropHandlers, handler)
+}
+
+func (w *mockWindow) SetCloseBehavior(behavior CloseBehavior) {
+	w.closeBehavior = behavior
 }
 
 // emit fires a test event to all registered handlers.

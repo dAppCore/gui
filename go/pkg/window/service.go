@@ -210,6 +210,13 @@ func (s *Service) registerTaskActions() {
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskSetVisibility(t.Name, t.Visible))
 	})
+	c.Action("window.set_close_behavior", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskSetCloseBehavior]("window.set_close_behavior", opts)
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		return core.Result{Value: nil, OK: true}.New(s.taskSetCloseBehavior(t.Name, t.Behavior))
+	})
 	c.Action("window.fullscreen", func(_ context.Context, opts core.Options) core.Result {
 		t, err := taskFromOptions[TaskFullscreen]("window.fullscreen", opts)
 		if err != nil {
@@ -646,6 +653,17 @@ func (s *Service) taskSetVisibility(name string, visible bool) resultFailure {
 		return core.E("window.taskSetVisibility", "window not found: "+name, nil)
 	}
 	pw.SetVisibility(visible)
+	return nil
+}
+
+// taskSetCloseBehavior installs the requested CloseBehavior on a
+// tracked window. Looks up by name, delegates to the platform.
+func (s *Service) taskSetCloseBehavior(name string, behavior CloseBehavior) resultFailure {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return core.E("window.taskSetCloseBehavior", "window not found: "+name, nil)
+	}
+	pw.SetCloseBehavior(behavior)
 	return nil
 }
 

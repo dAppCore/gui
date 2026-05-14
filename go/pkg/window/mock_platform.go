@@ -50,6 +50,7 @@ type MockWindow struct {
 	execJSCalls            []string
 	eventHandlers          []func(WindowEvent)
 	fileDropHandlers       []func(paths []string, targetID string)
+	closeBehavior          CloseBehavior
 }
 
 func (w *MockWindow) Name() string                    { return w.name }
@@ -107,6 +108,18 @@ func (w *MockWindow) OnWindowEvent(handler func(WindowEvent)) {
 }
 func (w *MockWindow) OnFileDrop(handler func(paths []string, targetID string)) {
 	w.fileDropHandlers = append(w.fileDropHandlers, handler)
+}
+
+// SetCloseBehavior records the requested behaviour. Tests verify
+// via CloseBehavior().
+func (w *MockWindow) SetCloseBehavior(behavior CloseBehavior) {
+	w.closeBehavior = behavior
+}
+
+// CloseBehavior returns the most-recently-set close behaviour.
+// Empty until SetCloseBehavior is called.
+func (w *MockWindow) CloseBehavior() CloseBehavior {
+	return w.closeBehavior
 }
 
 func (w *MockWindow) ExecJSCalls() []string {

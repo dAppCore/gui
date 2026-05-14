@@ -51,12 +51,19 @@ type WindowsWindow struct {
 	HiddenOnTaskbar bool
 }
 
-// MacWindowLevel mirrors NSWindow.Level. Zero is platform default.
-type MacWindowLevel int
+// MacWindowLevel mirrors application.MacWindowLevel (string-typed
+// alias of NSWindow.Level names). Empty string is platform default.
+type MacWindowLevel string
 
 const (
-	MacWindowLevelDefault  MacWindowLevel = 0
-	MacWindowLevelFloating MacWindowLevel = 3
+	MacWindowLevelDefault     MacWindowLevel = ""
+	MacWindowLevelNormal      MacWindowLevel = "normal"
+	MacWindowLevelFloating    MacWindowLevel = "floating"
+	MacWindowLevelTornOffMenu MacWindowLevel = "tornOffMenu"
+	MacWindowLevelModalPanel  MacWindowLevel = "modalPanel"
+	MacWindowLevelMainMenu    MacWindowLevel = "mainMenu"
+	MacWindowLevelStatus      MacWindowLevel = "status"
+	MacWindowLevelPopUpMenu   MacWindowLevel = "popUpMenu"
 )
 
 // MacCollectionBehavior is a bitfield mirroring NSWindow.collectionBehavior.

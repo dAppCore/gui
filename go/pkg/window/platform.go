@@ -87,6 +87,12 @@ type PlatformWindow interface {
 	// Events
 	OnWindowEvent(handler func(event WindowEvent))
 
+	// SetCloseBehavior installs the requested close-event behaviour
+	// on this window. See messages.go CloseBehavior for the
+	// semantics. Idempotent — calling twice replaces the prior
+	// behaviour.
+	SetCloseBehavior(behavior CloseBehavior)
+
 	// File drop
 	OnFileDrop(handler func(paths []string, targetID string))
 }
