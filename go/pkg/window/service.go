@@ -515,11 +515,23 @@ func (s *Service) trackWindow(pw PlatformWindow) {
 				y, _ := data["y"].(int)
 				coreutil.DispatchAction(s.Core(), "window.move", ActionWindowMoved{Name: e.Name, X: x, Y: y})
 			}
+			// Auto-persist OS-driven moves — without this, dragging a
+			// window only saves when the window is explicitly closed
+			// (which never happens for HideOnClose tray-rooted apps).
+			// CaptureState writes via a 500ms debounced timer so rapid
+			// drags coalesce into one save.
+			if pw, ok := s.manager.Get(e.Name); ok {
+				s.manager.State().CaptureState(pw)
+			}
 		case "resize":
 			if data := e.Data; data != nil {
 				w, _ := data["w"].(int)
 				h, _ := data["h"].(int)
 				coreutil.DispatchAction(s.Core(), "window.resize", ActionWindowResized{Name: e.Name, Width: w, Height: h})
+			}
+			// Auto-persist OS-driven resize — same rationale as move.
+			if pw, ok := s.manager.Get(e.Name); ok {
+				s.manager.State().CaptureState(pw)
 			}
 		case "close":
 			coreutil.DispatchAction(s.Core(), "window.closeEvent", ActionWindowClosed{Name: e.Name})
