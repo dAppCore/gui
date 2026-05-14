@@ -23,6 +23,16 @@ func NewWailsPlatform(app *application.App) *WailsPlatform {
 }
 
 func (wp *WailsPlatform) CreateWindow(options PlatformWindowOptions) PlatformWindow {
+	// wails3 alpha.91 defaults InitialPosition=WindowCentered, which
+	// IGNORES the X/Y options entirely and centres on the primary
+	// screen. To honour saved positions (and any explicit spec X/Y)
+	// we must set WindowXY when either coordinate is non-zero. The
+	// (0,0) case still centres — first-launch / no-state windows
+	// keep the platform-default placement.
+	initialPos := application.WindowCentered
+	if options.X != 0 || options.Y != 0 {
+		initialPos = application.WindowXY
+	}
 	wOpts := application.WebviewWindowOptions{
 		Name:                       options.Name,
 		Title:                      options.Title,
@@ -31,6 +41,7 @@ func (wp *WailsPlatform) CreateWindow(options PlatformWindowOptions) PlatformWin
 		JS:                         options.JS,
 		Width:                      options.Width,
 		Height:                     options.Height,
+		InitialPosition:            initialPos,
 		X:                          options.X,
 		Y:                          options.Y,
 		MinWidth:                   options.MinWidth,
