@@ -7,7 +7,7 @@ require (
 	dappco.re/go/webview v0.9.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/modelcontextprotocol/go-sdk v1.5.0
-	github.com/wailsapp/wails/v3 v3.0.0-alpha.83
+	github.com/wailsapp/wails/v3 v3.0.0-alpha.91
 	golang.org/x/text v0.36.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -50,10 +50,11 @@ require (
 	github.com/samber/lo v1.52.0 // indirect
 	github.com/sergi/go-diff v1.4.0 // indirect
 	github.com/skeema/knownhosts v1.3.2 // indirect
-	github.com/wailsapp/go-webview2 v1.0.23 // indirect
+	github.com/wailsapp/wails/webview2 v1.0.24 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	golang.org/x/crypto v0.50.0 // indirect
 	golang.org/x/exp v0.0.0-20260312153236-7ab1446f8b90 // indirect
+	golang.org/x/image v0.35.0 // indirect
 	golang.org/x/net v0.53.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )

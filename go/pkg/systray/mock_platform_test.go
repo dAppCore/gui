@@ -18,7 +18,7 @@ func TestMockPlatform_NewTray_Good(t *core.T) {
 	tray.SetTooltip("Core")
 	tray.SetLabel("Ready")
 	tray.SetMenu(p.NewMenu())
-	tray.AttachWindow(windowHandleStub{name: "panel"})
+	tray.AttachWindow(windowHandleStub{name: "panel"}, 0, 0)
 
 	core.AssertEqual(t, []byte{1, 2, 3}, mockTray.icon)
 	core.AssertEqual(t, []byte{4, 5, 6}, mockTray.templateIcon)
@@ -348,7 +348,7 @@ func TestMockPlatform_MockTray_AttachWindow_Good(t *core.T) {
 	core.AssertContains(t, ax7Variant, "good")
 	subject := new(exportedMockTray)
 	result := core.Try(func() any {
-		subject.AttachWindow(*new(WindowHandle))
+		subject.AttachWindow(*new(WindowHandle), 0, 0)
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
@@ -360,7 +360,7 @@ func TestMockPlatform_MockTray_AttachWindow_Bad(t *core.T) {
 	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(exportedMockTray)
 	result := core.Try(func() any {
-		subject.AttachWindow(*new(WindowHandle))
+		subject.AttachWindow(*new(WindowHandle), 0, 0)
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)
@@ -372,7 +372,7 @@ func TestMockPlatform_MockTray_AttachWindow_Ugly(t *core.T) {
 	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(exportedMockTray)
 	result := core.Try(func() any {
-		subject.AttachWindow(*new(WindowHandle))
+		subject.AttachWindow(*new(WindowHandle), 0, 0)
 		return "called"
 	})
 	core.AssertNotNil(t, result.Value)

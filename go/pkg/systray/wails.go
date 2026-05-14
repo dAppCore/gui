@@ -22,7 +22,7 @@ func NewWailsPlatform(app *application.App) *WailsPlatform {
 // NewTray creates a Wails system tray handle.
 // Use: tray := platform.NewTray()
 func (wp *WailsPlatform) NewTray() PlatformTray {
-	return &wailsTray{tray: wp.app.SystemTray.New()}
+	return &wailsTray{app: wp.app, tray: wp.app.SystemTray.New()}
 }
 
 // NewMenu creates a Wails tray menu handle.
@@ -32,6 +32,7 @@ func (wp *WailsPlatform) NewMenu() PlatformMenu {
 }
 
 type wailsTray struct {
+	app  *application.App
 	tray *application.SystemTray
 }
 
@@ -46,11 +47,24 @@ func (wt *wailsTray) SetMenu(menu PlatformMenu) {
 	}
 }
 
-func (wt *wailsTray) AttachWindow(w WindowHandle) {
-	_ = w
-	// Wails expects an application.Window implementation here, but the GUI
-	// package passes a lighter abstraction. Keep this as a no-op until the
-	// bridge is routed through a concrete Wails window wrapper.
+// AttachWindow anchors a previously-created window (by name) to the
+// tray. Looks the window up in wails's WindowManager and chains
+// WindowOffset(offsetY) when offsetY > 0. offsetX is currently unused —
+// wails3 alpha.91 exposes a single offset along the platform's natural
+// axis only.
+func (wt *wailsTray) AttachWindow(w WindowHandle, offsetX, offsetY int) {
+	_ = offsetX
+	if wt == nil || wt.tray == nil || wt.app == nil || w == nil {
+		return
+	}
+	window, ok := wt.app.Window.GetByName(w.Name())
+	if !ok || window == nil {
+		return
+	}
+	attached := wt.tray.AttachWindow(window)
+	if attached != nil && offsetY != 0 {
+		attached.WindowOffset(offsetY)
+	}
 }
 
 func (wt *wailsTray) ShowMessage(title, message string) resultFailure {

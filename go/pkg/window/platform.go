@@ -9,21 +9,27 @@ type Platform interface {
 
 // PlatformWindowOptions are the backend-specific options passed to CreateWindow.
 type PlatformWindowOptions struct {
-	Name                string
-	Title               string
-	URL                 string
-	HTML                string
-	JS                  string
-	Width, Height       int
-	X, Y                int
-	MinWidth, MinHeight int
-	MaxWidth, MaxHeight int
-	Frameless           bool
-	Hidden              bool
-	AlwaysOnTop         bool
-	BackgroundColour    [4]uint8 // RGBA
-	DisableResize       bool
-	EnableFileDrop      bool
+	Name                       string
+	Title                      string
+	URL                        string
+	HTML                       string
+	JS                         string
+	Width, Height              int
+	X, Y                       int
+	MinWidth, MinHeight        int
+	MaxWidth, MaxHeight        int
+	Frameless                  bool
+	Hidden                     bool
+	AlwaysOnTop                bool
+	BackgroundColour           [4]uint8 // RGBA
+	DisableResize              bool
+	EnableFileDrop             bool
+	HideOnEscape               bool
+	HideOnFocusLost            bool
+	DefaultContextMenuDisabled bool
+	Mac                        MacWindow
+	Linux                      LinuxWindow
+	Windows                    WindowsWindow
 }
 
 // PlatformWindow is a live window handle from the backend.

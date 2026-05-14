@@ -22,4 +22,7 @@ const (
 type Platform interface {
 	OnApplicationEvent(eventType EventType, handler func()) func()
 	OnOpenedWithFile(handler func(path string)) func()
+	// Quit asks the platform to terminate the application's event loop.
+	// Mirrors application.App.Quit(); safe to call from a UI-thread context.
+	Quit()
 }

@@ -36,6 +36,14 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 	})
 	s.cancels = append(s.cancels, cancel)
 
+	s.Core().Action("lifecycle.quit", func(_ context.Context, _ core.Options) core.Result {
+		if s.platform == nil {
+			return core.Result{Value: core.E("lifecycle.quit", "platform unavailable", nil), OK: false}
+		}
+		s.platform.Quit()
+		return core.Result{OK: true}
+	})
+
 	return core.Result{OK: true}
 }
 

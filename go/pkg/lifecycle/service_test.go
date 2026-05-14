@@ -14,6 +14,7 @@ type mockPlatform struct {
 	mu           sync.Mutex
 	handlers     map[EventType][]func()
 	fileHandlers []func(string)
+	quitCalls    int
 }
 
 func newMockPlatform() *mockPlatform {
@@ -48,6 +49,12 @@ func (m *mockPlatform) OnOpenedWithFile(handler func(string)) func() {
 			m.fileHandlers = append(m.fileHandlers[:idx], m.fileHandlers[idx+1:]...)
 		}
 	}
+}
+
+func (m *mockPlatform) Quit() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.quitCalls++
 }
 
 // simulateEvent fires all registered handlers for the given event type.

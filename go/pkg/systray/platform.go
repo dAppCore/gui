@@ -16,7 +16,7 @@ type PlatformTray interface {
 	SetTooltip(text string)
 	SetLabel(text string)
 	SetMenu(menu PlatformMenu)
-	AttachWindow(w WindowHandle)
+	AttachWindow(w WindowHandle, offsetX, offsetY int)
 	ShowMessage(title, message string) resultFailure
 }
 

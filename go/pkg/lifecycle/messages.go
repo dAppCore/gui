@@ -1,7 +1,7 @@
 // pkg/lifecycle/messages.go
 package lifecycle
 
-// All lifecycle events are broadcasts (Actions). There are no Queries or Tasks.
+// Lifecycle events are broadcasts (Actions); outgoing commands are Tasks.
 
 // ActionApplicationStarted fires when the platform application starts.
 // Distinct from core.ActionServiceStartup — this is platform-level readiness.
@@ -27,3 +27,7 @@ type ActionSystemSuspend struct{}
 
 // ActionSystemResume fires when the system resumes from suspend (Windows only: APMResume).
 type ActionSystemResume struct{}
+
+// TaskQuit asks the platform to quit the application. Consumers dispatch via
+// `c.Action("lifecycle.quit").Run(ctx, NewOptions(Option{Key: "task", Value: TaskQuit{}}))`.
+type TaskQuit struct{}

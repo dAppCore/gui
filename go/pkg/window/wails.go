@@ -7,6 +7,7 @@ import (
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/preload"
+	"github.com/leaanthony/u"
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/events"
 )
@@ -23,25 +24,44 @@ func NewWailsPlatform(app *application.App) *WailsPlatform {
 
 func (wp *WailsPlatform) CreateWindow(options PlatformWindowOptions) PlatformWindow {
 	wOpts := application.WebviewWindowOptions{
-		Name:             options.Name,
-		Title:            options.Title,
-		URL:              options.URL,
-		HTML:             options.HTML,
-		JS:               options.JS,
-		Width:            options.Width,
-		Height:           options.Height,
-		X:                options.X,
-		Y:                options.Y,
-		MinWidth:         options.MinWidth,
-		MinHeight:        options.MinHeight,
-		MaxWidth:         options.MaxWidth,
-		MaxHeight:        options.MaxHeight,
-		Frameless:        options.Frameless,
-		Hidden:           options.Hidden,
-		AlwaysOnTop:      options.AlwaysOnTop,
-		DisableResize:    options.DisableResize,
-		EnableFileDrop:   options.EnableFileDrop,
-		BackgroundColour: application.NewRGBA(options.BackgroundColour[0], options.BackgroundColour[1], options.BackgroundColour[2], options.BackgroundColour[3]),
+		Name:                       options.Name,
+		Title:                      options.Title,
+		URL:                        options.URL,
+		HTML:                       options.HTML,
+		JS:                         options.JS,
+		Width:                      options.Width,
+		Height:                     options.Height,
+		X:                          options.X,
+		Y:                          options.Y,
+		MinWidth:                   options.MinWidth,
+		MinHeight:                  options.MinHeight,
+		MaxWidth:                   options.MaxWidth,
+		MaxHeight:                  options.MaxHeight,
+		Frameless:                  options.Frameless,
+		Hidden:                     options.Hidden,
+		AlwaysOnTop:                options.AlwaysOnTop,
+		DisableResize:              options.DisableResize,
+		EnableFileDrop:             options.EnableFileDrop,
+		HideOnEscape:               options.HideOnEscape,
+		HideOnFocusLost:            options.HideOnFocusLost,
+		DefaultContextMenuDisabled: options.DefaultContextMenuDisabled,
+		BackgroundColour:           application.NewRGBA(options.BackgroundColour[0], options.BackgroundColour[1], options.BackgroundColour[2], options.BackgroundColour[3]),
+		Mac: application.MacWindow{
+			WindowLevel:             application.MacWindowLevel(options.Mac.WindowLevel),
+			CollectionBehavior:      application.MacWindowCollectionBehavior(options.Mac.CollectionBehavior),
+			InvisibleTitleBarHeight: options.Mac.InvisibleTitleBarHeight,
+		},
+		Linux: application.LinuxWindow{
+			Icon: options.Linux.Icon,
+		},
+		Windows: application.WindowsWindow{
+			HiddenOnTaskbar: options.Windows.HiddenOnTaskbar,
+		},
+	}
+	if options.Mac.DisableBackForwardNav {
+		wOpts.Mac.WebviewPreferences = application.MacWebviewPreferences{
+			AllowsBackForwardNavigationGestures: u.False,
+		}
 	}
 	var windowHandle *application.WebviewWindow
 	preloadHook := func(origin string, target preload.Webview) {

@@ -9,22 +9,65 @@ import (
 
 // Window is CoreGUI's own window descriptor — NOT a Wails type alias.
 type Window struct {
-	Name                string
-	Title               string
-	URL                 string
-	HTML                string
-	JS                  string
-	Width, Height       int
-	X, Y                int
-	MinWidth, MinHeight int
-	MaxWidth, MaxHeight int
-	Frameless           bool
-	Hidden              bool
-	AlwaysOnTop         bool
-	BackgroundColour    [4]uint8
-	DisableResize       bool
-	EnableFileDrop      bool
+	Name                       string
+	Title                      string
+	URL                        string
+	HTML                       string
+	JS                         string
+	Width, Height              int
+	X, Y                       int
+	MinWidth, MinHeight        int
+	MaxWidth, MaxHeight        int
+	Frameless                  bool
+	Hidden                     bool
+	AlwaysOnTop                bool
+	BackgroundColour           [4]uint8
+	DisableResize              bool
+	EnableFileDrop             bool
+	HideOnEscape               bool
+	HideOnFocusLost            bool
+	DefaultContextMenuDisabled bool
+	Mac                        MacWindow
+	Linux                      LinuxWindow
+	Windows                    WindowsWindow
 }
+
+// MacWindow holds macOS-specific window options. Zero values mean
+// platform default.
+type MacWindow struct {
+	WindowLevel             MacWindowLevel
+	CollectionBehavior      MacCollectionBehavior
+	InvisibleTitleBarHeight int
+	DisableBackForwardNav   bool
+}
+
+// LinuxWindow holds Linux-specific window options.
+type LinuxWindow struct {
+	Icon []byte
+}
+
+// WindowsWindow holds Windows-specific window options.
+type WindowsWindow struct {
+	HiddenOnTaskbar bool
+}
+
+// MacWindowLevel mirrors NSWindow.Level. Zero is platform default.
+type MacWindowLevel int
+
+const (
+	MacWindowLevelDefault  MacWindowLevel = 0
+	MacWindowLevelFloating MacWindowLevel = 3
+)
+
+// MacCollectionBehavior is a bitfield mirroring NSWindow.collectionBehavior.
+type MacCollectionBehavior uint64
+
+const (
+	MacCollectionBehaviorDefault             MacCollectionBehavior = 0
+	MacCollectionBehaviorCanJoinAllSpaces    MacCollectionBehavior = 1 << 0
+	MacCollectionBehaviorFullScreenAuxiliary MacCollectionBehavior = 1 << 8
+	MacCollectionBehaviorIgnoresCycle        MacCollectionBehavior = 1 << 6
+)
 
 // ToPlatformOptions converts a Window to PlatformWindowOptions for the backend.
 func (w *Window) ToPlatformOptions() PlatformWindowOptions {
@@ -36,6 +79,12 @@ func (w *Window) ToPlatformOptions() PlatformWindowOptions {
 		Frameless: w.Frameless, Hidden: w.Hidden,
 		AlwaysOnTop: w.AlwaysOnTop, BackgroundColour: w.BackgroundColour,
 		DisableResize: w.DisableResize, EnableFileDrop: w.EnableFileDrop,
+		HideOnEscape:               w.HideOnEscape,
+		HideOnFocusLost:            w.HideOnFocusLost,
+		DefaultContextMenuDisabled: w.DefaultContextMenuDisabled,
+		Mac:                        w.Mac,
+		Linux:                      w.Linux,
+		Windows:                    w.Windows,
 	}
 }
 

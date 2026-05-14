@@ -29,6 +29,10 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		t := taskSetTrayIconFromOptions(opts)
 		return core.Result{Value: nil, OK: true}.New(s.manager.SetIcon(t.Data))
 	})
+	s.Core().Action("systray.set_template_icon", func(_ context.Context, opts core.Options) core.Result {
+		t := taskSetTrayTemplateIconFromOptions(opts)
+		return core.Result{Value: nil, OK: true}.New(s.manager.SetTemplateIcon(t.Data))
+	})
 	s.Core().Action("systray.set_tooltip", func(_ context.Context, opts core.Options) core.Result {
 		t := taskSetTrayTooltipFromOptions(opts)
 		return core.Result{Value: nil, OK: true}.New(s.manager.SetTooltip(t.Tooltip))
@@ -89,7 +93,32 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		// Panel hide — deferred (requires WindowHandle integration)
 		return core.Result{OK: true}
 	})
+	s.Core().Action("systray.attach_window", func(_ context.Context, opts core.Options) core.Result {
+		t := taskAttachWindowFromOptions(opts)
+		if t.Name == "" {
+			return core.Result{Value: core.E("systray.attach_window", "window name required", nil), OK: false}
+		}
+		if s.manager == nil {
+			return core.Result{Value: core.E("systray.attach_window", "tray manager unavailable", nil), OK: false}
+		}
+		return core.Result{Value: nil, OK: true}.New(s.manager.AttachWindow(namedWindowHandle{name: t.Name}, t.OffsetX, t.OffsetY))
+	})
 	return core.Result{OK: true}
+}
+
+// namedWindowHandle is the minimal WindowHandle implementation the
+// platform uses to look up the underlying wails window by name.
+type namedWindowHandle struct{ name string }
+
+func (h namedWindowHandle) Name() string { return h.name }
+
+func taskAttachWindowFromOptions(opts core.Options) TaskAttachWindow {
+	if task := opts.Get("task"); task.OK {
+		if t, ok := task.Value.(TaskAttachWindow); ok {
+			return t
+		}
+	}
+	return TaskAttachWindow{}
 }
 
 func (s *Service) applyConfig(configData map[string]any) {
@@ -155,6 +184,25 @@ func taskSetTrayIconFromOptions(opts core.Options) TaskSetTrayIcon {
 		return decoded
 	}
 	return TaskSetTrayIcon{}
+}
+
+func taskSetTrayTemplateIconFromOptions(opts core.Options) TaskSetTrayTemplateIcon {
+	if task := opts.Get("task"); task.OK {
+		switch value := task.Value.(type) {
+		case TaskSetTrayTemplateIcon:
+			return value
+		case map[string]any:
+			var decoded TaskSetTrayTemplateIcon
+			if result := core.JSONUnmarshalString(core.JSONMarshalString(value), &decoded); result.OK {
+				return decoded
+			}
+		}
+	}
+	var decoded TaskSetTrayTemplateIcon
+	if result := core.JSONUnmarshalString(core.JSONMarshalString(optsToMap(opts)), &decoded); result.OK {
+		return decoded
+	}
+	return TaskSetTrayTemplateIcon{}
 }
 
 func taskSetTrayTooltipFromOptions(opts core.Options) TaskSetTrayTooltip {

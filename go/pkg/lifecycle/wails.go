@@ -81,3 +81,12 @@ func mapAppEvent(t EventType) (events.ApplicationEventType, bool) {
 	}
 	return platformMapAppEvent(t)
 }
+
+// Quit terminates the underlying Wails event loop. Safe to call from any
+// goroutine; Wails marshals the call onto the main thread internally.
+func (wp *WailsPlatform) Quit() {
+	if wp == nil || wp.app == nil {
+		return
+	}
+	wp.app.Quit()
+}
