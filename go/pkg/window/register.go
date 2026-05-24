@@ -11,6 +11,7 @@ func Register(p Platform) func(*core.Core) core.Result {
 			ServiceRuntime: core.NewServiceRuntime[Options](c, Options{}),
 			platform:       p,
 			manager:        NewManager(p),
+			specs:          make(map[string]registeredSpec),
 		}, OK: true}
 	}
 }

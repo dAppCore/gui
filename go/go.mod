@@ -6,6 +6,7 @@ require (
 	dappco.re/go/config v0.3.0
 	dappco.re/go/webview v0.9.0
 	github.com/gorilla/websocket v1.5.3
+	github.com/leaanthony/u v1.1.1
 	github.com/modelcontextprotocol/go-sdk v1.4.1
 	github.com/wailsapp/wails/v3 v3.0.0-alpha.91
 	golang.org/x/text v0.36.0
@@ -16,6 +17,7 @@ require (
 	dappco.re/go/io v0.9.0 // indirect
 	dappco.re/go/log v0.9.0 // indirect
 	dario.cat/mergo v1.0.2 // indirect
+	git.sr.ht/~jackmordaunt/go-toast/v2 v2.0.3 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProtonMail/go-crypto v1.3.0 // indirect
 	github.com/adrg/xdg v0.5.3 // indirect
@@ -38,7 +40,6 @@ require (
 	github.com/kevinburke/ssh_config v1.4.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/leaanthony/go-ansi-parser v1.6.1 // indirect
-	github.com/leaanthony/u v1.1.1 // indirect
 	github.com/lmittmann/tint v1.1.2 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
@@ -52,12 +53,13 @@ require (
 	github.com/wailsapp/wails/webview2 v1.0.24 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	golang.org/x/crypto v0.50.0 // indirect
+	golang.org/x/image v0.35.0 // indirect
 	golang.org/x/net v0.53.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
 
 require (
-	dappco.re/go v0.9.0
+	dappco.re/go v0.10.3
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect

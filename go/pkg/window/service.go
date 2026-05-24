@@ -2,6 +2,7 @@ package window
 
 import (
 	"context"
+	"sync"
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/internal/coreutil"
@@ -14,6 +15,21 @@ type Service struct {
 	*core.ServiceRuntime[Options]
 	manager  *Manager
 	platform Platform
+	// specs stores registered Window descriptors keyed by name.
+	// taskSetVisibility consults this map on first show to mount the
+	// platform window lazily via taskOpenWindow, rather than requiring
+	// every window to be explicitly opened before its visibility can
+	// be set. Populated via the window.register action.
+	specs   map[string]registeredSpec
+	specsMu sync.RWMutex
+}
+
+// registeredSpec pairs a Window descriptor with its WindowKind so the
+// service can route first-show through the right platform path (webview
+// mount vs systray show).
+type registeredSpec struct {
+	Window *Window
+	Kind   WindowKind
 }
 
 func (s *Service) OnStartup(_ context.Context) core.Result {
@@ -132,6 +148,13 @@ func (s *Service) registerTaskActions() {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskCloseWindow(t.Name))
+	})
+	c.Action("window.register", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskRegisterWindow]("window.register", opts)
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		return core.Result{Value: nil, OK: true}.New(s.taskRegisterWindow(t.Window, t.Kind))
 	})
 	c.Action("window.set_position", func(_ context.Context, opts core.Options) core.Result {
 		t, err := taskFromOptions[TaskSetPosition]("window.set_position", opts)
@@ -662,9 +685,73 @@ func (s *Service) taskSetBackgroundColour(name string, red, green, blue, alpha u
 func (s *Service) taskSetVisibility(name string, visible bool) resultFailure {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return core.E("window.taskSetVisibility", "window not found: "+name, nil)
+		// First-show path: the window isn't mounted yet. Hiding a
+		// never-shown window is a no-op success; showing requires a
+		// registered spec to know what to mount.
+		if !visible {
+			return nil
+		}
+		s.specsMu.RLock()
+		spec, hasSpec := s.specs[name]
+		s.specsMu.RUnlock()
+		if !hasSpec {
+			return core.E("window.taskSetVisibility", "unregistered window: "+name, nil)
+		}
+		switch spec.Kind {
+		case KindTray:
+			// Tray windows are realised by pkg/systray, not by this
+			// service. Visibility on a tray-classified name is accepted
+			// without WebView mount — the systray service owns the
+			// actual icon lifecycle.
+			return nil
+		case KindWebview:
+			// Reuse taskOpenWindow for the full create + register flow
+			// (buildWindowSpec → prepareWindowSpec → manager.Create).
+			openResult := s.taskOpenWindow(TaskOpenWindow{Window: spec.Window})
+			if !openResult.OK {
+				if e, isErr := openResult.Value.(error); isErr {
+					return e
+				}
+				return core.E("window.taskSetVisibility", "failed to open registered window: "+name, nil)
+			}
+			refreshed, hit := s.manager.Get(name)
+			if !hit {
+				return core.E("window.taskSetVisibility", "window mount completed but manager has no entry for "+name, nil)
+			}
+			pw = refreshed
+		default:
+			return core.E("window.taskSetVisibility", "unknown WindowKind for "+name, nil)
+		}
 	}
 	pw.SetVisibility(visible)
+	return nil
+}
+
+// taskRegisterWindow stores a Window descriptor in the service registry.
+// Called by consumers at boot to declare windows that may be opened
+// lazily by taskSetVisibility. Validates the WindowKind discriminator:
+// KindWebview requires non-empty URL; KindTray requires empty URL.
+// Duplicate names rejected — consumers re-register at every boot, so
+// any duplicate indicates a coding error.
+func (s *Service) taskRegisterWindow(w *Window, kind WindowKind) resultFailure {
+	if w == nil {
+		return core.E("window.taskRegisterWindow", "nil Window", nil)
+	}
+	if w.Name == "" {
+		return core.E("window.taskRegisterWindow", "Window.Name is required", nil)
+	}
+	if kind == KindWebview && w.URL == "" {
+		return core.E("window.taskRegisterWindow", "KindWebview requires non-empty URL", nil)
+	}
+	if kind == KindTray && w.URL != "" {
+		return core.E("window.taskRegisterWindow", "KindTray must have empty URL", nil)
+	}
+	s.specsMu.Lock()
+	defer s.specsMu.Unlock()
+	if _, exists := s.specs[w.Name]; exists {
+		return core.E("window.taskRegisterWindow", "window already registered: "+w.Name, nil)
+	}
+	s.specs[w.Name] = registeredSpec{Window: w, Kind: kind}
 	return nil
 }
 

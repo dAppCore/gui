@@ -17,6 +17,7 @@ func newTestWindowService(t *core.T) (*Service, *core.Core) {
 				ServiceRuntime: core.NewServiceRuntime[Options](c, Options{}),
 				platform:       platform,
 				manager:        NewManagerWithDir(platform, configDir),
+				specs:          make(map[string]registeredSpec),
 			}, OK: true}
 		}),
 		core.WithServiceLock(),
@@ -24,6 +25,29 @@ func newTestWindowService(t *core.T) (*Service, *core.Core) {
 	core.RequireTrue(t, c.ServiceStartup(context.Background(), nil).OK)
 	svc := core.MustServiceFor[*Service](c, "window")
 	return svc, c
+}
+
+// newTestWindowServiceWithPlatform exposes the mockPlatform so lifecycle
+// tests can count CreateWindow invocations directly (verifying
+// create-once on repeat-show etc.).
+func newTestWindowServiceWithPlatform(t *core.T) (*Service, *core.Core, *mockPlatform) {
+	t.Helper()
+	platform := newMockPlatform()
+	configDir := t.TempDir()
+	c := core.New(
+		core.WithService(func(c *core.Core) core.Result {
+			return core.Result{Value: &Service{
+				ServiceRuntime: core.NewServiceRuntime[Options](c, Options{}),
+				platform:       platform,
+				manager:        NewManagerWithDir(platform, configDir),
+				specs:          make(map[string]registeredSpec),
+			}, OK: true}
+		}),
+		core.WithServiceLock(),
+	)
+	core.RequireTrue(t, c.ServiceStartup(context.Background(), nil).OK)
+	svc := core.MustServiceFor[*Service](c, "window")
+	return svc, c, platform
 }
 
 func taskRun(c *core.Core, name string, task any) core.Result {
@@ -947,4 +971,112 @@ func TestService_Service_Manager_Ugly(t *core.T) {
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
+}
+
+// --- TaskRegisterWindow + lazy-mount taskSetVisibility ---
+// Coverage for plans/code/core/gui/RFC.window-lifecycle.md §7.
+
+func TestTaskSetVisibility_FirstShowCreatesWebView_Good(t *core.T) {
+	svc, c, platform := newTestWindowServiceWithPlatform(t)
+	core.RequireTrue(t, len(platform.windows) == 0, "platform starts empty")
+
+	core.RequireTrue(t, taskRun(c, "window.register", TaskRegisterWindow{
+		Window: &Window{Name: "lazy", URL: "/lazy.html"},
+		Kind:   KindWebview,
+	}).OK)
+
+	r := taskRun(c, "window.set_visibility", TaskSetVisibility{Name: "lazy", Visible: true})
+	core.RequireTrue(t, r.OK, "set_visibility(true) on registered-but-unmounted window must succeed")
+
+	core.AssertEqual(t, 1, len(platform.windows), "exactly one platform window created on first show")
+	pw, ok := svc.Manager().Get("lazy")
+	core.RequireTrue(t, ok, "manager tracks the lazily-mounted window")
+	core.AssertTrue(t, pw.(*mockWindow).visible)
+}
+
+func TestTaskSetVisibility_RepeatShowReusesWebView_Good(t *core.T) {
+	_, c, platform := newTestWindowServiceWithPlatform(t)
+	core.RequireTrue(t, taskRun(c, "window.register", TaskRegisterWindow{
+		Window: &Window{Name: "reused", URL: "/reused.html"},
+		Kind:   KindWebview,
+	}).OK)
+
+	core.RequireTrue(t, taskRun(c, "window.set_visibility", TaskSetVisibility{Name: "reused", Visible: true}).OK)
+	core.RequireTrue(t, taskRun(c, "window.set_visibility", TaskSetVisibility{Name: "reused", Visible: true}).OK)
+	core.RequireTrue(t, taskRun(c, "window.set_visibility", TaskSetVisibility{Name: "reused", Visible: true}).OK)
+
+	core.AssertEqual(t, 1, len(platform.windows), "repeat show must NOT re-create the platform window")
+}
+
+func TestTaskSetVisibility_HideThenShowReusesWebView_Good(t *core.T) {
+	svc, c, platform := newTestWindowServiceWithPlatform(t)
+	core.RequireTrue(t, taskRun(c, "window.register", TaskRegisterWindow{
+		Window: &Window{Name: "hide_show", URL: "/hide_show.html"},
+		Kind:   KindWebview,
+	}).OK)
+
+	core.RequireTrue(t, taskRun(c, "window.set_visibility", TaskSetVisibility{Name: "hide_show", Visible: true}).OK)
+	core.RequireTrue(t, taskRun(c, "window.set_visibility", TaskSetVisibility{Name: "hide_show", Visible: false}).OK)
+	core.RequireTrue(t, taskRun(c, "window.set_visibility", TaskSetVisibility{Name: "hide_show", Visible: true}).OK)
+
+	core.AssertEqual(t, 1, len(platform.windows), "hide does NOT unload; subsequent show reuses the mounted window")
+	pw, ok := svc.Manager().Get("hide_show")
+	core.RequireTrue(t, ok)
+	core.AssertTrue(t, pw.(*mockWindow).visible)
+}
+
+func TestTaskSetVisibility_TrayKindSkipsWebView_Good(t *core.T) {
+	_, c, platform := newTestWindowServiceWithPlatform(t)
+	core.RequireTrue(t, taskRun(c, "window.register", TaskRegisterWindow{
+		Window: &Window{Name: "tray"}, // KindTray must have empty URL
+		Kind:   KindTray,
+	}).OK)
+
+	r := taskRun(c, "window.set_visibility", TaskSetVisibility{Name: "tray", Visible: true})
+	core.RequireTrue(t, r.OK, "set_visibility on KindTray succeeds without WebView mount")
+
+	core.AssertEqual(t, 0, len(platform.windows), "KindTray must NOT trigger CreateWindow on the WebView platform")
+}
+
+func TestTaskSetVisibility_UnregisteredName_Bad(t *core.T) {
+	_, c := newTestWindowService(t)
+	r := taskRun(c, "window.set_visibility", TaskSetVisibility{Name: "ghost", Visible: true})
+	core.AssertFalse(t, r.OK, "set_visibility(true) on unregistered name must fail")
+}
+
+func TestTaskSetVisibility_HideUnshownIsNoOp_Good(t *core.T) {
+	_, c := newTestWindowService(t)
+	r := taskRun(c, "window.set_visibility", TaskSetVisibility{Name: "unknown", Visible: false})
+	core.AssertTrue(t, r.OK, "hiding a never-shown / unregistered window is a no-op success")
+}
+
+func TestTaskRegisterWindow_DuplicateNameRejected_Bad(t *core.T) {
+	_, c := newTestWindowService(t)
+	core.RequireTrue(t, taskRun(c, "window.register", TaskRegisterWindow{
+		Window: &Window{Name: "dup", URL: "/one.html"},
+		Kind:   KindWebview,
+	}).OK)
+	r := taskRun(c, "window.register", TaskRegisterWindow{
+		Window: &Window{Name: "dup", URL: "/two.html"},
+		Kind:   KindWebview,
+	})
+	core.AssertFalse(t, r.OK, "second register with same name must fail")
+}
+
+func TestTaskRegisterWindow_WebViewKindRequiresURL_Bad(t *core.T) {
+	_, c := newTestWindowService(t)
+	r := taskRun(c, "window.register", TaskRegisterWindow{
+		Window: &Window{Name: "no_url"},
+		Kind:   KindWebview,
+	})
+	core.AssertFalse(t, r.OK, "KindWebview with empty URL must be rejected at register time")
+}
+
+func TestTaskRegisterWindow_TrayKindRejectsURL_Bad(t *core.T) {
+	_, c := newTestWindowService(t)
+	r := taskRun(c, "window.register", TaskRegisterWindow{
+		Window: &Window{Name: "tray_with_url", URL: "/should-not-be-here.html"},
+		Kind:   KindTray,
+	})
+	core.AssertFalse(t, r.OK, "KindTray with non-empty URL must be rejected at register time")
 }

@@ -71,6 +71,29 @@ type TaskSetVisibility struct {
 	Visible bool
 }
 
+// WindowKind classifies how a window is realised by the platform.
+// Registered windows declare their kind up-front so taskSetVisibility
+// knows whether to lazily mount a WebView (KindWebview) or skip to the
+// systray path (KindTray) on first show.
+type WindowKind int
+
+const (
+	KindWebview WindowKind = iota // standard HTML window — Wails WebviewWindow
+	KindTray                      // systray icon — no WebView lifecycle
+)
+
+// TaskRegisterWindow stores a Window descriptor in the service registry
+// without opening it. taskSetVisibility consults the registry on first
+// show, creating the platform window lazily via the existing taskOpenWindow
+// path. Issued via the action bus as `window.register`.
+//
+// Validation enforces the discriminator: KindWebview requires non-empty
+// URL, KindTray requires empty URL. Duplicate names rejected.
+type TaskRegisterWindow struct {
+	Window *Window
+	Kind   WindowKind
+}
+
 // CloseBehavior governs what happens when the OS / user requests a
 // window close (window-control button, Cmd+W, Alt+F4). One of:
 //
