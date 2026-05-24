@@ -23,6 +23,9 @@ func NewWailsPlatform(app *application.App) *WailsPlatform {
 }
 
 func (wp *WailsPlatform) CreateWindow(options PlatformWindowOptions) PlatformWindow {
+	if wp == nil || wp.app == nil || wp.app.Window == nil {
+		return nil
+	}
 	// wails3 alpha.91 defaults InitialPosition=WindowCentered, which
 	// IGNORES the X/Y options entirely and centres on the primary
 	// screen. To honour saved positions (and any explicit spec X/Y)
@@ -292,6 +295,9 @@ func looksLikeLegacyDisplayPreload(raw string) bool {
 }
 
 func (wp *WailsPlatform) GetWindows() []PlatformWindow {
+	if wp == nil || wp.app == nil || wp.app.Window == nil {
+		return nil
+	}
 	all := wp.app.Window.GetAll()
 	out := make([]PlatformWindow, 0, len(all))
 	for _, w := range all {

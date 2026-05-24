@@ -2,8 +2,8 @@ package display
 
 import (
 	"context"
-	"html"    // Note: AX-6 — html.EscapeString is the structural HTML escape primitive; no core wrapper
-	"io"      // Note: AX-6 — io.ReadAll is the structural body-drain primitive
+	"html" // Note: AX-6 — html.EscapeString is the structural HTML escape primitive; no core wrapper
+	"io"   // Note: AX-6 — io.ReadAll is the structural body-drain primitive
 	"net/http"
 	"net/url" // Note: AX-6 — url.Values and ParseQuery are structural URL primitives; core has parse/escape wrappers only
 	"sort"    // Note: AX-6 — slice sorting is structural; core has no sort wrapper
@@ -25,10 +25,30 @@ type assetMiddlewareHandler struct {
 }
 
 func (h assetMiddlewareHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	rawURL := r.URL.String()
+	// alpha.91 middleware may pass nil request — defend each field before
+	// destructuring. Body read uses LimitReader with explicit error
+	// handling so a malformed body surfaces as 400 instead of silently
+	// proceeding with truncated bytes.
+	rawURL := ""
+	method := ""
+	headers := http.Header{}
+	var requestBody []byte
+	if r != nil && r.URL != nil {
+		rawURL = r.URL.String()
+		method = r.Method
+		headers = r.Header
+		if r.Body != nil {
+			read, err := io.ReadAll(io.LimitReader(r.Body, maxSchemeRequestBodyBytes+1))
+			if err != nil {
+				w.WriteHeader(400)
+				_, _ = w.Write([]byte("core route body unreadable"))
+				return
+			}
+			requestBody = read
+		}
+	}
 	if core.HasPrefix(core.Lower(core.Trim(rawURL)), "core://") {
-		reqBody, _ := io.ReadAll(http.MaxBytesReader(w, r.Body, maxSchemeRequestBodyBytes))
-		result := h.service.ResolveSchemeRequest(context.Background(), rawURL, r.Method, r.Header, reqBody)
+		result := h.service.ResolveSchemeRequest(context.Background(), rawURL, method, headers, requestBody)
 		if !result.OK {
 			w.WriteHeader(404)
 			_, _ = w.Write([]byte("core route not found"))

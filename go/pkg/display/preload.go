@@ -1133,7 +1133,7 @@ func (s *Service) injectElectronShim() string {
       return createMenu(template);
     }
     static setApplicationMenu(menu) {
-      return invokeBridge('menu.setAppMenu', { task: { items: normalizeMenuTemplate(menu?.template ?? menu?.items ?? menu) } });
+      return invokeBridge('menu.set_app_menu', { task: { items: normalizeMenuTemplate(menu?.template ?? menu?.items ?? menu) } });
     }
   }
   class Tray {
@@ -1147,25 +1147,25 @@ func (s *Service) injectElectronShim() string {
       this.image = image;
       const data = toBase64(image);
       if (data) {
-        return invokeBridge('systray.setIcon', { task: { data } });
+        return invokeBridge('systray.set_icon', { task: { data } });
       }
       return Promise.resolve(undefined);
     }
     setToolTip(tooltip) {
       this.tooltip = String(tooltip ?? "");
-      return invokeBridge('systray.setTooltip', { task: { tooltip: this.tooltip } });
+      return invokeBridge('systray.set_tooltip', { task: { tooltip: this.tooltip } });
     }
     setTitle(label) {
       this.title = String(label ?? "");
-      return invokeBridge('systray.setLabel', { task: { label: this.title } });
+      return invokeBridge('systray.set_label', { task: { label: this.title } });
     }
     setContextMenu(menu) {
       const normalized = normalizeTrayTemplate(menu?.template ?? menu?.items ?? menu);
       this.menu = normalized;
-      return invokeBridge('systray.setMenu', { task: { items: normalized } });
+      return invokeBridge('systray.set_menu', { task: { items: normalized } });
     }
     showMessage(title, message) {
-      return invokeBridge('systray.showMessage', { task: { title, message } });
+      return invokeBridge('systray.show_message', { task: { title, message } });
     }
     destroy() {}
   }
@@ -1217,11 +1217,11 @@ func (s *Service) injectElectronShim() string {
       invokeBridge('window.open', { task: { window: windowSpec } });
     }
     loadURL(url) { return invokeBridge('webview.navigate', { name: this.id, url }); }
-    show() { return invokeBridge('window.setVisibility', { name: this.id, visible: true }); }
-    hide() { return invokeBridge('window.setVisibility', { name: this.id, visible: false }); }
+    show() { return invokeBridge('window.set_visibility', { task: { name: this.id, visible: true } }); }
+    hide() { return invokeBridge('window.set_visibility', { task: { name: this.id, visible: false } }); }
     close() { return invokeBridge('window.close', { name: this.id }); }
-    openDevTools() { return invokeBridge('webview.devtoolsOpen', { task: { window: this.id } }); }
-    closeDevTools() { return invokeBridge('webview.devtoolsClose', { task: { window: this.id } }); }
+    openDevTools() { return invokeBridge('webview.devtools_open', { task: { window: this.id } }); }
+    closeDevTools() { return invokeBridge('webview.devtools_close', { task: { window: this.id } }); }
   }
   globalThis.Notification = globalThis.Notification || CoreNotification;
   globalThis.electron = { ipcRenderer, shell, clipboard, dialog, Menu, Tray, BrowserWindow, Notification: CoreNotification };
@@ -1237,7 +1237,7 @@ func (s *Service) injectBackgroundServiceShims() string {
   }
   globalThis.navigator.serviceWorker = globalThis.navigator.serviceWorker || {
     register(scriptURL, options) {
-      return invokeBridge('core.background.serviceWorker.register', { scriptURL, options });
+      return invokeBridge('core.background.service_worker.register', { scriptURL, options });
     },
     ready: Promise.resolve({ active: true })
   };

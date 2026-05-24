@@ -22,12 +22,21 @@ func NewWailsPlatform(app *application.App) *WailsPlatform {
 // NewTray creates a Wails system tray handle.
 // Use: tray := platform.NewTray()
 func (wp *WailsPlatform) NewTray() PlatformTray {
+	// alpha.91 may surface a nil SystemTray on platforms without one;
+	// guard before construction. Keep `app:` populated because
+	// AttachWindow below needs wt.app.Window.GetByName.
+	if wp == nil || wp.app == nil || wp.app.SystemTray == nil {
+		return nil
+	}
 	return &wailsTray{app: wp.app, tray: wp.app.SystemTray.New()}
 }
 
 // NewMenu creates a Wails tray menu handle.
 // Use: menu := platform.NewMenu()
 func (wp *WailsPlatform) NewMenu() PlatformMenu {
+	if wp == nil || wp.app == nil {
+		return &wailsTrayMenu{menu: application.NewMenu()}
+	}
 	return &wailsTrayMenu{menu: wp.app.NewMenu()}
 }
 
