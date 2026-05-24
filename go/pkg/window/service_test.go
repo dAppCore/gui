@@ -3,6 +3,7 @@ package window
 import (
 	"context"
 	"sync"
+	"time"
 
 	core "dappco.re/go"
 )
@@ -691,6 +692,110 @@ func TestTaskExecJS_Bad(t *core.T) {
 	_, c := newTestWindowService(t)
 	r := taskRun(c, "window.exec_js", TaskExecJS{Name: "nonexistent", JS: "alert(1)"})
 	core.AssertFalse(t, r.OK)
+}
+
+// --- TaskEvalJS — eval-with-result via Wails Events bus ---
+
+func TestTaskEvalJS_Good(t *core.T) {
+	svc, c := newTestWindowService(t)
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+
+	// MockPlatform doesn't fire the event itself; simulate the
+	// JS-side reply by reading the executed wrapped-script, picking
+	// out the reqId via regex, then calling CompleteEval. The real
+	// flow on Wails fires this from app.Event.On.
+	resultCh := make(chan EvalJSResult, 1)
+	errCh := make(chan error, 1)
+	go func() {
+		res, err := svc.taskEvalJS("test", "1 + 1", 0)
+		if err != nil {
+			errCh <- err
+			return
+		}
+		resultCh <- res
+	}()
+
+	// Spin until ExecJS lands the wrapped body, then dig out the reqId.
+	var reqID string
+	for i := 0; i < 50 && reqID == ""; i++ {
+		time.Sleep(2 * time.Millisecond)
+		pw, ok := svc.Manager().Get("test")
+		if !ok {
+			continue
+		}
+		mw := pw.(*mockWindow)
+		if len(mw.execJSCalls) > 0 {
+			reqID = extractEvalReqID(mw.execJSCalls[len(mw.execJSCalls)-1])
+		}
+	}
+	core.RequireTrue(t, reqID != "")
+
+	core.AssertTrue(t, svc.CompleteEval(reqID, float64(2), ""))
+
+	select {
+	case res := <-resultCh:
+		core.AssertEqual(t, reqID, res.ReqID)
+		core.AssertEqual(t, float64(2), res.Result)
+		core.AssertEqual(t, "", res.Err)
+	case err := <-errCh:
+		core.AssertTrue(t, err == nil)
+	case <-time.After(time.Second):
+		core.AssertTrue(t, false)
+	}
+}
+
+func TestTaskEvalJS_Bad(t *core.T) {
+	svc, _ := newTestWindowService(t)
+	// Window not open — platform-level error returned, no pending channel left dangling.
+	_, err := svc.taskEvalJS("nonexistent", "1", 0)
+	core.AssertTrue(t, err != nil)
+}
+
+func TestTaskEvalJS_Ugly(t *core.T) {
+	svc, c := newTestWindowService(t)
+	taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("test")}})
+
+	// No CompleteEval call — taskEvalJS should time out cleanly.
+	_, err := svc.taskEvalJS("test", "never", 50*time.Millisecond)
+	core.AssertTrue(t, err != nil)
+	core.AssertContains(t, err.Error(), "timeout")
+}
+
+func TestCompleteEval_UnknownReqID(t *core.T) {
+	svc, _ := newTestWindowService(t)
+	// No pending eval — CompleteEval returns false rather than panicking.
+	core.AssertFalse(t, svc.CompleteEval("ghost-1", "x", ""))
+}
+
+// extractEvalReqID pulls the reqId literal out of the wrapped IIFE
+// script the eval task fires. The wrap shape is
+// `var __id="<reqID>";` so a simple substring grab works without
+// pulling in a regex dep.
+func extractEvalReqID(js string) string {
+	const marker = "var __id="
+	idx := -1
+	for i := 0; i+len(marker) <= len(js); i++ {
+		if js[i:i+len(marker)] == marker {
+			idx = i + len(marker)
+			break
+		}
+	}
+	if idx == -1 {
+		return ""
+	}
+	// Skip the opening quote, scan until the closing quote.
+	if idx >= len(js) || js[idx] != '"' {
+		return ""
+	}
+	idx++
+	end := idx
+	for end < len(js) && js[end] != '"' {
+		end++
+	}
+	if end >= len(js) {
+		return ""
+	}
+	return js[idx:end]
 }
 
 // --- State toggles ---

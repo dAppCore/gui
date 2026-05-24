@@ -22,6 +22,38 @@ func NewWailsPlatform(app *application.App) *WailsPlatform {
 	return &WailsPlatform{app: app}
 }
 
+// BindEvalReply satisfies EvalReplyBinder. Registers an
+// app.Event.On listener for EvalJSEventName so JS-side replies
+// emitted via the @wailsio/runtime Events bus reach the Service's
+// CompleteEval router.
+//
+// Wails delivers the JS payload as ev.Data — for our
+// {reqId, result, err} shape it deserialises to map[string]any.
+// Extract the three fields and forward; unknown shapes are
+// silently ignored so a third-party event with the same name
+// can't poison the eval channel.
+func (wp *WailsPlatform) BindEvalReply(cb func(reqID string, result any, errStr string)) {
+	if wp == nil || wp.app == nil || cb == nil {
+		return
+	}
+	wp.app.Event.On(EvalJSEventName, func(ev *application.CustomEvent) {
+		if ev == nil {
+			return
+		}
+		data, ok := ev.Data.(map[string]any)
+		if !ok {
+			return
+		}
+		reqID, _ := data["reqId"].(string)
+		errStr, _ := data["err"].(string)
+		result := data["result"]
+		if reqID == "" {
+			return
+		}
+		cb(reqID, result, errStr)
+	})
+}
+
 func (wp *WailsPlatform) CreateWindow(options PlatformWindowOptions) PlatformWindow {
 	if wp == nil || wp.app == nil || wp.app.Window == nil {
 		return nil

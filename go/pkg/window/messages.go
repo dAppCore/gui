@@ -1,5 +1,7 @@
 package window
 
+import "time"
+
 type WindowInfo struct {
 	Name      string  `json:"name"`
 	Title     string  `json:"title"`
@@ -216,6 +218,39 @@ type TaskSetHTML struct {
 type TaskExecJS struct {
 	Name string
 	JS   string
+}
+
+// TaskEvalJS evaluates JS in the named window and waits for the
+// result via Wails' public Events bus. The handler wraps the JS
+// body in an IIFE that imports @wailsio/runtime and emits
+// "lthn:eval-reply" with {reqId, result/error}; the service's
+// listener completes a pending channel keyed by reqId and the
+// caller gets the value back synchronously.
+//
+// Replaces the older HTTP-fetchback path that timed out silently
+// against the bridge HTTP server because the WebView's cross-
+// origin POSTs failed the bridge's DNS-rebind defence. Uses
+// Wails' built-in Events bus so no cgo + no CORS + no script-
+// message-handler vendoring.
+//
+// Timeout defaults to 5 seconds when zero. Result and Err are
+// mutually exclusive in the response — non-empty Err carries the
+// JS-side exception string or the timeout sentinel.
+type TaskEvalJS struct {
+	Name    string
+	JS      string
+	Timeout time.Duration
+}
+
+// EvalJSResult is the return wrapper for TaskEvalJS. The action
+// returns this struct in core.Result.Value on success and on
+// JS-side errors (the OK flag distinguishes); only platform-
+// level failures (window not found, listener not registered)
+// land as core.Fail.
+type EvalJSResult struct {
+	ReqID  string `json:"reqId"`
+	Result any    `json:"result,omitempty"`
+	Err    string `json:"err,omitempty"`
 }
 
 // --- State toggles ---

@@ -3,6 +3,7 @@ package window
 import (
 	"context"
 	"sync"
+	"time"
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/internal/coreutil"
@@ -22,6 +23,16 @@ type Service struct {
 	// be set. Populated via the window.register action.
 	specs   map[string]registeredSpec
 	specsMu sync.RWMutex
+	// pendingEvals routes JS-side replies (delivered via Wails'
+	// Events bus on "lthn:eval-reply") back to the taskEvalJS caller
+	// blocked on a channel. Keyed by reqId.
+	pendingEvals   map[string]chan EvalJSResult
+	pendingEvalsMu sync.Mutex
+	// nextEvalSeq is the monotonic counter behind generated reqIds.
+	// Combined with a per-service prefix so two Service instances in
+	// the same process can't collide.
+	nextEvalSeq uint64
+	evalPrefix  string
 }
 
 // registeredSpec pairs a Window descriptor with its WindowKind so the
@@ -44,7 +55,29 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 
 	s.Core().RegisterQuery(s.handleQuery)
 	s.registerTaskActions()
+	// Bind the JS-side eval reply listener if the platform supports
+	// it. WailsPlatform wires app.Event.On(EvalJSEventName) →
+	// CompleteEval; MockPlatform is a no-op and tests call
+	// CompleteEval directly.
+	if binder, ok := s.platform.(EvalReplyBinder); ok && binder != nil {
+		binder.BindEvalReply(func(reqID string, result any, errStr string) {
+			s.CompleteEval(reqID, result, errStr)
+		})
+	}
 	return core.Result{OK: true}
+}
+
+// EvalReplyBinder is the optional extension a Platform implements
+// to route Wails custom-event replies back to the Service's eval
+// machinery. The Service calls BindEvalReply once at OnStartup;
+// the platform invokes the callback every time a "lthn:eval-reply"
+// event arrives on the Wails Events bus.
+//
+// MockPlatform deliberately does NOT implement this so tests can
+// drive Service.CompleteEval directly without an event-bus
+// dependency.
+type EvalReplyBinder interface {
+	BindEvalReply(cb func(reqID string, result any, errStr string))
 }
 
 func (s *Service) applyConfig(configData map[string]any) {
@@ -375,6 +408,17 @@ func (s *Service) registerTaskActions() {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskExecJS(t.Name, t.JS))
+	})
+	c.Action("window.eval_js", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskEvalJS]("window.eval_js", opts)
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		res, evalErr := s.taskEvalJS(t.Name, t.JS, t.Timeout)
+		if evalErr != nil {
+			return core.Result{Value: evalErr, OK: false}
+		}
+		return core.Result{Value: res, OK: true}
 	})
 	c.Action("window.toggle_fullscreen", func(_ context.Context, opts core.Options) core.Result {
 		t, err := taskFromOptions[TaskToggleFullscreen]("window.toggle_fullscreen", opts)
@@ -975,6 +1019,150 @@ func (s *Service) taskExecJS(name, js string) resultFailure {
 	}
 	pw.ExecJS(js)
 	return nil
+}
+
+// EvalJSEventName is the Wails event name the JS-side wrap emits a
+// reply on. Exported so the WailsPlatform binder can register the
+// app.Event.On listener with the same literal the wrap uses.
+const EvalJSEventName = "lthn:eval-reply"
+
+// taskEvalJS fires the JS body in the named window, then waits for
+// a "lthn:eval-reply" event to land via CompleteEval. The JS body
+// is wrapped in an IIFE that imports @wailsio/runtime and emits
+// the reply keyed by reqId; CompleteEval routes that reply back to
+// the channel this method blocks on.
+//
+// Returns EvalJSResult on platform success (whether the JS itself
+// succeeded or raised — Err carries the JS-side exception in the
+// latter case). Returns an error only on platform-level failure
+// (window missing, timeout).
+func (s *Service) taskEvalJS(name, js string, timeout time.Duration) (EvalJSResult, error) {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return EvalJSResult{}, core.E("window.taskEvalJS", "window not found: "+name, nil)
+	}
+	if timeout <= 0 {
+		timeout = 5 * time.Second
+	}
+	reqID := s.nextEvalID()
+	ch := make(chan EvalJSResult, 1)
+	s.pendingEvalsMu.Lock()
+	if s.pendingEvals == nil {
+		s.pendingEvals = make(map[string]chan EvalJSResult)
+	}
+	s.pendingEvals[reqID] = ch
+	s.pendingEvalsMu.Unlock()
+	defer func() {
+		s.pendingEvalsMu.Lock()
+		delete(s.pendingEvals, reqID)
+		s.pendingEvalsMu.Unlock()
+	}()
+
+	pw.ExecJS(wrapEvalScript(reqID, js))
+
+	select {
+	case res := <-ch:
+		return res, nil
+	case <-time.After(timeout):
+		return EvalJSResult{}, core.E("window.taskEvalJS", "eval timeout: "+name, nil)
+	}
+}
+
+// CompleteEval routes a JS-side reply from the Wails event listener
+// back to the taskEvalJS caller. WailsPlatform's app.Event.On
+// listener calls this with the {reqId, result, err} payload it
+// receives on EvalJSEventName.
+//
+// Safe to call from any goroutine. Returns true when the reqId
+// matched a pending caller; false when the reply arrived after
+// timeout (or for an unknown id — the latter only happens if a
+// third party emits the event, which would be an injection bug).
+func (s *Service) CompleteEval(reqID string, result any, errStr string) bool {
+	s.pendingEvalsMu.Lock()
+	ch, ok := s.pendingEvals[reqID]
+	s.pendingEvalsMu.Unlock()
+	if !ok {
+		return false
+	}
+	select {
+	case ch <- EvalJSResult{ReqID: reqID, Result: result, Err: errStr}:
+		return true
+	default:
+		// Buffer full — caller already took a reply; ignore.
+		return false
+	}
+}
+
+// nextEvalID returns a monotonic per-service reqId. The prefix
+// keeps two Service instances in the same process from colliding;
+// it's lazily initialised on first use so tests that build a
+// Service via NewService don't pay the syscall cost up front.
+func (s *Service) nextEvalID() string {
+	s.pendingEvalsMu.Lock()
+	if s.evalPrefix == "" {
+		r := core.RandomString(8)
+		if r.OK {
+			s.evalPrefix = r.Value.(string)
+		} else {
+			s.evalPrefix = "ev"
+		}
+	}
+	s.nextEvalSeq++
+	seq := s.nextEvalSeq
+	prefix := s.evalPrefix
+	s.pendingEvalsMu.Unlock()
+	return prefix + "-" + core.Sprintf("%d", seq)
+}
+
+// wrapEvalScript renders the IIFE template that evaluates body,
+// awaits a Promise return, catches exceptions, and emits the result
+// on the Wails Events bus keyed by reqId. Body is injected as a
+// JSON string literal so it can contain any source verbatim.
+//
+// The wrap chooses between Wails' top-level event emitter
+// (window.wails.Events.Emit) and the runtime module import so it
+// works whether the runtime is exposed via the global or only the
+// ES module. Falls back to console.error if neither is available so
+// pre-runtime evals surface in DevTools instead of vanishing.
+func wrapEvalScript(reqID, body string) string {
+	const tpl = `(function(){
+  var __id=%s;
+  var __post=function(payload){
+    try {
+      if (window.wails && window.wails.Events && typeof window.wails.Events.Emit === "function") {
+        window.wails.Events.Emit({ name: %q, data: payload });
+        return;
+      }
+    } catch(e){}
+    try {
+      import("@wailsio/runtime").then(function(rt){
+        rt.Events.Emit(new rt.WailsEvent(%q, payload));
+      }).catch(function(e){ try { console.error("lthn-eval emit:", e); } catch(_){} });
+    } catch(e){ try { console.error("lthn-eval emit:", e); } catch(_){} }
+  };
+  try {
+    var __r = (0,eval)(%s);
+    if (__r && typeof __r.then === "function") {
+      __r.then(
+        function(v){ __post({ reqId: __id, result: v }); },
+        function(e){ __post({ reqId: __id, err: String(e) + (e && e.stack ? "\n"+e.stack : "") }); }
+      );
+    } else {
+      __post({ reqId: __id, result: __r });
+    }
+  } catch(e) {
+    __post({ reqId: __id, err: String(e) + (e && e.stack ? "\n"+e.stack : "") });
+  }
+})();`
+	return core.Sprintf(tpl, jsString(reqID), EvalJSEventName, EvalJSEventName, jsString(body))
+}
+
+// jsString produces a JSON-encoded JS string literal — escapes
+// quotes, newlines, and unicode so the body can be safely embedded
+// in the IIFE template above. Equivalent to JSON.stringify(str)
+// on the JS side.
+func jsString(s string) string {
+	return core.JSONMarshalString(s)
 }
 
 // --- State toggles ---
