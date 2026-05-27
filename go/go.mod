@@ -8,7 +8,7 @@ require (
 	github.com/gorilla/websocket v1.5.3
 	github.com/leaanthony/u v1.1.1
 	github.com/modelcontextprotocol/go-sdk v1.4.1
-	github.com/wailsapp/wails/v3 v3.0.0-alpha.95
+	github.com/wailsapp/wails/v3 v3.0.0-alpha.96
 	golang.org/x/text v0.37.0
 	gopkg.in/yaml.v3 v3.0.1
 )
