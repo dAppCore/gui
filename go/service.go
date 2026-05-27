@@ -116,6 +116,16 @@ type GuiConfig struct {
 	// snapshots) persist here.
 	WindowLayoutPath string
 
+	// Tray declares the system tray surface (icon, tooltip, label,
+	// menu items + popover window attachment). Nil = no tray
+	// configured; the systray sub-service is still registered but
+	// the consumer drives its config imperatively. Click routing
+	// stays in the consumer: when a tray menu item is clicked, an
+	// ActionTrayMenuItemClicked message lands on the action bus
+	// carrying the item's ActionID — register a handler with
+	// core.RegisterAction to dispatch.
+	Tray *TrayConfig
+
 	// ShouldQuit returns false to veto an OS/user quit request. Nil
 	// means "always allow quit" (wails default).
 	ShouldQuit func() bool
@@ -391,6 +401,12 @@ func (s *Service) start(ctx context.Context) core.Result {
 			return rr
 		}
 	}
+
+	// Tray config — apply declared icon / tooltip / label / menu /
+	// popover attachment. Click routing stays caller-owned; the
+	// consumer registers a handler on ActionTrayMenuItemClicked and
+	// switches on ActionID.
+	applyTrayConfig(c, cfg.Tray)
 
 	return core.Ok(nil)
 }
