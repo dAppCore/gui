@@ -3,27 +3,224 @@
 // Package gui is the canonical entry-point for the core/gui repo.
 // One service per repo — `c.Service("gui")` returns this.
 //
-//	c, _ := core.New(core.WithName("gui", gui.NewService(gui.GuiConfig{})))
+// The Service owns the Wails application lifecycle for consumers that
+// want a desktop runtime. Consumers register sibling domain services
+// on Core first, then register gui.Service last with options. The
+// Service's OnStartup constructs the wails App from those options and
+// registers every core/gui sub-service (window, systray, lifecycle,
+// menu, dialog, contextmenu, keybinding, dock, environment, screen,
+// clipboard, events, browser, notification, webview, display, chat,
+// container, p2p). Run() blocks on the wails event loop until the user
+// or OS quits.
+//
+//	cfg := gui.GuiConfig{
+//	    Name:        "lthn",
+//	    Description: "Lethean Desktop",
+//	    Icon:        appIconBytes,
+//	    Assets:      gui.AssetOptions{Handler: ginEngine, Middleware: ginMW},
+//	    Mac:         gui.MacOptions{ActivationPolicy: gui.ActivationPolicyAccessory},
+//	    Bindings:    []any{runnerSvc, serverSvc, /* …domain services… */},
+//	}
+//	c, _ := core.New( /* domain services */, core.WithName("gui", gui.NewService(cfg)))
+//	if r := c.Service("gui").Value.(*gui.Service).Run(); !r.OK { … }
 
 package gui
 
 import (
 	"context"
+	"net/http"
 
 	core "dappco.re/go"
+	"dappco.re/go/gui/pkg/browser"
+	"dappco.re/go/gui/pkg/chat"
+	"dappco.re/go/gui/pkg/clipboard"
+	"dappco.re/go/gui/pkg/container"
+	"dappco.re/go/gui/pkg/contextmenu"
+	"dappco.re/go/gui/pkg/dialog"
+	"dappco.re/go/gui/pkg/display"
+	"dappco.re/go/gui/pkg/dock"
+	"dappco.re/go/gui/pkg/environment"
+	"dappco.re/go/gui/pkg/events"
+	"dappco.re/go/gui/pkg/keybinding"
+	"dappco.re/go/gui/pkg/lifecycle"
+	"dappco.re/go/gui/pkg/menu"
+	"dappco.re/go/gui/pkg/notification"
+	"dappco.re/go/gui/pkg/p2p"
+	"dappco.re/go/gui/pkg/screen"
+	"dappco.re/go/gui/pkg/systray"
+	"dappco.re/go/gui/pkg/webview"
+	"dappco.re/go/gui/pkg/window"
+	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
-// GuiConfig configures the gui service.
-//
-// Usage example: `cfg := gui.GuiConfig{}`
-type GuiConfig struct{}
+// GuiConfig configures the gui service. All fields are optional except
+// when a consumer needs the corresponding wails surface — leaving e.g.
+// Mac zeroed yields the wails defaults.
+type GuiConfig struct {
+	// Name is the application name shown in the default about box and
+	// platform UI. Default: "core-gui".
+	Name string
 
-// Service is the registerable handle for the gui repo.
+	// Description is the application description shown by the OS.
+	Description string
+
+	// Icon is the default application icon (PNG bytes). Empty leaves
+	// the wails default in place.
+	Icon []byte
+
+	// Assets binds the WebView's HTTP handler + middleware chain.
+	// The handler is the consumer's HTTP server (Gin, std mux, etc.);
+	// the middleware lets the consumer carve out `/wails/*` and other
+	// platform-internal routes before the user handler sees them.
+	Assets AssetOptions
+
+	// Mac carries macOS-specific application options (activation
+	// policy, terminate-after-last-window behaviour).
+	Mac MacOptions
+
+	// Windows carries Windows-specific application options
+	// (disable-quit-on-last-window, WebView2 feature flags).
+	Windows WindowsOptions
+
+	// SingleInstance enables OS-level single-instance enforcement.
+	// Nil disables single-instance — every launch creates a new
+	// process.
+	SingleInstance *SingleInstanceOptions
+
+	// Bindings are domain services that the consumer wants exposed as
+	// Wails IPC bindings. Each entry is constructed via gui.Bind[T];
+	// bindings land at the service's package path in the frontend.
+	Bindings []Binding
+
+	// ShouldQuit returns false to veto an OS/user quit request. Nil
+	// means "always allow quit" (wails default).
+	ShouldQuit func() bool
+
+	// OnShutdown fires after the user accepts quit, before the wails
+	// event loop tears down. Drain in-flight work here.
+	OnShutdown func()
+
+	// PostShutdown fires after the wails event loop has fully stopped.
+	// Last chance to close anything that held a ref into the loop.
+	PostShutdown func()
+
+	// OnPanic captures uncaught panics from Go-side service methods
+	// (binding adapters etc.). Renamed from wails's PanicHandler so
+	// every Options callback uses the On* prefix uniformly.
+	OnPanic func(PanicDetails)
+
+	// Chat / Container / P2P — sub-service config overrides forwarded
+	// to chat.Register / container.NewService / p2p.NewService. Blank
+	// fields keep package defaults. Mirrors BootstrapConfig.
+	Chat      ChatConfig
+	Container ContainerConfig
+	P2P       P2PConfig
+}
+
+// AssetOptions binds the WebView's HTTP handler + middleware chain.
+// The handler serves the consumer's frontend (embedded vite dist,
+// reverse-proxied dev server, etc.); the middleware lets the consumer
+// carve out platform-internal routes (e.g. /wails/*) before the user
+// handler sees them.
+type AssetOptions struct {
+	Handler    http.Handler
+	Middleware MiddlewareFunc
+}
+
+// MiddlewareFunc wraps a downstream HTTP handler. Mirrors the stdlib
+// idiom — implementations call next.ServeHTTP for requests they don't
+// intercept.
+type MiddlewareFunc func(next http.Handler) http.Handler
+
+// MacOptions carries macOS-specific application behaviour.
+type MacOptions struct {
+	// ApplicationShouldTerminateAfterLastWindowClosed: when false, the
+	// process survives the last window closing. Required for menu-bar
+	// / accessory apps where the tray IS the lifetime anchor.
+	ApplicationShouldTerminateAfterLastWindowClosed bool
+	// ActivationPolicy controls the macOS app activation kind
+	// (Regular, Accessory, Prohibited). See the ActivationPolicy
+	// constants.
+	ActivationPolicy ActivationPolicy
+}
+
+// WindowsOptions carries Windows-specific application behaviour.
+type WindowsOptions struct {
+	// DisableQuitOnLastWindowClosed: when true, closing the last
+	// window keeps the process alive. Required for tray-anchored
+	// lifetime, mirroring Mac.ApplicationShouldTerminateAfterLastWindowClosed.
+	DisableQuitOnLastWindowClosed bool
+	// EnabledFeatures opts into named WebView2 features
+	// (e.g. "msWebView2EnableDraggableRegions" for --wails-draggable
+	// CSS support).
+	EnabledFeatures []string
+}
+
+// ActivationPolicy is the macOS activation kind. Mirrors the wails
+// enum but stays string-typed for read-as-docs call sites.
+type ActivationPolicy int
+
+const (
+	// ActivationPolicyRegular: standard app with Dock icon + Cmd-Tab
+	// presence. wails default.
+	ActivationPolicyRegular ActivationPolicy = iota
+	// ActivationPolicyAccessory: menu-bar / tray-only, no Dock icon,
+	// no Cmd-Tab entry.
+	ActivationPolicyAccessory
+	// ActivationPolicyProhibited: hidden from Dock + Cmd-Tab + Mission
+	// Control. Background-only.
+	ActivationPolicyProhibited
+)
+
+// SingleInstanceOptions enables OS-level single-instance enforcement.
+// A second launch hands off URL/file/args to the first instance via
+// OnSecondInstanceLaunch and then exits.
+type SingleInstanceOptions struct {
+	// UniqueID is the OS-level instance key. macOS uses the Bundle
+	// Identifier; Windows uses a mutex name. Pick a stable value per
+	// app/build channel so OS-level flock behaviour is correct.
+	UniqueID string
+	// EncryptionKey enables AES-256-GCM on the inter-instance channel.
+	// Without it second-instance payloads MUST be treated as
+	// untrusted. Per-install random key recommended.
+	EncryptionKey [32]byte
+	// AdditionalData is forwarded to OnSecondInstanceLaunch alongside
+	// the launch args. Useful for app/version stamping so the receiver
+	// can audit which build sent the payload.
+	AdditionalData map[string]string
+	// OnSecondInstanceLaunch fires in the FIRST instance when a second
+	// launch attempt occurs. The data carries the second instance's
+	// args/workingDir/additionalData; the first instance typically
+	// re-broadcasts onto its own bus + brings a window to the front.
+	OnSecondInstanceLaunch func(SecondInstanceData)
+}
+
+// SecondInstanceData carries the second-launch context delivered to
+// OnSecondInstanceLaunch on the first running instance.
+type SecondInstanceData struct {
+	Args           []string
+	WorkingDir     string
+	AdditionalData map[string]string
+}
+
+// PanicDetails describes an uncaught panic from a Go-side binding or
+// lifecycle hook. Mirrors wails's shape minus the time field (the
+// consumer's logger stamps its own time).
+type PanicDetails struct {
+	Error          error
+	StackTrace     string
+	FullStackTrace string
+}
+
+// Service is the registerable handle for the gui repo. It owns the
+// wails *application.App, the registered sub-service set (window /
+// systray / menu / ...), and the Run loop.
 //
 // Usage example: `svc := core.MustServiceFor[*gui.Service](c, "gui")`
 type Service struct {
 	*core.ServiceRuntime[GuiConfig]
 	registrations core.Once
+	app           *application.App
 }
 
 // NewService returns the factory for c.Service() registration.
@@ -45,20 +242,158 @@ func Register(c *core.Core) core.Result {
 	return NewService(GuiConfig{})(c)
 }
 
-// OnStartup implements core.Startable. Idempotent via core.Once.
+// App returns the constructed wails *application.App for callers that
+// need direct access (legacy bridges, native integrations not yet
+// surfaced via core/gui sub-services). Returns nil before OnStartup
+// runs.
+//
+// Usage example: `app := svc.App()`
+func (s *Service) App() *application.App {
+	if s == nil {
+		return nil
+	}
+	return s.app
+}
+
+// OnStartup implements core.Startable. Builds the wails application
+// from GuiConfig, registers every core/gui sub-service on the Core,
+// and starts each sub-service's OnStartup. Idempotent via core.Once.
+//
+// OnStartup does NOT block on the event loop — Run() is the blocking
+// call. This split lets consumers register additional post-app actions
+// (tray menu config, key bindings, window pre-create) between
+// OnStartup and Run.
 //
 // Usage example: `r := svc.OnStartup(ctx)`
-func (s *Service) OnStartup(context.Context) core.Result {
+func (s *Service) OnStartup(ctx context.Context) core.Result {
 	if s == nil {
 		return core.Ok(nil)
 	}
-	s.registrations.Do(func() {})
+	var startErr core.Result
+	s.registrations.Do(func() {
+		startErr = s.start(ctx)
+	})
+	return startErr
+}
+
+// Run blocks on the wails event loop until the user or OS quits. Must
+// be called after OnStartup. Returns the wails app.Run() error wrapped
+// as core.Result.
+//
+// Usage example: `r := svc.Run()`
+func (s *Service) Run() core.Result {
+	if s == nil || s.app == nil {
+		return core.Fail(core.E("gui.Service.Run", "OnStartup has not been called", nil))
+	}
+	if err := s.app.Run(); err != nil {
+		return core.Fail(err)
+	}
 	return core.Ok(nil)
 }
 
-// OnShutdown implements core.Stoppable.
+// OnShutdown implements core.Stoppable. The Service does not actively
+// stop the wails event loop — Wails' own quit flow handles that. This
+// hook is here for symmetry + future expansion.
 //
 // Usage example: `r := svc.OnShutdown(ctx)`
 func (s *Service) OnShutdown(context.Context) core.Result {
 	return core.Ok(nil)
+}
+
+// start builds the wails App + registers sub-services. Called once
+// inside OnStartup's core.Once.Do.
+func (s *Service) start(ctx context.Context) core.Result {
+	cfg := s.Options()
+	s.app = application.New(buildWailsOptions(cfg))
+
+	// Register sub-services on the Core, mirroring BootstrapWithConfig
+	// but applied post-hoc to the existing Core (since the App was
+	// just built, we need to attach factories that take it as a ref).
+	registrations := []struct {
+		name    string
+		factory func(*core.Core) core.Result
+	}{
+		{"display", display.Register(s.app)},
+		{"window", window.Register(window.NewWailsPlatform(s.app))},
+		{"webview", webview.Register()},
+		{"menu", menu.Register(menu.NewWailsPlatform(s.app))},
+		{"systray", systray.Register(systray.NewWailsPlatform(s.app))},
+		{"browser", browser.Register(browser.NewWailsPlatform(s.app))},
+		{"notification", notification.Register(notification.NewWailsPlatform(s.app))},
+		{"lifecycle", lifecycle.Register(lifecycle.NewWailsPlatform(s.app))},
+		{"dialog", dialog.Register(dialog.NewWailsPlatform(s.app))},
+		{"contextmenu", contextmenu.Register(contextmenu.NewWailsPlatform(s.app))},
+		{"keybinding", keybinding.Register(keybinding.NewWailsPlatform(s.app))},
+		{"dock", dock.Register(dock.NewWailsPlatform(s.app))},
+		{"environment", environment.Register(environment.NewWailsPlatform(s.app))},
+		{"screen", screen.Register(screen.NewWailsPlatform(s.app))},
+		{"clipboard", clipboard.Register(clipboard.NewWailsPlatform(s.app))},
+		{"events", events.Register(events.NewWailsPlatform(s.app))},
+		{"chat", chat.Register(applyChatConfig(cfg.Chat)...)},
+		{"container", containerFactory(cfg.Container)},
+		{"p2p", p2pFactory(cfg.P2P)},
+	}
+	c := s.Core()
+	for _, r := range registrations {
+		if rr := registerSubservice(ctx, c, r.name, r.factory); !rr.OK {
+			return rr
+		}
+	}
+	return core.Ok(nil)
+}
+
+// registerSubservice mirrors lthn/desktop's registerStartedCoreGUIService
+// helper — runs the factory, registers the result on the Core, and
+// fires OnStartup on the returned service if it implements Startable.
+// Idempotent: returns OK if the service is already registered.
+func registerSubservice(ctx context.Context, c *core.Core, name string, factory func(*core.Core) core.Result) core.Result {
+	if c.Service(name).OK {
+		return core.Ok(nil)
+	}
+	r := factory(c)
+	if !r.OK {
+		return core.Fail(core.E("gui.Service.start", "register "+name+" failed", r.Value.(error)))
+	}
+	if r.Value != nil {
+		if rr := c.RegisterService(name, r.Value); !rr.OK {
+			return rr
+		}
+	}
+	svc := c.Service(name)
+	if !svc.OK {
+		return core.Ok(nil)
+	}
+	startable, ok := svc.Value.(core.Startable)
+	if !ok {
+		return core.Ok(nil)
+	}
+	if sr := startable.OnStartup(ctx); !sr.OK {
+		return core.Fail(core.E("gui.Service.start", "startup "+name+" failed", sr.Value.(error)))
+	}
+	return core.Ok(nil)
+}
+
+// containerFactory returns the registration factory for the container
+// sub-service with config-driven options.
+func containerFactory(cfg ContainerConfig) func(*core.Core) core.Result {
+	return func(c *core.Core) core.Result {
+		return core.Result{Value: container.NewService(c, container.TIMOptions{
+			Image:   cfg.Image,
+			Name:    cfg.Name,
+			DataDir: cfg.DataDir,
+			Command: cfg.Command,
+		}), OK: true}
+	}
+}
+
+// p2pFactory returns the registration factory for the p2p sub-service
+// with config-driven options.
+func p2pFactory(cfg P2PConfig) func(*core.Core) core.Result {
+	return func(c *core.Core) core.Result {
+		return core.Result{Value: p2p.NewService(c, p2p.Options{
+			ListenAddr: cfg.ListenAddr,
+			PeerAddrs:  cfg.PeerAddrs,
+			NodeID:     cfg.NodeID,
+		}), OK: true}
+	}
 }
