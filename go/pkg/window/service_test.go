@@ -238,12 +238,22 @@ func TestFileDrop_Good(t *core.T) {
 	pw, ok := svc.Manager().Get("drop-test")
 	core.RequireTrue(t, ok)
 	mw := pw.(*mockWindow)
-	mw.emitFileDrop([]string{"/tmp/file1.txt", "/tmp/file2.txt"}, "upload-zone")
+	mw.emitFileDrop([]string{"/tmp/file1.txt", "/tmp/file2.txt"}, &DropTarget{
+		ID: "upload-zone", X: 120, Y: 240,
+	})
 
 	mu.Lock()
 	core.AssertEqual(t, "drop-test", dropped.Name)
 	core.AssertEqual(t, []string{"/tmp/file1.txt", "/tmp/file2.txt"}, dropped.Paths)
 	core.AssertEqual(t, "upload-zone", dropped.TargetID)
+	core.AssertNotNil(t, dropped.Target)
+	if dropped.Target == nil {
+		mu.Unlock()
+		return
+	}
+	core.AssertEqual(t, "upload-zone", dropped.Target.ID)
+	core.AssertEqual(t, 120, dropped.Target.X)
+	core.AssertEqual(t, 240, dropped.Target.Y)
 	mu.Unlock()
 }
 

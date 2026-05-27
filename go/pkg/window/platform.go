@@ -95,7 +95,7 @@ type PlatformWindow interface {
 	SetCloseBehavior(behavior CloseBehavior)
 
 	// File drop
-	OnFileDrop(handler func(paths []string, targetID string))
+	OnFileDrop(handler func(paths []string, target *DropTarget))
 }
 
 // WindowEvent is emitted by the backend for window state changes.

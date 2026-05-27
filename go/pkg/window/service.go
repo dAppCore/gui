@@ -680,12 +680,16 @@ func (s *Service) trackWindow(pw PlatformWindow) {
 			coreutil.DispatchAction(s.Core(), "window.ready", ActionWindowRuntimeReady{Name: e.Name})
 		}
 	})
-	pw.OnFileDrop(func(paths []string, targetID string) {
-		coreutil.DispatchAction(s.Core(), "window.fileDrop", ActionFilesDropped{
-			Name:     pw.Name(),
-			Paths:    paths,
-			TargetID: targetID,
-		})
+	pw.OnFileDrop(func(paths []string, target *DropTarget) {
+		event := ActionFilesDropped{
+			Name:   pw.Name(),
+			Paths:  paths,
+			Target: target,
+		}
+		if target != nil {
+			event.TargetID = target.ID
+		}
+		coreutil.DispatchAction(s.Core(), "window.fileDrop", event)
 	})
 }
 

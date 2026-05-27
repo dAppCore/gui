@@ -46,7 +46,7 @@ type mockWindow struct {
 	devToolsOpen           bool
 	execJSCalls            []string
 	eventHandlers          []func(WindowEvent)
-	fileDropHandlers       []func(paths []string, targetID string)
+	fileDropHandlers       []func(paths []string, target *DropTarget)
 	closeBehavior          CloseBehavior
 }
 
@@ -104,7 +104,7 @@ func (w *mockWindow) CloseDevTools()                       { w.devToolsOpen = fa
 func (w *mockWindow) OnWindowEvent(handler func(WindowEvent)) {
 	w.eventHandlers = append(w.eventHandlers, handler)
 }
-func (w *mockWindow) OnFileDrop(handler func(paths []string, targetID string)) {
+func (w *mockWindow) OnFileDrop(handler func(paths []string, target *DropTarget)) {
 	w.fileDropHandlers = append(w.fileDropHandlers, handler)
 }
 
@@ -119,10 +119,12 @@ func (w *mockWindow) emit(e WindowEvent) {
 	}
 }
 
-// emitFileDrop simulates a file drop on the window.
-func (w *mockWindow) emitFileDrop(paths []string, targetID string) {
+// emitFileDrop simulates a file drop on the window. Pass nil target
+// for legacy zero-context drops, or a DropTarget with the element
+// metadata the consumer expects to receive.
+func (w *mockWindow) emitFileDrop(paths []string, target *DropTarget) {
 	for _, h := range w.fileDropHandlers {
-		h(paths, targetID)
+		h(paths, target)
 	}
 }
 

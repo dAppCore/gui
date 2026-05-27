@@ -49,7 +49,7 @@ type MockWindow struct {
 	devToolsOpen           bool
 	execJSCalls            []string
 	eventHandlers          []func(WindowEvent)
-	fileDropHandlers       []func(paths []string, targetID string)
+	fileDropHandlers       []func(paths []string, target *DropTarget)
 	closeBehavior          CloseBehavior
 }
 
@@ -107,7 +107,7 @@ func (w *MockWindow) CloseDevTools()                       { w.devToolsOpen = fa
 func (w *MockWindow) OnWindowEvent(handler func(WindowEvent)) {
 	w.eventHandlers = append(w.eventHandlers, handler)
 }
-func (w *MockWindow) OnFileDrop(handler func(paths []string, targetID string)) {
+func (w *MockWindow) OnFileDrop(handler func(paths []string, target *DropTarget)) {
 	w.fileDropHandlers = append(w.fileDropHandlers, handler)
 }
 

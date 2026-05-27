@@ -482,15 +482,21 @@ func (ww *wailsWindow) OnWindowEvent(handler func(event WindowEvent)) {
 	}
 }
 
-func (ww *wailsWindow) OnFileDrop(handler func(paths []string, targetID string)) {
+func (ww *wailsWindow) OnFileDrop(handler func(paths []string, target *DropTarget)) {
 	ww.w.OnWindowEvent(events.Common.WindowFilesDropped, func(event *application.WindowEvent) {
 		files := event.Context().DroppedFiles()
 		details := event.Context().DropTargetDetails()
-		targetID := ""
+		var target *DropTarget
 		if details != nil {
-			targetID = details.ElementID
+			target = &DropTarget{
+				ID:         details.ElementID,
+				X:          details.X,
+				Y:          details.Y,
+				ClassList:  details.ClassList,
+				Attributes: details.Attributes,
+			}
 		}
-		handler(files, targetID)
+		handler(files, target)
 	})
 }
 

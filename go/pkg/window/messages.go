@@ -207,10 +207,29 @@ type ActionWindowUnfullscreened struct{ Name string }
 // frontend has mounted).
 type ActionWindowRuntimeReady struct{ Name string }
 
+// DropTarget describes the HTML element that received an OS-level
+// file drop. Populated from Wails's DropTargetDetails when the drop
+// landed on an element carrying the data-file-drop-target attribute;
+// nil when the drop landed on a non-target region (e.g. window
+// chrome).
+type DropTarget struct {
+	ID         string            `json:"id,omitempty"`
+	X          int               `json:"x"`
+	Y          int               `json:"y"`
+	ClassList  []string          `json:"classList,omitempty"`
+	Attributes map[string]string `json:"attributes,omitempty"`
+}
+
 type ActionFilesDropped struct {
-	Name     string   `json:"name"` // window name
-	Paths    []string `json:"paths"`
-	TargetID string   `json:"targetId,omitempty"`
+	Name  string      `json:"name"` // window name
+	Paths []string    `json:"paths"`
+	// Target is the element that received the drop (nil when the drop
+	// landed outside any data-file-drop-target region).
+	Target *DropTarget `json:"target,omitempty"`
+	// TargetID mirrors Target.ID for back-compat. Empty when Target
+	// is nil. Retained so existing consumers keep working without a
+	// nil check; new consumers should read Target for full context.
+	TargetID string `json:"targetId,omitempty"`
 }
 
 // --- Zoom ---
