@@ -54,6 +54,24 @@ func (wp *WailsPlatform) BindEvalReply(cb func(reqID string, result any, errStr 
 	})
 }
 
+// BindCustomEvent satisfies CustomEventBinder. Registers an
+// app.Event.On listener for an arbitrary event name. The callback
+// receives ev.Data verbatim — consumers are responsible for the
+// type-assertion to whatever shape their JS-side emit produced.
+// Nil callback / nil app / empty name are guarded as no-ops so
+// boot-time wiring against an unconfigured platform stays quiet.
+func (wp *WailsPlatform) BindCustomEvent(name string, cb func(data any)) {
+	if wp == nil || wp.app == nil || cb == nil || name == "" {
+		return
+	}
+	wp.app.Event.On(name, func(ev *application.CustomEvent) {
+		if ev == nil {
+			return
+		}
+		cb(ev.Data)
+	})
+}
+
 func (wp *WailsPlatform) CreateWindow(options PlatformWindowOptions) PlatformWindow {
 	if wp == nil || wp.app == nil || wp.app.Window == nil {
 		return nil

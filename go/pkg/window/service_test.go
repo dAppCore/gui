@@ -28,6 +28,29 @@ func newTestWindowService(t *core.T) (*Service, *core.Core) {
 	return svc, c
 }
 
+// newTestWindowServiceWithCustomPlatform lets a test swap in any
+// Platform impl — used by SubscribeEvent tests to inject a
+// recordingBinder that implements CustomEventBinder while
+// mockPlatform deliberately does not.
+func newTestWindowServiceWithCustomPlatform(t *core.T, platform Platform) (*Service, *core.Core) {
+	t.Helper()
+	configDir := t.TempDir()
+	c := core.New(
+		core.WithService(func(c *core.Core) core.Result {
+			return core.Result{Value: &Service{
+				ServiceRuntime: core.NewServiceRuntime[Options](c, Options{}),
+				platform:       platform,
+				manager:        NewManagerWithDir(platform, configDir),
+				specs:          make(map[string]registeredSpec),
+			}, OK: true}
+		}),
+		core.WithServiceLock(),
+	)
+	core.RequireTrue(t, c.ServiceStartup(context.Background(), nil).OK)
+	svc := core.MustServiceFor[*Service](c, "window")
+	return svc, c
+}
+
 // newTestWindowServiceWithPlatform exposes the mockPlatform so lifecycle
 // tests can count CreateWindow invocations directly (verifying
 // create-once on repeat-show etc.).
@@ -1184,4 +1207,40 @@ func TestTaskRegisterWindow_TrayKindRejectsURL_Bad(t *core.T) {
 		Kind:   KindTray,
 	})
 	core.AssertFalse(t, r.OK, "KindTray with non-empty URL must be rejected at register time")
+}
+
+// --- SubscribeEvent — generic Wails custom-event subscription ---
+
+func TestSubscribeEvent_NoPlatformSupport_Good(t *core.T) {
+	// mockPlatform doesn't implement CustomEventBinder so SubscribeEvent
+	// returns false — the consumer-side fallback path documented in the
+	// SubscribeEvent godoc.
+	svc, _ := newTestWindowService(t)
+	ok := svc.SubscribeEvent("lthn:test", func(_ any) {})
+	core.AssertFalse(t, ok, "mockPlatform does not implement CustomEventBinder; SubscribeEvent should return false")
+}
+
+func TestSubscribeEvent_NilCallback_Bad(t *core.T) {
+	svc, _ := newTestWindowService(t)
+	ok := svc.SubscribeEvent("lthn:test", nil)
+	core.AssertFalse(t, ok, "nil callback should refuse to subscribe")
+}
+
+func TestSubscribeEvent_EmptyName_Bad(t *core.T) {
+	svc, _ := newTestWindowService(t)
+	ok := svc.SubscribeEvent("", func(_ any) {})
+	core.AssertFalse(t, ok, "empty event name should refuse to subscribe")
+}
+
+func TestSubscribeEvent_BindingPlatform_Good(t *core.T) {
+	// Inject a platform that DOES implement CustomEventBinder so we
+	// can prove the wiring works. The platform records (name, cb)
+	// pairs in a slice for the test to inspect.
+	binder := &recordingBinder{}
+	svc, _ := newTestWindowServiceWithCustomPlatform(t, binder)
+	cb := func(_ any) {}
+	ok := svc.SubscribeEvent("lthn:test", cb)
+	core.AssertTrue(t, ok, "platform implements CustomEventBinder; SubscribeEvent should succeed")
+	core.AssertEqual(t, 1, len(binder.bindings))
+	core.AssertEqual(t, "lthn:test", binder.bindings[0].name)
 }

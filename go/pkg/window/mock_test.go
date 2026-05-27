@@ -124,3 +124,23 @@ func (w *mockWindow) emitFileDrop(paths []string, targetID string) {
 		h(paths, targetID)
 	}
 }
+
+// recordingBinder is a test Platform that composes mockPlatform's
+// window-creation surface AND implements CustomEventBinder by
+// recording every (name, cb) pair the Service registers. Tests
+// inspect bindings to prove the wiring without depending on
+// app.Event.On (Wails-only).
+type recordingBinder struct {
+	mockPlatform
+	bindings []recordedBinding
+}
+
+type recordedBinding struct {
+	name string
+	cb   func(any)
+}
+
+// BindCustomEvent satisfies CustomEventBinder.
+func (r *recordingBinder) BindCustomEvent(name string, cb func(data any)) {
+	r.bindings = append(r.bindings, recordedBinding{name: name, cb: cb})
+}

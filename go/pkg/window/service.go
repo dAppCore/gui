@@ -80,6 +80,47 @@ type EvalReplyBinder interface {
 	BindEvalReply(cb func(reqID string, result any, errStr string))
 }
 
+// CustomEventBinder is the optional extension a Platform implements
+// to expose a generic Wails custom-event subscription to consumers
+// outside pkg/window. Consumers (e.g. pkg/bridge for its console +
+// error capture) call Service.SubscribeEvent(name, cb); the service
+// delegates to the platform if supported. Each (name, cb) registers
+// a fresh listener — no de-dup, no unsubscribe (consumers bind once
+// at their own OnStartup and live for the process lifetime).
+//
+// MockPlatform deliberately does NOT implement this so tests can
+// drive the consumer callback directly without an event-bus
+// dependency. SubscribeEvent on an unsupported platform is a no-op
+// + returns false so consumers can fall back to alternative paths
+// if they care.
+type CustomEventBinder interface {
+	BindCustomEvent(name string, cb func(data any))
+}
+
+// SubscribeEvent registers a callback for a Wails custom event with
+// the given name. Returns true when the platform supports event
+// binding (production WailsPlatform); false on platforms that don't
+// (test MockPlatform). Idempotency is the platform's concern — most
+// implementations stack listeners, so repeated SubscribeEvent calls
+// fan-out per emit.
+//
+// Usage example (bridge.OnStartup):
+//
+//	if !windowSvc.SubscribeEvent("lthn:console", s.handleConsoleEvent) {
+//	    // platform doesn't support custom events — degrade gracefully
+//	}
+func (s *Service) SubscribeEvent(name string, cb func(data any)) bool {
+	if s == nil || cb == nil || name == "" {
+		return false
+	}
+	binder, ok := s.platform.(CustomEventBinder)
+	if !ok || binder == nil {
+		return false
+	}
+	binder.BindCustomEvent(name, cb)
+	return true
+}
+
 func (s *Service) applyConfig(configData map[string]any) {
 	if width, ok := configData["default_width"]; ok {
 		if width, ok := width.(int); ok {
