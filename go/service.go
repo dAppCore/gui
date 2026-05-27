@@ -126,6 +126,16 @@ type GuiConfig struct {
 	// core.RegisterAction to dispatch.
 	Tray *TrayConfig
 
+	// Keybindings declares global hotkeys. gui.Service registers each
+	// accelerator + installs a shared trigger router that emits the
+	// configured EventName when the accelerator fires.
+	Keybindings []Keybinding
+
+	// ContextMenus declares named right-click surfaces. gui.Service
+	// registers each menu + installs a relay that emits the
+	// configured EventTemplate on item click.
+	ContextMenus []ContextMenu
+
 	// ShouldQuit returns false to veto an OS/user quit request. Nil
 	// means "always allow quit" (wails default).
 	ShouldQuit func() bool
@@ -407,6 +417,15 @@ func (s *Service) start(ctx context.Context) core.Result {
 	// consumer registers a handler on ActionTrayMenuItemClicked and
 	// switches on ActionID.
 	applyTrayConfig(c, cfg.Tray)
+
+	// Keybindings — register each accelerator + install the shared
+	// trigger router. EventName per binding fires on trigger.
+	applyKeybindings(c, cfg.Keybindings)
+
+	// Context menus — register each named menu + install the shared
+	// relay. EventTemplate per menu fires on item click with the
+	// click's context data forwarded.
+	applyContextMenus(c, cfg.ContextMenus)
 
 	return core.Ok(nil)
 }
