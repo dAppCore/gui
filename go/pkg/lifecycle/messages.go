@@ -10,6 +10,12 @@ type ActionApplicationStarted struct{}
 // ActionOpenedWithFile fires when the application is opened with a file argument.
 type ActionOpenedWithFile struct{ Path string }
 
+// ActionLaunchedWithUrl fires when the application is launched via a URL
+// scheme handoff (e.g. lthn:// on macOS, ms-app:// on Windows). The URL
+// arrives verbatim; consumers route to surfaces / handlers via their own
+// scheme parser.
+type ActionLaunchedWithUrl struct{ URL string }
+
 // ActionWillTerminate fires when the application is about to terminate (macOS only).
 type ActionWillTerminate struct{}
 

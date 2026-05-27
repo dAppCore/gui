@@ -14,6 +14,7 @@ type mockPlatform struct {
 	mu           sync.Mutex
 	handlers     map[EventType][]func()
 	fileHandlers []func(string)
+	urlHandlers  []func(string)
 	quitCalls    int
 }
 
@@ -47,6 +48,20 @@ func (m *mockPlatform) OnOpenedWithFile(handler func(string)) func() {
 		defer m.mu.Unlock()
 		if idx < len(m.fileHandlers) {
 			m.fileHandlers = append(m.fileHandlers[:idx], m.fileHandlers[idx+1:]...)
+		}
+	}
+}
+
+func (m *mockPlatform) OnLaunchedWithUrl(handler func(string)) func() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.urlHandlers = append(m.urlHandlers, handler)
+	idx := len(m.urlHandlers) - 1
+	return func() {
+		m.mu.Lock()
+		defer m.mu.Unlock()
+		if idx < len(m.urlHandlers) {
+			m.urlHandlers = append(m.urlHandlers[:idx], m.urlHandlers[idx+1:]...)
 		}
 	}
 }

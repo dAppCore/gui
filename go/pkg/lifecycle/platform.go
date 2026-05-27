@@ -17,11 +17,14 @@ const (
 // Platform abstracts the application lifecycle backend (Wails v3).
 // OnApplicationEvent registers a handler for a fire-and-forget event type.
 // OnOpenedWithFile registers a handler for file-open events (carries path data).
-// Both return a cancel function that deregisters the handler.
+// OnLaunchedWithUrl registers a handler for URL-scheme launch handoff
+// (lthn:// etc — carries the URL string verbatim).
+// All return a cancel function that deregisters the handler.
 // Platform-specific events no-op silently on unsupported OS (adapter registers nothing).
 type Platform interface {
 	OnApplicationEvent(eventType EventType, handler func()) func()
 	OnOpenedWithFile(handler func(path string)) func()
+	OnLaunchedWithUrl(handler func(url string)) func()
 	// Quit asks the platform to terminate the application's event loop.
 	// Mirrors application.App.Quit(); safe to call from a UI-thread context.
 	Quit()

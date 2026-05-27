@@ -71,6 +71,28 @@ func (wp *WailsPlatform) OnOpenedWithFile(handler func(path string)) func() {
 	})
 }
 
+// OnLaunchedWithUrl registers a handler for the Wails
+// ApplicationLaunchedWithUrl event. The payload's LaunchedWithURL()
+// carries the URL string verbatim; we forward it as-is so the
+// consumer's own scheme parser can route it.
+func (wp *WailsPlatform) OnLaunchedWithUrl(handler func(url string)) func() {
+	if wp == nil || wp.app == nil || handler == nil {
+		return func() {}
+	}
+	return wp.app.Event.OnApplicationEvent(events.Common.ApplicationLaunchedWithUrl, func(evt *application.ApplicationEvent) {
+		if evt == nil {
+			return
+		}
+		ctx := evt.Context()
+		if ctx == nil {
+			return
+		}
+		if url := ctx.URL(); url != "" {
+			handler(url)
+		}
+	})
+}
+
 // mapAppEvent — the gui lifecycle EventType is a small enum the consumer
 // owns; this is the single point where it bridges to Wails 3's event IDs.
 // Only events.Common entries are visible here. OS-specific entries are
