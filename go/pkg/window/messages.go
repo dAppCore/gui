@@ -3,15 +3,19 @@ package window
 import "time"
 
 type WindowInfo struct {
-	Name      string  `json:"name"`
-	Title     string  `json:"title"`
-	X         int     `json:"x"`
-	Y         int     `json:"y"`
-	Width     int     `json:"width"`
-	Height    int     `json:"height"`
-	Opacity   float64 `json:"opacity"`
-	Maximized bool    `json:"maximized"`
-	Focused   bool    `json:"focused"`
+	Name        string  `json:"name"`
+	Title       string  `json:"title"`
+	X           int     `json:"x"`
+	Y           int     `json:"y"`
+	Width       int     `json:"width"`
+	Height      int     `json:"height"`
+	Opacity     float64 `json:"opacity"`
+	Maximized   bool    `json:"maximized"`
+	Focused     bool    `json:"focused"`
+	Visible     bool    `json:"visible"`
+	Minimised   bool    `json:"minimised"`
+	Fullscreen  bool    `json:"fullscreen"`
+	AlwaysOnTop bool    `json:"always_on_top"`
 }
 
 type QueryWindowList struct{}

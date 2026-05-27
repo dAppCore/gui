@@ -59,6 +59,7 @@ func (w *mockWindow) IsFocused() bool                 { return w.focused }
 func (w *mockWindow) IsVisible() bool                 { return w.visible }
 func (w *mockWindow) IsFullscreen() bool              { return w.fullscreened }
 func (w *mockWindow) IsMinimised() bool               { return w.minimised }
+func (w *mockWindow) IsAlwaysOnTop() bool             { return w.alwaysOnTop }
 func (w *mockWindow) GetBounds() (int, int, int, int) { return w.x, w.y, w.width, w.height }
 func (w *mockWindow) GetZoom() float64 {
 	if w.zoom == 0 {

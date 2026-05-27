@@ -46,6 +46,7 @@ type PlatformWindow interface {
 	IsVisible() bool
 	IsFullscreen() bool
 	IsMinimised() bool
+	IsAlwaysOnTop() bool
 	GetBounds() (x, y, width, height int)
 	GetZoom() float64
 	GetOpacity() float64

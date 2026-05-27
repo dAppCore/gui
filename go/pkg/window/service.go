@@ -175,9 +175,13 @@ func (s *Service) queryWindowList() []WindowInfo {
 			w, h := pw.Size()
 			result = append(result, WindowInfo{
 				Name: name, Title: pw.Title(), X: x, Y: y, Width: w, Height: h,
-				Opacity:   pw.GetOpacity(),
-				Maximized: pw.IsMaximised(),
-				Focused:   pw.IsFocused(),
+				Opacity:     pw.GetOpacity(),
+				Maximized:   pw.IsMaximised(),
+				Focused:     pw.IsFocused(),
+				Visible:     pw.IsVisible(),
+				Minimised:   pw.IsMinimised(),
+				Fullscreen:  pw.IsFullscreen(),
+				AlwaysOnTop: pw.IsAlwaysOnTop(),
 			})
 		}
 	}
@@ -193,9 +197,13 @@ func (s *Service) queryWindowByName(name string) *WindowInfo {
 	w, h := pw.Size()
 	return &WindowInfo{
 		Name: name, Title: pw.Title(), X: x, Y: y, Width: w, Height: h,
-		Opacity:   pw.GetOpacity(),
-		Maximized: pw.IsMaximised(),
-		Focused:   pw.IsFocused(),
+		Opacity:     pw.GetOpacity(),
+		Maximized:   pw.IsMaximised(),
+		Focused:     pw.IsFocused(),
+		Visible:     pw.IsVisible(),
+		Minimised:   pw.IsMinimised(),
+		Fullscreen:  pw.IsFullscreen(),
+		AlwaysOnTop: pw.IsAlwaysOnTop(),
 	}
 }
 
@@ -599,7 +607,16 @@ func (s *Service) taskOpenWindow(t TaskOpenWindow) core.Result {
 	}
 	x, y := pw.Position()
 	w, h := pw.Size()
-	info := WindowInfo{Name: pw.Name(), Title: pw.Title(), X: x, Y: y, Width: w, Height: h, Opacity: pw.GetOpacity()}
+	info := WindowInfo{
+		Name: pw.Name(), Title: pw.Title(), X: x, Y: y, Width: w, Height: h,
+		Opacity:     pw.GetOpacity(),
+		Maximized:   pw.IsMaximised(),
+		Focused:     pw.IsFocused(),
+		Visible:     pw.IsVisible(),
+		Minimised:   pw.IsMinimised(),
+		Fullscreen:  pw.IsFullscreen(),
+		AlwaysOnTop: pw.IsAlwaysOnTop(),
+	}
 
 	// Attach platform event listeners that convert to IPC actions
 	s.trackWindow(pw)
