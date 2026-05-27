@@ -660,6 +660,24 @@ func (s *Service) trackWindow(pw PlatformWindow) {
 			}
 		case "close":
 			coreutil.DispatchAction(s.Core(), "window.closeEvent", ActionWindowClosed{Name: e.Name})
+		case "hide":
+			coreutil.DispatchAction(s.Core(), "window.hide", ActionWindowHidden{Name: e.Name})
+		case "show":
+			coreutil.DispatchAction(s.Core(), "window.show", ActionWindowShown{Name: e.Name})
+		case "minimise":
+			coreutil.DispatchAction(s.Core(), "window.minimise", ActionWindowMinimised{Name: e.Name})
+		case "unminimise":
+			coreutil.DispatchAction(s.Core(), "window.unminimise", ActionWindowUnminimised{Name: e.Name})
+		case "maximise":
+			coreutil.DispatchAction(s.Core(), "window.maximise", ActionWindowMaximised{Name: e.Name})
+		case "unmaximise":
+			coreutil.DispatchAction(s.Core(), "window.unmaximise", ActionWindowUnmaximised{Name: e.Name})
+		case "fullscreen":
+			coreutil.DispatchAction(s.Core(), "window.fullscreen", ActionWindowFullscreened{Name: e.Name})
+		case "unfullscreen":
+			coreutil.DispatchAction(s.Core(), "window.unfullscreen", ActionWindowUnfullscreened{Name: e.Name})
+		case "ready":
+			coreutil.DispatchAction(s.Core(), "window.ready", ActionWindowRuntimeReady{Name: e.Name})
 		}
 	})
 	pw.OnFileDrop(func(paths []string, targetID string) {

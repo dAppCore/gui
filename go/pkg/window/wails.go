@@ -443,11 +443,20 @@ func (ww *wailsWindow) OnWindowEvent(handler func(event WindowEvent)) {
 
 	// Map common Wails window events to our WindowEvent type.
 	eventMap := map[events.WindowEventType]string{
-		events.Common.WindowFocus:     "focus",
-		events.Common.WindowLostFocus: "blur",
-		events.Common.WindowDidMove:   "move",
-		events.Common.WindowDidResize: "resize",
-		events.Common.WindowClosing:   "close",
+		events.Common.WindowFocus:        "focus",
+		events.Common.WindowLostFocus:    "blur",
+		events.Common.WindowDidMove:      "move",
+		events.Common.WindowDidResize:    "resize",
+		events.Common.WindowClosing:      "close",
+		events.Common.WindowHide:         "hide",
+		events.Common.WindowShow:         "show",
+		events.Common.WindowMinimise:     "minimise",
+		events.Common.WindowUnMinimise:   "unminimise",
+		events.Common.WindowMaximise:     "maximise",
+		events.Common.WindowUnMaximise:   "unmaximise",
+		events.Common.WindowFullscreen:   "fullscreen",
+		events.Common.WindowUnFullscreen: "unfullscreen",
+		events.Common.WindowRuntimeReady: "ready",
 	}
 
 	for eventType, eventName := range eventMap {

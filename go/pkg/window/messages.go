@@ -186,6 +186,27 @@ type ActionWindowResized struct {
 type ActionWindowFocused struct{ Name string }
 type ActionWindowBlurred struct{ Name string }
 
+// Window state transitions — fired when the OS or user changes a
+// window's visibility / minimisation / maximisation / fullscreen
+// state. Consumers can react to these (e.g. pause rendering on
+// hide, reload on show, save layout on state change) without
+// polling.
+type ActionWindowHidden struct{ Name string }
+type ActionWindowShown struct{ Name string }
+type ActionWindowMinimised struct{ Name string }
+type ActionWindowUnminimised struct{ Name string }
+type ActionWindowMaximised struct{ Name string }
+type ActionWindowUnmaximised struct{ Name string }
+type ActionWindowFullscreened struct{ Name string }
+type ActionWindowUnfullscreened struct{ Name string }
+
+// ActionWindowRuntimeReady fires after the WebView JS runtime has
+// loaded and the Wails bridge is ready to accept IPC calls. Consumers
+// that need to push initial state into a window should wait for this
+// (rather than depending on window.create which fires before the
+// frontend has mounted).
+type ActionWindowRuntimeReady struct{ Name string }
+
 type ActionFilesDropped struct {
 	Name     string   `json:"name"` // window name
 	Paths    []string `json:"paths"`
