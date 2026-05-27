@@ -1160,24 +1160,20 @@ func (s *Service) nextEvalID() string {
 // on the Wails Events bus keyed by reqId. Body is injected as a
 // JSON string literal so it can contain any source verbatim.
 //
-// The wrap chooses between Wails' top-level event emitter
-// (window.wails.Events.Emit) and the runtime module import so it
-// works whether the runtime is exposed via the global or only the
-// ES module. Falls back to console.error if neither is available so
-// pre-runtime evals surface in DevTools instead of vanishing.
+// The wrap imports @wailsio/runtime and calls Events.Emit(name, data).
+// Wails v3 alpha.96 does NOT expose a window.wails global (the global
+// is window._wails, an internal dispatch table, not a public API).
+// The Emit signature is Emit(name, data) — not Emit(WailsEvent) — so
+// the runtime constructs the WailsEvent itself. Falls back to
+// console.error if the runtime import fails so pre-runtime evals
+// surface in DevTools instead of vanishing.
 func wrapEvalScript(reqID, body string) string {
 	const tpl = `(function(){
   var __id=%s;
   var __post=function(payload){
     try {
-      if (window.wails && window.wails.Events && typeof window.wails.Events.Emit === "function") {
-        window.wails.Events.Emit({ name: %q, data: payload });
-        return;
-      }
-    } catch(e){}
-    try {
       import("@wailsio/runtime").then(function(rt){
-        rt.Events.Emit(new rt.WailsEvent(%q, payload));
+        rt.Events.Emit(%q, payload);
       }).catch(function(e){ try { console.error("lthn-eval emit:", e); } catch(_){} });
     } catch(e){ try { console.error("lthn-eval emit:", e); } catch(_){} }
   };
@@ -1195,7 +1191,7 @@ func wrapEvalScript(reqID, body string) string {
     __post({ reqId: __id, err: String(e) + (e && e.stack ? "\n"+e.stack : "") });
   }
 })();`
-	return core.Sprintf(tpl, jsString(reqID), EvalJSEventName, EvalJSEventName, jsString(body))
+	return core.Sprintf(tpl, jsString(reqID), EvalJSEventName, jsString(body))
 }
 
 // jsString produces a JSON-encoded JS string literal — escapes
