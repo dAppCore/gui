@@ -57,6 +57,14 @@ import (
 // when a consumer needs the corresponding wails surface — leaving e.g.
 // Mac zeroed yields the wails defaults.
 type GuiConfig struct {
+	// Mode is the meta-decision driving platform-policy defaults
+	// (Mac.ActivationPolicy, terminate-after-last-window behaviour,
+	// Windows.DisableQuitOnLastWindowClosed). One of ModeTray /
+	// ModeSingleWindow / ModeMultiWindow. ModeDefault (zero value)
+	// leaves all fields at their package zeros. Explicit fields below
+	// always win — Mode only fills gaps.
+	Mode Mode
+
 	// Name is the application name shown in the default about box and
 	// platform UI. Default: "core-gui".
 	Name string
@@ -348,6 +356,7 @@ func (s *Service) OnShutdown(context.Context) core.Result {
 // inside OnStartup's core.Once.Do.
 func (s *Service) start(ctx context.Context) core.Result {
 	cfg := s.Options()
+	applyModeDefaults(&cfg)
 	s.app = application.New(buildWailsOptions(cfg))
 
 	// Register sub-services on the Core, mirroring BootstrapWithConfig
