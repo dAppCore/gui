@@ -27,9 +27,23 @@ type Window struct {
 	HideOnEscape               bool
 	HideOnFocusLost            bool
 	DefaultContextMenuDisabled bool
-	Mac                        MacWindow
-	Linux                      LinuxWindow
-	Windows                    WindowsWindow
+	// HideOnClose: the OS close button hides the window instead of
+	// destroying it. The window stays registered + can be re-shown
+	// via set_visibility. Tray-rooted apps + steady-state windows
+	// (chat, settings) set this so the user can dismiss without
+	// paying the cold-start cost on re-open. Applied automatically
+	// post-create by gui.Service when the Window is supplied via
+	// GuiConfig.Windows.
+	HideOnClose bool
+	// ContentProtection blocks the OS screen-capture API from
+	// recording this window. Wallets / private chat / key reveal
+	// surfaces should set true. Applied automatically post-create
+	// by gui.Service when the Window is supplied via GuiConfig.Windows.
+	// macOS + Windows 10+; no-op on Linux.
+	ContentProtection bool
+	Mac               MacWindow
+	Linux             LinuxWindow
+	Windows           WindowsWindow
 }
 
 // MacWindow holds macOS-specific window options. Zero values mean

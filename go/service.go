@@ -92,6 +92,30 @@ type GuiConfig struct {
 	// bindings land at the service's package path in the frontend.
 	Bindings []Binding
 
+	// WindowRegistry is the declarative window list. Each entry is
+	// registered + pre-created (hidden) during OnStartup, with
+	// HideOnClose / ContentProtection auto-applied post-create. The
+	// caller can open any registered window later via the
+	// `window.open` / `window.set_visibility` actions. Empty slice =
+	// no pre-create; consumers can still issue ad-hoc TaskOpenWindow.
+	//
+	// Named WindowRegistry (not Windows) to avoid clashing with the
+	// Windows field above which carries the Microsoft Windows OS
+	// options.
+	WindowRegistry []*window.Window
+
+	// WindowStatePath is the on-disk path the window service uses to
+	// persist per-window position/size/maximised state. Empty leaves
+	// the window service defaults in place (DIR_CONFIG/Core/
+	// window_state.json). Apps that own their own conf directory
+	// (lthn → ~/Lethean/conf/window_state.json) override here.
+	WindowStatePath string
+
+	// WindowLayoutPath is the on-disk path for the named-layout
+	// store. Empty = window service default. Layouts (multi-window
+	// snapshots) persist here.
+	WindowLayoutPath string
+
 	// ShouldQuit returns false to veto an OS/user quit request. Nil
 	// means "always allow quit" (wails default).
 	ShouldQuit func() bool
@@ -338,6 +362,84 @@ func (s *Service) start(ctx context.Context) core.Result {
 		if rr := registerSubservice(ctx, c, r.name, r.factory); !rr.OK {
 			return rr
 		}
+	}
+
+	// Apply WindowStatePath / WindowLayoutPath if the caller supplied
+	// overrides. The window service is now registered + started, so
+	// we can point its persistence layer at the consumer's chosen
+	// directory before any registry pre-create runs.
+	if cfg.WindowStatePath != "" || cfg.WindowLayoutPath != "" {
+		if winSvc, ok := core.ServiceFor[*window.Service](c, "window"); ok {
+			if cfg.WindowStatePath != "" {
+				winSvc.Manager().State().SetPath(cfg.WindowStatePath)
+			}
+			if cfg.WindowLayoutPath != "" {
+				winSvc.Manager().Layout().SetPath(cfg.WindowLayoutPath)
+			}
+		}
+	}
+
+	// Window registry — register each declared window with the window
+	// service + pre-create as hidden so the first show is instant.
+	// HideOnClose + ContentProtection auto-apply post-create via the
+	// existing TaskSetCloseBehavior / TaskSetContentProtection actions.
+	for _, w := range cfg.WindowRegistry {
+		if w == nil || w.Name == "" {
+			continue
+		}
+		if rr := registerAndPreCreateWindow(c, w); !rr.OK {
+			return rr
+		}
+	}
+
+	return core.Ok(nil)
+}
+
+// registerAndPreCreateWindow fires the standard registry + pre-create
+// sequence for a single declared window:
+//
+//   - window.register with KindWebview so taskSetVisibility can lazy-
+//     mount the window on first show
+//   - window.open as hidden so the platform window exists before the
+//     first show click (no cold-start render delay)
+//   - window.set_close_behavior to CloseBehaviorHide if HideOnClose set
+//   - window.set_content_protection if ContentProtection set
+//
+// Failures inside one step bubble up but pre-create remains best-effort
+// for the steps after registration — if the consumer set HideOnClose
+// and the close-behavior action fails, the window still opens; the
+// consumer can retry the behaviour action later if needed.
+func registerAndPreCreateWindow(c *core.Core, w *window.Window) core.Result {
+	ctx := core.Background()
+	if r := c.Action("window.register").Run(ctx, core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskRegisterWindow{Window: w, Kind: window.KindWebview}},
+	)); !r.OK {
+		return r
+	}
+	// Pre-create hidden — clone the descriptor so Hidden=true doesn't
+	// mutate the caller-supplied Window pointer.
+	openSpec := *w
+	openSpec.Hidden = true
+	if r := c.Action("window.open").Run(ctx, core.NewOptions(
+		core.Option{Key: "task", Value: window.TaskOpenWindow{Window: &openSpec}},
+	)); !r.OK {
+		return r
+	}
+	if w.HideOnClose {
+		c.Action("window.set_close_behavior").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: window.TaskSetCloseBehavior{
+				Name:     w.Name,
+				Behavior: window.CloseBehaviorHide,
+			}},
+		))
+	}
+	if w.ContentProtection {
+		c.Action("window.set_content_protection").Run(ctx, core.NewOptions(
+			core.Option{Key: "task", Value: window.TaskSetContentProtection{
+				Name:       w.Name,
+				Protection: true,
+			}},
+		))
 	}
 	return core.Ok(nil)
 }
