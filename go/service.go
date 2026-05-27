@@ -144,6 +144,13 @@ type GuiConfig struct {
 	// configured EventTemplate on item click.
 	ContextMenus []ContextMenu
 
+	// AppMenu declares the macOS application menu bar. Auto-gated to
+	// darwin — other platforms either lack a global app menu (Linux
+	// varies) or surface menus per-window (Windows). Role-based items
+	// (e.g. &gui.RoleAppMenu) get platform-managed entries (Quit / Cut
+	// / Window list) for free.
+	AppMenu []MenuItem
+
 	// ShouldQuit returns false to veto an OS/user quit request. Nil
 	// means "always allow quit" (wails default).
 	ShouldQuit func() bool
@@ -435,6 +442,9 @@ func (s *Service) start(ctx context.Context) core.Result {
 	// relay. EventTemplate per menu fires on item click with the
 	// click's context data forwarded.
 	applyContextMenus(c, cfg.ContextMenus)
+
+	// App menu — fire menu.set_app_menu on darwin. No-op elsewhere.
+	applyAppMenu(c, cfg.AppMenu)
 
 	return core.Ok(nil)
 }
