@@ -6,6 +6,7 @@ import (
 	"runtime"
 
 	core "dappco.re/go"
+	"dappco.re/go/gui/pkg/lifecycle"
 	"dappco.re/go/gui/pkg/systray"
 )
 
@@ -56,6 +57,13 @@ type TrayConfig struct {
 	// the tray icon's anchor point. Useful when the chrome / arrow
 	// region needs visual breathing room. Zero = no offset.
 	PopoverOffsetY int
+	// Routes is the declarative click-routing table. Each entry maps
+	// a menu item's ActionID to a window to open, an event to emit,
+	// or a quit dispatch. Items whose ActionID is not in the table
+	// fall through to any caller-registered ActionTrayMenuItemClicked
+	// handler — declarative + bespoke routing can coexist on the
+	// same menu (e.g. for prefix-based plugin clicks).
+	Routes []TrayRoute
 }
 
 // applyTrayConfig fires the systray.set_* + attach_window actions for
@@ -93,4 +101,77 @@ func applyTrayConfig(c *core.Core, cfg *TrayConfig) {
 			core.Option{Key: "task", Value: systray.TaskAttachWindow{Name: cfg.PopoverWindow, OffsetY: cfg.PopoverOffsetY}},
 		))
 	}
+}
+
+// TrayRoute declares the default behaviour for a single tray menu
+// item's ActionID. When applyTrayRoutes is installed by gui.Service,
+// any ActionTrayMenuItemClicked carrying a matching ActionID fires
+// (in this order):
+//
+//   1. gui.OpenWindow(c, OpenWindow) if OpenWindow is non-empty
+//   2. gui.EmitEvent(c, EmitEvent, OpenWindow) if EmitEvent is
+//      non-empty (the opened-window name rides as event data so
+//      "lthn:tray:open" listeners can switch on it)
+//   3. lifecycle.quit dispatch if Quit is true
+//
+// Items whose ActionID isn't in Routes fall through unhandled — the
+// consumer can register an additional RegisterAction handler for
+// bespoke routing (e.g. plugin-prefixed ActionIDs whose handler runs
+// a registry lookup before opening an ad-hoc window).
+//
+//	gui.TrayConfig{
+//	    Routes: []gui.TrayRoute{
+//	        {ActionID: "open_app",  OpenWindow: "app",  EmitEvent: "lthn:tray:open"},
+//	        {ActionID: "open_chat", OpenWindow: "chat", EmitEvent: "lthn:tray:open"},
+//	        {ActionID: "quit",      Quit: true},
+//	    },
+//	}
+type TrayRoute struct {
+	ActionID   string
+	OpenWindow string
+	EmitEvent  string
+	Quit       bool
+}
+
+// applyTrayRoutes registers a RegisterAction handler that switches on
+// ActionTrayMenuItemClicked.ActionID and dispatches via the route
+// table. Called by gui.Service.start() after applyTrayConfig. A nil /
+// empty routes table is a no-op; consumers with no declarative routes
+// keep the legacy contract (register their own handler externally).
+func applyTrayRoutes(c *core.Core, routes []TrayRoute) {
+	if c == nil || len(routes) == 0 {
+		return
+	}
+	table := make(map[string]TrayRoute, len(routes))
+	for _, r := range routes {
+		if r.ActionID == "" {
+			continue
+		}
+		table[r.ActionID] = r
+	}
+	if len(table) == 0 {
+		return
+	}
+	c.RegisterAction(func(_ *core.Core, msg core.Message) core.Result {
+		click, ok := msg.(systray.ActionTrayMenuItemClicked)
+		if !ok {
+			return core.Result{OK: true}
+		}
+		r, ok := table[click.ActionID]
+		if !ok {
+			return core.Result{OK: true}
+		}
+		if r.OpenWindow != "" {
+			OpenWindow(c, r.OpenWindow)
+		}
+		if r.EmitEvent != "" {
+			EmitEvent(c, r.EmitEvent, r.OpenWindow)
+		}
+		if r.Quit {
+			c.Action("lifecycle.quit").Run(core.Background(), core.NewOptions(
+				core.Option{Key: "task", Value: lifecycle.TaskQuit{}},
+			))
+		}
+		return core.Result{OK: true}
+	})
 }
