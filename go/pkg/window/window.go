@@ -41,9 +41,18 @@ type Window struct {
 	// by gui.Service when the Window is supplied via GuiConfig.Windows.
 	// macOS + Windows 10+; no-op on Linux.
 	ContentProtection bool
-	Mac               MacWindow
-	Linux             LinuxWindow
-	Windows           WindowsWindow
+	// ShowDockIcon: when set, gui.OpenWindow fires dock.show_icon
+	// before the show sequence so the window comes with a Dock /
+	// taskbar presence + Cmd+Tab eligibility. Use for primary "shell"
+	// windows in tray-anchored apps that want Dock visibility once
+	// the user opens the main UI. Auxiliary windows (settings, about)
+	// can stay icon-less to keep the menubar as the canonical entry.
+	// No-op on Linux + iOS; macOS handles via NSApp activation
+	// policy, Windows via taskbar visibility.
+	ShowDockIcon bool
+	Mac          MacWindow
+	Linux        LinuxWindow
+	Windows      WindowsWindow
 }
 
 // MacWindow holds macOS-specific window options. Zero values mean
