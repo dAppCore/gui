@@ -1199,21 +1199,24 @@ func (s *Service) nextEvalID() string {
 // on the Wails Events bus keyed by reqId. Body is injected as a
 // JSON string literal so it can contain any source verbatim.
 //
-// The wrap imports @wailsio/runtime and calls Events.Emit(name, data).
-// Wails v3 alpha.96 does NOT expose a window.wails global (the global
-// is window._wails, an internal dispatch table, not a public API).
-// The Emit signature is Emit(name, data) — not Emit(WailsEvent) — so
-// the runtime constructs the WailsEvent itself. Falls back to
-// console.error if the runtime import fails so pre-runtime evals
-// surface in DevTools instead of vanishing.
+// The wrap is injected via pw.ExecJS, which runs as a CLASSIC script
+// in the WebView main world — it has NO module resolver, so it cannot
+// import("@wailsio/runtime") (a bare specifier) at runtime. Instead it
+// reuses window.__lthnEmit, the already-resolved emitter the frontend
+// bridge shim (frontend/index.html, a type="module" script) publishes
+// after its own runtime import settles. One resolution, reused by
+// console/error capture AND eval replies. If the shim hasn't published
+// the global yet (eval fired before first paint), the reply is dropped
+// and the caller times out — a console.error breadcrumb is left in
+// DevTools rather than vanishing silently.
 func wrapEvalScript(reqID, body string) string {
 	const tpl = `(function(){
   var __id=%s;
+  var __name=%q;
   var __post=function(payload){
     try {
-      import("@wailsio/runtime").then(function(rt){
-        rt.Events.Emit(%q, payload);
-      }).catch(function(e){ try { console.error("lthn-eval emit:", e); } catch(_){} });
+      if (typeof window.__lthnEmit === "function") { window.__lthnEmit(__name, payload); }
+      else { try { console.error("lthn-eval: window.__lthnEmit unavailable — bridge shim not loaded"); } catch(_){} }
     } catch(e){ try { console.error("lthn-eval emit:", e); } catch(_){} }
   };
   try {
