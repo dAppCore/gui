@@ -59,7 +59,7 @@ require (
 )
 
 require (
-	dappco.re/go v0.10.3
+	dappco.re/go v0.10.4
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
