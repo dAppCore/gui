@@ -54,31 +54,40 @@ func OpenWindow(c *core.Core, name string) bool {
 	return true
 }
 
-// lookupWindow returns the registered Window descriptor by name from
-// the gui.Service's WindowRegistry, or nil if not registered there.
-// Used by OpenWindow to consult ShowDockIcon etc. before firing the
-// show sequence.
+// WindowSpec returns the registered Window descriptor by name from the
+// gui.Service's WindowRegistry, or nil + false if not registered.
 //
 // The window service's QueryWindowByName returns runtime WindowInfo
 // (position/size/focus state) rather than the original descriptor, so
-// the descriptor lookup has to walk the GuiConfig.WindowRegistry
-// directly. Walks a small fixed slice (single-digit entries in
-// practice) — promoting to a map would hide an O(N) scan that already
-// runs at human latency.
-func lookupWindow(c *core.Core, name string) *window.Window {
+// callers that need the *declaration* — close behaviour, content
+// protection flag, dock-icon elevation, etc. — walk the registry via
+// this helper. The slice is small fixed-size (single-digit entries in
+// practice) so the O(N) scan runs at human latency.
+//
+//	if spec, ok := gui.WindowSpec(c, "app"); ok {
+//	    // …use spec.URL / spec.HideOnClose / spec.ShowDockIcon
+//	}
+func WindowSpec(c *core.Core, name string) (*window.Window, bool) {
 	if c == nil || name == "" {
-		return nil
+		return nil, false
 	}
 	svc, ok := core.ServiceFor[*Service](c, "gui")
 	if !ok || svc == nil {
-		return nil
+		return nil, false
 	}
 	for _, w := range svc.Options().WindowRegistry {
 		if w != nil && w.Name == name {
-			return w
+			return w, true
 		}
 	}
-	return nil
+	return nil, false
+}
+
+// lookupWindow is the internal alias preserved so existing call sites
+// in this package keep their nil-only return contract.
+func lookupWindow(c *core.Core, name string) *window.Window {
+	w, _ := WindowSpec(c, name)
+	return w
 }
 
 // OpenAdhocWindow opens a runtime-created window that is NOT in the

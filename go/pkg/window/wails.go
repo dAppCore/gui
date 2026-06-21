@@ -170,7 +170,7 @@ func (wp *WailsPlatform) CreateWindow(options PlatformWindowOptions) PlatformWin
 	if !hasOnPageLoad {
 		subscribeToNavigationFinished(w, preloadHookOrigin, preloadHook)
 	}
-	return &wailsWindow{w: w, app: wp.app, title: options.Title, opacity: 1.0}
+	return &wailsWindow{w: w, app: wp.app, title: options.Title, opacity: 1.0, alwaysOnTop: options.AlwaysOnTop}
 }
 
 // subscribeToNavigationFinished wires a handler that runs on each page-load
@@ -362,10 +362,11 @@ func (wp *WailsPlatform) GetWindows() []PlatformWindow {
 // It stores the title and opacity locally because Wails v3 does not expose getters for both.
 // The app reference enables behaviours that span the application (e.g. CloseBehaviorQuit).
 type wailsWindow struct {
-	w       *application.WebviewWindow
-	app     *application.App
-	title   string
-	opacity float64
+	w           *application.WebviewWindow
+	app         *application.App
+	title       string
+	opacity     float64
+	alwaysOnTop bool
 }
 
 func (ww *wailsWindow) Name() string         { return ww.w.Name() }
@@ -377,6 +378,7 @@ func (ww *wailsWindow) IsFocused() bool      { return ww.w.IsFocused() }
 func (ww *wailsWindow) IsVisible() bool      { return ww.w.IsVisible() }
 func (ww *wailsWindow) IsFullscreen() bool   { return ww.w.IsFullscreen() }
 func (ww *wailsWindow) IsMinimised() bool    { return ww.w.IsMinimised() }
+func (ww *wailsWindow) IsAlwaysOnTop() bool  { return ww.alwaysOnTop }
 func (ww *wailsWindow) GetBounds() (int, int, int, int) {
 	r := ww.w.Bounds()
 	return r.X, r.Y, r.Width, r.Height
@@ -396,7 +398,10 @@ func (ww *wailsWindow) SetVisibility(visible bool) {
 		ww.w.Hide()
 	}
 }
-func (ww *wailsWindow) SetAlwaysOnTop(alwaysOnTop bool) { ww.w.SetAlwaysOnTop(alwaysOnTop) }
+func (ww *wailsWindow) SetAlwaysOnTop(alwaysOnTop bool) {
+	ww.alwaysOnTop = alwaysOnTop
+	ww.w.SetAlwaysOnTop(alwaysOnTop)
+}
 func (ww *wailsWindow) SetOpacity(opacity float64) {
 	ww.opacity = opacity
 	if setter, ok := any(ww.w).(interface{ SetOpacity(float64) }); ok {
@@ -438,11 +443,20 @@ func (ww *wailsWindow) OnWindowEvent(handler func(event WindowEvent)) {
 
 	// Map common Wails window events to our WindowEvent type.
 	eventMap := map[events.WindowEventType]string{
-		events.Common.WindowFocus:     "focus",
-		events.Common.WindowLostFocus: "blur",
-		events.Common.WindowDidMove:   "move",
-		events.Common.WindowDidResize: "resize",
-		events.Common.WindowClosing:   "close",
+		events.Common.WindowFocus:        "focus",
+		events.Common.WindowLostFocus:    "blur",
+		events.Common.WindowDidMove:      "move",
+		events.Common.WindowDidResize:    "resize",
+		events.Common.WindowClosing:      "close",
+		events.Common.WindowHide:         "hide",
+		events.Common.WindowShow:         "show",
+		events.Common.WindowMinimise:     "minimise",
+		events.Common.WindowUnMinimise:   "unminimise",
+		events.Common.WindowMaximise:     "maximise",
+		events.Common.WindowUnMaximise:   "unmaximise",
+		events.Common.WindowFullscreen:   "fullscreen",
+		events.Common.WindowUnFullscreen: "unfullscreen",
+		events.Common.WindowRuntimeReady: "ready",
 	}
 
 	for eventType, eventName := range eventMap {
@@ -468,15 +482,21 @@ func (ww *wailsWindow) OnWindowEvent(handler func(event WindowEvent)) {
 	}
 }
 
-func (ww *wailsWindow) OnFileDrop(handler func(paths []string, targetID string)) {
+func (ww *wailsWindow) OnFileDrop(handler func(paths []string, target *DropTarget)) {
 	ww.w.OnWindowEvent(events.Common.WindowFilesDropped, func(event *application.WindowEvent) {
 		files := event.Context().DroppedFiles()
 		details := event.Context().DropTargetDetails()
-		targetID := ""
+		var target *DropTarget
 		if details != nil {
-			targetID = details.ElementID
+			target = &DropTarget{
+				ID:         details.ElementID,
+				X:          details.X,
+				Y:          details.Y,
+				ClassList:  details.ClassList,
+				Attributes: details.Attributes,
+			}
 		}
-		handler(files, targetID)
+		handler(files, target)
 	})
 }
 

@@ -238,12 +238,22 @@ func TestFileDrop_Good(t *core.T) {
 	pw, ok := svc.Manager().Get("drop-test")
 	core.RequireTrue(t, ok)
 	mw := pw.(*mockWindow)
-	mw.emitFileDrop([]string{"/tmp/file1.txt", "/tmp/file2.txt"}, "upload-zone")
+	mw.emitFileDrop([]string{"/tmp/file1.txt", "/tmp/file2.txt"}, &DropTarget{
+		ID: "upload-zone", X: 120, Y: 240,
+	})
 
 	mu.Lock()
 	core.AssertEqual(t, "drop-test", dropped.Name)
 	core.AssertEqual(t, []string{"/tmp/file1.txt", "/tmp/file2.txt"}, dropped.Paths)
 	core.AssertEqual(t, "upload-zone", dropped.TargetID)
+	core.AssertNotNil(t, dropped.Target)
+	if dropped.Target == nil {
+		mu.Unlock()
+		return
+	}
+	core.AssertEqual(t, "upload-zone", dropped.Target.ID)
+	core.AssertEqual(t, 120, dropped.Target.X)
+	core.AssertEqual(t, 240, dropped.Target.Y)
 	mu.Unlock()
 }
 
@@ -788,6 +798,28 @@ func TestCompleteEval_UnknownReqID(t *core.T) {
 	svc, _ := newTestWindowService(t)
 	// No pending eval — CompleteEval returns false rather than panicking.
 	core.AssertFalse(t, svc.CompleteEval("ghost-1", "x", ""))
+}
+
+// TestWrapEvalScript_Contract pins the eval wrap to the
+// window.__lthnEmit reply path. The wrap is injected via ExecJS as a
+// CLASSIC script, which has no module resolver and cannot resolve the
+// "@wailsio/runtime" bare specifier at runtime — depending on a
+// per-eval import() inside the wrap is exactly the regression that
+// silently broke eval (and console/error) capture on alpha.96. The
+// wrap must instead reuse window.__lthnEmit, the emitter the frontend
+// shim publishes after its own module-context import settles.
+func TestWrapEvalScript_Contract(t *core.T) {
+	js := wrapEvalScript("ev-42", "1 + 1")
+
+	// Reuses the resolved emitter the frontend shim publishes.
+	core.AssertContains(t, js, "window.__lthnEmit")
+	// Must NOT carry its own runtime import — the broken alpha.96 form.
+	core.AssertNotContains(t, js, "@wailsio/runtime")
+	core.AssertNotContains(t, js, "import(")
+	// Carries reqId (extractEvalReqID contract) + event name + body.
+	core.AssertEqual(t, "ev-42", extractEvalReqID(js))
+	core.AssertContains(t, js, EvalJSEventName)
+	core.AssertContains(t, js, "1 + 1")
 }
 
 // extractEvalReqID pulls the reqId literal out of the wrapped IIFE

@@ -49,7 +49,7 @@ type MockWindow struct {
 	devToolsOpen           bool
 	execJSCalls            []string
 	eventHandlers          []func(WindowEvent)
-	fileDropHandlers       []func(paths []string, targetID string)
+	fileDropHandlers       []func(paths []string, target *DropTarget)
 	closeBehavior          CloseBehavior
 }
 
@@ -62,6 +62,7 @@ func (w *MockWindow) IsFocused() bool                 { return w.focused }
 func (w *MockWindow) IsVisible() bool                 { return w.visible }
 func (w *MockWindow) IsFullscreen() bool              { return w.fullscreened }
 func (w *MockWindow) IsMinimised() bool               { return w.minimised }
+func (w *MockWindow) IsAlwaysOnTop() bool             { return w.alwaysOnTop }
 func (w *MockWindow) GetBounds() (int, int, int, int) { return w.x, w.y, w.width, w.height }
 func (w *MockWindow) GetZoom() float64 {
 	if w.zoom == 0 {
@@ -106,7 +107,7 @@ func (w *MockWindow) CloseDevTools()                       { w.devToolsOpen = fa
 func (w *MockWindow) OnWindowEvent(handler func(WindowEvent)) {
 	w.eventHandlers = append(w.eventHandlers, handler)
 }
-func (w *MockWindow) OnFileDrop(handler func(paths []string, targetID string)) {
+func (w *MockWindow) OnFileDrop(handler func(paths []string, target *DropTarget)) {
 	w.fileDropHandlers = append(w.fileDropHandlers, handler)
 }
 

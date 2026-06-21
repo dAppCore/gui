@@ -175,9 +175,13 @@ func (s *Service) queryWindowList() []WindowInfo {
 			w, h := pw.Size()
 			result = append(result, WindowInfo{
 				Name: name, Title: pw.Title(), X: x, Y: y, Width: w, Height: h,
-				Opacity:   pw.GetOpacity(),
-				Maximized: pw.IsMaximised(),
-				Focused:   pw.IsFocused(),
+				Opacity:     pw.GetOpacity(),
+				Maximized:   pw.IsMaximised(),
+				Focused:     pw.IsFocused(),
+				Visible:     pw.IsVisible(),
+				Minimised:   pw.IsMinimised(),
+				Fullscreen:  pw.IsFullscreen(),
+				AlwaysOnTop: pw.IsAlwaysOnTop(),
 			})
 		}
 	}
@@ -193,9 +197,13 @@ func (s *Service) queryWindowByName(name string) *WindowInfo {
 	w, h := pw.Size()
 	return &WindowInfo{
 		Name: name, Title: pw.Title(), X: x, Y: y, Width: w, Height: h,
-		Opacity:   pw.GetOpacity(),
-		Maximized: pw.IsMaximised(),
-		Focused:   pw.IsFocused(),
+		Opacity:     pw.GetOpacity(),
+		Maximized:   pw.IsMaximised(),
+		Focused:     pw.IsFocused(),
+		Visible:     pw.IsVisible(),
+		Minimised:   pw.IsMinimised(),
+		Fullscreen:  pw.IsFullscreen(),
+		AlwaysOnTop: pw.IsAlwaysOnTop(),
 	}
 }
 
@@ -599,7 +607,16 @@ func (s *Service) taskOpenWindow(t TaskOpenWindow) core.Result {
 	}
 	x, y := pw.Position()
 	w, h := pw.Size()
-	info := WindowInfo{Name: pw.Name(), Title: pw.Title(), X: x, Y: y, Width: w, Height: h, Opacity: pw.GetOpacity()}
+	info := WindowInfo{
+		Name: pw.Name(), Title: pw.Title(), X: x, Y: y, Width: w, Height: h,
+		Opacity:     pw.GetOpacity(),
+		Maximized:   pw.IsMaximised(),
+		Focused:     pw.IsFocused(),
+		Visible:     pw.IsVisible(),
+		Minimised:   pw.IsMinimised(),
+		Fullscreen:  pw.IsFullscreen(),
+		AlwaysOnTop: pw.IsAlwaysOnTop(),
+	}
 
 	// Attach platform event listeners that convert to IPC actions
 	s.trackWindow(pw)
@@ -643,14 +660,36 @@ func (s *Service) trackWindow(pw PlatformWindow) {
 			}
 		case "close":
 			coreutil.DispatchAction(s.Core(), "window.closeEvent", ActionWindowClosed{Name: e.Name})
+		case "hide":
+			coreutil.DispatchAction(s.Core(), "window.hide", ActionWindowHidden{Name: e.Name})
+		case "show":
+			coreutil.DispatchAction(s.Core(), "window.show", ActionWindowShown{Name: e.Name})
+		case "minimise":
+			coreutil.DispatchAction(s.Core(), "window.minimise", ActionWindowMinimised{Name: e.Name})
+		case "unminimise":
+			coreutil.DispatchAction(s.Core(), "window.unminimise", ActionWindowUnminimised{Name: e.Name})
+		case "maximise":
+			coreutil.DispatchAction(s.Core(), "window.maximise", ActionWindowMaximised{Name: e.Name})
+		case "unmaximise":
+			coreutil.DispatchAction(s.Core(), "window.unmaximise", ActionWindowUnmaximised{Name: e.Name})
+		case "fullscreen":
+			coreutil.DispatchAction(s.Core(), "window.fullscreen", ActionWindowFullscreened{Name: e.Name})
+		case "unfullscreen":
+			coreutil.DispatchAction(s.Core(), "window.unfullscreen", ActionWindowUnfullscreened{Name: e.Name})
+		case "ready":
+			coreutil.DispatchAction(s.Core(), "window.ready", ActionWindowRuntimeReady{Name: e.Name})
 		}
 	})
-	pw.OnFileDrop(func(paths []string, targetID string) {
-		coreutil.DispatchAction(s.Core(), "window.fileDrop", ActionFilesDropped{
-			Name:     pw.Name(),
-			Paths:    paths,
-			TargetID: targetID,
-		})
+	pw.OnFileDrop(func(paths []string, target *DropTarget) {
+		event := ActionFilesDropped{
+			Name:   pw.Name(),
+			Paths:  paths,
+			Target: target,
+		}
+		if target != nil {
+			event.TargetID = target.ID
+		}
+		coreutil.DispatchAction(s.Core(), "window.fileDrop", event)
 	})
 }
 
@@ -1160,21 +1199,24 @@ func (s *Service) nextEvalID() string {
 // on the Wails Events bus keyed by reqId. Body is injected as a
 // JSON string literal so it can contain any source verbatim.
 //
-// The wrap imports @wailsio/runtime and calls Events.Emit(name, data).
-// Wails v3 alpha.96 does NOT expose a window.wails global (the global
-// is window._wails, an internal dispatch table, not a public API).
-// The Emit signature is Emit(name, data) — not Emit(WailsEvent) — so
-// the runtime constructs the WailsEvent itself. Falls back to
-// console.error if the runtime import fails so pre-runtime evals
-// surface in DevTools instead of vanishing.
+// The wrap is injected via pw.ExecJS, which runs as a CLASSIC script
+// in the WebView main world — it has NO module resolver, so it cannot
+// import("@wailsio/runtime") (a bare specifier) at runtime. Instead it
+// reuses window.__lthnEmit, the already-resolved emitter the frontend
+// bridge shim (frontend/index.html, a type="module" script) publishes
+// after its own runtime import settles. One resolution, reused by
+// console/error capture AND eval replies. If the shim hasn't published
+// the global yet (eval fired before first paint), the reply is dropped
+// and the caller times out — a console.error breadcrumb is left in
+// DevTools rather than vanishing silently.
 func wrapEvalScript(reqID, body string) string {
 	const tpl = `(function(){
   var __id=%s;
+  var __name=%q;
   var __post=function(payload){
     try {
-      import("@wailsio/runtime").then(function(rt){
-        rt.Events.Emit(%q, payload);
-      }).catch(function(e){ try { console.error("lthn-eval emit:", e); } catch(_){} });
+      if (typeof window.__lthnEmit === "function") { window.__lthnEmit(__name, payload); }
+      else { try { console.error("lthn-eval: window.__lthnEmit unavailable — bridge shim not loaded"); } catch(_){} }
     } catch(e){ try { console.error("lthn-eval emit:", e); } catch(_){} }
   };
   try {

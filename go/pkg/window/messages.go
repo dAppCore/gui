@@ -3,15 +3,19 @@ package window
 import "time"
 
 type WindowInfo struct {
-	Name      string  `json:"name"`
-	Title     string  `json:"title"`
-	X         int     `json:"x"`
-	Y         int     `json:"y"`
-	Width     int     `json:"width"`
-	Height    int     `json:"height"`
-	Opacity   float64 `json:"opacity"`
-	Maximized bool    `json:"maximized"`
-	Focused   bool    `json:"focused"`
+	Name        string  `json:"name"`
+	Title       string  `json:"title"`
+	X           int     `json:"x"`
+	Y           int     `json:"y"`
+	Width       int     `json:"width"`
+	Height      int     `json:"height"`
+	Opacity     float64 `json:"opacity"`
+	Maximized   bool    `json:"maximized"`
+	Focused     bool    `json:"focused"`
+	Visible     bool    `json:"visible"`
+	Minimised   bool    `json:"minimised"`
+	Fullscreen  bool    `json:"fullscreen"`
+	AlwaysOnTop bool    `json:"always_on_top"`
 }
 
 type QueryWindowList struct{}
@@ -182,10 +186,50 @@ type ActionWindowResized struct {
 type ActionWindowFocused struct{ Name string }
 type ActionWindowBlurred struct{ Name string }
 
+// Window state transitions — fired when the OS or user changes a
+// window's visibility / minimisation / maximisation / fullscreen
+// state. Consumers can react to these (e.g. pause rendering on
+// hide, reload on show, save layout on state change) without
+// polling.
+type ActionWindowHidden struct{ Name string }
+type ActionWindowShown struct{ Name string }
+type ActionWindowMinimised struct{ Name string }
+type ActionWindowUnminimised struct{ Name string }
+type ActionWindowMaximised struct{ Name string }
+type ActionWindowUnmaximised struct{ Name string }
+type ActionWindowFullscreened struct{ Name string }
+type ActionWindowUnfullscreened struct{ Name string }
+
+// ActionWindowRuntimeReady fires after the WebView JS runtime has
+// loaded and the Wails bridge is ready to accept IPC calls. Consumers
+// that need to push initial state into a window should wait for this
+// (rather than depending on window.create which fires before the
+// frontend has mounted).
+type ActionWindowRuntimeReady struct{ Name string }
+
+// DropTarget describes the HTML element that received an OS-level
+// file drop. Populated from Wails's DropTargetDetails when the drop
+// landed on an element carrying the data-file-drop-target attribute;
+// nil when the drop landed on a non-target region (e.g. window
+// chrome).
+type DropTarget struct {
+	ID         string            `json:"id,omitempty"`
+	X          int               `json:"x"`
+	Y          int               `json:"y"`
+	ClassList  []string          `json:"classList,omitempty"`
+	Attributes map[string]string `json:"attributes,omitempty"`
+}
+
 type ActionFilesDropped struct {
-	Name     string   `json:"name"` // window name
-	Paths    []string `json:"paths"`
-	TargetID string   `json:"targetId,omitempty"`
+	Name  string      `json:"name"` // window name
+	Paths []string    `json:"paths"`
+	// Target is the element that received the drop (nil when the drop
+	// landed outside any data-file-drop-target region).
+	Target *DropTarget `json:"target,omitempty"`
+	// TargetID mirrors Target.ID for back-compat. Empty when Target
+	// is nil. Retained so existing consumers keep working without a
+	// nil check; new consumers should read Target for full context.
+	TargetID string `json:"targetId,omitempty"`
 }
 
 // --- Zoom ---

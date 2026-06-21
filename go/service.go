@@ -429,10 +429,13 @@ func (s *Service) start(ctx context.Context) core.Result {
 	}
 
 	// Tray config — apply declared icon / tooltip / label / menu /
-	// popover attachment. Click routing stays caller-owned; the
-	// consumer registers a handler on ActionTrayMenuItemClicked and
-	// switches on ActionID.
+	// popover attachment. Click routing can be declared via
+	// cfg.Tray.Routes; entries not in the table fall through to the
+	// consumer's own ActionTrayMenuItemClicked handler.
 	applyTrayConfig(c, cfg.Tray)
+	if cfg.Tray != nil {
+		applyTrayRoutes(c, cfg.Tray.Routes)
+	}
 
 	// Keybindings — register each accelerator + install the shared
 	// trigger router. EventName per binding fires on trigger.

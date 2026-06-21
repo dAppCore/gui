@@ -46,6 +46,7 @@ type PlatformWindow interface {
 	IsVisible() bool
 	IsFullscreen() bool
 	IsMinimised() bool
+	IsAlwaysOnTop() bool
 	GetBounds() (x, y, width, height int)
 	GetZoom() float64
 	GetOpacity() float64
@@ -94,7 +95,7 @@ type PlatformWindow interface {
 	SetCloseBehavior(behavior CloseBehavior)
 
 	// File drop
-	OnFileDrop(handler func(paths []string, targetID string))
+	OnFileDrop(handler func(paths []string, target *DropTarget))
 }
 
 // WindowEvent is emitted by the backend for window state changes.
