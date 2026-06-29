@@ -12,15 +12,15 @@ func newWebviewToolsTestSubsystem(t *core.T, handler func(name string, opts core
 	t.Helper()
 
 	c := core.New(core.WithServiceLock())
-	c.Action("webview.devtoolsOpen", func(_ context.Context, opts core.Options) core.Result {
+	c.Action("webview.devtools_open", func(_ context.Context, opts core.Options) core.Result {
 		if handler != nil {
-			return handler("webview.devtoolsOpen", opts)
+			return handler("webview.devtools_open", opts)
 		}
 		return core.Result{}
 	})
-	c.Action("webview.devtoolsClose", func(_ context.Context, opts core.Options) core.Result {
+	c.Action("webview.devtools_close", func(_ context.Context, opts core.Options) core.Result {
 		if handler != nil {
-			return handler("webview.devtoolsClose", opts)
+			return handler("webview.devtools_close", opts)
 		}
 		return core.Result{}
 	})
@@ -53,7 +53,7 @@ func TestToolsWebview_webviewDevTools_GoodCase(t *core.T) {
 	result, err = sub.CallTool(context.Background(), "webview_devtools_close", map[string]any{"window": "main"})
 	core.RequireNoError(t, err)
 	core.AssertContains(t, result, "\"success\":true")
-	core.AssertEqual(t, []string{"webview.devtoolsOpen", "webview.devtoolsClose"}, calls)
+	core.AssertEqual(t, []string{"webview.devtools_open", "webview.devtools_close"}, calls)
 }
 
 func TestToolsWebview_webviewDevToolsOpen_Bad(t *core.T) {
@@ -64,7 +64,7 @@ func TestToolsWebview_webviewDevToolsOpen_Bad(t *core.T) {
 		task, ok := opts.Get("task").Value.(webview.TaskDevToolsOpen)
 		core.RequireTrue(t, ok)
 		core.AssertEqual(t, "main", task.Window)
-		core.AssertEqual(t, "webview.devtoolsOpen", name)
+		core.AssertEqual(t, "webview.devtools_open", name)
 		return core.Result{Value: core.NewError("devtools unavailable"), OK: false}
 	})
 
@@ -81,7 +81,7 @@ func TestToolsWebview_webviewDevToolsClose_Ugly(t *core.T) {
 		task, ok := opts.Get("task").Value.(webview.TaskDevToolsClose)
 		core.RequireTrue(t, ok)
 		core.AssertEqual(t, "main", task.Window)
-		core.AssertEqual(t, "webview.devtoolsClose", name)
+		core.AssertEqual(t, "webview.devtools_close", name)
 		return core.Result{Value: "suppressed failure", OK: false}
 	})
 

@@ -71,13 +71,13 @@ func TestDisplay_LayoutDelegationWrappers(t *core.T) {
 	errorCases := []errorOnlyWrapperCase{
 		{
 			name:   "DeleteLayout",
-			action: "window.deleteLayout",
+			action: "window.delete_layout",
 			call: func(svc *Service) resultFailure {
 				return svc.DeleteLayout("development")
 			},
 			setupGood: func(t *core.T, c *core.Core) {
 				t.Helper()
-				c.Action("window.deleteLayout", func(_ context.Context, opts core.Options) core.Result {
+				c.Action("window.delete_layout", func(_ context.Context, opts core.Options) core.Result {
 					task := opts.Get("task").Value.(window.TaskDeleteLayout)
 					core.AssertEqual(t, "development", task.Name)
 					return core.Result{OK: true}
@@ -86,13 +86,13 @@ func TestDisplay_LayoutDelegationWrappers(t *core.T) {
 		},
 		{
 			name:   "TileWindows",
-			action: "window.tileWindows",
+			action: "window.tile_windows",
 			call: func(svc *Service) resultFailure {
 				return svc.TileWindows(window.TileModeGrid, []string{"editor", "terminal"})
 			},
 			setupGood: func(t *core.T, c *core.Core) {
 				t.Helper()
-				c.Action("window.tileWindows", func(_ context.Context, opts core.Options) core.Result {
+				c.Action("window.tile_windows", func(_ context.Context, opts core.Options) core.Result {
 					task := opts.Get("task").Value.(window.TaskTileWindows)
 					core.AssertEqual(t, window.TileModeGrid.String(), task.Mode)
 					core.AssertEqual(t, []string{"editor", "terminal"}, task.Windows)
@@ -102,13 +102,13 @@ func TestDisplay_LayoutDelegationWrappers(t *core.T) {
 		},
 		{
 			name:   "SnapWindow",
-			action: "window.snapWindow",
+			action: "window.snap_window",
 			call: func(svc *Service) resultFailure {
 				return svc.SnapWindow("preview", window.SnapCenter)
 			},
 			setupGood: func(t *core.T, c *core.Core) {
 				t.Helper()
-				c.Action("window.snapWindow", func(_ context.Context, opts core.Options) core.Result {
+				c.Action("window.snap_window", func(_ context.Context, opts core.Options) core.Result {
 					task := opts.Get("task").Value.(window.TaskSnapWindow)
 					core.AssertEqual(t, "preview", task.Name)
 					core.AssertEqual(t, window.SnapCenter.String(), task.Position)
@@ -118,13 +118,13 @@ func TestDisplay_LayoutDelegationWrappers(t *core.T) {
 		},
 		{
 			name:   "StackWindows",
-			action: "window.stackWindows",
+			action: "window.stack_windows",
 			call: func(svc *Service) resultFailure {
 				return svc.StackWindows([]string{"editor", "preview"}, 24, 18)
 			},
 			setupGood: func(t *core.T, c *core.Core) {
 				t.Helper()
-				c.Action("window.stackWindows", func(_ context.Context, opts core.Options) core.Result {
+				c.Action("window.stack_windows", func(_ context.Context, opts core.Options) core.Result {
 					task := opts.Get("task").Value.(window.TaskStackWindows)
 					core.AssertEqual(t, []string{"editor", "preview"}, task.Windows)
 					core.AssertEqual(t, 24, task.OffsetX)
@@ -135,13 +135,13 @@ func TestDisplay_LayoutDelegationWrappers(t *core.T) {
 		},
 		{
 			name:   "ApplyWorkflowLayout",
-			action: "window.applyWorkflow",
+			action: "window.apply_workflow",
 			call: func(svc *Service) resultFailure {
 				return svc.ApplyWorkflowLayout(window.WorkflowCoding)
 			},
 			setupGood: func(t *core.T, c *core.Core) {
 				t.Helper()
-				c.Action("window.applyWorkflow", func(_ context.Context, opts core.Options) core.Result {
+				c.Action("window.apply_workflow", func(_ context.Context, opts core.Options) core.Result {
 					task := opts.Get("task").Value.(window.TaskApplyWorkflow)
 					core.AssertEqual(t, window.WorkflowCoding.String(), task.Workflow)
 					return core.Result{OK: true}
@@ -158,14 +158,14 @@ func TestDisplay_LayoutDelegationWrappers(t *core.T) {
 
 	runLayoutResultWrapperCase(t, layoutResultWrapperCase{
 		name:   "LayoutBesideEditor",
-		action: "window.layoutBesideEditor",
+		action: "window.layout_beside_editor",
 		zero:   window.LayoutBesideEditorResult{},
 		call: func(svc *Service) (any, resultFailure) {
 			return svc.LayoutBesideEditor("preview", "code", "right", 0.62)
 		},
 		setupGood: func(t *core.T, c *core.Core) {
 			t.Helper()
-			c.Action("window.layoutBesideEditor", func(_ context.Context, opts core.Options) core.Result {
+			c.Action("window.layout_beside_editor", func(_ context.Context, opts core.Options) core.Result {
 				task := opts.Get("task").Value.(window.TaskLayoutBesideEditor)
 				core.AssertEqual(t, "preview", task.Name)
 				core.AssertEqual(t, "code", task.Editor)
@@ -198,14 +198,14 @@ func TestDisplay_LayoutDelegationWrappers(t *core.T) {
 
 	runLayoutResultWrapperCase(t, layoutResultWrapperCase{
 		name:   "FindScreenSpace",
-		action: "window.findSpace",
+		action: "window.find_space",
 		zero:   window.ScreenSpace{},
 		call: func(svc *Service) (any, resultFailure) {
 			return svc.FindScreenSpace("screen-1", 800, 600, 24)
 		},
 		setupGood: func(t *core.T, c *core.Core) {
 			t.Helper()
-			c.Action("window.findSpace", func(_ context.Context, opts core.Options) core.Result {
+			c.Action("window.find_space", func(_ context.Context, opts core.Options) core.Result {
 				task := opts.Get("task").Value.(window.TaskScreenFindSpace)
 				core.AssertEqual(t, "screen-1", task.ScreenID)
 				core.AssertEqual(t, 800, task.Width)
@@ -236,14 +236,14 @@ func TestDisplay_LayoutDelegationWrappers(t *core.T) {
 
 	runLayoutResultWrapperCase(t, layoutResultWrapperCase{
 		name:   "ArrangeWindowPair",
-		action: "window.arrangePair",
+		action: "window.arrange_pair",
 		zero:   window.PairArrangement{},
 		call: func(svc *Service) (any, resultFailure) {
 			return svc.ArrangeWindowPair("editor", "preview", "screen-1", 0.55)
 		},
 		setupGood: func(t *core.T, c *core.Core) {
 			t.Helper()
-			c.Action("window.arrangePair", func(_ context.Context, opts core.Options) core.Result {
+			c.Action("window.arrange_pair", func(_ context.Context, opts core.Options) core.Result {
 				task := opts.Get("task").Value.(window.TaskWindowArrangePair)
 				core.AssertEqual(t, "editor", task.Primary)
 				core.AssertEqual(t, "preview", task.Secondary)

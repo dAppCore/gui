@@ -9,21 +9,27 @@ type Platform interface {
 
 // PlatformWindowOptions are the backend-specific options passed to CreateWindow.
 type PlatformWindowOptions struct {
-	Name                string
-	Title               string
-	URL                 string
-	HTML                string
-	JS                  string
-	Width, Height       int
-	X, Y                int
-	MinWidth, MinHeight int
-	MaxWidth, MaxHeight int
-	Frameless           bool
-	Hidden              bool
-	AlwaysOnTop         bool
-	BackgroundColour    [4]uint8 // RGBA
-	DisableResize       bool
-	EnableFileDrop      bool
+	Name                       string
+	Title                      string
+	URL                        string
+	HTML                       string
+	JS                         string
+	Width, Height              int
+	X, Y                       int
+	MinWidth, MinHeight        int
+	MaxWidth, MaxHeight        int
+	Frameless                  bool
+	Hidden                     bool
+	AlwaysOnTop                bool
+	BackgroundColour           [4]uint8 // RGBA
+	DisableResize              bool
+	EnableFileDrop             bool
+	HideOnEscape               bool
+	HideOnFocusLost            bool
+	DefaultContextMenuDisabled bool
+	Mac                        MacWindow
+	Linux                      LinuxWindow
+	Windows                    WindowsWindow
 }
 
 // PlatformWindow is a live window handle from the backend.
@@ -40,6 +46,7 @@ type PlatformWindow interface {
 	IsVisible() bool
 	IsFullscreen() bool
 	IsMinimised() bool
+	IsAlwaysOnTop() bool
 	GetBounds() (x, y, width, height int)
 	GetZoom() float64
 	GetOpacity() float64
@@ -81,8 +88,14 @@ type PlatformWindow interface {
 	// Events
 	OnWindowEvent(handler func(event WindowEvent))
 
+	// SetCloseBehavior installs the requested close-event behaviour
+	// on this window. See messages.go CloseBehavior for the
+	// semantics. Idempotent — calling twice replaces the prior
+	// behaviour.
+	SetCloseBehavior(behavior CloseBehavior)
+
 	// File drop
-	OnFileDrop(handler func(paths []string, targetID string))
+	OnFileDrop(handler func(paths []string, target *DropTarget))
 }
 
 // WindowEvent is emitted by the backend for window state changes.

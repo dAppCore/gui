@@ -101,7 +101,7 @@ func TestQueryAccentColour_Good(t *core.T) {
 
 func TestTaskOpenFileManager_Good(t *core.T) {
 	mock, c := newTestService(t)
-	r := c.Action("environment.openFileManager").Run(context.Background(), core.NewOptions(
+	r := c.Action("environment.open_file_manager").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: TaskOpenFileManager{Path: "/tmp", Select: true}},
 	))
 	core.RequireTrue(t, r.OK)
@@ -111,7 +111,7 @@ func TestTaskOpenFileManager_Good(t *core.T) {
 
 func TestTaskOpenFileManager_Bad_InvalidPath(t *core.T) {
 	_, c := newTestService(t)
-	r := c.Action("environment.openFileManager").Run(context.Background(), core.NewOptions(
+	r := c.Action("environment.open_file_manager").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: TaskOpenFileManager{Path: "../tmp", Select: false}},
 	))
 	core.AssertFalse(t, r.OK)
@@ -147,7 +147,7 @@ func TestTaskSetTheme_Good_OverrideAndReset(t *core.T) {
 	mock, c := newTestService(t)
 	mock.isDark = false
 
-	r := c.Action("environment.setTheme").Run(context.Background(), core.NewOptions(
+	r := c.Action("environment.set_theme").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: TaskSetTheme{Theme: "dark"}},
 	))
 	core.RequireTrue(t, r.OK)
@@ -158,7 +158,7 @@ func TestTaskSetTheme_Good_OverrideAndReset(t *core.T) {
 	core.AssertTrue(t, info.IsDark)
 	core.AssertEqual(t, "dark", info.Theme)
 
-	r = c.Action("environment.setTheme").Run(context.Background(), core.NewOptions(
+	r = c.Action("environment.set_theme").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: TaskSetTheme{Theme: "system"}},
 	))
 	core.RequireTrue(t, r.OK)
@@ -172,7 +172,7 @@ func TestTaskSetTheme_Good_OverrideAndReset(t *core.T) {
 
 func TestTaskSetTheme_Bad_Invalid(t *core.T) {
 	_, c := newTestService(t)
-	r := c.Action("environment.setTheme").Run(context.Background(), core.NewOptions(
+	r := c.Action("environment.set_theme").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: TaskSetTheme{Theme: "sepia"}},
 	))
 	core.AssertFalse(t, r.OK)
@@ -211,7 +211,7 @@ func TestTaskOpenFileManager_Bad_Error(t *core.T) {
 	c := core.New(core.WithService(Register(mock)), core.WithServiceLock())
 	core.RequireTrue(t, c.ServiceStartup(t.Context(), nil).OK)
 
-	r := c.Action("environment.openFileManager").Run(context.Background(), core.NewOptions(
+	r := c.Action("environment.open_file_manager").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: TaskOpenFileManager{Path: "/missing", Select: false}},
 	))
 	core.AssertFalse(t, r.OK)
@@ -222,7 +222,7 @@ func TestTaskOpenFileManager_Bad_Error(t *core.T) {
 func TestTaskOpenFileManager_Ugly_NoService(t *core.T) {
 	// No environment service — action is not registered
 	c := core.New(core.WithServiceLock())
-	r := c.Action("environment.openFileManager").Run(context.Background(), core.NewOptions())
+	r := c.Action("environment.open_file_manager").Run(context.Background(), core.NewOptions())
 	core.AssertFalse(t, r.OK)
 }
 

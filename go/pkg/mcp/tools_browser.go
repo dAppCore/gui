@@ -18,7 +18,7 @@ type BrowserOpenURLOutput struct {
 }
 
 func (s *Subsystem) browserOpenURL(_ context.Context, _ *mcp.CallToolRequest, input BrowserOpenURLInput) (*mcp.CallToolResult, BrowserOpenURLOutput, resultFailure) {
-	r := s.core.Action("browser.openURL").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("browser.open_url").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "url", Value: input.URL},
 	))
 	if !r.OK {
@@ -40,7 +40,7 @@ type BrowserOpenFileOutput struct {
 }
 
 func (s *Subsystem) browserOpenFile(_ context.Context, _ *mcp.CallToolRequest, input BrowserOpenFileInput) (*mcp.CallToolResult, BrowserOpenFileOutput, resultFailure) {
-	r := s.core.Action("browser.openFile").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("browser.open_file").Run(context.Background(), core.NewOptions(
 		core.Option{Key: core.Concat("pa", "th"), Value: input.Path},
 	))
 	if !r.OK {

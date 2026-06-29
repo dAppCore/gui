@@ -67,7 +67,7 @@ func (s *Service) buildPreload(rawURL string) string {
 }
 
 func (s *Service) resolveCoreScheme(rawURL string) (schemeResponse, bool, resultFailure) {
-	result := s.Core().Action("display.resolveScheme").Run(context.Background(), core.NewOptions(
+	result := s.Core().Action("display.resolve_scheme").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "url", Value: rawURL},
 	))
 	if !result.OK {

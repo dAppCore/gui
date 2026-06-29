@@ -147,7 +147,7 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		script, err := s.BuildPreloadScript(opts.String("url"))
 		return core.Result{}.New(script, err)
 	})
-	s.Core().Action("display.resolveScheme", func(ctx context.Context, opts core.Options) core.Result {
+	s.Core().Action("display.resolve_scheme", func(ctx context.Context, opts core.Options) core.Result {
 		return s.ResolveScheme(ctx, opts.String("url"))
 	})
 	s.Core().Action("display.storage.set", func(_ context.Context, opts core.Options) core.Result {
@@ -664,7 +664,7 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 	case "chat:models":
 		return c.Action("gui.chat.models").Run(ctx, wsOptions(msg.Data))
 	case "chat:select-model":
-		return c.Action("gui.chat.selectModel").Run(ctx, wsOptions(msg.Data))
+		return c.Action("gui.chat.select_model").Run(ctx, wsOptions(msg.Data))
 	case "chat:settings:save":
 		return c.Action("gui.chat.settings.save").Run(ctx, wsOptions(msg.Data))
 	case "chat:settings:defaults":
@@ -692,11 +692,11 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 	case "chat:conversations:export":
 		return c.Action("gui.chat.conversations.export").Run(ctx, wsOptions(msg.Data))
 	case "chat:attach-image":
-		return c.Action("gui.chat.attachImage").Run(ctx, wsOptions(msg.Data))
+		return c.Action("gui.chat.attach_image").Run(ctx, wsOptions(msg.Data))
 	case "chat:attach-image-file":
-		return c.Action("gui.chat.attachImageFile").Run(ctx, wsOptions(msg.Data))
+		return c.Action("gui.chat.attach_image_file").Run(ctx, wsOptions(msg.Data))
 	case "chat:remove-image":
-		return c.Action("gui.chat.removeImage").Run(ctx, wsOptions(msg.Data))
+		return c.Action("gui.chat.remove_image").Run(ctx, wsOptions(msg.Data))
 	case "chat:thinking:start":
 		return c.Action("gui.chat.thinking.start").Run(ctx, wsOptions(msg.Data))
 	case "chat:thinking:append":
@@ -728,19 +728,19 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 		return c.QUERY(keybinding.QueryList{})
 	case "browser:open-url":
 		url, _ := msg.Data["url"].(string)
-		return c.Action("browser.openURL").Run(ctx, core.NewOptions(
+		return c.Action("browser.open_url").Run(ctx, core.NewOptions(
 			core.Option{Key: "url", Value: url},
 		))
 	case "browser:open-file":
 		path, _ := msg.Data[core.Concat("pa", "th")].(string)
-		return c.Action("browser.openFile").Run(ctx, core.NewOptions(
+		return c.Action("browser.open_file").Run(ctx, core.NewOptions(
 			core.Option{Key: core.Concat("pa", "th"), Value: path},
 		))
 	case "clipboard:read":
 		return c.QUERY(clipboard.QueryText{})
 	case "clipboard:write":
 		text, _ := msg.Data["text"].(string)
-		return c.Action("clipboard.setText").Run(ctx, core.NewOptions(
+		return c.Action("clipboard.set_text").Run(ctx, core.NewOptions(
 			core.Option{Key: "task", Value: clipboard.TaskSetText{Text: text}},
 		))
 	case "clipboard:clear":
@@ -749,15 +749,15 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 		return c.QUERY(clipboard.QueryImage{})
 	case "clipboard:write-image":
 		data, _ := msg.Data["base64"].(string)
-		return c.Action("clipboard.setImage").Run(ctx, core.NewOptions(
+		return c.Action("clipboard.set_image").Run(ctx, core.NewOptions(
 			core.Option{Key: "data", Value: data},
 		))
 	case "dialog:open-file":
-		return c.Action("dialog.openFile").Run(ctx, wsOptions(msg.Data))
+		return c.Action("dialog.open_file").Run(ctx, wsOptions(msg.Data))
 	case "dialog:save-file":
-		return c.Action("dialog.saveFile").Run(ctx, wsOptions(msg.Data))
+		return c.Action("dialog.save_file").Run(ctx, wsOptions(msg.Data))
 	case "dialog:open-directory":
-		return c.Action("dialog.openDirectory").Run(ctx, wsOptions(msg.Data))
+		return c.Action("dialog.open_directory").Run(ctx, wsOptions(msg.Data))
 	case "dialog:confirm":
 		return c.Action("dialog.question").Run(ctx, wsOptions(msg.Data))
 	case "dialog:message":
@@ -765,16 +765,16 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 	case "dialog:prompt":
 		return c.Action("dialog.prompt").Run(ctx, wsOptions(msg.Data))
 	case "dock:show":
-		return c.Action("dock.showIcon").Run(ctx, core.NewOptions())
+		return c.Action("dock.show_icon").Run(ctx, core.NewOptions())
 	case "dock:hide":
-		return c.Action("dock.hideIcon").Run(ctx, core.NewOptions())
+		return c.Action("dock.hide_icon").Run(ctx, core.NewOptions())
 	case "dock:badge":
 		label, _ := msg.Data["label"].(string)
-		return c.Action("dock.setBadge").Run(ctx, core.NewOptions(
+		return c.Action("dock.set_badge").Run(ctx, core.NewOptions(
 			core.Option{Key: "task", Value: dock.TaskSetBadge{Label: label}},
 		))
 	case "dock:badge-remove":
-		return c.Action("dock.removeBadge").Run(ctx, core.NewOptions())
+		return c.Action("dock.remove_badge").Run(ctx, core.NewOptions())
 	case "dock:visible":
 		return c.QUERY(dock.QueryVisible{})
 	case "notification:show":
@@ -785,7 +785,7 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 			core.Option{Key: "task", Value: notification.TaskClear{ID: id}},
 		))
 	case "notification:permission-request":
-		return c.Action("notification.requestPermission").Run(ctx, core.NewOptions())
+		return c.Action("notification.request_permission").Run(ctx, core.NewOptions())
 	case "notification:permission-check":
 		return c.QUERY(notification.QueryPermission{})
 	case "notification:with-actions":
@@ -796,7 +796,7 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 		return c.QUERY(environment.QueryInfo{})
 	case "theme:set":
 		theme, _ := msg.Data["theme"].(string)
-		return c.Action("environment.setTheme").Run(ctx, core.NewOptions(
+		return c.Action("environment.set_theme").Run(ctx, core.NewOptions(
 			core.Option{Key: "task", Value: environment.TaskSetTheme{Theme: theme}},
 		))
 	case "contextmenu:add":
@@ -952,7 +952,7 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 				paths = append(paths, ps)
 			}
 		}
-		return c.Action("webview.uploadFile").Run(ctx, core.NewOptions(
+		return c.Action("webview.upload_file").Run(ctx, core.NewOptions(
 			core.Option{Key: "task", Value: webview.TaskUploadFile{Window: w, Selector: sel, Paths: paths}},
 		))
 	case "webview:viewport":
@@ -962,7 +962,7 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 		}
 		width, _ := msg.Data["width"].(float64)
 		height, _ := msg.Data["height"].(float64)
-		return c.Action("webview.setViewport").Run(ctx, core.NewOptions(
+		return c.Action("webview.set_viewport").Run(ctx, core.NewOptions(
 			core.Option{Key: "task", Value: webview.TaskSetViewport{Window: w, Width: int(width), Height: int(height)}},
 		))
 	case "webview:clear-console":
@@ -970,7 +970,7 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 		if e != nil {
 			return core.Result{Value: e, OK: false}
 		}
-		return c.Action("webview.clearConsole").Run(ctx, core.NewOptions(
+		return c.Action("webview.clear_console").Run(ctx, core.NewOptions(
 			core.Option{Key: "task", Value: webview.TaskClearConsole{Window: w}},
 		))
 	case "webview:console":
@@ -1028,7 +1028,7 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 		if e != nil {
 			return core.Result{Value: e, OK: false}
 		}
-		return c.Action("webview.devtoolsOpen").Run(ctx, core.NewOptions(
+		return c.Action("webview.devtools_open").Run(ctx, core.NewOptions(
 			core.Option{Key: "task", Value: webview.TaskDevToolsOpen{Window: w}},
 		))
 	case "webview:devtools-close":
@@ -1036,13 +1036,13 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 		if e != nil {
 			return core.Result{Value: e, OK: false}
 		}
-		return c.Action("webview.devtoolsClose").Run(ctx, core.NewOptions(
+		return c.Action("webview.devtools_close").Run(ctx, core.NewOptions(
 			core.Option{Key: "task", Value: webview.TaskDevToolsClose{Window: w}},
 		))
 	case "tray:show-message":
 		title, _ := msg.Data["title"].(string)
 		message, _ := msg.Data["message"].(string)
-		return c.Action("systray.showMessage").Run(ctx, core.NewOptions(
+		return c.Action("systray.show_message").Run(ctx, core.NewOptions(
 			core.Option{Key: "task", Value: systray.TaskShowMessage{Title: title, Message: message}},
 		))
 	case "layout:beside-editor":
@@ -1056,7 +1056,7 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 		if e != nil {
 			return core.Result{Value: e, OK: false}
 		}
-		return c.Action("window.layoutBesideEditor").Run(ctx, core.NewOptions(
+		return c.Action("window.layout_beside_editor").Run(ctx, core.NewOptions(
 			core.Option{Key: "task", Value: window.TaskLayoutBesideEditor{
 				Name: name, Editor: editor, Side: side, Ratio: ratio,
 			}},
@@ -1067,7 +1067,7 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 		if e != nil {
 			return core.Result{Value: e, OK: false}
 		}
-		return c.Action("window.layoutSuggest").Run(ctx, core.NewOptions(
+		return c.Action("window.layout_suggest").Run(ctx, core.NewOptions(
 			core.Option{Key: "task", Value: window.TaskLayoutSuggest{
 				ScreenID: screenID, WindowCount: windowCount,
 			}},
@@ -1086,7 +1086,7 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 		if e != nil {
 			return core.Result{Value: e, OK: false}
 		}
-		return c.Action("window.findSpace").Run(ctx, core.NewOptions(
+		return c.Action("window.find_space").Run(ctx, core.NewOptions(
 			core.Option{Key: "task", Value: window.TaskScreenFindSpace{
 				ScreenID: screenID, Width: width, Height: height, Padding: padding,
 			}},
@@ -1105,7 +1105,7 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 		if e != nil {
 			return core.Result{Value: e, OK: false}
 		}
-		return c.Action("window.arrangePair").Run(ctx, core.NewOptions(
+		return c.Action("window.arrange_pair").Run(ctx, core.NewOptions(
 			core.Option{Key: "task", Value: window.TaskWindowArrangePair{
 				Primary: primary, Secondary: secondary, ScreenID: screenID, Ratio: ratio,
 			}},
@@ -1119,7 +1119,7 @@ func (s *Service) handleWSMessage(msg WSMessage) core.Result {
 		if !ok {
 			return core.Result{Value: core.E("display.handleWSMessage", "missing required field \"opacity\"", nil), OK: false}
 		}
-		return c.Action("window.setOpacity").Run(ctx, core.NewOptions(
+		return c.Action("window.set_opacity").Run(ctx, core.NewOptions(
 			core.Option{Key: "task", Value: window.TaskSetOpacity{Name: name, Opacity: opacity}},
 		))
 	default:
@@ -1144,7 +1144,7 @@ func (s *Service) handleTrayAction(actionID string) {
 		// Hide all tracked windows so the tray action behaves like a real desktop "close" without quitting.
 		infos := s.ListWindowInfos()
 		for _, info := range infos {
-			coreutil.ObserveResult(c, "display.handleTrayAction", "window visibility update failed", c.Action("window.setVisibility").Run(ctx, core.NewOptions(
+			coreutil.ObserveResult(c, "display.handleTrayAction", "window visibility update failed", c.Action("window.set_visibility").Run(ctx, core.NewOptions(
 				core.Option{Key: "task", Value: window.TaskSetVisibility{Name: info.Name, Visible: false}},
 			)))
 		}
@@ -1303,28 +1303,28 @@ func (s *Service) ListWindowInfos() []window.WindowInfo {
 
 // SetWindowPosition moves a window via IPC.
 func (s *Service) SetWindowPosition(name string, x, y int) resultFailure {
-	r := s.Core().Action("window.setPosition").Run(context.Background(), core.NewOptions(
+	r := s.Core().Action("window.set_position").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetPosition{Name: name, X: x, Y: y}},
 	))
 	if !r.OK {
 		if e, ok := r.Value.(resultFailure); ok {
 			return e
 		}
-		return failedAction("display.SetWindowPosition", "window.setPosition")
+		return failedAction("display.SetWindowPosition", "window.set_position")
 	}
 	return nil
 }
 
 // SetWindowSize resizes a window via IPC.
 func (s *Service) SetWindowSize(name string, width, height int) resultFailure {
-	r := s.Core().Action("window.setSize").Run(context.Background(), core.NewOptions(
+	r := s.Core().Action("window.set_size").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetSize{Name: name, Width: width, Height: height}},
 	))
 	if !r.OK {
 		if e, ok := r.Value.(resultFailure); ok {
 			return e
 		}
-		return failedAction("display.SetWindowSize", "window.setSize")
+		return failedAction("display.SetWindowSize", "window.set_size")
 	}
 	return nil
 }
@@ -1409,42 +1409,42 @@ func (s *Service) RestoreWindow(name string) resultFailure {
 
 // SetWindowVisibility shows or hides a window.
 func (s *Service) SetWindowVisibility(name string, visible bool) resultFailure {
-	r := s.Core().Action("window.setVisibility").Run(context.Background(), core.NewOptions(
+	r := s.Core().Action("window.set_visibility").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetVisibility{Name: name, Visible: visible}},
 	))
 	if !r.OK {
 		if e, ok := r.Value.(resultFailure); ok {
 			return e
 		}
-		return failedAction("display.SetWindowVisibility", "window.setVisibility")
+		return failedAction("display.SetWindowVisibility", "window.set_visibility")
 	}
 	return nil
 }
 
 // SetWindowAlwaysOnTop sets whether a window stays on top.
 func (s *Service) SetWindowAlwaysOnTop(name string, alwaysOnTop bool) resultFailure {
-	r := s.Core().Action("window.setAlwaysOnTop").Run(context.Background(), core.NewOptions(
+	r := s.Core().Action("window.set_always_on_top").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetAlwaysOnTop{Name: name, AlwaysOnTop: alwaysOnTop}},
 	))
 	if !r.OK {
 		if e, ok := r.Value.(resultFailure); ok {
 			return e
 		}
-		return failedAction("display.SetWindowAlwaysOnTop", "window.setAlwaysOnTop")
+		return failedAction("display.SetWindowAlwaysOnTop", "window.set_always_on_top")
 	}
 	return nil
 }
 
 // SetWindowTitle changes a window's title.
 func (s *Service) SetWindowTitle(name string, title string) resultFailure {
-	r := s.Core().Action("window.setTitle").Run(context.Background(), core.NewOptions(
+	r := s.Core().Action("window.set_title").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetTitle{Name: name, Title: title}},
 	))
 	if !r.OK {
 		if e, ok := r.Value.(resultFailure); ok {
 			return e
 		}
-		return failedAction("display.SetWindowTitle", "window.setTitle")
+		return failedAction("display.SetWindowTitle", "window.set_title")
 	}
 	return nil
 }
@@ -1465,7 +1465,7 @@ func (s *Service) SetWindowFullscreen(name string, fullscreen bool) resultFailur
 
 // SetWindowBackgroundColour sets the background colour of a window.
 func (s *Service) SetWindowBackgroundColour(name string, r, g, b, a uint8) resultFailure {
-	result := s.Core().Action("window.setBackgroundColour").Run(context.Background(), core.NewOptions(
+	result := s.Core().Action("window.set_background_colour").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSetBackgroundColour{
 			Name: name, Red: r, Green: g, Blue: b, Alpha: a,
 		}},
@@ -1474,7 +1474,7 @@ func (s *Service) SetWindowBackgroundColour(name string, r, g, b, a uint8) resul
 		if e, ok := result.Value.(resultFailure); ok {
 			return e
 		}
-		return failedAction("display.SetWindowBackgroundColour", "window.setBackgroundColour")
+		return failedAction("display.SetWindowBackgroundColour", "window.set_background_colour")
 	}
 	return nil
 }
@@ -1572,28 +1572,28 @@ func (s *Service) CreateWindow(options CreateWindowOptions) (*window.WindowInfo,
 
 // SaveLayout saves the current window arrangement as a named layout.
 func (s *Service) SaveLayout(name string) resultFailure {
-	r := s.Core().Action("window.saveLayout").Run(context.Background(), core.NewOptions(
+	r := s.Core().Action("window.save_layout").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSaveLayout{Name: name}},
 	))
 	if !r.OK {
 		if e, ok := r.Value.(resultFailure); ok {
 			return e
 		}
-		return failedAction("display.SaveLayout", "window.saveLayout")
+		return failedAction("display.SaveLayout", "window.save_layout")
 	}
 	return nil
 }
 
 // RestoreLayout applies a saved layout.
 func (s *Service) RestoreLayout(name string) resultFailure {
-	r := s.Core().Action("window.restoreLayout").Run(context.Background(), core.NewOptions(
+	r := s.Core().Action("window.restore_layout").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskRestoreLayout{Name: name}},
 	))
 	if !r.OK {
 		if e, ok := r.Value.(resultFailure); ok {
 			return e
 		}
-		return failedAction("display.RestoreLayout", "window.restoreLayout")
+		return failedAction("display.RestoreLayout", "window.restore_layout")
 	}
 	return nil
 }
@@ -1613,14 +1613,14 @@ func (s *Service) ListLayouts() []window.LayoutInfo {
 
 // DeleteLayout removes a saved layout by name.
 func (s *Service) DeleteLayout(name string) resultFailure {
-	r := s.Core().Action("window.deleteLayout").Run(context.Background(), core.NewOptions(
+	r := s.Core().Action("window.delete_layout").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskDeleteLayout{Name: name}},
 	))
 	if !r.OK {
 		if e, ok := r.Value.(resultFailure); ok {
 			return e
 		}
-		return failedAction("display.DeleteLayout", "window.deleteLayout")
+		return failedAction("display.DeleteLayout", "window.delete_layout")
 	}
 	return nil
 }
@@ -1645,56 +1645,56 @@ func (s *Service) GetLayout(name string) *window.Layout {
 
 // TileWindows arranges windows in a tiled layout.
 func (s *Service) TileWindows(mode window.TileMode, windowNames []string) resultFailure {
-	r := s.Core().Action("window.tileWindows").Run(context.Background(), core.NewOptions(
+	r := s.Core().Action("window.tile_windows").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskTileWindows{Mode: mode.String(), Windows: windowNames}},
 	))
 	if !r.OK {
 		if e, ok := r.Value.(resultFailure); ok {
 			return e
 		}
-		return failedAction("display.TileWindows", "window.tileWindows")
+		return failedAction("display.TileWindows", "window.tile_windows")
 	}
 	return nil
 }
 
 // SnapWindow snaps a window to a screen edge or corner.
 func (s *Service) SnapWindow(name string, position window.SnapPosition) resultFailure {
-	r := s.Core().Action("window.snapWindow").Run(context.Background(), core.NewOptions(
+	r := s.Core().Action("window.snap_window").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSnapWindow{Name: name, Position: position.String()}},
 	))
 	if !r.OK {
 		if e, ok := r.Value.(resultFailure); ok {
 			return e
 		}
-		return failedAction("display.SnapWindow", "window.snapWindow")
+		return failedAction("display.SnapWindow", "window.snap_window")
 	}
 	return nil
 }
 
 // StackWindows arranges windows in a cascade pattern.
 func (s *Service) StackWindows(windowNames []string, offsetX, offsetY int) resultFailure {
-	r := s.Core().Action("window.stackWindows").Run(context.Background(), core.NewOptions(
+	r := s.Core().Action("window.stack_windows").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskStackWindows{Windows: windowNames, OffsetX: offsetX, OffsetY: offsetY}},
 	))
 	if !r.OK {
 		if e, ok := r.Value.(resultFailure); ok {
 			return e
 		}
-		return failedAction("display.StackWindows", "window.stackWindows")
+		return failedAction("display.StackWindows", "window.stack_windows")
 	}
 	return nil
 }
 
 // ApplyWorkflowLayout applies a predefined layout for a specific workflow.
 func (s *Service) ApplyWorkflowLayout(workflow window.WorkflowLayout) resultFailure {
-	r := s.Core().Action("window.applyWorkflow").Run(context.Background(), core.NewOptions(
+	r := s.Core().Action("window.apply_workflow").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskApplyWorkflow{Workflow: workflow.String()}},
 	))
 	if !r.OK {
 		if e, ok := r.Value.(resultFailure); ok {
 			return e
 		}
-		return failedAction("display.ApplyWorkflowLayout", "window.applyWorkflow")
+		return failedAction("display.ApplyWorkflowLayout", "window.apply_workflow")
 	}
 	return nil
 }
@@ -1703,7 +1703,7 @@ func (s *Service) ApplyWorkflowLayout(workflow window.WorkflowLayout) resultFail
 //
 //	result, err := svc.LayoutBesideEditor("preview", "code", "right", 0.62)
 func (s *Service) LayoutBesideEditor(name, editor, side string, ratio float64) (window.LayoutBesideEditorResult, resultFailure) {
-	r := s.Core().Action("window.layoutBesideEditor").Run(context.Background(), core.NewOptions(
+	r := s.Core().Action("window.layout_beside_editor").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskLayoutBesideEditor{
 			Name: name, Editor: editor, Side: side, Ratio: ratio,
 		}},
@@ -1712,7 +1712,7 @@ func (s *Service) LayoutBesideEditor(name, editor, side string, ratio float64) (
 		if e, ok := r.Value.(resultFailure); ok {
 			return window.LayoutBesideEditorResult{}, e
 		}
-		return window.LayoutBesideEditorResult{}, failedAction("display.LayoutBesideEditor", "window.layoutBesideEditor")
+		return window.LayoutBesideEditorResult{}, failedAction("display.LayoutBesideEditor", "window.layout_beside_editor")
 	}
 	result, ok := r.Value.(window.LayoutBesideEditorResult)
 	if !ok {
@@ -1725,7 +1725,7 @@ func (s *Service) LayoutBesideEditor(name, editor, side string, ratio float64) (
 //
 //	suggestion, err := svc.LayoutSuggest("", 2)
 func (s *Service) LayoutSuggest(screenID string, windowCount int) (window.LayoutSuggestion, resultFailure) {
-	r := s.Core().Action("window.layoutSuggest").Run(context.Background(), core.NewOptions(
+	r := s.Core().Action("window.layout_suggest").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskLayoutSuggest{
 			ScreenID: screenID, WindowCount: windowCount,
 		}},
@@ -1734,7 +1734,7 @@ func (s *Service) LayoutSuggest(screenID string, windowCount int) (window.Layout
 		if e, ok := r.Value.(resultFailure); ok {
 			return window.LayoutSuggestion{}, e
 		}
-		return window.LayoutSuggestion{}, failedAction("display.LayoutSuggest", "window.layoutSuggest")
+		return window.LayoutSuggestion{}, failedAction("display.LayoutSuggest", "window.layout_suggest")
 	}
 	result, ok := r.Value.(window.LayoutSuggestion)
 	if !ok {
@@ -1747,7 +1747,7 @@ func (s *Service) LayoutSuggest(screenID string, windowCount int) (window.Layout
 //
 //	space, err := svc.FindScreenSpace("", 800, 600, 24)
 func (s *Service) FindScreenSpace(screenID string, width, height, padding int) (window.ScreenSpace, resultFailure) {
-	r := s.Core().Action("window.findSpace").Run(context.Background(), core.NewOptions(
+	r := s.Core().Action("window.find_space").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskScreenFindSpace{
 			ScreenID: screenID, Width: width, Height: height, Padding: padding,
 		}},
@@ -1756,7 +1756,7 @@ func (s *Service) FindScreenSpace(screenID string, width, height, padding int) (
 		if e, ok := r.Value.(resultFailure); ok {
 			return window.ScreenSpace{}, e
 		}
-		return window.ScreenSpace{}, failedAction("display.FindScreenSpace", "window.findSpace")
+		return window.ScreenSpace{}, failedAction("display.FindScreenSpace", "window.find_space")
 	}
 	result, ok := r.Value.(window.ScreenSpace)
 	if !ok {
@@ -1769,7 +1769,7 @@ func (s *Service) FindScreenSpace(screenID string, width, height, padding int) (
 //
 //	arrangement, err := svc.ArrangeWindowPair("editor", "preview", "", 0.55)
 func (s *Service) ArrangeWindowPair(primary, secondary, screenID string, ratio float64) (window.PairArrangement, resultFailure) {
-	r := s.Core().Action("window.arrangePair").Run(context.Background(), core.NewOptions(
+	r := s.Core().Action("window.arrange_pair").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskWindowArrangePair{
 			Primary: primary, Secondary: secondary, ScreenID: screenID, Ratio: ratio,
 		}},
@@ -1778,7 +1778,7 @@ func (s *Service) ArrangeWindowPair(primary, secondary, screenID string, ratio f
 		if e, ok := r.Value.(resultFailure); ok {
 			return window.PairArrangement{}, e
 		}
-		return window.PairArrangement{}, failedAction("display.ArrangeWindowPair", "window.arrangePair")
+		return window.PairArrangement{}, failedAction("display.ArrangeWindowPair", "window.arrange_pair")
 	}
 	result, ok := r.Value.(window.PairArrangement)
 	if !ok {
@@ -1833,7 +1833,7 @@ func (s *Service) buildMenu() {
 		items = items[1:] // skip AppMenu
 	}
 
-	coreutil.ObserveResult(s.Core(), "display.setupApplicationMenu", "app menu setup failed", s.Core().Action("menu.setAppMenu").Run(context.Background(), core.NewOptions(
+	coreutil.ObserveResult(s.Core(), "display.setupApplicationMenu", "app menu setup failed", s.Core().Action("menu.set_app_menu").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: menu.TaskSetAppMenu{Items: items}},
 	)))
 }
@@ -1859,7 +1859,7 @@ func (s *Service) handleOpenDevTools() {
 	if windowName == "" {
 		return
 	}
-	coreutil.ObserveResult(s.Core(), "display.handleOpenDevTools", "devtools open failed", s.Core().Action("webview.devtoolsOpen").Run(context.Background(), core.NewOptions(
+	coreutil.ObserveResult(s.Core(), "display.handleOpenDevTools", "devtools open failed", s.Core().Action("webview.devtools_open").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: webview.TaskDevToolsOpen{Window: windowName}},
 	)))
 }
@@ -1869,7 +1869,7 @@ func (s *Service) handleCloseDevTools() {
 	if windowName == "" {
 		return
 	}
-	coreutil.ObserveResult(s.Core(), "display.handleCloseDevTools", "devtools close failed", s.Core().Action("webview.devtoolsClose").Run(context.Background(), core.NewOptions(
+	coreutil.ObserveResult(s.Core(), "display.handleCloseDevTools", "devtools close failed", s.Core().Action("webview.devtools_close").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: webview.TaskDevToolsClose{Window: windowName}},
 	)))
 }
@@ -1918,7 +1918,7 @@ func (s *Service) handleNewFile() {
 }
 
 func (s *Service) handleOpenFile() {
-	r := s.Core().Action("dialog.openFile").Run(context.Background(), core.NewOptions(
+	r := s.Core().Action("dialog.open_file").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: dialog.TaskOpenFile{
 			Options: dialog.OpenFileOptions{
 				Title:         "Open File",
@@ -1987,7 +1987,7 @@ func (s *Service) handleBuild() {
 // --- Tray (setup delegated via IPC) ---
 
 func (s *Service) setupTray() {
-	coreutil.ObserveResult(s.Core(), "display.setupTray", "tray setup failed", s.Core().Action("systray.setMenu").Run(context.Background(), core.NewOptions(
+	coreutil.ObserveResult(s.Core(), "display.setupTray", "tray setup failed", s.Core().Action("systray.set_menu").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: systray.TaskSetTrayMenu{Items: []systray.TrayMenuItem{
 			{Label: "Open Desktop", ActionID: "open-desktop"},
 			{Label: "Close Desktop", ActionID: "close-desktop"},

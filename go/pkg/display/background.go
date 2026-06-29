@@ -119,7 +119,7 @@ func cloneValue(value any) any {
 }
 
 func (s *Service) registerBackgroundActions() {
-	s.Core().Action("core.background.serviceWorker.register", func(_ context.Context, opts core.Options) core.Result {
+	s.Core().Action("core.background.service_worker.register", func(_ context.Context, opts core.Options) core.Result {
 		scriptURL := core.Trim(opts.String("scriptURL"))
 		record := s.background.RegisterServiceWorker(scriptURL, decodeMap(opts.Get("options").Value))
 		return core.Result{Value: map[string]any{

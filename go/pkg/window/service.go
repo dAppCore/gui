@@ -2,6 +2,8 @@ package window
 
 import (
 	"context"
+	"sync"
+	"time"
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/internal/coreutil"
@@ -14,6 +16,31 @@ type Service struct {
 	*core.ServiceRuntime[Options]
 	manager  *Manager
 	platform Platform
+	// specs stores registered Window descriptors keyed by name.
+	// taskSetVisibility consults this map on first show to mount the
+	// platform window lazily via taskOpenWindow, rather than requiring
+	// every window to be explicitly opened before its visibility can
+	// be set. Populated via the window.register action.
+	specs   map[string]registeredSpec
+	specsMu sync.RWMutex
+	// pendingEvals routes JS-side replies (delivered via Wails'
+	// Events bus on "lthn:eval-reply") back to the taskEvalJS caller
+	// blocked on a channel. Keyed by reqId.
+	pendingEvals   map[string]chan EvalJSResult
+	pendingEvalsMu sync.Mutex
+	// nextEvalSeq is the monotonic counter behind generated reqIds.
+	// Combined with a per-service prefix so two Service instances in
+	// the same process can't collide.
+	nextEvalSeq uint64
+	evalPrefix  string
+}
+
+// registeredSpec pairs a Window descriptor with its WindowKind so the
+// service can route first-show through the right platform path (webview
+// mount vs systray show).
+type registeredSpec struct {
+	Window *Window
+	Kind   WindowKind
 }
 
 func (s *Service) OnStartup(_ context.Context) core.Result {
@@ -28,7 +55,70 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 
 	s.Core().RegisterQuery(s.handleQuery)
 	s.registerTaskActions()
+	// Bind the JS-side eval reply listener if the platform supports
+	// it. WailsPlatform wires app.Event.On(EvalJSEventName) →
+	// CompleteEval; MockPlatform is a no-op and tests call
+	// CompleteEval directly.
+	if binder, ok := s.platform.(EvalReplyBinder); ok && binder != nil {
+		binder.BindEvalReply(func(reqID string, result any, errStr string) {
+			s.CompleteEval(reqID, result, errStr)
+		})
+	}
 	return core.Result{OK: true}
+}
+
+// EvalReplyBinder is the optional extension a Platform implements
+// to route Wails custom-event replies back to the Service's eval
+// machinery. The Service calls BindEvalReply once at OnStartup;
+// the platform invokes the callback every time a "lthn:eval-reply"
+// event arrives on the Wails Events bus.
+//
+// MockPlatform deliberately does NOT implement this so tests can
+// drive Service.CompleteEval directly without an event-bus
+// dependency.
+type EvalReplyBinder interface {
+	BindEvalReply(cb func(reqID string, result any, errStr string))
+}
+
+// CustomEventBinder is the optional extension a Platform implements
+// to expose a generic Wails custom-event subscription to consumers
+// outside pkg/window. Consumers (e.g. pkg/bridge for its console +
+// error capture) call Service.SubscribeEvent(name, cb); the service
+// delegates to the platform if supported. Each (name, cb) registers
+// a fresh listener — no de-dup, no unsubscribe (consumers bind once
+// at their own OnStartup and live for the process lifetime).
+//
+// MockPlatform deliberately does NOT implement this so tests can
+// drive the consumer callback directly without an event-bus
+// dependency. SubscribeEvent on an unsupported platform is a no-op
+// + returns false so consumers can fall back to alternative paths
+// if they care.
+type CustomEventBinder interface {
+	BindCustomEvent(name string, cb func(data any))
+}
+
+// SubscribeEvent registers a callback for a Wails custom event with
+// the given name. Returns true when the platform supports event
+// binding (production WailsPlatform); false on platforms that don't
+// (test MockPlatform). Idempotency is the platform's concern — most
+// implementations stack listeners, so repeated SubscribeEvent calls
+// fan-out per emit.
+//
+// Usage example (bridge.OnStartup):
+//
+//	if !windowSvc.SubscribeEvent("lthn:console", s.handleConsoleEvent) {
+//	    // platform doesn't support custom events — degrade gracefully
+//	}
+func (s *Service) SubscribeEvent(name string, cb func(data any)) bool {
+	if s == nil || cb == nil || name == "" {
+		return false
+	}
+	binder, ok := s.platform.(CustomEventBinder)
+	if !ok || binder == nil {
+		return false
+	}
+	binder.BindCustomEvent(name, cb)
+	return true
 }
 
 func (s *Service) applyConfig(configData map[string]any) {
@@ -85,9 +175,13 @@ func (s *Service) queryWindowList() []WindowInfo {
 			w, h := pw.Size()
 			result = append(result, WindowInfo{
 				Name: name, Title: pw.Title(), X: x, Y: y, Width: w, Height: h,
-				Opacity:   pw.GetOpacity(),
-				Maximized: pw.IsMaximised(),
-				Focused:   pw.IsFocused(),
+				Opacity:     pw.GetOpacity(),
+				Maximized:   pw.IsMaximised(),
+				Focused:     pw.IsFocused(),
+				Visible:     pw.IsVisible(),
+				Minimised:   pw.IsMinimised(),
+				Fullscreen:  pw.IsFullscreen(),
+				AlwaysOnTop: pw.IsAlwaysOnTop(),
 			})
 		}
 	}
@@ -103,9 +197,13 @@ func (s *Service) queryWindowByName(name string) *WindowInfo {
 	w, h := pw.Size()
 	return &WindowInfo{
 		Name: name, Title: pw.Title(), X: x, Y: y, Width: w, Height: h,
-		Opacity:   pw.GetOpacity(),
-		Maximized: pw.IsMaximised(),
-		Focused:   pw.IsFocused(),
+		Opacity:     pw.GetOpacity(),
+		Maximized:   pw.IsMaximised(),
+		Focused:     pw.IsFocused(),
+		Visible:     pw.IsVisible(),
+		Minimised:   pw.IsMinimised(),
+		Fullscreen:  pw.IsFullscreen(),
+		AlwaysOnTop: pw.IsAlwaysOnTop(),
 	}
 }
 
@@ -133,15 +231,22 @@ func (s *Service) registerTaskActions() {
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskCloseWindow(t.Name))
 	})
-	c.Action("window.setPosition", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskSetPosition]("window.setPosition", opts)
+	c.Action("window.register", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskRegisterWindow]("window.register", opts)
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		return core.Result{Value: nil, OK: true}.New(s.taskRegisterWindow(t.Window, t.Kind))
+	})
+	c.Action("window.set_position", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskSetPosition]("window.set_position", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskSetPosition(t.Name, t.X, t.Y))
 	})
-	c.Action("window.setSize", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskSetSize]("window.setSize", opts)
+	c.Action("window.set_size", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskSetSize]("window.set_size", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
@@ -175,40 +280,47 @@ func (s *Service) registerTaskActions() {
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskRestore(t.Name))
 	})
-	c.Action("window.setTitle", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskSetTitle]("window.setTitle", opts)
+	c.Action("window.set_title", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskSetTitle]("window.set_title", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskSetTitle(t.Name, t.Title))
 	})
-	c.Action("window.setAlwaysOnTop", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskSetAlwaysOnTop]("window.setAlwaysOnTop", opts)
+	c.Action("window.set_always_on_top", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskSetAlwaysOnTop]("window.set_always_on_top", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskSetAlwaysOnTop(t.Name, t.AlwaysOnTop))
 	})
-	c.Action("window.setOpacity", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskSetOpacity]("window.setOpacity", opts)
+	c.Action("window.set_opacity", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskSetOpacity]("window.set_opacity", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskSetOpacity(t.Name, t.Opacity))
 	})
-	c.Action("window.setBackgroundColour", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskSetBackgroundColour]("window.setBackgroundColour", opts)
+	c.Action("window.set_background_colour", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskSetBackgroundColour]("window.set_background_colour", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskSetBackgroundColour(t.Name, t.Red, t.Green, t.Blue, t.Alpha))
 	})
-	c.Action("window.setVisibility", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskSetVisibility]("window.setVisibility", opts)
+	c.Action("window.set_visibility", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskSetVisibility]("window.set_visibility", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskSetVisibility(t.Name, t.Visible))
+	})
+	c.Action("window.set_close_behavior", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskSetCloseBehavior]("window.set_close_behavior", opts)
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		return core.Result{Value: nil, OK: true}.New(s.taskSetCloseBehavior(t.Name, t.Behavior))
 	})
 	c.Action("window.fullscreen", func(_ context.Context, opts core.Options) core.Result {
 		t, err := taskFromOptions[TaskFullscreen]("window.fullscreen", opts)
@@ -217,158 +329,169 @@ func (s *Service) registerTaskActions() {
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskFullscreen(t.Name, t.Fullscreen))
 	})
-	c.Action("window.saveLayout", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskSaveLayout]("window.saveLayout", opts)
+	c.Action("window.save_layout", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskSaveLayout]("window.save_layout", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskSaveLayout(t.Name))
 	})
-	c.Action("window.restoreLayout", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskRestoreLayout]("window.restoreLayout", opts)
+	c.Action("window.restore_layout", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskRestoreLayout]("window.restore_layout", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskRestoreLayout(t.Name))
 	})
-	c.Action("window.deleteLayout", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskDeleteLayout]("window.deleteLayout", opts)
+	c.Action("window.delete_layout", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskDeleteLayout]("window.delete_layout", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		s.manager.Layout().DeleteLayout(t.Name)
 		return core.Result{OK: true}
 	})
-	c.Action("window.tileWindows", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskTileWindows]("window.tileWindows", opts)
+	c.Action("window.tile_windows", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskTileWindows]("window.tile_windows", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskTileWindows(t.Mode, t.Windows))
 	})
-	c.Action("window.stackWindows", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskStackWindows]("window.stackWindows", opts)
+	c.Action("window.stack_windows", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskStackWindows]("window.stack_windows", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskStackWindows(t.Windows, t.OffsetX, t.OffsetY))
 	})
-	c.Action("window.snapWindow", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskSnapWindow]("window.snapWindow", opts)
+	c.Action("window.snap_window", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskSnapWindow]("window.snap_window", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskSnapWindow(t.Name, t.Position))
 	})
-	c.Action("window.applyWorkflow", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskApplyWorkflow]("window.applyWorkflow", opts)
+	c.Action("window.apply_workflow", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskApplyWorkflow]("window.apply_workflow", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskApplyWorkflow(t.Workflow, t.Windows))
 	})
-	c.Action("window.layoutBesideEditor", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskLayoutBesideEditor]("window.layoutBesideEditor", opts)
+	c.Action("window.layout_beside_editor", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskLayoutBesideEditor]("window.layout_beside_editor", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		result, err := s.taskLayoutBesideEditor(t)
 		return core.Result{}.New(result, err)
 	})
-	c.Action("window.layoutSuggest", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskLayoutSuggest]("window.layoutSuggest", opts)
+	c.Action("window.layout_suggest", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskLayoutSuggest]("window.layout_suggest", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: s.taskLayoutSuggest(t), OK: true}
 	})
-	c.Action("window.findSpace", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskScreenFindSpace]("window.findSpace", opts)
+	c.Action("window.find_space", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskScreenFindSpace]("window.find_space", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: s.taskScreenFindSpace(t), OK: true}
 	})
-	c.Action("window.arrangePair", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskWindowArrangePair]("window.arrangePair", opts)
+	c.Action("window.arrange_pair", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskWindowArrangePair]("window.arrange_pair", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		result, err := s.taskWindowArrangePair(t)
 		return core.Result{}.New(result, err)
 	})
-	c.Action("window.setZoom", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskSetZoom]("window.setZoom", opts)
+	c.Action("window.set_zoom", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskSetZoom]("window.set_zoom", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskSetZoom(t.Name, t.Magnification))
 	})
-	c.Action("window.zoomIn", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskZoomIn]("window.zoomIn", opts)
+	c.Action("window.zoom_in", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskZoomIn]("window.zoom_in", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskZoomIn(t.Name))
 	})
-	c.Action("window.zoomOut", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskZoomOut]("window.zoomOut", opts)
+	c.Action("window.zoom_out", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskZoomOut]("window.zoom_out", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskZoomOut(t.Name))
 	})
-	c.Action("window.zoomReset", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskZoomReset]("window.zoomReset", opts)
+	c.Action("window.zoom_reset", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskZoomReset]("window.zoom_reset", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskZoomReset(t.Name))
 	})
-	c.Action("window.setURL", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskSetURL]("window.setURL", opts)
+	c.Action("window.set_url", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskSetURL]("window.set_url", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskSetURL(t.Name, t.URL))
 	})
-	c.Action("window.setHTML", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskSetHTML]("window.setHTML", opts)
+	c.Action("window.set_html", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskSetHTML]("window.set_html", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskSetHTML(t.Name, t.HTML))
 	})
-	c.Action("window.execJS", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskExecJS]("window.execJS", opts)
+	c.Action("window.exec_js", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskExecJS]("window.exec_js", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskExecJS(t.Name, t.JS))
 	})
-	c.Action("window.toggleFullscreen", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskToggleFullscreen]("window.toggleFullscreen", opts)
+	c.Action("window.eval_js", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskEvalJS]("window.eval_js", opts)
+		if err != nil {
+			return core.Result{Value: err, OK: false}
+		}
+		res, evalErr := s.taskEvalJS(t.Name, t.JS, t.Timeout)
+		if evalErr != nil {
+			return core.Result{Value: evalErr, OK: false}
+		}
+		return core.Result{Value: res, OK: true}
+	})
+	c.Action("window.toggle_fullscreen", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskToggleFullscreen]("window.toggle_fullscreen", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskToggleFullscreen(t.Name))
 	})
-	c.Action("window.toggleMaximise", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskToggleMaximise]("window.toggleMaximise", opts)
+	c.Action("window.toggle_maximise", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskToggleMaximise]("window.toggle_maximise", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskToggleMaximise(t.Name))
 	})
-	c.Action("window.setBounds", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskSetBounds]("window.setBounds", opts)
+	c.Action("window.set_bounds", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskSetBounds]("window.set_bounds", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
 		return core.Result{Value: nil, OK: true}.New(s.taskSetBounds(t.Name, t.X, t.Y, t.Width, t.Height))
 	})
-	c.Action("window.setContentProtection", func(_ context.Context, opts core.Options) core.Result {
-		t, err := taskFromOptions[TaskSetContentProtection]("window.setContentProtection", opts)
+	c.Action("window.set_content_protection", func(_ context.Context, opts core.Options) core.Result {
+		t, err := taskFromOptions[TaskSetContentProtection]("window.set_content_protection", opts)
 		if err != nil {
 			return core.Result{Value: err, OK: false}
 		}
@@ -484,7 +607,16 @@ func (s *Service) taskOpenWindow(t TaskOpenWindow) core.Result {
 	}
 	x, y := pw.Position()
 	w, h := pw.Size()
-	info := WindowInfo{Name: pw.Name(), Title: pw.Title(), X: x, Y: y, Width: w, Height: h, Opacity: pw.GetOpacity()}
+	info := WindowInfo{
+		Name: pw.Name(), Title: pw.Title(), X: x, Y: y, Width: w, Height: h,
+		Opacity:     pw.GetOpacity(),
+		Maximized:   pw.IsMaximised(),
+		Focused:     pw.IsFocused(),
+		Visible:     pw.IsVisible(),
+		Minimised:   pw.IsMinimised(),
+		Fullscreen:  pw.IsFullscreen(),
+		AlwaysOnTop: pw.IsAlwaysOnTop(),
+	}
 
 	// Attach platform event listeners that convert to IPC actions
 	s.trackWindow(pw)
@@ -508,22 +640,56 @@ func (s *Service) trackWindow(pw PlatformWindow) {
 				y, _ := data["y"].(int)
 				coreutil.DispatchAction(s.Core(), "window.move", ActionWindowMoved{Name: e.Name, X: x, Y: y})
 			}
+			// Auto-persist OS-driven moves — without this, dragging a
+			// window only saves when the window is explicitly closed
+			// (which never happens for HideOnClose tray-rooted apps).
+			// CaptureState writes via a 500ms debounced timer so rapid
+			// drags coalesce into one save.
+			if pw, ok := s.manager.Get(e.Name); ok {
+				s.manager.State().CaptureState(pw)
+			}
 		case "resize":
 			if data := e.Data; data != nil {
 				w, _ := data["w"].(int)
 				h, _ := data["h"].(int)
 				coreutil.DispatchAction(s.Core(), "window.resize", ActionWindowResized{Name: e.Name, Width: w, Height: h})
 			}
+			// Auto-persist OS-driven resize — same rationale as move.
+			if pw, ok := s.manager.Get(e.Name); ok {
+				s.manager.State().CaptureState(pw)
+			}
 		case "close":
 			coreutil.DispatchAction(s.Core(), "window.closeEvent", ActionWindowClosed{Name: e.Name})
+		case "hide":
+			coreutil.DispatchAction(s.Core(), "window.hide", ActionWindowHidden{Name: e.Name})
+		case "show":
+			coreutil.DispatchAction(s.Core(), "window.show", ActionWindowShown{Name: e.Name})
+		case "minimise":
+			coreutil.DispatchAction(s.Core(), "window.minimise", ActionWindowMinimised{Name: e.Name})
+		case "unminimise":
+			coreutil.DispatchAction(s.Core(), "window.unminimise", ActionWindowUnminimised{Name: e.Name})
+		case "maximise":
+			coreutil.DispatchAction(s.Core(), "window.maximise", ActionWindowMaximised{Name: e.Name})
+		case "unmaximise":
+			coreutil.DispatchAction(s.Core(), "window.unmaximise", ActionWindowUnmaximised{Name: e.Name})
+		case "fullscreen":
+			coreutil.DispatchAction(s.Core(), "window.fullscreen", ActionWindowFullscreened{Name: e.Name})
+		case "unfullscreen":
+			coreutil.DispatchAction(s.Core(), "window.unfullscreen", ActionWindowUnfullscreened{Name: e.Name})
+		case "ready":
+			coreutil.DispatchAction(s.Core(), "window.ready", ActionWindowRuntimeReady{Name: e.Name})
 		}
 	})
-	pw.OnFileDrop(func(paths []string, targetID string) {
-		coreutil.DispatchAction(s.Core(), "window.fileDrop", ActionFilesDropped{
-			Name:     pw.Name(),
-			Paths:    paths,
-			TargetID: targetID,
-		})
+	pw.OnFileDrop(func(paths []string, target *DropTarget) {
+		event := ActionFilesDropped{
+			Name:   pw.Name(),
+			Paths:  paths,
+			Target: target,
+		}
+		if target != nil {
+			event.TargetID = target.ID
+		}
+		coreutil.DispatchAction(s.Core(), "window.fileDrop", event)
 	})
 }
 
@@ -643,9 +809,84 @@ func (s *Service) taskSetBackgroundColour(name string, red, green, blue, alpha u
 func (s *Service) taskSetVisibility(name string, visible bool) resultFailure {
 	pw, ok := s.manager.Get(name)
 	if !ok {
-		return core.E("window.taskSetVisibility", "window not found: "+name, nil)
+		// First-show path: the window isn't mounted yet. Hiding a
+		// never-shown window is a no-op success; showing requires a
+		// registered spec to know what to mount.
+		if !visible {
+			return nil
+		}
+		s.specsMu.RLock()
+		spec, hasSpec := s.specs[name]
+		s.specsMu.RUnlock()
+		if !hasSpec {
+			return core.E("window.taskSetVisibility", "unregistered window: "+name, nil)
+		}
+		switch spec.Kind {
+		case KindTray:
+			// Tray windows are realised by pkg/systray, not by this
+			// service. Visibility on a tray-classified name is accepted
+			// without WebView mount — the systray service owns the
+			// actual icon lifecycle.
+			return nil
+		case KindWebview:
+			// Reuse taskOpenWindow for the full create + register flow
+			// (buildWindowSpec → prepareWindowSpec → manager.Create).
+			openResult := s.taskOpenWindow(TaskOpenWindow{Window: spec.Window})
+			if !openResult.OK {
+				if e, isErr := openResult.Value.(error); isErr {
+					return e
+				}
+				return core.E("window.taskSetVisibility", "failed to open registered window: "+name, nil)
+			}
+			refreshed, hit := s.manager.Get(name)
+			if !hit {
+				return core.E("window.taskSetVisibility", "window mount completed but manager has no entry for "+name, nil)
+			}
+			pw = refreshed
+		default:
+			return core.E("window.taskSetVisibility", "unknown WindowKind for "+name, nil)
+		}
 	}
 	pw.SetVisibility(visible)
+	return nil
+}
+
+// taskRegisterWindow stores a Window descriptor in the service registry.
+// Called by consumers at boot to declare windows that may be opened
+// lazily by taskSetVisibility. Validates the WindowKind discriminator:
+// KindWebview requires non-empty URL; KindTray requires empty URL.
+// Duplicate names rejected — consumers re-register at every boot, so
+// any duplicate indicates a coding error.
+func (s *Service) taskRegisterWindow(w *Window, kind WindowKind) resultFailure {
+	if w == nil {
+		return core.E("window.taskRegisterWindow", "nil Window", nil)
+	}
+	if w.Name == "" {
+		return core.E("window.taskRegisterWindow", "Window.Name is required", nil)
+	}
+	if kind == KindWebview && w.URL == "" {
+		return core.E("window.taskRegisterWindow", "KindWebview requires non-empty URL", nil)
+	}
+	if kind == KindTray && w.URL != "" {
+		return core.E("window.taskRegisterWindow", "KindTray must have empty URL", nil)
+	}
+	s.specsMu.Lock()
+	defer s.specsMu.Unlock()
+	if _, exists := s.specs[w.Name]; exists {
+		return core.E("window.taskRegisterWindow", "window already registered: "+w.Name, nil)
+	}
+	s.specs[w.Name] = registeredSpec{Window: w, Kind: kind}
+	return nil
+}
+
+// taskSetCloseBehavior installs the requested CloseBehavior on a
+// tracked window. Looks up by name, delegates to the platform.
+func (s *Service) taskSetCloseBehavior(name string, behavior CloseBehavior) resultFailure {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return core.E("window.taskSetCloseBehavior", "window not found: "+name, nil)
+	}
+	pw.SetCloseBehavior(behavior)
 	return nil
 }
 
@@ -858,6 +1099,149 @@ func (s *Service) taskExecJS(name, js string) resultFailure {
 	}
 	pw.ExecJS(js)
 	return nil
+}
+
+// EvalJSEventName is the Wails event name the JS-side wrap emits a
+// reply on. Exported so the WailsPlatform binder can register the
+// app.Event.On listener with the same literal the wrap uses.
+const EvalJSEventName = "lthn:eval-reply"
+
+// taskEvalJS fires the JS body in the named window, then waits for
+// a "lthn:eval-reply" event to land via CompleteEval. The JS body
+// is wrapped in an IIFE that imports @wailsio/runtime and emits
+// the reply keyed by reqId; CompleteEval routes that reply back to
+// the channel this method blocks on.
+//
+// Returns EvalJSResult on platform success (whether the JS itself
+// succeeded or raised — Err carries the JS-side exception in the
+// latter case). Returns an error only on platform-level failure
+// (window missing, timeout).
+func (s *Service) taskEvalJS(name, js string, timeout time.Duration) (EvalJSResult, error) {
+	pw, ok := s.manager.Get(name)
+	if !ok {
+		return EvalJSResult{}, core.E("window.taskEvalJS", "window not found: "+name, nil)
+	}
+	if timeout <= 0 {
+		timeout = 5 * time.Second
+	}
+	reqID := s.nextEvalID()
+	ch := make(chan EvalJSResult, 1)
+	s.pendingEvalsMu.Lock()
+	if s.pendingEvals == nil {
+		s.pendingEvals = make(map[string]chan EvalJSResult)
+	}
+	s.pendingEvals[reqID] = ch
+	s.pendingEvalsMu.Unlock()
+	defer func() {
+		s.pendingEvalsMu.Lock()
+		delete(s.pendingEvals, reqID)
+		s.pendingEvalsMu.Unlock()
+	}()
+
+	pw.ExecJS(wrapEvalScript(reqID, js))
+
+	select {
+	case res := <-ch:
+		return res, nil
+	case <-time.After(timeout):
+		return EvalJSResult{}, core.E("window.taskEvalJS", "eval timeout: "+name, nil)
+	}
+}
+
+// CompleteEval routes a JS-side reply from the Wails event listener
+// back to the taskEvalJS caller. WailsPlatform's app.Event.On
+// listener calls this with the {reqId, result, err} payload it
+// receives on EvalJSEventName.
+//
+// Safe to call from any goroutine. Returns true when the reqId
+// matched a pending caller; false when the reply arrived after
+// timeout (or for an unknown id — the latter only happens if a
+// third party emits the event, which would be an injection bug).
+func (s *Service) CompleteEval(reqID string, result any, errStr string) bool {
+	s.pendingEvalsMu.Lock()
+	ch, ok := s.pendingEvals[reqID]
+	s.pendingEvalsMu.Unlock()
+	if !ok {
+		return false
+	}
+	select {
+	case ch <- EvalJSResult{ReqID: reqID, Result: result, Err: errStr}:
+		return true
+	default:
+		// Buffer full — caller already took a reply; ignore.
+		return false
+	}
+}
+
+// nextEvalID returns a monotonic per-service reqId. The prefix
+// keeps two Service instances in the same process from colliding;
+// it's lazily initialised on first use so tests that build a
+// Service via NewService don't pay the syscall cost up front.
+func (s *Service) nextEvalID() string {
+	s.pendingEvalsMu.Lock()
+	if s.evalPrefix == "" {
+		r := core.RandomString(8)
+		if r.OK {
+			s.evalPrefix = r.Value.(string)
+		} else {
+			s.evalPrefix = "ev"
+		}
+	}
+	s.nextEvalSeq++
+	seq := s.nextEvalSeq
+	prefix := s.evalPrefix
+	s.pendingEvalsMu.Unlock()
+	return prefix + "-" + core.Sprintf("%d", seq)
+}
+
+// wrapEvalScript renders the IIFE template that evaluates body,
+// awaits a Promise return, catches exceptions, and emits the result
+// on the Wails Events bus keyed by reqId. Body is injected as a
+// JSON string literal so it can contain any source verbatim.
+//
+// The wrap is injected via pw.ExecJS, which runs as a CLASSIC script
+// in the WebView main world — it has NO module resolver, so it cannot
+// import("@wailsio/runtime") (a bare specifier) at runtime. Instead it
+// reuses window.__lthnEmit, the already-resolved emitter the frontend
+// bridge shim (frontend/index.html, a type="module" script) publishes
+// after its own runtime import settles. One resolution, reused by
+// console/error capture AND eval replies. If the shim hasn't published
+// the global yet (eval fired before first paint), the reply is dropped
+// and the caller times out — a console.error breadcrumb is left in
+// DevTools rather than vanishing silently.
+func wrapEvalScript(reqID, body string) string {
+	const tpl = `(function(){
+  var __id=%s;
+  var __name=%q;
+  var __post=function(payload){
+    try {
+      if (typeof window.__lthnEmit === "function") { window.__lthnEmit(__name, payload); }
+      else { try { console.error("lthn-eval: window.__lthnEmit unavailable — bridge shim not loaded"); } catch(_){} }
+    } catch(e){ try { console.error("lthn-eval emit:", e); } catch(_){} }
+  };
+  try {
+    var __r = (0,eval)(%s);
+    if (__r && typeof __r.then === "function") {
+      __r.then(
+        function(v){ __post({ reqId: __id, result: v }); },
+        function(e){ __post({ reqId: __id, err: String(e) + (e && e.stack ? "\n"+e.stack : "") }); }
+      );
+    } else {
+      __post({ reqId: __id, result: __r });
+    }
+  } catch(e) {
+    __post({ reqId: __id, err: String(e) + (e && e.stack ? "\n"+e.stack : "") });
+  }
+})();`
+	return core.Sprintf(tpl, jsString(reqID), EvalJSEventName, jsString(body))
+}
+
+// jsString produces a JSON-encoded JS string literal — escapes
+// quotes, newlines, and unicode so the body can be safely embedded
+// in the IIFE template above. Equivalent to JSON.stringify(str)
+// on the JS side.
+func jsString(s string) string {
+	return core.JSONMarshalString(s)
 }
 
 // --- State toggles ---

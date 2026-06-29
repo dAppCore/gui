@@ -96,16 +96,19 @@ func (m *Manager) SetLabel(text string) resultFailure {
 	return nil
 }
 
-// AttachWindow attaches a panel window to the tray.
-// Use: _ = manager.AttachWindow(windowHandle)
-func (m *Manager) AttachWindow(w WindowHandle) resultFailure {
+// AttachWindow attaches a panel window to the tray, with an optional
+// pixel offset relative to the tray icon (positive Y values move the
+// popover down; offset semantics are platform-dependent — Wails treats
+// the value as a single offset along the platform's natural axis).
+// Use: _ = manager.AttachWindow(windowHandle, 0, 5)
+func (m *Manager) AttachWindow(w WindowHandle, offsetX, offsetY int) resultFailure {
 	if m.tray == nil {
 		return core.E("systray.AttachWindow", "tray not initialised", nil)
 	}
 	m.mu.Lock()
 	m.panelWindow = w
 	m.mu.Unlock()
-	m.tray.AttachWindow(w)
+	m.tray.AttachWindow(w, offsetX, offsetY)
 	return nil
 }
 

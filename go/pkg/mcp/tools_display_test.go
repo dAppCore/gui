@@ -11,7 +11,7 @@ func newDisplayToolTestSubsystem(t *core.T, handler func(core.Options) core.Resu
 	t.Helper()
 	c := core.New(core.WithServiceLock())
 	if handler != nil {
-		c.Action("display.resolveScheme", func(_ context.Context, opts core.Options) core.Result {
+		c.Action("display.resolve_scheme", func(_ context.Context, opts core.Options) core.Result {
 			return handler(opts)
 		})
 	}

@@ -374,7 +374,7 @@ func TestServiceConclave_Good(t *core.T) {
 	core.AssertNotNil(t, r2.Value)
 
 	// Set app menu via IPC
-	r3 := taskRun(c, "menu.setAppMenu", menu.TaskSetAppMenu{Items: []menu.MenuItem{
+	r3 := taskRun(c, "menu.set_app_menu", menu.TaskSetAppMenu{Items: []menu.MenuItem{
 		{Label: "File"},
 	}})
 	core.RequireTrue(t, r3.OK)
@@ -475,7 +475,7 @@ func TestGetWindowInfo_Good(t *core.T) {
 	)
 
 	// Modify position via IPC
-	taskRun(c, "window.setPosition", window.TaskSetPosition{Name: "test-win", X: 100, Y: 200})
+	taskRun(c, "window.set_position", window.TaskSetPosition{Name: "test-win", X: 100, Y: 200})
 
 	info, err := svc.GetWindowInfo("test-win")
 	core.RequireNoError(t, err)
@@ -548,14 +548,14 @@ func TestSetWindowPosition_Bad(t *core.T) {
 func TestSetWindowPosition_ActionFailure(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
-	c.Action("window.setPosition", func(_ context.Context, _ core.Options) core.Result {
+	c.Action("window.set_position", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{OK: false}
 	})
 
 	err := svc.SetWindowPosition("pos-win", 300, 400)
 
 	core.AssertError(t, err)
-	core.AssertContains(t, err.Error(), "window.setPosition")
+	core.AssertContains(t, err.Error(), "window.set_position")
 }
 
 func TestSetWindowSize_Good(t *core.T) {
@@ -716,7 +716,7 @@ func TestSetWindowFullscreen_Bad(t *core.T) {
 func TestLayoutBesideEditor_ActionFailure(t *core.T) {
 	c := newTestConclave(t)
 	svc := core.MustServiceFor[*Service](c, "display")
-	c.Action("window.layoutBesideEditor", func(_ context.Context, _ core.Options) core.Result {
+	c.Action("window.layout_beside_editor", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{OK: false}
 	})
 
@@ -724,7 +724,7 @@ func TestLayoutBesideEditor_ActionFailure(t *core.T) {
 
 	core.AssertError(t, err)
 	core.AssertEmpty(t, result)
-	core.AssertContains(t, err.Error(), "window.layoutBesideEditor")
+	core.AssertContains(t, err.Error(), "window.layout_beside_editor")
 }
 
 func TestSetWindowFullscreen_Ugly(t *core.T) {
@@ -963,7 +963,7 @@ func TestDisplay_handleWSMessage_LayoutCommands_Good(t *core.T) {
 	}{
 		{
 			name:   "LayoutBesideEditor",
-			action: "window.layoutBesideEditor",
+			action: "window.layout_beside_editor",
 			msg: WSMessage{
 				Action: "layout:beside-editor",
 				Data: map[string]any{
@@ -984,7 +984,7 @@ func TestDisplay_handleWSMessage_LayoutCommands_Good(t *core.T) {
 		},
 		{
 			name:   "LayoutSuggest",
-			action: "window.layoutSuggest",
+			action: "window.layout_suggest",
 			msg: WSMessage{
 				Action: "layout:suggest",
 				Data: map[string]any{
@@ -1001,7 +1001,7 @@ func TestDisplay_handleWSMessage_LayoutCommands_Good(t *core.T) {
 		},
 		{
 			name:   "FindScreenSpace",
-			action: "window.findSpace",
+			action: "window.find_space",
 			msg: WSMessage{
 				Action: "screen:find-space",
 				Data: map[string]any{
@@ -1022,7 +1022,7 @@ func TestDisplay_handleWSMessage_LayoutCommands_Good(t *core.T) {
 		},
 		{
 			name:   "ArrangeWindowPair",
-			action: "window.arrangePair",
+			action: "window.arrange_pair",
 			msg: WSMessage{
 				Action: "window:arrange-pair",
 				Data: map[string]any{
@@ -1072,7 +1072,7 @@ func TestDisplay_handleWSMessage_LayoutCommands_Bad(t *core.T) {
 	}{
 		{
 			name:   "LayoutBesideEditor",
-			action: "window.layoutBesideEditor",
+			action: "window.layout_beside_editor",
 			msg: WSMessage{
 				Action: "layout:beside-editor",
 				Data: map[string]any{
@@ -1085,7 +1085,7 @@ func TestDisplay_handleWSMessage_LayoutCommands_Bad(t *core.T) {
 		},
 		{
 			name:   "LayoutSuggest",
-			action: "window.layoutSuggest",
+			action: "window.layout_suggest",
 			msg: WSMessage{
 				Action: "layout:suggest",
 				Data: map[string]any{
@@ -1096,7 +1096,7 @@ func TestDisplay_handleWSMessage_LayoutCommands_Bad(t *core.T) {
 		},
 		{
 			name:   "FindScreenSpace",
-			action: "window.findSpace",
+			action: "window.find_space",
 			msg: WSMessage{
 				Action: "screen:find-space",
 				Data: map[string]any{
@@ -1109,7 +1109,7 @@ func TestDisplay_handleWSMessage_LayoutCommands_Bad(t *core.T) {
 		},
 		{
 			name:   "ArrangeWindowPair",
-			action: "window.arrangePair",
+			action: "window.arrange_pair",
 			msg: WSMessage{
 				Action: "window:arrange-pair",
 				Data: map[string]any{
@@ -1152,7 +1152,7 @@ func TestDisplay_handleWSMessage_LayoutCommands_Ugly(t *core.T) {
 	}{
 		{
 			name:   "LayoutBesideEditor",
-			action: "window.layoutBesideEditor",
+			action: "window.layout_beside_editor",
 			msg: WSMessage{
 				Action: "layout:beside-editor",
 				Data: map[string]any{
@@ -1166,7 +1166,7 @@ func TestDisplay_handleWSMessage_LayoutCommands_Ugly(t *core.T) {
 		},
 		{
 			name:   "LayoutSuggest",
-			action: "window.layoutSuggest",
+			action: "window.layout_suggest",
 			msg: WSMessage{
 				Action: "layout:suggest",
 				Data: map[string]any{
@@ -1178,7 +1178,7 @@ func TestDisplay_handleWSMessage_LayoutCommands_Ugly(t *core.T) {
 		},
 		{
 			name:   "FindScreenSpace",
-			action: "window.findSpace",
+			action: "window.find_space",
 			msg: WSMessage{
 				Action: "screen:find-space",
 				Data: map[string]any{
@@ -1192,7 +1192,7 @@ func TestDisplay_handleWSMessage_LayoutCommands_Ugly(t *core.T) {
 		},
 		{
 			name:   "ArrangeWindowPair",
-			action: "window.arrangePair",
+			action: "window.arrange_pair",
 			msg: WSMessage{
 				Action: "window:arrange-pair",
 				Data: map[string]any{
@@ -1474,7 +1474,7 @@ func TestDisplay_LayoutSuggest_Good(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 
 	var gotTask window.TaskLayoutSuggest
-	c.Action("window.layoutSuggest", func(_ context.Context, opts core.Options) core.Result {
+	c.Action("window.layout_suggest", func(_ context.Context, opts core.Options) core.Result {
 		gotTask = opts.Get("task").Value.(window.TaskLayoutSuggest)
 		return core.Result{
 			Value: window.LayoutSuggestion{
@@ -1506,7 +1506,7 @@ func TestDisplay_LayoutSuggest_Bad(t *core.T) {
 	core.AssertContains(t, ax7Variant, "bad")
 	svc, c := newTestDisplayAPIService(t)
 
-	c.Action("window.layoutSuggest", func(_ context.Context, _ core.Options) core.Result {
+	c.Action("window.layout_suggest", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: core.AnError, OK: false}
 	})
 
@@ -1523,7 +1523,7 @@ func TestDisplay_LayoutSuggest_Ugly(t *core.T) {
 	core.AssertContains(t, ax7Variant, "ugly")
 	svc, c := newTestDisplayAPIService(t)
 
-	c.Action("window.layoutSuggest", func(_ context.Context, _ core.Options) core.Result {
+	c.Action("window.layout_suggest", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: "unexpected", OK: true}
 	})
 
@@ -1617,7 +1617,7 @@ func TestDisplay_SaveLayout_Good(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 
 	var gotTask window.TaskSaveLayout
-	c.Action("window.saveLayout", func(_ context.Context, opts core.Options) core.Result {
+	c.Action("window.save_layout", func(_ context.Context, opts core.Options) core.Result {
 		gotTask = opts.Get("task").Value.(window.TaskSaveLayout)
 		return core.Result{OK: true}
 	})
@@ -1634,7 +1634,7 @@ func TestDisplay_SaveLayout_Bad(t *core.T) {
 	core.AssertContains(t, ax7Variant, "bad")
 	svc, c := newTestDisplayAPIService(t)
 
-	c.Action("window.saveLayout", func(_ context.Context, _ core.Options) core.Result {
+	c.Action("window.save_layout", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: core.AnError, OK: false}
 	})
 
@@ -1650,14 +1650,14 @@ func TestDisplay_SaveLayout_Ugly(t *core.T) {
 	core.AssertContains(t, ax7Variant, "ugly")
 	svc, c := newTestDisplayAPIService(t)
 
-	c.Action("window.saveLayout", func(_ context.Context, _ core.Options) core.Result {
+	c.Action("window.save_layout", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: "unexpected", OK: false}
 	})
 
 	err := svc.SaveLayout("")
 
 	core.AssertError(t, err)
-	core.AssertContains(t, err.Error(), "window.saveLayout")
+	core.AssertContains(t, err.Error(), "window.save_layout")
 }
 
 func TestDisplay_RestoreLayout_Good(t *core.T) {
@@ -1667,7 +1667,7 @@ func TestDisplay_RestoreLayout_Good(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 
 	var gotTask window.TaskRestoreLayout
-	c.Action("window.restoreLayout", func(_ context.Context, opts core.Options) core.Result {
+	c.Action("window.restore_layout", func(_ context.Context, opts core.Options) core.Result {
 		gotTask = opts.Get("task").Value.(window.TaskRestoreLayout)
 		return core.Result{OK: true}
 	})
@@ -1684,7 +1684,7 @@ func TestDisplay_RestoreLayout_Bad(t *core.T) {
 	core.AssertContains(t, ax7Variant, "bad")
 	svc, c := newTestDisplayAPIService(t)
 
-	c.Action("window.restoreLayout", func(_ context.Context, _ core.Options) core.Result {
+	c.Action("window.restore_layout", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: core.AnError, OK: false}
 	})
 
@@ -1700,14 +1700,14 @@ func TestDisplay_RestoreLayout_Ugly(t *core.T) {
 	core.AssertContains(t, ax7Variant, "ugly")
 	svc, c := newTestDisplayAPIService(t)
 
-	c.Action("window.restoreLayout", func(_ context.Context, _ core.Options) core.Result {
+	c.Action("window.restore_layout", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: "unexpected", OK: false}
 	})
 
 	err := svc.RestoreLayout("")
 
 	core.AssertError(t, err)
-	core.AssertContains(t, err.Error(), "window.restoreLayout")
+	core.AssertContains(t, err.Error(), "window.restore_layout")
 }
 
 func TestDisplay_SetWindowBackgroundColour_Good(t *core.T) {
@@ -1717,7 +1717,7 @@ func TestDisplay_SetWindowBackgroundColour_Good(t *core.T) {
 	svc, c := newTestDisplayAPIService(t)
 
 	var gotTask window.TaskSetBackgroundColour
-	c.Action("window.setBackgroundColour", func(_ context.Context, opts core.Options) core.Result {
+	c.Action("window.set_background_colour", func(_ context.Context, opts core.Options) core.Result {
 		gotTask = opts.Get("task").Value.(window.TaskSetBackgroundColour)
 		return core.Result{OK: true}
 	})
@@ -1738,7 +1738,7 @@ func TestDisplay_SetWindowBackgroundColour_Bad(t *core.T) {
 	core.AssertContains(t, ax7Variant, "bad")
 	svc, c := newTestDisplayAPIService(t)
 
-	c.Action("window.setBackgroundColour", func(_ context.Context, _ core.Options) core.Result {
+	c.Action("window.set_background_colour", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: core.AnError, OK: false}
 	})
 
@@ -1754,14 +1754,14 @@ func TestDisplay_SetWindowBackgroundColour_Ugly(t *core.T) {
 	core.AssertContains(t, ax7Variant, "ugly")
 	svc, c := newTestDisplayAPIService(t)
 
-	c.Action("window.setBackgroundColour", func(_ context.Context, _ core.Options) core.Result {
+	c.Action("window.set_background_colour", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: "unexpected", OK: false}
 	})
 
 	err := svc.SetWindowBackgroundColour("", 0, 0, 0, 0)
 
 	core.AssertError(t, err)
-	core.AssertContains(t, err.Error(), "window.setBackgroundColour")
+	core.AssertContains(t, err.Error(), "window.set_background_colour")
 }
 
 // AX7 generated source-matching smoke coverage.

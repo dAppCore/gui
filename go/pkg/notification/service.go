@@ -42,7 +42,7 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		}
 		return core.Result{Value: nil, OK: true}.New(s.send(options))
 	}
-	s.Core().Action("notification.requestPermission", func(_ context.Context, _ core.Options) core.Result {
+	s.Core().Action("notification.request_permission", func(_ context.Context, _ core.Options) core.Result {
 		granted, err := s.platform.RequestPermission()
 		return core.Result{}.New(granted, err)
 	})
@@ -50,7 +50,7 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		granted, err := s.platform.RequestPermission()
 		return core.Result{}.New(granted, err)
 	})
-	s.Core().Action("notification.revokePermission", func(_ context.Context, _ core.Options) core.Result {
+	s.Core().Action("notification.revoke_permission", func(_ context.Context, _ core.Options) core.Result {
 		return core.Result{Value: nil, OK: true}.New(s.platform.RevokePermission())
 	})
 	s.Core().Action("gui.notification.revokePermission", func(_ context.Context, _ core.Options) core.Result {

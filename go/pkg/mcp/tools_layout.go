@@ -19,7 +19,7 @@ type LayoutSaveOutput struct {
 }
 
 func (s *Subsystem) layoutSave(_ context.Context, _ *mcp.CallToolRequest, input LayoutSaveInput) (*mcp.CallToolResult, LayoutSaveOutput, resultFailure) {
-	result := s.core.Action("window.saveLayout").Run(context.Background(), core.NewOptions(
+	result := s.core.Action("window.save_layout").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSaveLayout{Name: input.Name}},
 	))
 	if !result.OK {
@@ -41,7 +41,7 @@ type LayoutRestoreOutput struct {
 }
 
 func (s *Subsystem) layoutRestore(_ context.Context, _ *mcp.CallToolRequest, input LayoutRestoreInput) (*mcp.CallToolResult, LayoutRestoreOutput, resultFailure) {
-	result := s.core.Action("window.restoreLayout").Run(context.Background(), core.NewOptions(
+	result := s.core.Action("window.restore_layout").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskRestoreLayout{Name: input.Name}},
 	))
 	if !result.OK {
@@ -85,7 +85,7 @@ type LayoutDeleteOutput struct {
 }
 
 func (s *Subsystem) layoutDelete(_ context.Context, _ *mcp.CallToolRequest, input LayoutDeleteInput) (*mcp.CallToolResult, LayoutDeleteOutput, resultFailure) {
-	result := s.core.Action("window.deleteLayout").Run(context.Background(), core.NewOptions(
+	result := s.core.Action("window.delete_layout").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskDeleteLayout{Name: input.Name}},
 	))
 	if !result.OK {
@@ -132,7 +132,7 @@ type LayoutTileOutput struct {
 }
 
 func (s *Subsystem) layoutTile(_ context.Context, _ *mcp.CallToolRequest, input LayoutTileInput) (*mcp.CallToolResult, LayoutTileOutput, resultFailure) {
-	result := s.core.Action("window.tileWindows").Run(context.Background(), core.NewOptions(
+	result := s.core.Action("window.tile_windows").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskTileWindows{Mode: input.Mode, Windows: input.Windows}},
 	))
 	if !result.OK {
@@ -155,7 +155,7 @@ type LayoutSnapOutput struct {
 }
 
 func (s *Subsystem) layoutSnap(_ context.Context, _ *mcp.CallToolRequest, input LayoutSnapInput) (*mcp.CallToolResult, LayoutSnapOutput, resultFailure) {
-	result := s.core.Action("window.snapWindow").Run(context.Background(), core.NewOptions(
+	result := s.core.Action("window.snap_window").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskSnapWindow{Name: input.Name, Position: input.Position}},
 	))
 	if !result.OK {
@@ -179,7 +179,7 @@ type LayoutStackOutput struct {
 }
 
 func (s *Subsystem) layoutStack(_ context.Context, _ *mcp.CallToolRequest, input LayoutStackInput) (*mcp.CallToolResult, LayoutStackOutput, resultFailure) {
-	result := s.core.Action("window.stackWindows").Run(context.Background(), core.NewOptions(
+	result := s.core.Action("window.stack_windows").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskStackWindows{Windows: input.Windows, OffsetX: input.OffsetX, OffsetY: input.OffsetY}},
 	))
 	if !result.OK {
@@ -202,7 +202,7 @@ type LayoutWorkflowOutput struct {
 }
 
 func (s *Subsystem) layoutWorkflow(_ context.Context, _ *mcp.CallToolRequest, input LayoutWorkflowInput) (*mcp.CallToolResult, LayoutWorkflowOutput, resultFailure) {
-	result := s.core.Action("window.applyWorkflow").Run(context.Background(), core.NewOptions(
+	result := s.core.Action("window.apply_workflow").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskApplyWorkflow{Workflow: input.Workflow, Windows: input.Windows}},
 	))
 	if !result.OK {
@@ -228,7 +228,7 @@ type LayoutBesideEditorOutput struct {
 }
 
 func (s *Subsystem) layoutBesideEditor(_ context.Context, _ *mcp.CallToolRequest, input LayoutBesideEditorInput) (*mcp.CallToolResult, LayoutBesideEditorOutput, resultFailure) {
-	result := s.core.Action("window.layoutBesideEditor").Run(context.Background(), core.NewOptions(
+	result := s.core.Action("window.layout_beside_editor").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskLayoutBesideEditor{
 			Name: input.Name, Editor: input.Editor, Side: input.Side, Ratio: input.Ratio,
 		}},
@@ -258,7 +258,7 @@ type LayoutSuggestOutput struct {
 }
 
 func (s *Subsystem) layoutSuggest(_ context.Context, _ *mcp.CallToolRequest, input LayoutSuggestInput) (*mcp.CallToolResult, LayoutSuggestOutput, resultFailure) {
-	result := s.core.Action("window.layoutSuggest").Run(context.Background(), core.NewOptions(
+	result := s.core.Action("window.layout_suggest").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskLayoutSuggest{ScreenID: input.ScreenID, WindowCount: input.WindowCount}},
 	))
 	if !result.OK {
@@ -288,7 +288,7 @@ type ScreenFindSpaceOutput struct {
 }
 
 func (s *Subsystem) screenFindSpace(_ context.Context, _ *mcp.CallToolRequest, input ScreenFindSpaceInput) (*mcp.CallToolResult, ScreenFindSpaceOutput, resultFailure) {
-	result := s.core.Action("window.findSpace").Run(context.Background(), core.NewOptions(
+	result := s.core.Action("window.find_space").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskScreenFindSpace{
 			ScreenID: input.ScreenID, Width: input.Width, Height: input.Height, Padding: input.Padding,
 		}},
@@ -320,7 +320,7 @@ type WindowArrangePairOutput struct {
 }
 
 func (s *Subsystem) windowArrangePair(_ context.Context, _ *mcp.CallToolRequest, input WindowArrangePairInput) (*mcp.CallToolResult, WindowArrangePairOutput, resultFailure) {
-	result := s.core.Action("window.arrangePair").Run(context.Background(), core.NewOptions(
+	result := s.core.Action("window.arrange_pair").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: window.TaskWindowArrangePair{
 			Primary: input.Primary, Secondary: input.Secondary, ScreenID: input.ScreenID, Ratio: input.Ratio,
 		}},

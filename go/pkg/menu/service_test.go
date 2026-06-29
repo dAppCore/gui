@@ -39,7 +39,7 @@ func TestTaskSetAppMenu_Good(t *core.T) {
 			{Label: "Quit"},
 		}},
 	}
-	r := taskRun(c, "menu.setAppMenu", TaskSetAppMenu{Items: items})
+	r := taskRun(c, "menu.set_app_menu", TaskSetAppMenu{Items: items})
 	core.RequireTrue(t, r.OK)
 }
 
@@ -47,7 +47,7 @@ func TestQueryGetAppMenu_Good(t *core.T) {
 	_, c := newTestMenuService(t)
 
 	items := []MenuItem{{Label: "File"}, {Label: "Edit"}}
-	taskRun(c, "menu.setAppMenu", TaskSetAppMenu{Items: items})
+	taskRun(c, "menu.set_app_menu", TaskSetAppMenu{Items: items})
 
 	r := c.QUERY(QueryGetAppMenu{})
 	core.RequireTrue(t, r.OK)
@@ -58,7 +58,7 @@ func TestQueryGetAppMenu_Good(t *core.T) {
 
 func TestTaskSetAppMenu_Bad(t *core.T) {
 	c := core.New(core.WithServiceLock())
-	r := c.Action("menu.setAppMenu").Run(context.Background(), core.NewOptions())
+	r := c.Action("menu.set_app_menu").Run(context.Background(), core.NewOptions())
 	core.AssertFalse(t, r.OK)
 }
 
@@ -69,7 +69,7 @@ func TestTaskSetAppMenu_NoManager_FailsClosed(t *core.T) {
 	}
 	core.RequireTrue(t, svc.OnStartup(context.Background()).OK)
 
-	r := c.Action("menu.setAppMenu").Run(context.Background(), core.NewOptions(
+	r := c.Action("menu.set_app_menu").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: TaskSetAppMenu{Items: []MenuItem{{Label: "File"}}}},
 	))
 	core.AssertFalse(t, r.OK)

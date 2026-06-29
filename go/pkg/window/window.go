@@ -9,22 +9,95 @@ import (
 
 // Window is CoreGUI's own window descriptor — NOT a Wails type alias.
 type Window struct {
-	Name                string
-	Title               string
-	URL                 string
-	HTML                string
-	JS                  string
-	Width, Height       int
-	X, Y                int
-	MinWidth, MinHeight int
-	MaxWidth, MaxHeight int
-	Frameless           bool
-	Hidden              bool
-	AlwaysOnTop         bool
-	BackgroundColour    [4]uint8
-	DisableResize       bool
-	EnableFileDrop      bool
+	Name                       string
+	Title                      string
+	URL                        string
+	HTML                       string
+	JS                         string
+	Width, Height              int
+	X, Y                       int
+	MinWidth, MinHeight        int
+	MaxWidth, MaxHeight        int
+	Frameless                  bool
+	Hidden                     bool
+	AlwaysOnTop                bool
+	BackgroundColour           [4]uint8
+	DisableResize              bool
+	EnableFileDrop             bool
+	HideOnEscape               bool
+	HideOnFocusLost            bool
+	DefaultContextMenuDisabled bool
+	// HideOnClose: the OS close button hides the window instead of
+	// destroying it. The window stays registered + can be re-shown
+	// via set_visibility. Tray-rooted apps + steady-state windows
+	// (chat, settings) set this so the user can dismiss without
+	// paying the cold-start cost on re-open. Applied automatically
+	// post-create by gui.Service when the Window is supplied via
+	// GuiConfig.Windows.
+	HideOnClose bool
+	// ContentProtection blocks the OS screen-capture API from
+	// recording this window. Wallets / private chat / key reveal
+	// surfaces should set true. Applied automatically post-create
+	// by gui.Service when the Window is supplied via GuiConfig.Windows.
+	// macOS + Windows 10+; no-op on Linux.
+	ContentProtection bool
+	// ShowDockIcon: when set, gui.OpenWindow fires dock.show_icon
+	// before the show sequence so the window comes with a Dock /
+	// taskbar presence + Cmd+Tab eligibility. Use for primary "shell"
+	// windows in tray-anchored apps that want Dock visibility once
+	// the user opens the main UI. Auxiliary windows (settings, about)
+	// can stay icon-less to keep the menubar as the canonical entry.
+	// No-op on Linux + iOS; macOS handles via NSApp activation
+	// policy, Windows via taskbar visibility.
+	ShowDockIcon bool
+	Mac          MacWindow
+	Linux        LinuxWindow
+	Windows      WindowsWindow
 }
+
+// MacWindow holds macOS-specific window options. Zero values mean
+// platform default.
+type MacWindow struct {
+	WindowLevel             MacWindowLevel
+	CollectionBehavior      MacCollectionBehavior
+	InvisibleTitleBarHeight int
+	DisableBackForwardNav   bool
+}
+
+// LinuxWindow holds Linux-specific window options.
+type LinuxWindow struct {
+	Icon []byte
+}
+
+// WindowsWindow holds Windows-specific window options.
+type WindowsWindow struct {
+	HiddenOnTaskbar bool
+}
+
+// MacWindowLevel mirrors application.MacWindowLevel (string-typed
+// alias of NSWindow.Level names). Empty string is platform default.
+type MacWindowLevel string
+
+const (
+	MacWindowLevelDefault     MacWindowLevel = ""
+	MacWindowLevelNormal      MacWindowLevel = "normal"
+	MacWindowLevelFloating    MacWindowLevel = "floating"
+	MacWindowLevelTornOffMenu MacWindowLevel = "tornOffMenu"
+	MacWindowLevelModalPanel  MacWindowLevel = "modalPanel"
+	MacWindowLevelMainMenu    MacWindowLevel = "mainMenu"
+	MacWindowLevelStatus      MacWindowLevel = "status"
+	MacWindowLevelPopUpMenu   MacWindowLevel = "popUpMenu"
+)
+
+// MacCollectionBehavior is a bitfield mirroring NSWindow.collectionBehavior.
+type MacCollectionBehavior uint64
+
+const (
+	MacCollectionBehaviorDefault             MacCollectionBehavior = 0
+	MacCollectionBehaviorCanJoinAllSpaces    MacCollectionBehavior = 1 << 0
+	MacCollectionBehaviorFullScreenAuxiliary MacCollectionBehavior = 1 << 8
+	MacCollectionBehaviorIgnoresCycle        MacCollectionBehavior = 1 << 6
+)
 
 // ToPlatformOptions converts a Window to PlatformWindowOptions for the backend.
 func (w *Window) ToPlatformOptions() PlatformWindowOptions {
@@ -36,6 +109,12 @@ func (w *Window) ToPlatformOptions() PlatformWindowOptions {
 		Frameless: w.Frameless, Hidden: w.Hidden,
 		AlwaysOnTop: w.AlwaysOnTop, BackgroundColour: w.BackgroundColour,
 		DisableResize: w.DisableResize, EnableFileDrop: w.EnableFileDrop,
+		HideOnEscape:               w.HideOnEscape,
+		HideOnFocusLost:            w.HideOnFocusLost,
+		DefaultContextMenuDisabled: w.DefaultContextMenuDisabled,
+		Mac:                        w.Mac,
+		Linux:                      w.Linux,
+		Windows:                    w.Windows,
 	}
 }
 

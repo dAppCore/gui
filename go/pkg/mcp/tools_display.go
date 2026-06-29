@@ -22,7 +22,7 @@ type SchemeResolveOutput struct {
 }
 
 func (s *Subsystem) schemeResolve(_ context.Context, _ *mcp.CallToolRequest, input SchemeResolveInput) (*mcp.CallToolResult, SchemeResolveOutput, resultFailure) {
-	result := s.core.Action("display.resolveScheme").Run(context.Background(), core.NewOptions(
+	result := s.core.Action("display.resolve_scheme").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "url", Value: input.URL},
 	))
 	if !result.OK {

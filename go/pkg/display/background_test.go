@@ -65,7 +65,7 @@ func TestBackground_RegisterBackgroundActions_GoodCase(t *core.T) {
 	svc, c := newTestDisplayService(t)
 	svc.background = NewBackgroundRegistry()
 
-	result := c.Action("core.background.serviceWorker.register").Run(context.Background(), core.NewOptions(
+	result := c.Action("core.background.service_worker.register").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "scriptURL", Value: "https://example.com/sw.js"},
 		core.Option{Key: "options", Value: map[string]any{"scope": "/app"}},
 	))

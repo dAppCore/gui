@@ -3,9 +3,11 @@ package window
 
 import (
 	"reflect"
+	"unsafe"
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/preload"
+	"github.com/leaanthony/u"
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/events"
 )
@@ -20,48 +22,229 @@ func NewWailsPlatform(app *application.App) *WailsPlatform {
 	return &WailsPlatform{app: app}
 }
 
+// BindEvalReply satisfies EvalReplyBinder. Registers an
+// app.Event.On listener for EvalJSEventName so JS-side replies
+// emitted via the @wailsio/runtime Events bus reach the Service's
+// CompleteEval router.
+//
+// Wails delivers the JS payload as ev.Data — for our
+// {reqId, result, err} shape it deserialises to map[string]any.
+// Extract the three fields and forward; unknown shapes are
+// silently ignored so a third-party event with the same name
+// can't poison the eval channel.
+func (wp *WailsPlatform) BindEvalReply(cb func(reqID string, result any, errStr string)) {
+	if wp == nil || wp.app == nil || cb == nil {
+		return
+	}
+	wp.app.Event.On(EvalJSEventName, func(ev *application.CustomEvent) {
+		if ev == nil {
+			return
+		}
+		data, ok := ev.Data.(map[string]any)
+		if !ok {
+			return
+		}
+		reqID, _ := data["reqId"].(string)
+		errStr, _ := data["err"].(string)
+		result := data["result"]
+		if reqID == "" {
+			return
+		}
+		cb(reqID, result, errStr)
+	})
+}
+
+// BindCustomEvent satisfies CustomEventBinder. Registers an
+// app.Event.On listener for an arbitrary event name. The callback
+// receives ev.Data verbatim — consumers are responsible for the
+// type-assertion to whatever shape their JS-side emit produced.
+// Nil callback / nil app / empty name are guarded as no-ops so
+// boot-time wiring against an unconfigured platform stays quiet.
+func (wp *WailsPlatform) BindCustomEvent(name string, cb func(data any)) {
+	if wp == nil || wp.app == nil || cb == nil || name == "" {
+		return
+	}
+	wp.app.Event.On(name, func(ev *application.CustomEvent) {
+		if ev == nil {
+			return
+		}
+		cb(ev.Data)
+	})
+}
+
 func (wp *WailsPlatform) CreateWindow(options PlatformWindowOptions) PlatformWindow {
+	if wp == nil || wp.app == nil || wp.app.Window == nil {
+		return nil
+	}
+	// wails3 alpha.91 defaults InitialPosition=WindowCentered, which
+	// IGNORES the X/Y options entirely and centres on the primary
+	// screen. To honour saved positions (and any explicit spec X/Y)
+	// we must set WindowXY when either coordinate is non-zero. The
+	// (0,0) case still centres — first-launch / no-state windows
+	// keep the platform-default placement.
+	initialPos := application.WindowCentered
+	if options.X != 0 || options.Y != 0 {
+		initialPos = application.WindowXY
+	}
 	wOpts := application.WebviewWindowOptions{
-		Name:             options.Name,
-		Title:            options.Title,
-		URL:              options.URL,
-		HTML:             options.HTML,
-		JS:               options.JS,
-		Width:            options.Width,
-		Height:           options.Height,
-		X:                options.X,
-		Y:                options.Y,
-		MinWidth:         options.MinWidth,
-		MinHeight:        options.MinHeight,
-		MaxWidth:         options.MaxWidth,
-		MaxHeight:        options.MaxHeight,
-		Frameless:        options.Frameless,
-		Hidden:           options.Hidden,
-		AlwaysOnTop:      options.AlwaysOnTop,
-		DisableResize:    options.DisableResize,
-		EnableFileDrop:   options.EnableFileDrop,
-		BackgroundColour: application.NewRGBA(options.BackgroundColour[0], options.BackgroundColour[1], options.BackgroundColour[2], options.BackgroundColour[3]),
+		Name:                       options.Name,
+		Title:                      options.Title,
+		URL:                        options.URL,
+		HTML:                       options.HTML,
+		JS:                         options.JS,
+		Width:                      options.Width,
+		Height:                     options.Height,
+		InitialPosition:            initialPos,
+		X:                          options.X,
+		Y:                          options.Y,
+		MinWidth:                   options.MinWidth,
+		MinHeight:                  options.MinHeight,
+		MaxWidth:                   options.MaxWidth,
+		MaxHeight:                  options.MaxHeight,
+		Frameless:                  options.Frameless,
+		Hidden:                     options.Hidden,
+		AlwaysOnTop:                options.AlwaysOnTop,
+		DisableResize:              options.DisableResize,
+		EnableFileDrop:             options.EnableFileDrop,
+		HideOnEscape:               options.HideOnEscape,
+		HideOnFocusLost:            options.HideOnFocusLost,
+		DefaultContextMenuDisabled: options.DefaultContextMenuDisabled,
+		BackgroundColour:           application.NewRGBA(options.BackgroundColour[0], options.BackgroundColour[1], options.BackgroundColour[2], options.BackgroundColour[3]),
+		Mac: application.MacWindow{
+			WindowLevel:             application.MacWindowLevel(options.Mac.WindowLevel),
+			CollectionBehavior:      application.MacWindowCollectionBehavior(options.Mac.CollectionBehavior),
+			InvisibleTitleBarHeight: options.Mac.InvisibleTitleBarHeight,
+		},
+		Linux: application.LinuxWindow{
+			Icon: options.Linux.Icon,
+		},
+		Windows: application.WindowsWindow{
+			HiddenOnTaskbar: options.Windows.HiddenOnTaskbar,
+		},
+	}
+	if options.Mac.DisableBackForwardNav {
+		wOpts.Mac.WebviewPreferences = application.MacWebviewPreferences{
+			AllowsBackForwardNavigationGestures: u.False,
+		}
 	}
 	var windowHandle *application.WebviewWindow
-	if wirePreloadOnPageLoad(&wOpts, options.URL, func(origin string, target preload.Webview) {
+	preloadHook := func(origin string, target preload.Webview) {
 		if target == nil {
 			target = windowHandle
 		}
 		if target == nil {
 			return
 		}
+		// Wails 3 gates ExecJS on a runtimeLoaded flag that only flips when
+		// the page emits 'wails:runtime:ready' via its injected runtime —
+		// foreign pages (anthropic.com, wikipedia.org, plugin shells served
+		// from /plugin/<code>/, etc.) never ship that runtime, so every
+		// ExecJS for those windows queues forever.
+		//
+		// Flipping the flag here unblocks ExecJS for any origin, making
+		// every webview agent-addressable (same dispatch as our own
+		// index.html). Reflection is the only path because runtimeLoaded
+		// is unexported on Wails's WebviewWindow; we set it once per page
+		// load and any pending or future ExecJS goes straight through to
+		// the platform.
+		unblockWailsRuntime(windowHandle)
 		if err := preload.InjectPreload(target, origin); err != nil {
 			return
 		}
 		if extra := postPageLoadWindowJS(options.JS); core.Trim(extra) != "" {
 			target.ExecJS(extra)
 		}
-	}) {
+	}
+	preloadHookOrigin := options.URL
+	hasOnPageLoad := wirePreloadOnPageLoad(&wOpts, preloadHookOrigin, preloadHook)
+	if hasOnPageLoad {
 		wOpts.JS = ""
 	}
 	w := wp.app.Window.NewWithOptions(wOpts)
 	windowHandle = w
-	return &wailsWindow{w: w, title: options.Title, opacity: 1.0}
+	// Wails 3 alpha.83 doesn't expose OnPageLoad on WebviewWindowOptions
+	// (so wirePreloadOnPageLoad returns false), but it does emit a per-
+	// window navigation-finished event we can subscribe to. Wire that as
+	// the fallback path so plugin shells / foreign URLs still get the
+	// runtime gate flipped after the page lands.
+	if !hasOnPageLoad {
+		subscribeToNavigationFinished(w, preloadHookOrigin, preloadHook)
+	}
+	return &wailsWindow{w: w, app: wp.app, title: options.Title, opacity: 1.0, alwaysOnTop: options.AlwaysOnTop}
+}
+
+// subscribeToNavigationFinished wires a handler that runs on each page-load
+// completion via Wails's per-window event system. Used when OnPageLoad isn't
+// available on WebviewWindowOptions (Wails 3 alpha.83). Picks the right
+// platform event by trying common candidates; the unknown ones are no-ops
+// because Wails ignores unregistered event types.
+func subscribeToNavigationFinished(window *application.WebviewWindow, origin string, hook func(origin string, target preload.Webview)) {
+	if window == nil || hook == nil {
+		return
+	}
+	handler := func(_ *application.WindowEvent) {
+		hook(origin, window)
+	}
+	// Try every known event that signals "page finished loading" across
+	// platforms — only one will actually fire on the running OS, the rest
+	// stay dormant. Belt-and-braces.
+	for _, evt := range []events.WindowEventType{
+		events.Mac.WebViewDidFinishNavigation,
+		events.Windows.WebViewNavigationCompleted,
+		events.Linux.WindowLoadFinished,
+	} {
+		window.OnWindowEvent(evt, handler)
+	}
+}
+
+// unblockWailsRuntime force-flips Wails's per-window runtimeLoaded flag and
+// drains any queued ExecJS calls. Called from OnPageLoad so foreign pages
+// don't sit forever waiting for a wails:runtime:ready signal that they were
+// never going to send. No-op on builds where the field isn't accessible
+// (future Wails refactors) — degraded behaviour is just the existing queue.
+func unblockWailsRuntime(window *application.WebviewWindow) {
+	if window == nil {
+		return
+	}
+	value := reflect.ValueOf(window)
+	if value.Kind() != reflect.Pointer || value.IsNil() {
+		return
+	}
+	struc := value.Elem()
+	if struc.Kind() != reflect.Struct {
+		return
+	}
+	flagField := struc.FieldByName("runtimeLoaded")
+	if !flagField.IsValid() {
+		return
+	}
+	// Already set — nothing to do.
+	if flagField.Kind() == reflect.Bool {
+		flagAddr := unsafe.Pointer(flagField.UnsafeAddr())
+		// safe: flag is bool, single byte
+		flagWritable := reflect.NewAt(flagField.Type(), flagAddr).Elem()
+		if flagWritable.Bool() {
+			return
+		}
+		flagWritable.SetBool(true)
+	}
+
+	// Drain any ExecJS calls that queued before the flag flipped — they
+	// were waiting for runtimeLoaded; now they need to actually run.
+	pendingField := struc.FieldByName("pendingJS")
+	if !pendingField.IsValid() || pendingField.Kind() != reflect.Slice {
+		return
+	}
+	pendingAddr := unsafe.Pointer(pendingField.UnsafeAddr())
+	pendingWritable := reflect.NewAt(pendingField.Type(), pendingAddr).Elem()
+	pending := make([]string, pendingWritable.Len())
+	for i := 0; i < pendingWritable.Len(); i++ {
+		pending[i] = pendingWritable.Index(i).String()
+	}
+	pendingWritable.SetLen(0)
+	for _, js := range pending {
+		window.ExecJS(js)
+	}
 }
 
 func wirePreloadOnPageLoad(options *application.WebviewWindowOptions, fallbackOrigin string, inject func(origin string, target preload.Webview)) bool {
@@ -162,11 +345,14 @@ func looksLikeLegacyDisplayPreload(raw string) bool {
 }
 
 func (wp *WailsPlatform) GetWindows() []PlatformWindow {
+	if wp == nil || wp.app == nil || wp.app.Window == nil {
+		return nil
+	}
 	all := wp.app.Window.GetAll()
 	out := make([]PlatformWindow, 0, len(all))
 	for _, w := range all {
 		if wv, ok := w.(*application.WebviewWindow); ok {
-			out = append(out, &wailsWindow{w: wv})
+			out = append(out, &wailsWindow{w: wv, app: wp.app})
 		}
 	}
 	return out
@@ -174,10 +360,13 @@ func (wp *WailsPlatform) GetWindows() []PlatformWindow {
 
 // wailsWindow wraps *application.WebviewWindow to implement PlatformWindow.
 // It stores the title and opacity locally because Wails v3 does not expose getters for both.
+// The app reference enables behaviours that span the application (e.g. CloseBehaviorQuit).
 type wailsWindow struct {
-	w       *application.WebviewWindow
-	title   string
-	opacity float64
+	w           *application.WebviewWindow
+	app         *application.App
+	title       string
+	opacity     float64
+	alwaysOnTop bool
 }
 
 func (ww *wailsWindow) Name() string         { return ww.w.Name() }
@@ -189,6 +378,7 @@ func (ww *wailsWindow) IsFocused() bool      { return ww.w.IsFocused() }
 func (ww *wailsWindow) IsVisible() bool      { return ww.w.IsVisible() }
 func (ww *wailsWindow) IsFullscreen() bool   { return ww.w.IsFullscreen() }
 func (ww *wailsWindow) IsMinimised() bool    { return ww.w.IsMinimised() }
+func (ww *wailsWindow) IsAlwaysOnTop() bool  { return ww.alwaysOnTop }
 func (ww *wailsWindow) GetBounds() (int, int, int, int) {
 	r := ww.w.Bounds()
 	return r.X, r.Y, r.Width, r.Height
@@ -208,7 +398,10 @@ func (ww *wailsWindow) SetVisibility(visible bool) {
 		ww.w.Hide()
 	}
 }
-func (ww *wailsWindow) SetAlwaysOnTop(alwaysOnTop bool) { ww.w.SetAlwaysOnTop(alwaysOnTop) }
+func (ww *wailsWindow) SetAlwaysOnTop(alwaysOnTop bool) {
+	ww.alwaysOnTop = alwaysOnTop
+	ww.w.SetAlwaysOnTop(alwaysOnTop)
+}
 func (ww *wailsWindow) SetOpacity(opacity float64) {
 	ww.opacity = opacity
 	if setter, ok := any(ww.w).(interface{ SetOpacity(float64) }); ok {
@@ -250,11 +443,20 @@ func (ww *wailsWindow) OnWindowEvent(handler func(event WindowEvent)) {
 
 	// Map common Wails window events to our WindowEvent type.
 	eventMap := map[events.WindowEventType]string{
-		events.Common.WindowFocus:     "focus",
-		events.Common.WindowLostFocus: "blur",
-		events.Common.WindowDidMove:   "move",
-		events.Common.WindowDidResize: "resize",
-		events.Common.WindowClosing:   "close",
+		events.Common.WindowFocus:        "focus",
+		events.Common.WindowLostFocus:    "blur",
+		events.Common.WindowDidMove:      "move",
+		events.Common.WindowDidResize:    "resize",
+		events.Common.WindowClosing:      "close",
+		events.Common.WindowHide:         "hide",
+		events.Common.WindowShow:         "show",
+		events.Common.WindowMinimise:     "minimise",
+		events.Common.WindowUnMinimise:   "unminimise",
+		events.Common.WindowMaximise:     "maximise",
+		events.Common.WindowUnMaximise:   "unmaximise",
+		events.Common.WindowFullscreen:   "fullscreen",
+		events.Common.WindowUnFullscreen: "unfullscreen",
+		events.Common.WindowRuntimeReady: "ready",
 	}
 
 	for eventType, eventName := range eventMap {
@@ -280,16 +482,51 @@ func (ww *wailsWindow) OnWindowEvent(handler func(event WindowEvent)) {
 	}
 }
 
-func (ww *wailsWindow) OnFileDrop(handler func(paths []string, targetID string)) {
+func (ww *wailsWindow) OnFileDrop(handler func(paths []string, target *DropTarget)) {
 	ww.w.OnWindowEvent(events.Common.WindowFilesDropped, func(event *application.WindowEvent) {
 		files := event.Context().DroppedFiles()
 		details := event.Context().DropTargetDetails()
-		targetID := ""
+		var target *DropTarget
 		if details != nil {
-			targetID = details.ElementID
+			target = &DropTarget{
+				ID:         details.ElementID,
+				X:          details.X,
+				Y:          details.Y,
+				ClassList:  details.ClassList,
+				Attributes: details.Attributes,
+			}
 		}
-		handler(files, targetID)
+		handler(files, target)
 	})
+}
+
+// SetCloseBehavior wires a RegisterHook on the wails close event
+// implementing the requested behaviour. Default (Destroy) detaches
+// any prior hook so the close proceeds naturally.
+func (ww *wailsWindow) SetCloseBehavior(behavior CloseBehavior) {
+	if ww == nil || ww.w == nil {
+		return
+	}
+	switch behavior {
+	case CloseBehaviorHide:
+		ww.w.RegisterHook(events.Common.WindowClosing, func(e *application.WindowEvent) {
+			ww.w.Hide()
+			e.Cancel()
+		})
+	case CloseBehaviorQuit:
+		ww.w.RegisterHook(events.Common.WindowClosing, func(e *application.WindowEvent) {
+			if ww.app != nil {
+				ww.app.Quit()
+			}
+		})
+	case CloseBehaviorDestroy, "":
+		// Default — no hook; the wails default close path runs.
+		// Wails alpha.91 has no public Unhook API, so once a hook is
+		// installed the consumer can only replace it, not remove it.
+		// Calling with Destroy after Hide installs a pass-through
+		// hook that simply returns without cancelling.
+		ww.w.RegisterHook(events.Common.WindowClosing, func(_ *application.WindowEvent) {})
+	}
 }
 
 // Ensure wailsWindow satisfies PlatformWindow at compile time.

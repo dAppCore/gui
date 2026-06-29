@@ -52,7 +52,7 @@ func TestTaskTileWindows_Good_UsesPrimaryScreenSize(t *core.T) {
 	core.RequireTrue(t, taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("left"), WithSize(400, 400)}}).OK)
 	core.RequireTrue(t, taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("right"), WithSize(400, 400)}}).OK)
 
-	r := taskRun(c, "window.tileWindows", TaskTileWindows{Mode: "left-right", Windows: []string{"left", "right"}})
+	r := taskRun(c, "window.tile_windows", TaskTileWindows{Mode: "left-right", Windows: []string{"left", "right"}})
 	core.RequireTrue(t, r.OK)
 
 	r2 := c.QUERY(QueryWindowByName{Name: "left"})
@@ -81,7 +81,7 @@ func TestTaskSnapWindow_Good_UsesPrimaryScreenSize(t *core.T) {
 
 	core.RequireTrue(t, taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("snap"), WithSize(400, 300)}}).OK)
 
-	r := taskRun(c, "window.snapWindow", TaskSnapWindow{Name: "snap", Position: "left"})
+	r := taskRun(c, "window.snap_window", TaskSnapWindow{Name: "snap", Position: "left"})
 	core.RequireTrue(t, r.OK)
 
 	r2 := c.QUERY(QueryWindowByName{Name: "snap"})
@@ -105,7 +105,7 @@ func TestTaskTileWindows_Good_UsesPrimaryWorkAreaOrigin(t *core.T) {
 	core.RequireTrue(t, taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("left"), WithSize(400, 400)}}).OK)
 	core.RequireTrue(t, taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("right"), WithSize(400, 400)}}).OK)
 
-	r := taskRun(c, "window.tileWindows", TaskTileWindows{Mode: "left-right", Windows: []string{"left", "right"}})
+	r := taskRun(c, "window.tile_windows", TaskTileWindows{Mode: "left-right", Windows: []string{"left", "right"}})
 	core.RequireTrue(t, r.OK)
 
 	r2 := c.QUERY(QueryWindowByName{Name: "left"})

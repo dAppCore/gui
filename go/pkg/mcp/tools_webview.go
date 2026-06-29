@@ -253,7 +253,7 @@ type WebviewUploadOutput struct {
 }
 
 func (s *Subsystem) webviewUpload(_ context.Context, _ *mcp.CallToolRequest, input WebviewUploadInput) (*mcp.CallToolResult, WebviewUploadOutput, resultFailure) {
-	r := s.core.Action("webview.uploadFile").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("webview.upload_file").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: webview.TaskUploadFile{Window: input.Window, Selector: input.Selector, Paths: input.Paths}},
 	))
 	if !r.OK {
@@ -278,7 +278,7 @@ type WebviewViewportOutput struct {
 }
 
 func (s *Subsystem) webviewViewport(_ context.Context, _ *mcp.CallToolRequest, input WebviewViewportInput) (*mcp.CallToolResult, WebviewViewportOutput, resultFailure) {
-	r := s.core.Action("webview.setViewport").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("webview.set_viewport").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: webview.TaskSetViewport{Window: input.Window, Width: input.Width, Height: input.Height}},
 	))
 	if !r.OK {
@@ -328,7 +328,7 @@ type WebviewConsoleClearOutput struct {
 }
 
 func (s *Subsystem) webviewConsoleClear(_ context.Context, _ *mcp.CallToolRequest, input WebviewConsoleClearInput) (*mcp.CallToolResult, WebviewConsoleClearOutput, resultFailure) {
-	r := s.core.Action("webview.clearConsole").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("webview.clear_console").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: webview.TaskClearConsole{Window: input.Window}},
 	))
 	if !r.OK {
@@ -838,7 +838,7 @@ type WebviewDevToolsOpenOutput struct {
 }
 
 func (s *Subsystem) webviewDevToolsOpen(_ context.Context, _ *mcp.CallToolRequest, input WebviewDevToolsOpenInput) (*mcp.CallToolResult, WebviewDevToolsOpenOutput, resultFailure) {
-	r := s.core.Action("webview.devtoolsOpen").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("webview.devtools_open").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: webview.TaskDevToolsOpen{Window: input.Window}},
 	))
 	if !r.OK {
@@ -861,7 +861,7 @@ type WebviewDevToolsCloseOutput struct {
 }
 
 func (s *Subsystem) webviewDevToolsClose(_ context.Context, _ *mcp.CallToolRequest, input WebviewDevToolsCloseInput) (*mcp.CallToolResult, WebviewDevToolsCloseOutput, resultFailure) {
-	r := s.core.Action("webview.devtoolsClose").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("webview.devtools_close").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: webview.TaskDevToolsClose{Window: input.Window}},
 	))
 	if !r.OK {

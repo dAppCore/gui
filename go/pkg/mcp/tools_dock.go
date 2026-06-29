@@ -17,7 +17,7 @@ type DockShowOutput struct {
 }
 
 func (s *Subsystem) dockShow(_ context.Context, _ *mcp.CallToolRequest, _ DockShowInput) (*mcp.CallToolResult, DockShowOutput, resultFailure) {
-	r := s.core.Action("dock.showIcon").Run(context.Background(), core.NewOptions())
+	r := s.core.Action("dock.show_icon").Run(context.Background(), core.NewOptions())
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {
 			return nil, DockShowOutput{}, e
@@ -35,7 +35,7 @@ type DockHideOutput struct {
 }
 
 func (s *Subsystem) dockHide(_ context.Context, _ *mcp.CallToolRequest, _ DockHideInput) (*mcp.CallToolResult, DockHideOutput, resultFailure) {
-	r := s.core.Action("dock.hideIcon").Run(context.Background(), core.NewOptions())
+	r := s.core.Action("dock.hide_icon").Run(context.Background(), core.NewOptions())
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {
 			return nil, DockHideOutput{}, e
@@ -55,7 +55,7 @@ type DockBadgeOutput struct {
 }
 
 func (s *Subsystem) dockBadge(_ context.Context, _ *mcp.CallToolRequest, input DockBadgeInput) (*mcp.CallToolResult, DockBadgeOutput, resultFailure) {
-	r := s.core.Action("dock.setBadge").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("dock.set_badge").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: dock.TaskSetBadge{Label: input.Label}},
 	))
 	if !r.OK {
@@ -76,7 +76,7 @@ type DockRemoveBadgeOutput struct {
 }
 
 func (s *Subsystem) dockRemoveBadge(_ context.Context, _ *mcp.CallToolRequest, _ DockRemoveBadgeInput) (*mcp.CallToolResult, DockRemoveBadgeOutput, resultFailure) {
-	r := s.core.Action("dock.removeBadge").Run(context.Background(), core.NewOptions())
+	r := s.core.Action("dock.remove_badge").Run(context.Background(), core.NewOptions())
 	if !r.OK {
 		if e, ok := r.Value.(error); ok {
 			return nil, DockRemoveBadgeOutput{}, e
@@ -120,7 +120,7 @@ type DockSetProgressBarOutput struct {
 }
 
 func (s *Subsystem) dockSetProgressBar(_ context.Context, _ *mcp.CallToolRequest, input DockSetProgressBarInput) (*mcp.CallToolResult, DockSetProgressBarOutput, resultFailure) {
-	r := s.core.Action("dock.setProgressBar").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("dock.set_progress_bar").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: dock.TaskSetProgressBar{Progress: input.Progress}},
 	))
 	if !r.OK {
@@ -170,7 +170,7 @@ type DockStopBounceOutput struct {
 }
 
 func (s *Subsystem) dockStopBounce(_ context.Context, _ *mcp.CallToolRequest, input DockStopBounceInput) (*mcp.CallToolResult, DockStopBounceOutput, resultFailure) {
-	r := s.core.Action("dock.stopBounce").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("dock.stop_bounce").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: dock.TaskStopBounce{RequestID: input.RequestID}},
 	))
 	if !r.OK {

@@ -355,7 +355,7 @@ func TestTray_Manager_AttachWindow_Good(t *core.T) {
 	core.AssertContains(t, ax7Variant, "good")
 	subject := new(Manager)
 	result := core.Try(func() any {
-		got0 := subject.AttachWindow(*new(WindowHandle))
+		got0 := subject.AttachWindow(*new(WindowHandle), 0, 0)
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
@@ -367,7 +367,7 @@ func TestTray_Manager_AttachWindow_Bad(t *core.T) {
 	core.AssertContains(t, ax7Variant, "bad")
 	subject := new(Manager)
 	result := core.Try(func() any {
-		got0 := subject.AttachWindow(*new(WindowHandle))
+		got0 := subject.AttachWindow(*new(WindowHandle), 0, 0)
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)
@@ -379,7 +379,7 @@ func TestTray_Manager_AttachWindow_Ugly(t *core.T) {
 	core.AssertContains(t, ax7Variant, "ugly")
 	subject := new(Manager)
 	result := core.Try(func() any {
-		got0 := subject.AttachWindow(*new(WindowHandle))
+		got0 := subject.AttachWindow(*new(WindowHandle), 0, 0)
 		return core.Sprintf("%T", got0)
 	})
 	core.AssertNotNil(t, result.Value)

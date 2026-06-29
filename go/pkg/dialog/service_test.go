@@ -78,7 +78,7 @@ func TestService_TaskOpenFile_Good(t *core.T) {
 	mock, c := newTestService(t)
 	mock.openFilePaths = []string{"/a.txt", "/b.txt"}
 
-	r := taskRun(c, "dialog.openFile", TaskOpenFile{
+	r := taskRun(c, "dialog.open_file", TaskOpenFile{
 		Options: OpenFileOptions{Title: "Pick", AllowMultiple: true},
 	})
 	core.RequireTrue(t, r.OK)
@@ -96,7 +96,7 @@ func TestService_TaskOpenFile_FileFilters_Good(t *core.T) {
 	mock.openFilePaths = []string{"/img.png"}
 
 	filters := []FileFilter{{DisplayName: "Images", Pattern: "*.png;*.jpg"}}
-	r := taskRun(c, "dialog.openFile", TaskOpenFile{
+	r := taskRun(c, "dialog.open_file", TaskOpenFile{
 		Options: OpenFileOptions{
 			Title:   "Select image",
 			Filters: filters,
@@ -116,7 +116,7 @@ func TestService_TaskOpenFile_MultipleSelection_Good(t *core.T) {
 	mock, c := newTestService(t)
 	mock.openFilePaths = []string{"/a.txt", "/b.txt", "/c.txt"}
 
-	r := taskRun(c, "dialog.openFile", TaskOpenFile{
+	r := taskRun(c, "dialog.open_file", TaskOpenFile{
 		Options: OpenFileOptions{AllowMultiple: true},
 	})
 	core.RequireTrue(t, r.OK)
@@ -130,7 +130,7 @@ func TestService_TaskOpenFile_CanChooseOptions_Good(t *core.T) {
 	core.AssertContains(t, ax7Variant, "good")
 	mock, c := newTestService(t)
 
-	r := taskRun(c, "dialog.openFile", TaskOpenFile{
+	r := taskRun(c, "dialog.open_file", TaskOpenFile{
 		Options: OpenFileOptions{
 			CanChooseFiles:       true,
 			CanChooseDirectories: true,
@@ -155,7 +155,7 @@ func TestService_TaskOpenFileWithOptions_Good(t *core.T) {
 		AllowMultiple:   false,
 		ShowHiddenFiles: true,
 	}
-	r := taskRun(c, "dialog.openFile", TaskOpenFileWithOptions{Options: opts})
+	r := taskRun(c, "dialog.open_file", TaskOpenFileWithOptions{Options: opts})
 	core.RequireTrue(t, r.OK)
 	core.AssertEqual(t, []string{"/log.txt"}, r.Value.([]string))
 	core.AssertEqual(t, "Select log", mock.lastOpenOpts.Title)
@@ -168,7 +168,7 @@ func TestService_TaskOpenFileWithOptions_NilOptions_Good(t *core.T) {
 	core.AssertContains(t, ax7Variant, "good")
 	_, c := newTestService(t)
 
-	r := taskRun(c, "dialog.openFile", TaskOpenFileWithOptions{Options: nil})
+	r := taskRun(c, "dialog.open_file", TaskOpenFileWithOptions{Options: nil})
 	core.RequireTrue(t, r.OK)
 	core.AssertNotNil(t, r.Value)
 }
@@ -178,7 +178,7 @@ func TestService_TaskSaveFile_Good(t *core.T) {
 	ax7Variant := "TaskSaveFile:good"
 	core.AssertContains(t, ax7Variant, "good")
 	_, c := newTestService(t)
-	r := taskRun(c, "dialog.saveFile", TaskSaveFile{
+	r := taskRun(c, "dialog.save_file", TaskSaveFile{
 		Options: SaveFileOptions{Filename: "out.txt"},
 	})
 	core.RequireTrue(t, r.OK)
@@ -191,7 +191,7 @@ func TestService_TaskSaveFile_ShowHidden_Good(t *core.T) {
 	core.AssertContains(t, ax7Variant, "good")
 	mock, c := newTestService(t)
 
-	r := taskRun(c, "dialog.saveFile", TaskSaveFile{
+	r := taskRun(c, "dialog.save_file", TaskSaveFile{
 		Options: SaveFileOptions{Filename: "out.txt", ShowHiddenFiles: true},
 	})
 	core.RequireTrue(t, r.OK)
@@ -210,7 +210,7 @@ func TestService_TaskSaveFileWithOptions_Good(t *core.T) {
 		Filename: "data.json",
 		Filters:  []FileFilter{{DisplayName: "JSON", Pattern: "*.json"}},
 	}
-	r := taskRun(c, "dialog.saveFile", TaskSaveFileWithOptions{Options: opts})
+	r := taskRun(c, "dialog.save_file", TaskSaveFileWithOptions{Options: opts})
 	core.RequireTrue(t, r.OK)
 	core.AssertEqual(t, "/exports/data.json", r.Value.(string))
 	core.AssertEqual(t, "Export data", mock.lastSaveOpts.Title)
@@ -224,7 +224,7 @@ func TestService_TaskSaveFileWithOptions_NilOptions_Good(t *core.T) {
 	core.AssertContains(t, ax7Variant, "good")
 	_, c := newTestService(t)
 
-	r := taskRun(c, "dialog.saveFile", TaskSaveFileWithOptions{Options: nil})
+	r := taskRun(c, "dialog.save_file", TaskSaveFileWithOptions{Options: nil})
 	core.RequireTrue(t, r.OK)
 	core.AssertEqual(t, "/tmp/save.txt", r.Value)
 }
@@ -235,7 +235,7 @@ func TestService_TaskOpenDirectory_Good(t *core.T) {
 	core.AssertContains(t, ax7Variant, "good")
 	mock, c := newTestService(t)
 
-	r := taskRun(c, "dialog.openDirectory", TaskOpenDirectory{
+	r := taskRun(c, "dialog.open_directory", TaskOpenDirectory{
 		Options: OpenDirectoryOptions{Title: "Pick Dir", ShowHiddenFiles: true},
 	})
 	core.RequireTrue(t, r.OK)
@@ -386,19 +386,19 @@ func TestService_TaskPrompt_Good(t *core.T) {
 
 func TestService_TaskOpenFile_BadCase(t *core.T) {
 	c := core.New(core.WithServiceLock())
-	r := c.Action("dialog.openFile").Run(context.Background(), core.NewOptions())
+	r := c.Action("dialog.open_file").Run(context.Background(), core.NewOptions())
 	core.AssertFalse(t, r.OK)
 }
 
 func TestService_TaskOpenFileWithOptions_BadCase(t *core.T) {
 	c := core.New(core.WithServiceLock())
-	r := c.Action("dialog.openFile").Run(context.Background(), core.NewOptions())
+	r := c.Action("dialog.open_file").Run(context.Background(), core.NewOptions())
 	core.AssertFalse(t, r.OK)
 }
 
 func TestService_TaskSaveFileWithOptions_BadCase(t *core.T) {
 	c := core.New(core.WithServiceLock())
-	r := c.Action("dialog.saveFile").Run(context.Background(), core.NewOptions())
+	r := c.Action("dialog.save_file").Run(context.Background(), core.NewOptions())
 	core.AssertFalse(t, r.OK)
 }
 
@@ -435,7 +435,7 @@ func TestService_TaskOpenFile_Ugly(t *core.T) {
 	mock, c := newTestService(t)
 	mock.openFilePaths = nil
 
-	r := taskRun(c, "dialog.openFile", TaskOpenFile{
+	r := taskRun(c, "dialog.open_file", TaskOpenFile{
 		Options: OpenFileOptions{Title: "Pick"},
 	})
 	core.RequireTrue(t, r.OK)
@@ -457,7 +457,7 @@ func TestService_TaskOpenFileWithOptions_MultipleFilters_Ugly(t *core.T) {
 			{DisplayName: "All files", Pattern: "*.*"},
 		},
 	}
-	r := taskRun(c, "dialog.openFile", TaskOpenFileWithOptions{Options: opts})
+	r := taskRun(c, "dialog.open_file", TaskOpenFileWithOptions{Options: opts})
 	core.RequireTrue(t, r.OK)
 	core.AssertEqual(t, []string{"/doc.pdf"}, r.Value.([]string))
 	core.AssertLen(t, mock.lastOpenOpts.Filters, 3)
@@ -475,7 +475,7 @@ func TestService_TaskSaveFileWithOptions_FiltersAndHidden_Ugly(t *core.T) {
 		ShowHiddenFiles: true,
 		Filters:         []FileFilter{{DisplayName: "CSV", Pattern: "*.csv"}},
 	}
-	r := taskRun(c, "dialog.saveFile", TaskSaveFileWithOptions{Options: opts})
+	r := taskRun(c, "dialog.save_file", TaskSaveFileWithOptions{Options: opts})
 	core.RequireTrue(t, r.OK)
 	core.AssertTrue(t, mock.lastSaveOpts.ShowHiddenFiles)
 	core.AssertEqual(t, "output.csv", mock.lastSaveOpts.Filename)

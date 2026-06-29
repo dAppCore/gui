@@ -20,7 +20,7 @@ func TestTaskLayoutBesideEditor_Good(t *core.T) {
 		WithName("assistant"), WithPosition(10, 10), WithSize(400, 500),
 	}}).OK)
 
-	r := taskRun(c, "window.layoutBesideEditor", TaskLayoutBesideEditor{Name: "assistant"})
+	r := taskRun(c, "window.layout_beside_editor", TaskLayoutBesideEditor{Name: "assistant"})
 	core.RequireTrue(t, r.OK)
 	result := r.Value.(LayoutBesideEditorResult)
 	core.AssertEqual(t, "cursor", result.Editor)
@@ -36,7 +36,7 @@ func TestTaskLayoutSuggest_Good(t *core.T) {
 		WorkArea: screen.Rect{X: 0, Y: 0, Width: 2000, Height: 1000},
 	}})
 
-	r := taskRun(c, "window.layoutSuggest", TaskLayoutSuggest{WindowCount: 2})
+	r := taskRun(c, "window.layout_suggest", TaskLayoutSuggest{WindowCount: 2})
 	core.RequireTrue(t, r.OK)
 	suggestion := r.Value.(LayoutSuggestion)
 	core.AssertEqual(t, "left-right", suggestion.Mode)
@@ -53,7 +53,7 @@ func TestTaskScreenFindSpace_Good(t *core.T) {
 		WithName("left"), WithPosition(0, 0), WithSize(1000, 1000),
 	}}).OK)
 
-	r := taskRun(c, "window.findSpace", TaskScreenFindSpace{Width: 400, Height: 400})
+	r := taskRun(c, "window.find_space", TaskScreenFindSpace{Width: 400, Height: 400})
 	core.RequireTrue(t, r.OK)
 	space := r.Value.(ScreenSpace)
 	core.AssertGreaterOrEqual(t, space.X, 1000)
@@ -70,7 +70,7 @@ func TestTaskWindowArrangePair_Good(t *core.T) {
 	core.RequireTrue(t, taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("primary")}}).OK)
 	core.RequireTrue(t, taskRun(c, "window.open", TaskOpenWindow{Options: []WindowOption{WithName("secondary")}}).OK)
 
-	r := taskRun(c, "window.arrangePair", TaskWindowArrangePair{Primary: "primary", Secondary: "secondary", Ratio: 0.6})
+	r := taskRun(c, "window.arrange_pair", TaskWindowArrangePair{Primary: "primary", Secondary: "secondary", Ratio: 0.6})
 	core.RequireTrue(t, r.OK)
 	arrangement := r.Value.(PairArrangement)
 	core.AssertEqual(t, "horizontal", arrangement.Orientation)

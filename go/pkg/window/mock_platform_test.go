@@ -81,12 +81,13 @@ func TestMockPlatform_GetWindows_Bad(t *core.T) {
 func TestMockWindow_FileDrop_UglyCase(t *core.T) {
 	w := &mockWindow{}
 	calls := 0
-	w.OnFileDrop(func(paths []string, targetID string) {
+	w.OnFileDrop(func(paths []string, target *DropTarget) {
 		calls++
 		core.AssertEqual(t, []string{"a.txt"}, paths)
-		core.AssertEqual(t, "drop-zone", targetID)
+		core.AssertNotNil(t, target)
+		core.AssertEqual(t, "drop-zone", target.ID)
 	})
-	w.emitFileDrop([]string{"a.txt"}, "drop-zone")
+	w.emitFileDrop([]string{"a.txt"}, &DropTarget{ID: "drop-zone"})
 
 	core.AssertEqual(t, 1, calls)
 }

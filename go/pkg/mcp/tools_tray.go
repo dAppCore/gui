@@ -27,7 +27,7 @@ func (s *Subsystem) traySetIcon(_ context.Context, _ *mcp.CallToolRequest, input
 	if err != nil {
 		return nil, TraySetIconOutput{}, core.E("mcp.traySetIcon", "invalid base64 icon data", err)
 	}
-	r := s.core.Action("systray.setIcon").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("systray.set_icon").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: systray.TaskSetTrayIcon{Data: data}},
 	))
 	if !r.OK {
@@ -49,7 +49,7 @@ type TraySetTooltipOutput struct {
 }
 
 func (s *Subsystem) traySetTooltip(_ context.Context, _ *mcp.CallToolRequest, input TraySetTooltipInput) (*mcp.CallToolResult, TraySetTooltipOutput, resultFailure) {
-	r := s.core.Action("systray.setTooltip").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("systray.set_tooltip").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: systray.TaskSetTrayTooltip{Tooltip: input.Tooltip}},
 	))
 	if !r.OK {
@@ -71,7 +71,7 @@ type TraySetLabelOutput struct {
 }
 
 func (s *Subsystem) traySetLabel(_ context.Context, _ *mcp.CallToolRequest, input TraySetLabelInput) (*mcp.CallToolResult, TraySetLabelOutput, resultFailure) {
-	r := s.core.Action("systray.setLabel").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("systray.set_label").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: systray.TaskSetTrayLabel{Label: input.Label}},
 	))
 	if !r.OK {
@@ -94,7 +94,7 @@ type TraySetMenuOutput struct {
 }
 
 func (s *Subsystem) traySetMenu(_ context.Context, _ *mcp.CallToolRequest, input TraySetMenuInput) (*mcp.CallToolResult, TraySetMenuOutput, resultFailure) {
-	r := s.core.Action("systray.setMenu").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("systray.set_menu").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: systray.TaskSetTrayMenu{Items: input.Items}},
 	))
 	if !r.OK {
@@ -118,7 +118,7 @@ type TrayShowMessageOutput struct {
 }
 
 func (s *Subsystem) trayShowMessage(_ context.Context, _ *mcp.CallToolRequest, input TrayShowMessageInput) (*mcp.CallToolResult, TrayShowMessageOutput, resultFailure) {
-	r := s.core.Action("systray.showMessage").Run(context.Background(), core.NewOptions(
+	r := s.core.Action("systray.show_message").Run(context.Background(), core.NewOptions(
 		core.Option{Key: "task", Value: systray.TaskShowMessage{Title: input.Title, Message: input.Message}},
 	))
 	if !r.OK {

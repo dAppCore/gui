@@ -55,13 +55,13 @@ func TestDisplayAPI_TrayWrappers(t *core.T) {
 	cases := []errorOnlyWrapperCase{
 		{
 			name:   "SetTrayTooltip",
-			action: "systray.setTooltip",
+			action: "systray.set_tooltip",
 			call: func(svc *Service) resultFailure {
 				return svc.SetTrayTooltip("Helper tooltip")
 			},
 			setupGood: func(t *core.T, c *core.Core) {
 				t.Helper()
-				c.Action("systray.setTooltip", func(_ context.Context, opts core.Options) core.Result {
+				c.Action("systray.set_tooltip", func(_ context.Context, opts core.Options) core.Result {
 					task := opts.Get("task").Value.(systray.TaskSetTrayTooltip)
 					core.AssertEqual(t, "Helper tooltip", task.Tooltip)
 					return core.Result{OK: true}
@@ -70,13 +70,13 @@ func TestDisplayAPI_TrayWrappers(t *core.T) {
 		},
 		{
 			name:   "SetTrayLabel",
-			action: "systray.setLabel",
+			action: "systray.set_label",
 			call: func(svc *Service) resultFailure {
 				return svc.SetTrayLabel("Launcher")
 			},
 			setupGood: func(t *core.T, c *core.Core) {
 				t.Helper()
-				c.Action("systray.setLabel", func(_ context.Context, opts core.Options) core.Result {
+				c.Action("systray.set_label", func(_ context.Context, opts core.Options) core.Result {
 					task := opts.Get("task").Value.(systray.TaskSetTrayLabel)
 					core.AssertEqual(t, "Launcher", task.Label)
 					return core.Result{OK: true}
@@ -85,7 +85,7 @@ func TestDisplayAPI_TrayWrappers(t *core.T) {
 		},
 		{
 			name:   "SetTrayMenu",
-			action: "systray.setMenu",
+			action: "systray.set_menu",
 			call: func(svc *Service) resultFailure {
 				return svc.SetTrayMenu([]TrayMenuItem{
 					{Label: "Open", ActionID: "open"},
@@ -98,7 +98,7 @@ func TestDisplayAPI_TrayWrappers(t *core.T) {
 			},
 			setupGood: func(t *core.T, c *core.Core) {
 				t.Helper()
-				c.Action("systray.setMenu", func(_ context.Context, opts core.Options) core.Result {
+				c.Action("systray.set_menu", func(_ context.Context, opts core.Options) core.Result {
 					task := opts.Get("task").Value.(systray.TaskSetTrayMenu)
 					core.AssertLen(t, task.Items, 2)
 					core.AssertEqual(t, "Open", task.Items[0].Label)
@@ -110,13 +110,13 @@ func TestDisplayAPI_TrayWrappers(t *core.T) {
 		},
 		{
 			name:   "ShowTrayMessage",
-			action: "systray.showMessage",
+			action: "systray.show_message",
 			call: func(svc *Service) resultFailure {
 				return svc.ShowTrayMessage("Status", "Task complete")
 			},
 			setupGood: func(t *core.T, c *core.Core) {
 				t.Helper()
-				c.Action("systray.showMessage", func(_ context.Context, opts core.Options) core.Result {
+				c.Action("systray.show_message", func(_ context.Context, opts core.Options) core.Result {
 					task := opts.Get("task").Value.(systray.TaskShowMessage)
 					core.AssertEqual(t, "Status", task.Title)
 					core.AssertEqual(t, "Task complete", task.Message)
@@ -309,13 +309,13 @@ func TestDisplayAPI_NotificationWrappers(t *core.T) {
 func TestDisplayAPI_ThemeWrapper(t *core.T) {
 	runErrorOnlyWrapperCase(t, errorOnlyWrapperCase{
 		name:   "SetTheme",
-		action: "environment.setTheme",
+		action: "environment.set_theme",
 		call: func(svc *Service) resultFailure {
 			return svc.SetTheme("system")
 		},
 		setupGood: func(t *core.T, c *core.Core) {
 			t.Helper()
-			c.Action("environment.setTheme", func(_ context.Context, opts core.Options) core.Result {
+			c.Action("environment.set_theme", func(_ context.Context, opts core.Options) core.Result {
 				task := opts.Get("task").Value.(environment.TaskSetTheme)
 				core.AssertEqual(t, "system", task.Theme)
 				return core.Result{OK: true}

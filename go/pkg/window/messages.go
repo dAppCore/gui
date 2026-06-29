@@ -1,15 +1,21 @@
 package window
 
+import "time"
+
 type WindowInfo struct {
-	Name      string  `json:"name"`
-	Title     string  `json:"title"`
-	X         int     `json:"x"`
-	Y         int     `json:"y"`
-	Width     int     `json:"width"`
-	Height    int     `json:"height"`
-	Opacity   float64 `json:"opacity"`
-	Maximized bool    `json:"maximized"`
-	Focused   bool    `json:"focused"`
+	Name        string  `json:"name"`
+	Title       string  `json:"title"`
+	X           int     `json:"x"`
+	Y           int     `json:"y"`
+	Width       int     `json:"width"`
+	Height      int     `json:"height"`
+	Opacity     float64 `json:"opacity"`
+	Maximized   bool    `json:"maximized"`
+	Focused     bool    `json:"focused"`
+	Visible     bool    `json:"visible"`
+	Minimised   bool    `json:"minimised"`
+	Fullscreen  bool    `json:"fullscreen"`
+	AlwaysOnTop bool    `json:"always_on_top"`
 }
 
 type QueryWindowList struct{}
@@ -71,6 +77,61 @@ type TaskSetVisibility struct {
 	Visible bool
 }
 
+// WindowKind classifies how a window is realised by the platform.
+// Registered windows declare their kind up-front so taskSetVisibility
+// knows whether to lazily mount a WebView (KindWebview) or skip to the
+// systray path (KindTray) on first show.
+type WindowKind int
+
+const (
+	KindWebview WindowKind = iota // standard HTML window — Wails WebviewWindow
+	KindTray                      // systray icon — no WebView lifecycle
+)
+
+// TaskRegisterWindow stores a Window descriptor in the service registry
+// without opening it. taskSetVisibility consults the registry on first
+// show, creating the platform window lazily via the existing taskOpenWindow
+// path. Issued via the action bus as `window.register`.
+//
+// Validation enforces the discriminator: KindWebview requires non-empty
+// URL, KindTray requires empty URL. Duplicate names rejected.
+type TaskRegisterWindow struct {
+	Window *Window
+	Kind   WindowKind
+}
+
+// CloseBehavior governs what happens when the OS / user requests a
+// window close (window-control button, Cmd+W, Alt+F4). One of:
+//
+//	CloseBehaviorDestroy — let the close proceed (default).
+//	CloseBehaviorHide    — intercept, hide the window, cancel the
+//	                       close. Window stays registered so it can
+//	                       be shown again later. Tray-rooted apps use
+//	                       this so the popover survives clicking 'x'.
+//	CloseBehaviorQuit    — intercept and call app.Quit() instead.
+type CloseBehavior string
+
+const (
+	CloseBehaviorDestroy CloseBehavior = "destroy"
+	CloseBehaviorHide    CloseBehavior = "hide"
+	CloseBehaviorQuit    CloseBehavior = "quit"
+)
+
+// TaskSetCloseBehavior installs a behaviour-bearing hook on a
+// previously-registered window's close event. Declarative — the
+// behaviour intent is the payload; the platform decides whether to
+// wire RegisterHook, observers, or platform-native cancel surfaces.
+//
+//	c.Action("window.set_close_behavior").Run(ctx, NewOptions(
+//	    Option{Key: "task", Value: TaskSetCloseBehavior{
+//	        Name: "tray", Behavior: CloseBehaviorHide,
+//	    }},
+//	))
+type TaskSetCloseBehavior struct {
+	Name     string
+	Behavior CloseBehavior
+}
+
 type TaskFullscreen struct {
 	Name       string
 	Fullscreen bool
@@ -125,10 +186,50 @@ type ActionWindowResized struct {
 type ActionWindowFocused struct{ Name string }
 type ActionWindowBlurred struct{ Name string }
 
+// Window state transitions — fired when the OS or user changes a
+// window's visibility / minimisation / maximisation / fullscreen
+// state. Consumers can react to these (e.g. pause rendering on
+// hide, reload on show, save layout on state change) without
+// polling.
+type ActionWindowHidden struct{ Name string }
+type ActionWindowShown struct{ Name string }
+type ActionWindowMinimised struct{ Name string }
+type ActionWindowUnminimised struct{ Name string }
+type ActionWindowMaximised struct{ Name string }
+type ActionWindowUnmaximised struct{ Name string }
+type ActionWindowFullscreened struct{ Name string }
+type ActionWindowUnfullscreened struct{ Name string }
+
+// ActionWindowRuntimeReady fires after the WebView JS runtime has
+// loaded and the Wails bridge is ready to accept IPC calls. Consumers
+// that need to push initial state into a window should wait for this
+// (rather than depending on window.create which fires before the
+// frontend has mounted).
+type ActionWindowRuntimeReady struct{ Name string }
+
+// DropTarget describes the HTML element that received an OS-level
+// file drop. Populated from Wails's DropTargetDetails when the drop
+// landed on an element carrying the data-file-drop-target attribute;
+// nil when the drop landed on a non-target region (e.g. window
+// chrome).
+type DropTarget struct {
+	ID         string            `json:"id,omitempty"`
+	X          int               `json:"x"`
+	Y          int               `json:"y"`
+	ClassList  []string          `json:"classList,omitempty"`
+	Attributes map[string]string `json:"attributes,omitempty"`
+}
+
 type ActionFilesDropped struct {
-	Name     string   `json:"name"` // window name
-	Paths    []string `json:"paths"`
-	TargetID string   `json:"targetId,omitempty"`
+	Name  string      `json:"name"` // window name
+	Paths []string    `json:"paths"`
+	// Target is the element that received the drop (nil when the drop
+	// landed outside any data-file-drop-target region).
+	Target *DropTarget `json:"target,omitempty"`
+	// TargetID mirrors Target.ID for back-compat. Empty when Target
+	// is nil. Retained so existing consumers keep working without a
+	// nil check; new consumers should read Target for full context.
+	TargetID string `json:"targetId,omitempty"`
 }
 
 // --- Zoom ---
@@ -161,6 +262,39 @@ type TaskSetHTML struct {
 type TaskExecJS struct {
 	Name string
 	JS   string
+}
+
+// TaskEvalJS evaluates JS in the named window and waits for the
+// result via Wails' public Events bus. The handler wraps the JS
+// body in an IIFE that imports @wailsio/runtime and emits
+// "lthn:eval-reply" with {reqId, result/error}; the service's
+// listener completes a pending channel keyed by reqId and the
+// caller gets the value back synchronously.
+//
+// Replaces the older HTTP-fetchback path that timed out silently
+// against the bridge HTTP server because the WebView's cross-
+// origin POSTs failed the bridge's DNS-rebind defence. Uses
+// Wails' built-in Events bus so no cgo + no CORS + no script-
+// message-handler vendoring.
+//
+// Timeout defaults to 5 seconds when zero. Result and Err are
+// mutually exclusive in the response — non-empty Err carries the
+// JS-side exception string or the timeout sentinel.
+type TaskEvalJS struct {
+	Name    string
+	JS      string
+	Timeout time.Duration
+}
+
+// EvalJSResult is the return wrapper for TaskEvalJS. The action
+// returns this struct in core.Result.Value on success and on
+// JS-side errors (the OK flag distinguishes); only platform-
+// level failures (window not found, listener not registered)
+// land as core.Fail.
+type EvalJSResult struct {
+	ReqID  string `json:"reqId"`
+	Result any    `json:"result,omitempty"`
+	Err    string `json:"err,omitempty"`
 }
 
 // --- State toggles ---

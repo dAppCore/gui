@@ -45,7 +45,7 @@ type NotificationPermissionRequestOutput struct {
 }
 
 func (s *Subsystem) notificationPermissionRequest(_ context.Context, _ *mcp.CallToolRequest, _ NotificationPermissionRequestInput) (*mcp.CallToolResult, NotificationPermissionRequestOutput, resultFailure) {
-	result := s.core.Action("notification.requestPermission").Run(context.Background(), core.NewOptions())
+	result := s.core.Action("notification.request_permission").Run(context.Background(), core.NewOptions())
 	if !result.OK {
 		if err, ok := result.Value.(error); ok {
 			return nil, NotificationPermissionRequestOutput{}, err

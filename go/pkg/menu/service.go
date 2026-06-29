@@ -25,10 +25,10 @@ func (s *Service) OnStartup(_ context.Context) core.Result {
 		}
 	}
 	s.Core().RegisterQuery(s.handleQuery)
-	s.Core().Action("menu.setAppMenu", func(_ context.Context, opts core.Options) core.Result {
+	s.Core().Action("menu.set_app_menu", func(_ context.Context, opts core.Options) core.Result {
 		t := taskSetAppMenuFromOptions(opts)
 		if s.manager == nil || s.manager.Platform() == nil {
-			return core.Result{Value: core.E("menu.setAppMenu", "menu manager unavailable", nil), OK: false}
+			return core.Result{Value: core.E("menu.set_app_menu", "menu manager unavailable", nil), OK: false}
 		}
 		s.menuItems = t.Items
 		s.manager.SetApplicationMenu(t.Items)

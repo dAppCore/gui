@@ -58,7 +58,7 @@ func (t *mockTray) SetTemplateIcon(data []byte) { t.templateIcon = data }
 func (t *mockTray) SetTooltip(text string)      { t.tooltip = text }
 func (t *mockTray) SetLabel(text string)        { t.label = text }
 func (t *mockTray) SetMenu(menu PlatformMenu)   { t.menu = menu }
-func (t *mockTray) AttachWindow(w WindowHandle) { t.attachedWindow = w }
+func (t *mockTray) AttachWindow(w WindowHandle, offsetX, offsetY int) { t.attachedWindow = w }
 func (t *mockTray) ShowMessage(title, message string) resultFailure {
 	t.lastMessageTitle = title
 	t.lastMessageBody = message

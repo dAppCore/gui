@@ -46,7 +46,8 @@ type mockWindow struct {
 	devToolsOpen           bool
 	execJSCalls            []string
 	eventHandlers          []func(WindowEvent)
-	fileDropHandlers       []func(paths []string, targetID string)
+	fileDropHandlers       []func(paths []string, target *DropTarget)
+	closeBehavior          CloseBehavior
 }
 
 func (w *mockWindow) Name() string                    { return w.name }
@@ -58,6 +59,7 @@ func (w *mockWindow) IsFocused() bool                 { return w.focused }
 func (w *mockWindow) IsVisible() bool                 { return w.visible }
 func (w *mockWindow) IsFullscreen() bool              { return w.fullscreened }
 func (w *mockWindow) IsMinimised() bool               { return w.minimised }
+func (w *mockWindow) IsAlwaysOnTop() bool             { return w.alwaysOnTop }
 func (w *mockWindow) GetBounds() (int, int, int, int) { return w.x, w.y, w.width, w.height }
 func (w *mockWindow) GetZoom() float64 {
 	if w.zoom == 0 {
@@ -102,8 +104,12 @@ func (w *mockWindow) CloseDevTools()                       { w.devToolsOpen = fa
 func (w *mockWindow) OnWindowEvent(handler func(WindowEvent)) {
 	w.eventHandlers = append(w.eventHandlers, handler)
 }
-func (w *mockWindow) OnFileDrop(handler func(paths []string, targetID string)) {
+func (w *mockWindow) OnFileDrop(handler func(paths []string, target *DropTarget)) {
 	w.fileDropHandlers = append(w.fileDropHandlers, handler)
+}
+
+func (w *mockWindow) SetCloseBehavior(behavior CloseBehavior) {
+	w.closeBehavior = behavior
 }
 
 // emit fires a test event to all registered handlers.
@@ -113,9 +119,31 @@ func (w *mockWindow) emit(e WindowEvent) {
 	}
 }
 
-// emitFileDrop simulates a file drop on the window.
-func (w *mockWindow) emitFileDrop(paths []string, targetID string) {
+// emitFileDrop simulates a file drop on the window. Pass nil target
+// for legacy zero-context drops, or a DropTarget with the element
+// metadata the consumer expects to receive.
+func (w *mockWindow) emitFileDrop(paths []string, target *DropTarget) {
 	for _, h := range w.fileDropHandlers {
-		h(paths, targetID)
+		h(paths, target)
 	}
+}
+
+// recordingBinder is a test Platform that composes mockPlatform's
+// window-creation surface AND implements CustomEventBinder by
+// recording every (name, cb) pair the Service registers. Tests
+// inspect bindings to prove the wiring without depending on
+// app.Event.On (Wails-only).
+type recordingBinder struct {
+	mockPlatform
+	bindings []recordedBinding
+}
+
+type recordedBinding struct {
+	name string
+	cb   func(any)
+}
+
+// BindCustomEvent satisfies CustomEventBinder.
+func (r *recordingBinder) BindCustomEvent(name string, cb func(data any)) {
+	r.bindings = append(r.bindings, recordedBinding{name: name, cb: cb})
 }
