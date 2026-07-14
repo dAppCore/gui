@@ -7,7 +7,6 @@ import (
 
 	core "dappco.re/go"
 	"dappco.re/go/gui/pkg/preload"
-	"github.com/leaanthony/u"
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/events"
 )
@@ -123,9 +122,9 @@ func (wp *WailsPlatform) CreateWindow(options PlatformWindowOptions) PlatformWin
 		},
 	}
 	if options.Mac.DisableBackForwardNav {
-		wOpts.Mac.WebviewPreferences = application.MacWebviewPreferences{
-			AllowsBackForwardNavigationGestures: u.False,
-		}
+		// alpha2 moved the preference to an internal optional.Bool — the
+		// field's Set method is the public construction path.
+		wOpts.Mac.WebviewPreferences.AllowsBackForwardNavigationGestures.Set(false)
 	}
 	var windowHandle *application.WebviewWindow
 	preloadHook := func(origin string, target preload.Webview) {
