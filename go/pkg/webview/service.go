@@ -97,15 +97,15 @@ func defaultNewConn(options Options) func(string, string) (connector, resultFail
 		if exactWindowTargetWSURL(targets, windowName) == "" {
 			return nil, core.E("webview.connect", "no page target matched window name", nil)
 		}
-		wv, err := gowebview.New(
+		res := gowebview.New(
 			gowebview.WithDebugURL(debugURL),
 			gowebview.WithTimeout(options.Timeout),
 			gowebview.WithConsoleLimit(options.ConsoleLimit),
 		)
-		if err != nil {
-			return nil, err
+		if !res.OK {
+			return nil, res.Err()
 		}
-		return &realConnector{wv: wv, debugURL: debugURL}, nil
+		return &realConnector{wv: res.Value.(*gowebview.Webview), debugURL: debugURL}, nil
 	}
 }
 
@@ -589,10 +589,11 @@ func (r *realConnector) Print(toPDF bool) ([]byte, resultFailure) {
 
 	// Open a dedicated CDPClient for the single Page.printToPDF call.
 	// NewCDPClient connects to the first page target at the debug endpoint.
-	client, err := gowebview.NewCDPClient(r.debugURL)
-	if err != nil {
-		return nil, core.E("realConnector.Print", "failed to connect for PDF export", err)
+	clientRes := gowebview.NewCDPClient(r.debugURL)
+	if !clientRes.OK {
+		return nil, core.E("realConnector.Print", "failed to connect for PDF export", clientRes.Err())
 	}
+	client := clientRes.Value.(*gowebview.CDPClient)
 	defer client.Close()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)

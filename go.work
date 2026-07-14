@@ -4,10 +4,10 @@ go 1.26.2
 // CI uses GOWORK=off to fall back to go/go.mod tags (reproducible).
 
 use (
-	./go
-	./external/go
 	./external/config/go
-	./external/webview/go
+	./external/go
 	./external/io/go
 	./external/log/go
+	./external/webview/go
+	./go
 )
