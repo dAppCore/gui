@@ -130,7 +130,7 @@ func safeManifestRelativePath(baseDir, relativePath, label string) (string, resu
 	if rel == ".." || core.HasPrefix(rel, ".."+string(core.PathSeparator)) {
 		return "", core.E("display.safeManifestRelativePath", label+" escapes manifest directory", nil)
 	}
-	if !(&core.Fs{}).NewUnrestricted().Exists(candidateAbs) {
+	if !(&core.Fs{}).NewUnrestricted().Exists(candidateAbs).OK {
 		return "", core.E("display.safeManifestRelativePath", label+" does not exist", coreResultError(core.Stat(candidateAbs), label+" does not exist"))
 	}
 	candidateResolved, err := pathEvalSymlinks(candidateAbs)
@@ -182,7 +182,7 @@ func discoverManifestPath(pageURL string) (string, resultFailure) {
 		}
 	}
 	for _, candidate := range candidates {
-		if fsys.Exists(candidate) {
+		if fsys.Exists(candidate).OK {
 			return candidate, nil
 		}
 	}
@@ -190,10 +190,10 @@ func discoverManifestPath(pageURL string) (string, resultFailure) {
 }
 
 func appendLocalManifestCandidates(candidates *[]string, fsys *core.Fs, path string) {
-	if candidates == nil || fsys == nil || !fsys.Exists(path) {
+	if candidates == nil || fsys == nil || !fsys.Exists(path).OK {
 		return
 	}
-	if fsys.IsDir(path) {
+	if fsys.IsDir(path).OK {
 		*candidates = append(*candidates, core.PathJoin(path, ".core", "view.yaml"))
 		return
 	}

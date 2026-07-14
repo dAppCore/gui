@@ -1731,7 +1731,9 @@ func quantBitsFromName(name string) int {
 
 func directorySize(root string) int64 {
 	var total int64
-	if err := core.PathWalk(root, func(path string, info core.FsFileInfo, err error) error {
+	// core.PathWalk returns core.Result since v0.11.0; a failed walk still
+	// reports whatever summed before the failure — same semantics as before.
+	core.PathWalk(root, func(path string, info core.FsFileInfo, err error) error {
 		if err != nil || info == nil || info.IsDir() {
 			return nil
 		}
@@ -1739,8 +1741,6 @@ func directorySize(root string) int64 {
 			total += info.Size()
 		}
 		return nil
-	}); err != nil {
-		return total
-	}
+	})
 	return total
 }
