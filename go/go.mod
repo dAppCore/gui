@@ -13,8 +13,8 @@ require (
 )
 
 require (
-	dappco.re/go/io v0.15.0 // indirect
-	dappco.re/go/log v0.9.0 // indirect
+	dappco.re/go/io v0.15.1 // indirect
+	dappco.re/go/log v0.13.1 // indirect
 	git.sr.ht/~jackmordaunt/go-toast/v2 v2.0.3 // indirect
 	github.com/adrg/xdg v0.5.3 // indirect
 	github.com/coder/websocket v1.8.14 // indirect
