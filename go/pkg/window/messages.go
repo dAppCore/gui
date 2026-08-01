@@ -221,8 +221,8 @@ type DropTarget struct {
 }
 
 type ActionFilesDropped struct {
-	Name  string      `json:"name"` // window name
-	Paths []string    `json:"paths"`
+	Name  string   `json:"name"` // window name
+	Paths []string `json:"paths"`
 	// Target is the element that received the drop (nil when the drop
 	// landed outside any data-file-drop-target region).
 	Target *DropTarget `json:"target,omitempty"`

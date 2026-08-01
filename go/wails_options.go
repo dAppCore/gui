@@ -47,7 +47,7 @@ func buildWailsOptions(cfg GuiConfig) application.Options {
 		},
 		Mac: application.MacOptions{
 			ApplicationShouldTerminateAfterLastWindowClosed: cfg.Mac.ApplicationShouldTerminateAfterLastWindowClosed,
-			ActivationPolicy:                                translateActivationPolicy(cfg.Mac.ActivationPolicy),
+			ActivationPolicy: translateActivationPolicy(cfg.Mac.ActivationPolicy),
 		},
 		Windows: application.WindowsOptions{
 			DisableQuitOnLastWindowClosed: cfg.Windows.DisableQuitOnLastWindowClosed,

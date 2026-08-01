@@ -17,15 +17,17 @@ import (
 //   - SetProgressBar — neither macOS NSDockTile progress nor Windows
 //     ITaskbarList3 progress is wrapped. We accept the call so callers
 //     don't crash and silently no-op until upstream lands it.
+//
 //   - Bounce / StopBounce — macOS NSApp.requestUserAttention(:) and the
 //     Windows FlashWindowEx flags are not exposed. Same no-op shape;
 //     Bounce returns request ID 0 so StopBounce(0) is a valid no-op.
+//
 //   - IsVisible — Wails has no getter; we track our own state across
 //     ShowIcon/HideIcon and seed visible=true (the default state when
 //     the app launches in a dock-visible config).
 //
-//	wp := dock.NewWailsPlatform(app) // also calls app.RegisterService
-//	core.WithService(dock.Register(wp))
+//     wp := dock.NewWailsPlatform(app) // also calls app.RegisterService
+//     core.WithService(dock.Register(wp))
 type WailsPlatform struct {
 	app     *application.App
 	service *wailsdock.DockService

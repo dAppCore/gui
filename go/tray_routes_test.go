@@ -53,7 +53,7 @@ func TestApplyTrayRoutes_Good(t *testing.T) {
 func TestApplyTrayRoutes_Bad(t *testing.T) {
 	applyTrayRoutes(nil, []TrayRoute{{ActionID: "x"}}) // nil core, no panic
 	c := core.New()
-	applyTrayRoutes(c, nil)                                       // nil slice
-	applyTrayRoutes(c, []TrayRoute{})                             // empty slice
+	applyTrayRoutes(c, nil)                                     // nil slice
+	applyTrayRoutes(c, []TrayRoute{})                           // empty slice
 	applyTrayRoutes(c, []TrayRoute{{ActionID: "", Quit: true}}) // only empty-ID entries
 }

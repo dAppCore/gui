@@ -10,15 +10,21 @@ import (
 // + the ThemeChanged application event.
 //
 // Wails surfaces:
+//
 //   - app.Env.Info()              → OS / Arch / Debug / OSInfo / PlatformInfo
+//
 //   - app.Env.IsDarkMode()
+//
 //   - app.Env.GetAccentColor()    → "rgb(r,g,b)" string
+//
 //   - app.Env.OpenFileManager(path, selectFile)
+//
 //   - app.Env.HasFocusFollowsMouse()  (Linux only — Wails returns false elsewhere)
+//
 //   - app.Event.OnApplicationEvent(events.Common.ThemeChanged, …)
 //
-//	wp := environment.NewWailsPlatform(app)
-//	core.WithService(environment.Register(wp))
+//     wp := environment.NewWailsPlatform(app)
+//     core.WithService(environment.Register(wp))
 type WailsPlatform struct {
 	app *application.App
 }

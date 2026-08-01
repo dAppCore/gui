@@ -11,9 +11,9 @@ import (
 // three actions a "tray click opens chat" / "Cmd+J toggles popover"
 // dispatch normally fires:
 //
-//   1. window.restore — undoes a minimised state
-//   2. window.set_visibility{Visible: true} — un-hides
-//   3. window.focus — raises + activates
+//  1. window.restore — undoes a minimised state
+//  2. window.set_visibility{Visible: true} — un-hides
+//  3. window.focus — raises + activates
 //
 // Plus, when the registered Window has ShowDockIcon set, fires
 // dock.show_icon BEFORE the show sequence so the Dock / taskbar
@@ -97,12 +97,12 @@ func lookupWindow(c *core.Core, name string) *window.Window {
 // initial open; subsequent open-by-name re-shows go through OpenWindow.
 //
 // Sequence:
-//   1. window.open with the full descriptor (Hidden=true for pre-create
-//      — set spec.Hidden=false if you want the window visible immediately)
-//   2. window.set_close_behavior if HideOnClose is set
-//   3. window.set_content_protection if ContentProtection is set
-//   4. window.set_visibility{true} to show
-//   5. window.focus
+//  1. window.open with the full descriptor (Hidden=true for pre-create
+//     — set spec.Hidden=false if you want the window visible immediately)
+//  2. window.set_close_behavior if HideOnClose is set
+//  3. window.set_content_protection if ContentProtection is set
+//  4. window.set_visibility{true} to show
+//  5. window.focus
 //
 // Returns false on any step's Result failure, true on success.
 //

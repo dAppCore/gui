@@ -108,11 +108,11 @@ func applyTrayConfig(c *core.Core, cfg *TrayConfig) {
 // any ActionTrayMenuItemClicked carrying a matching ActionID fires
 // (in this order):
 //
-//   1. gui.OpenWindow(c, OpenWindow) if OpenWindow is non-empty
-//   2. gui.EmitEvent(c, EmitEvent, OpenWindow) if EmitEvent is
-//      non-empty (the opened-window name rides as event data so
-//      "lthn:tray:open" listeners can switch on it)
-//   3. lifecycle.quit dispatch if Quit is true
+//  1. gui.OpenWindow(c, OpenWindow) if OpenWindow is non-empty
+//  2. gui.EmitEvent(c, EmitEvent, OpenWindow) if EmitEvent is
+//     non-empty (the opened-window name rides as event data so
+//     "lthn:tray:open" listeners can switch on it)
+//  3. lifecycle.quit dispatch if Quit is true
 //
 // Items whose ActionID isn't in Routes fall through unhandled — the
 // consumer can register an additional RegisterAction handler for
