@@ -1,6 +1,6 @@
 package application
 
-import core "dappco.re/go"
+import core "github.com/dappcore/go"
 
 func TestKeyBindingManager_KeyBindingManager_Add_Good(t *core.T) {
 	// KeyBindingManager Add

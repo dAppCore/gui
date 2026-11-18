@@ -4,14 +4,14 @@ package mcp
 import (
 	"context"
 
-	core "dappco.re/go"
-	"dappco.re/go/gui/pkg/container"
-	"dappco.re/go/gui/pkg/contextmenu"
-	"dappco.re/go/gui/pkg/deno"
-	"dappco.re/go/gui/pkg/dock"
-	"dappco.re/go/gui/pkg/environment"
-	"dappco.re/go/gui/pkg/notification"
-	"dappco.re/go/gui/pkg/p2p"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/gui/go/pkg/container"
+	"github.com/dappcore/gui/go/pkg/contextmenu"
+	"github.com/dappcore/gui/go/pkg/deno"
+	"github.com/dappcore/gui/go/pkg/dock"
+	"github.com/dappcore/gui/go/pkg/environment"
+	"github.com/dappcore/gui/go/pkg/notification"
+	"github.com/dappcore/gui/go/pkg/p2p"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 

@@ -5,8 +5,8 @@ import (
 	"context"
 	"encoding/base64"
 
-	core "dappco.re/go"
-	"dappco.re/go/gui/pkg/systray"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/gui/go/pkg/systray"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 

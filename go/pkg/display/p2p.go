@@ -3,8 +3,8 @@ package display
 import (
 	"context"
 
-	core "dappco.re/go"
-	"dappco.re/go/gui/pkg/p2p"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/gui/go/pkg/p2p"
 )
 
 func (s *Service) attachP2PBridge() {

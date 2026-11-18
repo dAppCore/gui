@@ -3,8 +3,8 @@
 package gui
 
 import (
-	core "dappco.re/go"
-	"dappco.re/go/gui/pkg/events"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/gui/go/pkg/events"
 )
 
 // EmitEvent fires a Wails custom event onto the WebView's event bus

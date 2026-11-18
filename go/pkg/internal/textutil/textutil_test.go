@@ -1,6 +1,6 @@
 package textutil
 
-import core "dappco.re/go"
+import core "github.com/dappcore/go"
 
 func TestTextutil_FirstNonEmpty_Good(t *core.T) {
 	// FirstNonEmpty

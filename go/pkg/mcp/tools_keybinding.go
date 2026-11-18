@@ -4,8 +4,8 @@ package mcp
 import (
 	"context"
 
-	core "dappco.re/go"
-	"dappco.re/go/gui/pkg/keybinding"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/gui/go/pkg/keybinding"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 

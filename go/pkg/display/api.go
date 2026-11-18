@@ -3,13 +3,13 @@ package display
 import (
 	"context"
 
-	core "dappco.re/go"
-	"dappco.re/go/gui/pkg/clipboard"
-	"dappco.re/go/gui/pkg/dialog"
-	"dappco.re/go/gui/pkg/environment"
-	"dappco.re/go/gui/pkg/notification"
-	"dappco.re/go/gui/pkg/screen"
-	"dappco.re/go/gui/pkg/systray"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/gui/go/pkg/clipboard"
+	"github.com/dappcore/gui/go/pkg/dialog"
+	"github.com/dappcore/gui/go/pkg/environment"
+	"github.com/dappcore/gui/go/pkg/notification"
+	"github.com/dappcore/gui/go/pkg/screen"
+	"github.com/dappcore/gui/go/pkg/systray"
 )
 
 const writeClipboardImageOp = "display.WriteClipboardImage"

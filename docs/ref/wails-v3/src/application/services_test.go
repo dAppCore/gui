@@ -1,6 +1,6 @@
 package application
 
-import core "dappco.re/go"
+import core "github.com/dappcore/go"
 
 func TestServices_NewService_Good(t *core.T) {
 	// NewService

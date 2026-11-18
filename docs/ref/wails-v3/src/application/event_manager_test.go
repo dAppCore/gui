@@ -1,6 +1,6 @@
 package application
 
-import core "dappco.re/go"
+import core "github.com/dappcore/go"
 
 func TestEventManager_EventManager_Emit_Good(t *core.T) {
 	// EventManager Emit

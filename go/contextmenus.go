@@ -3,9 +3,9 @@
 package gui
 
 import (
-	core "dappco.re/go"
-	"dappco.re/go/gui/pkg/contextmenu"
-	"dappco.re/go/gui/pkg/events"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/gui/go/pkg/contextmenu"
+	"github.com/dappcore/gui/go/pkg/events"
 )
 
 // ContextMenu declares one named right-click surface. The Lit

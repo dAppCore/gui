@@ -11,7 +11,7 @@ Tests for `foo.go` belong in `foo_test.go`, and examples belong in
 not aliases for the same assertion. Avoid helper dispatchers that hide which
 symbol is being exercised.
 
-Use Core wrappers consistently. Import `dappco.re/go` for assertions, Result
+Use Core wrappers consistently. Import `github.com/dappcore/go` for assertions, Result
 helpers, formatting, filesystem/path helpers, JSON helpers, environment access,
 and test types. The local `compat/*` packages exist only to preserve package-like
 call sites while routing implementation through Core wrappers or small adapters.

@@ -260,8 +260,8 @@ package main
 
 import (
     "context"
-    "dappco.re/go/core"
-    "dappco.re/go/config"
+    "github.com/dappcore/go"
+    "github.com/dappcore/config/go"
 )
 
 type MyService struct {

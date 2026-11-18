@@ -3,8 +3,8 @@ package display
 import (
 	"context"
 
-	core "dappco.re/go"
-	"dappco.re/go/gui/pkg/chat"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/gui/go/pkg/chat"
 )
 
 func TestML_ModelState_GoodCase(t *core.T) {

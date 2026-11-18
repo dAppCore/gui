@@ -1,6 +1,6 @@
 package lifecycle
 
-import core "dappco.re/go"
+import core "github.com/dappcore/go"
 
 func TestRegister_Register_Good(t *core.T) {
 	// Register

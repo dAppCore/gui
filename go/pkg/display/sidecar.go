@@ -5,9 +5,9 @@ import (
 	"reflect"
 	"slices"
 
-	core "dappco.re/go"
-	"dappco.re/go/gui/pkg/deno"
-	"dappco.re/go/gui/pkg/internal/coreutil"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/gui/go/pkg/deno"
+	"github.com/dappcore/gui/go/pkg/internal/coreutil"
 )
 
 func (s *Service) registerSidecarActions() {

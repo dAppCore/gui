@@ -13,7 +13,7 @@ The Crypt service (`pkg/crypt`) provides cryptographic utilities including hashi
 ## Basic Usage
 
 ```go
-import "dappco.re/go/core/crypt/crypt"
+import "github.com/dappcore/go-crypt/go/crypt"
 
 // Standalone usage
 crypto, err := crypt.New()

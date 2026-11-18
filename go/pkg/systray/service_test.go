@@ -3,8 +3,8 @@ package systray
 import (
 	"context"
 
-	core "dappco.re/go"
-	"dappco.re/go/gui/pkg/notification"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/gui/go/pkg/notification"
 )
 
 func newTestSystrayService(t *core.T) (*Service, *core.Core) {

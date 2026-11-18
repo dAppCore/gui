@@ -12,7 +12,7 @@
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=dappcore_gui&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=dappcore_gui)
 [![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=dappcore_gui&metric=code_smells)](https://sonarcloud.io/dashboard?id=dappcore_gui)
 [![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=dappcore_gui&metric=ncloc)](https://sonarcloud.io/dashboard?id=dappcore_gui)
-[![Go Reference](https://pkg.go.dev/badge/dappco.re/go/gui.svg)](https://pkg.go.dev/dappco.re/go/gui)
+[![Go Reference](https://pkg.go.dev/badge/github.com/dappcore/gui/go.svg)](https://pkg.go.dev/github.com/dappcore/gui/go)
 [![License: EUPL-1.2](https://img.shields.io/badge/License-EUPL--1.2-blue.svg)](https://eupl.eu/1.2/en/)
 
 
@@ -23,7 +23,7 @@ display orchestration, dock integration, environment state, events, keybindings,
 menus, notifications, peer-to-peer messaging, preload injection, screens,
 system tray integration, webview automation, and window management.
 
-The module is `dappco.re/go/gui`. It depends on `dappco.re/go` for Core
+The module is `github.com/dappcore/gui/go`. It depends on `github.com/dappcore/go` for Core
 primitives and wraps Wails through `stubs/wails` so ordinary Go tests can run
 without native desktop bindings. The packages expose small registration
 functions and service objects that can be mounted into a Core runtime.

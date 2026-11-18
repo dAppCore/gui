@@ -3,8 +3,8 @@ package mcp
 import (
 	"context"
 
-	core "dappco.re/go"
-	"dappco.re/go/gui/pkg/webview"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/gui/go/pkg/webview"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 

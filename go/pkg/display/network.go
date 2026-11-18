@@ -6,8 +6,8 @@ import (
 	"sort"
 	"time"
 
-	core "dappco.re/go"
-	"dappco.re/go/gui/pkg/p2p"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/gui/go/pkg/p2p"
 )
 
 type NetworkInterfaceState struct {

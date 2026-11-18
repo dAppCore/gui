@@ -3,8 +3,8 @@ package mcp
 import (
 	"context"
 
-	core "dappco.re/go"
-	"dappco.re/go/gui/pkg/environment"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/gui/go/pkg/environment"
 )
 
 func newEnvironmentToolsTestSubsystem(t *core.T, query func(core.Query) core.Result) *Subsystem {

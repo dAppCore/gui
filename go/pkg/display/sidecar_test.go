@@ -4,8 +4,8 @@ import (
 	"context"
 	"syscall"
 
-	core "dappco.re/go"
-	"dappco.re/go/gui/pkg/deno"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/gui/go/pkg/deno"
 )
 
 func captureStderr(t *core.T, fn func()) string {

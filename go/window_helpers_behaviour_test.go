@@ -1,8 +1,8 @@
 package gui
 
 import (
-	core "dappco.re/go"
-	"dappco.re/go/gui/pkg/window"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/gui/go/pkg/window"
 )
 
 // NewService builds a gui Service over the supplied config without starting

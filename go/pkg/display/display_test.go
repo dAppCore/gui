@@ -8,12 +8,12 @@ import (
 	"reflect"
 	"time"
 
-	core "dappco.re/go"
-	"dappco.re/go/gui/pkg/container"
-	"dappco.re/go/gui/pkg/menu"
-	"dappco.re/go/gui/pkg/systray"
-	"dappco.re/go/gui/pkg/webview"
-	"dappco.re/go/gui/pkg/window"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/gui/go/pkg/container"
+	"github.com/dappcore/gui/go/pkg/menu"
+	"github.com/dappcore/gui/go/pkg/systray"
+	"github.com/dappcore/gui/go/pkg/webview"
+	"github.com/dappcore/gui/go/pkg/window"
 	"github.com/gorilla/websocket"
 )
 

@@ -14,7 +14,7 @@ MCP provides a standardized way for AI tools to:
 ## Basic Setup
 
 ```go
-import "dappco.re/go/gui/pkg/mcp"
+import "github.com/dappcore/gui/go/pkg/mcp"
 
 // Create standalone MCP server
 mcpService := mcp.NewStandaloneWithPort(9877)

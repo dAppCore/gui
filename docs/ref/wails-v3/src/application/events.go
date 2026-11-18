@@ -6,7 +6,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	core "dappco.re/go"
+	core "github.com/dappcore/go"
 	"github.com/wailsapp/wails/v3/pkg/events"
 )
 

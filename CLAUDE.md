@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is `dappco.re/go/gui` — a display/windowing module for the Core web3 desktop framework. It provides window management, dialogs, system tray, clipboard, notifications, theming, layouts, and real-time WebSocket events. Built on **Wails v3** (Go backend) with an **Angular 20** custom element frontend.
+This is `github.com/dappcore/gui/go` — a display/windowing module for the Core web3 desktop framework. It provides window management, dialogs, system tray, clipboard, notifications, theming, layouts, and real-time WebSocket events. Built on **Wails v3** (Go backend) with an **Angular 20** custom element frontend.
 
 ## Repository layout
 
@@ -51,7 +51,7 @@ npm test                    # Unit tests (Karma/Jasmine)
 
 ### Service-based design with Core DI
 
-The display `Service` registers with `dappco.re/go/core`'s service container via `Register(c *core.Core)`. It embeds `core.ServiceRuntime[Options]` for lifecycle management and access to sibling services.
+The display `Service` registers with `github.com/dappcore/go`'s service container via `Register(c *core.Core)`. It embeds `core.ServiceRuntime[Options]` for lifecycle management and access to sibling services.
 
 ### Interface abstraction for testability
 
@@ -84,12 +84,12 @@ All Wails application APIs are abstracted behind interfaces in `interfaces.go` (
 - **Functional options**: `WindowOption` functions (`WithName()`, `WithTitle()`, `WithSize()`, etc.) configure `window.Window` descriptors
 - **IPC message bus**: Sub-services communicate via `core.QUERY`, `core.PERFORM`, and `core.ACTION` — display orchestrates and bridges to WebSocket events
 - **Event broadcasting**: `WSEventManager` uses gorilla/websocket with a buffered channel (`eventBuffer`) and per-client subscription filtering (supports `"*"` wildcard)
-- **Error handling**: All errors use `coreerr.E(op, msg, err)` from `dappco.re/go/log` (aliased as `coreerr`), never `fmt.Errorf`
-- **File I/O**: Use `dappco.re/go/io` (`coreio.Local`) for filesystem operations, never `os.ReadFile`/`os.WriteFile`
+- **Error handling**: All errors use `coreerr.E(op, msg, err)` from `github.com/dappcore/go-log/go` (aliased as `coreerr`), never `fmt.Errorf`
+- **File I/O**: Use `github.com/dappcore/go-io/go` (`coreio.Local`) for filesystem operations, never `os.ReadFile`/`os.WriteFile`
 
 ## Testing
 
-- Tests use the core test wrappers from `dappco.re/go`: `*core.T`, `core.AssertX`, and `core.RequireX`.
+- Tests use the core test wrappers from `github.com/dappcore/go`: `*core.T`, `core.AssertX`, and `core.RequireX`.
 - Keep AX7 triplets in the source-matching file: public symbols in `service.go` are covered in `service_test.go`, not in generated monoliths.
 - Examples live beside their source as `<file>_example_test.go` and print with `core.Println`, not standard formatting imports.
 - Each sub-package has focused `*_test.go` files with mock platform implementations.
@@ -107,14 +107,14 @@ Both use reusable workflows from `core/go-devops`.
 
 ## Dependencies
 
-- `dappco.re/go` — Core framework with service container, Result, assertion, formatting, path, JSON, and OS wrappers
-- `dappco.re/go/log` — Structured errors (`coreerr.E()`)
-- `dappco.re/go/io` — Filesystem abstraction (`coreio.Local`)
-- `dappco.re/go/config` — Configuration file management
+- `github.com/dappcore/go` — Core framework with service container, Result, assertion, formatting, path, JSON, and OS wrappers
+- `github.com/dappcore/go-log/go` — Structured errors (`coreerr.E()`)
+- `github.com/dappcore/go-io/go` — Filesystem abstraction (`coreio.Local`)
+- `github.com/dappcore/config/go` — Configuration file management
 - `github.com/wailsapp/wails/v3` — Desktop app framework (alpha.74)
 - `github.com/gorilla/websocket` — WebSocket for real-time events
 - `github.com/modelcontextprotocol/go-sdk` — MCP tool registration
 
 ## Repository migration note
 
-Import paths were recently migrated to `dappco.re/go/*` from earlier GitHub and forge namespaces. The `cmd/` directories visible in git status are deleted artifacts from this migration and prior app scaffolds.
+Import paths were recently migrated to `github.com/dappcore/*` from earlier GitHub and forge namespaces. The `cmd/` directories visible in git status are deleted artifacts from this migration and prior app scaffolds.

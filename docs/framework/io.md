@@ -28,8 +28,8 @@ type Medium interface {
 
 ```go
 import (
-    "dappco.re/go/io"
-    "dappco.re/go/io/local"
+    "github.com/dappcore/go-io/go"
+    "github.com/dappcore/go-io/go/local"
 )
 
 // Pre-initialized global medium (root = "/")
@@ -93,7 +93,7 @@ err := io.Copy(localMedium, "data.json", remoteMedium, "backup/data.json")
 ## Mock Medium for Testing
 
 ```go
-import "dappco.re/go/io"
+import "github.com/dappcore/go-io/go"
 
 func TestMyFunction(t *testing.T) {
     mock := io.NewMockMedium()

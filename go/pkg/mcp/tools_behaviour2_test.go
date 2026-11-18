@@ -4,12 +4,12 @@ package mcp
 import (
 	"context"
 
-	core "dappco.re/go"
-	"dappco.re/go/gui/pkg/dialog"
-	"dappco.re/go/gui/pkg/marketplace"
-	"dappco.re/go/gui/pkg/menu"
-	"dappco.re/go/gui/pkg/screen"
-	"dappco.re/go/gui/pkg/window"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/gui/go/pkg/dialog"
+	"github.com/dappcore/gui/go/pkg/marketplace"
+	"github.com/dappcore/gui/go/pkg/menu"
+	"github.com/dappcore/gui/go/pkg/screen"
+	"github.com/dappcore/gui/go/pkg/window"
 )
 
 // dialog_open_file / save_file / open_directory / confirm / info / warning /

@@ -1,6 +1,6 @@
 package application
 
-import core "dappco.re/go"
+import core "github.com/dappcore/go"
 
 func TestApplicationOptions_ChainMiddleware_Good(t *core.T) {
 	// ChainMiddleware

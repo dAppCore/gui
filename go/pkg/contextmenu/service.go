@@ -6,8 +6,8 @@ import (
 	"maps"
 	"sync"
 
-	core "dappco.re/go"
-	"dappco.re/go/gui/pkg/internal/coreutil"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/gui/go/pkg/internal/coreutil"
 )
 
 type Options struct{}
