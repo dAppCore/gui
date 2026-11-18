@@ -1,6 +1,6 @@
 package application
 
-import core "dappco.re/go"
+import core "github.com/dappcore/go"
 
 func TestSystemTrayManager_SystemTrayManager_New_Good(t *core.T) {
 	// SystemTrayManager New

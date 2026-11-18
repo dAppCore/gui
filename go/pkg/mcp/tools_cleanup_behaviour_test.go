@@ -4,11 +4,11 @@ package mcp
 import (
 	"context"
 
-	core "dappco.re/go"
-	"dappco.re/go/gui/pkg/clipboard"
-	"dappco.re/go/gui/pkg/dock"
-	"dappco.re/go/gui/pkg/environment"
-	"dappco.re/go/gui/pkg/events"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/gui/go/pkg/clipboard"
+	"github.com/dappcore/gui/go/pkg/dock"
+	"github.com/dappcore/gui/go/pkg/environment"
+	"github.com/dappcore/gui/go/pkg/events"
 )
 
 // dock_info reads the dock visibility query; dock_set_progress_bar dispatches.

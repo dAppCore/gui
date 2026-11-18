@@ -6,8 +6,8 @@ import (
 	"sort"
 	"sync"
 
-	core "dappco.re/go"
-	"dappco.re/go/gui/pkg/internal/coreutil"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/gui/go/pkg/internal/coreutil"
 )
 
 // Options holds configuration for the events service (currently empty).

@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 	"unsafe"
 
-	core "dappco.re/go"
+	core "github.com/dappcore/go"
 	"github.com/leaanthony/u"
 	"github.com/wailsapp/wails/v3/internal/assetserver"
 	"github.com/wailsapp/wails/v3/pkg/events"

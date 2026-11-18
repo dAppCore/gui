@@ -12,8 +12,8 @@ go mod init myapp
 ## Install Dependencies
 
 ```bash
-go get dappco.re/go/core
-go get dappco.re/go/gui
+go get github.com/dappcore/go
+go get github.com/dappcore/gui/go
 go get github.com/wailsapp/wails/v3@latest
 ```
 
@@ -29,8 +29,8 @@ import (
     "embed"
     "log"
 
-    "dappco.re/go/core"
-    "dappco.re/go/gui/pkg/display"
+    "github.com/dappcore/go"
+    "github.com/dappcore/gui/go/pkg/display"
     "github.com/wailsapp/wails/v3/pkg/application"
 )
 

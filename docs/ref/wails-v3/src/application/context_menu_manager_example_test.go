@@ -2,7 +2,7 @@
 
 package application
 
-import core "dappco.re/go"
+import core "github.com/dappcore/go"
 
 func ExampleContextMenuManager_New() {
 	core.Println("ContextMenuManager_New")

@@ -2,7 +2,7 @@
 
 package application
 
-import core "dappco.re/go"
+import core "github.com/dappcore/go"
 
 func ExampleSystemTrayManager_New() {
 	core.Println("SystemTrayManager_New")

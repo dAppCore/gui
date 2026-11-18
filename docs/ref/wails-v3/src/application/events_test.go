@@ -1,6 +1,6 @@
 package application
 
-import core "dappco.re/go"
+import core "github.com/dappcore/go"
 
 func TestEvents_ApplicationEvent_Context_Good(t *core.T) {
 	// ApplicationEvent Context

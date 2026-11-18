@@ -4,9 +4,9 @@ package webview
 import (
 	"context"
 
-	core "dappco.re/go"
-	"dappco.re/go/gui/pkg/window"
-	gowebview "dappco.re/go/webview"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/gui/go/pkg/window"
+	gowebview "github.com/dappcore/go-webview/go"
 )
 
 type mockConnector struct {

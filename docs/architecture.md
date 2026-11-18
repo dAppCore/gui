@@ -23,7 +23,7 @@ dialog, and browser-window types. The source snapshot under `docs/ref/wails-v3`
 is retained as reference material for compatibility work and is audited for the
 same file-aware test/example shape as the rest of the tree.
 
-Standard-library wrapper discipline is enforced through `dappco.re/go` and the
+Standard-library wrapper discipline is enforced through `github.com/dappcore/go` and the
 local `compat/*` packages. Product code should use Core helpers for formatting,
 errors, strings, paths, environment, JSON, bytes, and process-adjacent APIs
 instead of importing the banned packages directly.

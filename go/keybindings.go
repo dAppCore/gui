@@ -3,9 +3,9 @@
 package gui
 
 import (
-	core "dappco.re/go"
-	"dappco.re/go/gui/pkg/events"
-	"dappco.re/go/gui/pkg/keybinding"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/gui/go/pkg/events"
+	"github.com/dappcore/gui/go/pkg/keybinding"
 )
 
 // Keybinding declares one global accelerator + its emit-on-trigger

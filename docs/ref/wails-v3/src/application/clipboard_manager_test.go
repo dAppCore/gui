@@ -1,6 +1,6 @@
 package application
 
-import core "dappco.re/go"
+import core "github.com/dappcore/go"
 
 func TestClipboardManager_ClipboardManager_SetText_Good(t *core.T) {
 	// ClipboardManager SetText

@@ -3,9 +3,9 @@ package systray
 import (
 	"context"
 
-	core "dappco.re/go"
-	"dappco.re/go/gui/pkg/internal/coreutil"
-	"dappco.re/go/gui/pkg/notification"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/gui/go/pkg/internal/coreutil"
+	"github.com/dappcore/gui/go/pkg/notification"
 )
 
 type Options struct{}

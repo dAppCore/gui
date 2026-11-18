@@ -1,6 +1,6 @@
 package application
 
-import core "dappco.re/go"
+import core "github.com/dappcore/go"
 
 func TestBrowserManager_BrowserManager_OpenURL_Good(t *core.T) {
 	// BrowserManager OpenURL

@@ -3,8 +3,8 @@ package mcp
 import (
 	"context"
 
-	core "dappco.re/go"
-	"dappco.re/go/gui/pkg/deno"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/gui/go/pkg/deno"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 

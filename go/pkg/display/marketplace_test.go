@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	core "dappco.re/go"
-	"dappco.re/go/gui/pkg/marketplace"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/gui/go/pkg/marketplace"
 	"gopkg.in/yaml.v3"
 )
 

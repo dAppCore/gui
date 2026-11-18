@@ -201,7 +201,7 @@ Event types:
 ## Go Integration
 
 ```go
-import "dappco.re/go/gui/cmd/core-gui"
+import "github.com/dappcore/gui/go/cmd/core-gui"
 
 // Create bridge
 bridge := NewMCPBridge(9877, displayService)

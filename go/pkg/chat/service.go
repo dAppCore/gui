@@ -12,9 +12,9 @@ import (
 	"sync"
 	"time"
 
-	core "dappco.re/go"
-	"dappco.re/go/gui/pkg/internal/coreutil"
-	guimcp "dappco.re/go/gui/pkg/mcp"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/gui/go/pkg/internal/coreutil"
+	guimcp "github.com/dappcore/gui/go/pkg/mcp"
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"

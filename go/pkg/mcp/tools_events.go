@@ -4,8 +4,8 @@ package mcp
 import (
 	"context"
 
-	core "dappco.re/go"
-	"dappco.re/go/gui/pkg/events"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/gui/go/pkg/events"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 

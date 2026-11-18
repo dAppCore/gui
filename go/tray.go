@@ -5,9 +5,9 @@ package gui
 import (
 	"runtime"
 
-	core "dappco.re/go"
-	"dappco.re/go/gui/pkg/lifecycle"
-	"dappco.re/go/gui/pkg/systray"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/gui/go/pkg/lifecycle"
+	"github.com/dappcore/gui/go/pkg/systray"
 )
 
 // TrayItem is an alias for the systray menu item shape. Re-exported so

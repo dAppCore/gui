@@ -2,7 +2,7 @@
 
 package application
 
-import core "dappco.re/go"
+import core "github.com/dappcore/go"
 
 func ExampleBrowserManager_OpenURL() {
 	core.Println("BrowserManager_OpenURL")

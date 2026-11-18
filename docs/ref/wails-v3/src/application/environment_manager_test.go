@@ -1,6 +1,6 @@
 package application
 
-import core "dappco.re/go"
+import core "github.com/dappcore/go"
 
 func TestEnvironmentManager_EnvironmentManager_Info_Good(t *core.T) {
 	// EnvironmentManager Info

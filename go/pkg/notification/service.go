@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
-	core "dappco.re/go"
-	"dappco.re/go/gui/pkg/dialog"
-	"dappco.re/go/gui/pkg/internal/coreutil"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/gui/go/pkg/dialog"
+	"github.com/dappcore/gui/go/pkg/internal/coreutil"
 )
 
 type Options struct{}

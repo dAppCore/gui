@@ -3,8 +3,8 @@ package window
 import (
 	"context"
 
-	core "dappco.re/go"
-	"dappco.re/go/gui/pkg/screen"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/gui/go/pkg/screen"
 )
 
 type mockScreenPlatform struct {

@@ -15,7 +15,7 @@ window functionality. The `pkg/display` package is the orchestration layer and
 bridges windowing, preload injection, marketplace installation, local schemes,
 network diagnostics, and browser-facing APIs.
 
-Core dependencies must route through `dappco.re/go` wrappers. Direct imports of
+Core dependencies must route through `github.com/dappcore/go` wrappers. Direct imports of
 `fmt`, `errors`, `strings`, `path/filepath`, `os`, `os/exec`,
 `encoding/json`, or `bytes` are intentionally avoided in package code and tests.
 Where legacy adapter APIs still expect those package names, use the local

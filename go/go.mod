@@ -1,10 +1,10 @@
-module dappco.re/go/gui
+module github.com/dappcore/gui/go
 
 go 1.26.0
 
 require (
-	dappco.re/go/config v0.18.0
-	dappco.re/go/webview v0.11.0
+	github.com/dappcore/config/go v0.19.0
+	github.com/dappcore/go-webview/go v0.12.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/modelcontextprotocol/go-sdk v1.7.0
 	github.com/wailsapp/wails/v3 v3.0.0-alpha2.121
@@ -13,11 +13,11 @@ require (
 )
 
 require (
-	dappco.re/go/io v0.15.3 // indirect
-	dappco.re/go/log v0.13.1 // indirect
 	git.sr.ht/~jackmordaunt/go-toast/v2 v2.0.3 // indirect
 	github.com/adrg/xdg v0.5.3 // indirect
 	github.com/coder/websocket v1.8.15 // indirect
+	github.com/dappcore/go-io/go v0.16.0 // indirect
+	github.com/dappcore/go-log/go v0.14.0 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/godbus/dbus/v5 v5.2.2 // indirect
 	github.com/jchv/go-winloader v0.0.0-20250406163304-c1995be93bd1 // indirect
@@ -32,7 +32,7 @@ require (
 )
 
 require (
-	dappco.re/go v0.12.0
+	github.com/dappcore/go v0.14.0
 	github.com/fsnotify/fsnotify v1.10.1 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/google/jsonschema-go v0.4.3 // indirect

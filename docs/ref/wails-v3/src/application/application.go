@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"sync"
 
-	core "dappco.re/go"
+	core "github.com/dappcore/go"
 	"github.com/wailsapp/wails/v3/internal/assetserver"
 	"github.com/wailsapp/wails/v3/internal/assetserver/bundledassets"
 	"github.com/wailsapp/wails/v3/internal/assetserver/webview"

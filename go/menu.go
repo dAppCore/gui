@@ -5,8 +5,8 @@ package gui
 import (
 	"runtime"
 
-	core "dappco.re/go"
-	"dappco.re/go/gui/pkg/menu"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/gui/go/pkg/menu"
 )
 
 // MenuItem aliases the menu sub-package's MenuItem so consumers can

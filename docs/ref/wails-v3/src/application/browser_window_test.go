@@ -1,6 +1,6 @@
 package application
 
-import core "dappco.re/go"
+import core "github.com/dappcore/go"
 
 func TestBrowserWindow_NewBrowserWindow_Good(t *core.T) {
 	// NewBrowserWindow

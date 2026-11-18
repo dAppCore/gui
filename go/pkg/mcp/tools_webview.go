@@ -9,9 +9,9 @@ import (
 	"image/png"
 	"math"
 
-	core "dappco.re/go"
-	"dappco.re/go/gui/pkg/webview"
-	"dappco.re/go/gui/pkg/window"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/gui/go/pkg/webview"
+	"github.com/dappcore/gui/go/pkg/window"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 

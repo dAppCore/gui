@@ -1,6 +1,6 @@
 package application
 
-import core "dappco.re/go"
+import core "github.com/dappcore/go"
 
 func TestSystemtray_SystemTray_SetLabel_Good(t *core.T) {
 	// SystemTray SetLabel

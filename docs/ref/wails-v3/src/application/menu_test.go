@@ -1,6 +1,6 @@
 package application
 
-import core "dappco.re/go"
+import core "github.com/dappcore/go"
 
 func TestMenu_NewContextMenu_Good(t *core.T) {
 	// NewContextMenu

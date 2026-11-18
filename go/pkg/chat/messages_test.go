@@ -1,6 +1,6 @@
 package chat
 
-import core "dappco.re/go"
+import core "github.com/dappcore/go"
 
 func TestMessages_DefaultSettings_Good(t *core.T) {
 	// DefaultSettings

@@ -4,8 +4,8 @@ package mcp
 import (
 	"context"
 
-	core "dappco.re/go"
-	"dappco.re/go/gui/pkg/window"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/gui/go/pkg/window"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 

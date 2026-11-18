@@ -4,8 +4,8 @@ import (
 	"context"
 	"sort"
 
-	core "dappco.re/go"
-	"dappco.re/go/gui/pkg/screen"
+	core "github.com/dappcore/go"
+	"github.com/dappcore/gui/go/pkg/screen"
 )
 
 type schemeResponse struct {

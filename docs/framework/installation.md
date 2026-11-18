@@ -36,8 +36,8 @@ choco install go-task
 ## Install Core
 
 ```bash
-go get dappco.re/go/core
-go get dappco.re/go/gui
+go get github.com/dappcore/go
+go get github.com/dappcore/gui/go
 ```
 
 ## Verify Installation

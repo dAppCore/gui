@@ -1,6 +1,6 @@
 package application
 
-import core "dappco.re/go"
+import core "github.com/dappcore/go"
 
 func TestScreenmanager_Rect_Origin_Good(t *core.T) {
 	// Rect Origin

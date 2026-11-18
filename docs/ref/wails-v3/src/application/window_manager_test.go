@@ -1,6 +1,6 @@
 package application
 
-import core "dappco.re/go"
+import core "github.com/dappcore/go"
 
 func TestWindowManager_WindowManager_GetByName_Good(t *core.T) {
 	// WindowManager GetByName
